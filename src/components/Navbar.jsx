@@ -1,14 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
+
 const links = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
-  { to: '/cart', label: 'Cart' },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onCartClick }) {
   const { itemCount } = useCart();
 
   return (
@@ -27,13 +27,21 @@ export default function Navbar() {
               }
             >
               {link.label}
-              {link.to === '/cart' && itemCount > 0 ? (
-                <span className="cart-badge" aria-label={`${itemCount} items in cart`}>
-                  {itemCount}
-                </span>
-              ) : null}
             </NavLink>
           ))}
+          <button
+            onClick={onCartClick}
+            className="nav-link"
+            style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.7rem 1rem', marginLeft: 8 }}
+            aria-label="Open cart"
+          >
+            Cart
+            {itemCount > 0 && (
+              <span className="cart-badge" aria-label={`${itemCount} items in cart`}>
+                {itemCount}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
     </header>

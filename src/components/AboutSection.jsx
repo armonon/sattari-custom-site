@@ -1,5 +1,6 @@
 
 import SattariPortrait from './SattariPortrait';
+import InstagramFeed from './InstagramFeed';
 
 export default function AboutSection() {
   return (
@@ -26,10 +27,7 @@ export default function AboutSection() {
           <div className="info-card instagram-card" style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
             <p className="card-kicker">Follow us on Instagram</p>
             <h3>@sattarimusic</h3>
-            <div className="instagram-placeholder">
-              {/* Replace with Instagram embed or gallery */}
-              <span>Instagram feed coming soon</span>
-            </div>
+            <InstagramFeed />
           </div>
         </div>
       </section>

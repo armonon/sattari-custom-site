@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 import { categories, products, formatPrice } from '../data/catalog';
 
@@ -9,6 +10,7 @@ const shopMoreDescriptions = {
 };
 
 export default function ShopPage() {
+  const { addToCart } = useCart();
   return (
     <section className="section page-header-offset">
       <div className="container section-header narrow">
@@ -63,8 +65,16 @@ export default function ShopPage() {
                   }}>
                     <p className="product-name" style={{ margin: 0, fontWeight: 600, fontSize: '1.13rem', color: '#fff', textShadow: '0 2px 8px #0008' }}>{product.name}</p>
                     <p className="product-price" style={{ margin: '0.2rem 0 0.7rem', color: '#fff', fontWeight: 500, textShadow: '0 2px 8px #0008' }}>{product.sizes ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(product.sizes[product.sizes.length-1].price)}` : formatPrice(product.price)}</p>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
                       <Link to={`/product/${product.slug ? product.slug : product.name.replace(/\s+/g, '-').toLowerCase()}`} className="button button-outline" style={{ background: 'rgba(255,255,255,0.10)', color: '#fff', border: '1.5px solid #fff', fontWeight: 500, minWidth: 0, padding: '0.45rem 1.1rem', fontSize: '1rem' }}>More Details</Link>
+                      <button
+                        className="button button-solid"
+                        style={{ marginLeft: 8, fontWeight: 600, fontSize: '1rem', padding: '0.45rem 1.1rem' }}
+                        onClick={() => addToCart({ slug: product.slug, quantity: 1 })}
+                        aria-label={`Add ${product.name} to cart`}
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
                 </div>
