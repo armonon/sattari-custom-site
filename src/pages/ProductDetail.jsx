@@ -172,8 +172,8 @@ export default function ProductDetail() {
               </ul>
             </div>
           ) : (
-            <details className="product-description-section">
-              <summary>More Details</summary>
+            <details className="product-description-section" open>
+              <summary className="product-description-title">Product Details</summary>
               <div className="product-description-content">
                 <p>{product.description}</p>
                 <ul className="product-specs-list">
