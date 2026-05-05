@@ -1,82 +1,76 @@
-
 import { Link } from 'react-router-dom';
 import AboutSection from './AboutSection';
-
-const highlights = [
-  {
-    title: 'Premium Drum Gear',
-    text: 'Curated cymbals, hi-hats, practice pads, and accessories—handpicked for drummers who demand more.',
-  },
-  {
-    title: 'Founder Expertise',
-    text: 'Led by Mohammad Sattari, a pro drummer with 30+ years of global experience. Every product and service is chosen with a musician’s eye.',
-  },
-  {
-    title: 'Local Support',
-    text: 'Repairs, rentals, and support for California musicians—without losing focus on the drum-first shop.',
-  },
-];
-
-const productPreview = [
-  'Pirouz Series Cymbals',
-  'Hi-Hats & Splashes',
-  'Practice Pads',
-  'Classic Drumsticks & Felts',
-];
+import { SEO, OrganizationSchema } from '../utils/seo';
 
 export default function HomePage() {
   return (
     <>
-      <section className="hero-section">
-        <div className="container hero-grid">
-          <div>
-            <p className="eyebrow">Premium Drum Gear</p>
+      <SEO
+        title="Handcrafted Drum Gear"
+        description="Shop handcrafted cymbals, sticks, practice pads, and drum essentials from Sattari Music. California-based expertise with secure online checkout."
+        url="https://sattarimusic.com/"
+      />
+      <OrganizationSchema />
+      <section className="hero-section hero-shell">
+        <div className="container hero-grid hero-premium-grid">
+          <div className="hero-copy-panel">
+            <div className="hero-kicker-row">
+              <p className="eyebrow">Premium Drum Gear</p>
+              <span className="hero-status-pill">California-crafted support</span>
+            </div>
             <h1>Drums First. Always.</h1>
             <p className="hero-copy">
-              Sattari Music is a California-based brand built for drummers—by drummers. Shop curated gear, get expert repairs, and join a community led by international performer Mohammad Sattari.
+              Shop handcrafted cymbals, sticks, pads, and essentials. Built by drummers, for
+              drummers.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">
                 Shop Drum Gear
               </Link>
               <Link to="/services" className="button button-outline">
-                Local Services
+                Services & Rentals
               </Link>
+            </div>
+
+            <div className="hero-metrics" aria-label="Storefront highlights">
+              <div className="hero-metric-card">
+                <strong>Direct founder insight</strong>
+                <span>Practical recommendations from a drummer-first perspective.</span>
+              </div>
+              <div className="hero-metric-card">
+                <strong>Premium visual polish</strong>
+                <span>A storefront feel that matches the quality of the gear.</span>
+              </div>
+              <div className="hero-metric-card">
+                <strong>Local support when needed</strong>
+                <span>Repairs, rentals, and working-musician help in California.</span>
+              </div>
             </div>
           </div>
 
-          <div className="hero-card">
-            <p className="card-kicker">Why Sattari Music?</p>
-            <ul className="bullet-list">
-              <li>Curated drum essentials</li>
-              <li>Founder with 30+ years’ experience</li>
-              <li>California-based, globally inspired</li>
-              <li>Instagram & community highlights</li>
-            </ul>
+          <div className="hero-card-stack">
+            <div className="hero-card hero-card-feature">
+              <p className="card-kicker">Why shop here?</p>
+              <h2>Premium gear, direct guidance, and a more elevated buying experience.</h2>
+              <ul className="bullet-list hero-bullet-list">
+                <li>Curated gear from pros</li>
+                <li>30+ years of hands-on expertise</li>
+                <li>California-based brand support</li>
+                <li>Direct connection to the founder</li>
+              </ul>
+            </div>
+
+            <div className="hero-mini-card">
+              <p className="card-kicker">Built for</p>
+              <strong>Players, teachers, rehearsals, and event-ready setups.</strong>
+              <p>
+                Whether you are buying for your own kit or planning local support, the experience is
+                designed to feel considered and premium.
+              </p>
+            </div>
           </div>
         </div>
       </section>
-
-      <section className="section">
-        <div className="container section-header">
-          <p className="eyebrow">Brand direction</p>
-          <h2>Make the homepage do one job really well</h2>
-          <p>
-            The current site already proves you sell instruments and have an About page.
-            This version turns that into a clearer message: drums first, then services. 
-          </p>
-        </div>
-
-        <div className="container card-grid three-col">
-          {highlights.map((item) => (
-            <article className="info-card" key={item.title}>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
 
       <AboutSection />
     </>

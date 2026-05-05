@@ -62,7 +62,9 @@ export function CartProvider({ children }) {
     const key = `${slug}::${size || 'default'}`;
 
     setCart((prev) => {
-      const existingIndex = prev.findIndex((entry) => `${entry.slug}::${entry.size || 'default'}` === key);
+      const existingIndex = prev.findIndex(
+        (entry) => `${entry.slug}::${entry.size || 'default'}` === key
+      );
       if (existingIndex === -1) {
         return [...prev, { slug, size, quantity: safeQty }];
       }

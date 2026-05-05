@@ -18,13 +18,12 @@ export default function InstagramCallback() {
           <h1 style={{ marginTop: 0 }}>OAuth callback received</h1>
 
           {error ? (
-            <p style={{ color: '#ff8e8e' }}>
-              Instagram returned an error: {error}
-            </p>
+            <p style={{ color: '#ff8e8e' }}>Instagram returned an error: {error}</p>
           ) : code ? (
             <>
               <p>
-                Success. Instagram returned an authorization `code`. This means your redirect URL is configured correctly.
+                Success. Instagram returned an authorization `code`. This means your redirect URL is
+                configured correctly.
               </p>
               <p style={{ wordBreak: 'break-all', fontSize: '0.95rem', opacity: 0.9 }}>
                 Code preview: {code.slice(0, 18)}...
@@ -39,7 +38,9 @@ export default function InstagramCallback() {
           </p>
 
           <div style={{ marginTop: '1rem' }}>
-            <Link to="/" className="button button-outline">Back to home</Link>
+            <Link to="/" className="button button-outline">
+              Back to home
+            </Link>
           </div>
         </article>
       </div>

@@ -88,7 +88,8 @@ export const products = [
     name: 'Cymbal Felts',
     slug: 'cymbal-felts',
     category: 'essentials',
-    description: 'SATTARI Cymbal Felts in an all new stunning red. Protect your cymbals and improve tone.',
+    description:
+      'SATTARI Cymbal Felts in an all new stunning red. Protect your cymbals and improve tone.',
     price: 6.99,
     image: '/sattari site/cymbal.png',
     specs: [],

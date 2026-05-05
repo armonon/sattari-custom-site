@@ -30,18 +30,32 @@ export default function ServiceInquiryForm() {
   }
 
   if (submitted) {
-    return <div className="service-form-glass"><h3>Thank you!</h3><p>Your inquiry has been received. We’ll get back to you soon.</p></div>;
+    return (
+      <div className="service-form-glass">
+        <p className="card-kicker">Inquiry sent</p>
+        <h3>Thank you!</h3>
+        <p>We’ve received your request and we’ll follow up soon with the next steps.</p>
+      </div>
+    );
   }
 
   return (
     <form className="service-form-glass" onSubmit={handleSubmit}>
+      <p className="card-kicker">Local service request</p>
       <h3>Service Inquiry</h3>
+      <p className="form-helper">
+        Tell us what you need, when you need it, and any details that will help us guide you.
+      </p>
       <label>
         <span>Service Type</span>
         <select name="service" value={form.service} onChange={handleChange} required>
-          <option value="" disabled>Select a service</option>
-          {SERVICE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option value="" disabled>
+            Select a service
+          </option>
+          {SERVICE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
       </label>
@@ -61,7 +75,9 @@ export default function ServiceInquiryForm() {
         <span>Describe what you need</span>
         <textarea name="details" value={form.details} onChange={handleChange} rows={4} required />
       </label>
-      <button className="button button-solid button-full" type="submit">Send Inquiry</button>
+      <button className="button button-solid button-full" type="submit">
+        Send service request
+      </button>
     </form>
   );
 }

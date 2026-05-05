@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /checkout/
+Disallow: /cart
+
+Sitemap: https://sattarimusic.com/sitemap.xml
+
+User-agent: Googlebot
+Allow: /

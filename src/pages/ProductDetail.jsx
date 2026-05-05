@@ -2,20 +2,66 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { products, formatPrice, resolveSelectedOption } from '../data/catalog';
 import { useCart } from '../context/CartContext';
+import OptimizedProductImage from '../components/OptimizedProductImage';
+import { SEO, StructuredData } from '../utils/seo';
+import '../styles-products-premium.css';
+
+const detailHighlights = {
+  cymbals: ['Handcrafted character', 'Musical attack and sustain', 'Ready for studio or stage'],
+  sticks: ['Consistent balance', 'Built for repeat sessions', 'Reliable feel across dynamics'],
+  essentials: ['Portable and practical', 'Easy everyday setup', 'Made to keep you playing'],
+};
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const product = products.find(
-    p => (p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug)
+  const product = products.find((p) =>
+    p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug
   );
   const [selectedSize, setSelectedSize] = useState(product?.sizes ? product.sizes[0].size : null);
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const { addToCart } = useCart();
 
-  if (!product) return <div className="container"><h2>Product not found</h2></div>;
+  if (!product) {
+    return (
+      <div className="container">
+        <h2>Product not found</h2>
+      </div>
+    );
+  }
 
   const { size, unitPrice } = resolveSelectedOption(product, selectedSize);
+  const detailImage = product.sizes?.find((option) => option.size === size)?.image || product.image;
+  const productUrl = `https://sattarimusic.com/product/${product.slug}`;
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: detailImage ? [`https://sattarimusic.com${detailImage}`] : undefined,
+    brand: {
+      '@type': 'Brand',
+      name: 'Sattari Music',
+    },
+    category: product.category,
+    offers: product.sizes?.length
+      ? product.sizes.map((option) => ({
+          '@type': 'Offer',
+          priceCurrency: 'USD',
+          price: option.price,
+          availability: 'https://schema.org/InStock',
+          url: productUrl,
+          sku: `${product.slug}-${option.size.replace(/[^a-zA-Z0-9]/g, '')}`,
+        }))
+      : {
+          '@type': 'Offer',
+          priceCurrency: 'USD',
+          price: unitPrice,
+          availability: 'https://schema.org/InStock',
+          url: productUrl,
+          sku: product.slug,
+        },
+  };
 
   function handleAddToCart() {
     addToCart({ slug: product.slug, size, quantity });
@@ -24,46 +70,77 @@ export default function ProductDetail() {
 
   return (
     <section className="section page-header-offset">
-      <div className="container" style={{ maxWidth: 900, display: 'flex', flexWrap: 'wrap', gap: '2.5rem' }}>
-        <div style={{ flex: '1 1 320px', minWidth: 320 }}>
-          {product.slug === 'sattari-drummer-practice-pad' ? (
-            <img
-              src="/sattari site/drumpad.png"
-              alt={product.name}
-              style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 16, marginBottom: 16, background: '#222' }}
-            />
-          ) : (
-            <div className="product-image-placeholder" style={{ minHeight: 280, marginBottom: 16 }} />
-          )}
-          {/* Add more images here if available */}
+      <SEO
+        title={product.name}
+        description={product.description.slice(0, 155)}
+        image={detailImage || product.image}
+        url={productUrl}
+        type="product"
+      />
+      <StructuredData data={productSchema} />
+      <div className="container product-detail-shell">
+        <div className="product-detail-media-column">
+          <div className="product-detail-image">
+            {detailImage ? (
+              <OptimizedProductImage
+                src={detailImage}
+                alt={product.name}
+                loading="eager"
+                fetchPriority="high"
+                sizes="(max-width: 768px) 100vw, 40vw"
+              />
+            ) : (
+              <div className="product-image-placeholder" />
+            )}
+          </div>
+          <div className="product-benefit-grid" aria-label="Product benefits">
+            {detailHighlights[product.category].map((point) => (
+              <div className="product-benefit" key={point}>
+                {point}
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ flex: '2 1 340px', minWidth: 320 }}>
+        <div className="product-detail-content-card product-detail-content-column">
+          <div className="product-hero-meta">
+            <span className="product-hero-badge">{product.category}</span>
+            <span className="product-hero-badge">Secure checkout</span>
+            <span className="product-hero-badge">California based</span>
+          </div>
           <h1>{product.name}</h1>
+          <p className="product-card-copy product-card-copy-detail">
+            Dial in a premium setup with handcrafted Sattari gear designed to feel dependable from
+            the first hit.
+          </p>
           {product.sizes ? (
             <>
-              <label style={{ display: 'block', margin: '1rem 0 0.5rem' }}>
-                <span style={{ color: 'var(--accent)', fontWeight: 500 }}>Choose Size:</span>
+              <div className="control-group">
+                <label className="control-label">Choose Size</label>
                 <select
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: 8, marginTop: 4 }}
+                  className="control-input"
                   value={selectedSize}
-                  onChange={e => setSelectedSize(e.target.value)}
+                  onChange={(e) => setSelectedSize(e.target.value)}
                 >
-                  {product.sizes.map(opt => (
+                  {product.sizes.map((opt) => (
                     <option key={opt.size} value={opt.size}>
                       {opt.size} — ${opt.price}
                     </option>
                   ))}
                 </select>
-              </label>
-              <p className="product-price" style={{ fontSize: 24, margin: '0.5rem 0 1.2rem' }}>
-                {formatPrice(unitPrice)}
+              </div>
+              <p className="product-price-enhanced">
+                <span className="product-price-accent">{formatPrice(unitPrice)}</span>
               </p>
             </>
           ) : (
-            <p className="product-price" style={{ fontSize: 24, margin: '0.5rem 0 1.2rem' }}>{formatPrice(product.price)}</p>
+            <p className="product-price-enhanced">
+              <span className="product-price-accent">{formatPrice(product.price)}</span>
+            </p>
           )}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
-            <label htmlFor="qty" style={{ color: 'var(--accent)' }}>Qty</label>
+          <div className="control-group">
+            <label htmlFor="qty" className="control-label">
+              Qty
+            </label>
             <input
               id="qty"
               type="number"
@@ -71,33 +148,46 @@ export default function ProductDetail() {
               max={99}
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-              style={{ width: 80, padding: '0.5rem', borderRadius: 8 }}
+              className="qty-input-product"
             />
           </div>
-          <button className="button button-solid button-full" style={{ marginBottom: 10 }} onClick={handleAddToCart}>Add to Cart</button>
-          {addedMessage ? <p style={{ marginTop: 0, color: 'var(--accent)' }}>{addedMessage}</p> : null}
-          <Link to="/cart" className="button button-outline button-full" style={{ display: 'inline-block', textAlign: 'center', marginBottom: 16 }}>Go to Cart</Link>
-          {/* Always show description and specs for Sattari Hand Crafted Cymbals */}
+          <div className="product-detail-actions">
+            <button className="btn-add-cart" onClick={handleAddToCart}>
+              Add to Cart
+            </button>
+            <Link to="/cart" className="btn-details">
+              Go to Cart
+            </Link>
+          </div>
+          {addedMessage ? <p className="success-message">{addedMessage}</p> : null}
+          <p className="product-shipping-note">
+            Secure Stripe checkout, quick confirmation, and easy follow-up if you need help choosing
+            sizes.
+          </p>
           {product.name === 'Sattari Hand Crafted Cymbals' ? (
-            <>
-              <p style={{ margin: '1.2rem 0 0.5rem', fontSize: '1.1rem' }}>{product.description}</p>
-              <ul style={{ marginTop: 12 }}>
+            <div className="product-description-section">
+              <p className="product-description-lead">{product.description}</p>
+              <ul className="product-specs-list">
                 {product.specs && product.specs.map((spec, i) => <li key={i}>{spec}</li>)}
               </ul>
-            </>
+            </div>
           ) : (
-            <details style={{ margin: '1.2rem 0' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--accent)' }}>More Details</summary>
-              <p style={{ marginTop: 12 }}>{product.description}</p>
-              <ul style={{ marginTop: 12 }}>
-                {product.specs && product.specs.map((spec, i) => <li key={i}>{spec}</li>)}
-              </ul>
+            <details className="product-description-section">
+              <summary>More Details</summary>
+              <div className="product-description-content">
+                <p>{product.description}</p>
+                <ul className="product-specs-list">
+                  {product.specs && product.specs.map((spec, i) => <li key={i}>{spec}</li>)}
+                </ul>
+              </div>
             </details>
           )}
         </div>
       </div>
-      <div className="container" style={{ marginTop: '2rem', textAlign: 'center' }}>
-        <Link to="/shop" className="button button-outline">Back to Shop</Link>
+      <div className="container shop-back-link-row">
+        <Link to="/shop" className="btn-details">
+          Back to Shop
+        </Link>
       </div>
     </section>
   );
