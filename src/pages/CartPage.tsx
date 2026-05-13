@@ -131,7 +131,11 @@ const CartPage: FC = () => {
                     layout
                   >
                     {/* Product Image */}
-                    <div className="cart-item-image-container">
+                    <Link
+                      to={`/product/${item.product.slug}`}
+                      className="cart-item-image-container cart-line-item-image-link"
+                      aria-label={`View ${item.product.name}`}
+                    >
                       {item.product.image ? (
                         <img
                           src={item.product.image}
@@ -141,11 +145,16 @@ const CartPage: FC = () => {
                       ) : (
                         <div className="cart-item-placeholder">📦</div>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Product Details */}
                     <div className="cart-item-details">
-                      <h3 className="cart-item-product-name">{item.product.name}</h3>
+                      <Link
+                        to={`/product/${item.product.slug}`}
+                        className="cart-item-product-name cart-item-product-link"
+                      >
+                        {item.product.name}
+                      </Link>
                       {item.size && (
                         <p className="cart-item-product-size">
                           Size: <strong>{item.size}</strong>
@@ -289,6 +298,9 @@ const CartPage: FC = () => {
             <div className="summary-note-card">
               <strong>Need a second look before paying?</strong>
               <p>Update quantities on the left and your total refreshes instantly.</p>
+              <Link to="/shop" className="summary-note-link">
+                Keep shopping
+              </Link>
             </div>
 
             {/* Security Info */}

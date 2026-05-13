@@ -71,15 +71,29 @@ export default function Category() {
             return (
               <article className="product-card-enhanced" key={product.name}>
                 <div className="product-image-container">
-                  <div className="product-image-placeholder" />
+                  <Link
+                    to={buildProductPath(product)}
+                    className="product-media-link"
+                    aria-label={`View ${product.name}`}
+                  >
+                    <div className="product-image-placeholder" />
+                  </Link>
                   <div className="product-info-overlay">
-                    <p className="product-kicker">{category.title}</p>
-                    <p className="product-name-enhanced">{product.name}</p>
-                    <p className="product-price-enhanced">
-                      <span className="product-price-accent">
-                        ${product.sizes[0].price} - ${product.sizes[product.sizes.length - 1].price}
-                      </span>
-                    </p>
+                    <Link
+                      to={buildProductPath(product)}
+                      className="product-copy-link"
+                      aria-label={`View details for ${product.name}`}
+                    >
+                      <p className="product-kicker">{category.title}</p>
+                      <p className="product-name-enhanced">{product.name}</p>
+                      <p className="product-price-enhanced">
+                        <span className="product-price-accent">
+                          {`${formatPrice(product.sizes[0].price)} - ${formatPrice(
+                            product.sizes[product.sizes.length - 1].price
+                          )}`}
+                        </span>
+                      </p>
+                    </Link>
                     <div className="product-actions">
                       <Link to={buildProductPath(product)} className="btn-details">
                         More Details
@@ -94,29 +108,41 @@ export default function Category() {
           return (
             <article className="product-card-enhanced" key={product.name}>
               <div className="product-image-container">
-                {product.image ? (
-                  <OptimizedProductImage
-                    src={product.image}
-                    alt={product.name}
-                    className="product-image"
-                    loading="lazy"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                ) : (
-                  <div className="product-image-placeholder" />
-                )}
+                <Link
+                  to={buildProductPath(product)}
+                  className="product-media-link"
+                  aria-label={`View ${product.name}`}
+                >
+                  {product.image ? (
+                    <OptimizedProductImage
+                      src={product.image}
+                      alt={product.name}
+                      className="product-image"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className="product-image-placeholder" />
+                  )}
+                </Link>
                 <div className="product-info-overlay">
-                  <p className="product-kicker">{category.title}</p>
-                  <p className="product-name-enhanced">{product.name}</p>
-                  <p className="product-price-enhanced">
-                    <span className="product-price-accent">
-                      {product.sizes
-                        ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(
-                            product.sizes[product.sizes.length - 1].price
-                          )}`
-                        : formatPrice(product.price)}
-                    </span>
-                  </p>
+                  <Link
+                    to={buildProductPath(product)}
+                    className="product-copy-link"
+                    aria-label={`View details for ${product.name}`}
+                  >
+                    <p className="product-kicker">{category.title}</p>
+                    <p className="product-name-enhanced">{product.name}</p>
+                    <p className="product-price-enhanced">
+                      <span className="product-price-accent">
+                        {product.sizes
+                          ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(
+                              product.sizes[product.sizes.length - 1].price
+                            )}`
+                          : formatPrice(product.price)}
+                      </span>
+                    </p>
+                  </Link>
                   <div className="product-actions">
                     <Link to={buildProductPath(product)} className="btn-details">
                       More Details

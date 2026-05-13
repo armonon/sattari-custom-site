@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
 const links = [
@@ -9,6 +10,17 @@ const links = [
 
 export default function Navbar({ onCartClick }) {
   const { itemCount } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  const handleCartClick = () => {
+    setMenuOpen(false);
+    onCartClick();
+  };
 
   return (
     <header className="nav-wrap">
@@ -34,7 +46,25 @@ export default function Navbar({ onCartClick }) {
             <span className="brand-name">Premium drum gear</span>
           </span>
         </NavLink>
-        <nav className="nav-links" aria-label="Primary navigation">
+        <div className="nav-actions-row">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <nav
+          id="primary-navigation"
+          className={`nav-links${menuOpen ? ' nav-links-open' : ''}`}
+          aria-label="Primary navigation"
+        >
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -44,7 +74,12 @@ export default function Navbar({ onCartClick }) {
               {link.label}
             </NavLink>
           ))}
-          <button onClick={onCartClick} className="nav-link nav-cart-button" aria-label="Open cart">
+          <button
+            type="button"
+            onClick={handleCartClick}
+            className="nav-link nav-cart-button"
+            aria-label={`Open cart${itemCount > 0 ? ` with ${itemCount} items` : ''}`}
+          >
             Cart
             {itemCount > 0 && (
               <span className="cart-badge" aria-label={`${itemCount} items in cart`}>

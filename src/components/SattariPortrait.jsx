@@ -1,11 +1,14 @@
 // SattariPortrait.jsx
 // Portrait card for About section
+import { Link } from 'react-router-dom';
 
 export default function SattariPortrait() {
   return (
-    <div
-      className="info-card sattari-portrait-card"
+    <Link
+      to="/services"
+      className="info-card sattari-portrait-card interactive-card-link"
       style={{ maxWidth: 340, margin: '0 auto', textAlign: 'center' }}
+      aria-label="Learn about services from Mohammad Sattari"
     >
       <img
         src="/sattari site/MO.png"
@@ -20,6 +23,6 @@ export default function SattariPortrait() {
       />
       <h3 style={{ margin: 0 }}>Mohammad Sattari</h3>
       <p style={{ color: 'var(--muted)', margin: '0.5rem 0 0' }}>Founder & Professional Drummer</p>
-    </div>
+    </Link>
   );
 }

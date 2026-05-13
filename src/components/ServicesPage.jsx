@@ -79,13 +79,23 @@ export default function ServicesPage() {
               </Link>
             </div>
             <div className="services-pills" aria-label="Service highlights">
-              <span className="service-pill">California-based appointments</span>
-              <span className="service-pill">Straightforward booking</span>
-              <span className="service-pill">Repairs, rentals, and lessons</span>
+              <a className="service-pill" href="#service-inquiry">
+                California-based appointments
+              </a>
+              <a className="service-pill" href="#service-inquiry">
+                Straightforward booking
+              </a>
+              <a className="service-pill" href="#service-inquiry">
+                Repairs, rentals, and lessons
+              </a>
             </div>
           </div>
 
-          <aside className="services-highlight-card" aria-label="Local highlights of service">
+          <a
+            className="services-highlight-card interactive-card-link"
+            href="#service-inquiry"
+            aria-label="Start a local service inquiry"
+          >
             <p className="card-kicker">What to expect</p>
             <h2>Clear local help without the guesswork</h2>
             <p>
@@ -106,13 +116,18 @@ export default function ServicesPage() {
                 <span>know the next step before you book</span>
               </div>
             </div>
-          </aside>
+          </a>
         </div>
       </div>
 
       <div className="container card-grid three-col services-card-grid">
         {services.map((service) => (
-          <article className="info-card service-card" key={service.title}>
+          <a
+            className="info-card service-card interactive-card-link"
+            href="#service-inquiry"
+            key={service.title}
+            aria-label={`Request help with ${service.title}`}
+          >
             <div className="service-card-header">
               <div className="service-icon" aria-hidden="true">
                 {service.icon}
@@ -128,7 +143,7 @@ export default function ServicesPage() {
                 <li key={point}>{point}</li>
               ))}
             </ul>
-          </article>
+          </a>
         ))}
       </div>
 

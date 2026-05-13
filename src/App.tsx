@@ -1,4 +1,4 @@
-import { useState, FC } from 'react';
+import { useEffect, useState, FC } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from '@components/Navbar';
 import BackgroundMedia from './components/BackgroundMedia';
@@ -30,11 +30,25 @@ const App: FC = () => {
     }
   };
 
+  useEffect(() => {
+    document.body.classList.toggle('cart-lock-scroll', cartOpen);
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCartOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.classList.remove('cart-lock-scroll');
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [cartOpen]);
+
   return (
-    <div
-      className="site-shell"
-      style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}
-    >
+    <div className="site-shell">
       <BackgroundMedia />
 
       <Navbar onCartClick={() => setCartOpen(true)} />
@@ -42,50 +56,25 @@ const App: FC = () => {
       {/* Cart Drawer */}
       <div
         className={`cart-drawer${cartOpen ? ' open' : ''}`}
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          height: '100vh',
-          width: 360,
-          maxWidth: '90vw',
-          background: 'rgba(18,18,20,0.98)',
-          boxShadow: cartOpen ? '-8px 0 32px rgba(0,0,0,0.28)' : 'none',
-          zIndex: 100,
-          transform: cartOpen ? 'translateX(0)' : 'translateX(110%)',
-          transition: 'transform 0.32s cubic-bezier(.7,.2,.2,1)',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
         aria-hidden={!cartOpen}
       >
         <button
-          style={{
-            alignSelf: 'flex-end',
-            margin: 16,
-            fontSize: 22,
-            background: 'none',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-          }}
+          className="cart-drawer-close"
           aria-label="Close cart"
           onClick={() => setCartOpen(false)}
         >
           ×
         </button>
-        <CartSidebar onCheckout={handleCheckout} />
+        <CartSidebar onCheckout={handleCheckout} onNavigate={() => setCartOpen(false)} />
       </div>
 
       {/* Overlay */}
       {cartOpen && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.32)',
-            zIndex: 99,
-          }}
+          className="cart-drawer-overlay"
           onClick={() => setCartOpen(false)}
           aria-hidden="true"
         />

@@ -66,6 +66,7 @@ export default function ProductDetail() {
   function handleAddToCart() {
     addToCart({ slug: product.slug, size, quantity });
     setAddedMessage('Added to cart.');
+    window.setTimeout(() => setAddedMessage(''), 2200);
   }
 
   return (
@@ -103,9 +104,18 @@ export default function ProductDetail() {
         </div>
         <div className="product-detail-content-card product-detail-content-column">
           <div className="product-hero-meta">
-            <span className="product-hero-badge">{product.category}</span>
-            <span className="product-hero-badge">Secure checkout</span>
-            <span className="product-hero-badge">California based</span>
+            <Link
+              to={`/shop/${product.category}`}
+              className="product-hero-badge product-hero-badge-link"
+            >
+              {product.category}
+            </Link>
+            <Link to="/cart" className="product-hero-badge product-hero-badge-link">
+              Secure checkout
+            </Link>
+            <Link to="/services" className="product-hero-badge product-hero-badge-link">
+              California based
+            </Link>
           </div>
           <h1>{product.name}</h1>
           <p className="product-card-copy product-card-copy-detail">
@@ -141,25 +151,45 @@ export default function ProductDetail() {
             <label htmlFor="qty" className="control-label">
               Qty
             </label>
-            <input
-              id="qty"
-              type="number"
-              min={1}
-              max={99}
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-              className="qty-input-product"
-            />
+            <div className="product-quantity-stepper">
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <input
+                id="qty"
+                type="number"
+                min={1}
+                max={99}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                className="qty-input-product"
+              />
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => Math.min(99, current + 1))}
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
           </div>
           <div className="product-detail-actions">
             <button className="btn-add-cart" onClick={handleAddToCart}>
-              Add to Cart
+              {addedMessage ? 'Added ✓' : 'Add to Cart'}
             </button>
             <Link to="/cart" className="btn-details">
               Go to Cart
             </Link>
           </div>
-          {addedMessage ? <p className="success-message">{addedMessage}</p> : null}
+          {addedMessage ? (
+            <p className="success-message" aria-live="polite">
+              {addedMessage}
+            </p>
+          ) : null}
           <p className="product-shipping-note">
             Secure Stripe checkout, quick confirmation, and easy follow-up if you need help choosing
             sizes.

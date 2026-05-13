@@ -1,13 +1,16 @@
 import { FC, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CartContextValue, CartItem } from '@/types';
+import '@/styles-cart-premium.css';
 
 interface CartSidebarProps {
   onCheckout: () => Promise<void>;
+  onNavigate?: () => void;
 }
 
-const CartSidebar: FC<CartSidebarProps> = ({ onCheckout }) => {
+const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate }) => {
   const { cartItems, itemCount, subtotal, updateQuantity, removeFromCart, clearCart } =
     useCart() as CartContextValue;
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
@@ -63,6 +66,9 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout }) => {
             <div className="empty-icon">🥁</div>
             <p>Your cart is empty</p>
             <small>Add some premium gear to get started</small>
+            <Link to="/shop" className="cart-empty-link" onClick={onNavigate}>
+              Browse shop
+            </Link>
           </motion.div>
         ) : (
           <motion.ul
@@ -81,7 +87,12 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout }) => {
                   layout
                 >
                   {/* Item Image */}
-                  <div className="cart-item-image-wrapper">
+                  <Link
+                    to={`/product/${item.product.slug}`}
+                    className="cart-item-image-wrapper cart-item-image-link"
+                    onClick={onNavigate}
+                    aria-label={`View ${item.product.name}`}
+                  >
                     {item.product.image ? (
                       <img
                         src={item.product.image}
@@ -91,11 +102,17 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout }) => {
                     ) : (
                       <div className="cart-item-image-placeholder">📦</div>
                     )}
-                  </div>
+                  </Link>
 
                   {/* Item Info */}
                   <div className="cart-item-info-premium">
-                    <p className="cart-item-name">{item.product.name}</p>
+                    <Link
+                      to={`/product/${item.product.slug}`}
+                      className="cart-item-name cart-item-name-link"
+                      onClick={onNavigate}
+                    >
+                      {item.product.name}
+                    </Link>
                     {item.size && <p className="cart-item-size">{item.size}</p>}
                     <p className="cart-item-price">${item.unitPrice.toFixed(2)}</p>
                   </div>
@@ -175,6 +192,9 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
+          <Link to="/cart" className="cart-view-link-premium" onClick={onNavigate}>
+            View full cart
+          </Link>
           <motion.button
             onClick={handleCheckout}
             disabled={isCheckingOut}

@@ -18,7 +18,11 @@ const productSellingPoints = {
   essentials: 'Built for daily practice, setup protection, and grab-and-go sessions.',
 };
 
-const trustPoints = ['Handcrafted quality', 'Secure Stripe checkout', 'Fast local fulfillment'];
+const trustPoints = [
+  { label: 'Handcrafted quality', to: '/shop/cymbals' },
+  { label: 'Secure Stripe checkout', to: '/cart' },
+  { label: 'Fast local fulfillment', to: '/services' },
+];
 
 const categorySpotlights = {
   cymbals: 'Expressive attack, warm sustain, and handcrafted nuance.',
@@ -28,6 +32,13 @@ const categorySpotlights = {
 
 export default function ShopPage() {
   const { addToCart } = useCart();
+  const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
+
+  const handleQuickAdd = (product) => {
+    addToCart({ slug: product.slug, quantity: 1 });
+    setRecentlyAddedSlug(product.slug);
+    window.setTimeout(() => setRecentlyAddedSlug(null), 1800);
+  };
 
   const buildProductPath = (product) =>
     `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
@@ -64,24 +75,29 @@ export default function ShopPage() {
         <p>Add items to cart, review everything in one place, and checkout securely with Stripe.</p>
         <div className="shop-trust-bar" aria-label="Storefront trust highlights">
           {trustPoints.map((point) => (
-            <span className="trust-chip" key={point}>
-              {point}
-            </span>
+            <Link className="trust-chip trust-chip-link" to={point.to} key={point.label}>
+              {point.label}
+            </Link>
           ))}
         </div>
       </div>
 
       <div className="container card-grid three-col shop-category-grid">
         {categories.map((category) => (
-          <article className="info-card shop-category-card" key={category.key}>
+          <Link
+            to={`/shop/${category.key}`}
+            className="info-card shop-category-card interactive-card-link"
+            key={category.key}
+            aria-label={`Explore ${category.title}`}
+          >
             <p className="card-kicker">{category.title} spotlight</p>
             <h3>{category.title}</h3>
             <p>{category.description}</p>
             <p className="shop-category-spotlight">{categorySpotlights[category.key]}</p>
-            <Link to={`/shop/${category.key}`} className="btn-secondary-detail shop-category-link">
+            <span className="btn-secondary-detail shop-category-link">
               Explore {category.title}
-            </Link>
-          </article>
+            </span>
+          </Link>
         ))}
       </div>
 
@@ -100,60 +116,68 @@ export default function ShopPage() {
               {filtered.map((product) => (
                 <article className="product-card-enhanced" key={product.name}>
                   <div className="product-image-container">
-                    {product.image ? (
-                      <OptimizedProductImage
-                        src={product.image}
-                        alt={product.name}
-                        className="product-image"
-                        loading="lazy"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <div
-                        className="product-image-placeholder"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                        }}
-                      />
-                    )}
+                    <Link
+                      to={buildProductPath(product)}
+                      className="product-media-link"
+                      aria-label={`View ${product.name}`}
+                    >
+                      {product.image ? (
+                        <OptimizedProductImage
+                          src={product.image}
+                          alt={product.name}
+                          className="product-image"
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                      ) : (
+                        <div className="product-image-placeholder" />
+                      )}
+                    </Link>
                     <div className="product-info-overlay">
-                      <p className="product-kicker">{category.title}</p>
-                      <p className="product-name-enhanced">{product.name}</p>
-                      <p className="product-card-copy">{productSellingPoints[product.category]}</p>
-                      <p className="product-price-enhanced">
-                        <span className="product-price-accent">
-                          {product.sizes
-                            ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(product.sizes[product.sizes.length - 1].price)}`
-                            : formatPrice(product.price)}
-                        </span>
-                      </p>
+                      <Link
+                        to={buildProductPath(product)}
+                        className="product-copy-link"
+                        aria-label={`View details for ${product.name}`}
+                      >
+                        <p className="product-kicker">{category.title}</p>
+                        <p className="product-name-enhanced">{product.name}</p>
+                        <p className="product-card-copy">
+                          {productSellingPoints[product.category]}
+                        </p>
+                        <p className="product-price-enhanced">
+                          <span className="product-price-accent">
+                            {product.sizes
+                              ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(product.sizes[product.sizes.length - 1].price)}`
+                              : formatPrice(product.price)}
+                          </span>
+                        </p>
+                      </Link>
                       <div className="product-actions">
                         <Link to={buildProductPath(product)} className="btn-details">
                           More Details
                         </Link>
                         <button
-                          className="btn-add-cart"
-                          onClick={() => addToCart({ slug: product.slug, quantity: 1 })}
+                          className={`btn-add-cart${recentlyAddedSlug === product.slug ? ' is-added' : ''}`}
+                          onClick={() => handleQuickAdd(product)}
                           aria-label={`Add ${product.name} to cart`}
                         >
-                          Add to Cart
+                          {recentlyAddedSlug === product.slug ? 'Added ✓' : 'Add to Cart'}
                         </button>
                       </div>
                     </div>
                   </div>
                 </article>
               ))}
-              <article className="shop-more-card" key={`${category.key}-more`}>
+              <Link
+                to={`/shop/${category.key}`}
+                className="shop-more-card interactive-card-link"
+                key={`${category.key}-more`}
+                aria-label={`Browse all ${category.title}`}
+              >
                 <p className="shop-more-title">Shop More {category.title}</p>
                 <p className="shop-more-desc">{shopMoreDescriptions[category.key]}</p>
-                <Link to={`/shop/${category.key}`} className="btn-secondary-detail">
-                  Browse All
-                </Link>
-              </article>
+                <span className="btn-secondary-detail">Browse All</span>
+              </Link>
             </div>
           </section>
         );

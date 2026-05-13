@@ -16,12 +16,14 @@ export default function HomePage() {
           <div className="hero-copy-panel">
             <div className="hero-kicker-row">
               <p className="eyebrow">Premium Drum Gear</p>
-              <span className="hero-status-pill">California-crafted support</span>
+              <Link to="/services" className="hero-status-pill hero-status-pill-link">
+                California-crafted support
+              </Link>
             </div>
             <h1>Drums First. Always.</h1>
             <p className="hero-copy">
-              Shop handcrafted cymbals, sticks, pads, and essentials. Built by drummers, for
-              drummers.
+              Handcrafted cymbals, sticks, practice pads, and local drum support — curated for
+              players who want gear that feels ready the first time they sit down.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">
@@ -32,24 +34,46 @@ export default function HomePage() {
               </Link>
             </div>
 
+            <div className="hero-quick-links" aria-label="Popular paths">
+              <Link to="/shop/cymbals">Cymbals</Link>
+              <Link to="/shop/sticks">Sticks</Link>
+              <Link to="/shop/essentials">Practice essentials</Link>
+            </div>
+
             <div className="hero-metrics" aria-label="Storefront highlights">
-              <div className="hero-metric-card">
+              <Link
+                to="/services"
+                className="hero-metric-card interactive-card-link"
+                aria-label="Learn about direct founder insight through local services"
+              >
                 <strong>Direct founder insight</strong>
                 <span>Practical recommendations from a drummer-first perspective.</span>
-              </div>
-              <div className="hero-metric-card">
-                <strong>Premium visual polish</strong>
-                <span>A storefront feel that matches the quality of the gear.</span>
-              </div>
-              <div className="hero-metric-card">
+              </Link>
+              <Link
+                to="/shop"
+                className="hero-metric-card interactive-card-link"
+                aria-label="Browse the shop for fast gear discovery"
+              >
+                <strong>Fast gear discovery</strong>
+                <span>Browse by category, compare details, and add to cart without friction.</span>
+              </Link>
+              <Link
+                to="/services"
+                className="hero-metric-card interactive-card-link"
+                aria-label="Request local drum support"
+              >
                 <strong>Local support when needed</strong>
                 <span>Repairs, rentals, and working-musician help in California.</span>
-              </div>
+              </Link>
             </div>
           </div>
 
           <div className="hero-card-stack">
-            <div className="hero-card hero-card-feature">
+            <Link
+              to="/shop"
+              className="hero-card hero-card-feature interactive-card-link"
+              aria-label="Shop premium drum gear"
+            >
               <p className="card-kicker">Why shop here?</p>
               <h2>Premium gear, direct guidance, and a more elevated buying experience.</h2>
               <ul className="bullet-list hero-bullet-list">
@@ -58,16 +82,20 @@ export default function HomePage() {
                 <li>California-based brand support</li>
                 <li>Direct connection to the founder</li>
               </ul>
-            </div>
+            </Link>
 
-            <div className="hero-mini-card">
+            <Link
+              to="/services"
+              className="hero-mini-card interactive-card-link"
+              aria-label="Explore services for players, teachers, rehearsals, and events"
+            >
               <p className="card-kicker">Built for</p>
               <strong>Players, teachers, rehearsals, and event-ready setups.</strong>
               <p>
                 Whether you are buying for your own kit or planning local support, the experience is
                 designed to feel considered and premium.
               </p>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

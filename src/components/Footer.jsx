@@ -1,12 +1,20 @@
+import { Link } from 'react-router-dom';
+
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="container footer-grid">
         <div>
-          <p className="footer-title">Sattari Music</p>
+          <Link to="/" className="footer-title footer-brand-link">
+            Sattari Music
+          </Link>
           <p className="footer-copy">
             Drum-forward gear, local repair support, rentals, and musician services.
           </p>
+          <div className="footer-quick-links" aria-label="Footer quick links">
+            <Link to="/shop">Shop gear</Link>
+            <Link to="/services">Book local support</Link>
+          </div>
         </div>
         <div>
           <p className="footer-title">Get in touch</p>

@@ -36,6 +36,14 @@ export default function AboutSection() {
           >
             <p className="card-kicker">Follow us on Instagram</p>
             <h3>@sattarimusic</h3>
+            <a
+              className="instagram-profile-link"
+              href="https://instagram.com/sattarimusic"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Instagram profile
+            </a>
             <InstagramFeed />
           </div>
         </div>

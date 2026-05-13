@@ -61,19 +61,49 @@ export default function ServiceInquiryForm() {
       </label>
       <label>
         <span>Your Name</span>
-        <input name="name" type="text" value={form.name} onChange={handleChange} required />
+        <input
+          name="name"
+          type="text"
+          value={form.name}
+          onChange={handleChange}
+          autoComplete="name"
+          placeholder="Your name"
+          required
+        />
       </label>
       <label>
         <span>Email</span>
-        <input name="email" type="email" value={form.email} onChange={handleChange} required />
+        <input
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          placeholder="you@example.com"
+          required
+        />
       </label>
       <label>
         <span>Phone</span>
-        <input name="phone" type="tel" value={form.phone} onChange={handleChange} />
+        <input
+          name="phone"
+          type="tel"
+          value={form.phone}
+          onChange={handleChange}
+          autoComplete="tel"
+          placeholder="Optional"
+        />
       </label>
       <label>
         <span>Describe what you need</span>
-        <textarea name="details" value={form.details} onChange={handleChange} rows={4} required />
+        <textarea
+          name="details"
+          value={form.details}
+          onChange={handleChange}
+          rows={4}
+          placeholder="Timing, location, gear, and what you are trying to solve"
+          required
+        />
       </label>
       <button className="button button-solid button-full" type="submit">
         Send service request
