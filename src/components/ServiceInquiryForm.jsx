@@ -8,25 +8,51 @@ const SERVICE_OPTIONS = [
   { value: 'studio', label: 'Studio Time' },
 ];
 
-export default function ServiceInquiryForm() {
+export default function ServiceInquiryForm({
+  initialService = '',
+  source = 'Website service form',
+}) {
   const [form, setForm] = useState({
-    service: '',
+    service: initialService,
     name: '',
     email: '',
     phone: '',
     details: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // TODO: Connect to Formspree/Netlify/Resend
-    setSubmitted(true);
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/service-inquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...form, source }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to send your inquiry right now.');
+      }
+
+      setSubmitted(true);
+    } catch (submitError) {
+      setError(submitError.message || 'Unable to send your inquiry right now.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -46,6 +72,11 @@ export default function ServiceInquiryForm() {
       <p className="form-helper">
         Tell us what you need, when you need it, and any details that will help us guide you.
       </p>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
       <label>
         <span>Service Type</span>
         <select name="service" value={form.service} onChange={handleChange} required>
@@ -105,8 +136,8 @@ export default function ServiceInquiryForm() {
           required
         />
       </label>
-      <button className="button button-solid button-full" type="submit">
-        Send service request
+      <button className="button button-solid button-full" type="submit" disabled={submitting}>
+        {submitting ? 'Sending...' : 'Send service request'}
       </button>
     </form>
   );

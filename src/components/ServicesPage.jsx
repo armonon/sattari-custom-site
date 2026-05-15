@@ -5,6 +5,7 @@ const services = [
     kicker: 'Precision care',
     icon: '✦',
     title: 'Instrument repair',
+    href: '/services/drum-repair-los-angeles',
     body: 'Bring your gear in for drum repair, hardware fixes, setup adjustments, and maintenance that helps your kit feel solid, responsive, and performance-ready.',
     points: [
       'Tune-up support for stands, pedals, and hardware',
@@ -122,9 +123,9 @@ export default function ServicesPage() {
 
       <div className="container card-grid three-col services-card-grid">
         {services.map((service) => (
-          <a
+          <Link
             className="info-card service-card interactive-card-link"
-            href="#service-inquiry"
+            to={service.href || '#service-inquiry'}
             key={service.title}
             aria-label={`Request help with ${service.title}`}
           >
@@ -143,7 +144,7 @@ export default function ServicesPage() {
                 <li key={point}>{point}</li>
               ))}
             </ul>
-          </a>
+          </Link>
         ))}
       </div>
 

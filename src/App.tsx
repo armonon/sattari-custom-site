@@ -15,6 +15,7 @@ import {
   LazyPage,
   ProductDetail,
   RadioPage,
+  RepairPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -152,6 +153,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <ServicesPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/drum-repair-los-angeles"
+            element={
+              <LazyPage>
+                <RepairPage />
               </LazyPage>
             }
           />
