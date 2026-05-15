@@ -14,6 +14,7 @@ import {
   InstagramCallback,
   LazyPage,
   ProductDetail,
+  RadioPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -151,6 +152,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <ServicesPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/radio"
+            element={
+              <LazyPage>
+                <RadioPage />
               </LazyPage>
             }
           />
