@@ -157,6 +157,14 @@ const App: FC = () => {
             }
           />
           <Route
+            path="/services/instrument-repair-los-angeles"
+            element={
+              <LazyPage>
+                <RepairPage />
+              </LazyPage>
+            }
+          />
+          <Route
             path="/services/drum-repair-los-angeles"
             element={
               <LazyPage>

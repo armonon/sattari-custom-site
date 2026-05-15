@@ -5,12 +5,12 @@ const services = [
     kicker: 'Precision care',
     icon: '✦',
     title: 'Instrument repair',
-    href: '/services/drum-repair-los-angeles',
-    body: 'Bring your gear in for drum repair, hardware fixes, setup adjustments, and maintenance that helps your kit feel solid, responsive, and performance-ready.',
+    href: '/services/instrument-repair-los-angeles',
+    body: 'Bring in violins, guitars, rare drums, percussion, hardware, and musician gear for careful repair, tuning, setup, and troubleshooting support.',
     points: [
-      'Tune-up support for stands, pedals, and hardware',
-      'Troubleshooting for snare, pedal, and stand issues',
-      'Setup refinement so your kit feels ready to play',
+      'Repair support for violins, guitars, rare drums, and percussion',
+      'Troubleshooting for tone, tuning, hardware, pedal, and setup issues',
+      'Thoughtful handling for vintage, rare, and sentimental pieces',
     ],
   },
   {
@@ -44,8 +44,8 @@ export default function ServicesPage() {
   return (
     <section className="section page-header-offset services-shell">
       <SEO
-        title="Local Drum Services"
-        description="Book Sattari Music for local drum repair, rentals, lessons, and musician support in California."
+        title="Local Instrument Services"
+        description="Book Sattari Music for local instrument repair, rare drum repair, guitar and violin repair, rentals, lessons, and musician support in California."
         url="https://sattarimusic.com/services"
       />
       <StructuredData
@@ -66,7 +66,7 @@ export default function ServicesPage() {
         <div className="services-hero-grid">
           <div className="services-copy">
             <p className="eyebrow">Local services</p>
-            <h1>Local drum services built around what you need most</h1>
+            <h1>Local instrument services built around what you need most</h1>
             <p>
               Whether you need a repair, a rental, or hands-on guidance, you can get local help that
               feels clear, personal, and easy to book.

@@ -3,34 +3,34 @@ import ServiceInquiryForm from './ServiceInquiryForm';
 import { SEO, StructuredData } from '../utils/seo';
 
 const repairServices = [
-  'Snare, kick, tom, and full-kit troubleshooting',
+  'Violin, guitar, bass, and string-instrument troubleshooting',
+  'Rare drum, vintage drum, snare, kick, tom, and full-kit repair support',
   'Drum tuning for recording, rehearsal, and live performance',
-  'Pedal, stand, throne, and hardware fixes',
-  'Drum head replacement, setup refinement, and tone checks',
-  'Vintage drum cleanup, restoration guidance, and part replacement planning',
-  'Percussion and musician gear support when the issue needs a careful local look',
+  'Pedal, stand, throne, case, and hardware fixes',
+  'Head, string, part, setup, tone, and playability checks',
+  'Percussion and unusual instrument support when the issue needs a careful local look',
 ];
 
 const repairSignals = [
   'Rattles, buzzes, loose hardware, stripped parts, or unstable stands',
-  'A snare or kit that will not tune evenly or stay in tune',
-  'Pedals that feel sluggish, noisy, or inconsistent',
-  'A drum sound that feels flat, choked, or session-unready',
+  'Strings, bridges, tuning, tone, or playability issues that need a careful check',
+  'A rare, vintage, or sentimental instrument that needs thoughtful handling',
+  'Pedals, stands, cases, or accessories that feel noisy, loose, or inconsistent',
 ];
 
 export default function RepairPage() {
   return (
     <section className="section page-header-offset services-shell repair-shell">
       <SEO
-        title="Drum Repair & Instrument Repair in Los Angeles"
-        description="Book Sattari Music for local drum repair, drum tuning, pedal repair, hardware fixes, kit setup, and musician gear support in the Los Angeles and San Fernando Valley area."
-        url="https://sattarimusic.com/services/drum-repair-los-angeles"
+        title="Instrument Repair in Los Angeles"
+        description="Book Sattari Music for local instrument repair, violin repair, guitar repair, rare drum repair, drum tuning, pedal repair, hardware fixes, and musician gear support in Los Angeles and the San Fernando Valley."
+        url="https://sattarimusic.com/services/instrument-repair-los-angeles"
       />
       <StructuredData
         data={{
           '@context': 'https://schema.org',
           '@type': 'Service',
-          name: 'Sattari Music Drum Repair and Instrument Repair',
+          name: 'Sattari Music Instrument Repair',
           provider: {
             '@type': 'Organization',
             name: 'Sattari Music',
@@ -38,24 +38,29 @@ export default function RepairPage() {
           },
           areaServed: ['Los Angeles', 'San Fernando Valley', 'Woodland Hills', 'California'],
           serviceType: [
+            'Instrument repair',
+            'Violin repair',
+            'Guitar repair',
+            'Rare drum repair',
+            'Vintage drum repair',
             'Drum repair',
             'Drum tuning',
             'Pedal repair',
-            'Drum hardware repair',
-            'Kit setup',
+            'Hardware repair',
             'Percussion repair',
           ],
-          url: 'https://sattarimusic.com/services/drum-repair-los-angeles',
+          url: 'https://sattarimusic.com/services/instrument-repair-los-angeles',
         }}
       />
 
       <div className="container repair-hero">
         <div className="repair-hero-copy">
-          <p className="eyebrow">Los Angeles drum repair</p>
-          <h1>Drum repair, tuning, and setup help for players who need their gear ready.</h1>
+          <p className="eyebrow">Los Angeles instrument repair</p>
+          <h1>Instrument repair for violins, guitars, rare drums, hardware, and musician gear.</h1>
           <p>
-            Sattari Music helps local musicians fix, tune, and dial in drums, pedals, stands, and
-            performance gear across the Los Angeles and San Fernando Valley area.
+            Sattari Music helps local musicians diagnose, repair, tune, and dial in instruments and
+            performance gear across the Los Angeles and San Fernando Valley area — from everyday
+            fixes to rare or sentimental pieces that need thoughtful care.
           </p>
           <div className="hero-actions services-actions">
             <a className="button button-solid" href="#repair-inquiry">
@@ -76,10 +81,10 @@ export default function RepairPage() {
             inspection.
           </p>
           <div className="repair-mini-stats" aria-label="Repair service highlights">
-            <span>Drums</span>
-            <span>Pedals</span>
+            <span>Violins</span>
+            <span>Guitars</span>
+            <span>Rare drums</span>
             <span>Hardware</span>
-            <span>Setup</span>
           </div>
         </div>
       </div>
@@ -97,7 +102,7 @@ export default function RepairPage() {
 
         <article className="info-card repair-info-card">
           <p className="card-kicker">Good time to reach out</p>
-          <h2>If your gear feels off, we can help diagnose it.</h2>
+          <h2>If your instrument or gear feels off, we can help diagnose it.</h2>
           <ul className="service-list repair-list">
             {repairSignals.map((signal) => (
               <li key={signal}>{signal}</li>
@@ -114,7 +119,7 @@ export default function RepairPage() {
         <div className="repair-process-steps">
           <div>
             <strong>1</strong>
-            <span>Describe the gear and what is happening.</span>
+            <span>Describe the instrument, gear, or rare piece and what is happening.</span>
           </div>
           <div>
             <strong>2</strong>
@@ -136,7 +141,7 @@ export default function RepairPage() {
             need it ready.
           </p>
         </div>
-        <ServiceInquiryForm initialService="repairs" source="Drum repair landing page" />
+        <ServiceInquiryForm initialService="repairs" source="Instrument repair landing page" />
       </div>
     </section>
   );
