@@ -173,7 +173,9 @@ export default function RadioPage() {
           <ul>
             <li>Only send audio you own or have permission to share.</li>
             <li>Include artist name, track title, BPM/key if known, and preferred show lane.</li>
-            <li>Short ideas are welcome: 30-second flips, loops, station tags, and show concepts.</li>
+            <li>
+              Short ideas are welcome: 30-second flips, loops, station tags, and show concepts.
+            </li>
           </ul>
           <Link className="button button-solid" to="/services">
             Contact Sattari
