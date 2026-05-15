@@ -2,38 +2,104 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://sattarimusic.com/</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://sattarimusic.com/los-angeles-music-store</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://sattarimusic.com/shop</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://sattarimusic.com/shop/instruments-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/shop/accessories-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.86</priority>
+  </url>
+  <url>
     <loc>https://sattarimusic.com/shop/cymbals</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sattarimusic.com/shop/sticks</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sattarimusic.com/shop/essentials</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sattarimusic.com/services</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/instrument-repair-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/drum-repair-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/instrument-rentals-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/rehearsal-space-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/recording-studio-rental-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/music-lessons-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/services/music-classes-los-angeles</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://sattarimusic.com/radio</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 </urlset>

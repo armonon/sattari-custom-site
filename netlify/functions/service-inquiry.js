@@ -2,10 +2,13 @@ import process from 'node:process';
 import { Resend } from 'resend';
 
 const SERVICE_LABELS = {
+  'instrument-sales': 'Instruments / gear',
+  accessories: 'Accessories',
   repairs: 'Repairs',
-  rentals: 'Rentals',
-  lessons: 'Lessons',
-  studio: 'Studio Time',
+  rentals: 'Instrument rentals',
+  rehearsal: 'Rehearsal space',
+  lessons: 'Teachers / classes',
+  studio: 'Rental studio',
 };
 
 function json(statusCode, body) {

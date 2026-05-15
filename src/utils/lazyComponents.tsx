@@ -10,6 +10,7 @@ export const CheckoutStatus = lazy(() => import('@pages/CheckoutStatus'));
 export const InstagramCallback = lazy(() => import('@pages/InstagramCallback'));
 export const ServicesPage = lazy(() => import('@components/ServicesPage'));
 export const RepairPage = lazy(() => import('@components/RepairPage'));
+export const LocalSeoPage = lazy(() => import('@components/LocalSeoPage'));
 export const RadioPage = lazy(() => import('@components/RadioPage'));
 
 // Fallback loading component

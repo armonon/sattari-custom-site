@@ -13,6 +13,7 @@ import {
   HomePage,
   InstagramCallback,
   LazyPage,
+  LocalSeoPage,
   ProductDetail,
   RadioPage,
   RepairPage,
@@ -101,6 +102,30 @@ const App: FC = () => {
             }
           />
           <Route
+            path="/los-angeles-music-store"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="music-store" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/shop/instruments-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="instruments" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/shop/accessories-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="accessories" />
+              </LazyPage>
+            }
+          />
+          <Route
             path="/shop/:categoryKey"
             element={
               <LazyPage>
@@ -153,6 +178,46 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <ServicesPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/instrument-rentals-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="instrument-rentals" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/rehearsal-space-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="rehearsal-space" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/recording-studio-rental-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="recording-studio" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/music-lessons-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="music-lessons" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/music-classes-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="music-lessons" />
               </LazyPage>
             }
           />

@@ -2,10 +2,13 @@
 import { useState } from 'react';
 
 const SERVICE_OPTIONS = [
+  { value: 'instrument-sales', label: 'Instruments / gear' },
+  { value: 'accessories', label: 'Accessories' },
   { value: 'repairs', label: 'Repairs' },
-  { value: 'rentals', label: 'Rentals' },
-  { value: 'lessons', label: 'Lessons' },
-  { value: 'studio', label: 'Studio Time' },
+  { value: 'rentals', label: 'Instrument rentals' },
+  { value: 'rehearsal', label: 'Rehearsal space' },
+  { value: 'studio', label: 'Rental studio' },
+  { value: 'lessons', label: 'Teachers / classes' },
 ];
 
 export default function ServiceInquiryForm({

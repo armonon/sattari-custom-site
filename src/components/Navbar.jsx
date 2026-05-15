@@ -44,7 +44,7 @@ export default function Navbar({ onCartClick }) {
           </span>
           <span className="brand-copy">
             <span className="brand-kicker">California craft</span>
-            <span className="brand-name">Premium drum gear</span>
+            <span className="brand-name">Music gear & services</span>
           </span>
         </NavLink>
         <div className="nav-actions-row">

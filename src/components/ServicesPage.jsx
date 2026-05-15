@@ -16,22 +16,36 @@ const services = [
   {
     kicker: 'Session-ready',
     icon: '◌',
-    title: 'Rentals',
-    body: 'Reserve local gear rentals for rehearsals, sessions, gigs, and events when you need dependable equipment without the last-minute scramble.',
+    title: 'Instrument rentals',
+    href: '/services/instrument-rentals-los-angeles',
+    body: 'Reserve local instruments and musician gear for rehearsals, sessions, gigs, classes, and events when you need dependable equipment without buying last-minute.',
     points: [
-      'Flexible local pickup and return timing',
-      'Rental options for events, rehearsals, and sessions',
+      'Short-term instrument and gear rental inquiries',
+      'Rental support for events, rehearsals, classes, and sessions',
       'Clear availability details before you commit',
     ],
   },
   {
-    kicker: 'Tailored support',
+    kicker: 'Creative space',
     icon: '◎',
-    title: 'Lessons or local support',
-    body: 'Book lessons, local consultations, or event support when you want practical guidance that matches your setup, goals, and playing needs.',
+    title: 'Studio & rehearsal space',
+    href: '/services/rehearsal-space-los-angeles',
+    body: 'Ask about rental studio and rehearsal space options for bands, teachers, students, creators, and musicians preparing for sessions or shows.',
     points: [
-      'One-on-one coaching and musician guidance',
-      'Support for local event and performance needs',
+      'Rehearsal space for bands, drummers, classes, and practice',
+      'Rental studio support for recording, content, and teaching',
+      'Gear, repair, and setup support connected to the space',
+    ],
+  },
+  {
+    kicker: 'Tailored support',
+    icon: '✺',
+    title: 'Teachers & classes',
+    href: '/services/music-lessons-los-angeles',
+    body: 'Book teachers, lessons, classes, and local consultations when you want practical guidance that matches your instrument, setup, and goals.',
+    points: [
+      'Music lessons and classes for students and working musicians',
+      'Support for drums, rhythm, instruments, and musician development',
       'Recommendations tailored to your setup and goals',
     ],
   },
@@ -45,7 +59,7 @@ export default function ServicesPage() {
     <section className="section page-header-offset services-shell">
       <SEO
         title="Local Instrument Services"
-        description="Book Sattari Music for local instrument repair, rare drum repair, guitar and violin repair, rentals, lessons, and musician support in California."
+        description="Book Sattari Music for local instrument repair, rare drum repair, guitar and violin repair, instrument rentals, rehearsal space, rental studio time, teachers, and music classes in California."
         url="https://sattarimusic.com/services"
       />
       <StructuredData
@@ -58,7 +72,15 @@ export default function ServicesPage() {
             name: 'Sattari Music',
           },
           areaServed: 'California',
-          serviceType: ['Instrument repair', 'Rentals', 'Lessons', 'Local musician support'],
+          serviceType: [
+            'Instrument repair',
+            'Instrument rentals',
+            'Rehearsal space',
+            'Rental studio',
+            'Music lessons',
+            'Music classes',
+            'Local musician support',
+          ],
           url: 'https://sattarimusic.com/services',
         }}
       />
@@ -68,27 +90,28 @@ export default function ServicesPage() {
             <p className="eyebrow">Local services</p>
             <h1>Local instrument services built around what you need most</h1>
             <p>
-              Whether you need a repair, a rental, or hands-on guidance, you can get local help that
-              feels clear, personal, and easy to book.
+              Whether you need a repair, rental, rehearsal space, studio time, teacher, class, or
+              hands-on guidance, you can get local help that feels clear, personal, and easy to
+              book.
             </p>
             <div className="hero-actions services-actions">
               <a className="button button-solid" href="#service-inquiry">
                 Request local support
               </a>
-              <Link className="button button-outline" to="/shop">
-                Explore the shop
+              <Link className="button button-outline" to="/los-angeles-music-store">
+                Explore the local hub
               </Link>
             </div>
             <div className="services-pills" aria-label="Service highlights">
-              <a className="service-pill" href="#service-inquiry">
-                California-based appointments
-              </a>
-              <a className="service-pill" href="#service-inquiry">
-                Straightforward booking
-              </a>
-              <a className="service-pill" href="#service-inquiry">
-                Repairs, rentals, and lessons
-              </a>
+              <Link className="service-pill" to="/services/instrument-repair-los-angeles">
+                Instrument repair
+              </Link>
+              <Link className="service-pill" to="/services/rehearsal-space-los-angeles">
+                Rehearsal space
+              </Link>
+              <Link className="service-pill" to="/services/music-lessons-los-angeles">
+                Teachers & classes
+              </Link>
             </div>
           </div>
 
@@ -101,12 +124,13 @@ export default function ServicesPage() {
             <h2>Clear local help without the guesswork</h2>
             <p>
               You’ll get a simple inquiry flow, a clear response, and support that focuses on what
-              will help you get back to playing faster.
+              will help you get back to playing, rehearsing, teaching, recording, or performing
+              faster.
             </p>
             <div className="services-stats">
               <div>
-                <strong>3 service options</strong>
-                <span>repair, rentals, and lessons/support</span>
+                <strong>4 service lanes</strong>
+                <span>repairs, rentals, space, teachers/classes</span>
               </div>
               <div>
                 <strong>1 simple inquiry</strong>

@@ -19,9 +19,9 @@ const productSellingPoints = {
 };
 
 const trustPoints = [
-  { label: 'Handcrafted quality', to: '/shop/cymbals' },
+  { label: 'Instruments & accessories', to: '/shop/instruments-los-angeles' },
   { label: 'Secure Stripe checkout', to: '/cart' },
-  { label: 'Fast local fulfillment', to: '/services' },
+  { label: 'Repairs, rentals & classes', to: '/services' },
 ];
 
 const categorySpotlights = {
@@ -49,7 +49,7 @@ export default function ShopPage() {
     name: 'Sattari Music Shop',
     url: 'https://sattarimusic.com/shop',
     description:
-      'Handcrafted cymbals, drumsticks, practice pads, and drum essentials from Sattari Music.',
+      'Instruments, music accessories, handcrafted cymbals, drumsticks, practice pads, and musician essentials from Sattari Music.',
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: products.slice(0, 10).map((product, index) => ({
@@ -64,15 +64,18 @@ export default function ShopPage() {
   return (
     <section className="section page-header-offset">
       <SEO
-        title="Shop Drum Gear"
-        description="Browse premium Sattari cymbals, sticks, and drum accessories with secure checkout and California-based support."
+        title="Shop Instruments & Music Accessories"
+        description="Browse instruments, accessories, premium Sattari cymbals, sticks, drum essentials, and musician gear with secure checkout and California-based support."
         url="https://sattarimusic.com/shop"
       />
       <StructuredData data={itemListSchema} />
       <div className="container section-header narrow">
-        <p className="eyebrow">Shop drums</p>
-        <h1>Build your setup with handcrafted Sattari gear</h1>
-        <p>Add items to cart, review everything in one place, and checkout securely with Stripe.</p>
+        <p className="eyebrow">Shop Sattari Music</p>
+        <h1>Build your setup with instruments, accessories, and handcrafted Sattari gear</h1>
+        <p>
+          Shop the current catalog online, or ask about instruments, accessories, repairs, rentals,
+          rehearsal space, studio time, teachers, and classes locally.
+        </p>
         <div className="shop-trust-bar" aria-label="Storefront trust highlights">
           {trustPoints.map((point) => (
             <Link className="trust-chip trust-chip-link" to={point.to} key={point.label}>
