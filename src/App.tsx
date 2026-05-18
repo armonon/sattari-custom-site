@@ -1,5 +1,5 @@
 import { useEffect, useState, FC } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import Navbar from '@components/Navbar';
 import BackgroundMedia from './components/BackgroundMedia';
 import { useCart } from '@context/CartContext';
@@ -101,6 +101,7 @@ const App: FC = () => {
               </LazyPage>
             }
           />
+          <Route path="/buy" element={<Navigate to="/shop" replace />} />
           <Route
             path="/los-angeles-music-store"
             element={
