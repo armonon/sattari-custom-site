@@ -23,7 +23,7 @@ A cutting-edge, production-ready e-commerce website for Sattari Music featuring 
 - 🧪 **Testing** - Vitest setup for unit tests
 - 🔐 **Environment Management** - Secure API key handling
 - 📦 **Order Persistence** - Completed Stripe orders stored durably for fulfillment
-- ✉️ **Optional Notifications** - Business email alerts when new paid orders arrive
+- ✉️ **Optional Notifications** - Business email alerts when new paid orders or service inquiries arrive
 
 ## 🚀 Quick Start
 
@@ -156,9 +156,11 @@ VITE_CHECKOUT_STATUS_URL (optional external status verification endpoint)
 VITE_API_URL (optional fallback checkout server URL)
 STRIPE_SECRET_KEY (required for Netlify function checkout)
 STRIPE_WEBHOOK_SECRET (required for Stripe webhook verification)
-RESEND_API_KEY (optional for order notification emails)
-ORDER_NOTIFICATION_EMAIL (optional notification recipient)
-ORDER_NOTIFICATION_FROM (optional verified sender address)
+RESEND_API_KEY (optional for order notification and service inquiry emails)
+ORDER_NOTIFICATION_EMAIL (optional paid-order notification recipient)
+ORDER_NOTIFICATION_FROM (optional verified sender address for order/service emails)
+SERVICE_INQUIRY_TO (optional service inquiry recipient; falls back to ORDER_NOTIFICATION_EMAIL)
+SERVICE_INQUIRY_FROM (optional verified sender for service inquiries; falls back to ORDER_NOTIFICATION_FROM)
 ORDER_LOOKUP_TOKEN (optional admin token for querying stored orders)
 ```
 
@@ -219,6 +221,7 @@ npm run dev
 	- `STRIPE_SECRET_KEY`
     - `STRIPE_WEBHOOK_SECRET` (for verified webhook processing)
     - `RESEND_API_KEY`, `ORDER_NOTIFICATION_EMAIL`, `ORDER_NOTIFICATION_FROM` (optional order alerts)
+    - `SERVICE_INQUIRY_TO`, `SERVICE_INQUIRY_FROM` (optional service inquiry recipient/sender; fall back to the order notification env vars)
 3. Start both apps in separate terminals:
 
 ```bash
@@ -227,6 +230,17 @@ npm run dev:api
 ```
 
 4. Open Stripe test mode and use a test card like `4242 4242 4242 4242`.
+
+## Service inquiry emails
+
+The Local Services form posts to `/api/service-inquiry`, which is served by `netlify/functions/service-inquiry.js` through the Netlify rewrite in `netlify.toml`.
+
+Required to send inquiry emails:
+- `RESEND_API_KEY`
+- `SERVICE_INQUIRY_TO` or `ORDER_NOTIFICATION_EMAIL`
+- `SERVICE_INQUIRY_FROM` or `ORDER_NOTIFICATION_FROM` (must be a Resend-verified sender/domain)
+
+The function validates `service`, `name`, `email`, and `details`, returns clear `400` errors for malformed submissions, and returns a configuration error if email delivery is not set up. The React form captures non-2xx and thrown submission errors in Sentry before showing the user-facing error state.
 
 ## Admin order lookup
 

@@ -77,10 +77,15 @@ export async function handler(event) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.ORDER_NOTIFICATION_FROM;
-  const to = process.env.ORDER_NOTIFICATION_EMAIL;
+  const from = process.env.SERVICE_INQUIRY_FROM || process.env.ORDER_NOTIFICATION_FROM;
+  const to = process.env.SERVICE_INQUIRY_TO || process.env.ORDER_NOTIFICATION_EMAIL;
 
   if (!apiKey || !from || !to) {
+    console.error('Service inquiry email configuration missing.', {
+      hasApiKey: Boolean(apiKey),
+      hasFrom: Boolean(from),
+      hasTo: Boolean(to),
+    });
     return json(500, { error: 'Service inquiry email is not configured yet.' });
   }
 
