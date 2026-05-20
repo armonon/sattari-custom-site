@@ -8,9 +8,10 @@ import '@/styles-cart-premium.css';
 interface CartSidebarProps {
   onCheckout: () => Promise<void>;
   onNavigate?: () => void;
+  checkoutError?: string;
 }
 
-const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate }) => {
+const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutError }) => {
   const { cartItems, itemCount, subtotal, updateQuantity, removeFromCart, clearCart } =
     useCart() as CartContextValue;
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
@@ -25,8 +26,11 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate }) => {
 
   const handleCheckout = async () => {
     setIsCheckingOut(true);
-    await onCheckout();
-    setIsCheckingOut(false);
+    try {
+      await onCheckout();
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   const containerVariants = {
@@ -195,6 +199,11 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate }) => {
           <Link to="/cart" className="cart-view-link-premium" onClick={onNavigate}>
             View full cart
           </Link>
+          {checkoutError && (
+            <div className="cart-checkout-error" role="alert">
+              {checkoutError}
+            </div>
+          )}
           <motion.button
             onClick={handleCheckout}
             disabled={isCheckingOut}

@@ -35,11 +35,6 @@ const CartPage: FC = () => {
   async function handleCheckout() {
     setCheckoutError('');
 
-    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
-      setCheckoutError('Payment configuration missing. Please contact support.');
-      return;
-    }
-
     if (!cartItems.length) {
       setCheckoutError('Your cart is empty. Add a product before checkout.');
       return;

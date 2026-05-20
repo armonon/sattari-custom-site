@@ -3,6 +3,39 @@ import Stripe from 'stripe';
 import { products, resolveSelectedOption } from '../../src/data/catalog.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+const STANDARD_SHIPPING_AMOUNT_CENTS = 795;
+const SHIPPING_COUNTRIES = ['US', 'CA'];
+
+function normalizeQuantity(quantity) {
+  const value = Number(quantity);
+  if (!Number.isFinite(value) || value < 1) return 1;
+  return Math.max(1, Math.min(99, Math.floor(value)));
+}
+
+function buildPublicImageUrl(clientUrl, imagePath) {
+  if (!imagePath) return [];
+
+  try {
+    return [new URL(imagePath, clientUrl).toString()];
+  } catch {
+    return [];
+  }
+}
+
+function getShippingOptions() {
+  return [
+    {
+      shipping_rate_data: {
+        type: 'fixed_amount',
+        fixed_amount: {
+          amount: STANDARD_SHIPPING_AMOUNT_CENTS,
+          currency: 'usd',
+        },
+        display_name: 'Standard shipping',
+      },
+    },
+  ];
+}
 
 function getClientUrl(event) {
   if (process.env.URL) return process.env.URL;
@@ -53,7 +86,7 @@ export async function handler(event) {
         throw new Error(`Price not configured for ${product.slug}`);
       }
 
-      const quantity = Math.max(1, Math.min(99, Number(item.quantity) || 1));
+      const quantity = normalizeQuantity(item.quantity);
 
       return {
         quantity,
@@ -63,7 +96,7 @@ export async function handler(event) {
           product_data: {
             name: size ? `${product.name} (${size})` : product.name,
             description: product.description?.slice(0, 500),
-            images: product.image ? [`${clientUrl}${product.image}`] : [],
+            images: buildPublicImageUrl(clientUrl, product.image),
             metadata: {
               slug: product.slug,
               size: size || 'default',
@@ -80,8 +113,9 @@ export async function handler(event) {
       phone_number_collection: { enabled: true },
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA'],
+        allowed_countries: SHIPPING_COUNTRIES,
       },
+      shipping_options: getShippingOptions(),
       success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/checkout/cancel`,
     });

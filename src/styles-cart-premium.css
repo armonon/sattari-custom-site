@@ -440,6 +440,16 @@
 
 /* ========== CART ACTIONS ========== */
 
+.cart-checkout-error {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(255, 96, 96, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(255, 59, 48, 0.1);
+  color: #ffb3ae;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 .cart-actions-premium {
   display: flex;
   flex-direction: column;

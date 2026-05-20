@@ -21,6 +21,39 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+const STANDARD_SHIPPING_AMOUNT_CENTS = 795;
+const SHIPPING_COUNTRIES = ['US', 'CA'];
+
+function normalizeQuantity(quantity) {
+  const value = Number(quantity);
+  if (!Number.isFinite(value) || value < 1) return 1;
+  return Math.max(1, Math.min(99, Math.floor(value)));
+}
+
+function buildPublicImageUrl(baseUrl, imagePath) {
+  if (!imagePath) return [];
+
+  try {
+    return [new URL(imagePath, baseUrl).toString()];
+  } catch {
+    return [];
+  }
+}
+
+function getShippingOptions() {
+  return [
+    {
+      shipping_rate_data: {
+        type: 'fixed_amount',
+        fixed_amount: {
+          amount: STANDARD_SHIPPING_AMOUNT_CENTS,
+          currency: 'usd',
+        },
+        display_name: 'Standard shipping',
+      },
+    },
+  ];
+}
 
 app.use(cors({ origin: clientUrl }));
 
@@ -116,6 +149,10 @@ app.get('/api/admin/orders', async (req, res) => {
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'Missing STRIPE_SECRET_KEY.' });
+  }
+
   try {
     const payloadItems = Array.isArray(req.body?.items) ? req.body.items : [];
     if (!payloadItems.length) {
@@ -133,7 +170,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         throw new Error(`Price not configured for ${product.slug}`);
       }
 
-      const quantity = Math.max(1, Math.min(99, Number(item.quantity) || 1));
+      const quantity = normalizeQuantity(item.quantity);
 
       return {
         quantity,
@@ -143,7 +180,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
           product_data: {
             name: size ? `${product.name} (${size})` : product.name,
             description: product.description?.slice(0, 500),
-            images: product.image ? [`${clientUrl}${product.image}`] : [],
+            images: buildPublicImageUrl(clientUrl, product.image),
             metadata: {
               slug: product.slug,
               size: size || 'default',
@@ -160,8 +197,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
       phone_number_collection: { enabled: true },
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA'],
+        allowed_countries: SHIPPING_COUNTRIES,
       },
+      shipping_options: getShippingOptions(),
       success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/checkout/cancel`,
     });

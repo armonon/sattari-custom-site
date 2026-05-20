@@ -23,12 +23,21 @@ import {
 
 const App: FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const { cartItems } = useCart();
 
   const handleCheckout = async () => {
+    setCheckoutError('');
+
+    if (!cartItems.length) {
+      setCheckoutError('Your cart is empty. Add a product before checkout.');
+      return;
+    }
+
     try {
       await redirectToCheckout({ cartItems });
     } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Checkout failed.');
       console.error('Checkout failed:', error);
     }
   };
@@ -71,7 +80,11 @@ const App: FC = () => {
         >
           ×
         </button>
-        <CartSidebar onCheckout={handleCheckout} onNavigate={() => setCartOpen(false)} />
+        <CartSidebar
+          onCheckout={handleCheckout}
+          onNavigate={() => setCartOpen(false)}
+          checkoutError={checkoutError}
+        />
       </div>
 
       {/* Overlay */}
