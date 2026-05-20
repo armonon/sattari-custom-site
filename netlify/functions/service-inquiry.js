@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import process from 'node:process';
 import { Resend } from 'resend';
 
@@ -32,6 +33,10 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function makeInquiryId() {
+  return `inq_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+}
+
 function buildInquiryText({ service, name, email, phone, details, source }) {
   const serviceLabel = SERVICE_LABELS[service] || service || 'Not specified';
 
@@ -47,6 +52,19 @@ function buildInquiryText({ service, name, email, phone, details, source }) {
     'Details:',
     details,
   ].join('\n');
+}
+
+async function storeInquiry(event, record) {
+  try {
+    const { connectLambda, getStore } = await import('@netlify/blobs');
+    connectLambda(event);
+    const inquiryStore = getStore('service-inquiries');
+    await inquiryStore.setJSON(`inquiries/${record.id}.json`, record);
+    return true;
+  } catch (error) {
+    console.error('Service inquiry storage failed:', error);
+    return false;
+  }
 }
 
 export async function handler(event) {
@@ -80,13 +98,31 @@ export async function handler(event) {
   const from = process.env.SERVICE_INQUIRY_FROM || process.env.ORDER_NOTIFICATION_FROM;
   const to = process.env.SERVICE_INQUIRY_TO || process.env.ORDER_NOTIFICATION_EMAIL;
 
+  const id = makeInquiryId();
+  const record = {
+    id,
+    service,
+    serviceLabel: SERVICE_LABELS[service] || service,
+    name,
+    email,
+    phone,
+    details,
+    source: source || 'Website service form',
+    recordedAt: new Date().toISOString(),
+    emailSent: false,
+  };
+
   if (!apiKey || !from || !to) {
-    console.error('Service inquiry email configuration missing.', {
+    console.warn('Service inquiry email configuration missing; storing inquiry only.', {
       hasApiKey: Boolean(apiKey),
       hasFrom: Boolean(from),
       hasTo: Boolean(to),
     });
-    return json(500, { error: 'Service inquiry email is not configured yet.' });
+    const stored = await storeInquiry(event, record);
+    if (!stored) {
+      return json(500, { error: 'Unable to save your inquiry right now. Please try again soon.' });
+    }
+    return json(200, { ok: true, id, emailSent: false, stored: true });
   }
 
   try {
@@ -100,9 +136,23 @@ export async function handler(event) {
       text: buildInquiryText({ service, name, email, phone, details, source }),
     });
 
-    return json(200, { ok: true, id: response.data?.id || null });
+    record.emailSent = true;
+    record.emailId = response.data?.id || null;
+    await storeInquiry(event, record);
+
+    return json(200, {
+      ok: true,
+      id: record.emailId || id,
+      inquiryId: id,
+      emailSent: true,
+      stored: true,
+    });
   } catch (error) {
-    console.error('Service inquiry failed:', error);
+    console.error('Service inquiry email failed; attempting storage fallback:', error);
+    const stored = await storeInquiry(event, record);
+    if (stored) {
+      return json(200, { ok: true, id, emailSent: false, stored: true });
+    }
     return json(500, { error: 'Unable to send your inquiry right now. Please try again soon.' });
   }
 }

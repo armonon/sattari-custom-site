@@ -53,19 +53,32 @@ export default function ServiceInquiryForm({
       });
 
       if (!response.ok) {
-        const responseError = new Error('Unable to send your inquiry right now.');
-
-        Sentry.captureException(responseError, {
-          tags: {
-            feature: 'service-inquiry',
-            status: String(response.status),
-            provider: 'netlify-forms',
+        const fallbackResponse = await fetch('/api/service-inquiry', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          extra: { source, service: form.service },
+          body: JSON.stringify({ ...form, source }),
         });
-        responseError.sentryCaptured = true;
+        const fallbackResult = await fallbackResponse.json().catch(() => ({}));
 
-        throw responseError;
+        if (!fallbackResponse.ok) {
+          const responseError = new Error(
+            fallbackResult.error || 'Unable to send your inquiry right now.'
+          );
+
+          Sentry.captureException(responseError, {
+            tags: {
+              feature: 'service-inquiry',
+              netlifyFormsStatus: String(response.status),
+              fallbackStatus: String(fallbackResponse.status),
+            },
+            extra: { source, service: form.service },
+          });
+          responseError.sentryCaptured = true;
+
+          throw responseError;
+        }
       }
 
       setSubmitted(true);

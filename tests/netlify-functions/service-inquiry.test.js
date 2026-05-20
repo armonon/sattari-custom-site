@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sendMock = vi.fn();
+const setJSONMock = vi.fn();
+const connectLambdaMock = vi.fn();
+
+vi.mock('@netlify/blobs', () => ({
+  connectLambda: connectLambdaMock,
+  getStore: vi.fn(() => ({
+    setJSON: setJSONMock,
+  })),
+}));
 
 vi.mock('resend', () => ({
   Resend: vi.fn().mockImplementation(() => ({
@@ -28,6 +37,7 @@ describe('service-inquiry Netlify function', () => {
     delete process.env.ORDER_NOTIFICATION_FROM;
     delete process.env.ORDER_NOTIFICATION_EMAIL;
     sendMock.mockResolvedValue({ data: { id: 'email_123' } });
+    setJSONMock.mockResolvedValue(undefined);
   });
 
   it('rejects non-POST requests', async () => {
@@ -73,7 +83,9 @@ describe('service-inquiry Netlify function', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(JSON.parse(response.body)).toEqual({ ok: true, id: 'email_123' });
+    expect(JSON.parse(response.body)).toEqual(
+      expect.objectContaining({ ok: true, id: 'email_123', emailSent: true, stored: true })
+    );
     expect(sendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         from: 'Sattari Music <services@example.com>',
@@ -107,7 +119,7 @@ describe('service-inquiry Netlify function', () => {
     );
   });
 
-  it('returns a configuration error without calling Resend when email env is incomplete', async () => {
+  it('stores the inquiry without calling Resend when email env is incomplete', async () => {
     delete process.env.RESEND_API_KEY;
 
     const response = await post({
@@ -117,8 +129,15 @@ describe('service-inquiry Netlify function', () => {
       details: 'Need a repair.',
     });
 
-    expect(response.statusCode).toBe(500);
-    expect(JSON.parse(response.body).error).toMatch(/not configured/i);
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual(
+      expect.objectContaining({ ok: true, emailSent: false, stored: true })
+    );
     expect(sendMock).not.toHaveBeenCalled();
+    expect(connectLambdaMock).toHaveBeenCalled();
+    expect(setJSONMock).toHaveBeenCalledWith(
+      expect.stringMatching(/^inquiries\/inq_.*\.json$/),
+      expect.objectContaining({ name: 'Alex', email: 'alex@example.com', emailSent: false })
+    );
   });
 });
