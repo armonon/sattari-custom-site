@@ -12,6 +12,7 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
     "test": "vitest --run --passWithNoTests",
+    "test:sattari-market-route": "vitest run src/components/SattariMarketPage.route.test.jsx",
     "test:ui": "vitest --ui"
   },
   "dependencies": {

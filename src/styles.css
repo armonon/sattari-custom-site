@@ -2023,3 +2023,134 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Sattari Market concept route */
+.sattari-market-page .hero-lede {
+  color: var(--text);
+  font-size: clamp(1.08rem, 2.4vw, 1.35rem);
+  line-height: 1.6;
+}
+
+.market-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+}
+
+.market-disclosure-card,
+.market-section-split,
+.market-listing-panel,
+.market-guardrails {
+  background: var(--panel-premium);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 2.2rem;
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+}
+
+.market-disclosure-card h2,
+.market-section-split h2,
+.market-listing-panel h2,
+.market-guardrails h2 {
+  margin-top: 0.35rem;
+}
+
+.market-source-grid,
+.market-listing-grid {
+  margin-bottom: 2.2rem;
+}
+
+.market-source-card,
+.market-listing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.market-status,
+.market-readiness-pill {
+  align-self: flex-start;
+  border: 1px solid rgba(214, 179, 109, 0.28);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.7rem;
+  text-transform: uppercase;
+}
+
+.market-status-approval-and-compliance-gated {
+  border-color: rgba(255, 160, 122, 0.34);
+  color: #ffb199;
+}
+
+.market-section-split {
+  align-items: start;
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+
+.market-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.market-chip-list li {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  padding: 0.75rem 0.95rem;
+}
+
+.market-listing-grid {
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.market-listing-card dl {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.market-listing-card dl div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.market-listing-card dt {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.market-listing-card dd {
+  color: var(--muted);
+  margin: 0;
+}
+
+.market-listing-price {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-top: auto;
+}
+
+@media (max-width: 900px) {
+  .market-section-split,
+  .market-listing-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -17,6 +17,7 @@ import {
   ProductDetail,
   RadioPage,
   RepairPage,
+  SattariMarketPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -115,6 +116,14 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route
+            path="/market"
+            element={
+              <LazyPage>
+                <SattariMarketPage />
+              </LazyPage>
+            }
+          />
           <Route
             path="/los-angeles-music-store"
             element={
