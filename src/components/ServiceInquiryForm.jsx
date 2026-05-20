@@ -38,21 +38,29 @@ export default function ServiceInquiryForm({
     setError('');
 
     try {
-      const response = await fetch('/api/service-inquiry', {
+      const body = new URLSearchParams({
+        'form-name': 'service-inquiry',
+        source,
+        ...form,
+      });
+
+      const response = await fetch('/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ ...form, source }),
+        body: body.toString(),
       });
-      const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const errorMessage = result.error || 'Unable to send your inquiry right now.';
-        const responseError = new Error(errorMessage);
+        const responseError = new Error('Unable to send your inquiry right now.');
 
         Sentry.captureException(responseError, {
-          tags: { feature: 'service-inquiry', status: String(response.status) },
+          tags: {
+            feature: 'service-inquiry',
+            status: String(response.status),
+            provider: 'netlify-forms',
+          },
           extra: { source, service: form.service },
         });
         responseError.sentryCaptured = true;
