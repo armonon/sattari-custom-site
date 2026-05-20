@@ -10,7 +10,7 @@ vi.mock('resend', () => ({
   })),
 }));
 
-const { handler } = await import('./service-inquiry.js');
+const { handler } = await import('../../netlify/functions/service-inquiry.js');
 
 function post(body) {
   return handler({
