@@ -1,4 +1,5 @@
 // ServiceInquiryForm.jsx
+import * as Sentry from '@sentry/react';
 import { useState } from 'react';
 
 const SERVICE_OPTIONS = [
@@ -47,11 +48,26 @@ export default function ServiceInquiryForm({
       const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(result.error || 'Unable to send your inquiry right now.');
+        const errorMessage = result.error || 'Unable to send your inquiry right now.';
+        const responseError = new Error(errorMessage);
+
+        Sentry.captureException(responseError, {
+          tags: { feature: 'service-inquiry', status: String(response.status) },
+          extra: { source, service: form.service },
+        });
+        responseError.sentryCaptured = true;
+
+        throw responseError;
       }
 
       setSubmitted(true);
     } catch (submitError) {
+      if (!submitError.sentryCaptured) {
+        Sentry.captureException(submitError, {
+          tags: { feature: 'service-inquiry' },
+          extra: { source, service: form.service },
+        });
+      }
       setError(submitError.message || 'Unable to send your inquiry right now.');
     } finally {
       setSubmitting(false);
