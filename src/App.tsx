@@ -10,6 +10,7 @@ import {
   Category,
   CartPage,
   CheckoutStatus,
+  DownloadsPage,
   HomePage,
   InstagramCallback,
   LazyPage,
@@ -265,6 +266,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RadioPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/downloads"
+            element={
+              <LazyPage>
+                <DownloadsPage />
               </LazyPage>
             }
           />
