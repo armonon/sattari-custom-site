@@ -50,8 +50,8 @@ export default function DownloadsPage() {
           <h1>Get the latest plugin suite build.</h1>
           <p>
             This downloader hosts the current Sattari Audio Plugin Suite alpha validation package:
-            one archive with AU/VST3 plugin builds, standalone apps where available, source snapshots,
-            install helpers, and validation helpers.
+            one archive with AU/VST3 plugin builds, standalone apps where available, source
+            snapshots, install helpers, and validation helpers.
           </p>
           <div className="hero-actions downloads-actions">
             <a className="button button-solid" href={suiteArchive.href} download>
@@ -114,10 +114,10 @@ export default function DownloadsPage() {
       </div>
 
       <div className="container downloads-warning">
-        <strong>Release gate:</strong> This is an internal alpha validation package, not a sale-ready
-        public release. Before any beta/public claim, each plugin still needs DAW open tests,
-        real-session listening, crash/CPU checks, install/uninstall checks, preset UX review, and
-        honest limitation notes.
+        <strong>Release gate:</strong> This is an internal alpha validation package, not a
+        sale-ready public release. Before any beta/public claim, each plugin still needs DAW open
+        tests, real-session listening, crash/CPU checks, install/uninstall checks, preset UX review,
+        and honest limitation notes.
       </div>
     </section>
   );
