@@ -6,73 +6,79 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  # Opt into the June 2026 GitHub JavaScript-action runtime early so
+  # checkout/setup-node/artifact failures show up before production fixes need it.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
+        # Keep both supported app runtimes explicit: 20.19.0 is the current
+        # production-compatible floor; 22.x is the forward-looking CI lane.
         node-version: [20.19.0, 22.x]
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Type check
         run: npm run type-check
-      
+
       - name: Lint
         run: npm run lint
-      
+
       - name: Run tests
         run: npm run test
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.node-version }}
           path: dist/
-  
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@v6
+
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.19.0'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2.1
-        with:
-          publish-dir: './dist'
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: 'Deploy from GitHub Actions'
-          enable-pull-request-comment: true
-          enable-commit-comment: true
+        run: >-
+          npx --yes netlify-cli@26.0.2 deploy
+          --dir=dist
+          --prod
+          --auth "$NETLIFY_AUTH_TOKEN"
+          --site "$NETLIFY_SITE_ID"
+          --message "Deploy from GitHub Actions"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
