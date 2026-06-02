@@ -7,6 +7,7 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: string;
+  noIndex?: boolean;
   children?: ReactNode;
 }
 
@@ -16,6 +17,7 @@ export const SEO: FC<SEOProps> = ({
   image = '/sattari site/sattari logo.png',
   url = 'https://sattarimusic.com',
   type = 'website',
+  noIndex = false,
 }) => {
   const fullTitle = `${title} | Sattari Music - Premium Drum Gear & Services`;
 
@@ -42,6 +44,7 @@ export const SEO: FC<SEOProps> = ({
       <meta name="twitter:image" content={image} />
 
       {/* Additional */}
+      {noIndex && <meta name="robots" content="noindex,nofollow" />}
       <meta name="theme-color" content="#0a0a0b" />
       <link rel="canonical" href={url} />
     </Helmet>

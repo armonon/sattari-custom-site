@@ -19,17 +19,18 @@ export default function SattariMarketPage() {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Sattari Market',
-    url: 'https://sattarimusic.com/market',
+    url: 'https://sattarimusic.com/internal/market-concept',
     description:
-      'Sattari Market concept page for NOW-powered music gear listings, source labels, and user-listing guardrails.',
+      'Internal Sattari Market concept page for NOW-powered music gear listings, source labels, and user-listing guardrails.',
   };
 
   return (
     <section className="section page-header-offset sattari-market-page">
       <SEO
         title="Sattari Market — Music Gear Listing Concept"
-        description="Preview the safe Sattari Market concept: music gear listings, NOW seller-profile trust, source labels, and clear guardrails before live connectors or marketplace payments."
-        url="https://sattarimusic.com/market"
+        description="Internal preview of the safe Sattari Market concept: music gear listings, NOW seller-profile trust, source labels, and clear guardrails before live connectors or marketplace payments."
+        url="https://sattarimusic.com/internal/market-concept"
+        noIndex
       />
       <StructuredData data={pageSchema} />
 

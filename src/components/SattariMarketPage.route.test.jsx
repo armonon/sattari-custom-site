@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,13 +18,15 @@ beforeEach(() => {
     configurable: true,
   });
   vi.stubGlobal('localStorage', storage);
+
+  document.head.innerHTML = '';
 });
 
-function renderAppAtMarketRoute() {
+function renderAppAtRoute(pathname) {
   return render(
     <HelmetProvider>
       <CartProvider>
-        <MemoryRouter initialEntries={['/market']}>
+        <MemoryRouter initialEntries={[pathname]}>
           <App />
         </MemoryRouter>
       </CartProvider>
@@ -32,9 +34,25 @@ function renderAppAtMarketRoute() {
   );
 }
 
-describe('Sattari Market route smoke', () => {
-  it('renders the /market route with source lanes, sample listings, and hard guardrails', async () => {
-    renderAppAtMarketRoute();
+describe('Sattari Market exposure smoke', () => {
+  it('keeps the concept out of public navigation and redirects /market to the shop', async () => {
+    renderAppAtRoute('/market');
+
+    expect(screen.queryByRole('link', { name: /^market$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^downloads$/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /build your setup with instruments, accessories, and handcrafted sattari gear/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 1, name: 'Sattari Market' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('preserves the no-indexed internal concept route with source lanes and hard guardrails', async () => {
+    renderAppAtRoute('/internal/market-concept');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Sattari Market' })
@@ -89,5 +107,16 @@ describe('Sattari Market route smoke', () => {
     expect(guardrails).toHaveTextContent('No checkout, escrow, payments, shipping labels');
     expect(guardrails).toHaveTextContent('No external buyer/seller messages');
     expect(guardrails).toHaveTextContent('No official marketplace partnership');
+
+    await waitFor(() => {
+      expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute(
+        'content',
+        'noindex,nofollow'
+      );
+      expect(document.head.querySelector('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        'https://sattarimusic.com/internal/market-concept'
+      );
+    });
   });
 });
