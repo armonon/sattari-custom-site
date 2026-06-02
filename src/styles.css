@@ -2262,6 +2262,19 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.download-link {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 1rem;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.download-link:hover {
+  color: #f0d28e;
+}
+
 .downloads-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
