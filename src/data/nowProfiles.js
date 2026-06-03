@@ -3,13 +3,14 @@ export const nowApps = [
     id: 'store',
     name: 'Store',
     route: '/shop',
-    description: 'Official Sattari products, downloads, and buyer history.',
+    description: 'Official Sattari products, services, and buyer history.',
   },
   {
     id: 'market',
     name: 'Market',
-    route: '/market',
-    description: 'Seller identity, listing trust, location, and inquiry readiness.',
+    route: '/internal/market-concept',
+    description:
+      'Noindexed concept rail for seller identity, listing trust, and inquiry readiness.',
   },
   {
     id: 'radio',
@@ -32,8 +33,8 @@ export const nowApps = [
   {
     id: 'downloads',
     name: 'Downloads',
-    route: '/downloads',
-    description: 'Plugin access, release notes, tester badges, and product ownership signals.',
+    route: '/shop',
+    description: 'Parked plugin release rail; public alpha downloads stay off the storefront.',
   },
 ];
 
@@ -98,16 +99,19 @@ export const nowProfiles = [
         summary: 'Ready to anchor events, groups, and forum posts when those surfaces go live.',
       },
       downloads: {
-        status: 'active',
-        label: 'Plugin creator profile',
-        summary: 'Links Sattari plugin/download ownership to a single creator identity.',
+        status: 'planned',
+        label: 'Plugin release rail parked',
+        summary: 'Public alpha downloads are removed until sale-ready release gates pass.',
       },
     },
     featured: [
       { appId: 'store', title: 'Sattari Music Store', route: '/shop' },
-      { appId: 'market', title: 'Sattari Market seller identity', route: '/market' },
+      {
+        appId: 'market',
+        title: 'Sattari Market seller identity',
+        route: '/internal/market-concept',
+      },
       { appId: 'radio', title: 'Sattari Radio host lane', route: '/radio' },
-      { appId: 'downloads', title: 'Sattari plugin downloads', route: '/downloads' },
     ],
     tenantCards: [
       {
@@ -174,14 +178,18 @@ export const nowProfiles = [
         summary: 'Prepared for groups, events, and forum moderation.',
       },
       downloads: {
-        status: 'active',
-        label: 'Release publisher',
-        summary: 'Publisher identity for downloadable Sattari software.',
+        status: 'planned',
+        label: 'Release publisher parked',
+        summary: 'Download publishing waits for internal validation and sale-ready approval.',
       },
     },
     featured: [
       { appId: 'store', title: 'Official Sattari products', route: '/shop' },
-      { appId: 'market', title: 'Official vs user listing boundary', route: '/market' },
+      {
+        appId: 'market',
+        title: 'Official vs user listing boundary',
+        route: '/internal/market-concept',
+      },
       { appId: 'radio', title: 'Station programming identity', route: '/radio' },
     ],
     tenantCards: [

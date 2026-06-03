@@ -20,11 +20,11 @@ beforeEach(() => {
   vi.stubGlobal('localStorage', storage);
 });
 
-function renderAppAtMarketRoute() {
+function renderAppAtRoute(route) {
   return render(
     <HelmetProvider>
       <CartProvider>
-        <MemoryRouter initialEntries={['/market']}>
+        <MemoryRouter initialEntries={[route]}>
           <App />
         </MemoryRouter>
       </CartProvider>
@@ -33,8 +33,21 @@ function renderAppAtMarketRoute() {
 }
 
 describe('Sattari Market route smoke', () => {
-  it('renders the /market route with source lanes, sample listings, and hard guardrails', async () => {
-    renderAppAtMarketRoute();
+  it('redirects the public /market route back to the shop surface', async () => {
+    renderAppAtRoute('/market');
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /build your setup with instruments/i,
+      })
+    ).toBeInTheDocument();
+
+    expect(screen.queryByRole('heading', { level: 1, name: 'Sattari Market' })).toBeNull();
+  });
+
+  it('renders the noindexed internal market concept route with source lanes, sample listings, and hard guardrails', async () => {
+    renderAppAtRoute('/internal/market-concept');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Sattari Market' })

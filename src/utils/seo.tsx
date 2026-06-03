@@ -7,6 +7,7 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: string;
+  robots?: string;
   children?: ReactNode;
 }
 
@@ -16,6 +17,7 @@ export const SEO: FC<SEOProps> = ({
   image = '/sattari site/sattari logo.png',
   url = 'https://sattarimusic.com',
   type = 'website',
+  robots,
 }) => {
   const fullTitle = `${title} | Sattari Music - Premium Drum Gear & Services`;
 
@@ -26,6 +28,7 @@ export const SEO: FC<SEOProps> = ({
       <meta name="description" content={description} />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta charSet="utf-8" />
+      {robots ? <meta name="robots" content={robots} /> : null}
 
       {/* Open Graph */}
       <meta property="og:type" content={type} />

@@ -10,7 +10,6 @@ import {
   Category,
   CartPage,
   CheckoutStatus,
-  DownloadsPage,
   HomePage,
   InstagramCallback,
   LazyPage,
@@ -118,8 +117,9 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route path="/market" element={<Navigate to="/shop" replace />} />
           <Route
-            path="/market"
+            path="/internal/market-concept"
             element={
               <LazyPage>
                 <SattariMarketPage />
@@ -283,14 +283,6 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RadioPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/downloads"
-            element={
-              <LazyPage>
-                <DownloadsPage />
               </LazyPage>
             }
           />

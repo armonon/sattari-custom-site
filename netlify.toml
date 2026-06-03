@@ -34,6 +34,18 @@
   status = 200
 
 [[redirects]]
+  from = "/downloads"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/downloads/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
