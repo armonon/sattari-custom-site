@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEO, StructuredData } from '../utils/seo';
+import NowTenantProfileCard from './NowTenantProfileCard';
 import {
   sattariMarketCategories,
   sattariMarketGuardrails,
@@ -39,13 +40,22 @@ export default function SattariMarketPage() {
         <p className="hero-lede">{sattariMarketTenant.tagline}</p>
         <p>{sattariMarketTenant.description}</p>
         <div className="market-hero-actions" aria-label="Sattari Market actions">
-          <Link className="button button-solid" to="/shop">
+          <Link className="button button-solid" to="/profiles/armon">
+            Open NOW profile
+          </Link>
+          <Link className="button button-outline" to="/shop">
             Shop official Sattari products
           </Link>
           <Link className="button button-outline" to="/services">
             Ask about local services
           </Link>
         </div>
+        <NowTenantProfileCard
+          handle="armon"
+          tenantId="sattari_market"
+          variant="market_listing"
+          eyebrow="Market seller identity"
+        />
       </div>
 
       <div

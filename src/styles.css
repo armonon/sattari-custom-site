@@ -2318,3 +2318,213 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* NOW universal profile system */
+.now-profile-page {
+  position: relative;
+}
+
+.now-profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(214, 179, 109, 0.24), transparent 30%),
+    linear-gradient(145deg, rgba(26, 26, 30, 0.94), rgba(12, 12, 14, 0.86));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.now-profile-hero-dark {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.14), transparent 30%),
+    linear-gradient(145deg, rgba(18, 18, 22, 0.96), rgba(5, 5, 7, 0.9));
+}
+
+.now-profile-avatar,
+.now-card-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28px;
+  border: 1px solid rgba(214, 179, 109, 0.28);
+  background: linear-gradient(135deg, rgba(214, 179, 109, 0.28), rgba(255, 255, 255, 0.06));
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+}
+
+.now-profile-avatar {
+  width: clamp(5rem, 12vw, 8rem);
+  height: clamp(5rem, 12vw, 8rem);
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+}
+
+.now-profile-main-copy h1 {
+  margin: 0.35rem 0 0.65rem;
+  font-size: clamp(2.2rem, 6vw, 5rem);
+  line-height: 0.95;
+}
+
+.now-profile-meta,
+.now-profile-switcher,
+.now-role-list,
+.now-app-card-topline,
+.now-featured-list,
+.now-profile-readiness,
+.now-card-trust-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.now-profile-meta span,
+.now-role-list li,
+.now-profile-tab,
+.now-status-pill,
+.now-card-trust-list li {
+  border: 1px solid rgba(214, 179, 109, 0.2);
+  background: rgba(214, 179, 109, 0.1);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.84rem;
+}
+
+.now-profile-switcher {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.now-profile-tab {
+  color: var(--muted);
+}
+
+.now-profile-tab-active,
+.now-profile-tab:hover {
+  color: #111;
+  background: var(--accent);
+}
+
+.now-profile-section {
+  margin-top: 1.6rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.now-role-list,
+.now-card-trust-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.now-app-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.now-app-card-topline {
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.now-status-active {
+  background: rgba(94, 234, 132, 0.14);
+  border-color: rgba(94, 234, 132, 0.3);
+}
+
+.now-status-ready {
+  background: rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+.now-app-description {
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.now-featured-panel,
+.now-profile-readiness,
+.now-tenant-card {
+  padding: 1.25rem;
+  border-radius: 26px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.now-featured-list a {
+  flex: 1 1 180px;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.now-featured-list span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+}
+
+.now-profile-readiness {
+  margin-top: 1.5rem;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.now-profile-readiness strong {
+  display: block;
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.now-profile-readiness span {
+  display: block;
+  color: var(--muted);
+}
+
+.now-tenant-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.now-card-avatar {
+  width: 4rem;
+  height: 4rem;
+}
+
+.now-card-copy h3 {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.now-card-copy p {
+  margin: 0.25rem 0;
+}
+
+@media (max-width: 820px) {
+  .now-profile-hero,
+  .now-profile-section,
+  .now-tenant-card {
+    grid-template-columns: 1fr;
+  }
+
+  .now-app-grid {
+    grid-template-columns: 1fr;
+  }
+}

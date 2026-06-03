@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEO, StructuredData } from '../utils/seo';
+import NowTenantProfileCard from './NowTenantProfileCard';
 
 const shows = [
   {
@@ -83,10 +84,19 @@ export default function RadioPage() {
             <a className="button button-solid" href="#weekly-shows">
               View weekly shows
             </a>
+            <Link className="button button-outline" to="/profiles/armon">
+              Open host profile
+            </Link>
             <a className="button button-outline" href="#radio-submissions">
               Submit to the signal
             </a>
           </div>
+          <NowTenantProfileCard
+            handle="armon"
+            tenantId="sattari_radio"
+            variant="host"
+            eyebrow="Radio host identity"
+          />
         </div>
 
         <div className="radio-player-card" aria-label="Sattari Radio player preview">

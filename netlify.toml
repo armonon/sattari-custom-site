@@ -29,6 +29,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/now/profile"
+  to = "/.netlify/functions/now-profile"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

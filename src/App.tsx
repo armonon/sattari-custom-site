@@ -15,6 +15,7 @@ import {
   InstagramCallback,
   LazyPage,
   LocalSeoPage,
+  NowProfilePage,
   ProductDetail,
   RadioPage,
   RepairPage,
@@ -122,6 +123,22 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <SattariMarketPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/profiles"
+            element={
+              <LazyPage>
+                <NowProfilePage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/profiles/:handle"
+            element={
+              <LazyPage>
+                <NowProfilePage />
               </LazyPage>
             }
           />

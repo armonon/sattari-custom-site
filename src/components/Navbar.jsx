@@ -6,6 +6,7 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Shop' },
   { to: '/market', label: 'Market' },
+  { to: '/profiles', label: 'Profiles' },
   { to: '/radio', label: 'Radio' },
   { to: '/downloads', label: 'Downloads' },
   { to: '/services', label: 'Local Services' },
