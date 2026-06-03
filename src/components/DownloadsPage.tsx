@@ -1,5 +1,16 @@
 import { SEO, StructuredData } from '../utils/seo';
 
+const autoPitchRealtime = {
+  name: 'Sattari Auto Pitch realtime alpha v0.2.0',
+  filename: 'sattari-auto-pitch-realtime-alpha-v0.2.0-mac-installer.pkg',
+  href: '/downloads/sattari-auto-pitch-realtime-alpha-v0.2.0-mac-installer.pkg',
+  archiveHref: '/downloads/auto-pitch-realtime-alpha-v0.2.0.tar.gz',
+  checksumHref: '/downloads/sattari-auto-pitch-realtime-alpha-v0.2.0.sha256',
+  size: '8.8 MB',
+  sha256: '74b6cab68dfaea0a1dcf6f3b27051fde54bfb1ca249cc43a4de34a1d29eb32c6',
+  updated: 'June 2, 2026',
+};
+
 const macInstaller = {
   name: 'Sattari Audio Plugin Suite Mac installer alpha v0.1.0',
   filename: 'sattari-audio-plugin-suite-alpha-v0.1.0-mac-installer.pkg',
@@ -51,11 +62,11 @@ export default function DownloadsPage() {
         data={{
           '@context': 'https://schema.org',
           '@type': 'SoftwareApplication',
-          name: macInstaller.name,
+          name: autoPitchRealtime.name,
           applicationCategory: 'MultimediaApplication',
           operatingSystem: 'macOS',
-          downloadUrl: `https://sattarimusic.com${macInstaller.href}`,
-          softwareVersion: '0.1.0-alpha',
+          downloadUrl: `https://sattarimusic.com${autoPitchRealtime.href}`,
+          softwareVersion: '0.2.0-alpha',
           publisher: {
             '@type': 'Organization',
             name: 'Sattari Music',
@@ -67,45 +78,45 @@ export default function DownloadsPage() {
       <div className="container downloads-hero">
         <div className="downloads-copy">
           <p className="eyebrow">Sattari Downloads</p>
-          <h1>Get the latest plugin suite build.</h1>
+          <h1>Get the latest Auto Pitch build.</h1>
           <p>
-            This downloader hosts the current Sattari Audio Plugin Suite alpha validation package: a
-            Mac installer for quick setup, the original archive with AU/VST3 plugin builds, and the
-            offline Auto Pitch / AutoKey tester kit for WAV experiments.
+            This downloader hosts the current internal alpha downloads: the new realtime Auto Pitch
+            Mac installer, the broader Sattari suite archive, and the offline Auto Pitch / AutoKey
+            tester kit for WAV experiments.
           </p>
           <div className="hero-actions downloads-actions">
-            <a className="button button-solid" href={macInstaller.href} download>
-              Download Mac installer
+            <a className="button button-solid" href={autoPitchRealtime.href} download>
+              Download realtime Auto Pitch
             </a>
-            <a className="button button-outline" href={autoPitchTester.href} download>
-              Download Auto Pitch tester
+            <a className="button button-outline" href={macInstaller.href} download>
+              Download full suite
             </a>
           </div>
         </div>
 
         <aside className="download-card" aria-label="Download details">
           <span className="download-pill">Internal alpha</span>
-          <h2>{macInstaller.name}</h2>
+          <h2>{autoPitchRealtime.name}</h2>
           <dl className="download-meta">
             <div>
               <dt>File</dt>
-              <dd>{macInstaller.filename}</dd>
+              <dd>{autoPitchRealtime.filename}</dd>
             </div>
             <div>
               <dt>Size</dt>
-              <dd>{macInstaller.size}</dd>
+              <dd>{autoPitchRealtime.size}</dd>
             </div>
             <div>
               <dt>Updated</dt>
-              <dd>{macInstaller.updated}</dd>
+              <dd>{autoPitchRealtime.updated}</dd>
             </div>
           </dl>
           <div className="checksum-box">
             <span>SHA-256</span>
-            <code>{macInstaller.sha256}</code>
+            <code>{autoPitchRealtime.sha256}</code>
           </div>
-          <a className="download-link" href={macInstaller.checksumHref} download>
-            Download installer checksum
+          <a className="download-link" href={autoPitchRealtime.checksumHref} download>
+            Download Auto Pitch checksum
           </a>
         </aside>
       </div>
@@ -137,15 +148,15 @@ export default function DownloadsPage() {
 
       <div className="container downloads-grid">
         <article className="info-card downloads-info-card">
-          <p className="card-kicker">Auto Pitch / AutoKey</p>
-          <h2>Offline tester kit.</h2>
+          <p className="card-kicker">Auto Pitch realtime</p>
+          <h2>Realtime tuner alpha.</h2>
           <p>
-            Use this to process a 16-bit PCM vocal WAV with AutoKey, Modern tuning, and the
-            experimental corrected-WAV renderer. It includes demo audio, trace JSON, and the Pitch
-            Compass browser UI.
+            Use this first if you want to test Auto Pitch in a DAW. It includes AU, VST3, and a
+            standalone app with live pitch detection, scale snapping, and bundled Rubber Band
+            realtime pitch shifting.
           </p>
-          <a className="download-link" href={autoPitchTester.href} download>
-            Download {autoPitchTester.filename}
+          <a className="download-link" href={autoPitchRealtime.archiveHref} download>
+            Download manual Auto Pitch archive
           </a>
         </article>
 
@@ -156,6 +167,11 @@ export default function DownloadsPage() {
             <li>
               <a href={suiteArchive.checksumHref} download>
                 Suite archive SHA-256
+              </a>
+            </li>
+            <li>
+              <a href={autoPitchRealtime.checksumHref} download>
+                Realtime Auto Pitch SHA-256
               </a>
             </li>
             <li>
