@@ -1,10 +1,14 @@
+import { connectLambda, getStore } from '@netlify/blobs';
 import {
-  getNOWProfile,
   getNOWStagedUserJourney,
   getNOWTenantProfileCard,
   nowApps,
   nowPublicProfileForbiddenFields,
 } from '../../src/data/nowProfiles.js';
+import {
+  nowProfileStoreName,
+  readNOWProfileWithFallback,
+} from '../../src/data/nowProfilePersistence.js';
 
 function publicProfile(profile) {
   return {
@@ -20,14 +24,25 @@ function publicProfile(profile) {
     bio: profile.bio,
     socials: profile.socials,
     featured: profile.featured,
+    updatedAt: profile.updatedAt,
   };
+}
+
+function getProfileStore(event) {
+  try {
+    connectLambda(event);
+    return getStore(nowProfileStoreName);
+  } catch {
+    return null;
+  }
 }
 
 export async function handler(event) {
   const params = event.queryStringParameters || {};
-  const profile = getNOWProfile(params.handle);
   const tenantId = params.tenant || 'sattari_market';
   const variant = params.variant || 'market_listing';
+  const store = getProfileStore(event);
+  const { profile, source } = await readNOWProfileWithFallback(store, params.handle);
   const tenantCard = getNOWTenantProfileCard(profile.handle, tenantId, variant);
   const stagedJourney = getNOWStagedUserJourney(profile.handle, tenantId, variant);
 
@@ -35,10 +50,16 @@ export async function handler(event) {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': source === 'stored' ? 'public, max-age=60' : 'public, max-age=300',
     },
     body: JSON.stringify({
       schema: 'now-profile-api-v0',
+      storage: {
+        schema: 'now-profile-storage-v1',
+        source,
+        store: nowProfileStoreName,
+        globallyReadable: true,
+      },
       profile: publicProfile(profile),
       apps: nowApps,
       tenantCard: tenantCard || null,
