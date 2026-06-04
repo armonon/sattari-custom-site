@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { SEO, StructuredData } from '../utils/seo';
 import {
@@ -6,6 +7,7 @@ import {
   getNOWProfile,
   getNOWProfileReadiness,
 } from '../data/nowProfiles';
+import { fetchNOWProfile } from '../utils/nowProfileApi';
 
 const statusCopy = {
   active: 'Live connection',
@@ -15,10 +17,46 @@ const statusCopy = {
 
 export default function NowProfilePage() {
   const { handle } = useParams();
-  const selectedProfile = getNOWProfile(handle);
+  const fallbackProfile = useMemo(() => getNOWProfile(handle), [handle]);
+  const [selectedProfile, setSelectedProfile] = useState(fallbackProfile);
+  const [profileSource, setProfileSource] = useState('seed');
+  const [profileStatus, setProfileStatus] = useState('Loading NOW profile…');
   const profiles = getAllNOWProfiles();
   const connections = getNOWAppConnections(selectedProfile);
   const readiness = getNOWProfileReadiness();
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      try {
+        const result = await fetchNOWProfile(handle || 'armon');
+        if (!active) return;
+        setSelectedProfile(result.profile);
+        setProfileSource(result.storage?.source || 'api');
+        setProfileStatus(
+          result.storage?.source === 'stored'
+            ? 'Loaded from durable NOW profile storage.'
+            : 'Loaded from seeded NOW profile data.'
+        );
+      } catch (error) {
+        if (!active) return;
+        setSelectedProfile(fallbackProfile);
+        setProfileSource('fallback');
+        setProfileStatus(
+          error.status === 404
+            ? 'No saved profile exists for this handle yet.'
+            : 'Using local profile fallback while the API is unavailable.'
+        );
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [fallbackProfile, handle]);
 
   const profileSchema = {
     '@context': 'https://schema.org',
@@ -54,6 +92,13 @@ export default function NowProfilePage() {
             <span>@{selectedProfile.handle}</span>
             <span>{selectedProfile.location}</span>
             <span>{selectedProfile.roles.length} roles</span>
+            <span>{profileSource} profile</span>
+          </div>
+          <div className="now-profile-actions">
+            <Link to={`/profiles/${selectedProfile.handle}/edit`} className="primary-button">
+              Edit / claim profile
+            </Link>
+            <span className="now-profile-api-status">{profileStatus}</span>
           </div>
         </div>
       </div>

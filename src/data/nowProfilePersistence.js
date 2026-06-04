@@ -1,4 +1,4 @@
-import { getNOWProfile, nowApps, nowPublicProfileForbiddenFields } from './nowProfiles.js';
+import { getAllNOWProfiles, nowApps, nowPublicProfileForbiddenFields } from './nowProfiles.js';
 
 const MAX_TEXT_FIELD_LENGTH = 600;
 const MAX_BIO_LENGTH = 2000;
@@ -146,6 +146,11 @@ function rejectPrivateProfileFields(payload = {}) {
   );
 }
 
+function getSeedNOWProfile(handle) {
+  const normalizedHandle = normalizeNOWHandle(handle);
+  return getAllNOWProfiles().find((profile) => profile.handle === normalizedHandle) || null;
+}
+
 export function sanitizeNOWProfileDraft(payload = {}, existingProfile = {}) {
   const privateFields = rejectPrivateProfileFields(payload);
   if (privateFields.length > 0) {
@@ -201,9 +206,13 @@ export function sanitizeNOWProfileDraft(payload = {}, existingProfile = {}) {
 export async function readStoredNOWProfile(store, handle) {
   if (!store) return null;
 
-  const key = getNOWProfileBlobKey(handle);
-  const value = await store.get(key, { type: 'json', consistency: 'strong' });
-  return value || null;
+  try {
+    const key = getNOWProfileBlobKey(handle);
+    const value = await store.get(key, { type: 'json', consistency: 'strong' });
+    return value || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function readNOWProfileWithFallback(store, handle = 'armon') {
@@ -216,7 +225,12 @@ export async function readNOWProfileWithFallback(store, handle = 'armon') {
     return { profile, source: 'stored' };
   }
 
-  return { profile: getNOWProfile(normalizedHandle), source: 'seed' };
+  const seedProfile = getSeedNOWProfile(normalizedHandle);
+  if (seedProfile) {
+    return { profile: seedProfile, source: 'seed' };
+  }
+
+  return { profile: null, source: 'missing' };
 }
 
 export async function saveNOWProfile(store, payload, existingProfile, options = {}) {

@@ -14,6 +14,7 @@ import {
   InstagramCallback,
   LazyPage,
   LocalSeoPage,
+  NowProfileEditorPage,
   NowProfilePage,
   ProductDetail,
   RadioPage,
@@ -131,6 +132,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <NowProfilePage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/profiles/:handle/edit"
+            element={
+              <LazyPage>
+                <NowProfileEditorPage />
               </LazyPage>
             }
           />

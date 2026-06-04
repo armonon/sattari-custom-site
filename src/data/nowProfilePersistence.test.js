@@ -54,9 +54,25 @@ describe('NOW profile persistence', () => {
     expect(profile.ownerId).toBe('user_123');
   });
 
-  it('falls back to seeded profiles when no stored profile exists', async () => {
+  it('falls back only to exact seeded profiles when no stored profile exists', async () => {
     const store = createMemoryNOWProfileStore();
-    const { profile, source } = await readNOWProfileWithFallback(store, 'armon');
+    const seeded = await readNOWProfileWithFallback(store, 'armon');
+    const missing = await readNOWProfileWithFallback(store, 'unknown-artist');
+
+    expect(seeded.source).toBe('seed');
+    expect(seeded.profile.handle).toBe('armon');
+    expect(missing.source).toBe('missing');
+    expect(missing.profile).toBeNull();
+  });
+
+  it('falls back to seeded profiles if storage reads are unavailable', async () => {
+    const brokenStore = {
+      async get() {
+        throw new Error('blob store unavailable');
+      },
+    };
+
+    const { profile, source } = await readNOWProfileWithFallback(brokenStore, 'armon');
 
     expect(source).toBe('seed');
     expect(profile.handle).toBe('armon');

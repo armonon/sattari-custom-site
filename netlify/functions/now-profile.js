@@ -1,7 +1,6 @@
 import { connectLambda, getStore } from '@netlify/blobs';
 import {
   getNOWStagedUserJourney,
-  getNOWTenantProfileCard,
   nowApps,
   nowPublicProfileForbiddenFields,
 } from '../../src/data/nowProfiles.js';
@@ -28,6 +27,25 @@ function publicProfile(profile) {
   };
 }
 
+function getTenantProfileCard(profile, tenantId, variant) {
+  const tenantCard = (profile.tenantCards || []).find((card) => {
+    const tenantMatches = !tenantId || card.tenantId === tenantId;
+    const variantMatches = !variant || card.variant === variant;
+    return tenantMatches && variantMatches;
+  });
+
+  return tenantCard
+    ? {
+        ...tenantCard,
+        handle: profile.handle,
+        displayName: profile.displayName,
+        avatarInitials: profile.avatarInitials,
+        headline: profile.headline,
+        roles: profile.roles,
+      }
+    : null;
+}
+
 function getProfileStore(event) {
   try {
     connectLambda(event);
@@ -43,7 +61,28 @@ export async function handler(event) {
   const variant = params.variant || 'market_listing';
   const store = getProfileStore(event);
   const { profile, source } = await readNOWProfileWithFallback(store, params.handle);
-  const tenantCard = getNOWTenantProfileCard(profile.handle, tenantId, variant);
+
+  if (!profile) {
+    return {
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+      body: JSON.stringify({
+        schema: 'now-profile-api-error-v1',
+        error: 'NOW profile not found.',
+        storage: {
+          schema: 'now-profile-storage-v1',
+          source,
+          store: nowProfileStoreName,
+          globallyReadable: true,
+        },
+      }),
+    };
+  }
+
+  const tenantCard = getTenantProfileCard(profile, tenantId, variant);
   const stagedJourney = getNOWStagedUserJourney(profile.handle, tenantId, variant);
 
   return {
