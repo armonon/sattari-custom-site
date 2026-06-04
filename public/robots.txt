@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /checkout/
 Disallow: /cart
+Disallow: /downloads/
+Disallow: /internal/
 
 Sitemap: https://sattarimusic.com/sitemap.xml
 

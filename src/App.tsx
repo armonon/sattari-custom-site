@@ -10,11 +10,11 @@ import {
   Category,
   CartPage,
   CheckoutStatus,
-  DownloadsPage,
   HomePage,
   InstagramCallback,
   LazyPage,
   LocalSeoPage,
+  NowProfileEditorPage,
   NowProfilePage,
   ProductDetail,
   RadioPage,
@@ -118,8 +118,9 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route path="/market" element={<Navigate to="/shop" replace />} />
           <Route
-            path="/market"
+            path="/internal/market-concept"
             element={
               <LazyPage>
                 <SattariMarketPage />
@@ -131,6 +132,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <NowProfilePage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/profiles/:handle/edit"
+            element={
+              <LazyPage>
+                <NowProfileEditorPage />
               </LazyPage>
             }
           />
@@ -283,14 +292,6 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RadioPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/downloads"
-            element={
-              <LazyPage>
-                <DownloadsPage />
               </LazyPage>
             }
           />

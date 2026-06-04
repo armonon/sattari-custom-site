@@ -4,8 +4,10 @@ import {
   getNOWAppConnections,
   getNOWProfile,
   getNOWProfileReadiness,
+  getNOWStagedUserJourney,
   getNOWTenantProfileCard,
   nowApps,
+  nowPublicProfileForbiddenFields,
   nowProfileRoles,
 } from './nowProfiles';
 
@@ -48,5 +50,31 @@ describe('NOW profile data', () => {
     expect(readiness.appCount).toBeGreaterThanOrEqual(6);
     expect(readiness.activeConnectionCount).toBeGreaterThanOrEqual(3);
     expect(readiness.roles).toEqual(nowProfileRoles);
+  });
+
+  it('defines a smokeable public-data-only Market journey without unsafe routes or private fields', () => {
+    const journey = getNOWStagedUserJourney('armon', 'sattari_market', 'market_listing');
+    const routes = journey.steps.map((step) => step.route);
+    const serializedJourney = JSON.stringify(journey).toLowerCase();
+
+    expect(journey.schema).toBe('now-staged-user-journey-v0');
+    expect(journey.handle).toBe('armon');
+    expect(routes).toEqual(['/profiles/armon', '/internal/market-concept', '/services']);
+    expect(routes).not.toContain('/market');
+    expect(routes).not.toContain('/downloads');
+    expect(journey.boundary).toMatchObject({
+      publicDataOnly: true,
+      authRequired: false,
+      nativeMarketplacePayment: false,
+      externalBuyerSellerMessage: false,
+      productionListingMutation: false,
+      safeHandoff: 'contact_first_or_official_shop_only',
+    });
+
+    for (const field of nowPublicProfileForbiddenFields) {
+      expect(journey.boundary.privateFieldsExcluded).toContain(field);
+    }
+    expect(serializedJourney).not.toContain('wallet:');
+    expect(serializedJourney).not.toContain('token:');
   });
 });

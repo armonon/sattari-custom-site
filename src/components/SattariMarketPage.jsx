@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SEO, StructuredData } from '../utils/seo';
 import NowTenantProfileCard from './NowTenantProfileCard';
+import { getNOWStagedUserJourney } from '../data/nowProfiles';
 import {
   sattariMarketCategories,
   sattariMarketGuardrails,
@@ -16,11 +17,13 @@ const statusLabels = {
 };
 
 export default function SattariMarketPage() {
+  const stagedJourney = getNOWStagedUserJourney('armon', 'sattari_market', 'market_listing');
+
   const pageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Sattari Market',
-    url: 'https://sattarimusic.com/market',
+    url: 'https://sattarimusic.com/internal/market-concept',
     description:
       'Sattari Market concept page for NOW-powered music gear listings, source labels, and user-listing guardrails.',
   };
@@ -30,7 +33,8 @@ export default function SattariMarketPage() {
       <SEO
         title="Sattari Market — Music Gear Listing Concept"
         description="Preview the safe Sattari Market concept: music gear listings, NOW seller-profile trust, source labels, and clear guardrails before live connectors or marketplace payments."
-        url="https://sattarimusic.com/market"
+        url="https://sattarimusic.com/internal/market-concept"
+        robots="noindex,nofollow"
       />
       <StructuredData data={pageSchema} />
 
@@ -71,6 +75,30 @@ export default function SattariMarketPage() {
           scraping, or external messaging.
         </p>
       </div>
+
+      <section
+        className="container market-section-split now-staged-journey"
+        aria-labelledby="now-market-staged-journey-title"
+      >
+        <div>
+          <p className="card-kicker">Staged user flow</p>
+          <h2 id="now-market-staged-journey-title">Profile to Market, without private data.</h2>
+          <p>{stagedJourney.label}</p>
+          <p>
+            This is the smokeable path a reviewer can try now: open Armon&apos;s public NOW profile,
+            enter the noindexed Market concept card, then use contact-first or official-shop paths
+            instead of native marketplace actions.
+          </p>
+        </div>
+        <ol className="market-chip-list" aria-label="NOW Market staged user-flow steps">
+          {stagedJourney.steps.map((step) => (
+            <li key={step.id}>
+              <strong>{step.label}</strong>
+              <span>{step.route}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <div className="container card-grid three-col market-source-grid">
         {sattariMarketSources.map((source) => (

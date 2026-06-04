@@ -20,11 +20,11 @@ beforeEach(() => {
   vi.stubGlobal('localStorage', storage);
 });
 
-function renderAppAtMarketRoute() {
+function renderAppAtRoute(route) {
   return render(
     <HelmetProvider>
       <CartProvider>
-        <MemoryRouter initialEntries={['/market']}>
+        <MemoryRouter initialEntries={[route]}>
           <App />
         </MemoryRouter>
       </CartProvider>
@@ -33,8 +33,21 @@ function renderAppAtMarketRoute() {
 }
 
 describe('Sattari Market route smoke', () => {
-  it('renders the /market route with source lanes, sample listings, and hard guardrails', async () => {
-    renderAppAtMarketRoute();
+  it('redirects the public /market route back to the shop surface', async () => {
+    renderAppAtRoute('/market');
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /build your setup with instruments/i,
+      })
+    ).toBeInTheDocument();
+
+    expect(screen.queryByRole('heading', { level: 1, name: 'Sattari Market' })).toBeNull();
+  });
+
+  it('renders the noindexed internal market concept route with source lanes, sample listings, and hard guardrails', async () => {
+    renderAppAtRoute('/internal/market-concept');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Sattari Market' })
@@ -57,6 +70,16 @@ describe('Sattari Market route smoke', () => {
     expect(disclosure).toHaveTextContent('checkout');
     expect(disclosure).toHaveTextContent('scraping');
     expect(disclosure).toHaveTextContent('external messaging');
+
+    const stagedJourney = screen
+      .getByRole('heading', { name: /profile to market, without private data/i })
+      .closest('section');
+    expect(stagedJourney).toBeInTheDocument();
+    expect(stagedJourney).toHaveTextContent('Profile → Sattari Market card');
+    expect(stagedJourney).toHaveTextContent('/profiles/armon');
+    expect(stagedJourney).toHaveTextContent('/internal/market-concept');
+    expect(stagedJourney).toHaveTextContent('/services');
+    expect(stagedJourney).not.toHaveTextContent('/downloads');
 
     expect(
       screen.getByRole('heading', { name: /built first around musicians and studios/i })
