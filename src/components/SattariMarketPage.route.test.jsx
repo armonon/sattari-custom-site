@@ -71,6 +71,16 @@ describe('Sattari Market route smoke', () => {
     expect(disclosure).toHaveTextContent('scraping');
     expect(disclosure).toHaveTextContent('external messaging');
 
+    const stagedJourney = screen
+      .getByRole('heading', { name: /profile to market, without private data/i })
+      .closest('section');
+    expect(stagedJourney).toBeInTheDocument();
+    expect(stagedJourney).toHaveTextContent('Profile → Sattari Market card');
+    expect(stagedJourney).toHaveTextContent('/profiles/armon');
+    expect(stagedJourney).toHaveTextContent('/internal/market-concept');
+    expect(stagedJourney).toHaveTextContent('/services');
+    expect(stagedJourney).not.toHaveTextContent('/downloads');
+
     expect(
       screen.getByRole('heading', { name: /built first around musicians and studios/i })
     ).toBeInTheDocument();

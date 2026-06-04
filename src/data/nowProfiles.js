@@ -215,6 +215,97 @@ export const nowProfiles = [
   },
 ];
 
+export const nowPublicProfileForbiddenFields = [
+  'vault',
+  'wallet',
+  'pass',
+  'email',
+  'savedItems',
+  'saved_items',
+  'inquiry',
+  'payment',
+  'license',
+  'secret',
+  'token',
+];
+
+const nowStagedUserJourneyTemplates = {
+  sattari_market: {
+    schema: 'now-staged-user-journey-v0',
+    label: 'Profile → Sattari Market card → safe contact-first handoff',
+    tenantId: 'sattari_market',
+    variant: 'market_listing',
+    steps: [
+      {
+        id: 'public_profile',
+        label: 'Open the public NOW profile',
+        route: '/profiles/{handle}',
+        proof: 'Shows public identity, roles, app rail, and featured Market surface only.',
+      },
+      {
+        id: 'tenant_market_card',
+        label: 'Follow the Market app rail into the tenant card',
+        route: '/internal/market-concept',
+        proof:
+          'Shows a NOW seller card, source lanes, listing readiness labels, and noindexed Market concept boundary.',
+      },
+      {
+        id: 'safe_contact_first',
+        label: 'Use contact/shop readiness instead of native marketplace actions',
+        route: '/services',
+        proof:
+          'Keeps buyer/seller messaging, payments, checkout for user listings, and live marketplace sync approval-gated.',
+      },
+    ],
+    boundary: {
+      publicDataOnly: true,
+      privateFieldsExcluded: nowPublicProfileForbiddenFields,
+      authRequired: false,
+      nativeMarketplacePayment: false,
+      externalBuyerSellerMessage: false,
+      productionListingMutation: false,
+      safeHandoff: 'contact_first_or_official_shop_only',
+    },
+  },
+  sattari_radio: {
+    schema: 'now-staged-user-journey-v0',
+    label: 'Profile → Sattari Radio card → submissions stay gated',
+    tenantId: 'sattari_radio',
+    variant: 'host',
+    steps: [
+      {
+        id: 'public_profile',
+        label: 'Open the public NOW profile',
+        route: '/profiles/{handle}',
+        proof: 'Shows public host identity, roles, and app rail only.',
+      },
+      {
+        id: 'tenant_radio_card',
+        label: 'Follow the Radio app rail into the host surface',
+        route: '/radio',
+        proof:
+          'Shows the Radio host/station identity without enabling rights or submission automation.',
+      },
+      {
+        id: 'safe_submission_boundary',
+        label: 'Keep submissions and rights review gated',
+        route: '/radio',
+        proof:
+          'No upload, rights clearance, external message, or publication action is created by the profile rail.',
+      },
+    ],
+    boundary: {
+      publicDataOnly: true,
+      privateFieldsExcluded: nowPublicProfileForbiddenFields,
+      authRequired: false,
+      uploadCreated: false,
+      externalMessage: false,
+      publicationApproval: false,
+      safeHandoff: 'host_profile_review_only',
+    },
+  },
+};
+
 export function getNOWProfile(handle = 'armon') {
   return nowProfiles.find((profile) => profile.handle === handle) ?? nowProfiles[0];
 }
@@ -251,6 +342,27 @@ export function getNOWTenantProfileCard(handle = 'armon', tenantId = 'sattari_ma
         roles: profile.roles,
       }
     : null;
+}
+
+export function getNOWStagedUserJourney(
+  handle = 'armon',
+  tenantId = 'sattari_market',
+  variant = 'market_listing'
+) {
+  const profile = getNOWProfile(handle);
+  const template =
+    nowStagedUserJourneyTemplates[tenantId] ?? nowStagedUserJourneyTemplates.sattari_market;
+
+  return {
+    ...template,
+    handle: profile.handle,
+    profileRoute: `/profiles/${profile.handle}`,
+    variant: variant || template.variant,
+    steps: template.steps.map((step) => ({
+      ...step,
+      route: step.route.replace('{handle}', profile.handle),
+    })),
+  };
 }
 
 export function getNOWProfileReadiness() {
