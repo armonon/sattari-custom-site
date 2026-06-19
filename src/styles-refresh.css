@@ -345,6 +345,24 @@ input:focus {
   color: var(--accent-300);
 }
 
+/* ---------- About row (founder + portrait) ---------- */
+.about-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+}
+
+.about-row-copy {
+  flex: 2;
+  min-width: 0;
+}
+
+.about-row-portrait {
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+}
+
 /* =====================================================================
    MOBILE OPTIMIZATION — refinements on top of the existing strong base
    ===================================================================== */
@@ -389,6 +407,18 @@ input:focus {
   .hero-actions,
   .services-actions {
     width: 100%;
+  }
+
+  /* About row stacks vertically so the founder portrait can't overflow */
+  .about-row {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .about-row-portrait {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 }
 

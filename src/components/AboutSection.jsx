@@ -5,11 +5,8 @@ export default function AboutSection() {
   return (
     <>
       <section className="section section-contrast">
-        <div
-          className="container about-row"
-          style={{ display: 'flex', alignItems: 'flex-start', gap: '2.5rem' }}
-        >
-          <div style={{ flex: 2 }}>
+        <div className="container about-row">
+          <div className="about-row-copy">
             <p className="eyebrow">About Sattari Music</p>
             <h2>Founded by Mohammad Sattari</h2>
             <p>
@@ -23,7 +20,7 @@ export default function AboutSection() {
               and your instrument here.
             </p>
           </div>
-          <div style={{ flex: 1, minWidth: 220, maxWidth: 340 }}>
+          <div className="about-row-portrait">
             <SattariPortrait />
           </div>
         </div>
