@@ -1,0 +1,757 @@
+/* =====================================================================
+   Sattari Music — Elevation Layer (styles-refresh.css)
+   Loaded AFTER styles.css so it refines, never rebuilds.
+   Goal: a more cohesive, premium feel + tighter mobile rhythm,
+   keeping the existing dark / champagne-gold identity intact.
+   Safe to remove this single import to fully revert.
+   ===================================================================== */
+
+:root {
+  /* Refined accent ramp (kept in the existing gold family) */
+  --accent-100: #f0dcae;
+  --accent-300: #e3c485;
+  --accent: #d6b36d;
+  --accent-600: #c39e54;
+  --grad-accent: linear-gradient(135deg, var(--accent-300), var(--accent) 55%, var(--accent-600));
+  --grad-text: linear-gradient(180deg, #fffdf7 0%, #f4e6c6 55%, #d9bd83 100%);
+
+  /* Layered elevation scale — softer, more directional than a single shadow */
+  --elev-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.28);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 48px rgba(0, 0, 0, 0.36);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 30px 80px rgba(0, 0, 0, 0.44);
+  --ring: 0 0 0 1px rgba(214, 179, 109, 0.0);
+  --ring-accent: 0 0 0 1px rgba(214, 179, 109, 0.35), 0 0 34px rgba(214, 179, 109, 0.16);
+
+  /* Hairline borders that read as crafted, not flat */
+  --hairline: 1px solid rgba(255, 255, 255, 0.1);
+  --hairline-strong: 1px solid rgba(255, 255, 255, 0.16);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 150ms var(--ease-out);
+  --t-base: 240ms var(--ease-out);
+
+  /* Fluid type scale */
+  --fs-display: clamp(2.6rem, 6.2vw, 4.9rem);
+  --fs-h2: clamp(1.9rem, 3.6vw, 2.9rem);
+  --fs-h3: clamp(1.3rem, 2.1vw, 1.7rem);
+  --fs-body: clamp(1rem, 0.96rem + 0.2vw, 1.08rem);
+  --fs-small: 0.92rem;
+
+  /* Vertical rhythm */
+  --section-y: clamp(3.5rem, 7vw, 6.5rem);
+  --gutter: clamp(1rem, 4vw, 2rem);
+
+  /* Display typeface (loaded in index.html); falls back to the Inter stack */
+  --font-display:
+    'Sora', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ---------- Global polish & overflow safety ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+/* Media never causes horizontal scroll on phones */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Long words / URLs wrap instead of pushing layout wide */
+p,
+li,
+h1,
+h2,
+h3,
+a {
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: rgba(214, 179, 109, 0.28);
+  color: #fff;
+}
+
+/* Refined, on-brand scrollbar (desktop) */
+@media (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(214, 179, 109, 0.4) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(214, 179, 109, 0.32);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(214, 179, 109, 0.5);
+    background-clip: padding-box;
+  }
+}
+
+/* Sharper, more consistent focus ring everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-300);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---------- Typography elevation ---------- */
+h1,
+h2,
+h3,
+.brand-name {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.hero-section h1,
+.hero-copy-panel h1 {
+  font-size: var(--fs-display);
+  line-height: 0.98;
+  font-weight: 800;
+  /* Subtle champagne gradient on the headline */
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-wrap: balance;
+}
+
+.section h2,
+.section-title,
+h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.08;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  font-weight: 650;
+}
+
+.hero-copy,
+.section p,
+.lead {
+  max-width: 64ch;
+}
+
+.eyebrow,
+.card-kicker,
+.brand-kicker {
+  font-weight: 600;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+  border-radius: var(--radius-full, 999px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    transform var(--t-fast),
+    box-shadow var(--t-base),
+    background var(--t-base),
+    border-color var(--t-base),
+    color var(--t-base);
+}
+
+.button-solid,
+.btn-add-cart {
+  background: var(--grad-accent);
+  color: #1a1408;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 12px 30px rgba(214, 179, 109, 0.24);
+}
+
+.button-solid:hover,
+.btn-add-cart:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 18px 42px rgba(214, 179, 109, 0.34);
+}
+
+.button-outline,
+.button-secondary,
+.btn-secondary-detail {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(214, 179, 109, 0.32);
+  color: var(--text);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.button-outline:hover,
+.button-secondary:hover,
+.btn-secondary-detail:hover {
+  transform: translateY(-2px);
+  border-color: rgba(214, 179, 109, 0.6);
+  background: rgba(214, 179, 109, 0.1);
+}
+
+.button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ---------- Navigation ---------- */
+.nav-link {
+  font-weight: 550;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  border-color: rgba(214, 179, 109, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-link-active {
+  color: var(--text);
+  background: rgba(214, 179, 109, 0.12);
+  border-color: rgba(214, 179, 109, 0.34);
+}
+
+/* ---------- Cards & surfaces ---------- */
+.info-card,
+.hero-card,
+.hero-metric-card,
+.cta-banner,
+.service-form-glass,
+.services-highlight-card,
+.product-card {
+  border: var(--hairline);
+  box-shadow: var(--elev-1);
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
+    border-color var(--t-base);
+}
+
+.info-card:hover,
+.hero-metric-card:hover,
+.product-card:hover,
+.services-highlight-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(214, 179, 109, 0.28);
+  box-shadow: var(--elev-2);
+}
+
+/* Interactive linked cards get a clear, accessible affordance */
+.interactive-card-link {
+  position: relative;
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
+    border-color var(--t-base);
+}
+
+.interactive-card-link:hover {
+  box-shadow: var(--ring-accent), var(--elev-2);
+}
+
+/* ---------- Product grid & shop ---------- */
+.product-card {
+  border-radius: var(--radius-lg, 20px);
+  overflow: clip;
+}
+
+.product-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform var(--t-base);
+}
+
+.product-card:hover img {
+  transform: scale(1.035);
+}
+
+.product-price,
+.price {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Forms ---------- */
+.service-form-glass input,
+.service-form-glass select,
+.service-form-glass textarea,
+input[type='text'],
+input[type='email'],
+input[type='tel'],
+textarea,
+select {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background var(--t-fast);
+}
+
+.service-form-glass input:focus,
+.service-form-glass select:focus,
+.service-form-glass textarea:focus,
+textarea:focus,
+select:focus,
+input:focus {
+  border-color: rgba(214, 179, 109, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(214, 179, 109, 0.16);
+  outline: none;
+}
+
+/* ---------- Section rhythm ---------- */
+.section,
+.hero-section {
+  padding-block: var(--section-y);
+}
+
+.cta-banner {
+  border-radius: clamp(20px, 3vw, 28px);
+  background: var(--panel-premium, linear-gradient(145deg, rgba(36, 36, 41, 0.92), rgba(16, 16, 19, 0.82)));
+}
+
+/* ---------- Footer ---------- */
+.footer-grid a:hover {
+  color: var(--accent-300);
+}
+
+/* =====================================================================
+   MOBILE OPTIMIZATION — refinements on top of the existing strong base
+   ===================================================================== */
+
+/* Use dynamic viewport height so the hero doesn't jump with the URL bar */
+@supports (height: 100dvh) {
+  .site-shell {
+    min-height: 100dvh;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --section-y: clamp(2.8rem, 9vw, 4rem);
+  }
+
+  body {
+    line-height: 1.62;
+  }
+
+  /* Comfortable reading gutters */
+  .container {
+    width: min(100% - 2rem, 1120px);
+  }
+
+  /* Headline stays punchy but never clips on small screens */
+  .hero-section h1,
+  .hero-copy-panel h1 {
+    font-size: clamp(2.1rem, 11vw, 3.4rem);
+    line-height: 1;
+  }
+
+  /* Cards sit a touch tighter and flatter (less heavy shadow on small screens) */
+  .info-card,
+  .hero-metric-card,
+  .product-card,
+  .cta-banner {
+    box-shadow: var(--elev-1);
+  }
+
+  /* Generous, thumb-friendly stacked actions */
+  .hero-actions,
+  .services-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Two-up product grid reads better than one giant column on phones */
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .product-card img {
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Instagram stays 2-up and tidy */
+  .instagram-feed-grid {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-section h1,
+  .hero-copy-panel h1 {
+    font-size: clamp(1.95rem, 12vw, 2.6rem);
+  }
+}
+
+/* Respect users who reduce motion: neutralize the new hover lifts/scales */
+@media (prefers-reduced-motion: reduce) {
+  .button:hover,
+  .info-card:hover,
+  .hero-metric-card:hover,
+  .product-card:hover,
+  .product-card:hover img,
+  .services-highlight-card:hover,
+  .interactive-card-link:hover {
+    transform: none;
+  }
+}
+
+/* On touch devices, drop hover transforms entirely (matches existing pattern) */
+@media (hover: none) {
+  .button:hover,
+  .info-card:hover,
+  .hero-metric-card:hover,
+  .product-card:hover,
+  .product-card:hover img,
+  .interactive-card-link:hover {
+    transform: none;
+    box-shadow: var(--elev-1);
+  }
+}
+
+/* =====================================================================
+   CSS ANIMATIONS — replace framer-motion (cart entrance/exit + hovers)
+   ===================================================================== */
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes itemIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes removeOut {
+  to {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+}
+
+.anim-rise {
+  animation: riseIn 0.45s var(--ease-out) both;
+}
+
+.anim-rise-sm {
+  animation: riseIn 0.32s var(--ease-out) both;
+}
+
+.anim-item {
+  animation: itemIn 0.4s var(--ease-out) both;
+}
+
+.cart-item-premium.removing,
+.cart-line-item-premium.removing {
+  animation: removeOut 0.28s var(--ease-soft) forwards;
+  pointer-events: none;
+}
+
+/* Hover/active states formerly handled by framer's whileHover/whileTap */
+.cart-item-remove-premium,
+.cart-remove-btn {
+  transition:
+    transform var(--t-fast),
+    color var(--t-fast),
+    background var(--t-fast);
+}
+
+.cart-item-remove-premium:hover {
+  transform: scale(1.12);
+}
+
+.cart-remove-btn:hover {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.cart-item-remove-premium:active,
+.cart-remove-btn:active {
+  transform: scale(0.92);
+}
+
+.checkout-btn-premium,
+.checkout-btn-full,
+.clear-cart-btn-premium,
+.clear-cart-link {
+  transition:
+    transform var(--t-fast),
+    box-shadow var(--t-base),
+    opacity var(--t-fast);
+}
+
+.checkout-btn-premium:hover:not(:disabled),
+.checkout-btn-full:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.checkout-btn-premium:active:not(:disabled),
+.checkout-btn-full:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.clear-cart-link:hover {
+  transform: translateX(-4px);
+}
+
+.clear-cart-btn-premium:hover {
+  opacity: 0.82;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise,
+  .anim-rise-sm,
+  .anim-item,
+  .cart-item-premium.removing,
+  .cart-line-item-premium.removing {
+    animation: none;
+  }
+  .cart-remove-btn:hover,
+  .cart-item-remove-premium:hover,
+  .clear-cart-link:hover,
+  .checkout-btn-premium:hover,
+  .checkout-btn-full:hover {
+    transform: none;
+  }
+}
+
+/* =====================================================================
+   PER-PAGE POLISH — Shop, Product Detail, Home
+   Additive refinements layered over styles-products-premium.css.
+   ===================================================================== */
+
+/* ---- Shop: enhanced product cards ---- */
+.product-grid .product-card-enhanced {
+  border-radius: var(--radius-lg, 20px);
+  overflow: clip;
+  border: var(--hairline);
+  box-shadow: var(--elev-1);
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
+    border-color var(--t-base);
+}
+
+.product-grid .product-card-enhanced:hover {
+  transform: translateY(-5px);
+  border-color: rgba(214, 179, 109, 0.3);
+  box-shadow: var(--elev-2);
+}
+
+.product-card-enhanced .product-image-container,
+.product-card-enhanced .product-media-link {
+  overflow: clip;
+}
+
+.product-card-enhanced .product-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease-out);
+}
+
+.product-card-enhanced:hover .product-image {
+  transform: scale(1.05);
+}
+
+.product-name-enhanced {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+.product-price-accent {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent-100);
+}
+
+.shop-category-spotlight {
+  color: var(--muted);
+}
+
+.shop-collection-header h2 {
+  font-size: var(--fs-h2);
+}
+
+/* ---- Shop & cart trust chips ---- */
+.trust-chip {
+  border: 1px solid rgba(214, 179, 109, 0.22);
+  background: rgba(214, 179, 109, 0.08);
+  border-radius: var(--radius-full, 999px);
+}
+
+.trust-chip-link {
+  transition:
+    transform var(--t-fast),
+    border-color var(--t-fast),
+    background var(--t-fast);
+}
+
+.trust-chip-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(214, 179, 109, 0.5);
+  background: rgba(214, 179, 109, 0.14);
+}
+
+/* ---- Product detail ---- */
+.product-detail-image {
+  border-radius: var(--radius-lg, 20px);
+  overflow: clip;
+  border: var(--hairline);
+  box-shadow: var(--elev-2);
+  background: var(--panel-premium);
+}
+
+.product-detail-image img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+@media (min-width: 921px) {
+  .product-detail-media-column {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+  }
+}
+
+.product-benefit {
+  border: var(--hairline);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  transition:
+    border-color var(--t-fast),
+    background var(--t-fast),
+    transform var(--t-fast);
+}
+
+.product-benefit:hover {
+  transform: translateY(-2px);
+  border-color: rgba(214, 179, 109, 0.28);
+  background: rgba(214, 179, 109, 0.08);
+}
+
+.product-hero-badge {
+  border: 1px solid rgba(214, 179, 109, 0.28);
+  border-radius: var(--radius-full, 999px);
+  background: rgba(214, 179, 109, 0.08);
+  transition:
+    border-color var(--t-fast),
+    background var(--t-fast);
+}
+
+.product-hero-badge-link:hover {
+  border-color: rgba(214, 179, 109, 0.55);
+  background: rgba(214, 179, 109, 0.16);
+}
+
+.control-input,
+.qty-input-product {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.control-input:focus,
+.qty-input-product:focus {
+  border-color: rgba(214, 179, 109, 0.55);
+  box-shadow: 0 0 0 3px rgba(214, 179, 109, 0.16);
+  outline: none;
+}
+
+.product-detail-content-card .product-price-accent {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+/* ---- Home: feature card bullets & status pill ---- */
+.hero-bullet-list {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.hero-bullet-list li {
+  position: relative;
+  padding-left: 1.6rem;
+  color: var(--muted);
+}
+
+.hero-bullet-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: var(--grad-accent);
+  transform: rotate(45deg);
+}
+
+.hero-status-pill {
+  border: 1px solid rgba(214, 179, 109, 0.3);
+  border-radius: var(--radius-full, 999px);
+  background: rgba(214, 179, 109, 0.1);
+  transition:
+    border-color var(--t-fast),
+    background var(--t-fast),
+    transform var(--t-fast);
+}
+
+.hero-status-pill-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(214, 179, 109, 0.55);
+  background: rgba(214, 179, 109, 0.18);
+}

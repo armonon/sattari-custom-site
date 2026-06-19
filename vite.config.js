@@ -25,9 +25,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          stripe: ['@stripe/stripe-js', '@stripe/react-stripe-js'],
           react_vendor: ['react', 'react-dom', 'react-router-dom'],
-          query: ['react-query'],
         },
       },
     },
