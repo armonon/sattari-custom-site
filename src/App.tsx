@@ -10,16 +10,12 @@ import {
   Category,
   CartPage,
   CheckoutStatus,
-  DownloadsPage,
   HomePage,
   InstagramCallback,
   LazyPage,
   LocalSeoPage,
-  NowProfilePage,
   ProductDetail,
-  RadioPage,
   RepairPage,
-  SattariMarketPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -118,30 +114,6 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
-          <Route
-            path="/market"
-            element={
-              <LazyPage>
-                <SattariMarketPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/profiles"
-            element={
-              <LazyPage>
-                <NowProfilePage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/profiles/:handle"
-            element={
-              <LazyPage>
-                <NowProfilePage />
-              </LazyPage>
-            }
-          />
           <Route
             path="/los-angeles-music-store"
             element={
@@ -275,22 +247,6 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RepairPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/radio"
-            element={
-              <LazyPage>
-                <RadioPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/downloads"
-            element={
-              <LazyPage>
-                <DownloadsPage />
               </LazyPage>
             }
           />
