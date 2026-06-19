@@ -1,7 +1,6 @@
 import { FC, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import type { CartContextValue, CartItem } from '@/types';
 import '@/styles-cart-premium.css';
 
@@ -19,7 +18,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
 
   const handleRemove = async (key: string) => {
     setIsRemoving(key);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 280));
     removeFromCart(key);
     setIsRemoving(null);
   };
@@ -33,23 +32,6 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: 20 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-    exit: { opacity: 0, x: -20, transition: { duration: 0.2 } },
-  };
-
   return (
     <aside className="cart-sidebar-premium">
       {/* Header */}
@@ -61,121 +43,102 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
       {/* Items List */}
       <div className="cart-items-container-premium">
         {cartItems.length === 0 ? (
-          <motion.div
-            className="cart-empty-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
+          <div className="cart-empty-premium anim-rise">
             <div className="empty-icon">🥁</div>
             <p>Your cart is empty</p>
             <small>Add some premium gear to get started</small>
             <Link to="/shop" className="cart-empty-link" onClick={onNavigate}>
               Browse shop
             </Link>
-          </motion.div>
+          </div>
         ) : (
-          <motion.ul
-            className="cart-list-premium"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <AnimatePresence mode="popLayout">
-              {cartItems.map((item: CartItem) => (
-                <motion.li
-                  key={item.key}
-                  className={`cart-item-premium ${isRemoving === item.key ? 'removing' : ''}`}
-                  variants={itemVariants}
-                  exit="exit"
-                  layout
+          <ul className="cart-list-premium">
+            {cartItems.map((item: CartItem, index: number) => (
+              <li
+                key={item.key}
+                className={`cart-item-premium anim-item ${isRemoving === item.key ? 'removing' : ''}`}
+                style={{ animationDelay: `${Math.min(index * 55, 330)}ms` }}
+              >
+                {/* Item Image */}
+                <Link
+                  to={`/product/${item.product.slug}`}
+                  className="cart-item-image-wrapper cart-item-image-link"
+                  onClick={onNavigate}
+                  aria-label={`View ${item.product.name}`}
                 >
-                  {/* Item Image */}
+                  {item.product.image ? (
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="cart-item-image-premium"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="cart-item-image-placeholder">📦</div>
+                  )}
+                </Link>
+
+                {/* Item Info */}
+                <div className="cart-item-info-premium">
                   <Link
                     to={`/product/${item.product.slug}`}
-                    className="cart-item-image-wrapper cart-item-image-link"
+                    className="cart-item-name cart-item-name-link"
                     onClick={onNavigate}
-                    aria-label={`View ${item.product.name}`}
                   >
-                    {item.product.image ? (
-                      <img
-                        src={item.product.image}
-                        alt={item.product.name}
-                        className="cart-item-image-premium"
-                      />
-                    ) : (
-                      <div className="cart-item-image-placeholder">📦</div>
-                    )}
+                    {item.product.name}
                   </Link>
+                  {item.size && <p className="cart-item-size">{item.size}</p>}
+                  <p className="cart-item-price">${item.unitPrice.toFixed(2)}</p>
+                </div>
 
-                  {/* Item Info */}
-                  <div className="cart-item-info-premium">
-                    <Link
-                      to={`/product/${item.product.slug}`}
-                      className="cart-item-name cart-item-name-link"
-                      onClick={onNavigate}
+                {/* Item Controls */}
+                <div className="cart-item-controls-premium">
+                  <div className="quantity-adjuster">
+                    <button
+                      onClick={() => updateQuantity(item.key, Math.max(1, item.quantity - 1))}
+                      className="qty-btn"
+                      aria-label="Decrease quantity"
                     >
-                      {item.product.name}
-                    </Link>
-                    {item.size && <p className="cart-item-size">{item.size}</p>}
-                    <p className="cart-item-price">${item.unitPrice.toFixed(2)}</p>
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={item.quantity}
+                      onChange={(e) => updateQuantity(item.key, e.target.value)}
+                      className="qty-input"
+                      aria-label={`Quantity for ${item.product.name}`}
+                    />
+                    <button
+                      onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                      className="qty-btn"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
                   </div>
+                  <p className="cart-item-total">${item.lineTotal.toFixed(2)}</p>
+                </div>
 
-                  {/* Item Controls */}
-                  <div className="cart-item-controls-premium">
-                    <div className="quantity-adjuster">
-                      <button
-                        onClick={() => updateQuantity(item.key, Math.max(1, item.quantity - 1))}
-                        className="qty-btn"
-                        aria-label="Decrease quantity"
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={item.quantity}
-                        onChange={(e) => updateQuantity(item.key, e.target.value)}
-                        className="qty-input"
-                        aria-label={`Quantity for ${item.product.name}`}
-                      />
-                      <button
-                        onClick={() => updateQuantity(item.key, item.quantity + 1)}
-                        className="qty-btn"
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <p className="cart-item-total">${item.lineTotal.toFixed(2)}</p>
-                  </div>
-
-                  {/* Remove Button */}
-                  <motion.button
-                    onClick={() => handleRemove(item.key)}
-                    className="cart-item-remove-premium"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-label={`Remove ${item.product.name} from cart`}
-                  >
-                    ✕
-                  </motion.button>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </motion.ul>
+                {/* Remove Button */}
+                <button
+                  onClick={() => handleRemove(item.key)}
+                  className="cart-item-remove-premium"
+                  aria-label={`Remove ${item.product.name} from cart`}
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
       {/* Summary */}
       {cartItems.length > 0 && (
-        <motion.div
-          className="cart-summary-premium"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div className="cart-summary-premium anim-rise">
           <div className="summary-row">
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
@@ -185,17 +148,12 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
             <span>Total</span>
             <span className="total-amount">${subtotal.toFixed(2)}</span>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Actions */}
       {cartItems.length > 0 && (
-        <motion.div
-          className="cart-actions-premium"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
+        <div className="cart-actions-premium anim-rise">
           <Link to="/cart" className="cart-view-link-premium" onClick={onNavigate}>
             View full cart
           </Link>
@@ -204,25 +162,18 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
               {checkoutError}
             </div>
           )}
-          <motion.button
+          <button
             onClick={handleCheckout}
             disabled={isCheckingOut}
             className="checkout-btn-premium"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
           >
             <span>{isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}</span>
             {!isCheckingOut && <span className="checkout-arrow">→</span>}
-          </motion.button>
-          <motion.button
-            onClick={clearCart}
-            className="clear-cart-btn-premium"
-            whileHover={{ opacity: 0.8 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          </button>
+          <button onClick={clearCart} className="clear-cart-btn-premium">
             Clear Bag
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
       )}
     </aside>
   );
