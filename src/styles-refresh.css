@@ -209,6 +209,24 @@ h3 {
   backdrop-filter: blur(6px);
 }
 
+/* The span variant lacks .button's base shape, so give it one of its own:
+   a real pill that wraps cleanly when the label breaks across lines. */
+.btn-secondary-detail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.15rem;
+  border-radius: var(--radius-full, 999px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-align: center;
+  transition:
+    transform var(--t-fast),
+    background var(--t-base),
+    border-color var(--t-base);
+}
+
 .button-outline:hover,
 .button-secondary:hover,
 .btn-secondary-detail:hover {
