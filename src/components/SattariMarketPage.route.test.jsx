@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,12 +34,30 @@ function renderAppAtRoute(pathname) {
   );
 }
 
-describe('Sattari Market exposure smoke', () => {
-  it('keeps the concept out of public navigation and redirects /market to the shop', async () => {
-    renderAppAtRoute('/market');
+describe('public tab exposure smoke', () => {
+  it('keeps Market, Profiles, Radio, and Downloads out of public navigation', () => {
+    renderAppAtRoute('/');
 
     expect(screen.queryByRole('link', { name: /^market$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^profiles$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^radio$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /^downloads$/i })).not.toBeInTheDocument();
+  });
+
+  it('redirects removed public routes away from their old surfaces', async () => {
+    renderAppAtRoute('/radio');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Drums First. Always.' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 1, name: /sattari radio/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps /market pointed at the shop instead of a marketplace tab', async () => {
+    renderAppAtRoute('/market');
+
     expect(
       await screen.findByRole('heading', {
         level: 1,
@@ -47,76 +65,7 @@ describe('Sattari Market exposure smoke', () => {
       })
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { level: 1, name: 'Sattari Market' })
+      screen.queryByRole('heading', { level: 1, name: /sattari market/i })
     ).not.toBeInTheDocument();
-  });
-
-  it('preserves the no-indexed internal concept route with source lanes and hard guardrails', async () => {
-    renderAppAtRoute('/internal/market-concept');
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Sattari Market' })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText('Buy, sell, and discover music gear through trusted musician profiles.')
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /shop official sattari products/i })).toHaveAttribute(
-      'href',
-      '/shop'
-    );
-    expect(screen.getByRole('link', { name: /ask about local services/i })).toHaveAttribute(
-      'href',
-      '/services'
-    );
-
-    const disclosure = screen.getByRole('note', { name: /prototype disclosure/i });
-    expect(disclosure).toHaveTextContent('without adding live marketplace connectors');
-    expect(disclosure).toHaveTextContent('checkout');
-    expect(disclosure).toHaveTextContent('scraping');
-    expect(disclosure).toHaveTextContent('external messaging');
-
-    expect(
-      screen.getByRole('heading', { name: /built first around musicians and studios/i })
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('Drums & cymbals').length).toBeGreaterThan(0);
-    expect(screen.getByText('Lessons, repairs & rentals')).toBeInTheDocument();
-
-    const sourceRegion = screen.getByText('External marketplace links').closest('article');
-    expect(sourceRegion).toBeInTheDocument();
-    expect(within(sourceRegion).getByText('Approval/compliance gated')).toBeInTheDocument();
-    expect(sourceRegion).toHaveTextContent('link-out/source-label concepts only');
-
-    const listingPanel = screen
-      .getByRole('heading', {
-        name: /listing cards show source and readiness/i,
-      })
-      .closest('section');
-    expect(listingPanel).toBeInTheDocument();
-    expect(
-      within(listingPanel).getByText('Pirouz Series cymbal — demo condition')
-    ).toBeInTheDocument();
-    expect(within(listingPanel).getByText('External link placeholder')).toBeInTheDocument();
-    expect(within(listingPanel).getByText('Link-out concept only')).toBeInTheDocument();
-
-    const guardrails = screen
-      .getByRole('heading', { name: /what this page does not do yet/i })
-      .closest('section');
-    expect(guardrails).toBeInTheDocument();
-    expect(guardrails).toHaveTextContent('No scraping or live third-party marketplace sync');
-    expect(guardrails).toHaveTextContent('No checkout, escrow, payments, shipping labels');
-    expect(guardrails).toHaveTextContent('No external buyer/seller messages');
-    expect(guardrails).toHaveTextContent('No official marketplace partnership');
-
-    await waitFor(() => {
-      expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute(
-        'content',
-        'noindex,nofollow'
-      );
-      expect(document.head.querySelector('link[rel="canonical"]')).toHaveAttribute(
-        'href',
-        'https://sattarimusic.com/internal/market-concept'
-      );
-    });
   });
 });

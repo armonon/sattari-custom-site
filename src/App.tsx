@@ -15,9 +15,7 @@ import {
   LazyPage,
   LocalSeoPage,
   ProductDetail,
-  RadioPage,
   RepairPage,
-  SattariMarketPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -117,14 +115,11 @@ const App: FC = () => {
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
           <Route path="/market" element={<Navigate to="/shop" replace />} />
-          <Route
-            path="/internal/market-concept"
-            element={
-              <LazyPage>
-                <SattariMarketPage />
-              </LazyPage>
-            }
-          />
+          <Route path="/profiles" element={<Navigate to="/" replace />} />
+          <Route path="/profile" element={<Navigate to="/" replace />} />
+          <Route path="/radio" element={<Navigate to="/" replace />} />
+          <Route path="/downloads" element={<Navigate to="/" replace />} />
+          <Route path="/download" element={<Navigate to="/" replace />} />
           <Route
             path="/los-angeles-music-store"
             element={
@@ -258,14 +253,6 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RepairPage />
-              </LazyPage>
-            }
-          />
-          <Route
-            path="/radio"
-            element={
-              <LazyPage>
-                <RadioPage />
               </LazyPage>
             }
           />

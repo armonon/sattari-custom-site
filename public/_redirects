@@ -1,2 +1,12 @@
+/market /shop 302
+/market/* /shop 302
+/radio /404.html 404
+/radio/* /404.html 404
+/profiles /404.html 404
+/profiles/* /404.html 404
+/profile /404.html 404
+/profile/* /404.html 404
 /downloads /404.html 404
 /downloads/* /404.html 404
+/download /404.html 404
+/download/* /404.html 404

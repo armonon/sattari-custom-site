@@ -11,8 +11,6 @@ export const InstagramCallback = lazy(() => import('@pages/InstagramCallback'));
 export const ServicesPage = lazy(() => import('@components/ServicesPage'));
 export const RepairPage = lazy(() => import('@components/RepairPage'));
 export const LocalSeoPage = lazy(() => import('@components/LocalSeoPage'));
-export const RadioPage = lazy(() => import('@components/RadioPage'));
-export const SattariMarketPage = lazy(() => import('@components/SattariMarketPage'));
 
 // Fallback loading component
 export const PageLoader = () => (
