@@ -242,3 +242,29 @@ body {
 [data-theme='day'] .service-form-glass ::placeholder {
   color: rgba(58, 48, 28, 0.5);
 }
+
+/* ---- Feature cards on Home & Local Services ----
+   These have hardcoded-dark (or translucent-white) backgrounds that ignore the
+   palette, so they stayed dark/invisible in day mode. Repaint them light. The
+   gold ::before/::after glows and token-based text carry over fine. */
+[data-theme='day'] .hero-mini-card,
+[data-theme='day'] .services-highlight-card {
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.96), rgba(240, 233, 219, 0.9));
+  border-color: rgba(154, 122, 46, 0.22);
+  box-shadow:
+    0 18px 44px rgba(60, 50, 30, 0.12),
+    0 0 40px rgba(154, 122, 46, 0.06);
+}
+
+/* Hero metric cards are translucent white — invisible on a light page. */
+[data-theme='day'] .hero-metric-card {
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.96), rgba(240, 233, 219, 0.88));
+  border-color: rgba(154, 122, 46, 0.2);
+  box-shadow: 0 14px 28px rgba(60, 50, 30, 0.1);
+}
+
+/* Inner stat tiles inside the "What to expect" box. */
+[data-theme='day'] .services-stats div {
+  background: rgba(154, 122, 46, 0.07);
+  border-color: rgba(154, 122, 46, 0.18);
+}
