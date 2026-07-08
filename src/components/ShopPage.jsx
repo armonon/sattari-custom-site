@@ -10,7 +10,8 @@ const shopMoreDescriptions = {
   cymbals: 'Browse our handcrafted cymbals, hi-hats, and splashes for every drummer.',
   sticks: 'Explore classic hickory, maple, and specialty sticks for every playing style.',
   essentials: 'Find practice pads, felts, keys, and must-have accessories for your kit.',
-  violins: 'Browse handcrafted acoustic, electric, and silent violins, fitted and tuned in California.',
+  violins:
+    'Browse handcrafted acoustic, electric, and silent violins, fitted and tuned in California.',
 };
 
 const productSellingPoints = {
