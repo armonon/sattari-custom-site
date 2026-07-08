@@ -48,11 +48,17 @@ body {
   gap: 0.5rem;
 }
 
-/* On the desktop row, keep the brand left and cluster the toggle with the
-   links on the right. Narrow layouts stack/grid on their own, so scope this. */
+/* Desktop: leave the header dock (brand left, links right) untouched and just
+   park the toggle in the far-right corner, after the links. `order` moves it
+   visually without changing DOM order, so the mobile grid layout is unaffected.
+   Narrow layouts stack/grid on their own, so scope this to the desktop row. */
 @media (min-width: 861px) {
-  .nav-inner .nav-actions-row {
+  .nav-inner .nav-links {
     margin-left: auto;
+    order: 1;
+  }
+  .nav-inner .nav-actions-row {
+    order: 2;
   }
 }
 
