@@ -67,7 +67,7 @@
 .product-media-link .product-image-placeholder {
   width: 100%;
   height: auto;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -965,10 +965,10 @@
   .product-media-link .product-image-placeholder {
     position: relative;
     inset: auto;
-    aspect-ratio: 1 / 0.78;
+    aspect-ratio: 4 / 3;
     width: 100%;
     height: auto;
-    min-height: 230px;
+    min-height: 0;
   }
 
   .product-info-overlay {

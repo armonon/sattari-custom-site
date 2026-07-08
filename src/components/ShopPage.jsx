@@ -30,6 +30,11 @@ const categorySpotlights = {
   essentials: 'Purpose-built accessories for practice, setup, and carry.',
 };
 
+// Some products carry their image only on a size variant (e.g. the practice
+// pad). Fall back to the first size image so every card shows a photo.
+const resolveProductImage = (product) =>
+  product.image || product.sizes?.find((size) => size.image)?.image || '';
+
 export default function ShopPage() {
   const { addToCart } = useCart();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
@@ -124,9 +129,9 @@ export default function ShopPage() {
                       className="product-media-link"
                       aria-label={`View ${product.name}`}
                     >
-                      {product.image ? (
+                      {resolveProductImage(product) ? (
                         <OptimizedProductImage
-                          src={product.image}
+                          src={resolveProductImage(product)}
                           alt={product.name}
                           className="product-image"
                           loading="lazy"

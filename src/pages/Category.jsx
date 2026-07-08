@@ -11,6 +11,11 @@ const categoryHighlights = {
   essentials: ['Practice-ready', 'Compact carry', 'Built for consistency'],
 };
 
+// Fall back to a size-variant image when the product has no top-level image,
+// so every card shows a photo instead of an empty placeholder.
+const resolveProductImage = (product) =>
+  product.image || product.sizes?.find((size) => size.image)?.image || '';
+
 export default function Category() {
   const { categoryKey } = useParams();
   const category = categories.find((c) => c.key === categoryKey);
@@ -113,9 +118,9 @@ export default function Category() {
                   className="product-media-link"
                   aria-label={`View ${product.name}`}
                 >
-                  {product.image ? (
+                  {resolveProductImage(product) ? (
                     <OptimizedProductImage
-                      src={product.image}
+                      src={resolveProductImage(product)}
                       alt={product.name}
                       className="product-image"
                       loading="lazy"
