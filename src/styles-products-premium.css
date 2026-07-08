@@ -1049,3 +1049,155 @@
     padding: 1rem;
   }
 }
+
+/* =====================================================================
+   DAY theme — repaint the hardcoded-dark product surfaces.
+   Appended last so these win over the base rules above; the
+   [data-theme='day'] prefix also keeps specificity above them. Text that
+   already uses var(--text)/--muted/--accent themes on its own and is left
+   alone. Palette matches styles-theme.css.
+   ===================================================================== */
+
+/* ---- Listing cards (Shop + Category) ---- */
+[data-theme='day'] .product-card-enhanced {
+  background: linear-gradient(145deg, #fffdf8, #f4eede);
+  border-color: rgba(154, 122, 46, 0.22);
+  box-shadow:
+    0 16px 40px rgba(60, 50, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+[data-theme='day'] .product-card-enhanced:hover {
+  border-color: rgba(154, 122, 46, 0.45);
+  box-shadow:
+    0 20px 60px rgba(154, 122, 46, 0.18),
+    0 0 0 1px rgba(154, 122, 46, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Backdrop behind the info row (the image itself covers row 1). */
+[data-theme='day'] .product-image-container {
+  background: #efe7d6;
+}
+
+[data-theme='day'] .product-kicker {
+  color: #6c6353;
+}
+
+[data-theme='day'] .product-name-enhanced {
+  color: #241f16;
+  text-shadow: none;
+}
+
+[data-theme='day'] .product-copy-link:hover .product-name-enhanced {
+  color: #7c6224;
+}
+
+[data-theme='day'] .product-price-enhanced {
+  color: #241f16;
+  text-shadow: none;
+}
+
+[data-theme='day'] .product-card-copy {
+  color: #5f5647;
+}
+
+/* Gold clipped text is too pale on a light page — deepen the gradient. */
+[data-theme='day'] .product-price-accent,
+[data-theme='day'] .product-detail-price {
+  background: linear-gradient(135deg, #9a7a2e, #b98f48);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Keep the info row light on mobile, where the base gives it a dark scrim. */
+[data-theme='day'] .product-info-overlay {
+  background: transparent;
+  border-top-color: rgba(154, 122, 46, 0.18);
+}
+
+/* ---- Secondary ("More details") buttons ---- */
+[data-theme='day'] .product-actions .btn-details,
+[data-theme='day'] .btn-details {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.12), rgba(154, 122, 46, 0.04));
+  color: #241f16;
+  border-color: rgba(154, 122, 46, 0.3);
+  box-shadow: 0 8px 18px rgba(60, 50, 30, 0.1);
+}
+
+[data-theme='day'] .product-actions .btn-details:hover,
+[data-theme='day'] .btn-details:hover {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.2), rgba(154, 122, 46, 0.08));
+  border-color: rgba(154, 122, 46, 0.45);
+}
+
+[data-theme='day'] .btn-secondary-detail {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.08), rgba(154, 122, 46, 0.03));
+  border-color: rgba(154, 122, 46, 0.3);
+}
+
+[data-theme='day'] .btn-secondary-detail:hover {
+  background: rgba(154, 122, 46, 0.12);
+}
+
+/* ---- Product detail page ---- */
+[data-theme='day'] .product-detail-image {
+  background: linear-gradient(145deg, #fffdf8, #f1eadc);
+  border-color: rgba(154, 122, 46, 0.2);
+  box-shadow: 0 12px 38px rgba(60, 50, 30, 0.12);
+}
+
+[data-theme='day'] .product-detail-content-card {
+  background: linear-gradient(145deg, #fffdf8, #f4eede);
+  border-color: rgba(154, 122, 46, 0.18);
+  box-shadow:
+    0 18px 46px rgba(60, 50, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+[data-theme='day'] .product-benefit {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.08), rgba(154, 122, 46, 0.03));
+  border-color: rgba(154, 122, 46, 0.16);
+  box-shadow: 0 10px 20px rgba(60, 50, 30, 0.08);
+}
+
+[data-theme='day'] .product-hero-badge {
+  background: rgba(154, 122, 46, 0.1);
+  border-color: rgba(154, 122, 46, 0.28);
+}
+
+[data-theme='day'] .product-hero-badge-link:hover {
+  background: rgba(154, 122, 46, 0.2);
+}
+
+[data-theme='day'] .product-description-section {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.06), rgba(154, 122, 46, 0.02));
+  border-color: rgba(154, 122, 46, 0.14);
+}
+
+[data-theme='day'] .control-input,
+[data-theme='day'] .product-quantity-stepper {
+  background: #fffdf8;
+  border-color: rgba(154, 122, 46, 0.28);
+}
+
+[data-theme='day'] .control-input:hover,
+[data-theme='day'] .control-input:focus {
+  background: #fff;
+  border-color: rgba(154, 122, 46, 0.5);
+}
+
+[data-theme='day'] .qty-input-product {
+  background: rgba(154, 122, 46, 0.06);
+  border-inline-color: rgba(154, 122, 46, 0.16);
+}
+
+/* Sticky action bar on the detail page — only a bar (with a background) at
+   the mobile breakpoint, so scope the day repaint to match. */
+@media (max-width: 700px) {
+  [data-theme='day'] .product-detail-actions {
+    background: linear-gradient(180deg, rgba(250, 246, 238, 0.92), rgba(250, 246, 238, 0.98));
+    border-top-color: rgba(154, 122, 46, 0.18);
+  }
+}
