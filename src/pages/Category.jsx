@@ -9,6 +9,7 @@ const categoryHighlights = {
   cymbals: ['Handcrafted tone', 'Stage-ready projection', 'Distinctive response'],
   sticks: ['Premium wood', 'Balanced rebound', 'Daily-play durability'],
   essentials: ['Practice-ready', 'Compact carry', 'Built for consistency'],
+  violins: ['Hand-carved tonewoods', 'Workshop-fitted & tuned', 'Acoustic, electric & silent'],
 };
 
 // Fall back to a size-variant image when the product has no top-level image,

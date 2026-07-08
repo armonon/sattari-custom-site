@@ -37,6 +37,7 @@ export default function HomePage() {
             <div className="hero-quick-links" aria-label="Popular paths">
               <Link to="/shop/cymbals">Cymbals</Link>
               <Link to="/shop/sticks">Sticks</Link>
+              <Link to="/shop/violins">Violins</Link>
               <Link to="/shop/essentials">Practice essentials</Link>
             </div>
 

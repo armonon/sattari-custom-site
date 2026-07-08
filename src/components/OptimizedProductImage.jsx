@@ -1,6 +1,9 @@
 function toAvifSource(src) {
-  if (!src) return null;
-  return src.replace(/\.(png|jpe?g)$/i, '.avif');
+  // Only the bundled drum PNGs ship an .avif sibling. Other images (e.g. the
+  // violin photos saved as .jpg) have no .avif, so skip the <source> for them
+  // to avoid a broken avif reference — the browser loads the raster directly.
+  if (!src || !/\.png$/i.test(src)) return null;
+  return src.replace(/\.png$/i, '.avif');
 }
 
 export default function OptimizedProductImage({

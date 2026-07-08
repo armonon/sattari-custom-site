@@ -14,6 +14,12 @@ export const categories = [
     description: 'Practice pads, cymbal felts, bags, and must-have accessories for your kit.',
     key: 'essentials',
   },
+  {
+    title: 'Violins',
+    description:
+      'Handcrafted SATTARI acoustic, electric, and silent violins — individually fitted and tuned in California.',
+    key: 'violins',
+  },
 ];
 
 export const products = [
@@ -131,6 +137,50 @@ export const products = [
       "Sattari Hand Crafted Hi-Hat's are renowned for their exceptional quality and craftsmanship in the world of drumming. These cymbals are meticulously handcrafted with precision and care, resulting in a unique sound and character that drummers love. The Sattari brand takes great pride in its dedication to creating cymbals that meet the highest standards of musicianship. Each cymbal is carefully forged by skilled artisans who understand the intricacies of cymbal making. They use traditional techniques combined with modern innovations to produce cymbals that are both versatile and expressive.",
     sizes: [{ size: '14"', price: 130 }],
     image: '/sattari site/hihat.png',
+    specs: [],
+  },
+  {
+    id: 'cremona-handmade-acoustic-violin',
+    name: 'CREMONA - Handmade Acoustic Violin',
+    slug: 'cremona-handmade-acoustic-violin',
+    category: 'violins',
+    description:
+      'Introducing the all-new SATTARI fully handmade violin. This model is hand-carved, shaped, and treated with our finest varnishes — a quality instrument at sound pricing.',
+    price: 250.0,
+    image: '/sattari site/violins/cremona-acoustic.jpg',
+    specs: [],
+  },
+  {
+    id: 'chiara-wooden-electric-violin',
+    name: 'CHIARA - Wooden Electric Silent Violin',
+    slug: 'chiara-wooden-electric-violin',
+    category: 'violins',
+    description:
+      'SATTARI wooden electric SILENT violin, 4/4 (full size). Hand-carved solid spruce top with solid maple back and sides, plus volume and tone control. Includes a Brazilwood bow with genuine Mongolian horsehair, a lightweight foam hard case, chinrest, bridge, high-quality SATTARI rosin, and a 9V battery. Practice silently, or connect the output jack to an amplifier to perform on stage.',
+    price: 250.0,
+    image: '/sattari site/violins/chiara-electric.jpg',
+    specs: [],
+  },
+  {
+    id: 'miami-electric-violin',
+    name: 'MIAMI - Electric Violin',
+    slug: 'miami-electric-violin',
+    category: 'violins',
+    description:
+      'SATTARI electric violin, 4/4. Perfect for amplifying your sound in live performance or practicing quietly at home. Features a 1/4" jack for amplified use and a 3.5mm headphone jack for private practice, with a piezo pickup mounted under a maple bridge; maple body, neck, and scroll; and ebony pegs, fingerboard, and chinrest. Reverb on/off, volume, and aux controls, plus a 9V battery panel. Includes custom strings, a Brazilwood and horsehair bow, high-grade rosin, a triangular foam case, cable, and headphones. Available in red, white, blue, and black.',
+    price: 120.0,
+    image: '/sattari site/violins/miami-electric.jpg',
+    specs: [],
+  },
+  {
+    id: 'brescia-acoustic-violin',
+    name: 'BRESCIA - Acoustic Violin',
+    slug: 'brescia-acoustic-violin',
+    category: 'violins',
+    description:
+      'SATTARI acoustic violin, 4/4. Beautiful and uncompromising, reminiscent of 17th-century masterpieces. Made from select American woods and finished with hand-applied traditional varnishes, featuring the deeper arching of many European styles in a warm golden base color. Highly figured maple back, ribs, and neck; redwood fingerboard and pegs; and a composite tailpiece with built-in tuners. Includes custom strings, a Brazilwood and horsehair bow, high-grade rosin, and a triangular foam case. Individually workshop-fitted and tuned at SATTARI Musical Instruments in California, USA.',
+    price: 160.0,
+    image: '/sattari site/violins/brescia-acoustic.jpg',
     specs: [],
   },
 ];

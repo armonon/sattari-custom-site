@@ -10,12 +10,14 @@ const shopMoreDescriptions = {
   cymbals: 'Browse our handcrafted cymbals, hi-hats, and splashes for every drummer.',
   sticks: 'Explore classic hickory, maple, and specialty sticks for every playing style.',
   essentials: 'Find practice pads, felts, keys, and must-have accessories for your kit.',
+  violins: 'Browse handcrafted acoustic, electric, and silent violins, fitted and tuned in California.',
 };
 
 const productSellingPoints = {
   cymbals: 'Hand-forged response with expressive attack and warm sustain.',
   sticks: 'Balanced feel, durable wood selection, and reliable rebound.',
   essentials: 'Built for daily practice, setup protection, and grab-and-go sessions.',
+  violins: 'Hand-carved tonewoods, workshop-fitted and tuned for expressive, reliable play.',
 };
 
 const trustPoints = [
@@ -28,6 +30,7 @@ const categorySpotlights = {
   cymbals: 'Expressive attack, warm sustain, and handcrafted nuance.',
   sticks: 'Balanced rebound and dependable feel for repeat sessions.',
   essentials: 'Purpose-built accessories for practice, setup, and carry.',
+  violins: 'Acoustic warmth, electric versatility, and silent practice — all handcrafted.',
 };
 
 // Some products carry their image only on a size variant (e.g. the practice
