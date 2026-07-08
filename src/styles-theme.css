@@ -1,0 +1,201 @@
+/* =====================================================================
+   Day / Night theming
+   ---------------------------------------------------------------------
+   The base stylesheets ship the dark ("night") palette as the default.
+   `ThemeContext` sets data-theme="day" | "night" on <html>; when it is
+   "day" the overrides at the bottom of this file repaint the site with a
+   warm light palette. Because this file is imported last, its overrides
+   win the cascade.
+   ===================================================================== */
+
+/* ---- Cross-fade when the theme flips (color only; gradients snap) ---- */
+html {
+  transition: background-color 400ms ease;
+}
+
+body {
+  transition:
+    background-color 400ms ease,
+    color 400ms ease;
+}
+
+.nav-wrap,
+.footer,
+.instagram-row,
+.theme-toggle {
+  transition:
+    background 400ms ease,
+    color 400ms ease,
+    border-color 400ms ease,
+    box-shadow 400ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  .nav-wrap,
+  .footer,
+  .instagram-row,
+  .theme-toggle {
+    transition: none;
+  }
+}
+
+/* ---- Theme toggle control (works in both palettes) ---- */
+.nav-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* On the desktop row, keep the brand left and cluster the toggle with the
+   links on the right. Narrow layouts stack/grid on their own, so scope this. */
+@media (min-width: 861px) {
+  .nav-inner .nav-actions-row {
+    margin-left: auto;
+  }
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), var(--accent-soft));
+  color: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.theme-toggle:hover {
+  border-color: rgba(214, 179, 109, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(214, 179, 109, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle-icon {
+  display: inline-flex;
+}
+
+.theme-toggle-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.theme-toggle-icon svg circle {
+  fill: currentColor;
+}
+
+.theme-toggle-icon svg line {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.theme-toggle-icon svg path {
+  fill: currentColor;
+}
+
+.theme-toggle-badge {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--muted);
+}
+
+/* Gentle cue that the icon tracks the sun/moon while on auto. */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle-auto .theme-toggle-icon {
+    animation: theme-toggle-breathe 4s ease-in-out infinite;
+  }
+}
+
+@keyframes theme-toggle-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+/* =====================================================================
+   DAY palette
+   ===================================================================== */
+[data-theme='day'] {
+  /* Core tokens (styles.css / styles-enhanced.css) */
+  --bg: #f6f1e6;
+  --panel: #fffdf8;
+  --panel-2: #efe7d6;
+  --line: rgba(58, 48, 28, 0.14);
+  --line-strong: rgba(58, 48, 28, 0.26);
+  --text: #241f16;
+  --muted: #6c6353;
+  --accent: #9a7a2e;
+  --accent-dark: #7c6224;
+  --accent-soft: rgba(154, 122, 46, 0.14);
+  --accent-glow: rgba(154, 122, 46, 0.28);
+  --panel-premium: linear-gradient(145deg, rgba(255, 253, 248, 0.96), rgba(240, 233, 219, 0.9));
+  --shadow: 0 16px 50px rgba(60, 50, 30, 0.16);
+  --shadow-sm: 0 4px 12px rgba(60, 50, 30, 0.1);
+  --shadow-lg: 0 32px 96px rgba(60, 50, 30, 0.2);
+
+  /* Refined ramp + elevation (styles-refresh.css) */
+  --grad-text: linear-gradient(180deg, #2a2417 0%, #6b5322 55%, #937425 100%);
+  --elev-1:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 8px 24px rgba(60, 50, 30, 0.1);
+  --elev-2:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 18px 48px rgba(60, 50, 30, 0.14);
+  --elev-3:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 30px 80px rgba(60, 50, 30, 0.18);
+  --ring-accent:
+    0 0 0 1px rgba(154, 122, 46, 0.4),
+    0 0 34px rgba(154, 122, 46, 0.14);
+  --hairline: 1px solid rgba(58, 48, 28, 0.12);
+  --hairline-strong: 1px solid rgba(58, 48, 28, 0.2);
+}
+
+/* ---- Hardcoded surfaces that don't read from tokens ---- */
+[data-theme='day'] body {
+  background:
+    radial-gradient(circle at top, rgba(214, 179, 109, 0.16), transparent 26%),
+    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, 0.6), transparent 22%),
+    radial-gradient(circle at top, #fbf7ee, #efe7d7 55%);
+}
+
+[data-theme='day'] .nav-wrap {
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0.9), rgba(250, 246, 238, 0.72));
+  box-shadow: 0 14px 36px rgba(60, 50, 30, 0.1);
+}
+
+[data-theme='day'] .instagram-row {
+  background: linear-gradient(90deg, rgba(250, 246, 238, 0.94) 60%, rgba(240, 233, 219, 0.9) 100%);
+}
+
+/* Glass fills built from translucent white read as invisible on a light page —
+   give the common ones a faint warm tint so their edges stay legible. */
+[data-theme='day'] .hero-status-pill,
+[data-theme='day'] .nav-cart-button {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.06), rgba(154, 122, 46, 0.12));
+}
+
+[data-theme='day'] .mobile-menu-button {
+  background: linear-gradient(135deg, rgba(154, 122, 46, 0.08), rgba(154, 122, 46, 0.14));
+  box-shadow: 0 12px 24px rgba(60, 50, 30, 0.12);
+}

@@ -7,7 +7,9 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './styles.css';
 import './styles-refresh.css';
+import './styles-theme.css';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Initialize Sentry — error + performance tracking.
 // Session Replay was removed to keep the initial bundle lean; re-add
@@ -24,11 +26,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <HelmetProvider>
-        <CartProvider>
-          <SentryRoutes>
-            <App />
-          </SentryRoutes>
-        </CartProvider>
+        <ThemeProvider>
+          <CartProvider>
+            <SentryRoutes>
+              <App />
+            </SentryRoutes>
+          </CartProvider>
+        </ThemeProvider>
       </HelmetProvider>
     </ErrorBoundary>
   </React.StrictMode>

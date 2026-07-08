@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '@context/ThemeContext';
 
 declare global {
   interface Navigator {
@@ -10,6 +11,8 @@ declare global {
 }
 
 export default function BackgroundMedia() {
+  const { mode } = useTheme();
+  const isDay = mode === 'day';
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
@@ -44,8 +47,10 @@ export default function BackgroundMedia() {
         zIndex: -1,
         pointerEvents: 'none',
         overflow: 'hidden',
-        background:
-          'radial-gradient(circle at top, rgba(21,21,25,0.95), rgba(8,8,9,0.98) 48%), #000',
+        transition: 'background 400ms ease',
+        background: isDay
+          ? 'radial-gradient(circle at top, rgba(255,252,245,0.98), rgba(240,233,219,0.98) 55%), #f6f1e6'
+          : 'radial-gradient(circle at top, rgba(21,21,25,0.95), rgba(8,8,9,0.98) 48%), #000',
       }}
       aria-hidden="true"
     >
@@ -58,11 +63,12 @@ export default function BackgroundMedia() {
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'min(40vw, 480px)',
-          opacity: 0.05,
+          opacity: isDay ? 0.08 : 0.05,
           filter: 'blur(2px)',
         }}
       />
-      {showVideo ? (
+      {/* The ambient loop is a night-time flourish; day mode stays clean and bright. */}
+      {showVideo && !isDay ? (
         <video
           autoPlay
           muted
@@ -87,7 +93,9 @@ export default function BackgroundMedia() {
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45))',
+          background: isDay
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.1), rgba(246,241,230,0.35))'
+            : 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45))',
         }}
       />
     </div>

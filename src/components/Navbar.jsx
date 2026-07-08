@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import ThemeToggle from './ThemeToggle';
 
 const links = [
   { to: '/', label: 'Home' },
@@ -47,6 +48,7 @@ export default function Navbar({ onCartClick }) {
           </span>
         </NavLink>
         <div className="nav-actions-row">
+          <ThemeToggle />
           <button
             type="button"
             className="mobile-menu-button"

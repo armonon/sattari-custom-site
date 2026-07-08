@@ -50,6 +50,32 @@
     />
 
     <title>Sattari Music - Premium Handcrafted Drum Gear & Services</title>
+
+    <!-- Apply the day/night theme before first paint to avoid a flash of the
+         wrong palette. Keep this logic in sync with src/utils/theme.ts. -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('sattari-theme-pref-v1') || 'auto';
+          var mode = pref === 'day' || pref === 'night' ? pref : null;
+          if (!mode) {
+            // Auto: match the OS appearance, else fall back to the local clock.
+            var mm = window.matchMedia;
+            if (mm && mm('(prefers-color-scheme: dark)').matches) mode = 'night';
+            else if (mm && mm('(prefers-color-scheme: light)').matches) mode = 'day';
+            else {
+              var h = new Date().getHours();
+              mode = h >= 6 && h < 18 ? 'day' : 'night';
+            }
+          }
+          document.documentElement.dataset.theme = mode;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', mode === 'day' ? '#f6f1e6' : '#0a0a0b');
+        } catch (e) {
+          document.documentElement.dataset.theme = 'night';
+        }
+      })();
+    </script>
   </head>
   <body>
     <form
