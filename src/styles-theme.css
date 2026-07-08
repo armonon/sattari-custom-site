@@ -205,3 +205,9 @@ body {
   background: linear-gradient(135deg, rgba(154, 122, 46, 0.08), rgba(154, 122, 46, 0.14));
   box-shadow: 0 12px 24px rgba(60, 50, 30, 0.12);
 }
+
+/* The wordmark ships as a near-white logo built for the dark theme; render it
+   black so it stays legible on the light day header. */
+[data-theme='day'] .brand-logo {
+  filter: brightness(0);
+}
