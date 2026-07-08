@@ -211,3 +211,34 @@ body {
 [data-theme='day'] .brand-logo {
   filter: brightness(0);
 }
+
+/* ---- Service inquiry form fields ----
+   The base fields use a translucent-white fill + white border — nearly
+   invisible on the light day form and only faintly visible on the dark night
+   form. Give them a clearer border in both modes, and proper light fields with
+   a warm dark border + readable placeholder in day. Loaded last, so these win. */
+.service-form-glass input,
+.service-form-glass select,
+.service-form-glass textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(214, 179, 109, 0.34);
+}
+
+[data-theme='day'] .service-form-glass input,
+[data-theme='day'] .service-form-glass select,
+[data-theme='day'] .service-form-glass textarea {
+  background: #ffffff;
+  border-color: rgba(58, 48, 28, 0.32);
+  color: var(--text);
+}
+
+[data-theme='day'] .service-form-glass input:focus,
+[data-theme='day'] .service-form-glass select:focus,
+[data-theme='day'] .service-form-glass textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(154, 122, 46, 0.16);
+}
+
+[data-theme='day'] .service-form-glass ::placeholder {
+  color: rgba(58, 48, 28, 0.5);
+}
