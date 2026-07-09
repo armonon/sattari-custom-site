@@ -89,6 +89,9 @@ export default function BackgroundMedia() {
             height: '100vh',
             objectFit: 'cover',
             display: 'block',
+            // Overscan so the soft (blurred) edges and any source letterboxing
+            // are clipped by the container instead of showing a border.
+            transform: 'scale(1.15)',
             background: isDay ? '#f6f1e6' : '#000',
             filter: isDay ? 'blur(10px) saturate(1.05)' : 'blur(8px)',
             opacity: isDay ? 0.92 : 0.42,

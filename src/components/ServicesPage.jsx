@@ -172,6 +172,47 @@ export default function ServicesPage() {
         ))}
       </div>
 
+      <div className="container services-location" id="visit">
+        <div className="services-location-copy">
+          <p className="card-kicker">Visit the shop</p>
+          <h2>SATTARI Musical Instruments</h2>
+          <p className="services-location-address">
+            4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364
+          </p>
+          <p>
+            Come in to play the gear, talk through a repair, or plan a rental, lesson, or session in
+            person. Serving Woodland Hills and the greater San Fernando Valley.
+          </p>
+          <div className="services-location-actions">
+            <a
+              className="button button-solid"
+              href="https://www.google.com/maps/dir//SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Get directions
+            </a>
+            <a
+              className="button button-outline"
+              href="https://www.google.com/maps/search/?api=1&query=SATTARI+Musical+Instruments+Woodland+Hills"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on Google
+            </a>
+          </div>
+        </div>
+        <div className="services-map">
+          <iframe
+            title="Map to SATTARI Musical Instruments in Woodland Hills"
+            src="https://www.google.com/maps?q=SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364&output=embed"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+        </div>
+      </div>
+
       <div className="container service-form-shell" id="service-inquiry">
         <div className="service-form-copy section-header narrow">
           <p className="eyebrow">Start the conversation</p>

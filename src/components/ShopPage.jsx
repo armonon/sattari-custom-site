@@ -166,22 +166,15 @@ export default function ShopPage() {
             </span>
           </Link>
         ))}
-      </div>
-
-      <div className="container">
         <Link
           to="/shop/all"
-          className="shop-all-banner interactive-card-link"
+          className="info-card shop-category-card shop-all-card interactive-card-link"
           aria-label="Shop all products"
         >
-          <div>
-            <p className="card-kicker">Everything in the shop</p>
-            <h2>Shop all</h2>
-            <p className="shop-all-banner-copy">
-              Browse the full Sattari catalog — {products.length} products in one place.
-            </p>
-          </div>
-          <span className="btn-secondary-detail">Browse all products</span>
+          <p className="card-kicker">Everything in the shop</p>
+          <h3>Shop all</h3>
+          <p>The full Sattari catalog — {products.length} products in one place.</p>
+          <span className="btn-secondary-detail shop-category-link">Browse all products</span>
         </Link>
       </div>
 

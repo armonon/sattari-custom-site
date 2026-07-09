@@ -22,36 +22,19 @@ const MoonIcon = () => (
   </svg>
 );
 
-const LABELS = {
-  auto: 'Auto (matches your system)',
-  day: 'Day mode',
-  night: 'Night mode',
-};
-
-const NEXT = {
-  auto: 'day',
-  day: 'night',
-  night: 'auto',
-};
-
 export default function ThemeToggle() {
-  const { preference, mode, cyclePreference } = useTheme();
-  const isAuto = preference === 'auto';
+  const { mode, cyclePreference } = useTheme();
+  const next = mode === 'day' ? 'night' : 'day';
 
   return (
     <button
       type="button"
-      className={`theme-toggle theme-toggle-${mode}${isAuto ? ' theme-toggle-auto' : ''}`}
+      className={`theme-toggle theme-toggle-${mode}`}
       onClick={cyclePreference}
-      aria-label={`Theme: ${LABELS[preference]}. Activate for ${LABELS[NEXT[preference]]}.`}
-      title={LABELS[preference]}
+      aria-label={`Switch to ${next} mode`}
+      title={`Switch to ${next} mode`}
     >
       <span className="theme-toggle-icon">{mode === 'day' ? <SunIcon /> : <MoonIcon />}</span>
-      {isAuto && (
-        <span className="theme-toggle-badge" aria-hidden="true">
-          AUTO
-        </span>
-      )}
     </button>
   );
 }

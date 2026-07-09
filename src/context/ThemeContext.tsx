@@ -31,8 +31,6 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const CYCLE: ThemePreference[] = ['auto', 'day', 'night'];
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(() => getStoredPreference());
   const [mode, setMode] = useState<ThemeMode>(() => resolveTheme(getStoredPreference()));
@@ -44,8 +42,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const cyclePreference = useCallback(() => {
+    // The toggle is a plain day/night switch. New visitors start on `auto`
+    // (follows the system); the first tap flips to the opposite of what's shown
+    // and from then on it stays a manual day ⇄ night choice.
     setPreferenceState((current) => {
-      const next = CYCLE[(CYCLE.indexOf(current) + 1) % CYCLE.length];
+      const next: ThemePreference = resolveTheme(current) === 'day' ? 'night' : 'day';
       storePreference(next);
       return next;
     });
