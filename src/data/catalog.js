@@ -148,6 +148,15 @@ export const products = [
       'Introducing the all-new SATTARI fully handmade violin. This model is hand-carved, shaped, and treated with our finest varnishes — a quality instrument at sound pricing.',
     price: 250.0,
     image: '/sattari site/violins/cremona-acoustic.jpg',
+    gallery: [
+      '/sattari site/violins/cremona-acoustic.jpg',
+      '/sattari site/violins/cremona-acoustic-2.jpg',
+      '/sattari site/violins/cremona-acoustic-3.jpg',
+      '/sattari site/violins/cremona-acoustic-4.jpg',
+      '/sattari site/violins/cremona-acoustic-5.jpg',
+      '/sattari site/violins/cremona-acoustic-6.jpg',
+      '/sattari site/violins/cremona-acoustic-7.jpg',
+    ],
     specs: [],
   },
   {
@@ -159,6 +168,17 @@ export const products = [
       'SATTARI wooden electric SILENT violin, 4/4 (full size). Hand-carved solid spruce top with solid maple back and sides, plus volume and tone control. Includes a Brazilwood bow with genuine Mongolian horsehair, a lightweight foam hard case, chinrest, bridge, high-quality SATTARI rosin, and a 9V battery. Practice silently, or connect the output jack to an amplifier to perform on stage.',
     price: 250.0,
     image: '/sattari site/violins/chiara-electric.jpg',
+    gallery: [
+      '/sattari site/violins/chiara-electric.jpg',
+      '/sattari site/violins/chiara-electric-2.jpg',
+      '/sattari site/violins/chiara-electric-3.jpg',
+      '/sattari site/violins/chiara-electric-4.jpg',
+      '/sattari site/violins/chiara-electric-5.jpg',
+      '/sattari site/violins/chiara-electric-6.jpg',
+      '/sattari site/violins/chiara-electric-7.jpg',
+      '/sattari site/violins/chiara-electric-8.jpg',
+      '/sattari site/violins/chiara-electric-9.jpg',
+    ],
     specs: [],
   },
   {
@@ -170,6 +190,24 @@ export const products = [
       'SATTARI electric violin, 4/4. Perfect for amplifying your sound in live performance or practicing quietly at home. Features a 1/4" jack for amplified use and a 3.5mm headphone jack for private practice, with a piezo pickup mounted under a maple bridge; maple body, neck, and scroll; and ebony pegs, fingerboard, and chinrest. Reverb on/off, volume, and aux controls, plus a 9V battery panel. Includes custom strings, a Brazilwood and horsehair bow, high-grade rosin, a triangular foam case, cable, and headphones. Available in red, white, blue, and black.',
     price: 120.0,
     image: '/sattari site/violins/miami-electric.jpg',
+    gallery: [
+      '/sattari site/violins/miami-electric.jpg',
+      '/sattari site/violins/miami-electric-2.jpg',
+      '/sattari site/violins/miami-electric-3.jpg',
+      '/sattari site/violins/miami-electric-4.jpg',
+      '/sattari site/violins/miami-electric-5.jpg',
+      '/sattari site/violins/miami-electric-6.jpg',
+      '/sattari site/violins/miami-electric-7.jpg',
+      '/sattari site/violins/miami-electric-8.jpg',
+      '/sattari site/violins/miami-electric-9.jpg',
+      '/sattari site/violins/miami-electric-10.jpg',
+    ],
+    colors: [
+      { name: 'Black', hex: '#111111' },
+      { name: 'Red', hex: '#d21f2a' },
+      { name: 'White', hex: '#f5f5f2' },
+      { name: 'Blue', hex: '#1f49d2' },
+    ],
     specs: [],
   },
   {
@@ -181,12 +219,29 @@ export const products = [
       'SATTARI acoustic violin, 4/4. Beautiful and uncompromising, reminiscent of 17th-century masterpieces. Made from select American woods and finished with hand-applied traditional varnishes, featuring the deeper arching of many European styles in a warm golden base color. Highly figured maple back, ribs, and neck; redwood fingerboard and pegs; and a composite tailpiece with built-in tuners. Includes custom strings, a Brazilwood and horsehair bow, high-grade rosin, and a triangular foam case. Individually workshop-fitted and tuned at SATTARI Musical Instruments in California, USA.',
     price: 160.0,
     image: '/sattari site/violins/brescia-acoustic.jpg',
+    gallery: [
+      '/sattari site/violins/brescia-acoustic.jpg',
+      '/sattari site/violins/brescia-acoustic-2.jpg',
+      '/sattari site/violins/brescia-acoustic-3.jpg',
+      '/sattari site/violins/brescia-acoustic-4.jpg',
+      '/sattari site/violins/brescia-acoustic-5.jpg',
+      '/sattari site/violins/brescia-acoustic-6.jpg',
+      '/sattari site/violins/brescia-acoustic-7.jpg',
+      '/sattari site/violins/brescia-acoustic-8.jpg',
+      '/sattari site/violins/brescia-acoustic-9.jpg',
+      '/sattari site/violins/brescia-acoustic-10.jpg',
+    ],
     specs: [],
   },
 ];
 
 export function getProductBySlug(slug) {
   return products.find((p) => p.slug === slug);
+}
+
+// Unique key for a cart line: a product plus its selected size and color.
+export function buildCartKey(slug, size, color) {
+  return `${slug}::${size || 'default'}::${color || 'any'}`;
 }
 
 export function resolveSelectedOption(product, selectedSize) {

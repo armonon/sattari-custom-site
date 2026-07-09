@@ -1050,6 +1050,83 @@
   }
 }
 
+/* ========== PRODUCT GALLERY + COLOR SWATCHES ========== */
+.product-gallery-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.product-gallery-thumb {
+  width: 68px;
+  height: 68px;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #1a1a1f;
+  border: 1.5px solid rgba(214, 179, 109, 0.2);
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.product-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-gallery-thumb:hover {
+  transform: translateY(-2px);
+  border-color: rgba(214, 179, 109, 0.45);
+}
+
+.product-gallery-thumb.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(214, 179, 109, 0.3);
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.color-swatch {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--swatch, #888);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.color-swatch:hover {
+  transform: translateY(-2px);
+}
+
+.color-swatch.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(214, 179, 109, 0.35);
+}
+
+[data-theme='day'] .product-gallery-thumb {
+  background: #efe7d6;
+}
+
+[data-theme='day'] .color-swatch {
+  border-color: rgba(58, 48, 28, 0.28);
+}
+
 /* =====================================================================
    DAY theme — repaint the hardcoded-dark product surfaces.
    Appended last so these win over the base rules above; the

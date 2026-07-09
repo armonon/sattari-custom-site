@@ -63,7 +63,7 @@ describe('checkout utilities', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        items: [{ slug: 'pirouz-series-cymbals', size: null, quantity: 2 }],
+        items: [{ slug: 'pirouz-series-cymbals', size: null, color: null, quantity: 2 }],
       }),
     });
     expect(session).toEqual({ id: 'cs_test_123', url: 'https://checkout.example.com' });

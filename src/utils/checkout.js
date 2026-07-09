@@ -2,6 +2,7 @@ function normalizeCheckoutItems(cartItems = []) {
   return cartItems.map((item) => ({
     slug: item.slug,
     size: item.size ?? null,
+    color: item.color ?? null,
     quantity: item.quantity,
   }));
 }

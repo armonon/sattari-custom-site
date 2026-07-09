@@ -89,6 +89,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
                     {item.product.name}
                   </Link>
                   {item.size && <p className="cart-item-size">{item.size}</p>}
+                  {item.color && <p className="cart-item-size">{item.color}</p>}
                   <p className="cart-item-price">${item.unitPrice.toFixed(2)}</p>
                 </div>
 

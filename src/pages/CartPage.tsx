@@ -126,6 +126,11 @@ const CartPage: FC = () => {
                         Size: <strong>{item.size}</strong>
                       </p>
                     )}
+                    {item.color && (
+                      <p className="cart-item-product-size">
+                        Color: <strong>{item.color}</strong>
+                      </p>
+                    )}
                     <p className="cart-item-unit-price">${item.unitPrice.toFixed(2)} each</p>
                   </div>
 

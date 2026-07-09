@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  category: 'cymbals' | 'sticks' | 'essentials';
+  category: 'cymbals' | 'sticks' | 'essentials' | 'violins';
   description: string;
   price?: number;
   sizes?: Array<{
@@ -11,6 +11,11 @@ export interface Product {
     image?: string;
   }>;
   image?: string;
+  gallery?: string[];
+  colors?: Array<{
+    name: string;
+    hex: string;
+  }>;
   specs: string[];
 }
 
@@ -24,6 +29,7 @@ export interface CartItem {
   key: string;
   slug: string;
   size: string | null;
+  color: string | null;
   quantity: number;
   product: Product;
   unitPrice: number;
@@ -32,8 +38,9 @@ export interface CartItem {
 
 export interface CartEntry {
   slug: string;
-  size: string | null;
-  quantity: number;
+  size?: string | null;
+  color?: string | null;
+  quantity?: number;
 }
 
 export interface CartContextValue {

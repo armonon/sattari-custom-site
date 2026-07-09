@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getProductBySlug, resolveSelectedOption } from '../data/catalog';
+import { getProductBySlug, resolveSelectedOption, buildCartKey } from '../data/catalog';
 
 const STORAGE_KEY = 'sattari-cart-v1';
 
@@ -34,10 +34,13 @@ export function CartProvider({ children }) {
         const { size, unitPrice } = resolveSelectedOption(product, entry.size);
         if (typeof unitPrice !== 'number') return null;
 
+        const color = entry.color || null;
+
         return {
-          key: `${entry.slug}::${size || 'default'}`,
+          key: buildCartKey(entry.slug, size, color),
           slug: entry.slug,
           size,
+          color,
           quantity: normalizeQuantity(entry.quantity),
           product,
           unitPrice,
@@ -57,16 +60,16 @@ export function CartProvider({ children }) {
     [cartItems]
   );
 
-  function addToCart({ slug, size = null, quantity = 1 }) {
+  function addToCart({ slug, size = null, color = null, quantity = 1 }) {
     const safeQty = normalizeQuantity(quantity);
-    const key = `${slug}::${size || 'default'}`;
+    const key = buildCartKey(slug, size, color);
 
     setCart((prev) => {
       const existingIndex = prev.findIndex(
-        (entry) => `${entry.slug}::${entry.size || 'default'}` === key
+        (entry) => buildCartKey(entry.slug, entry.size, entry.color) === key
       );
       if (existingIndex === -1) {
-        return [...prev, { slug, size, quantity: safeQty }];
+        return [...prev, { slug, size, color, quantity: safeQty }];
       }
 
       const next = [...prev];
@@ -88,7 +91,7 @@ export function CartProvider({ children }) {
 
     setCart((prev) =>
       prev.map((entry) => {
-        const entryKey = `${entry.slug}::${entry.size || 'default'}`;
+        const entryKey = buildCartKey(entry.slug, entry.size, entry.color);
         if (entryKey !== key) return entry;
         return { ...entry, quantity: normalizeQuantity(safeQty) };
       })
@@ -96,7 +99,9 @@ export function CartProvider({ children }) {
   }
 
   function removeFromCart(key) {
-    setCart((prev) => prev.filter((entry) => `${entry.slug}::${entry.size || 'default'}` !== key));
+    setCart((prev) =>
+      prev.filter((entry) => buildCartKey(entry.slug, entry.size, entry.color) !== key)
+    );
   }
 
   function clearCart() {

@@ -10,6 +10,7 @@ const detailHighlights = {
   cymbals: ['Handcrafted character', 'Musical attack and sustain', 'Ready for studio or stage'],
   sticks: ['Consistent balance', 'Built for repeat sessions', 'Reliable feel across dynamics'],
   essentials: ['Portable and practical', 'Easy everyday setup', 'Made to keep you playing'],
+  violins: ['Hand-carved tonewoods', 'Workshop-fitted and tuned', 'California made'],
 };
 
 export default function ProductDetail() {
@@ -18,6 +19,10 @@ export default function ProductDetail() {
     p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug
   );
   const [selectedSize, setSelectedSize] = useState(product?.sizes ? product.sizes[0].size : null);
+  const [selectedColor, setSelectedColor] = useState(
+    product?.colors ? product.colors[0].name : null
+  );
+  const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const { addToCart } = useCart();
@@ -32,6 +37,8 @@ export default function ProductDetail() {
 
   const { size, unitPrice } = resolveSelectedOption(product, selectedSize);
   const detailImage = product.sizes?.find((option) => option.size === size)?.image || product.image;
+  const galleryImages = product.gallery?.length ? product.gallery : [];
+  const mainImage = galleryImages.length ? galleryImages[activeImage] : detailImage;
   const productUrl = `https://sattarimusic.com/product/${product.slug}`;
   const productSchema = {
     '@context': 'https://schema.org',
@@ -64,7 +71,7 @@ export default function ProductDetail() {
   };
 
   function handleAddToCart() {
-    addToCart({ slug: product.slug, size, quantity });
+    addToCart({ slug: product.slug, size, color: selectedColor, quantity });
     setAddedMessage('Added to cart.');
     window.setTimeout(() => setAddedMessage(''), 2200);
   }
@@ -82,9 +89,9 @@ export default function ProductDetail() {
       <div className="container product-detail-shell">
         <div className="product-detail-media-column">
           <div className="product-detail-image">
-            {detailImage ? (
+            {mainImage ? (
               <OptimizedProductImage
-                src={detailImage}
+                src={mainImage}
                 alt={product.name}
                 loading="eager"
                 fetchPriority="high"
@@ -94,6 +101,22 @@ export default function ProductDetail() {
               <div className="product-image-placeholder" />
             )}
           </div>
+          {galleryImages.length > 1 && (
+            <div className="product-gallery-thumbs" aria-label="Product gallery">
+              {galleryImages.map((img, index) => (
+                <button
+                  type="button"
+                  key={img}
+                  className={`product-gallery-thumb${index === activeImage ? ' is-active' : ''}`}
+                  onClick={() => setActiveImage(index)}
+                  aria-label={`View image ${index + 1} of ${galleryImages.length}`}
+                  aria-current={index === activeImage}
+                >
+                  <img src={img} alt="" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
           <div className="product-benefit-grid" aria-label="Product benefits">
             {detailHighlights[product.category].map((point) => (
               <div className="product-benefit" key={point}>
@@ -146,6 +169,25 @@ export default function ProductDetail() {
             <p className="product-price-enhanced">
               <span className="product-price-accent">{formatPrice(product.price)}</span>
             </p>
+          )}
+          {product.colors && (
+            <div className="control-group">
+              <label className="control-label">Color: {selectedColor}</label>
+              <div className="color-swatches" role="group" aria-label="Choose color">
+                {product.colors.map((option) => (
+                  <button
+                    type="button"
+                    key={option.name}
+                    className={`color-swatch${selectedColor === option.name ? ' is-active' : ''}`}
+                    style={{ '--swatch': option.hex }}
+                    onClick={() => setSelectedColor(option.name)}
+                    aria-pressed={selectedColor === option.name}
+                    aria-label={option.name}
+                    title={option.name}
+                  />
+                ))}
+              </div>
+            </div>
           )}
           <div className="control-group">
             <label htmlFor="qty" className="control-label">

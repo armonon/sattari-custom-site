@@ -86,7 +86,12 @@ export async function handler(event) {
         throw new Error(`Price not configured for ${product.slug}`);
       }
 
+      // Only accept a color that the product actually offers.
+      const offeredColors = product.colors?.map((option) => option.name) ?? [];
+      const color = offeredColors.includes(item.color) ? item.color : null;
+
       const quantity = normalizeQuantity(item.quantity);
+      const variant = [size, color].filter(Boolean).join(', ');
 
       return {
         quantity,
@@ -94,12 +99,13 @@ export async function handler(event) {
           currency: 'usd',
           unit_amount: Math.round(unitPrice * 100),
           product_data: {
-            name: size ? `${product.name} (${size})` : product.name,
+            name: variant ? `${product.name} (${variant})` : product.name,
             description: product.description?.slice(0, 500),
             images: buildPublicImageUrl(clientUrl, product.image),
             metadata: {
               slug: product.slug,
               size: size || 'default',
+              color: color || 'default',
             },
           },
         },
