@@ -367,3 +367,12 @@ export function resolveSelectedOption(product, selectedSize) {
 export function formatPrice(value) {
   return `$${Number(value ?? 0).toFixed(2)}`;
 }
+
+// Price label for a product card: a single price, or a low–high range for
+// multi-size products (collapses to one price when every size costs the same).
+export function formatPriceRange(product) {
+  const prices = product.sizes?.length ? product.sizes.map((size) => size.price) : [product.price];
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  return low === high ? formatPrice(low) : `${formatPrice(low)} - ${formatPrice(high)}`;
+}

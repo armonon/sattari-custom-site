@@ -38,6 +38,7 @@ export default function HomePage() {
               <Link to="/shop/cymbals">Cymbals</Link>
               <Link to="/shop/sticks">Sticks</Link>
               <Link to="/shop/violins">Violins</Link>
+              <Link to="/shop/guitar-bass">Guitar &amp; Bass</Link>
               <Link to="/shop/essentials">Practice essentials</Link>
             </div>
 

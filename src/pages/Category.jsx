@@ -1,6 +1,6 @@
 // src/pages/Category.jsx
 import { useParams, Link } from 'react-router-dom';
-import { categories, products, formatPrice } from '../data/catalog';
+import { categories, products, formatPriceRange } from '../data/catalog';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
@@ -94,11 +94,7 @@ export default function Category() {
                       <p className="product-kicker">{category.title}</p>
                       <p className="product-name-enhanced">{product.name}</p>
                       <p className="product-price-enhanced">
-                        <span className="product-price-accent">
-                          {`${formatPrice(product.sizes[0].price)} - ${formatPrice(
-                            product.sizes[product.sizes.length - 1].price
-                          )}`}
-                        </span>
+                        <span className="product-price-accent">{formatPriceRange(product)}</span>
                       </p>
                     </Link>
                     <div className="product-actions">
@@ -141,13 +137,7 @@ export default function Category() {
                     <p className="product-kicker">{category.title}</p>
                     <p className="product-name-enhanced">{product.name}</p>
                     <p className="product-price-enhanced">
-                      <span className="product-price-accent">
-                        {product.sizes
-                          ? `${formatPrice(product.sizes[0].price)} - ${formatPrice(
-                              product.sizes[product.sizes.length - 1].price
-                            )}`
-                          : formatPrice(product.price)}
-                      </span>
+                      <span className="product-price-accent">{formatPriceRange(product)}</span>
                     </p>
                   </Link>
                   <div className="product-actions">
