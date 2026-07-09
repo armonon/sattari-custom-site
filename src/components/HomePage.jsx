@@ -6,8 +6,8 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="Handcrafted Drum Gear"
-        description="Shop handcrafted cymbals, sticks, practice pads, and drum essentials from Sattari Music. California-based expertise with secure online checkout."
+        title="Instruments, Gear & Local Music Services"
+        description="Sattari Music is a home for all musicians — handcrafted cymbals and drums, violins, guitars, bass, and accessories, plus local repairs, rentals, lessons, and studio time in California."
         url="https://sattarimusic.com/"
       />
       <OrganizationSchema />
@@ -15,19 +15,19 @@ export default function HomePage() {
         <div className="container hero-grid hero-premium-grid">
           <div className="hero-copy-panel">
             <div className="hero-kicker-row">
-              <p className="eyebrow">Premium Drum Gear</p>
+              <p className="eyebrow">California instrument craft</p>
               <Link to="/services" className="hero-status-pill hero-status-pill-link">
                 California-crafted support
               </Link>
             </div>
-            <h1>Drums First. Always.</h1>
+            <h1>A home for all musicians.</h1>
             <p className="hero-copy">
-              Handcrafted cymbals, sticks, practice pads, and local drum support — curated for
-              players who want gear that feels ready the first time they sit down.
+              Handcrafted cymbals and drums, violins, guitars, bass, and the accessories that
+              complete your setup — plus local repairs, rentals, lessons, and studio time.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">
-                Shop Drum Gear
+                Shop instruments &amp; gear
               </Link>
               <Link to="/services" className="button button-outline">
                 Services & Rentals
@@ -49,7 +49,7 @@ export default function HomePage() {
                 aria-label="Learn about direct founder insight through local services"
               >
                 <strong>Direct founder insight</strong>
-                <span>Practical recommendations from a drummer-first perspective.</span>
+                <span>Practical recommendations from a maker&apos;s perspective.</span>
               </Link>
               <Link
                 to="/shop"

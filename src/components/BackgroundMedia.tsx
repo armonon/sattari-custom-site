@@ -10,6 +10,9 @@ declare global {
   }
 }
 
+const DAY_VIDEO = '/sattari site/bg.mp4';
+const NIGHT_VIDEO = '/sattari site/INSTRA PATTERN.mp4';
+
 export default function BackgroundMedia() {
   const { mode } = useTheme();
   const isDay = mode === 'day';
@@ -54,22 +57,27 @@ export default function BackgroundMedia() {
       }}
       aria-hidden="true"
     >
-      <div
-        style={{
-          position: 'absolute',
-          inset: '10% 10% auto',
-          height: '60vh',
-          backgroundImage: "url('/sattari site/sattari logo.avif')",
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'min(40vw, 480px)',
-          opacity: isDay ? 0.08 : 0.05,
-          filter: 'blur(2px)',
-        }}
-      />
-      {/* The ambient loop is a night-time flourish; day mode stays clean and bright. */}
-      {showVideo && !isDay ? (
+      {/* Faint watermark — night only; in day the video is the backdrop. */}
+      {!isDay ? (
+        <div
+          style={{
+            position: 'absolute',
+            inset: '10% 10% auto',
+            height: '60vh',
+            backgroundImage: "url('/sattari site/sattari logo.avif')",
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'min(40vw, 480px)',
+            opacity: 0.05,
+            filter: 'blur(2px)',
+          }}
+        />
+      ) : null}
+      {/* Ambient loop: bg.mp4 by day, the pattern loop by night. Keyed by mode
+          so the element reloads the correct source when the theme flips. */}
+      {showVideo ? (
         <video
+          key={mode}
           autoPlay
           muted
           loop
@@ -81,21 +89,23 @@ export default function BackgroundMedia() {
             height: '100vh',
             objectFit: 'cover',
             display: 'block',
-            background: '#000',
-            filter: 'blur(8px)',
-            opacity: 0.42,
+            background: isDay ? '#f6f1e6' : '#000',
+            filter: isDay ? 'blur(10px) saturate(1.05)' : 'blur(8px)',
+            opacity: isDay ? 0.92 : 0.42,
           }}
         >
-          <source src="/sattari site/INSTRA PATTERN.mp4" type="video/mp4" />
+          <source src={isDay ? DAY_VIDEO : NIGHT_VIDEO} type="video/mp4" />
         </video>
       ) : null}
+      {/* Frosted "gaussian glass" over the video so content stays readable. */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           background: isDay
-            ? 'linear-gradient(180deg, rgba(255,255,255,0.1), rgba(246,241,230,0.35))'
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.42), rgba(246,241,230,0.55))'
             : 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45))',
+          backdropFilter: isDay ? 'blur(8px)' : undefined,
         }}
       />
     </div>

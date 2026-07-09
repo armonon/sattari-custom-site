@@ -103,7 +103,12 @@ export const products = [
     description:
       'SATTARI Cymbal Felts in an all new stunning red. Protect your cymbals and improve tone.',
     price: 6.99,
-    image: '/sattari site/cymbal.png',
+    image: '/sattari site/drums/cymbal-felts.jpg',
+    gallery: [
+      '/sattari site/drums/cymbal-felts.jpg',
+      '/sattari site/drums/cymbal-felts-2.jpg',
+      '/sattari site/drums/cymbal-felts-3.jpg',
+    ],
     specs: [],
   },
   {
