@@ -268,3 +268,48 @@ body {
   background: rgba(154, 122, 46, 0.07);
   border-color: rgba(154, 122, 46, 0.18);
 }
+
+/* ---- Service inquiry form: lighter, cleaner restyle ---- */
+.service-form-glass {
+  padding: 1.9rem 1.85rem;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.14);
+  border-color: rgba(214, 179, 109, 0.14);
+}
+
+.service-form-glass h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-bottom: 0.4rem;
+}
+
+.service-form-glass .form-helper {
+  margin-bottom: 1.25rem;
+  font-size: 0.94rem;
+}
+
+.service-form-glass label {
+  margin-bottom: 0.95rem;
+}
+
+.service-form-glass span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.service-form-glass input,
+.service-form-glass select,
+.service-form-glass textarea {
+  padding: 0.72rem 0.9rem;
+  border-radius: 10px;
+}
+
+.service-form-glass button {
+  margin-top: 0.5rem;
+}
+
+[data-theme='day'] .service-form-glass {
+  box-shadow: 0 12px 34px rgba(60, 50, 30, 0.12);
+}
