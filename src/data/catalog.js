@@ -20,6 +20,12 @@ export const categories = [
       'Handcrafted SATTARI acoustic, electric, and silent violins — individually fitted and tuned in California.',
     key: 'violins',
   },
+  {
+    title: 'Guitar & Bass',
+    description:
+      'Electric and acoustic guitars, bass, and guitar accessories — set up and shipped from California.',
+    key: 'guitar-bass',
+  },
 ];
 
 export const products = [
@@ -98,19 +104,6 @@ export const products = [
       'SATTARI Cymbal Felts in an all new stunning red. Protect your cymbals and improve tone.',
     price: 6.99,
     image: '/sattari site/cymbal.png',
-    specs: [],
-  },
-  {
-    id: 'sattari-drummer-practice-pad',
-    name: 'SATTARI Drummer Practice Pad',
-    slug: 'sattari-drummer-practice-pad',
-    category: 'essentials',
-    description:
-      'Practice anytime, anywhere—SATTARI practice pads provide the best substitute to acoustic drums. Players can practice rudiments, paradiddles, or just drum along to songs and beats they enjoy—without disturbing anyone. Portable and quiet, works on any surface including carpet, table, lap, or inside a standard snare basket.',
-    sizes: [
-      { size: '8"', price: 15, image: '/sattari site/drumpad.png' },
-      { size: '12"', price: 25, image: '/sattari site/drumpad.png' },
-    ],
     specs: [],
   },
   {
@@ -230,6 +223,122 @@ export const products = [
       '/sattari site/violins/brescia-acoustic-8.jpg',
       '/sattari site/violins/brescia-acoustic-9.jpg',
       '/sattari site/violins/brescia-acoustic-10.jpg',
+    ],
+    specs: [],
+  },
+  {
+    id: 'five-string-bass-guitar',
+    name: '5 String Bass Guitar',
+    slug: 'five-string-bass-guitar',
+    category: 'guitar-bass',
+    description:
+      'Five-string electric bass — an excellent wooden instrument with a glossy finish. Available in store.',
+    price: 280.0,
+    image: '/sattari site/guitars/bass-guitar.jpg',
+    gallery: [
+      '/sattari site/guitars/bass-guitar.jpg',
+      '/sattari site/guitars/bass-guitar-2.jpg',
+      '/sattari site/guitars/bass-guitar-3.jpg',
+    ],
+    specs: [],
+  },
+  {
+    id: 'classic-nylon-string-guitar',
+    name: 'Classic Nylon String Guitar',
+    slug: 'classic-nylon-string-guitar',
+    category: 'guitar-bass',
+    description:
+      'A 40-inch classical guitar with a spruce top, sapele back and sides, and a rosewood bridge and fingerboard.',
+    price: 280.0,
+    image: '/sattari site/guitars/nylon-guitar.jpg',
+    gallery: [
+      '/sattari site/guitars/nylon-guitar.jpg',
+      '/sattari site/guitars/nylon-guitar-2.jpg',
+      '/sattari site/guitars/nylon-guitar-3.jpg',
+      '/sattari site/guitars/nylon-guitar-4.jpg',
+      '/sattari site/guitars/nylon-guitar-5.jpg',
+      '/sattari site/guitars/nylon-guitar-6.jpg',
+      '/sattari site/guitars/nylon-guitar-7.jpg',
+    ],
+    specs: [],
+  },
+  {
+    id: 'violin-strings',
+    name: 'Violin Strings',
+    slug: 'violin-strings',
+    category: 'violins',
+    description: 'Ball-end violin strings that fit both 4/4 and 3/4 violins.',
+    price: 10.0,
+    image: '/sattari site/violins/violin-strings.jpg',
+    gallery: [
+      '/sattari site/violins/violin-strings.jpg',
+      '/sattari site/violins/violin-strings-2.jpg',
+      '/sattari site/violins/violin-strings-3.jpg',
+    ],
+    specs: [],
+  },
+  {
+    id: 'sattari-darbuka',
+    name: 'SATTARI Darbuka',
+    slug: 'sattari-darbuka',
+    category: 'essentials',
+    description:
+      'A lightweight, clear, and tight-sounding hand drum — known in some parts of the world as the dumbek. Perfect for parties, live events, and family gatherings, and a wonderful gift for any musician.',
+    price: 69.99,
+    image: '/sattari site/drums/darbuka.jpg',
+    gallery: [
+      '/sattari site/drums/darbuka.jpg',
+      '/sattari site/drums/darbuka-2.jpg',
+      '/sattari site/drums/darbuka-3.jpg',
+    ],
+    specs: [],
+  },
+  {
+    id: 'sattari-practice-pad-12',
+    name: '12" Drummer Practice Pad',
+    slug: 'sattari-practice-pad-12',
+    category: 'essentials',
+    description:
+      'A 12-inch SATTARI practice pad — the best substitute for acoustic drums. Work on rudiments and paradiddles or play along to the beats you enjoy without disturbing anyone. Portable and quiet; works on any surface including carpet, table, lap, or inside a standard snare basket.',
+    price: 25.0,
+    image: '/sattari site/drums/practice-pad-12.jpg',
+    gallery: [
+      '/sattari site/drums/practice-pad-12.jpg',
+      '/sattari site/drums/practice-pad-12-2.jpg',
+      '/sattari site/drums/practice-pad-12-3.jpg',
+      '/sattari site/drums/practice-pad-12-4.jpg',
+      '/sattari site/drums/practice-pad-12-5.jpg',
+      '/sattari site/drums/practice-pad-12-6.jpg',
+    ],
+    colors: [
+      { name: 'Black', hex: '#111111' },
+      { name: 'Grey', hex: '#808080' },
+      { name: 'Green', hex: '#2e7d32' },
+    ],
+    specs: [],
+  },
+  {
+    id: 'sattari-practice-pad-8',
+    name: '8" Drummer Practice Pad',
+    slug: 'sattari-practice-pad-8',
+    category: 'essentials',
+    description:
+      'An 8-inch SATTARI practice pad — the best substitute for acoustic drums. Work on rudiments and paradiddles or play along to the beats you enjoy without disturbing anyone. Portable and quiet; works on any surface including carpet, table, lap, or inside a standard snare basket.',
+    price: 15.0,
+    image: '/sattari site/drums/practice-pad-8.jpg',
+    gallery: [
+      '/sattari site/drums/practice-pad-8.jpg',
+      '/sattari site/drums/practice-pad-8-2.jpg',
+      '/sattari site/drums/practice-pad-8-3.jpg',
+      '/sattari site/drums/practice-pad-8-4.jpg',
+      '/sattari site/drums/practice-pad-8-5.jpg',
+      '/sattari site/drums/practice-pad-8-6.jpg',
+      '/sattari site/drums/practice-pad-8-7.jpg',
+    ],
+    colors: [
+      { name: 'Grey', hex: '#808080' },
+      { name: 'Green', hex: '#2e7d32' },
+      { name: 'Blue', hex: '#1f49d2' },
     ],
     specs: [],
   },

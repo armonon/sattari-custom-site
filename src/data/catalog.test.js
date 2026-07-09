@@ -10,11 +10,11 @@ describe('catalog utilities', () => {
   });
 
   it('falls back to the first size for sized products', () => {
-    const practicePad = getProductBySlug('sattari-drummer-practice-pad');
+    const effectCymbal = getProductBySlug('sattari-effect-cymbal');
 
-    expect(resolveSelectedOption(practicePad, null)).toEqual({
-      size: '8"',
-      unitPrice: 15,
+    expect(resolveSelectedOption(effectCymbal, null)).toEqual({
+      size: '15"',
+      unitPrice: 100,
     });
   });
 

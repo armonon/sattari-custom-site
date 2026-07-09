@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  category: 'cymbals' | 'sticks' | 'essentials' | 'violins';
+  category: 'cymbals' | 'sticks' | 'essentials' | 'violins' | 'guitar-bass';
   description: string;
   price?: number;
   sizes?: Array<{

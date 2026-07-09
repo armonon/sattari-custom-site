@@ -11,6 +11,7 @@ const detailHighlights = {
   sticks: ['Consistent balance', 'Built for repeat sessions', 'Reliable feel across dynamics'],
   essentials: ['Portable and practical', 'Easy everyday setup', 'Made to keep you playing'],
   violins: ['Hand-carved tonewoods', 'Workshop-fitted and tuned', 'California made'],
+  'guitar-bass': ['Set up and ready to play', 'Ships from California', 'Electric or acoustic'],
 };
 
 export default function ProductDetail() {

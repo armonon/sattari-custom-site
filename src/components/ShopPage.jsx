@@ -12,6 +12,7 @@ const shopMoreDescriptions = {
   essentials: 'Find practice pads, felts, keys, and must-have accessories for your kit.',
   violins:
     'Browse handcrafted acoustic, electric, and silent violins, fitted and tuned in California.',
+  'guitar-bass': 'Electric and acoustic guitars, bass, and guitar accessories from Sattari.',
 };
 
 const productSellingPoints = {
@@ -19,6 +20,7 @@ const productSellingPoints = {
   sticks: 'Balanced feel, durable wood selection, and reliable rebound.',
   essentials: 'Built for daily practice, setup protection, and grab-and-go sessions.',
   violins: 'Hand-carved tonewoods, workshop-fitted and tuned for expressive, reliable play.',
+  'guitar-bass': 'Set up and ready to play, shipped from California.',
 };
 
 const trustPoints = [
@@ -32,6 +34,7 @@ const categorySpotlights = {
   sticks: 'Balanced rebound and dependable feel for repeat sessions.',
   essentials: 'Purpose-built accessories for practice, setup, and carry.',
   violins: 'Acoustic warmth, electric versatility, and silent practice — all handcrafted.',
+  'guitar-bass': 'Electric and acoustic tone, set up and ready to play.',
 };
 
 // Some products carry their image only on a size variant (e.g. the practice
