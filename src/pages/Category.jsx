@@ -1,6 +1,6 @@
 // src/pages/Category.jsx
 import { useParams, Link } from 'react-router-dom';
-import { categories, products, formatPriceRange } from '../data/catalog';
+import { categories, products, formatPriceRange, categoryTitle } from '../data/catalog';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
@@ -11,6 +11,14 @@ const categoryHighlights = {
   essentials: ['Practice-ready', 'Compact carry', 'Built for consistency'],
   violins: ['Hand-carved tonewoods', 'Workshop-fitted & tuned', 'Acoustic, electric & silent'],
   'guitar-bass': ['Set up and ready', 'Ships from California', 'Electric & acoustic'],
+  all: ['Instruments & accessories', 'Secure checkout', 'Ships from California'],
+};
+
+// Synthetic category for the /shop/all page (lists every product).
+const ALL_CATEGORY = {
+  key: 'all',
+  title: 'Shop all',
+  description: 'Browse the full Sattari catalog in one place.',
 };
 
 // Fall back to a size-variant image when the product has no top-level image,
@@ -20,8 +28,9 @@ const resolveProductImage = (product) =>
 
 export default function Category() {
   const { categoryKey } = useParams();
-  const category = categories.find((c) => c.key === categoryKey);
-  const filtered = products.filter((p) => p.category === categoryKey);
+  const isAll = categoryKey === 'all';
+  const category = isAll ? ALL_CATEGORY : categories.find((c) => c.key === categoryKey);
+  const filtered = isAll ? products : products.filter((p) => p.category === categoryKey);
 
   const buildProductPath = (product) =>
     `/product/${product.slug ? product.slug : product.name.replace(/\s+/g, '-').toLowerCase()}`;
@@ -54,7 +63,7 @@ export default function Category() {
   return (
     <section className="section page-header-offset">
       <SEO
-        title={`${category.title} Drum Gear`}
+        title={isAll ? 'Shop All Products' : `${category.title} Drum Gear`}
         description={category.description}
         url={`https://sattarimusic.com/shop/${category.key}`}
       />
@@ -91,7 +100,7 @@ export default function Category() {
                       className="product-copy-link"
                       aria-label={`View details for ${product.name}`}
                     >
-                      <p className="product-kicker">{category.title}</p>
+                      <p className="product-kicker">{categoryTitle(product.category)}</p>
                       <p className="product-name-enhanced">{product.name}</p>
                       <p className="product-price-enhanced">
                         <span className="product-price-accent">{formatPriceRange(product)}</span>
@@ -134,7 +143,7 @@ export default function Category() {
                     className="product-copy-link"
                     aria-label={`View details for ${product.name}`}
                   >
-                    <p className="product-kicker">{category.title}</p>
+                    <p className="product-kicker">{categoryTitle(product.category)}</p>
                     <p className="product-name-enhanced">{product.name}</p>
                     <p className="product-price-enhanced">
                       <span className="product-price-accent">{formatPriceRange(product)}</span>

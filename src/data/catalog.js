@@ -482,6 +482,12 @@ export function formatPrice(value) {
   return `$${Number(value ?? 0).toFixed(2)}`;
 }
 
+// Display title for a category key (used for card kickers, the "Shop all"
+// page, etc.). Falls back to a neutral label for unknown keys.
+export function categoryTitle(key) {
+  return categories.find((category) => category.key === key)?.title || 'Shop';
+}
+
 // Price label for a product card: a single price, or a low–high range for
 // multi-size products (collapses to one price when every size costs the same).
 export function formatPriceRange(product) {

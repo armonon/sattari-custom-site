@@ -45,8 +45,6 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-const categoryTitle = (key) => categories.find((c) => c.key === key)?.title || 'Shop';
-
 function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuickAdd }) {
   const path = buildProductPath(product);
   const image = resolveProductImage(product);
@@ -170,27 +168,22 @@ export default function ShopPage() {
         ))}
       </div>
 
-      <section className="container shop-collection-block" aria-label="All products">
-        <div className="shop-collection-header">
+      <div className="container">
+        <Link
+          to="/shop/all"
+          className="shop-all-banner interactive-card-link"
+          aria-label="Shop all products"
+        >
           <div>
             <p className="card-kicker">Everything in the shop</p>
             <h2>Shop all</h2>
+            <p className="shop-all-banner-copy">
+              Browse the full Sattari catalog — {products.length} products in one place.
+            </p>
           </div>
-          <p>Browse the full Sattari catalog in one place.</p>
-        </div>
-        <div className="product-grid">
-          {products.map((product) => (
-            <ProductCard
-              key={product.slug}
-              product={product}
-              kicker={categoryTitle(product.category)}
-              sellingPoint={productSellingPoints[product.category]}
-              recentlyAddedSlug={recentlyAddedSlug}
-              onQuickAdd={handleQuickAdd}
-            />
-          ))}
-        </div>
-      </section>
+          <span className="btn-secondary-detail">Browse all products</span>
+        </Link>
+      </div>
 
       {categories.map((category) => {
         const filtered = products.filter((p) => p.category === category.key).slice(0, 2);
