@@ -89,12 +89,13 @@ export default function BackgroundMedia() {
             height: '100vh',
             objectFit: 'cover',
             display: 'block',
-            // Overscan so the soft (blurred) edges and any source letterboxing
-            // are clipped by the container instead of showing a border.
-            transform: 'scale(1.15)',
+            // Overscan generously so the blur's soft (transparent) edges are
+            // always clipped well outside the viewport — no border at any size.
+            transform: 'scale(1.3)',
+            transformOrigin: 'center',
             background: isDay ? '#f6f1e6' : '#000',
-            filter: isDay ? 'blur(10px) saturate(1.05)' : 'blur(8px)',
-            opacity: isDay ? 0.92 : 0.42,
+            filter: isDay ? 'blur(14px) saturate(1.05)' : 'blur(8px)',
+            opacity: isDay ? 0.9 : 0.42,
           }}
         >
           <source src={isDay ? DAY_VIDEO : NIGHT_VIDEO} type="video/mp4" />
@@ -106,9 +107,8 @@ export default function BackgroundMedia() {
           position: 'absolute',
           inset: 0,
           background: isDay
-            ? 'linear-gradient(180deg, rgba(255,255,255,0.42), rgba(246,241,230,0.55))'
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.5), rgba(246,241,230,0.62))'
             : 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45))',
-          backdropFilter: isDay ? 'blur(8px)' : undefined,
         }}
       />
     </div>
