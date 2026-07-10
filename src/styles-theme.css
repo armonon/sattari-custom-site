@@ -404,3 +404,30 @@ body {
     margin: 2rem auto;
   }
 }
+
+/* Simple service list inside the "What to expect" card. */
+.services-highlight-list {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.services-highlight-list li {
+  position: relative;
+  padding-left: 1.4rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.services-highlight-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}

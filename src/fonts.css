@@ -1,0 +1,19 @@
+/* Self-hosted fonts (latin subset) — replaces the third-party Google Fonts
+   request so the site makes no external font calls (privacy + performance).
+   Inter and Sora are both variable fonts, so one file per family covers every
+   weight the site uses. Files live in public/fonts and are served at /fonts. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/sora.woff2') format('woff2');
+}

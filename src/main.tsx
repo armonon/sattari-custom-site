@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import * as Sentry from '@sentry/react';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import './fonts.css';
 import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';

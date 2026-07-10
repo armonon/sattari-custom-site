@@ -121,26 +121,17 @@ export default function ServicesPage() {
             aria-label="Start a local service inquiry"
           >
             <p className="card-kicker">What to expect</p>
-            <h2>Clear local help without the guesswork</h2>
+            <h2>Local help, without the guesswork</h2>
             <p>
-              You’ll get a simple inquiry flow, a clear response, and support that focuses on what
-              will help you get back to playing, rehearsing, teaching, recording, or performing
-              faster.
+              Tell us what you need and when, and you’ll get a clear response with honest guidance
+              on the right next step.
             </p>
-            <div className="services-stats">
-              <div>
-                <strong>4 service lanes</strong>
-                <span>repairs, rentals, space, teachers/classes</span>
-              </div>
-              <div>
-                <strong>1 simple inquiry</strong>
-                <span>tell us what you need and when</span>
-              </div>
-              <div>
-                <strong>Fast clarity</strong>
-                <span>know the next step before you book</span>
-              </div>
-            </div>
+            <ul className="services-highlight-list">
+              <li>Instrument &amp; drum repairs</li>
+              <li>Rentals &amp; rehearsal space</li>
+              <li>Recording studio time</li>
+              <li>Teachers &amp; classes</li>
+            </ul>
           </a>
         </div>
       </div>
