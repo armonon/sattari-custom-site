@@ -2604,3 +2604,160 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================================
+   LOCAL SEO PAGES — breadcrumb, FAQ accordion, sibling cross-links
+   Token-driven so it adapts to day and night.
+   ===================================================================== */
+.local-seo-breadcrumb {
+  margin-bottom: 1.3rem;
+}
+
+.local-seo-breadcrumb ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.local-seo-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.local-seo-breadcrumb a {
+  color: var(--muted);
+  transition: color 160ms ease;
+}
+
+.local-seo-breadcrumb a:hover {
+  color: var(--accent);
+}
+
+.local-seo-breadcrumb [aria-current='page'] {
+  color: var(--text);
+}
+
+.crumb-sep {
+  color: var(--line-strong);
+}
+
+.local-seo-faq {
+  margin-top: 3rem;
+}
+
+.local-seo-faq .section-header {
+  margin-bottom: 1.4rem;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 820px;
+}
+
+.faq-item {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-premium);
+  overflow: hidden;
+  transition: border-color 180ms ease;
+}
+
+.faq-item[open] {
+  border-color: rgba(214, 179, 109, 0.32);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-question::after {
+  content: '+';
+  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.faq-item[open] .faq-question::after {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  margin: 0;
+  padding: 0 1.2rem 1.15rem;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 68ch;
+}
+
+.local-seo-crosslinks {
+  margin-top: 3rem;
+}
+
+.local-seo-crosslinks .section-header {
+  margin-bottom: 1.4rem;
+}
+
+.local-seo-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.9rem;
+}
+
+.local-seo-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-premium);
+  color: var(--text);
+  font-weight: 600;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.local-seo-link-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(214, 179, 109, 0.4);
+  box-shadow: var(--shadow);
+}
+
+.local-seo-link-arrow {
+  color: var(--accent);
+  transition: transform 180ms ease;
+}
+
+.local-seo-link-card:hover .local-seo-link-arrow {
+  transform: translateX(4px);
+}
+
+.local-seo-nap {
+  margin-top: 1.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

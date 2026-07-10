@@ -45,6 +45,20 @@ const pages = {
     secondaryCta: { label: 'Request local support', href: '#local-inquiry' },
     formService: 'instrument-sales',
     formSource: 'Los Angeles music store SEO page',
+    faqs: [
+      {
+        q: 'Where is Sattari Music located?',
+        a: 'Sattari Music is based in Woodland Hills and serves Los Angeles and the greater San Fernando Valley. You can visit the shop in person or start any request online.',
+      },
+      {
+        q: 'What can I do at a local music store like Sattari?',
+        a: 'Buy instruments and accessories, get gear repaired or set up, arrange rentals, book rehearsal or studio time, and connect with teachers and classes — all through one local hub.',
+      },
+      {
+        q: 'Do I have to buy online, or can I ask first?',
+        a: 'You can ask first. Send a request describing what you need and you’ll get a real response with honest guidance before you commit to anything.',
+      },
+    ],
   },
   instruments: {
     eyebrow: 'Instruments in Los Angeles',
@@ -74,6 +88,20 @@ const pages = {
     secondaryCta: { label: 'Ask about an instrument', href: '#local-inquiry' },
     formService: 'instrument-sales',
     formSource: 'Instruments Los Angeles SEO page',
+    faqs: [
+      {
+        q: 'What instruments does Sattari carry?',
+        a: 'The catalog centers on handcrafted drums, cymbals, and percussion, plus violins, guitars, and bass, with more available by request. Ask about anything you don’t see listed.',
+      },
+      {
+        q: 'Can you help me source a specific or rare instrument?',
+        a: 'Yes. If it’s not in the current catalog, send a request and we’ll help you track down the right instrument or a suitable alternative.',
+      },
+      {
+        q: 'Do you help students and beginners choose gear?',
+        a: 'Absolutely. Tell us your level and goals and we’ll point you to gear that fits, along with setup, lessons, or rental options if they’d help.',
+      },
+    ],
   },
   accessories: {
     eyebrow: 'Music accessories in Los Angeles',
@@ -103,6 +131,20 @@ const pages = {
     secondaryCta: { label: 'Ask about accessories', href: '#local-inquiry' },
     formService: 'accessories',
     formSource: 'Accessories Los Angeles SEO page',
+    faqs: [
+      {
+        q: 'What accessories can I get from Sattari?',
+        a: 'Drumsticks, practice pads, cymbal felts, hardware, cases, and everyday essentials — plus replacement parts by request.',
+      },
+      {
+        q: 'I broke a part before a session — can you help fast?',
+        a: 'Send a request with what you need and your timing, and we’ll tell you what’s available and the quickest way to get it.',
+      },
+      {
+        q: 'Can you recommend accessories for my setup?',
+        a: 'Yes. Describe your kit or instrument and how you play, and we’ll suggest what actually fits instead of a generic list.',
+      },
+    ],
   },
   'instrument-rentals': {
     eyebrow: 'Instrument rentals in Los Angeles',
@@ -140,6 +182,20 @@ const pages = {
     secondaryCta: { label: 'View services', to: '/services' },
     formService: 'rentals',
     formSource: 'Instrument rentals SEO page',
+    faqs: [
+      {
+        q: 'What can I rent from Sattari?',
+        a: 'Instruments and musician gear for rehearsals, sessions, gigs, classes, and events. Send a request and we’ll confirm what’s available for your dates.',
+      },
+      {
+        q: 'How do rentals work?',
+        a: 'Tell us the gear, the dates, and what it’s for. We’ll respond with availability and next steps — no long-term commitment required.',
+      },
+      {
+        q: 'Do you rent for one-off events or single sessions?',
+        a: 'Yes. Short-term rentals for a single session or event are welcome, with support if the gear needs to be performance-ready.',
+      },
+    ],
   },
   'rehearsal-space': {
     eyebrow: 'Rehearsal space in Los Angeles',
@@ -179,6 +235,20 @@ const pages = {
     },
     formService: 'rehearsal',
     formSource: 'Rehearsal space SEO page',
+    faqs: [
+      {
+        q: 'Who is the rehearsal space for?',
+        a: 'Bands, drummers, solo players, teachers, and students who need a focused local place to practice, prep for shows, or run creative sessions.',
+      },
+      {
+        q: 'How do I book rehearsal time?',
+        a: 'Send a request with your timing and setup needs and we’ll confirm availability and the details before you lock it in.',
+      },
+      {
+        q: 'Can I also get gear or studio time through the same request?',
+        a: 'Yes. Rehearsal, rental studio time, gear, rentals, and repairs all connect through the same local hub.',
+      },
+    ],
   },
   'recording-studio': {
     eyebrow: 'Rental studio in Los Angeles',
@@ -211,6 +281,20 @@ const pages = {
     },
     formService: 'studio',
     formSource: 'Rental studio SEO page',
+    faqs: [
+      {
+        q: 'What can I use the rental studio for?',
+        a: 'Recording, content creation, lessons, rehearsals, and focused creative projects for musicians, teachers, and producers.',
+      },
+      {
+        q: 'How do I request studio time?',
+        a: 'Send a request describing your project and timing and we’ll respond with availability and setup details.',
+      },
+      {
+        q: 'Do you support teaching and content, not just recording?',
+        a: 'Yes. The space suits lessons, classes, and content work as well as music recording.',
+      },
+    ],
   },
   'music-lessons': {
     eyebrow: 'Music teachers and classes in Los Angeles',
@@ -240,8 +324,46 @@ const pages = {
     secondaryCta: { label: 'View local services', to: '/services' },
     formService: 'lessons',
     formSource: 'Music lessons SEO page',
+    faqs: [
+      {
+        q: 'What lessons and classes does Sattari offer?',
+        a: 'Teacher connections and classes for drums, rhythm, and instrument fundamentals — from first-time beginners to more advanced players.',
+      },
+      {
+        q: 'I’m a total beginner — is that okay?',
+        a: 'Definitely. Tell us your goals and your instrument and we’ll recommend the right starting point.',
+      },
+      {
+        q: 'Can lessons connect to gear and rentals?',
+        a: 'Yes. Lessons tie into instrument guidance, accessories, rentals, and practice support through the same local flow.',
+      },
+    ],
   },
 } as const;
+
+const ORIGIN = 'https://sattarimusic.com';
+const SHOP_NAP =
+  'SATTARI Musical Instruments, 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364';
+
+const toPath = (url: string) => url.replace(ORIGIN, '');
+
+// Sibling local pages, for cross-linking (internal-link + navigation value).
+const LOCAL_PAGE_LINKS = (Object.keys(pages) as PageKey[]).map((key) => ({
+  key,
+  label: pages[key].eyebrow,
+  path: toPath(pages[key].url),
+}));
+
+// Home → (Shop | Services) → current — drives both the breadcrumb UI and schema.
+function getBreadcrumbs(pageKey: PageKey): { label: string; to?: string }[] {
+  const page = pages[pageKey];
+  const path = toPath(page.url);
+  const crumbs: { label: string; to?: string }[] = [{ label: 'Home', to: '/' }];
+  if (path.startsWith('/shop')) crumbs.push({ label: 'Shop', to: '/shop' });
+  else if (path.startsWith('/services')) crumbs.push({ label: 'Local services', to: '/services' });
+  crumbs.push({ label: page.eyebrow });
+  return crumbs;
+}
 
 function CtaLink({
   cta,
@@ -267,6 +389,7 @@ function CtaLink({
 
 export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
   const page = pages[pageKey];
+  const breadcrumbs = getBreadcrumbs(pageKey);
 
   return (
     <section className="section page-header-offset services-shell local-seo-shell">
@@ -286,6 +409,48 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           },
         }}
       />
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: page.faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.q,
+            acceptedAnswer: { '@type': 'Answer', text: faq.a },
+          })),
+        }}
+      />
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: breadcrumbs.map((crumb, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: crumb.label,
+            item: crumb.to ? `${ORIGIN}${crumb.to === '/' ? '' : crumb.to}` : page.url,
+          })),
+        }}
+      />
+
+      <nav className="container local-seo-breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          {breadcrumbs.map((crumb, index) => (
+            <li key={crumb.label}>
+              {crumb.to ? (
+                <Link to={crumb.to}>{crumb.label}</Link>
+              ) : (
+                <span aria-current="page">{crumb.label}</span>
+              )}
+              {index < breadcrumbs.length - 1 ? (
+                <span className="crumb-sep" aria-hidden="true">
+                  /
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </nav>
 
       <div className="container repair-hero local-seo-hero">
         <div className="repair-hero-copy">
@@ -335,6 +500,21 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         </article>
       </div>
 
+      <div className="container local-seo-faq">
+        <div className="section-header narrow">
+          <p className="eyebrow">Common questions</p>
+          <h2>Local questions, answered</h2>
+        </div>
+        <div className="faq-list">
+          {page.faqs.map((faq) => (
+            <details className="faq-item" key={faq.q}>
+              <summary className="faq-question">{faq.q}</summary>
+              <p className="faq-answer">{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+
       <div className="container service-form-shell" id="local-inquiry">
         <div className="service-form-copy section-header narrow">
           <p className="eyebrow">Start the conversation</p>
@@ -345,6 +525,30 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           </p>
         </div>
         <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
+      </div>
+
+      <div className="container local-seo-crosslinks">
+        <div className="section-header narrow">
+          <p className="eyebrow">More local pages</p>
+          <h2>Explore more Sattari local services</h2>
+        </div>
+        <div className="local-seo-link-grid">
+          {LOCAL_PAGE_LINKS.filter((link) => link.key !== pageKey).map((link) => (
+            <Link
+              className="local-seo-link-card interactive-card-link"
+              to={link.path}
+              key={link.key}
+            >
+              <span className="local-seo-link-label">{link.label}</span>
+              <span className="local-seo-link-arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+          ))}
+        </div>
+        <p className="local-seo-nap">
+          Serving Los Angeles &amp; the San Fernando Valley — {SHOP_NAP}.
+        </p>
       </div>
     </section>
   );
