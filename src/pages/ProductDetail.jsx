@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products, formatPrice, resolveSelectedOption } from '../data/catalog';
+import {
+  products,
+  formatPrice,
+  formatPriceRange,
+  resolveSelectedOption,
+  categoryTitle,
+} from '../data/catalog';
 import { useCart } from '../context/CartContext';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
@@ -27,6 +33,18 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const { addToCart } = useCart();
+
+  // Related items: same category first, then fill from the rest of the catalog.
+  const related = useMemo(() => {
+    if (!product) return [];
+    const sameCategory = products.filter(
+      (p) => p.category === product.category && p.slug !== product.slug
+    );
+    const others = products.filter(
+      (p) => p.category !== product.category && p.slug !== product.slug
+    );
+    return [...sameCategory, ...others].slice(0, 4);
+  }, [product]);
 
   if (!product) {
     return (
@@ -257,6 +275,46 @@ export default function ProductDetail() {
           )}
         </div>
       </div>
+      {related.length > 0 ? (
+        <div className="container related-products">
+          <div className="related-products-header">
+            <p className="card-kicker">More from Sattari</p>
+            <h2>You might also like</h2>
+          </div>
+          <div className="product-grid related-grid">
+            {related.map((item) => {
+              const image = item.image || item.sizes?.find((s) => s.image)?.image || '';
+              return (
+                <Link
+                  to={`/product/${item.slug}`}
+                  className="related-card interactive-card-link"
+                  key={item.slug}
+                >
+                  <div className="related-card-media">
+                    {image ? (
+                      <OptimizedProductImage
+                        src={image}
+                        alt={item.name}
+                        className="product-image"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                      />
+                    ) : (
+                      <div className="product-image-placeholder" />
+                    )}
+                  </div>
+                  <div className="related-card-body">
+                    <p className="related-card-kicker">{categoryTitle(item.category)}</p>
+                    <p className="related-card-name">{item.name}</p>
+                    <p className="product-price-accent">{formatPriceRange(item)}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       <div className="container shop-back-link-row">
         <Link to="/shop" className="btn-details">
           Back to Shop

@@ -501,3 +501,11 @@ export function formatPriceRange(product) {
   const high = Math.max(...prices);
   return low === high ? formatPrice(low) : `${formatPrice(low)} - ${formatPrice(high)}`;
 }
+
+// Lowest numeric price for a product (the size floor for multi-size items).
+// Used for price sorting in the shop.
+export function getMinPrice(product) {
+  return product.sizes?.length
+    ? Math.min(...product.sizes.map((size) => size.price))
+    : product.price;
+}

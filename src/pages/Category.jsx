@@ -1,9 +1,31 @@
 // src/pages/Category.jsx
+import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { categories, products, formatPriceRange, categoryTitle } from '../data/catalog';
+import {
+  categories,
+  products,
+  formatPriceRange,
+  categoryTitle,
+  getMinPrice,
+} from '../data/catalog';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
+
+const SORT_OPTIONS = [
+  { value: 'featured', label: 'Featured' },
+  { value: 'price-asc', label: 'Price: Low to High' },
+  { value: 'price-desc', label: 'Price: High to Low' },
+  { value: 'name', label: 'Name: A–Z' },
+];
+
+function sortProducts(list, sort) {
+  const sorted = [...list];
+  if (sort === 'price-asc') sorted.sort((a, b) => getMinPrice(a) - getMinPrice(b));
+  else if (sort === 'price-desc') sorted.sort((a, b) => getMinPrice(b) - getMinPrice(a));
+  else if (sort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name));
+  return sorted;
+}
 
 const categoryHighlights = {
   cymbals: ['Handcrafted tone', 'Stage-ready projection', 'Distinctive response'],
@@ -31,6 +53,16 @@ export default function Category() {
   const isAll = categoryKey === 'all';
   const category = isAll ? ALL_CATEGORY : categories.find((c) => c.key === categoryKey);
   const filtered = isAll ? products : products.filter((p) => p.category === categoryKey);
+
+  // On the "all" view, chips filter by category; sort applies everywhere.
+  const [activeCat, setActiveCat] = useState('all');
+  const [sort, setSort] = useState('featured');
+
+  const visible = useMemo(() => {
+    const scoped =
+      isAll && activeCat !== 'all' ? filtered.filter((p) => p.category === activeCat) : filtered;
+    return sortProducts(scoped, sort);
+  }, [filtered, isAll, activeCat, sort]);
 
   const buildProductPath = (product) =>
     `/product/${product.slug ? product.slug : product.name.replace(/\s+/g, '-').toLowerCase()}`;
@@ -80,8 +112,63 @@ export default function Category() {
           ))}
         </div>
       </div>
+      <div className="container shop-toolbar">
+        {isAll && (
+          <div className="shop-filter-chips" role="group" aria-label="Filter by category">
+            <button
+              type="button"
+              className={`shop-filter-chip${activeCat === 'all' ? ' is-active' : ''}`}
+              onClick={() => setActiveCat('all')}
+              aria-pressed={activeCat === 'all'}
+            >
+              All
+            </button>
+            {categories.map((c) => (
+              <button
+                type="button"
+                key={c.key}
+                className={`shop-filter-chip${activeCat === c.key ? ' is-active' : ''}`}
+                onClick={() => setActiveCat(c.key)}
+                aria-pressed={activeCat === c.key}
+              >
+                {c.title}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="shop-toolbar-right">
+          <span className="shop-result-count">
+            {visible.length} {visible.length === 1 ? 'product' : 'products'}
+          </span>
+          <label className="shop-sort">
+            <span className="shop-sort-label">Sort</span>
+            <select
+              className="control-input shop-sort-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort products"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="container shop-empty-state">
+          <p>No products match this filter yet.</p>
+          <button type="button" className="btn-details" onClick={() => setActiveCat('all')}>
+            Clear filter
+          </button>
+        </div>
+      ) : null}
+
       <div className="container product-grid">
-        {filtered.map((product) => {
+        {visible.map((product) => {
           // Special UI for Sattari Hand Crafted Cymbals
           if (product.name === 'Sattari Hand Crafted Cymbals' && categoryKey === 'cymbals') {
             return (
