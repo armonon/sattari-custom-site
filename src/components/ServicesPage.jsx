@@ -159,8 +159,45 @@ export default function ServicesPage() {
                 <li key={point}>{point}</li>
               ))}
             </ul>
+            <span className="service-card-cta" aria-hidden="true">
+              Request help <span className="service-card-cta-arrow">→</span>
+            </span>
           </Link>
         ))}
+      </div>
+
+      <div className="container services-steps" aria-label="How local support works">
+        <div className="services-steps-header section-header narrow">
+          <p className="eyebrow">How it works</p>
+          <h2>Getting help is simple</h2>
+        </div>
+        <ol className="services-steps-grid">
+          {[
+            {
+              n: 1,
+              title: 'Tell us what you need',
+              body: 'Share your instrument, your timing, and the kind of help you’re after in a quick message.',
+            },
+            {
+              n: 2,
+              title: 'Get a clear response',
+              body: 'We reply with honest guidance on the right next step — pricing, availability, and options, no guesswork.',
+            },
+            {
+              n: 3,
+              title: 'Book it and get set up',
+              body: 'Confirm your repair, rental, studio time, or lesson and you’re ready to play.',
+            },
+          ].map((step) => (
+            <li className="service-step" key={step.n}>
+              <span className="service-step-number" aria-hidden="true">
+                {step.n}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </li>
+          ))}
+        </ol>
       </div>
 
       <div className="container services-location" id="visit">

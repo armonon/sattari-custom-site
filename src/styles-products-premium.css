@@ -1288,3 +1288,193 @@
 .shop-all-card h3 {
   margin: 0.35rem 0 0.8rem;
 }
+
+/* =====================================================================
+   SHOP TOOLBAR — category filters + sort (Category / Shop All)
+   Theme-aware via design tokens, so it adapts to day & night.
+   ===================================================================== */
+.shop-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.shop-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shop-filter-chip {
+  padding: 0.5rem 1rem;
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.shop-filter-chip:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.shop-filter-chip.is-active {
+  background: var(--accent);
+  color: #1a1408;
+  border-color: var(--accent);
+}
+
+.shop-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.shop-result-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.shop-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shop-sort-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.shop-sort-select {
+  width: auto;
+  min-height: 44px;
+  padding: 0.45rem 0.8rem;
+}
+
+.shop-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0 3rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .shop-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+}
+
+/* =====================================================================
+   RELATED PRODUCTS — "You might also like" on the product detail page
+   ===================================================================== */
+.related-products {
+  margin-top: 3.5rem;
+}
+
+.related-products-header {
+  margin-bottom: 1.4rem;
+}
+
+.related-products-header h2 {
+  margin: 0.2rem 0 0;
+}
+
+.related-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.4rem;
+}
+
+.related-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-premium);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.related-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.related-card-media {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+
+.related-card-media img,
+.related-card-media .product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  aspect-ratio: auto;
+}
+
+.related-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem 1.1rem;
+}
+
+.related-card-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.related-card-name {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.related-grid .product-price-accent {
+  margin: 0.15rem 0 0;
+}
+
+@media (max-width: 900px) {
+  .related-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .related-grid {
+    grid-template-columns: 1fr;
+  }
+}
