@@ -929,6 +929,82 @@ button {
   line-height: 1.8;
 }
 
+/* Card affordance: a clear "keep going" cue on each service card. */
+.service-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.service-card-cta-arrow {
+  transition: transform 180ms ease;
+}
+
+.service-card.interactive-card-link:hover .service-card-cta-arrow {
+  transform: translateX(4px);
+}
+
+/* How it works — 3 numbered steps before the inquiry form. */
+.services-steps {
+  margin-top: 3.5rem;
+}
+
+.services-steps-header {
+  margin-bottom: 1.6rem;
+}
+
+.services-steps-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+  counter-reset: services-steps;
+}
+
+.service-step {
+  position: relative;
+  padding: 1.8rem 1.6rem;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--panel-premium);
+  box-shadow: var(--shadow);
+}
+
+.service-step h3 {
+  margin: 1rem 0 0.5rem;
+}
+
+.service-step p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.service-step-number {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #1a1408;
+  background: linear-gradient(145deg, var(--accent-300, #e3c485), var(--accent, #d6b36d));
+  box-shadow: 0 8px 20px rgba(214, 179, 109, 0.24);
+}
+
+/* On small screens the steps stack; the connecting rhythm stays tidy. */
+@media (max-width: 760px) {
+  .services-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .service-form-shell {
   margin-top: 2rem;
 }
