@@ -89,9 +89,9 @@ export default function BackgroundMedia() {
             height: '100vh',
             objectFit: 'cover',
             display: 'block',
-            // Overscan generously so the blur's soft (transparent) edges are
-            // always clipped well outside the viewport — no border at any size.
-            transform: 'scale(1.3)',
+            // bg.mp4 is pre-cropped to remove its baked-in black bars, so only a
+            // small overscan is needed to hide the blur's soft (transparent) edge.
+            transform: 'scale(1.1)',
             transformOrigin: 'center',
             background: isDay ? '#f6f1e6' : '#000',
             filter: isDay ? 'blur(14px) saturate(1.05)' : 'blur(8px)',
