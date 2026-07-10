@@ -13,6 +13,19 @@ declare global {
 const DAY_VIDEO = '/sattari site/bg.mp4';
 const NIGHT_VIDEO = '/sattari site/INSTRA PATTERN.mp4';
 
+// Both source clips frame a centered *square* of real content:
+//  • bg.mp4 (day)   is 1280×720 with ~22% black pillarbox bars on each side,
+//    so the content is a 720×720 square in the middle.
+//  • the night pattern is a full-frame 1200×1200 square (no bars).
+// We give the <video> its own frame aspect ratio and size it from the larger
+// viewport axis, so that centered content square always covers the viewport.
+// The black pillars then fall outside the overflow-hidden container at every
+// aspect ratio — no black border at any size. A little overscan hides the
+// blur's soft edges just past the viewport.
+const DAY_FRAME_AR = 1280 / 720; // ≈ 1.778
+const NIGHT_FRAME_AR = 1; // 1200 × 1200
+const COVER_OVERSCAN = 1.12;
+
 export default function BackgroundMedia() {
   const { mode } = useTheme();
   const isDay = mode === 'day';
@@ -85,14 +98,18 @@ export default function BackgroundMedia() {
           preload="none"
           poster="/sattari site/sattari logo.avif"
           style={{
-            width: '100vw',
-            height: '100vh',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            // Size to the frame's aspect ratio from the larger viewport axis so
+            // the centered content square always covers the viewport and the
+            // black pillars stay clipped outside it — at any window size.
+            height: `calc(max(100vw, 100vh) * ${COVER_OVERSCAN})`,
+            width: `calc(max(100vw, 100vh) * ${COVER_OVERSCAN * (isDay ? DAY_FRAME_AR : NIGHT_FRAME_AR)})`,
+            transform: 'translate(-50%, -50%)',
+            transformOrigin: 'center',
             objectFit: 'cover',
             display: 'block',
-            // Overscan generously so the blur's soft (transparent) edges are
-            // always clipped well outside the viewport — no border at any size.
-            transform: 'scale(1.3)',
-            transformOrigin: 'center',
             background: isDay ? '#f6f1e6' : '#000',
             filter: isDay ? 'blur(14px) saturate(1.05)' : 'blur(8px)',
             opacity: isDay ? 0.9 : 0.42,
