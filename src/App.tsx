@@ -123,6 +123,22 @@ const App: FC = () => {
             }
           />
           <Route
+            path="/woodland-hills-music-store"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="woodland-hills" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/calabasas-music-store"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="calabasas" />
+              </LazyPage>
+            }
+          />
+          <Route
             path="/shop/instruments-los-angeles"
             element={
               <LazyPage>
@@ -135,6 +151,30 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <LocalSeoPage pageKey="accessories" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/shop/drums-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="drums" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/shop/violins-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="violins" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/shop/guitars-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="guitars" />
               </LazyPage>
             }
           />
@@ -247,6 +287,22 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <RepairPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/instrument-repair-woodland-hills"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="repair-woodland-hills" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/instrument-repair-calabasas"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="repair-calabasas" />
               </LazyPage>
             }
           />

@@ -9,7 +9,14 @@ type PageKey =
   | 'instrument-rentals'
   | 'rehearsal-space'
   | 'recording-studio'
-  | 'music-lessons';
+  | 'music-lessons'
+  | 'woodland-hills'
+  | 'calabasas'
+  | 'repair-woodland-hills'
+  | 'repair-calabasas'
+  | 'drums'
+  | 'violins'
+  | 'guitars';
 
 interface LocalSeoPageProps {
   pageKey: PageKey;
@@ -339,6 +346,330 @@ const pages = {
       },
     ],
   },
+  'woodland-hills': {
+    eyebrow: 'Woodland Hills music store',
+    title:
+      'Your neighborhood Woodland Hills music store for instruments, gear, repairs, and lessons.',
+    seoTitle: 'Woodland Hills Music Store',
+    description:
+      'Sattari Music is a Woodland Hills music store for instruments, drum gear, violins, guitars, accessories, repairs, rentals, lessons, and studio time — serving Woodland Hills and the West San Fernando Valley.',
+    url: 'https://sattarimusic.com/woodland-hills-music-store',
+    schemaType: 'MusicStore',
+    schemaName: 'Sattari Music — Woodland Hills',
+    intro:
+      'Based right in Woodland Hills, Sattari Music is a full local hub: instruments and gear to buy, repairs for almost anything you play, plus rentals, rehearsal and studio space, teachers, and classes — all a short drive away.',
+    highlights: ['Instruments', 'Drum gear', 'Violins', 'Guitars', 'Repairs', 'Lessons'],
+    offerings: [
+      'Instrument and gear sales for players across Woodland Hills and the Valley',
+      'Repairs, setup, and tuning for drums, strings, guitars, and more',
+      'Rentals, rehearsal space, and studio time for local musicians',
+      'Teachers and classes for students, hobbyists, and working players',
+    ],
+    goodFor: [
+      'Woodland Hills players who want a real local shop, not just online',
+      'Getting an instrument repaired or set up close to home',
+      'Families and students starting music in the West Valley',
+      'Musicians who want gear, repair, and lessons in one place',
+    ],
+    primaryCta: { label: 'Shop instruments & gear', to: '/shop' },
+    secondaryCta: { label: 'Visit or ask us', href: '#local-inquiry' },
+    formService: 'instrument-sales',
+    formSource: 'Woodland Hills music store SEO page',
+    faqs: [
+      {
+        q: 'Where is your Woodland Hills location?',
+        a: 'Sattari Music is at 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364, serving Woodland Hills and the surrounding San Fernando Valley.',
+      },
+      {
+        q: 'What can I buy or do at the Woodland Hills shop?',
+        a: 'Buy instruments and gear, get repairs and setups, arrange rentals, book rehearsal or studio time, and connect with teachers — all locally.',
+      },
+      {
+        q: 'Do you help beginners and students in Woodland Hills?',
+        a: 'Yes. Tell us your goals and we’ll help with the right starter instrument, lessons, and anything you need to get going.',
+      },
+    ],
+  },
+  calabasas: {
+    eyebrow: 'Calabasas music store',
+    title:
+      'A local music store minutes from Calabasas for instruments, repairs, rentals, and lessons.',
+    seoTitle: 'Calabasas Music Store',
+    description:
+      'Looking for a music store near Calabasas? Sattari Music offers instruments, drum gear, violins, guitars, accessories, repairs, rentals, lessons, and studio time just minutes away in Woodland Hills.',
+    url: 'https://sattarimusic.com/calabasas-music-store',
+    schemaType: 'MusicStore',
+    schemaName: 'Sattari Music — near Calabasas',
+    intro:
+      'Just a short drive from Calabasas, Sattari Music gives local players a real place to buy instruments and gear, get repairs and setups, and book rentals, rehearsal space, studio time, teachers, and classes.',
+    highlights: ['Instruments', 'Drum gear', 'Violins', 'Guitars', 'Repairs', 'Lessons'],
+    offerings: [
+      'Instrument and gear sales for Calabasas-area players and families',
+      'Repairs, tuning, and setup for drums, strings, guitars, and more',
+      'Rentals, rehearsal space, and studio time close to home',
+      'Teachers and classes for students and working musicians',
+    ],
+    goodFor: [
+      'Calabasas players who want a nearby shop instead of a long drive',
+      'Students and parents starting lessons or buying a first instrument',
+      'Getting gear repaired or set up without shipping it away',
+      'Musicians who want sales, service, and lessons in one place',
+    ],
+    primaryCta: { label: 'Shop instruments & gear', to: '/shop' },
+    secondaryCta: { label: 'Ask about visiting', href: '#local-inquiry' },
+    formService: 'instrument-sales',
+    formSource: 'Calabasas music store SEO page',
+    faqs: [
+      {
+        q: 'How far is Sattari Music from Calabasas?',
+        a: 'The shop is in Woodland Hills at 4881 Topanga Canyon Blvd #202 — just a short drive from Calabasas.',
+      },
+      {
+        q: 'Do you serve Calabasas musicians?',
+        a: 'Yes. Players from Calabasas and across the West Valley come in for gear, repairs, rentals, lessons, and studio time.',
+      },
+      {
+        q: 'Can I get an instrument repaired if I live in Calabasas?',
+        a: 'Absolutely. Bring it to the Woodland Hills shop, or send a request first and we’ll tell you what to expect.',
+      },
+    ],
+  },
+  'repair-woodland-hills': {
+    eyebrow: 'Instrument repair in Woodland Hills',
+    title: 'Instrument repair in Woodland Hills for drums, strings, guitars, and more.',
+    seoTitle: 'Instrument Repair in Woodland Hills',
+    description:
+      'Local instrument repair in Woodland Hills: drum and percussion repair, guitar and violin setup, hardware fixes, tuning, and troubleshooting from Sattari Music in the San Fernando Valley.',
+    url: 'https://sattarimusic.com/services/instrument-repair-woodland-hills',
+    schemaType: 'Service',
+    schemaName: 'Sattari Music Instrument Repair — Woodland Hills',
+    intro:
+      'When something needs fixing, Sattari handles instrument repair right in Woodland Hills — drums and percussion, guitars, violins, hardware, and setup — with careful, honest work and a real person to talk it through.',
+    highlights: [
+      'Drum repair',
+      'Guitar setup',
+      'Violin setup',
+      'Hardware',
+      'Tuning',
+      'Troubleshooting',
+    ],
+    offerings: [
+      'Repair and setup for drums, percussion, guitars, violins, and gear',
+      'Hardware, pedal, tuning, and tone troubleshooting',
+      'Careful handling for vintage, rare, and sentimental instruments',
+      'Honest guidance on repair vs. replace before any work starts',
+    ],
+    goodFor: [
+      'Woodland Hills players who need a fix before a session or show',
+      'Drummers and percussionists with hardware or setup issues',
+      'String and guitar players needing setup, tuning, or repair',
+      'Anyone with a rare or sentimental instrument to protect',
+    ],
+    primaryCta: { label: 'Request a repair', href: '#local-inquiry' },
+    secondaryCta: { label: 'See all services', to: '/services' },
+    formService: 'repairs',
+    formSource: 'Instrument repair Woodland Hills SEO page',
+    faqs: [
+      {
+        q: 'What instruments do you repair in Woodland Hills?',
+        a: 'Drums and percussion, guitars, violins, hardware, and a range of musician gear. Ask about anything specific.',
+      },
+      {
+        q: 'How do I start a repair?',
+        a: 'Send a request describing the instrument and the issue and we’ll respond with next steps and what to expect.',
+      },
+      {
+        q: 'Do you work on rare or vintage instruments?',
+        a: 'Yes, with extra care. Tell us about the piece and we’ll handle it thoughtfully.',
+      },
+    ],
+  },
+  'repair-calabasas': {
+    eyebrow: 'Instrument repair near Calabasas',
+    title: 'Instrument repair near Calabasas for drums, guitars, violins, and gear.',
+    seoTitle: 'Instrument Repair near Calabasas',
+    description:
+      'Instrument repair near Calabasas: drum and percussion repair, guitar and violin setup, hardware fixes, and tuning from Sattari Music, minutes away in Woodland Hills.',
+    url: 'https://sattarimusic.com/services/instrument-repair-calabasas',
+    schemaType: 'Service',
+    schemaName: 'Sattari Music Instrument Repair — near Calabasas',
+    intro:
+      'For Calabasas players, Sattari offers careful instrument repair minutes away in Woodland Hills — drums, guitars, violins, hardware, and setup — with honest guidance before any work begins.',
+    highlights: [
+      'Drum repair',
+      'Guitar setup',
+      'Violin setup',
+      'Hardware',
+      'Tuning',
+      'Troubleshooting',
+    ],
+    offerings: [
+      'Repair and setup for drums, percussion, guitars, violins, and gear',
+      'Hardware, tuning, and tone troubleshooting for local players',
+      'Thoughtful handling for vintage, rare, and sentimental instruments',
+      'Clear repair-vs-replace guidance before you commit',
+    ],
+    goodFor: [
+      'Calabasas players who need a nearby repair option',
+      'Drummers with hardware, pedal, or setup issues',
+      'String and guitar players needing setup or repair',
+      'Rare or sentimental instruments that need careful hands',
+    ],
+    primaryCta: { label: 'Request a repair', href: '#local-inquiry' },
+    secondaryCta: { label: 'See all services', to: '/services' },
+    formService: 'repairs',
+    formSource: 'Instrument repair Calabasas SEO page',
+    faqs: [
+      {
+        q: 'Where do I bring an instrument for repair from Calabasas?',
+        a: 'To the Sattari shop in Woodland Hills at 4881 Topanga Canyon Blvd #202 — a short drive from Calabasas.',
+      },
+      {
+        q: 'What can you repair?',
+        a: 'Drums and percussion, guitars, violins, hardware, and musician gear. Ask about anything specific.',
+      },
+      {
+        q: 'Can you tell me the cost before starting?',
+        a: 'Yes. Send a request with the details and we’ll give honest guidance before any work begins.',
+      },
+    ],
+  },
+  drums: {
+    eyebrow: 'Drum gear in Los Angeles',
+    title: 'Drum gear for sale — handcrafted cymbals, sticks, and essentials for LA drummers.',
+    seoTitle: 'Drums & Drum Gear in Los Angeles',
+    description:
+      'Shop drum gear from Sattari Music: handcrafted cymbals, hi-hats, splashes, drumsticks, practice pads, felts, and drum essentials for drummers in Los Angeles and the San Fernando Valley.',
+    url: 'https://sattarimusic.com/shop/drums-los-angeles',
+    schemaType: 'Store',
+    schemaName: 'Sattari Drum Gear',
+    intro:
+      'Sattari is built by drummers, for drummers: handcrafted cymbals, hi-hats, and splashes, premium drumsticks, practice pads, felts, and the essentials that keep your kit ready — plus local repair and setup support.',
+    highlights: ['Cymbals', 'Hi-hats', 'Splashes', 'Sticks', 'Practice pads', 'Felts'],
+    offerings: [
+      'Handcrafted Sattari cymbals, hi-hats, and effect cymbals',
+      'Premium hickory and maple drumsticks, plus bundles',
+      'Practice pads, cymbal felts, and daily-use drum essentials',
+      'Local repair, setup, and hardware support for your kit',
+    ],
+    goodFor: [
+      'Drummers looking for handcrafted cymbals with real character',
+      'Students and gigging players restocking sticks and essentials',
+      'Anyone who wants drum gear with local support behind it',
+      'Players who also need repairs, felts, or hardware help',
+    ],
+    primaryCta: { label: 'Shop cymbals', to: '/shop/cymbals' },
+    secondaryCta: { label: 'Shop sticks & essentials', to: '/shop/sticks' },
+    formService: 'instrument-sales',
+    formSource: 'Drums Los Angeles SEO page',
+    faqs: [
+      {
+        q: 'What drum gear does Sattari make?',
+        a: 'Handcrafted cymbals, hi-hats, splashes, and effect cymbals, plus drumsticks, practice pads, and felts.',
+      },
+      {
+        q: 'Do you sell full drum kits?',
+        a: 'The focus is handcrafted cymbals, sticks, and essentials rather than full kits — ask us if you’re looking for something specific.',
+      },
+      {
+        q: 'Can you help with cymbal or hardware repair?',
+        a: 'Yes. Sattari offers local repair and setup support for cymbals, hardware, and more.',
+      },
+    ],
+  },
+  violins: {
+    eyebrow: 'Violins in Los Angeles',
+    title: 'Handcrafted violins for sale — acoustic, electric, and silent, fitted in California.',
+    seoTitle: 'Violins for Sale in Los Angeles',
+    description:
+      'Shop handcrafted SATTARI violins in Los Angeles: acoustic, electric, and silent violins, individually fitted and tuned in California, with local setup, repair, and lesson support.',
+    url: 'https://sattarimusic.com/shop/violins-los-angeles',
+    schemaType: 'Store',
+    schemaName: 'Sattari Violins',
+    intro:
+      'SATTARI violins are hand-carved, shaped, and finished with fine varnishes — acoustic, electric, and silent models, individually fitted and tuned in California, with local setup, repair, and teacher support.',
+    highlights: [
+      'Acoustic',
+      'Electric',
+      'Silent',
+      'Hand-carved',
+      'Fitted & tuned',
+      'California made',
+    ],
+    offerings: [
+      'Handcrafted acoustic, electric, and silent SATTARI violins',
+      'Individually fitted and tuned before they reach you',
+      'Local setup, string, and repair support for your instrument',
+      'Teacher and lesson connections for new and returning players',
+    ],
+    goodFor: [
+      'Students and players looking for a quality violin locally',
+      'Musicians who want acoustic, electric, or silent options',
+      'Anyone who wants a fitted, tuned instrument, not a boxed guess',
+      'Players who also need setup, repair, or lessons',
+    ],
+    primaryCta: { label: 'Shop violins', to: '/shop/violins' },
+    secondaryCta: { label: 'Ask about a violin', href: '#local-inquiry' },
+    formService: 'instrument-sales',
+    formSource: 'Violins Los Angeles SEO page',
+    faqs: [
+      {
+        q: 'What kinds of violins does Sattari offer?',
+        a: 'Handcrafted acoustic, electric, and silent violins, each fitted and tuned in California.',
+      },
+      {
+        q: 'Are the violins good for beginners?',
+        a: 'Yes. Tell us the player’s level and goals and we’ll recommend the right fit, plus lessons if useful.',
+      },
+      {
+        q: 'Do you help with violin setup or repair?',
+        a: 'Yes, Sattari offers local setup, string, and repair support for violins.',
+      },
+    ],
+  },
+  guitars: {
+    eyebrow: 'Guitars & bass in Los Angeles',
+    title: 'Guitars and bass for sale — set up and ready, shipped from California.',
+    seoTitle: 'Guitars & Bass in Los Angeles',
+    description:
+      'Shop electric and acoustic guitars and bass from Sattari Music in Los Angeles, set up and ready to play, with local accessories, setup, and repair support.',
+    url: 'https://sattarimusic.com/shop/guitars-los-angeles',
+    schemaType: 'Store',
+    schemaName: 'Sattari Guitars & Bass',
+    intro:
+      'Electric and acoustic guitars and bass, set up and ready to play and shipped from California — backed by local accessories, setup, string, and repair support so your instrument stays gig-ready.',
+    highlights: ['Electric', 'Acoustic', 'Bass', 'Set up ready', 'Accessories', 'Repairs'],
+    offerings: [
+      'Electric and acoustic guitars and bass for players and students',
+      'Instruments set up and ready to play before they ship',
+      'Strings, accessories, and setup essentials to keep you ready',
+      'Local setup, string, and repair support when you need it',
+    ],
+    goodFor: [
+      'Players looking for guitars or bass locally in the Valley',
+      'Students and beginners who want a ready-to-play instrument',
+      'Musicians who also need accessories, setup, or repairs',
+      'Anyone who wants a real person behind the purchase',
+    ],
+    primaryCta: { label: 'Shop guitar & bass', to: '/shop/guitar-bass' },
+    secondaryCta: { label: 'Ask about a guitar', href: '#local-inquiry' },
+    formService: 'instrument-sales',
+    formSource: 'Guitars Los Angeles SEO page',
+    faqs: [
+      {
+        q: 'What guitars does Sattari carry?',
+        a: 'Electric and acoustic guitars and bass, with more available by request.',
+      },
+      {
+        q: 'Are the instruments set up before I get them?',
+        a: 'Yes. Guitars and bass are set up and ready to play, and shipped from California.',
+      },
+      {
+        q: 'Can you help with strings, setup, or repair?',
+        a: 'Yes, Sattari offers local accessories, setup, and repair support.',
+      },
+    ],
+  },
 } as const;
 
 const ORIGIN = 'https://sattarimusic.com';
@@ -533,18 +864,20 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           <h2>Explore more Sattari local services</h2>
         </div>
         <div className="local-seo-link-grid">
-          {LOCAL_PAGE_LINKS.filter((link) => link.key !== pageKey).map((link) => (
-            <Link
-              className="local-seo-link-card interactive-card-link"
-              to={link.path}
-              key={link.key}
-            >
-              <span className="local-seo-link-label">{link.label}</span>
-              <span className="local-seo-link-arrow" aria-hidden="true">
-                →
-              </span>
-            </Link>
-          ))}
+          {LOCAL_PAGE_LINKS.filter((link) => link.key !== pageKey)
+            .slice(0, 6)
+            .map((link) => (
+              <Link
+                className="local-seo-link-card interactive-card-link"
+                to={link.path}
+                key={link.key}
+              >
+                <span className="local-seo-link-label">{link.label}</span>
+                <span className="local-seo-link-arrow" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            ))}
         </div>
         <p className="local-seo-nap">
           Serving Los Angeles &amp; the San Fernando Valley — {SHOP_NAP}.
