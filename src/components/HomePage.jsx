@@ -44,54 +44,42 @@ export default function HomePage() {
               <Link to="/shop/essentials">Practice essentials</Link>
             </div>
 
-            <div className="hero-metrics" aria-label="Storefront highlights">
+            <div className="hero-metrics hero-metrics-image" aria-label="Storefront highlights">
               <Link
                 to="/services"
-                className="hero-metric-card interactive-card-link"
+                className="hero-metric-card hero-metric-card-image interactive-card-link"
                 aria-label="Learn about direct founder insight through local services"
               >
-                <span className="hero-metric-media">
-                  <OptimizedProductImage
-                    src="/sattari site/crash.png"
-                    alt=""
-                    loading="lazy"
-                    sizes="72px"
-                  />
-                </span>
-                <strong>Direct founder insight</strong>
-                <span>Practical recommendations from a maker&apos;s perspective.</span>
+                <OptimizedProductImage
+                  src="/sattari site/crash.png"
+                  alt=""
+                  loading="lazy"
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                />
               </Link>
               <Link
                 to="/shop"
-                className="hero-metric-card interactive-card-link"
+                className="hero-metric-card hero-metric-card-image interactive-card-link"
                 aria-label="Browse the shop for fast gear discovery"
               >
-                <span className="hero-metric-media">
-                  <OptimizedProductImage
-                    src="/sattari site/violins/brescia-acoustic.jpg"
-                    alt=""
-                    loading="lazy"
-                    sizes="72px"
-                  />
-                </span>
-                <strong>Fast gear discovery</strong>
-                <span>Browse by category, compare details, and add to cart without friction.</span>
+                <OptimizedProductImage
+                  src="/sattari site/violins/brescia-acoustic.jpg"
+                  alt=""
+                  loading="lazy"
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                />
               </Link>
               <Link
                 to="/services"
-                className="hero-metric-card interactive-card-link"
+                className="hero-metric-card hero-metric-card-image interactive-card-link"
                 aria-label="Request local drum support"
               >
-                <span className="hero-metric-media">
-                  <OptimizedProductImage
-                    src="/sattari site/guitars/bass-guitar.jpg"
-                    alt=""
-                    loading="lazy"
-                    sizes="72px"
-                  />
-                </span>
-                <strong>Local support when needed</strong>
-                <span>Repairs, rentals, and working-musician help in California.</span>
+                <OptimizedProductImage
+                  src="/sattari site/guitars/bass-guitar.jpg"
+                  alt=""
+                  loading="lazy"
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                />
               </Link>
             </div>
           </div>
