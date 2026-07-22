@@ -80,43 +80,46 @@ export default function HomePage() {
 
       <section className="section hero-metrics-section">
         <div className="container">
-          <div className="hero-metrics hero-metrics-image" aria-label="Storefront highlights">
-            <Link
-              to="/services"
-              className="hero-metric-card hero-metric-card-image interactive-card-link"
-              aria-label="Learn about direct founder insight through local services"
-            >
-              <OptimizedProductImage
-                src="/sattari site/crash.png"
-                alt=""
-                loading="lazy"
-                sizes="(max-width: 760px) 100vw, 33vw"
-              />
-            </Link>
-            <Link
-              to="/shop"
-              className="hero-metric-card hero-metric-card-image interactive-card-link"
-              aria-label="Browse the shop for fast gear discovery"
-            >
-              <OptimizedProductImage
-                src="/sattari site/violins/brescia-acoustic.jpg"
-                alt=""
-                loading="lazy"
-                sizes="(max-width: 760px) 100vw, 33vw"
-              />
-            </Link>
-            <Link
-              to="/services"
-              className="hero-metric-card hero-metric-card-image interactive-card-link"
-              aria-label="Request local drum support"
-            >
-              <OptimizedProductImage
-                src="/sattari site/guitars/bass-guitar.jpg"
-                alt=""
-                loading="lazy"
-                sizes="(max-width: 760px) 100vw, 33vw"
-              />
-            </Link>
+          <div className="section-header narrow hero-metrics-header">
+            <p className="eyebrow">Shop by category</p>
+            <h2>Find your next instrument</h2>
+          </div>
+          <div className="hero-metrics hero-metrics-image" aria-label="Shop by category">
+            {[
+              {
+                to: '/shop/cymbals',
+                src: '/sattari site/crash.png',
+                alt: 'Handcrafted Sattari cymbals',
+                label: 'Cymbals & Drums',
+              },
+              {
+                to: '/shop/violins',
+                src: '/sattari site/violins/brescia-acoustic.jpg',
+                alt: 'Handcrafted Sattari acoustic violin',
+                label: 'Violins',
+              },
+              {
+                to: '/shop/guitar-bass',
+                src: '/sattari site/guitars/bass-guitar.jpg',
+                alt: 'Sattari bass guitar',
+                label: 'Guitar & Bass',
+              },
+            ].map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="hero-metric-card hero-metric-card-image interactive-card-link"
+                aria-label={`Shop ${item.label}`}
+              >
+                <OptimizedProductImage
+                  src={item.src}
+                  alt={item.alt}
+                  loading="lazy"
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                />
+                <span className="hero-metric-card-label">{item.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

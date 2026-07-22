@@ -352,15 +352,26 @@ button {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
 }
 
-/* Image-only variant: the photo fills the whole card, no caption text. */
-.hero-metric-card-image {
+/* Photo tile + caption: a square photo on top, with a label below it
+   naming where the card leads. Specificity (two classes) is needed to beat
+   the generic .interactive-card-link { display: block } rule, which shares
+   .hero-metric-card-image's specificity and comes later in this file. */
+.hero-metric-card-image.interactive-card-link {
+  display: flex;
+  flex-direction: column;
   padding: 0;
   overflow: hidden;
+  background: var(--panel-2, #19191d);
+}
+
+.hero-metric-card-image picture {
+  display: block;
+  width: 100%;
   aspect-ratio: 1 / 1;
+  overflow: hidden;
   background: #1a1a1f;
 }
 
-.hero-metric-card-image picture,
 .hero-metric-card-image img {
   display: block;
   width: 100%;
@@ -371,6 +382,31 @@ button {
 
 .hero-metric-card-image.interactive-card-link:hover img {
   transform: scale(1.05);
+}
+
+.hero-metric-card-label {
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  font-family: var(--font-display, inherit);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  transition: color 200ms ease;
+}
+
+.hero-metric-card-image.interactive-card-link:hover .hero-metric-card-label {
+  color: var(--accent);
+}
+
+.hero-metrics-header {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+
+.hero-metrics-header.section-header.narrow {
+  max-width: 480px;
+  margin-inline: auto;
 }
 
 /* Pure image tiles read fine small — keep the 3-across row even on narrow
