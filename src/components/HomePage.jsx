@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FounderIntro, InstagramSection } from './AboutSection';
+import AboutSection from './AboutSection';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, OrganizationSchema } from '../utils/seo';
 
@@ -12,7 +12,6 @@ export default function HomePage() {
         url="https://sattarimusic.com/"
       />
       <OrganizationSchema />
-      <FounderIntro className="section section-contrast page-header-offset" />
       <section className="hero-section hero-shell">
         <div className="container hero-grid hero-premium-grid">
           <div className="hero-copy-panel">
@@ -116,7 +115,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <InstagramSection />
+      <AboutSection />
     </>
   );
 }
