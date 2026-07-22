@@ -42,45 +42,6 @@ export default function HomePage() {
               <Link to="/shop/guitar-bass">Guitar &amp; Bass</Link>
               <Link to="/shop/essentials">Practice essentials</Link>
             </div>
-
-            <div className="hero-metrics hero-metrics-image" aria-label="Storefront highlights">
-              <Link
-                to="/services"
-                className="hero-metric-card hero-metric-card-image interactive-card-link"
-                aria-label="Learn about direct founder insight through local services"
-              >
-                <OptimizedProductImage
-                  src="/sattari site/crash.png"
-                  alt=""
-                  loading="lazy"
-                  sizes="(max-width: 760px) 100vw, 33vw"
-                />
-              </Link>
-              <Link
-                to="/shop"
-                className="hero-metric-card hero-metric-card-image interactive-card-link"
-                aria-label="Browse the shop for fast gear discovery"
-              >
-                <OptimizedProductImage
-                  src="/sattari site/violins/brescia-acoustic.jpg"
-                  alt=""
-                  loading="lazy"
-                  sizes="(max-width: 760px) 100vw, 33vw"
-                />
-              </Link>
-              <Link
-                to="/services"
-                className="hero-metric-card hero-metric-card-image interactive-card-link"
-                aria-label="Request local drum support"
-              >
-                <OptimizedProductImage
-                  src="/sattari site/guitars/bass-guitar.jpg"
-                  alt=""
-                  loading="lazy"
-                  sizes="(max-width: 760px) 100vw, 33vw"
-                />
-              </Link>
-            </div>
           </div>
 
           <div className="hero-card-stack">
@@ -116,6 +77,49 @@ export default function HomePage() {
       </section>
 
       <AboutSection />
+
+      <section className="section hero-metrics-section">
+        <div className="container">
+          <div className="hero-metrics hero-metrics-image" aria-label="Storefront highlights">
+            <Link
+              to="/services"
+              className="hero-metric-card hero-metric-card-image interactive-card-link"
+              aria-label="Learn about direct founder insight through local services"
+            >
+              <OptimizedProductImage
+                src="/sattari site/crash.png"
+                alt=""
+                loading="lazy"
+                sizes="(max-width: 760px) 100vw, 33vw"
+              />
+            </Link>
+            <Link
+              to="/shop"
+              className="hero-metric-card hero-metric-card-image interactive-card-link"
+              aria-label="Browse the shop for fast gear discovery"
+            >
+              <OptimizedProductImage
+                src="/sattari site/violins/brescia-acoustic.jpg"
+                alt=""
+                loading="lazy"
+                sizes="(max-width: 760px) 100vw, 33vw"
+              />
+            </Link>
+            <Link
+              to="/services"
+              className="hero-metric-card hero-metric-card-image interactive-card-link"
+              aria-label="Request local drum support"
+            >
+              <OptimizedProductImage
+                src="/sattari site/guitars/bass-guitar.jpg"
+                alt=""
+                loading="lazy"
+                sizes="(max-width: 760px) 100vw, 33vw"
+              />
+            </Link>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
