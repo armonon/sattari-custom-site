@@ -382,6 +382,15 @@ button {
   gap: 0.6rem;
 }
 
+/* Standalone placement (below the Instagram feed): the section already
+   provides top padding, and the tiles read better capped rather than
+   stretching full-width on a wide desktop container. */
+.hero-metrics-section .hero-metrics {
+  margin-top: 0;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
 .button {
   position: relative;
   isolation: isolate;
