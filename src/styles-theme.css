@@ -263,6 +263,12 @@ body {
   box-shadow: 0 14px 28px rgba(60, 50, 30, 0.1);
 }
 
+/* Image-tile variant: solid loading-state placeholder (covered by the photo
+   itself once it loads), matching the product-card convention. */
+[data-theme='day'] .hero-metric-card-image {
+  background: #efe7d6;
+}
+
 /* Inner stat tiles inside the "What to expect" box. */
 [data-theme='day'] .services-stats div {
   background: rgba(154, 122, 46, 0.07);

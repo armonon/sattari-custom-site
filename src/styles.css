@@ -352,47 +352,34 @@ button {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
 }
 
-.hero-metric-card strong,
-.hero-metric-card span {
-  display: block;
-}
-
-.hero-metric-media {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 0.7rem;
-  padding: 0.4rem;
-  border-radius: 16px;
+/* Image-only variant: the photo fills the whole card, no caption text. */
+.hero-metric-card-image {
+  padding: 0;
   overflow: hidden;
-  /* A light, near-white swatch so the product photo's own white background
-     blends in and the full instrument silhouette reads clearly at this size
-     (object-fit: cover on a tall product shot crops to an unrecognizable
-     sliver — contain keeps the whole shape visible). */
-  background: linear-gradient(145deg, #f4efe4, #e7ddc9);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex: none;
+  aspect-ratio: 1 / 1;
+  background: #1a1a1f;
 }
 
-.hero-metric-media picture,
-.hero-metric-media img {
+.hero-metric-card-image picture,
+.hero-metric-card-image img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  transition: transform 260ms ease;
 }
 
-.hero-metric-card strong {
-  margin-bottom: 0.35rem;
-  font-size: 0.98rem;
+.hero-metric-card-image.interactive-card-link:hover img {
+  transform: scale(1.05);
 }
 
-.hero-metric-card span {
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.6;
+/* Pure image tiles read fine small — keep the 3-across row even on narrow
+   screens instead of stacking into three full-width squares. Specificity
+   (two classes) beats the generic 860px .hero-metrics { 1fr } stack rule
+   regardless of source order. */
+.hero-metrics.hero-metrics-image {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
 }
 
 .button {
