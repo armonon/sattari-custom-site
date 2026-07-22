@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import AboutSection from './AboutSection';
+import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, OrganizationSchema } from '../utils/seo';
 
 export default function HomePage() {
@@ -48,6 +49,14 @@ export default function HomePage() {
                 className="hero-metric-card interactive-card-link"
                 aria-label="Learn about direct founder insight through local services"
               >
+                <span className="hero-metric-media">
+                  <OptimizedProductImage
+                    src="/sattari site/crash.png"
+                    alt=""
+                    loading="lazy"
+                    sizes="72px"
+                  />
+                </span>
                 <strong>Direct founder insight</strong>
                 <span>Practical recommendations from a maker&apos;s perspective.</span>
               </Link>
@@ -56,6 +65,14 @@ export default function HomePage() {
                 className="hero-metric-card interactive-card-link"
                 aria-label="Browse the shop for fast gear discovery"
               >
+                <span className="hero-metric-media">
+                  <OptimizedProductImage
+                    src="/sattari site/violins/brescia-acoustic.jpg"
+                    alt=""
+                    loading="lazy"
+                    sizes="72px"
+                  />
+                </span>
                 <strong>Fast gear discovery</strong>
                 <span>Browse by category, compare details, and add to cart without friction.</span>
               </Link>
@@ -64,6 +81,14 @@ export default function HomePage() {
                 className="hero-metric-card interactive-card-link"
                 aria-label="Request local drum support"
               >
+                <span className="hero-metric-media">
+                  <OptimizedProductImage
+                    src="/sattari site/guitars/bass-guitar.jpg"
+                    alt=""
+                    loading="lazy"
+                    sizes="72px"
+                  />
+                </span>
                 <strong>Local support when needed</strong>
                 <span>Repairs, rentals, and working-musician help in California.</span>
               </Link>
