@@ -103,6 +103,9 @@ export default function ProductDetail() {
         image={detailImage || product.image}
         url={productUrl}
         type="product"
+        price={unitPrice}
+        availability="in stock"
+        retailerId={product.slug}
       />
       <StructuredData data={productSchema} />
       <div className="container product-detail-shell">
