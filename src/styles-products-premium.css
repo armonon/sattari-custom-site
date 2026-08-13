@@ -1478,3 +1478,54 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------
+   Stock status
+   Shown only for variants an employee has opted into tracking;
+   untracked products render exactly as they did before.
+   --------------------------------------------------------------- */
+
+.product-stock-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Dim the imagery, not the text: the name and price still need to be
+   readable so customers can ask about restocking. */
+.product-card-enhanced.is-sold-out .product-image,
+.product-card-enhanced.is-sold-out .product-image-placeholder {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.btn-add-cart:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.product-stock-note {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.product-stock-note.is-sold-out {
+  color: var(--muted);
+}
+
+.product-stock-note.is-low {
+  color: var(--accent);
+  font-weight: 600;
+}

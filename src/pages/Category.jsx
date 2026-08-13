@@ -9,6 +9,7 @@ import {
   getMinPrice,
 } from '../data/catalog';
 import OptimizedProductImage from '../components/OptimizedProductImage';
+import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
 
@@ -57,6 +58,7 @@ export default function Category() {
   // On the "all" view, chips filter by category; sort applies everywhere.
   const [activeCat, setActiveCat] = useState('all');
   const [sort, setSort] = useState('featured');
+  const { isSoldOut } = useInventory();
 
   const visible = useMemo(() => {
     const scoped =
@@ -172,7 +174,10 @@ export default function Category() {
           // Special UI for Sattari Hand Crafted Cymbals
           if (product.name === 'Sattari Hand Crafted Cymbals' && categoryKey === 'cymbals') {
             return (
-              <article className="product-card-enhanced" key={product.name}>
+              <article
+                className={`product-card-enhanced${isSoldOut(product) ? ' is-sold-out' : ''}`}
+                key={product.name}
+              >
                 <div className="product-image-container">
                   <Link
                     to={buildProductPath(product)}
@@ -180,6 +185,9 @@ export default function Category() {
                     aria-label={`View ${product.name}`}
                   >
                     <div className="product-image-placeholder" />
+                    {isSoldOut(product) ? (
+                      <span className="product-stock-badge">Out of stock</span>
+                    ) : null}
                   </Link>
                   <div className="product-info-overlay">
                     <Link
@@ -205,13 +213,19 @@ export default function Category() {
           }
           // Default product card
           return (
-            <article className="product-card-enhanced" key={product.name}>
+            <article
+              className={`product-card-enhanced${isSoldOut(product) ? ' is-sold-out' : ''}`}
+              key={product.name}
+            >
               <div className="product-image-container">
                 <Link
                   to={buildProductPath(product)}
                   className="product-media-link"
                   aria-label={`View ${product.name}`}
                 >
+                  {isSoldOut(product) ? (
+                    <span className="product-stock-badge">Out of stock</span>
+                  ) : null}
                   {resolveProductImage(product) ? (
                     <OptimizedProductImage
                       src={resolveProductImage(product)}

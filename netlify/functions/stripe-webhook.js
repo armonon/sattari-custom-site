@@ -6,8 +6,46 @@ import {
   getOrderStoreKey,
 } from '../../src/utils/orderProcessing.js';
 import { sendOrderNotification } from '../../server/orderNotifications.js';
+import { applyStockDeltas } from '../../src/utils/inventory.js';
+import { updateStock } from '../../server/stockStore.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+
+// Turns Stripe line items back into stock decrements. The slug/size/color were
+// written into product metadata when the session was created; 'default' is the
+// placeholder for an absent size or color, and stockKey normalizes it away.
+export function buildStockDeltas(lineItems = []) {
+  const deltas = [];
+
+  for (const item of lineItems) {
+    const metadata = item?.price?.product?.metadata;
+    if (!metadata?.slug) continue;
+
+    const quantity = Number(item.quantity) || 0;
+    if (quantity <= 0) continue;
+
+    deltas.push({
+      slug: metadata.slug,
+      size: metadata.size,
+      color: metadata.color,
+      delta: -quantity,
+    });
+  }
+
+  return deltas;
+}
+
+async function applyStockForOrder(event, deltas) {
+  let skipped = [];
+
+  await updateStock(event, (stock) => {
+    const result = applyStockDeltas(stock, deltas);
+    skipped = result.skipped;
+    return result.stock;
+  });
+
+  return { skipped };
+}
 
 function getHeader(headers, name) {
   return headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || null;
@@ -72,6 +110,10 @@ export async function handler(event) {
       if (!existingOrder) {
         const lineItemsResponse = await stripe.checkout.sessions.listLineItems(session.id, {
           limit: 100,
+          // The slug/size/color needed to find the right stock entry live in
+          // product metadata, which is not returned unless the product is
+          // expanded. createOrderRecord ignores the extra data.
+          expand: ['data.price.product'],
         });
 
         const orderRecord = createOrderRecord(session, lineItemsResponse.data, {
@@ -84,6 +126,35 @@ export async function handler(event) {
             paymentStatus: orderRecord.paymentStatus,
           },
         });
+
+        // Stock comes down here, inside the existing "have we already recorded
+        // this order?" guard. Stripe retries webhooks on any non-2xx, so a
+        // decrement outside this block would subtract the same sale twice.
+        try {
+          const deltas = buildStockDeltas(lineItemsResponse.data);
+          if (deltas.length) {
+            const { skipped } = await applyStockForOrder(event, deltas);
+            if (skipped.length) {
+              // Untracked variants are skipped rather than created: a sale says
+              // one unit left, not how many there were. Logged so an employee
+              // can see which products still need an opening count.
+              console.log(
+                JSON.stringify({ type: 'stock-untracked-skip', sessionId: session.id, skipped })
+              );
+            }
+          }
+        } catch (stockError) {
+          // Never fail the webhook over stock. Stripe would retry, and the
+          // retry would be swallowed by the idempotency guard above, so the
+          // order would be recorded but the notification never sent.
+          console.error(
+            JSON.stringify({
+              type: 'stock-decrement-error',
+              sessionId: session.id,
+              message: stockError?.message || String(stockError),
+            })
+          );
+        }
 
         try {
           const notification = await sendOrderNotification(orderRecord);

@@ -10,6 +10,7 @@ import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';
 import { CartProvider } from './context/CartContext';
+import { InventoryProvider } from './context/InventoryContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 // Initialize Sentry — error + performance tracking.
@@ -28,11 +29,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <HelmetProvider>
         <ThemeProvider>
-          <CartProvider>
-            <SentryRoutes>
-              <App />
-            </SentryRoutes>
-          </CartProvider>
+          <InventoryProvider>
+            <CartProvider>
+              <SentryRoutes>
+                <App />
+              </SentryRoutes>
+            </CartProvider>
+          </InventoryProvider>
         </ThemeProvider>
       </HelmetProvider>
     </ErrorBoundary>

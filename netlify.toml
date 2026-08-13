@@ -34,6 +34,13 @@
   status = 200
 
 [[redirects]]
+  from = "/api/inventory"
+  to = "/.netlify/functions/inventory"
+  status = 200
+
+# Must stay last: redirects are matched in order and this one catches
+# everything left over for the single-page app.
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

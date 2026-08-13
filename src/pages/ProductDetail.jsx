@@ -8,6 +8,7 @@ import {
   categoryTitle,
 } from '../data/catalog';
 import { useCart } from '../context/CartContext';
+import { useInventory } from '../context/InventoryContext';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
@@ -33,6 +34,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const { addToCart } = useCart();
+  const { isVariantSoldOut, quantityFor } = useInventory();
 
   // Related items: same category first, then fill from the rest of the catalog.
   const related = useMemo(() => {
@@ -55,6 +57,14 @@ export default function ProductDetail() {
   }
 
   const { size, unitPrice } = resolveSelectedOption(product, selectedSize);
+  // Stock is per variant, so this reflects the size and color currently
+  // selected — switching to an available size re-enables the button.
+  const variantSoldOut = isVariantSoldOut(product.slug, size, selectedColor);
+  const variantRemaining = quantityFor(product.slug, size, selectedColor);
+  const showRemaining = Number.isFinite(variantRemaining) && variantRemaining > 0;
+  const availability = variantSoldOut
+    ? 'https://schema.org/OutOfStock'
+    : 'https://schema.org/InStock';
   const detailImage = product.sizes?.find((option) => option.size === size)?.image || product.image;
   const galleryImages = product.gallery?.length ? product.gallery : [];
   const mainImage = galleryImages.length ? galleryImages[activeImage] : detailImage;
@@ -75,7 +85,10 @@ export default function ProductDetail() {
           '@type': 'Offer',
           priceCurrency: 'USD',
           price: option.price,
-          availability: 'https://schema.org/InStock',
+          // Per size, so Google does not keep advertising a sold-out variant.
+          availability: isVariantSoldOut(product.slug, option.size, selectedColor)
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
           url: productUrl,
           sku: `${product.slug}-${option.size.replace(/[^a-zA-Z0-9]/g, '')}`,
         }))
@@ -83,13 +96,14 @@ export default function ProductDetail() {
           '@type': 'Offer',
           priceCurrency: 'USD',
           price: unitPrice,
-          availability: 'https://schema.org/InStock',
+          availability,
           url: productUrl,
           sku: product.slug,
         },
   };
 
   function handleAddToCart() {
+    if (variantSoldOut) return;
     addToCart({ slug: product.slug, size, color: selectedColor, quantity });
     setAddedMessage('Added to cart.');
     window.setTimeout(() => setAddedMessage(''), 2200);
@@ -242,13 +256,29 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="product-detail-actions">
-            <button className="btn-add-cart" onClick={handleAddToCart}>
-              {addedMessage ? 'Added ✓' : 'Add to Cart'}
+            <button
+              className="btn-add-cart"
+              onClick={handleAddToCart}
+              disabled={variantSoldOut}
+              aria-label={variantSoldOut ? `${product.name} is out of stock` : undefined}
+            >
+              {variantSoldOut ? 'Out of Stock' : addedMessage ? 'Added ✓' : 'Add to Cart'}
             </button>
             <Link to="/cart" className="btn-details">
               Go to Cart
             </Link>
           </div>
+          {variantSoldOut ? (
+            <p className="product-stock-note is-sold-out" aria-live="polite">
+              {product.sizes?.length || product.colors?.length
+                ? 'This option is out of stock. Try another size or color, or call us.'
+                : 'Out of stock right now. Call us and we can let you know when it is back.'}
+            </p>
+          ) : showRemaining && variantRemaining <= 3 ? (
+            <p className="product-stock-note is-low" aria-live="polite">
+              Only {variantRemaining} left.
+            </p>
+          ) : null}
           {addedMessage ? (
             <p className="success-message" aria-live="polite">
               {addedMessage}

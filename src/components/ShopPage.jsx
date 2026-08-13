@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
+import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
 import { categories, products, formatPriceRange } from '../data/catalog';
 import OptimizedProductImage from './OptimizedProductImage';
@@ -45,13 +46,13 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuickAdd }) {
+function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuickAdd, soldOut }) {
   const path = buildProductPath(product);
   const image = resolveProductImage(product);
   const priceLabel = formatPriceRange(product);
 
   return (
-    <article className="product-card-enhanced">
+    <article className={`product-card-enhanced${soldOut ? ' is-sold-out' : ''}`}>
       <div className="product-image-container">
         <Link to={path} className="product-media-link" aria-label={`View ${product.name}`}>
           {image ? (
@@ -65,6 +66,7 @@ function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuick
           ) : (
             <div className="product-image-placeholder" />
           )}
+          {soldOut ? <span className="product-stock-badge">Out of stock</span> : null}
         </Link>
         <div className="product-info-overlay">
           <Link
@@ -86,9 +88,16 @@ function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuick
             <button
               className={`btn-add-cart${recentlyAddedSlug === product.slug ? ' is-added' : ''}`}
               onClick={() => onQuickAdd(product)}
-              aria-label={`Add ${product.name} to cart`}
+              disabled={soldOut}
+              aria-label={
+                soldOut ? `${product.name} is out of stock` : `Add ${product.name} to cart`
+              }
             >
-              {recentlyAddedSlug === product.slug ? 'Added ✓' : 'Add to Cart'}
+              {soldOut
+                ? 'Out of Stock'
+                : recentlyAddedSlug === product.slug
+                  ? 'Added ✓'
+                  : 'Add to Cart'}
             </button>
           </div>
         </div>
@@ -99,9 +108,11 @@ function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuick
 
 export default function ShopPage() {
   const { addToCart } = useCart();
+  const { isSoldOut } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
 
   const handleQuickAdd = (product) => {
+    if (isSoldOut(product)) return;
     addToCart({ slug: product.slug, quantity: 1 });
     setRecentlyAddedSlug(product.slug);
     window.setTimeout(() => setRecentlyAddedSlug(null), 1800);
@@ -198,6 +209,7 @@ export default function ShopPage() {
                   sellingPoint={productSellingPoints[product.category]}
                   recentlyAddedSlug={recentlyAddedSlug}
                   onQuickAdd={handleQuickAdd}
+                  soldOut={isSoldOut(product)}
                 />
               ))}
               <Link
