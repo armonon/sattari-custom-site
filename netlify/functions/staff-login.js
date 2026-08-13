@@ -1,5 +1,6 @@
 import {
   checkPassword,
+  checkUsername,
   createSession,
   getClientIp,
   isConfigured,
@@ -22,7 +23,8 @@ export async function handler(event) {
 
   if (!isConfigured()) {
     return json(500, {
-      error: 'Staff access is not configured. Set STAFF_PASSWORD_SALT, STAFF_PASSWORD_HASH, and STAFF_SESSION_SECRET.',
+      error:
+        'Staff access is not configured. Set STAFF_USERNAME, STAFF_PASSWORD_SALT, STAFF_PASSWORD_HASH, and STAFF_SESSION_SECRET.',
     });
   }
 
@@ -37,7 +39,7 @@ export async function handler(event) {
 
   const staff = String(body.staff || '').trim();
   if (!staff) {
-    return json(400, { error: 'Enter your name so changes can be tracked.' });
+    return json(400, { error: 'Enter the username.' });
   }
 
   try {
@@ -55,14 +57,20 @@ export async function handler(event) {
     return json(503, { error: 'Sign-in is temporarily unavailable. Try again shortly.' });
   }
 
-  if (!checkPassword(body.password)) {
+  // Username and password are checked together and reported together. Saying
+  // which one was wrong would tell an attacker when they had found a valid
+  // username, turning two unknowns back into one.
+  const usernameOk = checkUsername(staff);
+  const passwordOk = checkPassword(body.password);
+
+  if (!usernameOk || !passwordOk) {
     try {
       await recordFailure(event, ip);
     } catch (error) {
       console.error(JSON.stringify({ type: 'throttle-write-error', message: error?.message }));
     }
     console.log(JSON.stringify({ type: 'staff-login-failed', staff: staff.slice(0, 40), ip }));
-    return json(401, { error: 'That password is not right.' });
+    return json(401, { error: 'That username or password is not right.' });
   }
 
   try {

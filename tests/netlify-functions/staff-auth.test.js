@@ -8,6 +8,7 @@ vi.mock('@netlify/blobs', () => ({
 
 const {
   checkPassword,
+  checkUsername,
   createSession,
   getBearerToken,
   getClientIp,
@@ -22,15 +23,40 @@ const PASSWORD = 'correct-horse-battery';
 const SALT = 'a1b2c3d4';
 
 beforeEach(() => {
+  process.env.STAFF_USERNAME = 'sattaristudio';
   process.env.STAFF_PASSWORD_SALT = SALT;
   process.env.STAFF_PASSWORD_HASH = hashPassword(PASSWORD, SALT);
   process.env.STAFF_SESSION_SECRET = 'test-secret-key';
 });
 
 afterEach(() => {
+  delete process.env.STAFF_USERNAME;
   delete process.env.STAFF_PASSWORD_SALT;
   delete process.env.STAFF_PASSWORD_HASH;
   delete process.env.STAFF_SESSION_SECRET;
+});
+
+describe('username checking', () => {
+  it('accepts the configured username', () => {
+    expect(checkUsername('sattaristudio')).toBe(true);
+  });
+
+  it('ignores case and surrounding whitespace', () => {
+    expect(checkUsername('  SattariStudio ')).toBe(true);
+  });
+
+  it('rejects anything else', () => {
+    expect(checkUsername('admin')).toBe(false);
+    expect(checkUsername('sattaristudi')).toBe(false);
+    expect(checkUsername('')).toBe(false);
+    expect(checkUsername(undefined)).toBe(false);
+  });
+
+  it('refuses when no username is configured', () => {
+    delete process.env.STAFF_USERNAME;
+    expect(checkUsername('sattaristudio')).toBe(false);
+    expect(isConfigured()).toBe(false);
+  });
 });
 
 describe('password checking', () => {

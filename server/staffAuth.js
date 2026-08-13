@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 // checked here on every request rather than in the page.
 //
 // Secrets live in Netlify environment variables, never in the repo:
+//   STAFF_USERNAME         the username staff type to sign in
 //   STAFF_PASSWORD_SALT    hex salt from scripts/hash-staff-password.mjs
 //   STAFF_PASSWORD_HASH    hex scrypt hash of the password
 //   STAFF_SESSION_SECRET   random key used to sign session tokens
@@ -17,6 +18,7 @@ const SESSION_HOURS = 12;
 
 export function getAuthConfig() {
   return {
+    username: process.env.STAFF_USERNAME || '',
     salt: process.env.STAFF_PASSWORD_SALT || '',
     hash: process.env.STAFF_PASSWORD_HASH || '',
     secret: process.env.STAFF_SESSION_SECRET || '',
@@ -24,8 +26,8 @@ export function getAuthConfig() {
 }
 
 export function isConfigured() {
-  const { salt, hash, secret } = getAuthConfig();
-  return Boolean(salt && hash && secret);
+  const { username, salt, hash, secret } = getAuthConfig();
+  return Boolean(username && salt && hash && secret);
 }
 
 export function hashPassword(password, salt) {
@@ -40,6 +42,15 @@ function safeEqual(a, b) {
   const right = Buffer.from(String(b), 'utf8');
   if (left.length !== right.length) return false;
   return crypto.timingSafeEqual(left, right);
+}
+
+// Compared in constant time and case-insensitively: a username is an
+// identifier, not a secret, and rejecting the right person for capitalising it
+// at a busy counter buys nothing.
+export function checkUsername(username) {
+  const expected = getAuthConfig().username;
+  if (!expected) return false;
+  return safeEqual(String(username ?? '').trim().toLowerCase(), expected.trim().toLowerCase());
 }
 
 export function checkPassword(password) {

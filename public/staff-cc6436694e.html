@@ -237,18 +237,25 @@
       <!-- Sign in -->
       <section id="login-view" class="card login">
         <h1>Sattari Music</h1>
-        <p class="sub">Stock. Sign in with the shop password.</p>
+        <p class="sub">Stock and listings. Staff only.</p>
         <form id="login-form">
-          <label for="staff">Your name</label>
-          <input id="staff" type="text" autocomplete="off" placeholder="e.g. Armon" required />
-          <label for="password">Shop password</label>
+          <label for="staff">Username</label>
+          <input
+            id="staff"
+            type="text"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            required
+          />
+          <label for="password">Password</label>
           <input id="password" type="password" autocomplete="current-password" required />
           <button class="full" type="submit" id="login-btn">Sign in</button>
         </form>
         <div id="login-msg"></div>
         <p class="note">
-          Your name is recorded with every change so the shop has a readable history of who
-          adjusted what.
+          Changes are recorded against this account. Because everyone shares it, the history shows
+          what changed and when — not which person did it.
         </p>
       </section>
 
