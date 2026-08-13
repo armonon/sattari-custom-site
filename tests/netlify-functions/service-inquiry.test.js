@@ -97,6 +97,25 @@ describe('service-inquiry Netlify function', () => {
     );
   });
 
+  it('labels Audio Suite alpha signups so they are identifiable in the inbox', async () => {
+    const response = await post({
+      service: 'audio-alpha',
+      name: 'Sam Tester',
+      email: 'sam@example.com',
+      details: 'DAW / host: Logic Pro\n\nMixing and vocals, M2 MacBook Pro.',
+      source: 'Audio Suite alpha signup',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyTo: 'sam@example.com',
+        subject: 'New Sattari service inquiry: Audio Suite alpha access',
+        text: expect.stringContaining('Logic Pro'),
+      })
+    );
+  });
+
   it('falls back to order notification env vars when service-specific env vars are absent', async () => {
     delete process.env.SERVICE_INQUIRY_FROM;
     delete process.env.SERVICE_INQUIRY_TO;

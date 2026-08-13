@@ -7,6 +7,7 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
+  { to: '/audio-suite', label: 'Audio Suite', tag: 'Alpha' },
 ];
 
 export default function Navbar({ onCartClick }) {
@@ -74,6 +75,7 @@ export default function Navbar({ onCartClick }) {
               className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
             >
               {link.label}
+              {link.tag && <span className="nav-link-tag">{link.tag}</span>}
             </NavLink>
           ))}
           <button
