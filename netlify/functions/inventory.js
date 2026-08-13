@@ -1,4 +1,3 @@
-import { connectLambda, getStore } from '@netlify/blobs';
 import { STOCK_BLOB_KEY, STOCK_STORE, sanitizeStockMap } from '../../src/utils/inventory.js';
 import {
   CATALOG_BLOB_KEY,
@@ -6,6 +5,7 @@ import {
   EMPTY_CATALOG_DOC,
   sanitizeCatalogDoc,
 } from '../../src/utils/catalogMerge.js';
+import { openStore } from '../../server/blobs.js';
 
 function json(statusCode, body) {
   return {
@@ -38,13 +38,11 @@ export async function handler(event) {
   let degraded = false;
 
   try {
-    connectLambda(event);
-
     // Strong consistency, not the eventual default: an employee who sets a
     // count expects to see it on the storefront immediately, and a stale read
     // right after a sale is what allows overselling.
-    const stockStore = getStore({ name: STOCK_STORE, consistency: 'strong' });
-    const catalogStore = getStore({ name: CATALOG_STORE, consistency: 'strong' });
+    const stockStore = openStore(event, STOCK_STORE);
+    const catalogStore = openStore(event, CATALOG_STORE);
 
     const [rawStock, rawCatalog] = await Promise.all([
       stockStore.get(STOCK_BLOB_KEY, { type: 'json' }),

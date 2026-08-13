@@ -1,5 +1,5 @@
-import { connectLambda, getStore } from '@netlify/blobs';
 import { IMAGE_STORE } from './staff-image.js';
+import { openStore } from '../../server/blobs.js';
 
 const CONTENT_TYPES = {
   jpg: 'image/jpeg',
@@ -27,8 +27,7 @@ export async function handler(event) {
   }
 
   try {
-    connectLambda(event);
-    const store = getStore({ name: IMAGE_STORE, consistency: 'strong' });
+    const store = openStore(event, IMAGE_STORE);
     const blob = await store.get(key, { type: 'arrayBuffer' });
 
     if (!blob) return { statusCode: 404, body: 'Not found.' };

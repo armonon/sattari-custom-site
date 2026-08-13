@@ -1,11 +1,10 @@
-import { connectLambda, getStore } from '@netlify/blobs';
 import { STOCK_BLOB_KEY, STOCK_STORE, sanitizeStockMap } from '../src/utils/inventory.js';
+import { openStore } from './blobs.js';
 
 // Strong consistency rather than the eventual default. A stale read here is
 // precisely how you sell the last item twice.
 export function getStockStore(event) {
-  if (event) connectLambda(event);
-  return getStore({ name: STOCK_STORE, consistency: 'strong' });
+  return openStore(event, STOCK_STORE);
 }
 
 export async function readStock(event) {

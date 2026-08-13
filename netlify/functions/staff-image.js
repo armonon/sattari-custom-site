@@ -1,6 +1,6 @@
-import { connectLambda, getStore } from '@netlify/blobs';
 import crypto from 'node:crypto';
 import { requireStaff } from '../../server/staffAuth.js';
+import { openStore } from '../../server/blobs.js';
 
 export const IMAGE_STORE = 'catalog-images';
 
@@ -95,8 +95,7 @@ export async function handler(event) {
 
   const key = `${crypto.randomBytes(12).toString('hex')}.${ALLOWED[actualType]}`;
 
-  connectLambda(event);
-  const store = getStore({ name: IMAGE_STORE, consistency: 'strong' });
+  const store = openStore(event, IMAGE_STORE);
   await store.set(key, buffer, { metadata: { contentType: actualType, staff: session.staff } });
 
   console.log(

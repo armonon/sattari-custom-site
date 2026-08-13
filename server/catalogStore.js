@@ -1,14 +1,13 @@
-import { connectLambda, getStore } from '@netlify/blobs';
 import {
   CATALOG_BLOB_KEY,
   CATALOG_STORE,
   EMPTY_CATALOG_DOC,
   sanitizeCatalogDoc,
 } from '../src/utils/catalogMerge.js';
+import { openStore } from './blobs.js';
 
 export function getCatalogStore(event) {
-  if (event) connectLambda(event);
-  return getStore({ name: CATALOG_STORE, consistency: 'strong' });
+  return openStore(event, CATALOG_STORE);
 }
 
 export async function readCatalogDoc(event) {

@@ -1,4 +1,4 @@
-import { connectLambda, getStore } from '@netlify/blobs';
+import { openStore } from './blobs.js';
 
 // Per-IP login throttle.
 //
@@ -19,8 +19,7 @@ const BASE_LOCK_MS = 60 * 1000;
 const MAX_LOCK_MS = 15 * 60 * 1000;
 
 function store(event) {
-  if (event) connectLambda(event);
-  return getStore({ name: STORE, consistency: 'strong' });
+  return openStore(event, STORE);
 }
 
 async function read(event) {
