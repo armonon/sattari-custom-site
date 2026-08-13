@@ -333,16 +333,27 @@
           <div class="card" style="margin-top: 1rem">
             <div class="bar" style="margin-bottom: 0.5rem">
               <strong>Recent orders</strong>
-              <span class="state" id="order-count"></span>
+              <span style="display:flex;gap:0.5rem;align-items:center">
+                <span class="state" id="order-count"></span>
+                <select id="order-filter" class="select" style="width:auto">
+                  <option value="open">Needs action</option>
+                  <option value="all">All orders</option>
+                  <option value="new">New</option>
+                  <option value="packed">Packed</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="collected">Picked up</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </span>
             </div>
             <table>
               <thead>
                 <tr>
-                  <th style="width: 11rem">When</th>
+                  <th style="width: 10rem">When</th>
                   <th>Customer</th>
-                  <th style="width: 6rem">Items</th>
-                  <th style="width: 7rem">Total</th>
-                  <th style="width: 7rem">Payment</th>
+                  <th style="width: 6.5rem">Total</th>
+                  <th style="width: 6.5rem">Payment</th>
+                  <th style="width: 15rem">Fulfilment</th>
                 </tr>
               </thead>
               <tbody id="order-rows"></tbody>
@@ -1080,44 +1091,65 @@
           );
         }
 
+        var FULFILMENT_LABELS = {
+          new: 'New',
+          packed: 'Packed',
+          shipped: 'Shipped',
+          collected: 'Picked up',
+          cancelled: 'Cancelled',
+        };
+        var OPEN_STATUSES = ['new', 'packed'];
+        var lastOrderData = null;
+
         function renderOrders(data) {
+          lastOrderData = data;
           var stats = data.stats || {};
           var rev = stats.revenueCents || {};
           var counts = stats.orders || {};
           var cur = stats.currency || 'usd';
 
           el('order-stats').innerHTML =
+            statTile('Needs action', data.openCount || 0, 'new or packed') +
             statTile('Revenue today', fmtMoney(rev.last24h, cur), counts.last24h + ' orders') +
             statTile('Last 7 days', fmtMoney(rev.last7d, cur), counts.last7d + ' orders') +
             statTile('Last 30 days', fmtMoney(rev.last30d, cur), counts.last30d + ' orders') +
             statTile('All time', fmtMoney(rev.allTime, cur), counts.paid + ' paid orders') +
             statTile('Average order', fmtMoney(stats.averageOrderCents, cur), '') +
-            (counts.unpaid
-              ? statTile('Unpaid', counts.unpaid, 'started but not paid')
-              : '');
+            (counts.unpaid ? statTile('Unpaid', counts.unpaid, 'started but not paid') : '');
 
           var orders = data.orders || [];
+          var filter = el('order-filter').value;
+          var shown = orders.filter(function (o) {
+            var st = (o.fulfillment && o.fulfillment.status) || 'new';
+            if (filter === 'all') return true;
+            if (filter === 'open') return OPEN_STATUSES.indexOf(st) !== -1;
+            return st === filter;
+          });
+
           el('order-count').textContent = data.total
-            ? 'showing ' + orders.length + ' of ' + data.total
+            ? shown.length + ' of ' + data.total
             : '';
 
           var tbody = el('order-rows');
           tbody.innerHTML = '';
 
-          if (!orders.length) {
+          if (!shown.length) {
             var empty = document.createElement('tr');
             var cell = document.createElement('td');
             cell.colSpan = 5;
             cell.className = 'state';
             cell.textContent = data.degraded
               ? 'Could not read orders right now. Try Reload.'
-              : 'No orders yet. They appear here the moment Stripe confirms a payment.';
+              : orders.length
+                ? 'No orders match this filter.'
+                : 'No orders yet. They appear here the moment Stripe confirms a payment.';
             empty.appendChild(cell);
             tbody.appendChild(empty);
             return;
           }
 
-          orders.forEach(function (order) {
+          shown.forEach(function (order) {
+            var f = order.fulfillment || { status: 'new' };
             var tr = document.createElement('tr');
 
             var whenCell = document.createElement('td');
@@ -1139,17 +1171,17 @@
               var items = document.createElement('div');
               items.className = 'order-items';
               items.textContent = order.items
-                .map(function (i) {
-                  return i.description + ' x' + i.quantity;
-                })
+                .map(function (i) { return i.description + ' x' + i.quantity; })
                 .join(', ');
               whoCell.appendChild(items);
             }
+            if (order.shippingCity) {
+              var place = document.createElement('div');
+              place.className = 'order-items';
+              place.textContent = [order.shippingCity, order.shippingState].filter(Boolean).join(', ');
+              whoCell.appendChild(place);
+            }
             tr.appendChild(whoCell);
-
-            var itemsCell = document.createElement('td');
-            itemsCell.textContent = order.itemCount != null ? order.itemCount : '—';
-            tr.appendChild(itemsCell);
 
             var totalCell = document.createElement('td');
             totalCell.textContent = fmtMoney(order.amountTotal, order.currency);
@@ -1163,9 +1195,74 @@
             payCell.appendChild(pill);
             tr.appendChild(payCell);
 
+            // --- fulfilment control ---
+            var fCell = document.createElement('td');
+            var select = document.createElement('select');
+            select.className = 'select';
+            Object.keys(FULFILMENT_LABELS).forEach(function (key) {
+              var opt = document.createElement('option');
+              opt.value = key;
+              opt.textContent = FULFILMENT_LABELS[key];
+              if (key === f.status) opt.selected = true;
+              select.appendChild(opt);
+            });
+
+            var tracking = document.createElement('input');
+            tracking.type = 'text';
+            tracking.placeholder = 'Tracking #';
+            tracking.value = f.tracking || '';
+            tracking.style.marginTop = '0.35rem';
+            tracking.style.fontSize = '0.85rem';
+
+            function save(status) {
+              select.disabled = true;
+              // Marking an unpaid order as gone is nearly always a mistake, so
+              // it asks once rather than silently accepting.
+              if (!paid && (status === 'shipped' || status === 'collected')) {
+                if (!window.confirm('This order has not been paid. Mark it ' + FULFILMENT_LABELS[status] + ' anyway?')) {
+                  select.value = f.status;
+                  select.disabled = false;
+                  return;
+                }
+              }
+              api(ORDERS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                  orderId: order.id,
+                  status: status,
+                  tracking: tracking.value.trim(),
+                }),
+              })
+                .then(function () { return loadOrders(); })
+                .catch(function (error) {
+                  if (error.message !== 'unauthorized') {
+                    message('order-msg', error.message, 'error');
+                  }
+                  select.disabled = false;
+                });
+            }
+
+            select.addEventListener('change', function () { save(select.value); });
+            tracking.addEventListener('change', function () { save(select.value); });
+
+            fCell.appendChild(select);
+            if (f.status === 'shipped' || tracking.value) fCell.appendChild(tracking);
+
+            if (f.updatedAt) {
+              var by = document.createElement('div');
+              by.className = 'order-items';
+              by.textContent = (f.staff ? f.staff + ' · ' : '') + fmtWhen(f.updatedAt);
+              fCell.appendChild(by);
+            }
+            tr.appendChild(fCell);
+
             tbody.appendChild(tr);
           });
         }
+
+        el('order-filter').addEventListener('change', function () {
+          if (lastOrderData) renderOrders(lastOrderData);
+        });
 
         async function loadOrders() {
           message('order-msg', '');

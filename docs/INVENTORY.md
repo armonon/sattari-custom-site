@@ -100,6 +100,47 @@ storing zero.
 
 ---
 
+## Orders & fulfilment
+
+The **Orders** tab shows what sold, plus revenue by window. Orders are written
+by the Stripe webhook the moment payment is confirmed; the dashboard reads that
+same store, so there is no second source of truth.
+
+**Fulfilment is stored separately from the order record**, in its own blob. An
+order record is what Stripe told us happened; fulfilment is what the shop did
+about it. Keeping them apart means re-reading an order from Stripe can never
+wipe the fact that it shipped, and a fulfilment bug can never corrupt a payment
+record.
+
+Statuses: `new` → `packed` → `shipped` (with tracking) or `collected`, plus
+`cancelled`. **There are deliberately no transition rules.** Shops hit
+out-of-order cases constantly — a shipped order comes back, a pickup becomes a
+delivery — and blocking them just teaches staff to work around the tool. Every
+change records who made it and when, and the last 20 changes are kept, so the
+sequence is always recoverable.
+
+Marking an *unpaid* order shipped or picked up asks for confirmation first.
+
+Revenue counts only orders Stripe marked `paid`. Unpaid sessions are shown as a
+separate count rather than hidden — a started-but-unpaid order is something to
+chase.
+
+### Sale notification emails
+
+Every completed sale emails the addresses in `ORDER_NOTIFICATION_EMAIL`
+(comma-separated). All three variables must be set or the webhook silently skips
+the email and only logs it:
+
+| Variable | Notes |
+| --- | --- |
+| `RESEND_API_KEY` | From resend.com |
+| `ORDER_NOTIFICATION_FROM` | Must be on a domain verified with Resend |
+| `ORDER_NOTIFICATION_EMAIL` | Comma-separated recipients |
+
+Resend reports failures in the response body rather than throwing, so a
+body-level error is raised explicitly — otherwise a rejected email would log as
+a success.
+
 ## Known limits
 
 - **The oversell race is open.** Stock is checked when the checkout session is
@@ -110,6 +151,14 @@ storing zero.
 
 - **The counter depends on the internet.** Data lives in Netlify, so an outage
   at the shop means no stock lookups until it's back.
+
+- **Refunds, payouts, and disputes stay in Stripe.** This records what sold and
+  what the shop did about it; duplicating Stripe's money handling would mean two
+  systems disagreeing about money.
+
+- **Fulfilment state lives in one blob.** Fine at a shop's order volume — one
+  read for the whole dashboard, atomic conditional writes. If orders ever reach
+  the tens of thousands, split it by key.
 
 - **Sizes and colors can't be edited from the staff page yet.** You can edit
   name, category, price, description, and photo. Products with per-size pricing
