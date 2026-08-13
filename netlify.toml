@@ -3,6 +3,12 @@
   publish = "dist"
   functions = "netlify/functions"
 
+# Pin the Node version so Netlify matches the version CI builds and tests
+# against. Without this Netlify picks its build-image default, which can
+# change under us and produce builds that pass in CI but fail here.
+[build.environment]
+  NODE_VERSION = "20.19.0"
+
 [[redirects]]
   from = "/api/create-checkout-session"
   to = "/.netlify/functions/create-checkout-session"
