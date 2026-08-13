@@ -62,5 +62,6 @@ export function openStore(event, name) {
     set: (...args) => call('set', ...args),
     setJSON: (...args) => call('setJSON', ...args),
     list: (...args) => call('list', ...args),
+    delete: (...args) => call('delete', ...args),
   };
 }

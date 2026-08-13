@@ -59,6 +59,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/staff/backup"
+  to = "/.netlify/functions/staff-backup"
+  status = 200
+
+[[redirects]]
   from = "/api/staff/image"
   to = "/.netlify/functions/staff-image"
   status = 200
@@ -67,6 +72,12 @@
   from = "/product-images/*"
   to = "/.netlify/functions/product-image"
   status = 200
+
+# Nightly snapshot of everything the shop cannot recover from elsewhere.
+# Scheduled functions run on published production deploys only, and cannot be
+# triggered over HTTP — the staff-facing download and restore are separate.
+[functions."nightly-backup"]
+  schedule = "0 9 * * *"
 
 # The staff page is unlisted, not secret, so it must stay out of search
 # results. This header does that WITHOUT naming the path in robots.txt —

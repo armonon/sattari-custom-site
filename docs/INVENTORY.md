@@ -141,6 +141,56 @@ Resend reports failures in the response body rather than throwing, so a
 body-level error is raised explicitly — otherwise a rejected email would log as
 a success.
 
+## Backups
+
+A snapshot runs nightly (`netlify.toml` → `[functions."nightly-backup"]`, 09:00
+UTC) and keeps the last 30. **Backups tab** in the staff page lists them, takes
+one on demand, downloads one, and restores one.
+
+What is snapshotted: stock counts, catalog edits, fulfilment state, and the list
+of photo keys.
+
+**Orders are deliberately excluded.** Stripe is the system of record for
+payments; a second copy would only ever be the one that disagrees.
+
+**Photo bytes are not included** — only their keys. Blob keys are immutable and
+never reused, so the list tells you what should exist and what is missing.
+
+Two things worth understanding:
+
+1. **Stored snapshots live in the same Netlify account as the data.** They
+   protect against a bad bulk edit or a bug. They do *not* protect against
+   losing the account. **Download current** saves a file to the employee's
+   machine — that is the copy that survives account loss, and it is the direct
+   descendant of the original "one file you can copy to a USB stick".
+
+2. **A restore takes a safety snapshot of the current state first**, so
+   restoring the wrong backup is itself undoable. Restore also requires typing
+   `RESTORE`, because it overwrites live stock and prices for the whole shop.
+
+Scheduled functions run on published production deploys only — not on previews
+— and cannot be triggered over HTTP, which is why the staff-facing download and
+restore are a separate function.
+
+## Failing loudly
+
+The staff page is built to make failure obvious, on the principle that a
+silent failure at a counter costs more than an ugly one:
+
+- A sticky red banner at the top of the page for any failed request, so an
+  error is visible even if it happened in a panel the employee is not looking at
+- Offline is detected and named as offline, rather than surfacing as a generic
+  failure
+- HTTP status codes are translated into sentences that say what to do
+  (409 → someone else changed this, reload; 5xx → nothing was saved, try again)
+- Image uploads reject the wrong file type *before* uploading, and name the
+  type — including a specific hint for iPhone HEIC photos
+- Every message says whether anything was saved
+
+This is the opposite of the storefront's rule, which fails open and silently:
+customers should never see the shop break, but staff should never be left
+guessing whether a save landed.
+
 ## Known limits
 
 - **The oversell race is open.** Stock is checked when the checkout session is

@@ -279,10 +279,26 @@
         font-size: 0.85rem;
         margin-top: 1.25rem;
       }
+      .global-error {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        margin-bottom: 1rem;
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: var(--panel);
+        background: var(--danger);
+        box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
+      <!-- Page-level failure banner. Sticky so it stays visible while an
+           employee scrolls looking for what went wrong. -->
+      <div id="global-error" class="global-error hidden" role="alert" aria-live="assertive"></div>
+
       <!-- Sign in -->
       <section id="login-view" class="card login">
         <h1>Sattari Music</h1>
@@ -325,6 +341,45 @@
           <button class="tab is-active" id="tab-stock" type="button">Stock</button>
           <button class="tab" id="tab-listings" type="button">Listings</button>
           <button class="tab" id="tab-orders" type="button">Orders</button>
+          <button class="tab" id="tab-backups" type="button">Backups</button>
+        </div>
+
+        <!-- Backups -->
+        <div class="hidden" id="panel-backups">
+          <div class="card">
+            <div class="bar">
+              <div>
+                <strong>Backups</strong>
+                <div class="state" id="backup-summary">A snapshot is taken automatically every night.</div>
+              </div>
+              <span>
+                <button class="secondary" id="snapshot-btn" type="button">Take one now</button>
+                <button id="download-btn" type="button" style="margin-left:0.4rem">Download current</button>
+              </span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 12rem">Taken</th>
+                  <th>Contents</th>
+                  <th style="width: 13rem"></th>
+                </tr>
+              </thead>
+              <tbody id="backup-rows"></tbody>
+            </table>
+            <div id="backup-msg"></div>
+          </div>
+          <p class="note">
+            <strong>Download current</strong> saves a file to this computer. That is the only copy
+            that survives losing the Netlify account — the nightly snapshots live in the same place
+            as the data they protect, so they cover mistakes and bugs, not account loss. Keep a
+            downloaded copy somewhere else.
+            <br /><br />
+            Orders are not included: Stripe already holds every payment, and a second copy would
+            only ever be the one that disagrees. Product photos are listed but not embedded.
+            Restoring takes a snapshot of the current state first, so an accidental restore can
+            itself be undone.
+          </p>
         </div>
 
         <!-- Orders -->
@@ -500,6 +555,7 @@
 
         function message(target, text, kind) {
           var box = el(target);
+          if (!box) return;
           if (!text) {
             box.innerHTML = '';
             return;
@@ -507,8 +563,28 @@
           box.innerHTML = '';
           var div = document.createElement('div');
           div.className = 'msg ' + (kind || '');
+          div.setAttribute('role', kind === 'error' ? 'alert' : 'status');
           div.textContent = text;
           box.appendChild(div);
+          // An error below the fold is an error nobody sees.
+          if (kind === 'error' && div.scrollIntoView) {
+            div.scrollIntoView({ block: 'nearest' });
+          }
+        }
+
+        // Page-level banner. Panel messages are easy to miss when the failure
+        // happened somewhere the employee is not looking.
+        function banner(text) {
+          var bar = el('global-error');
+          if (!bar) return;
+          bar.textContent = text;
+          bar.classList.remove('hidden');
+          if (bar.scrollIntoView) bar.scrollIntoView({ block: 'nearest' });
+        }
+
+        function clearBanner() {
+          var bar = el('global-error');
+          if (bar) bar.classList.add('hidden');
         }
 
         function show(view) {
@@ -644,6 +720,22 @@
           el('save-btn').disabled = count === 0;
         }
 
+        // Nothing here fails quietly. Staff need to know that a save did not
+        // happen and what to do about it, so every failure produces a specific
+        // sentence rather than a spinner that stops.
+        function explainStatus(status, serverMessage) {
+          if (serverMessage) return serverMessage;
+          if (status === 403) return 'You are not allowed to do that.';
+          if (status === 404) return 'That item no longer exists. Reload and try again.';
+          if (status === 409) return 'Someone else changed this at the same time. Reload and redo it.';
+          if (status === 413) return 'That file is too large.';
+          if (status === 429) return 'Too many attempts. Wait a moment and try again.';
+          if (status >= 500) {
+            return 'The server had a problem (' + status + '). Nothing was saved. Try again in a moment.';
+          }
+          return 'Request failed (' + status + '). Nothing was saved.';
+        }
+
         async function api(url, options) {
           var opts = options || {};
           opts.headers = Object.assign(
@@ -652,12 +744,26 @@
             token() ? { Authorization: 'Bearer ' + token() } : {}
           );
 
-          var response = await fetch(url, opts);
+          // Distinguish "the shop's internet is down" from "the server said
+          // no" — they need completely different responses from staff.
+          if (navigator.onLine === false) {
+            banner('You are offline. Nothing can be saved until the internet is back.');
+            throw new Error('You are offline. Nothing was saved.');
+          }
+
+          var response;
+          try {
+            response = await fetch(url, opts);
+          } catch (networkError) {
+            banner('Could not reach the server. Check the internet connection — nothing was saved.');
+            throw new Error('Could not reach the server. Nothing was saved.');
+          }
+
           var payload = {};
           try {
             payload = await response.json();
           } catch (e) {
-            /* leave payload empty */
+            /* not every response carries JSON */
           }
 
           if (response.status === 401) {
@@ -668,8 +774,12 @@
           }
 
           if (!response.ok) {
-            throw new Error(payload.error || 'Request failed (' + response.status + ').');
+            var text = explainStatus(response.status, payload.error);
+            banner(text);
+            throw new Error(text);
           }
+
+          clearBanner();
           return payload;
         }
 
@@ -778,7 +888,7 @@
         var pendingImage = '';
 
         function showTab(which) {
-          ['stock', 'listings', 'orders'].forEach(function (name) {
+          ['stock', 'listings', 'orders', 'backups'].forEach(function (name) {
             el('tab-' + name).classList.toggle('is-active', which === name);
           });
           el('panel-stock').classList.toggle('hidden', which !== 'stock');
@@ -786,6 +896,7 @@
           el('panel-listings').classList.toggle('hidden', which !== 'listings');
           el('listings-note').classList.toggle('hidden', which !== 'listings');
           el('panel-orders').classList.toggle('hidden', which !== 'orders');
+          el('panel-backups').classList.toggle('hidden', which !== 'backups');
           if (which !== 'listings') el('panel-editor').classList.add('hidden');
         }
 
@@ -799,6 +910,10 @@
         el('tab-orders').addEventListener('click', function () {
           showTab('orders');
           loadOrders();
+        });
+        el('tab-backups').addEventListener('click', function () {
+          showTab('backups');
+          loadBackups();
         });
 
         function money(value) {
@@ -969,9 +1084,43 @@
           });
         }
 
+        var ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
         el('f-image').addEventListener('change', async function () {
           var file = el('f-image').files && el('f-image').files[0];
           if (!file) return;
+
+          pendingImage = '';
+          el('image-preview').innerHTML = '';
+          message('editor-msg', '');
+
+          // Check the obvious problems here, with a plain sentence, rather
+          // than letting the upload fail later for a reason nobody can act on.
+          if (ACCEPTED_IMAGE_TYPES.indexOf(file.type) === -1) {
+            var what = file.type || 'an unknown type';
+            el('image-state').textContent = '';
+            message(
+              'editor-msg',
+              'That file is ' + what + '. Photos must be JPEG, PNG, or WebP. ' +
+                'HEIC photos from an iPhone need converting first — opening them in Preview and ' +
+                'exporting as JPEG works.',
+              'error'
+            );
+            el('f-image').value = '';
+            return;
+          }
+
+          if (file.size > 25 * 1024 * 1024) {
+            el('image-state').textContent = '';
+            message(
+              'editor-msg',
+              'That photo is ' + (file.size / 1024 / 1024).toFixed(1) +
+                'MB, which is too big to process in the browser. Use a smaller photo.',
+              'error'
+            );
+            el('f-image').value = '';
+            return;
+          }
 
           el('image-state').textContent = 'Shrinking…';
           try {
@@ -980,9 +1129,9 @@
 
             var approxKb = Math.round((dataUrl.length * 0.75) / 1024);
             el('image-state').textContent =
-              'Ready to upload (' + approxKb + ' KB, was ' + Math.round(file.size / 1024) + ' KB).';
+              'Ready to upload (' + approxKb + ' KB, was ' + Math.round(file.size / 1024) + ' KB). ' +
+              'It uploads when you press Save.';
 
-            el('image-preview').innerHTML = '';
             var preview = document.createElement('img');
             preview.className = 'thumb';
             preview.src = dataUrl;
@@ -990,7 +1139,14 @@
             el('image-preview').appendChild(preview);
           } catch (error) {
             pendingImage = '';
-            el('image-state').textContent = error.message;
+            el('image-state').textContent = '';
+            message(
+              'editor-msg',
+              'That photo could not be read: ' + error.message +
+                ' Try a different file, or re-save it as a JPEG.',
+              'error'
+            );
+            el('f-image').value = '';
           }
         });
 
@@ -1275,6 +1431,178 @@
             }
           }
         }
+
+        /* ---------------------------------------------------------------
+           Backups
+           --------------------------------------------------------------- */
+
+        var BACKUP_URL = '/api/staff/backup';
+
+        function renderBackups(data) {
+          var snaps = data.snapshots || [];
+          el('backup-summary').textContent = snaps.length
+            ? snaps.length + ' stored · newest ' + fmtWhen(snaps[0].createdAt)
+            : 'No snapshots stored yet. One is taken automatically every night.';
+
+          var tbody = el('backup-rows');
+          tbody.innerHTML = '';
+
+          if (!snaps.length) {
+            var empty = document.createElement('tr');
+            var cell = document.createElement('td');
+            cell.colSpan = 3;
+            cell.className = 'state';
+            cell.textContent =
+              'Nothing yet. Press "Take one now" if you want a snapshot before making big changes.';
+            empty.appendChild(cell);
+            tbody.appendChild(empty);
+            return;
+          }
+
+          snaps.forEach(function (snap) {
+            var tr = document.createElement('tr');
+
+            var when = document.createElement('td');
+            when.className = 'variant';
+            when.textContent = fmtWhen(snap.createdAt);
+            if (snap.reason) {
+              var why = document.createElement('div');
+              why.className = 'order-items';
+              why.textContent = snap.reason;
+              when.appendChild(why);
+            }
+            tr.appendChild(when);
+
+            var what = document.createElement('td');
+            what.className = 'state';
+            what.textContent =
+              snap.trackedVariants + ' stock counts · ' +
+              snap.editedProducts + ' edited · ' +
+              snap.addedProducts + ' added · ' +
+              snap.hiddenProducts + ' removed · ' +
+              snap.fulfilledOrders + ' orders · ' +
+              snap.images + ' photos';
+            tr.appendChild(what);
+
+            var actions = document.createElement('td');
+            actions.className = 'row-actions';
+
+            var dl = document.createElement('button');
+            dl.className = 'secondary';
+            dl.type = 'button';
+            dl.textContent = 'Download';
+            dl.addEventListener('click', function () { downloadBackup(snap.key); });
+            actions.appendChild(dl);
+
+            var restore = document.createElement('button');
+            restore.className = 'secondary';
+            restore.type = 'button';
+            restore.style.marginLeft = '0.4rem';
+            restore.textContent = 'Restore';
+            restore.addEventListener('click', function () { restoreBackup(snap); });
+            actions.appendChild(restore);
+
+            tr.appendChild(actions);
+            tbody.appendChild(tr);
+          });
+        }
+
+        async function loadBackups() {
+          message('backup-msg', '');
+          try {
+            renderBackups(await api(BACKUP_URL, { method: 'GET' }));
+          } catch (error) {
+            if (error.message !== 'unauthorized') message('backup-msg', error.message, 'error');
+          }
+        }
+
+        // The download needs the auth header, so it cannot be a plain link.
+        async function downloadBackup(key) {
+          message('backup-msg', 'Preparing the file…', 'ok');
+          try {
+            var url = BACKUP_URL + '?action=download' + (key ? '&key=' + encodeURIComponent(key) : '');
+            var response = await fetch(url, { headers: { Authorization: 'Bearer ' + token() } });
+
+            if (response.status === 401) {
+              setToken(''); show('login');
+              message('login-msg', 'Your session expired. Sign in again.', 'error');
+              return;
+            }
+            if (!response.ok) {
+              throw new Error(explainStatus(response.status, ''));
+            }
+
+            var blob = await response.blob();
+            var name = 'sattari-backup.json';
+            var disposition = response.headers.get('Content-Disposition') || '';
+            var match = /filename="([^"]+)"/.exec(disposition);
+            if (match) name = match[1];
+
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            message('backup-msg', 'Saved ' + name + ' to this computer.', 'ok');
+          } catch (error) {
+            message('backup-msg', 'Could not download the backup: ' + error.message, 'error');
+          }
+        }
+
+        el('download-btn').addEventListener('click', function () { downloadBackup(null); });
+
+        el('snapshot-btn').addEventListener('click', async function () {
+          el('snapshot-btn').disabled = true;
+          message('backup-msg', '');
+          try {
+            await api(BACKUP_URL, { method: 'POST', body: JSON.stringify({ action: 'snapshot' }) });
+            await loadBackups();
+            message('backup-msg', 'Snapshot taken.', 'ok');
+          } catch (error) {
+            if (error.message !== 'unauthorized') message('backup-msg', error.message, 'error');
+          } finally {
+            el('snapshot-btn').disabled = false;
+          }
+        });
+
+        async function restoreBackup(snap) {
+          // Typed confirmation, not a click: this overwrites live stock,
+          // prices, and fulfilment for the whole shop.
+          var typed = window.prompt(
+            'This replaces ALL current stock, listings, and fulfilment with the backup from ' +
+              fmtWhen(snap.createdAt) +
+              '.\n\nA snapshot of the current state is saved first, so this can be undone.\n\n' +
+              'Type RESTORE to confirm:'
+          );
+          if (typed === null) return;
+
+          message('backup-msg', '');
+          try {
+            var result = await api(BACKUP_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'restore', key: snap.key, confirm: typed }),
+            });
+            await loadBackups();
+            message(
+              'backup-msg',
+              'Restored. The state from just before this restore was saved as a new snapshot, so you can undo it.',
+              'ok'
+            );
+            void result;
+          } catch (error) {
+            if (error.message !== 'unauthorized') message('backup-msg', error.message, 'error');
+          }
+        }
+
+        // Tell staff the moment the connection drops, rather than letting the
+        // next save fail mysteriously.
+        window.addEventListener('offline', function () {
+          banner('You are offline. Nothing can be saved until the internet is back.');
+        });
+        window.addEventListener('online', clearBanner);
 
         // Resume an existing session if the tab was reloaded.
         if (token()) {

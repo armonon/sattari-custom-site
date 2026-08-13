@@ -1,8 +1,9 @@
 import crypto from 'node:crypto';
 import { requireStaff } from '../../server/staffAuth.js';
 import { openStore } from '../../server/blobs.js';
+import { IMAGE_STORE } from '../../server/imageStore.js';
 
-export const IMAGE_STORE = 'catalog-images';
+export { IMAGE_STORE };
 
 // Only formats a browser will render inline. No SVG: it can carry script, and
 // these files are served from our own origin.

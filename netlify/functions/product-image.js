@@ -1,4 +1,4 @@
-import { IMAGE_STORE } from './staff-image.js';
+import { IMAGE_STORE } from '../../server/imageStore.js';
 import { openStore } from '../../server/blobs.js';
 
 const CONTENT_TYPES = {
