@@ -3,6 +3,7 @@ import { stockKey } from '../../src/utils/inventory.js';
 
 const createSessionMock = vi.fn();
 const blobGetMock = vi.fn();
+const catalogGetMock = vi.fn();
 
 vi.mock('stripe', () => ({
   default: vi.fn().mockImplementation(() => ({
@@ -12,7 +13,9 @@ vi.mock('stripe', () => ({
 
 vi.mock('@netlify/blobs', () => ({
   connectLambda: vi.fn(),
-  getStore: vi.fn(() => ({ get: blobGetMock })),
+  getStore: vi.fn((options) => ({
+    get: options?.name === 'catalog' ? catalogGetMock : blobGetMock,
+  })),
 }));
 
 const { handler } = await import('../../netlify/functions/create-checkout-session.js');
@@ -36,6 +39,7 @@ describe('create-checkout-session stock enforcement', () => {
     process.env.URL = 'https://sattarimusic.com';
     createSessionMock.mockResolvedValue({ id: 'cs_test_123', url: 'https://checkout.test/s' });
     blobGetMock.mockResolvedValue({});
+    catalogGetMock.mockResolvedValue(null);
   });
 
   it('allows checkout when the variant is not tracked', async () => {
@@ -109,6 +113,47 @@ describe('create-checkout-session stock enforcement', () => {
 
     const available = await post([{ slug: SIZED, size: '16"', quantity: 1 }]);
     expect(available.statusCode).toBe(200);
+  });
+
+  it('charges the price an employee edited, not the one in catalog.js', async () => {
+    // The whole point of server-side pricing: if this read the base file, a
+    // customer would see the new price and be charged the old one.
+    catalogGetMock.mockResolvedValue({ overrides: { [PLAIN]: { price: 42.5 } } });
+
+    const response = await post([{ slug: PLAIN, quantity: 1 }]);
+    expect(response.statusCode).toBe(200);
+
+    const payload = createSessionMock.mock.calls[0][0];
+    expect(payload.line_items[0].price_data.unit_amount).toBe(4250);
+  });
+
+  it('refuses to sell a product an employee removed', async () => {
+    catalogGetMock.mockResolvedValue({ hidden: [PLAIN] });
+
+    const response = await post([{ slug: PLAIN, quantity: 1 }]);
+
+    expect(response.statusCode).toBe(400);
+    expect(createSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('sells a product an employee added', async () => {
+    catalogGetMock.mockResolvedValue({
+      added: [{ name: 'Shop Special', price: 30, category: 'essentials' }],
+    });
+
+    const response = await post([{ slug: 'shop-special', quantity: 1 }]);
+    expect(response.statusCode).toBe(200);
+
+    const payload = createSessionMock.mock.calls[0][0];
+    expect(payload.line_items[0].price_data.unit_amount).toBe(3000);
+  });
+
+  it('falls back to the base catalog when the catalog store is unreachable', async () => {
+    catalogGetMock.mockRejectedValue(new Error('blobs down'));
+
+    const response = await post([{ slug: PLAIN, quantity: 1 }]);
+    expect(response.statusCode).toBe(200);
+    expect(createSessionMock.mock.calls[0][0].line_items[0].price_data.unit_amount).toBe(8000);
   });
 
   it('fails open when the stock store is unreachable', async () => {

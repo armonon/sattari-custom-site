@@ -48,6 +48,21 @@
   to = "/.netlify/functions/staff-stock"
   status = 200
 
+[[redirects]]
+  from = "/api/staff/catalog"
+  to = "/.netlify/functions/staff-catalog"
+  status = 200
+
+[[redirects]]
+  from = "/api/staff/image"
+  to = "/.netlify/functions/staff-image"
+  status = 200
+
+[[redirects]]
+  from = "/product-images/*"
+  to = "/.netlify/functions/product-image"
+  status = 200
+
 # The staff page is unlisted, not secret, so it must stay out of search
 # results. This header does that WITHOUT naming the path in robots.txt —
 # robots.txt is public, and listing a private URL there hands it to anyone

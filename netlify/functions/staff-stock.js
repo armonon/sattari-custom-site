@@ -1,7 +1,20 @@
-import { products } from '../../src/data/catalog.js';
+import { products as baseProducts } from '../../src/data/catalog.js';
 import { listVariants, sanitizeStockMap, stockKey } from '../../src/utils/inventory.js';
+import { mergeCatalog } from '../../src/utils/catalogMerge.js';
 import { readStock, updateStock } from '../../server/stockStore.js';
+import { readCatalogDoc } from '../../server/catalogStore.js';
 import { requireStaff } from '../../server/staffAuth.js';
+
+// Stock rows come from the merged catalog, not the base file, so products an
+// employee added are stockable and edited variants line up with what the shop
+// is actually selling.
+async function getProducts(event) {
+  try {
+    return mergeCatalog(baseProducts, await readCatalogDoc(event));
+  } catch {
+    return baseProducts;
+  }
+}
 
 function json(statusCode, body) {
   return {
@@ -13,7 +26,7 @@ function json(statusCode, body) {
 
 // Every purchasable variant in the catalog, so the staff page can render a row
 // per item without duplicating the catalog shape in the browser.
-function buildVariantRows(stock) {
+function buildVariantRows(stock, products) {
   const rows = [];
 
   for (const product of products) {
@@ -45,9 +58,11 @@ export async function handler(event) {
     return json(401, { error: 'Sign in to continue.' });
   }
 
+  const products = await getProducts(event);
+
   if (event.httpMethod === 'GET') {
     const stock = await readStock(event);
-    return json(200, { staff: session.staff, items: buildVariantRows(stock) });
+    return json(200, { staff: session.staff, items: buildVariantRows(stock, products) });
   }
 
   if (event.httpMethod !== 'POST') {
@@ -126,7 +141,7 @@ export async function handler(event) {
       })
     );
 
-    return json(200, { staff: session.staff, items: buildVariantRows(stock), rejected });
+    return json(200, { staff: session.staff, items: buildVariantRows(stock, products), rejected });
   } catch (error) {
     // updateStock throws only after losing the conditional-write race
     // repeatedly, which means someone else is editing at the same moment.

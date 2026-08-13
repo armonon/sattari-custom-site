@@ -185,6 +185,46 @@
       .hidden {
         display: none;
       }
+      textarea,
+      .select {
+        width: 100%;
+        padding: 0.6rem 0.7rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+        resize: vertical;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .tab {
+        background: transparent;
+        color: var(--muted);
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        padding: 0.5rem 0.9rem;
+      }
+      .tab.is-active {
+        color: var(--text);
+        border-bottom-color: var(--text);
+      }
+      .thumb {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        margin-top: 0.5rem;
+      }
+      tr.is-hidden-row td {
+        opacity: 0.5;
+      }
       .note {
         color: var(--muted);
         font-size: 0.85rem;
@@ -216,7 +256,7 @@
       <section id="stock-view" class="hidden">
         <div class="bar">
           <div>
-            <h1>Stock</h1>
+            <h1>Shop admin</h1>
             <p class="sub" id="who"></p>
           </div>
           <div>
@@ -225,7 +265,12 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="tabs">
+          <button class="tab is-active" id="tab-stock" type="button">Stock</button>
+          <button class="tab" id="tab-listings" type="button">Listings</button>
+        </div>
+
+        <div class="card" id="panel-stock">
           <div class="bar" style="margin-bottom: 0.75rem">
             <label for="filter" style="margin: 0">Search</label>
             <input
@@ -254,12 +299,72 @@
           <div id="stock-msg"></div>
         </div>
 
-        <p class="note">
+        <p class="note" id="stock-note">
           Leave an item <strong>Not tracked</strong> and it always shows as available, exactly as
           the site behaved before. Set a number and the shop starts showing stock — at zero the
           product shows <strong>Out of stock</strong> and cannot be bought. Online sales subtract
           themselves automatically; you only adjust for counter sales and restocks.
         </p>
+
+        <!-- Listings -->
+        <div class="card hidden" id="panel-listings">
+          <div class="bar" style="margin-bottom: 0.5rem">
+            <strong>Products on the site</strong>
+            <button id="new-btn" type="button">Add a product</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th style="width: 8rem">Category</th>
+                <th style="width: 7rem">Price</th>
+                <th style="width: 7rem">Status</th>
+                <th style="width: 12rem"></th>
+              </tr>
+            </thead>
+            <tbody id="listing-rows"></tbody>
+          </table>
+          <div id="listing-msg"></div>
+        </div>
+
+        <p class="note hidden" id="listings-note">
+          <strong>Remove</strong> hides a product from the site — nothing is deleted, and you can
+          put it back at any time. Editing a price here changes what customers are charged at
+          checkout, not just what they see.
+        </p>
+
+        <!-- Add / edit form -->
+        <div class="card hidden" id="panel-editor" style="margin-top: 1.25rem">
+          <div class="bar">
+            <strong id="editor-title">Add a product</strong>
+            <button class="secondary" id="editor-close" type="button">Close</button>
+          </div>
+
+          <label for="f-name">Name</label>
+          <input id="f-name" type="text" placeholder="e.g. 16&quot; Crash Cymbal" />
+
+          <label for="f-category">Category</label>
+          <select id="f-category" class="select"></select>
+
+          <label for="f-price">Price (USD)</label>
+          <input id="f-price" type="number" min="0" step="0.01" style="width: 10rem" />
+
+          <label for="f-description">Description</label>
+          <textarea id="f-description" rows="4"></textarea>
+
+          <label for="f-image">Photo</label>
+          <input id="f-image" type="file" accept="image/jpeg,image/png,image/webp" />
+          <p class="state" id="image-state">
+            Photos are shrunk in your browser before uploading, so they load fast and stay cheap.
+          </p>
+          <div id="image-preview"></div>
+
+          <div class="bar" style="margin-top: 1.25rem">
+            <span class="state" id="editor-hint"></span>
+            <button id="editor-save" type="button">Save</button>
+          </div>
+          <div id="editor-msg"></div>
+        </div>
       </section>
     </div>
 
@@ -553,6 +658,289 @@
         });
 
         el('filter').addEventListener('input', render);
+
+        /* ---------------------------------------------------------------
+           Listings
+           --------------------------------------------------------------- */
+
+        var CATALOG_URL = '/api/staff/catalog';
+        var IMAGE_URL = '/api/staff/image';
+        var CATEGORIES = [
+          { key: 'cymbals', title: 'Cymbals' },
+          { key: 'sticks', title: 'Sticks' },
+          { key: 'essentials', title: 'Essentials & Accessories' },
+          { key: 'violins', title: 'Violins' },
+          { key: 'guitar-bass', title: 'Guitar & Bass' },
+        ];
+
+        var listings = [];
+        var editing = null;
+        var pendingImage = '';
+
+        function showTab(which) {
+          var isStock = which === 'stock';
+          el('tab-stock').classList.toggle('is-active', isStock);
+          el('tab-listings').classList.toggle('is-active', !isStock);
+          el('panel-stock').classList.toggle('hidden', !isStock);
+          el('stock-note').classList.toggle('hidden', !isStock);
+          el('panel-listings').classList.toggle('hidden', isStock);
+          el('listings-note').classList.toggle('hidden', isStock);
+          if (isStock) el('panel-editor').classList.add('hidden');
+        }
+
+        el('tab-stock').addEventListener('click', function () {
+          showTab('stock');
+        });
+        el('tab-listings').addEventListener('click', function () {
+          showTab('listings');
+          if (!listings.length) loadListings();
+        });
+
+        function money(value) {
+          return typeof value === 'number' ? '$' + value.toFixed(2) : '—';
+        }
+
+        function renderListings() {
+          var tbody = el('listing-rows');
+          tbody.innerHTML = '';
+
+          listings.forEach(function (item) {
+            var tr = document.createElement('tr');
+            if (item.hidden) tr.className = 'is-hidden-row';
+
+            var nameCell = document.createElement('td');
+            nameCell.textContent = item.name;
+            if (item.origin === 'added') {
+              var tag = document.createElement('span');
+              tag.className = 'state';
+              tag.textContent = ' (added here)';
+              nameCell.appendChild(tag);
+            }
+            tr.appendChild(nameCell);
+
+            var categoryCell = document.createElement('td');
+            categoryCell.className = 'variant';
+            categoryCell.textContent = item.category || '';
+            tr.appendChild(categoryCell);
+
+            var priceCell = document.createElement('td');
+            priceCell.textContent = item.sizes ? 'from ' + money(item.price) : money(item.price);
+            tr.appendChild(priceCell);
+
+            var statusCell = document.createElement('td');
+            statusCell.className = 'state' + (item.hidden ? ' out' : '');
+            statusCell.textContent = item.hidden ? 'Removed' : 'On the site';
+            tr.appendChild(statusCell);
+
+            var actionCell = document.createElement('td');
+            actionCell.className = 'row-actions';
+
+            var editBtn = document.createElement('button');
+            editBtn.className = 'secondary';
+            editBtn.type = 'button';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', function () {
+              openEditor(item);
+            });
+            actionCell.appendChild(editBtn);
+
+            var toggleBtn = document.createElement('button');
+            toggleBtn.className = 'secondary';
+            toggleBtn.type = 'button';
+            toggleBtn.style.marginLeft = '0.4rem';
+            toggleBtn.textContent = item.hidden ? 'Put back' : 'Remove';
+            toggleBtn.addEventListener('click', function () {
+              saveCatalog({ action: item.hidden ? 'show' : 'hide', slug: item.slug });
+            });
+            actionCell.appendChild(toggleBtn);
+
+            tr.appendChild(actionCell);
+            tbody.appendChild(tr);
+          });
+        }
+
+        async function loadListings() {
+          try {
+            var data = await api(CATALOG_URL, { method: 'GET' });
+            listings = data.listings || [];
+            renderListings();
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('listing-msg', error.message, 'error');
+            }
+          }
+        }
+
+        async function saveCatalog(payload) {
+          message('listing-msg', '');
+          try {
+            var data = await api(CATALOG_URL, { method: 'POST', body: JSON.stringify(payload) });
+            listings = data.listings || listings;
+            renderListings();
+            message('listing-msg', 'Saved.', 'ok');
+            return true;
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('listing-msg', error.message, 'error');
+            }
+            return false;
+          }
+        }
+
+        function fillCategories() {
+          var select = el('f-category');
+          select.innerHTML = '';
+          CATEGORIES.forEach(function (category) {
+            var option = document.createElement('option');
+            option.value = category.key;
+            option.textContent = category.title;
+            select.appendChild(option);
+          });
+        }
+
+        function openEditor(item) {
+          editing = item || null;
+          pendingImage = '';
+          fillCategories();
+
+          el('editor-title').textContent = item ? 'Edit ' + item.name : 'Add a product';
+          el('f-name').value = item ? item.name : '';
+          el('f-category').value = item ? item.category || 'essentials' : 'essentials';
+          el('f-price').value = item && typeof item.price === 'number' ? item.price : '';
+          el('f-description').value = item ? item.description || '' : '';
+          el('f-image').value = '';
+          el('image-preview').innerHTML = '';
+          message('editor-msg', '');
+
+          el('editor-hint').textContent =
+            item && item.sizes
+              ? 'This product has sizes with their own prices; editing the price here sets the base price only.'
+              : '';
+
+          el('panel-editor').classList.remove('hidden');
+          el('panel-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        el('new-btn').addEventListener('click', function () {
+          openEditor(null);
+        });
+        el('editor-close').addEventListener('click', function () {
+          el('panel-editor').classList.add('hidden');
+          editing = null;
+        });
+
+        // Shrink in the browser before uploading. Bandwidth is the biggest
+        // recurring cost on this site, and a 4MB phone photo costs roughly
+        // twenty times what a resized one does — every time a customer loads
+        // the page. Doing it here also avoids adding an image library to the
+        // server.
+        function resizeImage(file, maxEdge, quality) {
+          return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onerror = function () {
+              reject(new Error('That file could not be read.'));
+            };
+            reader.onload = function () {
+              var img = new Image();
+              img.onerror = function () {
+                reject(new Error('That file is not an image we can read.'));
+              };
+              img.onload = function () {
+                var scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+                var canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // JPEG for photographs: a resized PNG of a photo is often
+                // larger than the original.
+                resolve(canvas.toDataURL('image/jpeg', quality));
+              };
+              img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        el('f-image').addEventListener('change', async function () {
+          var file = el('f-image').files && el('f-image').files[0];
+          if (!file) return;
+
+          el('image-state').textContent = 'Shrinking…';
+          try {
+            var dataUrl = await resizeImage(file, 1400, 0.82);
+            pendingImage = dataUrl;
+
+            var approxKb = Math.round((dataUrl.length * 0.75) / 1024);
+            el('image-state').textContent =
+              'Ready to upload (' + approxKb + ' KB, was ' + Math.round(file.size / 1024) + ' KB).';
+
+            el('image-preview').innerHTML = '';
+            var preview = document.createElement('img');
+            preview.className = 'thumb';
+            preview.src = dataUrl;
+            preview.alt = '';
+            el('image-preview').appendChild(preview);
+          } catch (error) {
+            pendingImage = '';
+            el('image-state').textContent = error.message;
+          }
+        });
+
+        el('editor-save').addEventListener('click', async function () {
+          message('editor-msg', '');
+          el('editor-save').disabled = true;
+
+          try {
+            var imagePath = '';
+            if (pendingImage) {
+              var uploaded = await api(IMAGE_URL, {
+                method: 'POST',
+                body: JSON.stringify({ dataUrl: pendingImage }),
+              });
+              imagePath = uploaded.url;
+            }
+
+            var name = el('f-name').value.trim();
+            var priceRaw = el('f-price').value.trim();
+            var price = priceRaw === '' ? null : Number(priceRaw);
+
+            if (!name) throw new Error('A product needs a name.');
+            if (!editing && (price === null || !isFinite(price)))
+              throw new Error('A new product needs a price.');
+
+            var fields = {
+              name: name,
+              category: el('f-category').value,
+              description: el('f-description').value.trim(),
+            };
+            if (price !== null && isFinite(price)) fields.price = price;
+            if (imagePath) fields.image = imagePath;
+
+            var ok;
+            if (editing) {
+              ok = await saveCatalog({ action: 'edit', slug: editing.slug, changes: fields });
+            } else {
+              ok = await saveCatalog({ action: 'add', product: fields });
+            }
+
+            if (ok) {
+              el('panel-editor').classList.add('hidden');
+              editing = null;
+              pendingImage = '';
+              el('image-state').textContent =
+                'Photos are shrunk in your browser before uploading, so they load fast and stay cheap.';
+            }
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('editor-msg', error.message, 'error');
+            }
+          } finally {
+            el('editor-save').disabled = false;
+          }
+        });
 
         // Resume an existing session if the tab was reloaded.
         if (token()) {

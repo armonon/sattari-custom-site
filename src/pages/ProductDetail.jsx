@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  products,
   formatPrice,
   formatPriceRange,
   resolveSelectedOption,
@@ -23,6 +22,7 @@ const detailHighlights = {
 
 export default function ProductDetail() {
   const { slug } = useParams();
+  const { isVariantSoldOut, quantityFor, products, status } = useInventory();
   const product = products.find((p) =>
     p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug
   );
@@ -34,7 +34,6 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const { addToCart } = useCart();
-  const { isVariantSoldOut, quantityFor } = useInventory();
 
   // Related items: same category first, then fill from the rest of the catalog.
   const related = useMemo(() => {
@@ -46,12 +45,15 @@ export default function ProductDetail() {
       (p) => p.category !== product.category && p.slug !== product.slug
     );
     return [...sameCategory, ...others].slice(0, 4);
-  }, [product]);
+  }, [product, products]);
 
   if (!product) {
+    // A product an employee added lives in the catalog layer, which arrives a
+    // moment after the page does. Showing "not found" during that window would
+    // flash a 404 on a product that exists.
     return (
-      <div className="container">
-        <h2>Product not found</h2>
+      <div className="container page-header-offset">
+        <h2>{status === 'loading' ? 'Loading…' : 'Product not found'}</h2>
       </div>
     );
   }
@@ -154,7 +156,9 @@ export default function ProductDetail() {
             </div>
           )}
           <div className="product-benefit-grid" aria-label="Product benefits">
-            {detailHighlights[product.category].map((point) => (
+            {/* Employees can set a category, so this lookup can miss. Falling
+                back keeps an added product's page from crashing outright. */}
+            {(detailHighlights[product.category] || detailHighlights.essentials).map((point) => (
               <div className="product-benefit" key={point}>
                 {point}
               </div>

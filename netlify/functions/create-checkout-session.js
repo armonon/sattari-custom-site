@@ -1,8 +1,10 @@
 import process from 'node:process';
 import Stripe from 'stripe';
-import { products, resolveSelectedOption } from '../../src/data/catalog.js';
+import { products as baseProducts, resolveSelectedOption } from '../../src/data/catalog.js';
 import { describeVariant, findStockShortfalls } from '../../src/utils/inventory.js';
+import { mergeCatalog } from '../../src/utils/catalogMerge.js';
 import { readStock } from '../../server/stockStore.js';
+import { readCatalogDoc } from '../../server/catalogStore.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 const STANDARD_SHIPPING_AMOUNT_CENTS = 795;
@@ -121,6 +123,24 @@ export async function handler(event) {
     }
 
     const clientUrl = getClientUrl(event);
+
+    // Prices come from the merged catalog, never from the request body. An
+    // employee's edited price has to be the one Stripe charges, so the same
+    // merge the storefront displays is recomputed here on the server.
+    //
+    // Falls back to the base catalog if the blob is unreachable: customers can
+    // still buy the original 26 products at their original prices.
+    let products = baseProducts;
+    try {
+      products = mergeCatalog(baseProducts, await readCatalogDoc(event));
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          type: 'checkout-catalog-read-error',
+          message: error?.message || String(error),
+        })
+      );
+    }
 
     const resolvedItems = payloadItems.map((item) => {
       const product = products.find((entry) => entry.slug === item.slug);

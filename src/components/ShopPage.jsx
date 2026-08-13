@@ -2,7 +2,7 @@ import React from 'react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
-import { categories, products, formatPriceRange } from '../data/catalog';
+import { categories, formatPriceRange } from '../data/catalog';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
@@ -108,7 +108,7 @@ function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuick
 
 export default function ShopPage() {
   const { addToCart } = useCart();
-  const { isSoldOut } = useInventory();
+  const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
 
   const handleQuickAdd = (product) => {

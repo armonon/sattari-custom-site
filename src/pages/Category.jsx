@@ -1,13 +1,7 @@
 // src/pages/Category.jsx
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  categories,
-  products,
-  formatPriceRange,
-  categoryTitle,
-  getMinPrice,
-} from '../data/catalog';
+import { categories, formatPriceRange, categoryTitle, getMinPrice } from '../data/catalog';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
@@ -51,6 +45,7 @@ const resolveProductImage = (product) =>
 
 export default function Category() {
   const { categoryKey } = useParams();
+  const { isSoldOut, products } = useInventory();
   const isAll = categoryKey === 'all';
   const category = isAll ? ALL_CATEGORY : categories.find((c) => c.key === categoryKey);
   const filtered = isAll ? products : products.filter((p) => p.category === categoryKey);
@@ -58,7 +53,6 @@ export default function Category() {
   // On the "all" view, chips filter by category; sort applies everywhere.
   const [activeCat, setActiveCat] = useState('all');
   const [sort, setSort] = useState('featured');
-  const { isSoldOut } = useInventory();
 
   const visible = useMemo(() => {
     const scoped =
