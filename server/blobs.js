@@ -32,6 +32,23 @@ function warnOnce(name) {
   );
 }
 
+// Reads also ask for strong consistency at the operation level, not just on
+// the store. Measured against production, the store-level option alone left a
+// read-after-write window of over a second — long enough for the checkout
+// guard to approve a sale of something that had just gone to zero. The
+// per-read option is what actually closes it.
+const READ_OPTION_INDEX = { get: 1, getWithMetadata: 1, list: 0 };
+
+function withStrongRead(method, args) {
+  const index = READ_OPTION_INDEX[method];
+  if (index === undefined) return args;
+
+  const next = [...args];
+  while (next.length <= index) next.push(undefined);
+  next[index] = { ...(next[index] || {}), consistency: 'strong' };
+  return next;
+}
+
 export function openStore(event, name) {
   if (event) connectLambda(event);
 
@@ -46,7 +63,7 @@ export function openStore(event, name) {
   const call = async (method, ...args) => {
     if (strong) {
       try {
-        return await strong[method](...args);
+        return await strong[method](...withStrongRead(method, args));
       } catch (error) {
         if (!isConsistencyUnavailable(error)) throw error;
         warnOnce(name);
