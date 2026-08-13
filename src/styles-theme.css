@@ -275,6 +275,15 @@ body {
   border-color: rgba(154, 122, 46, 0.18);
 }
 
+/* Shop Assistant option chips are translucent white — invisible on a light page. */
+[data-theme='day'] .shop-assistant-option {
+  background: rgba(154, 122, 46, 0.06);
+}
+
+[data-theme='day'] .shop-assistant-option:hover {
+  background: rgba(154, 122, 46, 0.12);
+}
+
 /* ---- Service inquiry form: lighter, cleaner restyle ---- */
 .service-form-glass {
   padding: 1.9rem 1.85rem;

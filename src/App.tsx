@@ -6,6 +6,7 @@ import { useCart } from '@context/CartContext';
 import { redirectToCheckout } from '@utils/stripe';
 import CartSidebar from '@components/CartSidebar';
 import Footer from '@components/Footer';
+import ShopAssistant from '@components/ShopAssistant';
 import {
   Category,
   CartPage,
@@ -310,6 +311,7 @@ const App: FC = () => {
       </main>
 
       <Footer />
+      <ShopAssistant />
     </div>
   );
 };
