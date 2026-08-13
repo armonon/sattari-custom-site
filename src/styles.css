@@ -3037,3 +3037,421 @@ textarea:focus-visible {
     transform: none;
   }
 }
+
+/* =====================================================================
+   Audio Suite shared bits: nav "Alpha" tag, alpha badge, signup form.
+   (The rest of this block belonged to the standalone /audio-suite page,
+   which is now folded into /downloads.)
+   ===================================================================== */
+.nav-link-tag {
+  margin-left: 0.4rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.audio-alpha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 179, 109, 0.32);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.audio-alpha-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+.audio-alpha-form {
+  max-width: 620px;
+}
+.audio-alpha-privacy {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* =====================================================================
+   SATTARI AUDIO SUITE (/downloads)
+   One page: what it is, the product shots, the alpha builds, signup.
+   Mobile-first — every grid is a single column until it has room.
+   ===================================================================== */
+.suite-page {
+  overflow-x: clip; /* belt-and-braces: no sideways scroll from wide shots */
+}
+
+.suite-section {
+  margin-top: clamp(2.75rem, 8vw, 4.5rem);
+}
+
+/* ---------- Hero ---------- */
+.suite-hero {
+  display: grid;
+  gap: clamp(1.5rem, 5vw, 2.75rem);
+  align-items: center;
+}
+
+.suite-hero .audio-alpha-badge {
+  display: inline-flex;
+  margin-bottom: 0.9rem;
+}
+
+.suite-hero h1 {
+  margin: 0 0 0.9rem;
+}
+
+.suite-lead {
+  color: var(--muted);
+  font-size: clamp(1rem, 2.4vw, 1.12rem);
+  line-height: 1.65;
+  max-width: 60ch;
+  margin: 0 0 1.5rem;
+}
+
+.suite-hero .hero-actions {
+  margin-bottom: 1.1rem;
+}
+
+.suite-hero-shot {
+  border-radius: clamp(14px, 3vw, 20px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  background: #10121a;
+}
+
+.suite-hero-shot img,
+.suite-hero-shot picture {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  .suite-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  }
+}
+
+/* ---------- Downloads ---------- */
+.suite-build-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .suite-build-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+.suite-build-card {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+  border-radius: clamp(14px, 3vw, 20px);
+  border: 1px solid var(--line);
+  background: var(--panel-premium);
+  box-shadow: var(--shadow);
+}
+
+.suite-build-head {
+  flex: 1 1 auto;
+}
+
+.suite-build-card h3 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.08rem;
+  overflow-wrap: anywhere; /* long build names must not widen the card */
+}
+
+.suite-build-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.suite-build-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 1.2rem;
+}
+
+.suite-build-actions .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 48px; /* comfortable tap target */
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.suite-build-size {
+  opacity: 0.72;
+  font-weight: 500;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.suite-checksums {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+.suite-checksums summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.suite-checksums summary:hover {
+  color: var(--accent);
+}
+
+.suite-verify-help {
+  margin: 0.6rem 0 0.6rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.suite-hash {
+  margin: 0 0 0.7rem;
+}
+
+.suite-hash-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  margin-bottom: 0.25rem;
+}
+
+.suite-hash code,
+.suite-verify-help code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere; /* a 64-char hash must wrap, never overflow */
+  display: inline-block;
+  max-width: 100%;
+  color: var(--text);
+  background: var(--accent-soft);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+
+.suite-install-notice {
+  margin-top: 1.6rem;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+  border-radius: clamp(14px, 3vw, 20px);
+  border: 1px solid rgba(214, 179, 109, 0.28);
+  background: var(--accent-soft);
+}
+
+.suite-install-notice h3 {
+  margin: 0 0 0.7rem;
+  font-size: 1rem;
+}
+
+.suite-install-notice ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 0.93rem;
+}
+
+.suite-install-notice li + li {
+  margin-top: 0.5rem;
+}
+
+.suite-install-notice strong {
+  color: var(--text);
+}
+
+/* ---------- Product shots ---------- */
+.suite-product-grid {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 700px) {
+  .suite-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .suite-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.suite-product {
+  display: flex;
+  flex-direction: column;
+  border-radius: clamp(14px, 3vw, 18px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--panel-premium);
+  box-shadow: var(--shadow);
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease;
+}
+
+.suite-product:hover {
+  transform: translateY(-3px);
+  border-color: rgba(214, 179, 109, 0.34);
+}
+
+.suite-product-shot {
+  background: #10121a; /* matches the shots' own dark chrome in both themes */
+  border-bottom: 1px solid var(--line);
+}
+
+.suite-product-shot img,
+.suite-product-shot picture,
+.suite-analysis-shot img,
+.suite-analysis-shot picture {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.suite-product-body {
+  padding: 1.05rem 1.15rem 1.3rem;
+}
+
+.suite-product-body h3 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.suite-product-body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+/* ---------- Analysis tools ---------- */
+.suite-analysis-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 860px) {
+  .suite-analysis-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.suite-analysis h3 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.98rem;
+}
+
+.suite-analysis p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.suite-analysis-shot {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #10121a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suite-product:hover {
+    transform: none;
+  }
+}
+
+/* Product screenshots fill their frame at any width. */
+.suite-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------------------
+   Audio Suite page: centre the constrained blocks.
+   .section-header.narrow (800px), .faq-list (820px) and .audio-alpha-form
+   (620px) all set a max-width but no auto margin, so inside the centred
+   1120px .container they sat hard against the left edge while the grids
+   beside them ran full width. Scoped to .suite-page so every other page
+   keeps the left-aligned convention it was designed with.
+   --------------------------------------------------------------------- */
+.suite-page .section-header.narrow {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.suite-page .section-header.narrow p {
+  margin-inline: auto;
+}
+
+.suite-page .faq-list,
+.suite-page .audio-alpha-form {
+  margin-inline: auto;
+}
+
+.suite-install-notice {
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+/* The hero stays a split, left-aligned layout on desktop — centring the
+   copy there would fight the image beside it. It only centres once it
+   stacks. */
+@media (max-width: 899px) {
+  .suite-hero-copy {
+    text-align: center;
+  }
+
+  .suite-hero-copy .suite-lead {
+    margin-inline: auto;
+  }
+
+  .suite-hero-copy .hero-actions,
+  .suite-hero-copy .shop-trust-bar {
+    justify-content: center;
+  }
+
+  .suite-hero-copy .audio-alpha-badge {
+    margin-inline: auto;
+  }
+}
