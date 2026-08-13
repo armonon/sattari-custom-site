@@ -5,7 +5,7 @@ import {
   EMPTY_CATALOG_DOC,
   sanitizeCatalogDoc,
 } from '../../src/utils/catalogMerge.js';
-import { openStore } from '../../server/blobs.js';
+import { isConsistencyDegraded, openStore } from '../../server/blobs.js';
 
 function json(statusCode, body) {
   return {
@@ -62,5 +62,12 @@ export async function handler(event) {
     );
   }
 
-  return json(200, { stock, catalog, degraded });
+  return json(200, {
+    stock,
+    catalog,
+    degraded,
+    // True when reads fell back to eventual consistency. A stale stock number
+    // is how an out-of-stock item gets sold, so this must not be invisible.
+    eventualConsistency: isConsistencyDegraded(),
+  });
 }

@@ -18,8 +18,17 @@ function isConsistencyUnavailable(error) {
 }
 
 let warned = false;
+let degraded = false;
+
+// Whether any read in this instance has had to fall back to eventual
+// consistency. Surfaced in /api/inventory so a silent downgrade is visible
+// instead of showing up later as an unexplained stale number.
+export function isConsistencyDegraded() {
+  return degraded;
+}
 
 function warnOnce(name) {
+  degraded = true;
   if (warned) return;
   warned = true;
   console.warn(
@@ -32,11 +41,10 @@ function warnOnce(name) {
   );
 }
 
-// Reads also ask for strong consistency at the operation level, not just on
-// the store. Measured against production, the store-level option alone left a
-// read-after-write window of over a second — long enough for the checkout
-// guard to approve a sale of something that had just gone to zero. The
-// per-read option is what actually closes it.
+// Reads ask for strong consistency at the operation level as well as on the
+// store. Belt and braces: measured against production, neither alone reliably
+// closed the read-after-write window (see docs/INVENTORY.md), so the actual
+// consistency achieved is reported rather than assumed.
 const READ_OPTION_INDEX = { get: 1, getWithMetadata: 1, list: 0 };
 
 function withStrongRead(method, args) {
