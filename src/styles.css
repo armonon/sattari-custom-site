@@ -3147,3 +3147,122 @@ textarea:focus-visible {
   color: var(--muted);
   text-align: center;
 }
+
+/* =====================================================================
+   AUDIO SUITE DOWNLOADS
+   ===================================================================== */
+.downloads-header {
+  text-align: center;
+}
+
+.downloads-header .audio-alpha-badge {
+  display: inline-flex;
+  margin-bottom: 0.6rem;
+}
+
+.downloads-notice {
+  max-width: 760px;
+}
+
+.downloads-notice ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.downloads-notice li + li {
+  margin-top: 0.5rem;
+}
+
+.downloads-notice strong {
+  color: var(--text);
+}
+
+.downloads-grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-top: 2.5rem;
+}
+
+.download-card h3 {
+  margin: 0.3rem 0 0.6rem;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.2rem 0 0.4rem;
+}
+
+.download-actions .button {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 0.8rem 1rem;
+}
+
+.download-size {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.download-checksums {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+
+.download-checksums summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.download-checksums summary:hover {
+  color: var(--accent);
+}
+
+.download-verify-help {
+  margin: 0.7rem 0 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.download-hash {
+  margin: 0 0 0.7rem;
+}
+
+.download-hash-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin-bottom: 0.2rem;
+}
+
+.download-hash code,
+.download-verify-help code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+  color: var(--text);
+  background: var(--accent-soft);
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+}
+
+.downloads-footer {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+.downloads-footer a {
+  color: var(--accent);
+}

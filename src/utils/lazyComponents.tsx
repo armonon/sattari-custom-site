@@ -12,6 +12,7 @@ export const ServicesPage = lazy(() => import('@components/ServicesPage'));
 export const RepairPage = lazy(() => import('@components/RepairPage'));
 export const LocalSeoPage = lazy(() => import('@components/LocalSeoPage'));
 export const AudioSuitePage = lazy(() => import('@pages/AudioSuitePage'));
+export const DownloadsPage = lazy(() => import('@pages/DownloadsPage'));
 
 // Fallback loading component
 export const PageLoader = () => (

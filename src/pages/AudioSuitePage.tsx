@@ -61,7 +61,7 @@ const IDEAS = [
 const FAQS = [
   {
     q: 'Can I download it today?',
-    a: 'Not yet. The suite is in private alpha and public downloads are closed while listening tests, supported-DAW checks and Apple distribution requirements are still being completed. Request an invite and we’ll be in touch as testing opens up.',
+    a: 'Yes — early alpha builds for macOS are on the Downloads page, including the plugin suite installer and Auto Pitch. They are not yet notarized by Apple, so macOS will warn you on first open. Sign up below if you would like to be told when newer builds land.',
   },
   {
     q: 'What do I need to run it?',
@@ -106,7 +106,7 @@ export default function AudioSuitePage() {
         <p className="eyebrow">Sattari Audio Suite</p>
         <p className="audio-alpha-badge">
           <span className="audio-alpha-dot" aria-hidden="true" />
-          Private alpha &middot; not yet available to download
+          Alpha &middot; early builds, expect rough edges
         </p>
         <h1>Six products. One musical system.</h1>
         <p className="hero-copy audio-suite-lead">
@@ -114,11 +114,11 @@ export default function AudioSuitePage() {
           Stack carry the same musical context through to the finished track.
         </p>
         <div className="hero-actions">
-          <a className="button button-solid" href="#alpha-signup">
-            Request alpha access
-          </a>
-          <a className="button button-outline" href="#products">
-            See the six products
+          <Link className="button button-solid" to="/downloads">
+            Download the alpha
+          </Link>
+          <a className="button button-outline" href="#alpha-signup">
+            Get build announcements
           </a>
         </div>
         <div className="shop-trust-bar" aria-label="Audio Suite highlights">
@@ -131,13 +131,14 @@ export default function AudioSuitePage() {
       <div className="container audio-alpha-callout">
         <h2>What &ldquo;alpha&rdquo; means here</h2>
         <p>
-          This is unreleased software under active development. It is not on sale, there is no
-          public download, and builds go to a small group of testers at a time. Expect rough edges
-          and changes between builds — that is the point of this stage.
+          This is unreleased software under active development. It is not on sale, it is not yet
+          notarized by Apple, and things will change between builds — that is the point of this
+          stage. Don&rsquo;t rely on it for deadline work.
         </p>
         <p>
-          If you&rsquo;d like to be part of it, the signup below reaches us directly and we&rsquo;ll
-          follow up by email.
+          Early macOS builds are on the <Link to="/downloads">Downloads</Link> page. The signup
+          below reaches us directly if you&rsquo;d like to be told when newer builds land, or want
+          one for a setup that isn&rsquo;t covered yet.
         </p>
       </div>
 

@@ -11,6 +11,7 @@ import {
   AudioSuitePage,
   Category,
   CartPage,
+  DownloadsPage,
   CheckoutStatus,
   HomePage,
   InstagramCallback,
@@ -126,6 +127,15 @@ const App: FC = () => {
           />
           {/* The suite was previously linked as /audio in a few places. */}
           <Route path="/audio" element={<Navigate to="/audio-suite" replace />} />
+          <Route
+            path="/downloads"
+            element={
+              <LazyPage>
+                <DownloadsPage />
+              </LazyPage>
+            }
+          />
+          <Route path="/audio-suite/downloads" element={<Navigate to="/downloads" replace />} />
           <Route
             path="/los-angeles-music-store"
             element={
