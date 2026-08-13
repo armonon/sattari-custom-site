@@ -3037,3 +3037,232 @@ textarea:focus-visible {
     transform: none;
   }
 }
+
+/* =====================================================================
+   AUDIO SUITE — alpha landing page + nav "Alpha" tag
+   Token-driven so it themes with day/night automatically.
+   ===================================================================== */
+.nav-link-tag {
+  margin-left: 0.4rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.audio-suite-hero {
+  text-align: center;
+  max-width: 780px;
+}
+
+.audio-suite-hero h1 {
+  margin: 0.6rem 0 1rem;
+}
+
+.audio-suite-lead {
+  margin-inline: auto;
+}
+
+.audio-suite-hero .hero-actions,
+.audio-suite-hero .shop-trust-bar {
+  justify-content: center;
+}
+
+.audio-alpha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 179, 109, 0.32);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.audio-alpha-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.audio-alpha-callout {
+  max-width: 760px;
+  margin-top: 3rem;
+  padding: 1.6rem 1.7rem;
+  border-radius: var(--radius-lg, 20px);
+  border: 1px solid rgba(214, 179, 109, 0.28);
+  background: var(--accent-soft);
+}
+
+.audio-alpha-callout h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1.15rem;
+}
+
+.audio-alpha-callout p {
+  margin: 0 0 0.7rem;
+  color: var(--muted);
+  max-width: 66ch;
+}
+
+.audio-alpha-callout p:last-child {
+  margin-bottom: 0;
+}
+
+.audio-suite-section {
+  margin-top: 3.5rem;
+}
+
+.audio-product-card .card-kicker {
+  color: var(--accent);
+}
+
+.audio-product-card h3 {
+  margin: 0.3rem 0 0.6rem;
+}
+
+.audio-suite-signup-shell {
+  margin-top: 3.5rem;
+}
+
+.audio-alpha-form {
+  max-width: 620px;
+}
+
+.audio-alpha-privacy {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* =====================================================================
+   AUDIO SUITE DOWNLOADS
+   ===================================================================== */
+.downloads-header {
+  text-align: center;
+}
+
+.downloads-header .audio-alpha-badge {
+  display: inline-flex;
+  margin-bottom: 0.6rem;
+}
+
+.downloads-notice {
+  max-width: 760px;
+}
+
+.downloads-notice ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.downloads-notice li + li {
+  margin-top: 0.5rem;
+}
+
+.downloads-notice strong {
+  color: var(--text);
+}
+
+.downloads-grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-top: 2.5rem;
+}
+
+.download-card h3 {
+  margin: 0.3rem 0 0.6rem;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.2rem 0 0.4rem;
+}
+
+.download-actions .button {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 0.8rem 1rem;
+}
+
+.download-size {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.download-checksums {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+
+.download-checksums summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.download-checksums summary:hover {
+  color: var(--accent);
+}
+
+.download-verify-help {
+  margin: 0.7rem 0 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.download-hash {
+  margin: 0 0 0.7rem;
+}
+
+.download-hash-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin-bottom: 0.2rem;
+}
+
+.download-hash code,
+.download-verify-help code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+  color: var(--text);
+  background: var(--accent-soft);
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+}
+
+.downloads-footer {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+.downloads-footer a {
+  color: var(--accent);
+}

@@ -8,8 +8,10 @@ import CartSidebar from '@components/CartSidebar';
 import Footer from '@components/Footer';
 import ShopAssistant from '@components/ShopAssistant';
 import {
+  AudioSuitePage,
   Category,
   CartPage,
+  DownloadsPage,
   CheckoutStatus,
   HomePage,
   InstagramCallback,
@@ -115,6 +117,25 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route
+            path="/audio-suite"
+            element={
+              <LazyPage>
+                <AudioSuitePage />
+              </LazyPage>
+            }
+          />
+          {/* The suite was previously linked as /audio in a few places. */}
+          <Route path="/audio" element={<Navigate to="/audio-suite" replace />} />
+          <Route
+            path="/downloads"
+            element={
+              <LazyPage>
+                <DownloadsPage />
+              </LazyPage>
+            }
+          />
+          <Route path="/audio-suite/downloads" element={<Navigate to="/downloads" replace />} />
           <Route
             path="/los-angeles-music-store"
             element={

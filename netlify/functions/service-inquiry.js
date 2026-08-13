@@ -10,6 +10,7 @@ const SERVICE_LABELS = {
   rehearsal: 'Rehearsal space',
   lessons: 'Teachers / classes',
   studio: 'Rental studio',
+  'audio-alpha': 'Audio Suite alpha access',
 };
 
 function json(statusCode, body) {
