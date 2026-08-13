@@ -8,7 +8,6 @@ import CartSidebar from '@components/CartSidebar';
 import Footer from '@components/Footer';
 import ShopAssistant from '@components/ShopAssistant';
 import {
-  AudioSuitePage,
   Category,
   CartPage,
   DownloadsPage,
@@ -117,16 +116,7 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
-          <Route
-            path="/audio-suite"
-            element={
-              <LazyPage>
-                <AudioSuitePage />
-              </LazyPage>
-            }
-          />
-          {/* The suite was previously linked as /audio in a few places. */}
-          <Route path="/audio" element={<Navigate to="/audio-suite" replace />} />
+          {/* The Audio Suite and its downloads are one page, on /downloads. */}
           <Route
             path="/downloads"
             element={
@@ -135,7 +125,9 @@ const App: FC = () => {
               </LazyPage>
             }
           />
+          <Route path="/audio-suite" element={<Navigate to="/downloads" replace />} />
           <Route path="/audio-suite/downloads" element={<Navigate to="/downloads" replace />} />
+          <Route path="/audio" element={<Navigate to="/downloads" replace />} />
           <Route
             path="/los-angeles-music-store"
             element={
