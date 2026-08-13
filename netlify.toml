@@ -38,6 +38,27 @@
   to = "/.netlify/functions/inventory"
   status = 200
 
+[[redirects]]
+  from = "/api/staff/login"
+  to = "/.netlify/functions/staff-login"
+  status = 200
+
+[[redirects]]
+  from = "/api/staff/stock"
+  to = "/.netlify/functions/staff-stock"
+  status = 200
+
+# The staff page is unlisted, not secret, so it must stay out of search
+# results. This header does that WITHOUT naming the path in robots.txt —
+# robots.txt is public, and listing a private URL there hands it to anyone
+# who asks for the file.
+[[headers]]
+  for = "/staff-cc6436694e.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+
 # Must stay last: redirects are matched in order and this one catches
 # everything left over for the single-page app.
 [[redirects]]

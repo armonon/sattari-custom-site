@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Stock — Sattari Music</title>
+    <!--
+      Standalone page, deliberately NOT part of the React app.
+
+      Vite copies public/ to dist/ untouched, and Netlify serves real files
+      before applying the /* -> index.html rewrite, so this page never enters
+      the JS bundle. A route added to App.tsx would ship its path to every
+      visitor; this one does not appear anywhere in the site's code.
+
+      That makes the URL unlisted, not secret. It leaks through history, a
+      screenshot, or a shared link, so the password is the real lock and it is
+      enforced in the functions, not here.
+    -->
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f6f4;
+        --panel: #ffffff;
+        --text: #16171a;
+        --muted: #6b6f76;
+        --line: #e2e2df;
+        --accent: #1a1b1e;
+        --danger: #b3261e;
+        --ok: #1f7a3d;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #131417;
+          --panel: #1c1e22;
+          --text: #f2f2f0;
+          --muted: #9aa0a8;
+          --line: #2c2f35;
+          --accent: #f2f2f0;
+          --danger: #f2857c;
+          --ok: #6ed08f;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .wrap {
+        max-width: 940px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.25rem;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+        font-size: 0.95rem;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      .login {
+        max-width: 380px;
+        margin: 12vh auto 0;
+      }
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 0.9rem 0 0.3rem;
+      }
+      input[type='text'],
+      input[type='password'],
+      input[type='number'] {
+        width: 100%;
+        padding: 0.6rem 0.7rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+      }
+      input[type='number'] {
+        width: 6.5rem;
+        text-align: right;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        background: var(--accent);
+        color: var(--panel);
+      }
+      button.secondary {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--line);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .full {
+        width: 100%;
+        margin-top: 1.2rem;
+      }
+      .msg {
+        margin-top: 0.9rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        border: 1px solid var(--line);
+      }
+      .msg.error {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .msg.ok {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .bar {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        text-align: left;
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 0.55rem 0.6rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+      }
+      tr.group td {
+        background: var(--bg);
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .variant {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .state {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .state.out {
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .state.untracked {
+        font-style: italic;
+      }
+      .row-actions {
+        white-space: nowrap;
+      }
+      .hidden {
+        display: none;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-top: 1.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <!-- Sign in -->
+      <section id="login-view" class="card login">
+        <h1>Sattari Music</h1>
+        <p class="sub">Stock. Sign in with the shop password.</p>
+        <form id="login-form">
+          <label for="staff">Your name</label>
+          <input id="staff" type="text" autocomplete="off" placeholder="e.g. Armon" required />
+          <label for="password">Shop password</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+          <button class="full" type="submit" id="login-btn">Sign in</button>
+        </form>
+        <div id="login-msg"></div>
+        <p class="note">
+          Your name is recorded with every change so the shop has a readable history of who
+          adjusted what.
+        </p>
+      </section>
+
+      <!-- Stock editor -->
+      <section id="stock-view" class="hidden">
+        <div class="bar">
+          <div>
+            <h1>Stock</h1>
+            <p class="sub" id="who"></p>
+          </div>
+          <div>
+            <button class="secondary" id="reload-btn" type="button">Reload</button>
+            <button class="secondary" id="signout-btn" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="bar" style="margin-bottom: 0.75rem">
+            <label for="filter" style="margin: 0">Search</label>
+            <input
+              id="filter"
+              type="text"
+              placeholder="Filter by product name"
+              style="flex: 1; min-width: 200px"
+            />
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Option</th>
+                <th style="width: 8rem">On hand</th>
+                <th style="width: 9rem">Status</th>
+                <th style="width: 8rem"></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="bar" style="margin: 1.25rem 0 0">
+            <span class="state" id="dirty-count"></span>
+            <button id="save-btn" type="button" disabled>Save changes</button>
+          </div>
+          <div id="stock-msg"></div>
+        </div>
+
+        <p class="note">
+          Leave an item <strong>Not tracked</strong> and it always shows as available, exactly as
+          the site behaved before. Set a number and the shop starts showing stock — at zero the
+          product shows <strong>Out of stock</strong> and cannot be bought. Online sales subtract
+          themselves automatically; you only adjust for counter sales and restocks.
+        </p>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        var LOGIN_URL = '/api/staff/login';
+        var STOCK_URL = '/api/staff/stock';
+        // sessionStorage, not localStorage: on a shared counter machine the
+        // session should end when the tab closes rather than linger.
+        var TOKEN_KEY = 'sattari_staff_token';
+
+        var el = function (id) {
+          return document.getElementById(id);
+        };
+        var items = [];
+        var edits = Object.create(null);
+
+        function token() {
+          try {
+            return sessionStorage.getItem(TOKEN_KEY) || '';
+          } catch (e) {
+            return '';
+          }
+        }
+
+        function setToken(value) {
+          try {
+            if (value) sessionStorage.setItem(TOKEN_KEY, value);
+            else sessionStorage.removeItem(TOKEN_KEY);
+          } catch (e) {
+            /* private mode — session simply will not persist */
+          }
+        }
+
+        function message(target, text, kind) {
+          var box = el(target);
+          if (!text) {
+            box.innerHTML = '';
+            return;
+          }
+          box.innerHTML = '';
+          var div = document.createElement('div');
+          div.className = 'msg ' + (kind || '');
+          div.textContent = text;
+          box.appendChild(div);
+        }
+
+        function show(view) {
+          el('login-view').classList.toggle('hidden', view !== 'login');
+          el('stock-view').classList.toggle('hidden', view !== 'stock');
+        }
+
+        function variantLabel(item) {
+          var parts = [];
+          if (item.size) parts.push(item.size);
+          if (item.color) parts.push(item.color);
+          return parts.length ? parts.join(' · ') : '—';
+        }
+
+        function currentValue(item) {
+          return Object.prototype.hasOwnProperty.call(edits, item.key)
+            ? edits[item.key]
+            : item.quantity;
+        }
+
+        function render() {
+          var filter = el('filter').value.trim().toLowerCase();
+          var tbody = el('rows');
+          tbody.innerHTML = '';
+
+          var lastSlug = null;
+          var shown = 0;
+
+          items.forEach(function (item) {
+            if (filter && item.name.toLowerCase().indexOf(filter) === -1) return;
+            shown += 1;
+
+            if (item.slug !== lastSlug) {
+              lastSlug = item.slug;
+              var groupRow = document.createElement('tr');
+              groupRow.className = 'group';
+              var groupCell = document.createElement('td');
+              groupCell.colSpan = 5;
+              groupCell.textContent = item.name;
+              groupRow.appendChild(groupCell);
+              tbody.appendChild(groupRow);
+            }
+
+            var value = currentValue(item);
+            var tr = document.createElement('tr');
+
+            var nameCell = document.createElement('td');
+            nameCell.className = 'variant';
+            nameCell.textContent = item.category || '';
+            tr.appendChild(nameCell);
+
+            var variantCell = document.createElement('td');
+            variantCell.className = 'variant';
+            variantCell.textContent = variantLabel(item);
+            tr.appendChild(variantCell);
+
+            var qtyCell = document.createElement('td');
+            var input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.step = '1';
+            input.value = value === null || value === undefined ? '' : String(value);
+            input.placeholder = 'Not tracked';
+            input.addEventListener('input', function () {
+              var raw = input.value.trim();
+              edits[item.key] = raw === '' ? null : Math.max(0, Math.floor(Number(raw) || 0));
+              updateDirty();
+              updateStatusCell(tr, item);
+            });
+            qtyCell.appendChild(input);
+            tr.appendChild(qtyCell);
+
+            var statusCell = document.createElement('td');
+            statusCell.className = 'status-cell';
+            tr.appendChild(statusCell);
+
+            var actionCell = document.createElement('td');
+            actionCell.className = 'row-actions';
+            var stopBtn = document.createElement('button');
+            stopBtn.className = 'secondary';
+            stopBtn.type = 'button';
+            stopBtn.textContent = 'Stop tracking';
+            stopBtn.addEventListener('click', function () {
+              edits[item.key] = null;
+              input.value = '';
+              updateDirty();
+              updateStatusCell(tr, item);
+            });
+            actionCell.appendChild(stopBtn);
+            tr.appendChild(actionCell);
+
+            tbody.appendChild(tr);
+            updateStatusCell(tr, item);
+          });
+
+          if (!shown) {
+            var empty = document.createElement('tr');
+            var cell = document.createElement('td');
+            cell.colSpan = 5;
+            cell.className = 'state';
+            cell.textContent = 'No products match that search.';
+            empty.appendChild(cell);
+            tbody.appendChild(empty);
+          }
+        }
+
+        function updateStatusCell(tr, item) {
+          var cell = tr.querySelector('.status-cell');
+          if (!cell) return;
+          var value = currentValue(item);
+
+          if (value === null || value === undefined) {
+            cell.className = 'status-cell state untracked';
+            cell.textContent = 'Not tracked';
+          } else if (value <= 0) {
+            cell.className = 'status-cell state out';
+            cell.textContent = 'Out of stock';
+          } else {
+            cell.className = 'status-cell state';
+            cell.textContent = value + ' on hand';
+          }
+        }
+
+        function updateDirty() {
+          var count = 0;
+          items.forEach(function (item) {
+            if (!Object.prototype.hasOwnProperty.call(edits, item.key)) return;
+            if (edits[item.key] !== item.quantity) count += 1;
+          });
+          el('dirty-count').textContent = count
+            ? count + ' unsaved change' + (count === 1 ? '' : 's')
+            : 'No unsaved changes';
+          el('save-btn').disabled = count === 0;
+        }
+
+        async function api(url, options) {
+          var opts = options || {};
+          opts.headers = Object.assign(
+            { 'Content-Type': 'application/json' },
+            opts.headers || {},
+            token() ? { Authorization: 'Bearer ' + token() } : {}
+          );
+
+          var response = await fetch(url, opts);
+          var payload = {};
+          try {
+            payload = await response.json();
+          } catch (e) {
+            /* leave payload empty */
+          }
+
+          if (response.status === 401) {
+            setToken('');
+            show('login');
+            message('login-msg', 'Your session expired. Sign in again.', 'error');
+            throw new Error('unauthorized');
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.error || 'Request failed (' + response.status + ').');
+          }
+          return payload;
+        }
+
+        async function loadStock() {
+          var data = await api(STOCK_URL, { method: 'GET' });
+          items = data.items || [];
+          edits = Object.create(null);
+          el('who').textContent = 'Signed in as ' + (data.staff || '');
+          render();
+          updateDirty();
+          show('stock');
+        }
+
+        el('login-form').addEventListener('submit', async function (submitEvent) {
+          submitEvent.preventDefault();
+          message('login-msg', '');
+          el('login-btn').disabled = true;
+
+          try {
+            var data = await api(LOGIN_URL, {
+              method: 'POST',
+              body: JSON.stringify({
+                staff: el('staff').value,
+                password: el('password').value,
+              }),
+            });
+            setToken(data.token);
+            el('password').value = '';
+            await loadStock();
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('login-msg', error.message, 'error');
+            }
+          } finally {
+            el('login-btn').disabled = false;
+          }
+        });
+
+        el('save-btn').addEventListener('click', async function () {
+          var updates = [];
+          items.forEach(function (item) {
+            if (!Object.prototype.hasOwnProperty.call(edits, item.key)) return;
+            if (edits[item.key] === item.quantity) return;
+            updates.push({ key: item.key, quantity: edits[item.key] });
+          });
+
+          if (!updates.length) return;
+
+          el('save-btn').disabled = true;
+          message('stock-msg', '');
+
+          try {
+            var data = await api(STOCK_URL, {
+              method: 'POST',
+              body: JSON.stringify({ updates: updates }),
+            });
+            items = data.items || items;
+            edits = Object.create(null);
+            render();
+            updateDirty();
+            message('stock-msg', 'Saved. The shop is showing these numbers now.', 'ok');
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('stock-msg', error.message, 'error');
+              el('save-btn').disabled = false;
+            }
+          }
+        });
+
+        el('reload-btn').addEventListener('click', function () {
+          message('stock-msg', '');
+          loadStock().catch(function (error) {
+            if (error.message !== 'unauthorized') message('stock-msg', error.message, 'error');
+          });
+        });
+
+        el('signout-btn').addEventListener('click', function () {
+          setToken('');
+          items = [];
+          edits = Object.create(null);
+          show('login');
+          message('login-msg', 'Signed out.', 'ok');
+        });
+
+        el('filter').addEventListener('input', render);
+
+        // Resume an existing session if the tab was reloaded.
+        if (token()) {
+          loadStock().catch(function () {
+            show('login');
+          });
+        } else {
+          show('login');
+        }
+      })();
+    </script>
+  </body>
+</html>
