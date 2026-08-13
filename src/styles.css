@@ -3039,8 +3039,9 @@ textarea:focus-visible {
 }
 
 /* =====================================================================
-   AUDIO SUITE — alpha landing page + nav "Alpha" tag
-   Token-driven so it themes with day/night automatically.
+   Audio Suite shared bits: nav "Alpha" tag, alpha badge, signup form.
+   (The rest of this block belonged to the standalone /audio-suite page,
+   which is now folded into /downloads.)
    ===================================================================== */
 .nav-link-tag {
   margin-left: 0.4rem;
@@ -3055,25 +3056,6 @@ textarea:focus-visible {
   text-transform: uppercase;
   vertical-align: middle;
 }
-
-.audio-suite-hero {
-  text-align: center;
-  max-width: 780px;
-}
-
-.audio-suite-hero h1 {
-  margin: 0.6rem 0 1rem;
-}
-
-.audio-suite-lead {
-  margin-inline: auto;
-}
-
-.audio-suite-hero .hero-actions,
-.audio-suite-hero .shop-trust-bar {
-  justify-content: center;
-}
-
 .audio-alpha-badge {
   display: inline-flex;
   align-items: center;
@@ -3088,7 +3070,6 @@ textarea:focus-visible {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
-
 .audio-alpha-dot {
   width: 7px;
   height: 7px;
@@ -3096,51 +3077,9 @@ textarea:focus-visible {
   background: currentColor;
   flex: none;
 }
-
-.audio-alpha-callout {
-  max-width: 760px;
-  margin-top: 3rem;
-  padding: 1.6rem 1.7rem;
-  border-radius: var(--radius-lg, 20px);
-  border: 1px solid rgba(214, 179, 109, 0.28);
-  background: var(--accent-soft);
-}
-
-.audio-alpha-callout h2 {
-  margin: 0 0 0.7rem;
-  font-size: 1.15rem;
-}
-
-.audio-alpha-callout p {
-  margin: 0 0 0.7rem;
-  color: var(--muted);
-  max-width: 66ch;
-}
-
-.audio-alpha-callout p:last-child {
-  margin-bottom: 0;
-}
-
-.audio-suite-section {
-  margin-top: 3.5rem;
-}
-
-.audio-product-card .card-kicker {
-  color: var(--accent);
-}
-
-.audio-product-card h3 {
-  margin: 0.3rem 0 0.6rem;
-}
-
-.audio-suite-signup-shell {
-  margin-top: 3.5rem;
-}
-
 .audio-alpha-form {
   max-width: 620px;
 }
-
 .audio-alpha-privacy {
   margin: 0.9rem 0 0;
   font-size: 0.82rem;
@@ -3466,4 +3405,53 @@ textarea:focus-visible {
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* ---------------------------------------------------------------------
+   Audio Suite page: centre the constrained blocks.
+   .section-header.narrow (800px), .faq-list (820px) and .audio-alpha-form
+   (620px) all set a max-width but no auto margin, so inside the centred
+   1120px .container they sat hard against the left edge while the grids
+   beside them ran full width. Scoped to .suite-page so every other page
+   keeps the left-aligned convention it was designed with.
+   --------------------------------------------------------------------- */
+.suite-page .section-header.narrow {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.suite-page .section-header.narrow p {
+  margin-inline: auto;
+}
+
+.suite-page .faq-list,
+.suite-page .audio-alpha-form {
+  margin-inline: auto;
+}
+
+.suite-install-notice {
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+/* The hero stays a split, left-aligned layout on desktop — centring the
+   copy there would fight the image beside it. It only centres once it
+   stacks. */
+@media (max-width: 899px) {
+  .suite-hero-copy {
+    text-align: center;
+  }
+
+  .suite-hero-copy .suite-lead {
+    margin-inline: auto;
+  }
+
+  .suite-hero-copy .hero-actions,
+  .suite-hero-copy .shop-trust-bar {
+    justify-content: center;
+  }
+
+  .suite-hero-copy .audio-alpha-badge {
+    margin-inline: auto;
+  }
 }
