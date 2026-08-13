@@ -225,6 +225,55 @@
       tr.is-hidden-row td {
         opacity: 0.5;
       }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+      }
+      .stat {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+      }
+      .stat .label {
+        font-size: 0.7rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      .stat .value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+      .stat .sub {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+      }
+      .pill {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid var(--line);
+      }
+      .pill.paid {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .pill.unpaid {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .order-items {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-top: 0.2rem;
+      }
       .note {
         color: var(--muted);
         font-size: 0.85rem;
@@ -275,6 +324,36 @@
         <div class="tabs">
           <button class="tab is-active" id="tab-stock" type="button">Stock</button>
           <button class="tab" id="tab-listings" type="button">Listings</button>
+          <button class="tab" id="tab-orders" type="button">Orders</button>
+        </div>
+
+        <!-- Orders -->
+        <div class="hidden" id="panel-orders">
+          <div class="stat-grid" id="order-stats"></div>
+          <div class="card" style="margin-top: 1rem">
+            <div class="bar" style="margin-bottom: 0.5rem">
+              <strong>Recent orders</strong>
+              <span class="state" id="order-count"></span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 11rem">When</th>
+                  <th>Customer</th>
+                  <th style="width: 6rem">Items</th>
+                  <th style="width: 7rem">Total</th>
+                  <th style="width: 7rem">Payment</th>
+                </tr>
+              </thead>
+              <tbody id="order-rows"></tbody>
+            </table>
+            <div id="order-msg"></div>
+          </div>
+          <p class="note">
+            Orders are recorded when Stripe confirms payment, and stock comes down automatically at
+            the same moment. Refunds and payouts stay in the Stripe dashboard — this is a record of
+            what sold, not a replacement for it.
+          </p>
         </div>
 
         <div class="card" id="panel-stock">
@@ -651,6 +730,9 @@
 
         el('reload-btn').addEventListener('click', function () {
           message('stock-msg', '');
+          // Refresh whatever is on screen, not just stock.
+          if (!el('panel-orders').classList.contains('hidden')) return loadOrders();
+          if (!el('panel-listings').classList.contains('hidden')) return loadListings();
           loadStock().catch(function (error) {
             if (error.message !== 'unauthorized') message('stock-msg', error.message, 'error');
           });
@@ -685,14 +767,15 @@
         var pendingImage = '';
 
         function showTab(which) {
-          var isStock = which === 'stock';
-          el('tab-stock').classList.toggle('is-active', isStock);
-          el('tab-listings').classList.toggle('is-active', !isStock);
-          el('panel-stock').classList.toggle('hidden', !isStock);
-          el('stock-note').classList.toggle('hidden', !isStock);
-          el('panel-listings').classList.toggle('hidden', isStock);
-          el('listings-note').classList.toggle('hidden', isStock);
-          if (isStock) el('panel-editor').classList.add('hidden');
+          ['stock', 'listings', 'orders'].forEach(function (name) {
+            el('tab-' + name).classList.toggle('is-active', which === name);
+          });
+          el('panel-stock').classList.toggle('hidden', which !== 'stock');
+          el('stock-note').classList.toggle('hidden', which !== 'stock');
+          el('panel-listings').classList.toggle('hidden', which !== 'listings');
+          el('listings-note').classList.toggle('hidden', which !== 'listings');
+          el('panel-orders').classList.toggle('hidden', which !== 'orders');
+          if (which !== 'listings') el('panel-editor').classList.add('hidden');
         }
 
         el('tab-stock').addEventListener('click', function () {
@@ -701,6 +784,10 @@
         el('tab-listings').addEventListener('click', function () {
           showTab('listings');
           if (!listings.length) loadListings();
+        });
+        el('tab-orders').addEventListener('click', function () {
+          showTab('orders');
+          loadOrders();
         });
 
         function money(value) {
@@ -948,6 +1035,149 @@
             el('editor-save').disabled = false;
           }
         });
+
+        /* ---------------------------------------------------------------
+           Orders
+           --------------------------------------------------------------- */
+
+        var ORDERS_URL = '/api/staff/orders';
+
+        function fmtMoney(cents, currency) {
+          // Mirrors src/utils/orderStats.js: a missing total must read as
+          // unknown, never as $0.00.
+          if (typeof cents !== 'number' || !isFinite(cents)) return '—';
+          try {
+            return new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: (currency || 'usd').toUpperCase(),
+            }).format(cents / 100);
+          } catch (e) {
+            return '$' + (cents / 100).toFixed(2);
+          }
+        }
+
+        function fmtWhen(iso) {
+          if (!iso) return '—';
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return '—';
+          return d.toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+        }
+
+        function statTile(label, value, sub) {
+          return (
+            '<div class="stat"><div class="label">' +
+            label +
+            '</div><div class="value">' +
+            value +
+            '</div>' +
+            (sub ? '<div class="sub">' + sub + '</div>' : '') +
+            '</div>'
+          );
+        }
+
+        function renderOrders(data) {
+          var stats = data.stats || {};
+          var rev = stats.revenueCents || {};
+          var counts = stats.orders || {};
+          var cur = stats.currency || 'usd';
+
+          el('order-stats').innerHTML =
+            statTile('Revenue today', fmtMoney(rev.last24h, cur), counts.last24h + ' orders') +
+            statTile('Last 7 days', fmtMoney(rev.last7d, cur), counts.last7d + ' orders') +
+            statTile('Last 30 days', fmtMoney(rev.last30d, cur), counts.last30d + ' orders') +
+            statTile('All time', fmtMoney(rev.allTime, cur), counts.paid + ' paid orders') +
+            statTile('Average order', fmtMoney(stats.averageOrderCents, cur), '') +
+            (counts.unpaid
+              ? statTile('Unpaid', counts.unpaid, 'started but not paid')
+              : '');
+
+          var orders = data.orders || [];
+          el('order-count').textContent = data.total
+            ? 'showing ' + orders.length + ' of ' + data.total
+            : '';
+
+          var tbody = el('order-rows');
+          tbody.innerHTML = '';
+
+          if (!orders.length) {
+            var empty = document.createElement('tr');
+            var cell = document.createElement('td');
+            cell.colSpan = 5;
+            cell.className = 'state';
+            cell.textContent = data.degraded
+              ? 'Could not read orders right now. Try Reload.'
+              : 'No orders yet. They appear here the moment Stripe confirms a payment.';
+            empty.appendChild(cell);
+            tbody.appendChild(empty);
+            return;
+          }
+
+          orders.forEach(function (order) {
+            var tr = document.createElement('tr');
+
+            var whenCell = document.createElement('td');
+            whenCell.className = 'variant';
+            whenCell.textContent = fmtWhen(order.recordedAt || order.submittedAt);
+            tr.appendChild(whenCell);
+
+            var whoCell = document.createElement('td');
+            var name = document.createElement('div');
+            name.textContent = order.customerName || order.customerEmail || 'Unknown customer';
+            whoCell.appendChild(name);
+            if (order.customerEmail) {
+              var mail = document.createElement('div');
+              mail.className = 'order-items';
+              mail.textContent = order.customerEmail;
+              whoCell.appendChild(mail);
+            }
+            if (order.items && order.items.length) {
+              var items = document.createElement('div');
+              items.className = 'order-items';
+              items.textContent = order.items
+                .map(function (i) {
+                  return i.description + ' x' + i.quantity;
+                })
+                .join(', ');
+              whoCell.appendChild(items);
+            }
+            tr.appendChild(whoCell);
+
+            var itemsCell = document.createElement('td');
+            itemsCell.textContent = order.itemCount != null ? order.itemCount : '—';
+            tr.appendChild(itemsCell);
+
+            var totalCell = document.createElement('td');
+            totalCell.textContent = fmtMoney(order.amountTotal, order.currency);
+            tr.appendChild(totalCell);
+
+            var payCell = document.createElement('td');
+            var pill = document.createElement('span');
+            var paid = order.paymentStatus === 'paid';
+            pill.className = 'pill ' + (paid ? 'paid' : 'unpaid');
+            pill.textContent = order.paymentStatus || 'unknown';
+            payCell.appendChild(pill);
+            tr.appendChild(payCell);
+
+            tbody.appendChild(tr);
+          });
+        }
+
+        async function loadOrders() {
+          message('order-msg', '');
+          try {
+            var data = await api(ORDERS_URL, { method: 'GET' });
+            renderOrders(data);
+          } catch (error) {
+            if (error.message !== 'unauthorized') {
+              message('order-msg', error.message, 'error');
+            }
+          }
+        }
 
         // Resume an existing session if the tab was reloaded.
         if (token()) {
