@@ -36,10 +36,10 @@ export function InstagramSection() {
           style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}
         >
           <p className="card-kicker">Follow us on Instagram</p>
-          <h3>@sattarimusic</h3>
+          <h3>@sattari.music</h3>
           <a
             className="instagram-profile-link"
-            href="https://instagram.com/sattarimusic"
+            href="https://www.instagram.com/sattari.music/"
             target="_blank"
             rel="noopener noreferrer"
           >

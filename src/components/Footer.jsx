@@ -30,12 +30,12 @@ export default function Footer() {
             <br />
             <br />
             <a
-              href="https://instagram.com/sattarimusic"
+              href="https://www.instagram.com/sattari.music/"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'inherit', textDecoration: 'underline' }}
             >
-              Follow @sattarimusic
+              Follow @sattari.music
             </a>
           </p>
         </div>
