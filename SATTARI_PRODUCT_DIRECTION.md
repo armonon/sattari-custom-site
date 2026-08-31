@@ -15,6 +15,23 @@ Sattari should feel like a practical music home base:
 - Build musician profiles and social presence.
 - Sell and browse instruments in a local community market.
 
+## Product Split
+
+Sattari Learn and Sattari Studio should feel related, but they should have different
+jobs.
+
+- **Sattari Learn = analyze, explain, and train.** A user brings a song, loop, idea,
+  mic input, or MIDI performance, and Learn turns it into musical concepts, practice
+  exercises, feedback, and next steps.
+- **Sattari Studio = create, remix, and perform.** Studio is the web-native evolution
+  of the StemDeck concept: optimized and polished for the site, with deck/stem/loop
+  workflows, creation tools, and export/share paths.
+
+They should share musical intelligence: key, BPM, chords, sections, stems, pitch,
+rhythm, MIDI, loops, and practice metadata. The difference is the user's intent:
+Learn answers "teach me what is happening and how to play it"; Studio answers "help
+me make something with it."
+
 ## Existing Technical Source
 
 The Sattari plugin suite provides much of the advanced Studio and Learn capability:
@@ -51,8 +68,9 @@ Relevant capabilities already present in the suite:
 
 ## Sattari Studio
 
-The studio section will incorporate the existing DJ stem deck and Sattari plugin suite
-code. It should become the creative tool layer of the site.
+Sattari Studio is the creation layer. It should incorporate the existing DJ stem deck
+and Sattari plugin suite code, but the site version should be optimized and polished
+for its new web format rather than copied one-to-one from the native app/plugin UI.
 
 Initial concepts:
 
@@ -61,6 +79,7 @@ Initial concepts:
 - BPM, key, chord, and arrangement information.
 - Song breakdowns that connect directly into lessons.
 - Studio service calls to action for production, mixing, lessons, and custom work.
+- Export or share a performed loop, remix idea, practice clip, or arrangement sketch.
 
 First practical Studio build:
 
@@ -68,11 +87,18 @@ First practical Studio build:
 - Embed a demo deck UI with pre-cleared audio/stems before accepting uploads.
 - Show BPM/key/section metadata and stem controls from static demo manifests first.
 - Later connect real StemDeck processing through a local/server analysis bridge.
+- Translate native StemDeck concepts into web controls: decks, stem lanes, loop
+  regions, pads, crossfader, key/BPM panels, arrangement capture, and export.
+- Keep Studio focused on making something, not explaining everything. Explanations can
+  link into Learn when the user asks to understand a chord, rhythm, or stem.
 
 ## Sattari Learn
 
 The Learn section should not start as a static full curriculum. It should start as an
 interactive teaching engine, then use curriculum paths to organize the user's progress.
+
+Learn is the analysis layer. It should take musical material and turn it into clear,
+playable concepts.
 
 Core idea:
 
@@ -119,6 +145,18 @@ Recommended first Learn prototype:
 6. Add WebMIDI note detection for piano/guitar-MIDI controllers.
 7. Add StemDeck-powered stem separation and loop practice once the processing bridge is
    clear.
+
+Learn modes:
+
+- **Analyze:** explain key, BPM, likely chords, sections, rhythm feel, energy, and song
+  structure.
+- **Practice:** create exercises for piano, guitar, drums, bass, or voice.
+- **Challenge:** listen through mic/MIDI and score pitch, timing, rhythm, and chord
+  changes.
+- **Suggest:** recommend basslines, alternate chords, simpler parts, harder parts,
+  loop points, and next practice steps.
+- **Send to Studio:** move an analyzed loop, stem, chord progression, or practice idea
+  into Studio for creation.
 
 The curriculum should be modular, not huge upfront. We can create small skill paths:
 
