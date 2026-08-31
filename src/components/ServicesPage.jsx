@@ -1,61 +1,72 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, CalendarClock, DoorOpen, GraduationCap, Wrench } from 'lucide-react';
+import {
+  ArrowUpRight,
+  CalendarClock,
+  Check,
+  ChevronRight,
+  DoorOpen,
+  GraduationCap,
+  MapPin,
+  Phone,
+  Wrench,
+} from 'lucide-react';
+import ServiceInquiryForm from './ServiceInquiryForm';
+import { SEO, StructuredData } from '../utils/seo';
 
 const services = [
   {
+    value: 'repairs',
     kicker: 'Precision care',
     icon: Wrench,
     title: 'Instrument repair',
+    short: 'Setups, tuning, hardware fixes, and troubleshooting.',
     href: '/services/instrument-repair-los-angeles',
-    body: 'Bring in violins, guitars, rare drums, percussion, hardware, and musician gear for careful repair, tuning, setup, and troubleshooting support.',
-    points: [
-      'Repair support for violins, guitars, rare drums, and percussion',
-      'Troubleshooting for tone, tuning, hardware, pedal, and setup issues',
-      'Thoughtful handling for vintage, rare, and sentimental pieces',
-    ],
+    body: 'Bring in guitars, violins, rare drums, percussion, hardware, pedals, and musician gear for careful diagnosis and repair.',
+    points: ['Setup and tuning', 'Hardware and tone issues', 'Rare or sentimental instruments'],
   },
   {
+    value: 'rentals',
     kicker: 'Session-ready',
     icon: CalendarClock,
     title: 'Instrument rentals',
+    short: 'Gear for rehearsals, sessions, gigs, classes, and events.',
     href: '/services/instrument-rentals-los-angeles',
-    body: 'Reserve local instruments and musician gear for rehearsals, sessions, gigs, classes, and events when you need dependable equipment without buying last-minute.',
-    points: [
-      'Short-term instrument and gear rental inquiries',
-      'Rental support for events, rehearsals, classes, and sessions',
-      'Clear availability details before you commit',
-    ],
+    body: 'Tell us what you need and when. We will confirm local availability before you commit.',
+    points: ['Short-term gear rentals', 'Event and session support', 'Clear availability details'],
   },
   {
+    value: 'rehearsal',
     kicker: 'Creative space',
     icon: DoorOpen,
-    title: 'Studio & rehearsal space',
+    title: 'Studio & rehearsal',
+    short: 'Space for bands, lessons, practice, recording, and content.',
     href: '/services/rehearsal-space-los-angeles',
-    body: 'Ask about rental studio and rehearsal space options for bands, teachers, students, creators, and musicians preparing for sessions or shows.',
-    points: [
-      'Rehearsal space for bands, drummers, classes, and practice',
-      'Rental studio support for recording, content, and teaching',
-      'Gear, repair, and setup support connected to the space',
-    ],
+    body: 'Request a rehearsal or rental studio setup for your band, class, practice session, recording, or content shoot.',
+    points: ['Band and drum rehearsal', 'Recording and content', 'Teaching and practice'],
   },
   {
+    value: 'lessons',
     kicker: 'Tailored support',
     icon: GraduationCap,
     title: 'Teachers & classes',
+    short: 'Practical instruction matched to your instrument and goals.',
     href: '/services/music-lessons-los-angeles',
-    body: 'Book teachers, lessons, classes, and local consultations when you want practical guidance that matches your instrument, setup, and goals.',
+    body: 'Find local lessons, classes, and guidance for your instrument, rhythm, setup, and next musical goal.',
     points: [
-      'Music lessons and classes for students and working musicians',
-      'Support for drums, rhythm, instruments, and musician development',
-      'Recommendations tailored to your setup and goals',
+      'Private lessons and classes',
+      'Rhythm and instrument support',
+      'Goal-based recommendations',
     ],
   },
 ];
 
-import ServiceInquiryForm from './ServiceInquiryForm';
-import { SEO, StructuredData } from '../utils/seo';
+const directionsUrl =
+  'https://www.google.com/maps/dir//SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364';
 
 export default function ServicesPage() {
+  const [selectedService, setSelectedService] = useState(services[0]);
+
   return (
     <section className="section page-header-offset services-shell">
       <SEO
@@ -85,198 +96,151 @@ export default function ServicesPage() {
           url: 'https://sattarimusic.com/services',
         }}
       />
-      <div className="container services-hero section-header">
-        <div className="services-hero-grid">
-          <div className="services-copy">
-            <p className="eyebrow">Local services</p>
-            <h1>Local instrument services built around what you need most</h1>
+
+      <div className="container services-intake">
+        <header className="services-intake-header">
+          <div className="services-intake-title">
+            <p className="eyebrow">Sattari local services</p>
+            <h1>What do you need help with?</h1>
             <p>
-              Whether you need a repair, rental, rehearsal space, studio time, teacher, class, or
-              hands-on guidance, you can get local help that feels clear, personal, and easy to
-              book.
+              Choose a service and send the essentials. We will reply with availability and the next
+              step.
             </p>
-            <div className="hero-actions services-actions">
-              <a className="button button-solid" href="#service-inquiry">
-                Request local support
-              </a>
-              <Link className="button button-outline" to="/los-angeles-music-store">
-                Explore the local hub
-              </Link>
-            </div>
-            <div className="services-pills" aria-label="Service highlights">
-              <Link className="service-pill" to="/services/instrument-repair-los-angeles">
-                Instrument repair
-              </Link>
-              <Link className="service-pill" to="/services/rehearsal-space-los-angeles">
-                Rehearsal space
-              </Link>
-              <Link className="service-pill" to="/services/music-lessons-los-angeles">
-                Teachers & classes
-              </Link>
-            </div>
           </div>
 
-          <a
-            className="services-highlight-card interactive-card-link"
-            href="#service-inquiry"
-            aria-label="Start a local service inquiry"
-          >
-            <p className="card-kicker">What to expect</p>
-            <h2>Local help, without the guesswork</h2>
-            <p>
-              Tell us what you need and when, and you’ll get a clear response with honest guidance
-              on the right next step.
-            </p>
-            <ul className="services-highlight-list">
-              <li>Instrument &amp; drum repairs</li>
-              <li>Rentals &amp; rehearsal space</li>
-              <li>Recording studio time</li>
-              <li>Teachers &amp; classes</li>
-            </ul>
-          </a>
-        </div>
-      </div>
-
-      <div className="container services-directory">
-        <div className="services-directory-heading">
-          <div>
-            <p className="eyebrow">Ways we can help</p>
-            <h2>One place for local support</h2>
-          </div>
-          <a className="button button-outline" href="#service-inquiry">
-            Tell us what you need
-          </a>
-        </div>
-
-        <div className="services-directory-list">
-          {services.map((service, index) => {
-            const Icon = service.icon;
-
-            return (
-              <article className="service-directory-row" key={service.title}>
-                <div className="service-directory-title">
-                  <span className="service-directory-number" aria-hidden="true">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span className="service-directory-icon" aria-hidden="true">
-                    <Icon size={20} />
-                  </span>
-                  <div>
-                    <p className="card-kicker">{service.kicker}</p>
-                    <h3>
-                      <Link to={service.href}>{service.title}</Link>
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="service-directory-details">
-                  <p>{service.body}</p>
-                  <ul>
-                    {service.points.map((point) => (
-                      <li key={point}>{point}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <Link
-                  className="service-directory-link"
-                  to={service.href}
-                  aria-label={`View ${service.title}`}
-                >
-                  <ArrowUpRight size={18} />
-                  <span>View service</span>
-                </Link>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="container services-steps" aria-label="How local support works">
-        <div className="services-steps-header section-header narrow">
-          <p className="eyebrow">How it works</p>
-          <h2>Getting help is simple</h2>
-        </div>
-        <ol className="services-steps-grid">
-          {[
-            {
-              n: 1,
-              title: 'Tell us what you need',
-              body: 'Share your instrument, your timing, and the kind of help you’re after in a quick message.',
-            },
-            {
-              n: 2,
-              title: 'Get a clear response',
-              body: 'We reply with honest guidance on the right next step — pricing, availability, and options, no guesswork.',
-            },
-            {
-              n: 3,
-              title: 'Book it and get set up',
-              body: 'Confirm your repair, rental, studio time, or lesson and you’re ready to play.',
-            },
-          ].map((step) => (
-            <li className="service-step" key={step.n}>
-              <span className="service-step-number" aria-hidden="true">
-                {step.n}
+          <div className="services-contact-actions" aria-label="Contact Sattari Music">
+            <a className="services-contact-action" href="tel:+14244653020">
+              <Phone size={19} aria-hidden="true" />
+              <span>
+                Call the shop
+                <strong>(424) 465-3020</strong>
               </span>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
+            </a>
+            <a
+              className="services-contact-action"
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MapPin size={19} aria-hidden="true" />
+              <span>
+                Get directions
+                <strong>Woodland Hills</strong>
+              </span>
+            </a>
+          </div>
+        </header>
 
-      <div className="container services-location" id="visit">
-        <div className="services-location-copy">
-          <p className="card-kicker">Visit the shop</p>
-          <h2>SATTARI Musical Instruments</h2>
-          <p className="services-location-address">
-            4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364
-          </p>
-          <p>
-            Come in to play the gear, talk through a repair, or plan a rental, lesson, or session in
-            person. Serving Woodland Hills and the greater San Fernando Valley.
-          </p>
-          <div className="services-location-actions">
+        <div className="services-workspace">
+          <section className="services-picker" aria-labelledby="service-picker-title">
+            <div className="services-pane-heading">
+              <span className="services-step-badge" aria-hidden="true">
+                1
+              </span>
+              <div>
+                <h2 id="service-picker-title">Choose a service</h2>
+                <p>Select the closest match. We can adjust it after you send.</p>
+              </div>
+            </div>
+
+            <div className="services-picker-list">
+              {services.map((service) => {
+                const Icon = service.icon;
+                const isSelected = selectedService.value === service.value;
+
+                return (
+                  <button
+                    className={`services-picker-option${isSelected ? ' is-selected' : ''}`}
+                    type="button"
+                    key={service.value}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedService(service)}
+                  >
+                    <span className="services-picker-icon" aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
+                    <span className="services-picker-copy">
+                      <strong>{service.title}</strong>
+                      <small>{service.short}</small>
+                    </span>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="services-selection" aria-live="polite">
+              <div className="services-selection-heading">
+                <div>
+                  <p className="card-kicker">{selectedService.kicker}</p>
+                  <h3>{selectedService.title}</h3>
+                </div>
+                <Link
+                  to={selectedService.href}
+                  aria-label={`View ${selectedService.title} details`}
+                >
+                  Details
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </Link>
+              </div>
+              <p>{selectedService.body}</p>
+              <ul>
+                {selectedService.points.map((point) => (
+                  <li key={point}>
+                    <Check size={15} aria-hidden="true" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <section
+            className="services-request"
+            id="service-inquiry"
+            aria-labelledby="service-request-title"
+          >
+            <div className="services-pane-heading">
+              <span className="services-step-badge" aria-hidden="true">
+                2
+              </span>
+              <div>
+                <h2 id="service-request-title">Send your request</h2>
+                <p>Share the timing and a few useful details. No commitment required.</p>
+              </div>
+            </div>
+            <ServiceInquiryForm
+              compact
+              initialService={selectedService.value}
+              source="Local services action page"
+            />
+          </section>
+        </div>
+
+        <aside className="services-visit-bar" id="visit">
+          <span className="services-visit-icon" aria-hidden="true">
+            <MapPin size={21} />
+          </span>
+          <div className="services-visit-copy">
+            <h2>Visit SATTARI Musical Instruments</h2>
+            <p>4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364</p>
+          </div>
+          <div className="services-visit-actions">
             <a
               className="button button-solid"
-              href="https://www.google.com/maps/dir//SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364"
+              href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
+              <MapPin size={17} aria-hidden="true" />
               Get directions
             </a>
-            <a
-              className="button button-outline"
-              href="https://www.google.com/maps/search/?api=1&query=SATTARI+Musical+Instruments+Woodland+Hills"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View on Google
+            <a className="button button-outline" href="tel:+14244653020">
+              <Phone size={17} aria-hidden="true" />
+              Call shop
             </a>
           </div>
-        </div>
-        <div className="services-map">
-          <iframe
-            title="Map to SATTARI Musical Instruments in Woodland Hills"
-            src="https://www.google.com/maps?q=SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364&output=embed"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
-        </div>
-      </div>
-
-      <div className="container service-form-shell" id="service-inquiry">
-        <div className="service-form-copy section-header narrow">
-          <p className="eyebrow">Start the conversation</p>
-          <h2>Tell us what you need and we’ll help you find the right next step</h2>
-          <p>
-            Share your timing, your setup, and the kind of help you’re looking for. We’ll use that
-            to point you toward the best local service for your situation.
-          </p>
-        </div>
-        <ServiceInquiryForm />
+        </aside>
       </div>
     </section>
   );

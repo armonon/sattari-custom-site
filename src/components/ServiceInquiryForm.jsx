@@ -1,6 +1,6 @@
 // ServiceInquiryForm.jsx
 import * as Sentry from '@sentry/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const SERVICE_OPTIONS = [
   { value: 'instrument-sales', label: 'Instruments / gear' },
@@ -15,6 +15,7 @@ const SERVICE_OPTIONS = [
 export default function ServiceInquiryForm({
   initialService = '',
   source = 'Website service form',
+  compact = false,
 }) {
   const [form, setForm] = useState({
     service: initialService,
@@ -26,6 +27,12 @@ export default function ServiceInquiryForm({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setForm((current) =>
+      current.service === initialService ? current : { ...current, service: initialService }
+    );
+  }, [initialService]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -106,65 +113,76 @@ export default function ServiceInquiryForm({
   }
 
   return (
-    <form className="service-form-glass" onSubmit={handleSubmit}>
-      <p className="card-kicker">Local service request</p>
-      <h3>Service Inquiry</h3>
-      <p className="form-helper">
-        Tell us what you need, when you need it, and any details that will help us guide you.
-      </p>
+    <form
+      className={`service-form-glass${compact ? ' service-form-compact' : ''}`}
+      onSubmit={handleSubmit}
+    >
+      {!compact && (
+        <>
+          <p className="card-kicker">Local service request</p>
+          <h3>Service Inquiry</h3>
+          <p className="form-helper">
+            Tell us what you need, when you need it, and any details that will help us guide you.
+          </p>
+        </>
+      )}
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-      <label>
-        <span>Service Type</span>
-        <select name="service" value={form.service} onChange={handleChange} required>
-          <option value="" disabled>
-            Select a service
-          </option>
-          {SERVICE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+      <div className="service-form-row">
+        <label>
+          <span>Service Type</span>
+          <select name="service" value={form.service} onChange={handleChange} required>
+            <option value="" disabled>
+              Select a service
             </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span>Your Name</span>
-        <input
-          name="name"
-          type="text"
-          value={form.name}
-          onChange={handleChange}
-          autoComplete="name"
-          placeholder="Your name"
-          required
-        />
-      </label>
-      <label>
-        <span>Email</span>
-        <input
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-          autoComplete="email"
-          placeholder="you@example.com"
-          required
-        />
-      </label>
-      <label>
-        <span>Phone</span>
-        <input
-          name="phone"
-          type="tel"
-          value={form.phone}
-          onChange={handleChange}
-          autoComplete="tel"
-          placeholder="Optional"
-        />
-      </label>
+            {SERVICE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Phone</span>
+          <input
+            name="phone"
+            type="tel"
+            value={form.phone}
+            onChange={handleChange}
+            autoComplete="tel"
+            placeholder="Optional"
+          />
+        </label>
+      </div>
+      <div className="service-form-row">
+        <label>
+          <span>Your Name</span>
+          <input
+            name="name"
+            type="text"
+            value={form.name}
+            onChange={handleChange}
+            autoComplete="name"
+            placeholder="Your name"
+            required
+          />
+        </label>
+        <label>
+          <span>Email</span>
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+          />
+        </label>
+      </div>
       <label>
         <span>Describe what you need</span>
         <textarea

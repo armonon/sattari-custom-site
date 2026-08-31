@@ -161,18 +161,10 @@ body {
 
   /* Refined ramp + elevation (styles-refresh.css) */
   --grad-text: linear-gradient(180deg, #2a2417 0%, #6b5322 55%, #937425 100%);
-  --elev-1:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 8px 24px rgba(60, 50, 30, 0.1);
-  --elev-2:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 18px 48px rgba(60, 50, 30, 0.14);
-  --elev-3:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 30px 80px rgba(60, 50, 30, 0.18);
-  --ring-accent:
-    0 0 0 1px rgba(154, 122, 46, 0.4),
-    0 0 34px rgba(154, 122, 46, 0.14);
+  --elev-1: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 8px 24px rgba(60, 50, 30, 0.1);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 48px rgba(60, 50, 30, 0.14);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 30px 80px rgba(60, 50, 30, 0.18);
+  --ring-accent: 0 0 0 1px rgba(154, 122, 46, 0.4), 0 0 34px rgba(154, 122, 46, 0.14);
   --hairline: 1px solid rgba(58, 48, 28, 0.12);
   --hairline-strong: 1px solid rgba(58, 48, 28, 0.2);
 }
@@ -247,27 +239,12 @@ body {
    These have hardcoded-dark (or translucent-white) backgrounds that ignore the
    palette, so they stayed dark/invisible in day mode. Repaint them light. The
    gold ::before/::after glows and token-based text carry over fine. */
-[data-theme='day'] .hero-mini-card,
-[data-theme='day'] .services-highlight-card {
+[data-theme='day'] .hero-mini-card {
   background: linear-gradient(145deg, rgba(255, 253, 248, 0.96), rgba(240, 233, 219, 0.9));
   border-color: rgba(154, 122, 46, 0.22);
   box-shadow:
     0 18px 44px rgba(60, 50, 30, 0.12),
     0 0 40px rgba(154, 122, 46, 0.06);
-}
-
-[data-theme='day'] .services-directory {
-  border-color: rgba(154, 122, 46, 0.22);
-  background: rgba(250, 246, 238, 0.88);
-  box-shadow: 0 18px 44px rgba(60, 50, 30, 0.1);
-}
-
-[data-theme='day'] .services-directory-heading {
-  background: rgba(154, 122, 46, 0.035);
-}
-
-[data-theme='day'] .service-directory-row:hover {
-  background: rgba(154, 122, 46, 0.045);
 }
 
 /* Hero metric cards are translucent white — invisible on a light page. */
@@ -281,12 +258,6 @@ body {
    itself once it loads), matching the product-card convention. */
 [data-theme='day'] .hero-metric-card-image {
   background: #efe7d6;
-}
-
-/* Inner stat tiles inside the "What to expect" box. */
-[data-theme='day'] .services-stats div {
-  background: rgba(154, 122, 46, 0.07);
-  border-color: rgba(154, 122, 46, 0.18);
 }
 
 /* Shop Assistant option chips are translucent white — invisible on a light page. */
@@ -386,77 +357,66 @@ body {
   background: rgba(210, 31, 42, 0.08);
 }
 
-/* ---- Services: visit-the-shop location + embedded Google map ---- */
-.services-location {
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 2rem;
-  align-items: center;
-  margin: 3rem auto;
-}
-
-.services-location-copy h2 {
-  margin: 0.4rem 0 0.5rem;
-}
-
-.services-location-address {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.services-location-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 1.25rem;
-}
-
-.services-map {
-  border-radius: 22px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  aspect-ratio: 16 / 10;
-  background: var(--panel);
-}
-
-.services-map iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-@media (max-width: 760px) {
-  .services-location {
-    grid-template-columns: 1fr;
-    margin: 2rem auto;
-  }
-}
-
-/* Simple service list inside the "What to expect" card. */
-.services-highlight-list {
-  list-style: none;
-  margin: 1.5rem 0 0;
+/* ---- Local services action workspace ---- */
+.services-request .service-form-glass {
+  align-items: stretch;
+  margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.7rem;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
-.services-highlight-list li {
-  position: relative;
-  padding-left: 1.4rem;
-  color: var(--text);
-  font-weight: 500;
+.service-form-compact label {
+  margin-bottom: 0.72rem;
 }
 
-.services-highlight-list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
+.service-form-compact span {
+  margin-bottom: 0.3rem;
+  font-size: 0.65rem;
+}
+
+.service-form-compact input,
+.service-form-compact select,
+.service-form-compact textarea {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+}
+
+[data-theme='day'] .services-workspace {
+  border-color: rgba(82, 68, 40, 0.22);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 42px rgba(38, 31, 19, 0.1);
+}
+
+[data-theme='day'] .services-request {
+  background: rgba(241, 244, 242, 0.7);
+}
+
+[data-theme='day'] .services-contact-action,
+[data-theme='day'] .services-picker-option,
+[data-theme='day'] .services-visit-bar {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(82, 68, 40, 0.2);
+}
+
+[data-theme='day'] .services-contact-action:hover,
+[data-theme='day'] .services-picker-option:hover {
+  background: rgba(154, 122, 46, 0.06);
+  border-color: rgba(154, 122, 46, 0.36);
+}
+
+[data-theme='day'] .services-picker-option.is-selected {
+  background: rgba(154, 122, 46, 0.1);
+  border-color: rgba(154, 122, 46, 0.52);
+}
+
+[data-theme='day'] .services-picker-icon,
+[data-theme='day'] .services-step-badge,
+[data-theme='day'] .services-visit-icon {
+  background: rgba(154, 122, 46, 0.08);
 }
