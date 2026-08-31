@@ -14,6 +14,7 @@ export const LocalSeoPage = lazy(() => import('@components/LocalSeoPage'));
 export const DownloadsPage = lazy(() => import('@pages/DownloadsPage'));
 export const SattariLearnPage = lazy(() => import('@pages/SattariLearnPage'));
 export const SattariStudioPage = lazy(() => import('@pages/SattariStudioPage'));
+export const SattariHubPage = lazy(() => import('@pages/SattariHubPage'));
 
 // Fallback loading component
 export const PageLoader = () => (

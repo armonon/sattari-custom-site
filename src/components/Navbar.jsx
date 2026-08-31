@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { LayoutGrid } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import ThemeToggle from './ThemeToggle';
 
@@ -7,8 +8,6 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
-  { to: '/learn', label: 'Learn', tag: 'New' },
-  { to: '/studio', label: 'Studio', tag: 'Alpha' },
 ];
 
 export default function Navbar({ onCartClick }) {
@@ -76,9 +75,17 @@ export default function Navbar({ onCartClick }) {
               className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
             >
               {link.label}
-              {link.tag && <span className="nav-link-tag">{link.tag}</span>}
             </NavLink>
           ))}
+          <NavLink
+            to="/hub"
+            className={({ isActive }) =>
+              isActive ? 'nav-link nav-hub-button nav-hub-button-active' : 'nav-link nav-hub-button'
+            }
+          >
+            <LayoutGrid size={16} aria-hidden="true" />
+            Sattari Hub
+          </NavLink>
           <button
             type="button"
             onClick={handleCartClick}

@@ -270,6 +270,7 @@ export default function SattariLearnPage() {
             <h1>Learn</h1>
           </div>
           <div className="audio-product-switch" aria-label="Audio products">
+            <Link to="/hub">Hub</Link>
             <Link to="/learn" className="is-active">
               Learn
             </Link>

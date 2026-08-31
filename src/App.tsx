@@ -18,6 +18,7 @@ import {
   LocalSeoPage,
   ProductDetail,
   RepairPage,
+  SattariHubPage,
   SattariLearnPage,
   SattariStudioPage,
   ServicesPage,
@@ -29,7 +30,7 @@ const App: FC = () => {
   const [checkoutError, setCheckoutError] = useState('');
   const { cartItems } = useCart();
   const location = useLocation();
-  const isAudioWorkspace = location.pathname === '/learn' || location.pathname === '/studio';
+  const isAudioWorkspace = ['/hub', '/learn', '/studio'].includes(location.pathname);
 
   const handleCheckout = async () => {
     setCheckoutError('');
@@ -120,6 +121,14 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route
+            path="/hub"
+            element={
+              <LazyPage>
+                <SattariHubPage />
+              </LazyPage>
+            }
+          />
           <Route
             path="/learn"
             element={

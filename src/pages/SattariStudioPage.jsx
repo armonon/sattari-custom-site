@@ -401,6 +401,7 @@ export default function SattariStudioPage() {
             <h1>Studio</h1>
           </div>
           <div className="audio-product-switch" aria-label="Audio products">
+            <Link to="/hub">Hub</Link>
             <Link to="/learn">Learn</Link>
             <Link to="/studio" className="is-active">
               Studio

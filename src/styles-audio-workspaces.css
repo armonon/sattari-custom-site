@@ -73,8 +73,8 @@
 
 .audio-product-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-width: 210px;
+  grid-template-columns: repeat(3, 1fr);
+  min-width: 270px;
   padding: 3px;
   border: 1px solid var(--aw-line);
   border-radius: 6px;
@@ -1684,7 +1684,7 @@
 @media (max-width: 720px) {
   .audio-workspace { padding-bottom: 3rem; }
   .audio-workspace-topbar { min-height: 72px; padding: 0.8rem 1rem; }
-  .audio-product-switch { min-width: 154px; }
+  .audio-product-switch { min-width: 210px; }
   .audio-product-switch a { min-height: 32px; padding: 0 0.6rem; font-size: 0.68rem; }
   .learn-intro,
   .learn-command-grid,
@@ -1734,7 +1734,7 @@
 
 @media (max-width: 420px) {
   .audio-workspace-topbar > div:first-child .audio-workspace-kicker { display: none; }
-  .audio-product-switch { min-width: 142px; }
+  .audio-product-switch { min-width: 198px; }
   .learn-chord-strip { grid-template-columns: repeat(2, 1fr); }
   .learn-instrument-switch { grid-template-columns: repeat(2, 1fr); }
   .learn-piano { height: 112px; }
