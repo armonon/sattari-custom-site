@@ -1006,6 +1006,196 @@ button {
   transform: translateX(4px);
 }
 
+.services-directory {
+  margin-top: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(214, 179, 109, 0.2);
+  border-radius: 8px;
+  background: rgba(18, 18, 21, 0.8);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.services-directory-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.35rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.services-directory-heading .eyebrow {
+  margin-bottom: 0.3rem;
+}
+
+.services-directory-heading h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.services-directory-heading .button {
+  flex: 0 0 auto;
+}
+
+.service-directory-row {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(320px, 1.4fr) 92px;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  align-items: start;
+  padding: 1.55rem 1.5rem;
+  transition: background 180ms ease;
+}
+
+.service-directory-row + .service-directory-row {
+  border-top: 1px solid var(--line);
+}
+
+.service-directory-row:hover {
+  background: rgba(214, 179, 109, 0.035);
+}
+
+.service-directory-title {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 25px 42px minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.service-directory-number {
+  padding-top: 0.7rem;
+  color: rgba(214, 179, 109, 0.7);
+  font-family: Sora, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.service-directory-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(214, 179, 109, 0.24);
+  border-radius: 6px;
+  color: var(--accent);
+  background: rgba(214, 179, 109, 0.08);
+}
+
+.service-directory-title .card-kicker {
+  margin: 0 0 0.22rem;
+  font-size: 0.62rem;
+}
+
+.service-directory-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.service-directory-title h3 a:hover {
+  color: var(--accent);
+}
+
+.service-directory-details > p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.service-directory-details ul {
+  display: grid;
+  gap: 0.38rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service-directory-details li {
+  position: relative;
+  padding-left: 0.9rem;
+  color: var(--muted);
+  font-size: 0.69rem;
+  line-height: 1.5;
+}
+
+.service-directory-details li::before {
+  content: '';
+  position: absolute;
+  top: 0.58em;
+  left: 0;
+  width: 5px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.service-directory-link {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.61rem;
+  font-weight: 750;
+  text-align: right;
+}
+
+.service-directory-link svg {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transition: border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.service-directory-link:hover {
+  color: var(--accent);
+}
+
+.service-directory-link:hover svg {
+  transform: translate(2px, -2px);
+  border-color: rgba(214, 179, 109, 0.42);
+}
+
+@media (max-width: 920px) {
+  .service-directory-row {
+    grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .service-directory-link {
+    grid-column: 1 / -1;
+    justify-self: start;
+    flex-direction: row-reverse;
+    align-items: center;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .services-directory-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1.1rem;
+  }
+
+  .services-directory-heading .button {
+    width: 100%;
+  }
+
+  .service-directory-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .service-directory-link {
+    grid-column: 1;
+  }
+}
+
 /* How it works — 3 numbered steps before the inquiry form. */
 .services-steps {
   margin-top: 3.5rem;

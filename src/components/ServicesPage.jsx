@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
+import { ArrowUpRight, CalendarClock, DoorOpen, GraduationCap, Wrench } from 'lucide-react';
 
 const services = [
   {
     kicker: 'Precision care',
-    icon: '✦',
+    icon: Wrench,
     title: 'Instrument repair',
     href: '/services/instrument-repair-los-angeles',
     body: 'Bring in violins, guitars, rare drums, percussion, hardware, and musician gear for careful repair, tuning, setup, and troubleshooting support.',
@@ -15,7 +16,7 @@ const services = [
   },
   {
     kicker: 'Session-ready',
-    icon: '◌',
+    icon: CalendarClock,
     title: 'Instrument rentals',
     href: '/services/instrument-rentals-los-angeles',
     body: 'Reserve local instruments and musician gear for rehearsals, sessions, gigs, classes, and events when you need dependable equipment without buying last-minute.',
@@ -27,7 +28,7 @@ const services = [
   },
   {
     kicker: 'Creative space',
-    icon: '◎',
+    icon: DoorOpen,
     title: 'Studio & rehearsal space',
     href: '/services/rehearsal-space-los-angeles',
     body: 'Ask about rental studio and rehearsal space options for bands, teachers, students, creators, and musicians preparing for sessions or shows.',
@@ -39,7 +40,7 @@ const services = [
   },
   {
     kicker: 'Tailored support',
-    icon: '✺',
+    icon: GraduationCap,
     title: 'Teachers & classes',
     href: '/services/music-lessons-los-angeles',
     body: 'Book teachers, lessons, classes, and local consultations when you want practical guidance that matches your instrument, setup, and goals.',
@@ -136,34 +137,59 @@ export default function ServicesPage() {
         </div>
       </div>
 
-      <div className="container card-grid three-col services-card-grid">
-        {services.map((service) => (
-          <Link
-            className="info-card service-card interactive-card-link"
-            to={service.href || '#service-inquiry'}
-            key={service.title}
-            aria-label={`Request help with ${service.title}`}
-          >
-            <div className="service-card-header">
-              <div className="service-icon" aria-hidden="true">
-                {service.icon}
-              </div>
-              <div>
-                <p className="card-kicker">{service.kicker}</p>
-                <h3>{service.title}</h3>
-              </div>
-            </div>
-            <p>{service.body}</p>
-            <ul className="service-list">
-              {service.points.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-            <span className="service-card-cta" aria-hidden="true">
-              Request help <span className="service-card-cta-arrow">→</span>
-            </span>
-          </Link>
-        ))}
+      <div className="container services-directory">
+        <div className="services-directory-heading">
+          <div>
+            <p className="eyebrow">Ways we can help</p>
+            <h2>One place for local support</h2>
+          </div>
+          <a className="button button-outline" href="#service-inquiry">
+            Tell us what you need
+          </a>
+        </div>
+
+        <div className="services-directory-list">
+          {services.map((service, index) => {
+            const Icon = service.icon;
+
+            return (
+              <article className="service-directory-row" key={service.title}>
+                <div className="service-directory-title">
+                  <span className="service-directory-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="service-directory-icon" aria-hidden="true">
+                    <Icon size={20} />
+                  </span>
+                  <div>
+                    <p className="card-kicker">{service.kicker}</p>
+                    <h3>
+                      <Link to={service.href}>{service.title}</Link>
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="service-directory-details">
+                  <p>{service.body}</p>
+                  <ul>
+                    {service.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link
+                  className="service-directory-link"
+                  to={service.href}
+                  aria-label={`View ${service.title}`}
+                >
+                  <ArrowUpRight size={18} />
+                  <span>View service</span>
+                </Link>
+              </article>
+            );
+          })}
+        </div>
       </div>
 
       <div className="container services-steps" aria-label="How local support works">
