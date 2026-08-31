@@ -1,5 +1,5 @@
 import { useEffect, useState, FC } from 'react';
-import { Navigate, Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from '@components/Navbar';
 import BackgroundMedia from './components/BackgroundMedia';
 import { useCart } from '@context/CartContext';
@@ -18,6 +18,8 @@ import {
   LocalSeoPage,
   ProductDetail,
   RepairPage,
+  SattariLearnPage,
+  SattariStudioPage,
   ServicesPage,
   ShopPage,
 } from '@utils/lazyComponents';
@@ -26,6 +28,8 @@ const App: FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const { cartItems } = useCart();
+  const location = useLocation();
+  const isAudioWorkspace = location.pathname === '/learn' || location.pathname === '/studio';
 
   const handleCheckout = async () => {
     setCheckoutError('');
@@ -116,6 +120,22 @@ const App: FC = () => {
             }
           />
           <Route path="/buy" element={<Navigate to="/shop" replace />} />
+          <Route
+            path="/learn"
+            element={
+              <LazyPage>
+                <SattariLearnPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/studio"
+            element={
+              <LazyPage>
+                <SattariStudioPage />
+              </LazyPage>
+            }
+          />
           {/* The Audio Suite and its downloads are one page, on /downloads. */}
           <Route
             path="/downloads"
@@ -323,8 +343,8 @@ const App: FC = () => {
         </Routes>
       </main>
 
-      <Footer />
-      <ShopAssistant />
+      {!isAudioWorkspace && <Footer />}
+      {!isAudioWorkspace && <ShopAssistant />}
     </div>
   );
 };

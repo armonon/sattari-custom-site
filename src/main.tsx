@@ -9,6 +9,7 @@ import './fonts.css';
 import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';
+import './styles-audio-workspaces.css';
 import { CartProvider } from './context/CartContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { ThemeProvider } from './context/ThemeContext';

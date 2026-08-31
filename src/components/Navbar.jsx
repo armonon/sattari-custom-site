@@ -7,7 +7,8 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
-  { to: '/downloads', label: 'Audio Suite', tag: 'Alpha' },
+  { to: '/learn', label: 'Learn', tag: 'New' },
+  { to: '/studio', label: 'Studio', tag: 'Alpha' },
 ];
 
 export default function Navbar({ onCartClick }) {

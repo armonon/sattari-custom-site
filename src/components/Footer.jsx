@@ -14,6 +14,8 @@ export default function Footer() {
           <div className="footer-quick-links" aria-label="Footer quick links">
             <Link to="/shop">Shop gear</Link>
             <Link to="/services">Book local support</Link>
+            <Link to="/learn">Learn a song</Link>
+            <Link to="/studio">Open Studio</Link>
           </div>
         </div>
         <div>
