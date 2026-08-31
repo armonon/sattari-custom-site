@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  ArrowUpRight,
+  Disc3,
+  Drumstick,
+  Guitar,
+  LayoutGrid,
+  Music2,
+  PackageOpen,
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
@@ -36,6 +45,14 @@ const categorySpotlights = {
   essentials: 'Purpose-built accessories for practice, setup, and carry.',
   violins: 'Acoustic warmth, electric versatility, and silent practice — all handcrafted.',
   'guitar-bass': 'Electric and acoustic tone, set up and ready to play.',
+};
+
+const categoryIcons = {
+  cymbals: Disc3,
+  sticks: Drumstick,
+  essentials: PackageOpen,
+  violins: Music2,
+  'guitar-bass': Guitar,
 };
 
 // Some products carry their image only on a size variant (e.g. the practice
@@ -160,33 +177,72 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="container card-grid three-col shop-category-grid">
-        {categories.map((category) => (
+      <div className="container shop-category-panel">
+        <div className="shop-category-panel-heading">
+          <div>
+            <p className="card-kicker">Browse the catalog</p>
+            <h2>Shop by category</h2>
+          </div>
+          <Link to="/shop/all">
+            View all {products.length} products
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </Link>
+        </div>
+
+        <nav className="shop-category-list" aria-label="Shop product categories">
+          {categories.map((category, index) => {
+            const Icon = categoryIcons[category.key];
+
+            return (
+              <Link
+                to={`/shop/${category.key}`}
+                className="shop-category-row"
+                key={category.key}
+                aria-label={`Explore ${category.title}`}
+              >
+                <span className="shop-category-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="shop-category-icon" aria-hidden="true">
+                  <Icon size={20} />
+                </span>
+                <span className="shop-category-primary">
+                  <strong>{category.title}</strong>
+                  <small>{category.description}</small>
+                </span>
+                <span className="shop-category-spotlight">{categorySpotlights[category.key]}</span>
+                <span className="shop-category-action">
+                  Explore
+                  <ArrowUpRight size={17} aria-hidden="true" />
+                </span>
+              </Link>
+            );
+          })}
+
           <Link
-            to={`/shop/${category.key}`}
-            className="info-card shop-category-card interactive-card-link"
-            key={category.key}
-            aria-label={`Explore ${category.title}`}
+            to="/shop/all"
+            className="shop-category-row shop-all-row"
+            aria-label="Shop all products"
           >
-            <p className="card-kicker">{category.title} spotlight</p>
-            <h3>{category.title}</h3>
-            <p>{category.description}</p>
-            <p className="shop-category-spotlight">{categorySpotlights[category.key]}</p>
-            <span className="btn-secondary-detail shop-category-link">
-              Explore {category.title}
+            <span className="shop-category-number" aria-hidden="true">
+              {String(categories.length + 1).padStart(2, '0')}
+            </span>
+            <span className="shop-category-icon" aria-hidden="true">
+              <LayoutGrid size={20} />
+            </span>
+            <span className="shop-category-primary">
+              <strong>Shop all</strong>
+              <small>The full Sattari catalog in one place.</small>
+            </span>
+            <span className="shop-category-spotlight">
+              Browse all {products.length} available products.
+            </span>
+            <span className="shop-category-action">
+              Browse all
+              <ArrowUpRight size={17} aria-hidden="true" />
             </span>
           </Link>
-        ))}
-        <Link
-          to="/shop/all"
-          className="info-card shop-category-card shop-all-card interactive-card-link"
-          aria-label="Shop all products"
-        >
-          <p className="card-kicker">Everything in the shop</p>
-          <h3>Shop all</h3>
-          <p>The full Sattari catalog — {products.length} products in one place.</p>
-          <span className="btn-secondary-detail shop-category-link">Browse all products</span>
-        </Link>
+        </nav>
       </div>
 
       {categories.map((category) => {
