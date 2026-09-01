@@ -217,30 +217,41 @@ export default function ServicesPage() {
           </section>
         </div>
 
-        <aside className="services-visit-bar" id="visit">
-          <span className="services-visit-icon" aria-hidden="true">
-            <MapPin size={21} />
-          </span>
-          <div className="services-visit-copy">
-            <h2>Visit SATTARI Musical Instruments</h2>
-            <p>4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364</p>
+        <section className="services-location" id="visit" aria-labelledby="services-location-title">
+          <div className="services-location-copy">
+            <p className="eyebrow">Visit the shop</p>
+            <h2 id="services-location-title">SATTARI Musical Instruments</h2>
+            <address>4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364</address>
+            <p>
+              Bring in an instrument, talk through a repair, or plan a rental, lesson, or session
+              with us in person.
+            </p>
+            <div className="services-location-actions">
+              <a
+                className="button button-solid"
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MapPin size={17} aria-hidden="true" />
+                Get directions
+              </a>
+              <a className="button button-outline" href="tel:+14244653020">
+                <Phone size={17} aria-hidden="true" />
+                Call shop
+              </a>
+            </div>
           </div>
-          <div className="services-visit-actions">
-            <a
-              className="button button-solid"
-              href={directionsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MapPin size={17} aria-hidden="true" />
-              Get directions
-            </a>
-            <a className="button button-outline" href="tel:+14244653020">
-              <Phone size={17} aria-hidden="true" />
-              Call shop
-            </a>
+          <div className="services-map">
+            <iframe
+              title="Map to SATTARI Musical Instruments in Woodland Hills"
+              src="https://www.google.com/maps?q=SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
           </div>
-        </aside>
+        </section>
       </div>
     </section>
   );

@@ -388,35 +388,66 @@ body {
 }
 
 [data-theme='day'] .services-workspace {
-  border-color: rgba(82, 68, 40, 0.22);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 42px rgba(38, 31, 19, 0.1);
+  border-color: #d2d2d7;
+  background: #f5f5f7;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.08);
 }
 
 [data-theme='day'] .services-request {
-  background: rgba(241, 244, 242, 0.7);
+  background: #ffffff;
 }
 
 [data-theme='day'] .services-contact-action,
-[data-theme='day'] .services-picker-option,
-[data-theme='day'] .services-visit-bar {
-  background: rgba(255, 255, 255, 0.72);
-  border-color: rgba(82, 68, 40, 0.2);
+[data-theme='day'] .services-picker-list {
+  border-color: #d2d2d7;
+  background: #ffffff;
 }
 
 [data-theme='day'] .services-contact-action:hover,
 [data-theme='day'] .services-picker-option:hover {
-  background: rgba(154, 122, 46, 0.06);
-  border-color: rgba(154, 122, 46, 0.36);
+  background: #f5f5f7;
+  border-color: #b9b9bf;
 }
 
 [data-theme='day'] .services-picker-option.is-selected {
-  background: rgba(154, 122, 46, 0.1);
-  border-color: rgba(154, 122, 46, 0.52);
+  background: rgba(0, 113, 227, 0.08);
 }
 
-[data-theme='day'] .services-picker-icon,
-[data-theme='day'] .services-step-badge,
-[data-theme='day'] .services-visit-icon {
-  background: rgba(154, 122, 46, 0.08);
+[data-theme='day'] .services-contact-action {
+  border-color: #d2d2d7;
+  background: #ffffff;
+}
+
+[data-theme='day'] .services-picker-option {
+  border-bottom-color: #e5e5ea;
+}
+
+[data-theme='day'] .services-picker,
+[data-theme='day'] .services-selection {
+  border-color: #d2d2d7;
+}
+
+[data-theme='day'] .service-form-compact span {
+  color: #3a3a3c;
+}
+
+[data-theme='day'] .services-request .service-form-compact input,
+[data-theme='day'] .services-request .service-form-compact select,
+[data-theme='day'] .services-request .service-form-compact textarea {
+  border-color: transparent;
+  color: #1d1d1f;
+  background: #f5f5f7;
+}
+
+[data-theme='day'] .services-request .service-form-compact input:focus,
+[data-theme='day'] .services-request .service-form-compact select:focus,
+[data-theme='day'] .services-request .service-form-compact textarea:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.14);
+}
+
+[data-theme='day'] .services-map {
+  border-color: #d2d2d7;
+  background: #e8e8ed;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.1);
 }

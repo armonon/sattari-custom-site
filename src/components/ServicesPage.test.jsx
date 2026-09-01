@@ -25,5 +25,8 @@ describe('ServicesPage', () => {
     });
     expect(nameInput).toHaveValue('Armon');
     expect(screen.getByRole('heading', { name: 'Instrument rentals' })).toBeInTheDocument();
+    expect(
+      screen.getByTitle('Map to SATTARI Musical Instruments in Woodland Hills')
+    ).toBeInTheDocument();
   });
 });
