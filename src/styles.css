@@ -3272,24 +3272,7 @@ textarea:focus-visible {
   }
 }
 
-/* =====================================================================
-   Audio Suite shared bits: nav "Alpha" tag, alpha badge, signup form.
-   (The rest of this block belonged to the standalone /audio-suite page,
-   which is now folded into /downloads.)
-   ===================================================================== */
-.nav-link-tag {
-  margin-left: 0.4rem;
-  padding: 0.12rem 0.4rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  border: 1px solid var(--line);
-  color: var(--accent);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  vertical-align: middle;
-}
+/* Audio Suite alpha badge and signup form for the unlisted downloads page. */
 .audio-alpha-badge {
   display: inline-flex;
   align-items: center;
