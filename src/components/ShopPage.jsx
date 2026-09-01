@@ -16,15 +16,6 @@ import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import '../styles-products-premium.css';
 
-const shopMoreDescriptions = {
-  cymbals: 'Browse our handcrafted cymbals, hi-hats, and splashes for every drummer.',
-  sticks: 'Explore classic hickory, maple, and specialty sticks for every playing style.',
-  essentials: 'Find practice pads, felts, keys, and must-have accessories for your kit.',
-  violins:
-    'Browse handcrafted acoustic, electric, and silent violins, fitted and tuned in California.',
-  'guitar-bass': 'Electric and acoustic guitars, bass, and guitar accessories from Sattari.',
-};
-
 const productSellingPoints = {
   cymbals: 'Hand-forged response with expressive attack and warm sustain.',
   sticks: 'Balanced feel, durable wood selection, and reliable rebound.',
@@ -38,14 +29,6 @@ const trustPoints = [
   { label: 'Secure Stripe checkout', to: '/cart' },
   { label: 'Repairs, rentals & classes', to: '/services' },
 ];
-
-const categorySpotlights = {
-  cymbals: 'Expressive attack, warm sustain, and handcrafted nuance.',
-  sticks: 'Balanced rebound and dependable feel for repeat sessions.',
-  essentials: 'Purpose-built accessories for practice, setup, and carry.',
-  violins: 'Acoustic warmth, electric versatility, and silent practice — all handcrafted.',
-  'guitar-bass': 'Electric and acoustic tone, set up and ready to play.',
-};
 
 const categoryIcons = {
   cymbals: Disc3,
@@ -127,6 +110,9 @@ export default function ShopPage() {
   const { addToCart } = useCart();
   const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
+  const featuredProducts = categories.flatMap((category) =>
+    products.filter((product) => product.category === category.key).slice(0, 2)
+  );
 
   const handleQuickAdd = (product) => {
     if (isSoldOut(product)) return;
@@ -161,7 +147,7 @@ export default function ShopPage() {
         url="https://sattarimusic.com/shop"
       />
       <StructuredData data={itemListSchema} />
-      <div className="container section-header narrow">
+      <div className="container section-header narrow shop-page-intro">
         <p className="eyebrow">Shop Sattari Music</p>
         <h1>Build your setup with instruments, accessories, and handcrafted Sattari gear</h1>
         <p>
@@ -190,8 +176,11 @@ export default function ShopPage() {
         </div>
 
         <nav className="shop-category-list" aria-label="Shop product categories">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const Icon = categoryIcons[category.key];
+            const productCount = products.filter(
+              (product) => product.category === category.key
+            ).length;
 
             return (
               <Link
@@ -200,19 +189,16 @@ export default function ShopPage() {
                 key={category.key}
                 aria-label={`Explore ${category.title}`}
               >
-                <span className="shop-category-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
                 <span className="shop-category-icon" aria-hidden="true">
                   <Icon size={20} />
                 </span>
                 <span className="shop-category-primary">
                   <strong>{category.title}</strong>
-                  <small>{category.description}</small>
+                  <small>
+                    {productCount} {productCount === 1 ? 'product' : 'products'}
+                  </small>
                 </span>
-                <span className="shop-category-spotlight">{categorySpotlights[category.key]}</span>
                 <span className="shop-category-action">
-                  Explore
                   <ArrowUpRight size={17} aria-hidden="true" />
                 </span>
               </Link>
@@ -224,64 +210,49 @@ export default function ShopPage() {
             className="shop-category-row shop-all-row"
             aria-label="Shop all products"
           >
-            <span className="shop-category-number" aria-hidden="true">
-              {String(categories.length + 1).padStart(2, '0')}
-            </span>
             <span className="shop-category-icon" aria-hidden="true">
               <LayoutGrid size={20} />
             </span>
             <span className="shop-category-primary">
               <strong>Shop all</strong>
-              <small>The full Sattari catalog in one place.</small>
-            </span>
-            <span className="shop-category-spotlight">
-              Browse all {products.length} available products.
+              <small>{products.length} products</small>
             </span>
             <span className="shop-category-action">
-              Browse all
               <ArrowUpRight size={17} aria-hidden="true" />
             </span>
           </Link>
         </nav>
       </div>
 
-      {categories.map((category) => {
-        const filtered = products.filter((p) => p.category === category.key).slice(0, 2);
-        return (
-          <section className="container shop-collection-block" key={category.key}>
-            <div className="shop-collection-header">
-              <div>
-                <p className="card-kicker">Featured collection</p>
-                <h2>{category.title}</h2>
-              </div>
-              <p>{shopMoreDescriptions[category.key]}</p>
-            </div>
-            <div className="product-grid">
-              {filtered.map((product) => (
-                <ProductCard
-                  key={product.slug}
-                  product={product}
-                  kicker={category.title}
-                  sellingPoint={productSellingPoints[product.category]}
-                  recentlyAddedSlug={recentlyAddedSlug}
-                  onQuickAdd={handleQuickAdd}
-                  soldOut={isSoldOut(product)}
-                />
-              ))}
-              <Link
-                to={`/shop/${category.key}`}
-                className="shop-more-card interactive-card-link"
-                key={`${category.key}-more`}
-                aria-label={`Browse all ${category.title}`}
-              >
-                <p className="shop-more-title">Shop More {category.title}</p>
-                <p className="shop-more-desc">{shopMoreDescriptions[category.key]}</p>
-                <span className="btn-secondary-detail">Browse All</span>
-              </Link>
-            </div>
-          </section>
-        );
-      })}
+      <section className="container shop-featured-catalog">
+        <div className="shop-catalog-header">
+          <div>
+            <p className="card-kicker">Featured catalog</p>
+            <h2>Ready to play</h2>
+          </div>
+          <Link to="/shop/all" className="shop-catalog-all-link">
+            View all {products.length} products
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </Link>
+        </div>
+        <div className="product-grid shop-featured-grid">
+          {featuredProducts.map((product) => {
+            const category = categories.find((item) => item.key === product.category);
+
+            return (
+              <ProductCard
+                key={product.slug}
+                product={product}
+                kicker={category?.title || 'Sattari'}
+                sellingPoint={productSellingPoints[product.category]}
+                recentlyAddedSlug={recentlyAddedSlug}
+                onQuickAdd={handleQuickAdd}
+                soldOut={isSoldOut(product)}
+              />
+            );
+          })}
+        </div>
+      </section>
     </section>
   );
 }
