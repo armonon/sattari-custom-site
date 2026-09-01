@@ -10,6 +10,7 @@ import {
   Gauge,
   Guitar,
   Headphones,
+  Layers3,
   Lightbulb,
   Mic2,
   Music2,
@@ -23,6 +24,7 @@ import {
   Upload,
   Zap,
 } from 'lucide-react';
+import LearnArranger from '../components/LearnArranger';
 import { SEO } from '../utils/seo';
 
 const analysis = {
@@ -137,7 +139,7 @@ export default function SattariLearnPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisReady, setAnalysisReady] = useState(true);
-  const [activeMode, setActiveMode] = useState('analyze');
+  const [activeMode, setActiveMode] = useState('arrange');
   const [instrument, setInstrument] = useState('piano');
   const [dropActive, setDropActive] = useState(false);
   const [selectedSection, setSelectedSection] = useState(1);
@@ -146,6 +148,7 @@ export default function SattariLearnPage() {
   const [tapTimes, setTapTimes] = useState([]);
   const [midiState, setMidiState] = useState({ status: 'idle', note: '' });
   const [micState, setMicState] = useState('idle');
+  const [arrangement, setArrangement] = useState(null);
 
   useEffect(
     () => () => {
@@ -251,7 +254,13 @@ export default function SattariLearnPage() {
   const saveForStudio = () => {
     window.localStorage.setItem(
       'sattari-studio-transfer-v1',
-      JSON.stringify({ trackName, key: analysis.key, bpm: analysis.bpm, chords: analysis.chords })
+      JSON.stringify({
+        trackName,
+        key: analysis.key,
+        bpm: arrangement?.bpm || analysis.bpm,
+        chords: arrangement?.progression || analysis.chords,
+        arrangement,
+      })
     );
   };
 
@@ -448,6 +457,7 @@ export default function SattariLearnPage() {
           {[
             ['analyze', AudioWaveform, 'Analyze'],
             ['practice', Music2, 'Practice'],
+            ['arrange', Layers3, 'Arrange'],
             ['challenge', Target, 'Challenge'],
             ['suggest', Lightbulb, 'Suggest'],
           ].map(([id, Icon, label]) => (
@@ -528,6 +538,14 @@ export default function SattariLearnPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {activeMode === 'arrange' && (
+            <LearnArranger
+              bpm={analysis.bpm}
+              initialChords={analysis.chords}
+              onArrangementChange={setArrangement}
+            />
           )}
 
           {activeMode === 'challenge' && (

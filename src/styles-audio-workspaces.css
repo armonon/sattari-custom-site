@@ -615,7 +615,7 @@
 .learn-mode-bar {
   margin-top: 0.9rem;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border: 1px solid var(--aw-line);
   border-radius: 6px 6px 0 0;
   overflow: hidden;
@@ -972,6 +972,667 @@
 .send-to-studio strong { display: block; }
 .send-to-studio small { color: var(--aw-muted); font-size: 0.58rem; }
 .send-to-studio strong { margin-top: 0.16rem; font-size: 0.76rem; }
+
+/* Learn practice arranger */
+
+.learn-arranger {
+  overflow: hidden;
+  border-radius: 0 0 7px 7px;
+  background: #0d0f10;
+}
+
+.learn-arranger-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto minmax(140px, 1fr);
+  gap: 1rem;
+  align-items: center;
+  min-height: 72px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--aw-line);
+  background: #141719;
+}
+
+.learn-arranger-title span,
+.learn-arranger-title strong,
+.learn-arranger-readout small,
+.learn-arranger-readout strong {
+  display: block;
+  letter-spacing: 0;
+}
+
+.learn-arranger-title span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--aw-gold);
+  font-size: 0.56rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.learn-arranger-title strong {
+  margin-top: 0.25rem;
+  font-family: Sora, sans-serif;
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.learn-arranger-transport {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.learn-arranger-transport button,
+.learn-tempo-control button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--aw-line);
+  border-radius: 50%;
+  color: var(--aw-muted);
+  background: var(--aw-panel-2);
+  cursor: pointer;
+}
+
+.learn-arranger-transport button:hover,
+.learn-arranger-transport button.is-active,
+.learn-tempo-control button:hover {
+  border-color: rgba(219, 184, 108, 0.48);
+  color: var(--aw-gold);
+}
+
+.learn-arranger-transport button.is-primary {
+  border-color: var(--aw-gold);
+  color: #15120c;
+  background: var(--aw-gold);
+}
+
+.learn-tempo-control {
+  display: grid;
+  grid-template-columns: auto 28px 38px 28px;
+  gap: 0.2rem;
+  align-items: center;
+  padding: 0.28rem;
+  border: 1px solid var(--aw-line);
+  border-radius: 6px;
+  background: #0d0f10;
+}
+
+.learn-tempo-control > span {
+  padding: 0 0.35rem;
+  color: var(--aw-muted);
+  font-size: 0.51rem;
+  font-weight: 800;
+}
+
+.learn-tempo-control button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.learn-tempo-control strong {
+  color: var(--aw-text);
+  font-family: Sora, sans-serif;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.learn-arranger-readout {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.learn-arranger-readout > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #55595b;
+}
+
+.learn-arranger-readout > span.is-ready {
+  background: var(--aw-green);
+  box-shadow: 0 0 8px rgba(164, 214, 111, 0.58);
+}
+
+.learn-arranger-readout small {
+  color: var(--aw-muted);
+  font-size: 0.5rem;
+}
+
+.learn-arranger-readout strong {
+  margin-top: 0.1rem;
+  font-size: 0.66rem;
+}
+
+.learn-arranger-scroll {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.learn-arranger-ruler,
+.learn-arranger-tracks {
+  min-width: 850px;
+}
+
+.learn-arranger-ruler {
+  display: grid;
+  grid-template-columns: 210px repeat(4, minmax(0, 1fr));
+  min-height: 31px;
+  border-bottom: 1px solid var(--aw-line);
+  background: #0b0d0e;
+}
+
+.learn-arranger-ruler > span {
+  border-right: 1px solid var(--aw-line);
+}
+
+.learn-arranger-ruler strong {
+  padding: 0.5rem 0.65rem;
+  border-right: 1px solid var(--aw-line);
+  color: var(--aw-muted);
+  font-family: Sora, sans-serif;
+  font-size: 0.54rem;
+  font-weight: 700;
+}
+
+.learn-arranger-ruler strong.is-active {
+  color: var(--aw-gold);
+  background: rgba(219, 184, 108, 0.06);
+}
+
+.learn-arranger-track {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 92px;
+  border-bottom: 1px solid var(--aw-line);
+}
+
+.learn-track-header {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 28px;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border-right: 1px solid var(--aw-line);
+  background: #141719;
+}
+
+.learn-track-header > div > strong,
+.learn-track-header > div > small {
+  display: block;
+  letter-spacing: 0;
+}
+
+.learn-track-header > div > strong {
+  font-size: 0.68rem;
+}
+
+.learn-track-header > div > small {
+  margin-top: 0.18rem;
+  color: var(--aw-muted);
+  font-size: 0.49rem;
+}
+
+.learn-track-type {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--aw-line);
+  border-radius: 5px;
+  color: var(--aw-gold);
+  background: var(--aw-panel-2);
+}
+
+.learn-track-header > button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--aw-line);
+  border-radius: 4px;
+  color: var(--aw-muted);
+  background: #0e1011;
+  font-size: 0.55rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.learn-track-header > button.is-muted {
+  border-color: rgba(255, 121, 110, 0.45);
+  color: var(--aw-coral);
+  background: rgba(255, 121, 110, 0.08);
+}
+
+.learn-track-header > label {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--aw-muted);
+}
+
+.learn-track-header input[type='range'] {
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  accent-color: var(--aw-gold);
+}
+
+.learn-chord-clips,
+.learn-bass-clips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 0.55rem;
+}
+
+.learn-chord-clips label,
+.learn-bass-clips button {
+  min-width: 0;
+  min-height: 74px;
+  padding: 0.58rem 0.65rem;
+  border: 1px solid rgba(219, 184, 108, 0.24);
+  border-radius: 5px;
+  background: rgba(219, 184, 108, 0.06);
+}
+
+.learn-chord-clips label.is-active,
+.learn-bass-clips button.is-active {
+  border-color: var(--aw-gold);
+  background: rgba(219, 184, 108, 0.14);
+  box-shadow: inset 0 -2px var(--aw-gold);
+}
+
+.learn-chord-clips span,
+.learn-chord-clips select {
+  display: block;
+  width: 100%;
+  letter-spacing: 0;
+}
+
+.learn-chord-clips span {
+  color: var(--aw-muted);
+  font-size: 0.47rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.learn-chord-clips select {
+  margin-top: 0.48rem;
+  padding: 0;
+  border: 0;
+  color: var(--aw-text);
+  background: transparent;
+  font-family: Sora, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 650;
+  outline: 0;
+  cursor: pointer;
+}
+
+.learn-bass-lane {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  align-items: stretch;
+}
+
+.learn-bass-clips {
+  padding-right: 0.35rem;
+}
+
+.learn-bass-clips button {
+  color: var(--aw-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.learn-bass-clips span,
+.learn-bass-clips small {
+  display: block;
+  letter-spacing: 0;
+}
+
+.learn-bass-clips span {
+  font-family: Sora, sans-serif;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.learn-bass-clips small {
+  margin-top: 0.48rem;
+  color: var(--aw-muted);
+  font-size: 0.48rem;
+  text-transform: capitalize;
+}
+
+.learn-bass-pattern {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 0.25rem 0.45rem;
+  align-content: center;
+  padding: 0.7rem;
+  border-left: 1px solid var(--aw-line);
+  color: var(--aw-muted);
+}
+
+.learn-bass-pattern span {
+  font-size: 0.51rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.learn-bass-pattern select {
+  grid-column: 1 / -1;
+  min-height: 30px;
+  margin-top: 0.2rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--aw-line);
+  border-radius: 4px;
+  color: var(--aw-text);
+  background: var(--aw-panel-2);
+  font-size: 0.58rem;
+}
+
+.track-drums {
+  min-height: 142px;
+}
+
+.learn-step-sequencer {
+  display: grid;
+  gap: 0.38rem;
+  align-content: center;
+  padding: 0.65rem;
+}
+
+.learn-step-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.learn-step-row > span {
+  color: var(--aw-muted);
+  font-size: 0.49rem;
+  font-weight: 750;
+}
+
+.learn-step-row > div {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(20px, 1fr));
+  gap: 4px;
+}
+
+.learn-step-row button {
+  position: relative;
+  min-width: 0;
+  height: 25px;
+  padding: 0;
+  border: 1px solid var(--aw-line);
+  border-radius: 3px;
+  background: var(--aw-panel-2);
+  cursor: pointer;
+}
+
+.learn-step-row button:nth-child(4n + 1) {
+  border-left-color: var(--aw-line-strong);
+  background: #202427;
+}
+
+.learn-step-row button.is-current {
+  box-shadow: 0 0 0 1px var(--aw-text);
+}
+
+.learn-step-row button.is-on {
+  border-color: var(--aw-gold);
+  background: rgba(219, 184, 108, 0.48);
+}
+
+.learn-step-row.step-coral button.is-on {
+  border-color: var(--aw-coral);
+  background: rgba(255, 121, 110, 0.48);
+}
+
+.learn-step-row.step-cyan button.is-on {
+  border-color: var(--aw-cyan);
+  background: rgba(98, 210, 220, 0.48);
+}
+
+.learn-step-row button span {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.39rem;
+  font-weight: 750;
+}
+
+.learn-instrument-rack {
+  border-top: 1px solid var(--aw-line);
+  background: #111315;
+}
+
+.learn-rack-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 58px;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--aw-line);
+}
+
+.learn-rack-header > div:first-child span,
+.learn-rack-header > div:first-child strong {
+  display: block;
+  letter-spacing: 0;
+}
+
+.learn-rack-header > div:first-child span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--aw-gold);
+  font-size: 0.52rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.learn-rack-header > div:first-child strong {
+  margin-top: 0.22rem;
+  font-size: 0.72rem;
+}
+
+.learn-rack-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 3px;
+  border: 1px solid var(--aw-line);
+  border-radius: 5px;
+  background: #0c0e0f;
+}
+
+.learn-rack-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  min-height: 30px;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: 3px;
+  color: var(--aw-muted);
+  background: transparent;
+  font-size: 0.56rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.learn-rack-tabs button.is-active {
+  color: var(--aw-text);
+  background: var(--aw-panel-3);
+}
+
+.learn-live-instrument {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.75rem;
+}
+
+.learn-live-instrument.instrument-chords,
+.learn-live-instrument.instrument-drums {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.learn-live-instrument.instrument-bass {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.learn-live-instrument button {
+  min-width: 0;
+  min-height: 68px;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--aw-line);
+  border-top-color: var(--aw-gold);
+  border-radius: 5px;
+  color: var(--aw-text);
+  background: var(--aw-panel-2);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 100ms ease,
+    border-color 100ms ease,
+    background 100ms ease;
+}
+
+.learn-live-instrument.instrument-drums button:nth-child(2) {
+  border-top-color: var(--aw-coral);
+}
+
+.learn-live-instrument.instrument-drums button:nth-child(3) {
+  border-top-color: var(--aw-cyan);
+}
+
+.learn-live-instrument button.is-hit,
+.learn-live-instrument button:active {
+  transform: scale(0.975);
+  border-color: var(--aw-gold);
+  background: rgba(219, 184, 108, 0.14);
+}
+
+.learn-live-instrument button span,
+.learn-live-instrument button strong,
+.learn-live-instrument button small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learn-live-instrument button span {
+  color: var(--aw-muted);
+  font-size: 0.43rem;
+}
+
+.learn-live-instrument button strong {
+  margin-top: 0.28rem;
+  font-family: Sora, sans-serif;
+  font-size: 0.7rem;
+}
+
+.learn-live-instrument button small {
+  margin-top: 0.24rem;
+  color: var(--aw-muted);
+  font-size: 0.46rem;
+}
+
+[data-theme='day'] .learn-arranger,
+[data-theme='day'] .learn-arranger-ruler,
+[data-theme='day'] .learn-tempo-control,
+[data-theme='day'] .learn-rack-tabs {
+  background: #dedad2;
+}
+
+[data-theme='day'] .learn-arranger-toolbar,
+[data-theme='day'] .learn-track-header,
+[data-theme='day'] .learn-instrument-rack {
+  background: var(--aw-panel);
+}
+
+[data-theme='day'] .learn-step-row button:nth-child(4n + 1) {
+  background: #dad5cc;
+}
+
+@media (max-width: 920px) {
+  .learn-arranger-toolbar {
+    grid-template-columns: minmax(150px, 1fr) auto auto;
+  }
+
+  .learn-arranger-readout {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .learn-arranger-toolbar {
+    grid-template-columns: 1fr auto;
+    gap: 0.65rem;
+  }
+
+  .learn-arranger-transport {
+    justify-self: end;
+  }
+
+  .learn-tempo-control {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    grid-template-columns: 1fr 34px 48px 34px;
+  }
+
+  .learn-rack-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .learn-rack-tabs button {
+    min-height: 36px;
+  }
+
+  .learn-live-instrument.instrument-bass {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  .learn-arranger-title strong {
+    font-size: 0.72rem;
+  }
+
+  .learn-arranger-transport button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .learn-live-instrument.instrument-chords,
+  .learn-live-instrument.instrument-drums,
+  .learn-live-instrument.instrument-bass {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 
 /* Studio */
 
