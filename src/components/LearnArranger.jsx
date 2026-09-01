@@ -18,14 +18,38 @@ import {
   VolumeX,
 } from 'lucide-react';
 
+const CHROMATIC_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+function noteFromMidi(midi) {
+  return `${CHROMATIC_NOTES[midi % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
+function createChord(name, root, intervals) {
+  const rootIndex = CHROMATIC_NOTES.indexOf(root);
+  const chordRoot = 48 + rootIndex;
+  const bassRoot = 24 + rootIndex;
+  return {
+    name,
+    notes: intervals.map((interval) => noteFromMidi(chordRoot + interval)),
+    root: noteFromMidi(bassRoot),
+    tones: intervals.slice(0, 4).map((interval) => noteFromMidi(bassRoot + interval)),
+  };
+}
+
+const FEATURED_CHORDS = [
+  createChord('Am7', 'A', [0, 3, 7, 10]),
+  createChord('Fmaj7', 'F', [0, 4, 7, 11]),
+  createChord('Dm7', 'D', [0, 3, 7, 10]),
+  createChord('Em7', 'E', [0, 3, 7, 10]),
+  createChord('E7', 'E', [0, 4, 7, 10]),
+];
+
 const CHORD_LIBRARY = [
-  { name: 'Am7', notes: ['A3', 'C4', 'E4', 'G4'], root: 'A1', tones: ['A1', 'C2', 'E2', 'G2'] },
-  { name: 'Fmaj7', notes: ['F3', 'A3', 'C4', 'E4'], root: 'F1', tones: ['F1', 'A1', 'C2', 'E2'] },
-  { name: 'C', notes: ['C4', 'E4', 'G4'], root: 'C2', tones: ['C2', 'E2', 'G2', 'B2'] },
-  { name: 'G', notes: ['G3', 'B3', 'D4'], root: 'G1', tones: ['G1', 'B1', 'D2', 'F2'] },
-  { name: 'Dm7', notes: ['D3', 'F3', 'A3', 'C4'], root: 'D2', tones: ['D2', 'F2', 'A2', 'C3'] },
-  { name: 'Em7', notes: ['E3', 'G3', 'B3', 'D4'], root: 'E2', tones: ['E2', 'G2', 'B2', 'D3'] },
-  { name: 'E7', notes: ['E3', 'G#3', 'B3', 'D4'], root: 'E2', tones: ['E2', 'G#2', 'B2', 'D3'] },
+  ...FEATURED_CHORDS,
+  ...CHROMATIC_NOTES.flatMap((root) => [
+    createChord(root, root, [0, 4, 7]),
+    createChord(`${root}m`, root, [0, 3, 7]),
+  ]),
 ];
 
 const DEFAULT_PROGRESSION = ['Am7', 'Fmaj7', 'C', 'G'];

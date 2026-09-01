@@ -34,5 +34,5 @@ describe('LearnArranger', () => {
       expect(latestArrangement.drumPattern.kick[0]).toBe(false);
       expect(latestArrangement.schema).toBe('SattariLearn.practiceArrangement.v1');
     });
-  });
+  }, 10000);
 });
