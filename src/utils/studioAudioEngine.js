@@ -19,6 +19,7 @@ export class StudioAudioEngine {
     this.recorder = Tone.Recorder.supported ? new Tone.Recorder() : null;
     this.microphone = null;
     this.decks = new Map();
+    this.padPlayers = new Map();
     this.crossfader = 50;
     this.padSynth = new Tone.Synth({
       oscillator: { type: 'triangle' },
@@ -58,15 +59,34 @@ export class StudioAudioEngine {
   ensureDeck(deckId, side = 'left') {
     if (!this.decks.has(deckId)) {
       const output = new Tone.Gain(1).connect(this.master);
+      const meter = new Tone.Meter({ normalRange: true, smoothing: 0.82 });
+      const reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.012, wet: 0 }).connect(output);
+      const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.24, wet: 0 }).connect(
+        reverb
+      );
+      const filter = new Tone.Filter({ frequency: 20000, type: 'lowpass', rolloff: -24 }).connect(
+        delay
+      );
+      const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 }).connect(filter);
+      const input = new Tone.Gain(1).connect(eq);
+      output.connect(meter);
       this.decks.set(deckId, {
         side,
+        input,
+        eq,
+        filter,
+        delay,
+        reverb,
         output,
+        meter,
         lanes: new Map(),
         gain: 82,
+        fader: 82,
         playing: false,
         startedAt: 0,
         offset: 0,
         playbackRate: 1,
+        pitch: 0,
         looping: false,
         loopStart: 0,
         loopEnd: 0,
@@ -86,16 +106,17 @@ export class StudioAudioEngine {
       existing.gain.dispose();
     }
 
-    const laneGain = new Tone.Gain(1).connect(deck.output);
+    const laneGain = new Tone.Gain(1).connect(deck.input);
     const player = new Tone.Player({ fadeIn: 0.008, fadeOut: 0.015 }).connect(laneGain);
     await player.load(url);
-    player.playbackRate = deck.playbackRate;
+    player.playbackRate = this.getLanePlaybackRate(deck);
     deck.lanes.set(laneId, {
       player,
       gain: laneGain,
       level: 76,
       muted: false,
       solo: false,
+      pitch: 0,
       duration: player.buffer.duration,
     });
     this.applyLaneMix(deckId);
@@ -133,6 +154,18 @@ export class StudioAudioEngine {
     this.updateDeckOutput(deckId);
   }
 
+  setDeckFader(deckId, level) {
+    const deck = this.ensureDeck(deckId);
+    deck.fader = level;
+    this.updateDeckOutput(deckId);
+  }
+
+  setDeckSide(deckId, side) {
+    const deck = this.ensureDeck(deckId);
+    deck.side = side;
+    this.updateDeckOutput(deckId);
+  }
+
   updateDeckOutput(deckId) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
@@ -140,14 +173,51 @@ export class StudioAudioEngine {
     const sideGain =
       deck.side === 'left'
         ? Math.cos(normalized * Math.PI * 0.5)
-        : Math.sin(normalized * Math.PI * 0.5);
-    deck.output.gain.rampTo(gainFromPercent(deck.gain) * sideGain, 0.025);
+        : deck.side === 'right'
+          ? Math.sin(normalized * Math.PI * 0.5)
+          : 1;
+    deck.output.gain.rampTo(
+      gainFromPercent(deck.gain) * gainFromPercent(deck.fader) * sideGain,
+      0.025
+    );
+  }
+
+  setDeckEq(deckId, { low = 50, mid = 50, high = 50 }) {
+    const deck = this.ensureDeck(deckId);
+    deck.eq.low.rampTo(((clamp(low, 0, 100) - 50) / 50) * 12, 0.035);
+    deck.eq.mid.rampTo(((clamp(mid, 0, 100) - 50) / 50) * 12, 0.035);
+    deck.eq.high.rampTo(((clamp(high, 0, 100) - 50) / 50) * 12, 0.035);
+  }
+
+  setDeckFilter(deckId, value) {
+    const deck = this.ensureDeck(deckId);
+    const normalized = clamp(value, 0, 100);
+    if (normalized < 48) {
+      deck.filter.type = 'lowpass';
+      const frequency = 70 * Math.pow(20000 / 70, normalized / 48);
+      deck.filter.frequency.rampTo(frequency, 0.035);
+    } else if (normalized > 52) {
+      deck.filter.type = 'highpass';
+      const frequency = 20 * Math.pow(7500 / 20, (normalized - 52) / 48);
+      deck.filter.frequency.rampTo(frequency, 0.035);
+    } else {
+      deck.filter.type = 'lowpass';
+      deck.filter.frequency.rampTo(20000, 0.035);
+    }
+  }
+
+  setDeckFx(deckId, { reverb = 0, echo = 0 }) {
+    const deck = this.ensureDeck(deckId);
+    deck.reverb.wet.rampTo(clamp(reverb, 0, 100) / 100, 0.04);
+    deck.delay.wet.rampTo(clamp(echo, 0, 100) / 100, 0.04);
   }
 
   setLaneState(deckId, laneId, updates) {
-    const lane = this.decks.get(deckId)?.lanes.get(laneId);
-    if (!lane) return;
+    const deck = this.decks.get(deckId);
+    const lane = deck?.lanes.get(laneId);
+    if (!deck || !lane) return;
     Object.assign(lane, updates);
+    if ('pitch' in updates) lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
     this.applyLaneMix(deckId);
   }
 
@@ -170,8 +240,35 @@ export class StudioAudioEngine {
       deck.startedAt = Tone.now();
     }
     deck.playbackRate = clamp(rate, 0.5, 2);
+    this.applyPlaybackRates(deck);
+  }
+
+  setDeckPitch(deckId, semitones) {
+    const deck = this.decks.get(deckId);
+    if (!deck) return;
+    if (deck.playing) {
+      deck.offset = this.getDeckPosition(deckId);
+      deck.startedAt = Tone.now();
+    }
+    deck.pitch = clamp(semitones, -12, 12);
+    this.applyPlaybackRates(deck);
+  }
+
+  setStemPitch(deckId, laneId, semitones) {
+    const deck = this.decks.get(deckId);
+    const lane = deck?.lanes.get(laneId);
+    if (!deck || !lane) return;
+    lane.pitch = clamp(semitones, -12, 12);
+    lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
+  }
+
+  getLanePlaybackRate(deck, lane = null) {
+    return clamp(deck.playbackRate * Math.pow(2, (deck.pitch + (lane?.pitch || 0)) / 12), 0.25, 4);
+  }
+
+  applyPlaybackRates(deck) {
     deck.lanes.forEach((lane) => {
-      lane.player.playbackRate = deck.playbackRate;
+      lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
     });
   }
 
@@ -181,6 +278,15 @@ export class StudioAudioEngine {
     deck.looping = enabled;
     deck.loopStart = 0;
     deck.loopEnd = Math.max(0.25, (60 / Math.max(1, bpm)) * 4);
+    this.applyLoop(deckId);
+  }
+
+  setLoopRegion(deckId, enabled, start, end) {
+    const deck = this.decks.get(deckId);
+    if (!deck) return;
+    deck.looping = enabled;
+    deck.loopStart = Math.max(0, Number(start) || 0);
+    deck.loopEnd = Math.max(deck.loopStart + 0.05, Number(end) || deck.loopStart + 1);
     this.applyLoop(deckId);
   }
 
@@ -259,7 +365,8 @@ export class StudioAudioEngine {
     const deck = this.decks.get(deckId);
     if (!deck) return 0;
     let position = deck.offset;
-    if (deck.playing) position += Math.max(0, Tone.now() - deck.startedAt) * deck.playbackRate;
+    if (deck.playing)
+      position += Math.max(0, Tone.now() - deck.startedAt) * this.getLanePlaybackRate(deck);
     if (deck.looping && deck.loopEnd > deck.loopStart) {
       position = deck.loopStart + ((position - deck.loopStart) % (deck.loopEnd - deck.loopStart));
     }
@@ -275,6 +382,11 @@ export class StudioAudioEngine {
     return Array.isArray(value) ? Math.max(...value) : Number(value) || 0;
   }
 
+  getDeckMeterLevel(deckId) {
+    const value = this.decks.get(deckId)?.meter.getValue() ?? 0;
+    return Array.isArray(value) ? Math.max(...value) : Number(value) || 0;
+  }
+
   async startRecording() {
     if (!this.recorder) throw new Error('Audio recording is not supported by this browser.');
     await this.unlock();
@@ -283,10 +395,35 @@ export class StudioAudioEngine {
 
   async triggerPad(index, frequency) {
     await this.unlock();
-    if (index === 0) this.padKick.triggerAttackRelease('C1', '8n', undefined, 0.86);
+    const loadedPad = this.padPlayers.get(index);
+    if (loadedPad) {
+      loadedPad.player.stop();
+      loadedPad.player.start();
+    } else if (index === 0) this.padKick.triggerAttackRelease('C1', '8n', undefined, 0.86);
     else if (index === 1 || index === 3) this.padNoise.triggerAttackRelease('16n', undefined, 0.52);
     else if (index === 2) this.padHat.triggerAttackRelease('32n', undefined, 0.32);
     else this.padSynth.triggerAttackRelease(frequency, '16n', undefined, 0.46);
+  }
+
+  async loadPad(index, url, level = 82) {
+    await this.unlock();
+    const existing = this.padPlayers.get(index);
+    if (existing) {
+      existing.player.stop();
+      existing.player.dispose();
+      existing.gain.dispose();
+    }
+    const gain = new Tone.Gain(gainFromPercent(level)).connect(this.master);
+    const player = new Tone.Player().connect(gain);
+    await player.load(url);
+    this.padPlayers.set(index, { player, gain, level });
+  }
+
+  setPadGain(index, level) {
+    const pad = this.padPlayers.get(index);
+    if (!pad) return;
+    pad.level = level;
+    pad.gain.gain.rampTo(gainFromPercent(level), 0.025);
   }
 
   async stopRecording() {
@@ -311,10 +448,22 @@ export class StudioAudioEngine {
         lane.player.dispose();
         lane.gain.dispose();
       });
+      deck.input.dispose();
+      deck.eq.dispose();
+      deck.filter.dispose();
+      deck.delay.dispose();
+      deck.reverb.dispose();
+      deck.meter.dispose();
       deck.output.dispose();
     });
     this.microphone?.close();
     this.microphone?.dispose();
+    this.padPlayers.forEach(({ player, gain }) => {
+      player.stop();
+      player.dispose();
+      gain.dispose();
+    });
+    this.padPlayers.clear();
     this.recorder?.dispose();
     this.padSynth.dispose();
     this.padKick.dispose();

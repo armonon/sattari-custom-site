@@ -1,29 +1,36 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AudioWaveform,
-  ChevronDown,
   Circle,
-  Download,
-  FileAudio,
-  Layers3,
-  Link2,
+  Disc3,
+  FolderOpen,
+  Grid3X3,
+  KeyRound,
+  Library,
   ListMusic,
+  Maximize2,
   Mic2,
-  Minus,
   Pause,
   Play,
   Plus,
   Radio,
-  RefreshCw,
+  Redo2,
   Save,
+  Scissors,
+  Settings,
   SlidersHorizontal,
-  Sparkles,
-  Trash2,
-  Upload,
-  Volume2,
-  Waves,
+  Undo2,
+  X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
+import {
+  ArrangementWave,
+  EmptyArrangementDrop,
+  Knob,
+  SegmentMeter,
+  StemDeckChannel,
+  VerticalFader,
+} from '../components/studio/StemDeckChannel';
 import { analyzeAudioFile } from '../utils/audioAnalysis';
 import {
   clearStudioSession,
@@ -34,32 +41,44 @@ import {
 } from '../utils/audioProjectStore';
 import { SEO } from '../utils/seo';
 import { StudioAudioEngine } from '../utils/studioAudioEngine';
+import '../styles-stemdeck-web.css';
 
 const DECK_SEEDS = [
-  { id: 'A', color: 'cyan', side: 'left' },
-  { id: 'B', color: 'coral', side: 'right' },
-  { id: 'C', color: 'green', side: 'left' },
-  { id: 'D', color: 'gold', side: 'right' },
+  { id: 'A', accent: '#26d9ff', side: 'left' },
+  { id: 'B', accent: '#62f5c8', side: 'right' },
+  { id: 'C', accent: '#9b7bff', side: 'left' },
+  { id: 'D', accent: '#ffb020', side: 'right' },
 ];
 
 const LANE_DEFINITIONS = [
-  { id: 'fullMix', label: 'Full mix', color: 'cyan' },
-  { id: 'drums', label: 'Drums', color: 'green' },
-  { id: 'bass', label: 'Bass', color: 'gold' },
-  { id: 'music', label: 'Music', color: 'cyan' },
-  { id: 'vocals', label: 'Vocals', color: 'coral' },
+  { id: 'fullMix', label: 'Full mix' },
+  { id: 'drums', label: 'Drums' },
+  { id: 'bass', label: 'Bass' },
+  { id: 'music', label: 'Music' },
+  { id: 'vocals', label: 'Vocals' },
 ];
 
-const PERFORMANCE_PADS = [
-  ['Kick', 72],
-  ['Snare', 180],
-  ['Hat', 420],
-  ['Clap', 260],
-  ['Low', 110],
-  ['Rise', 760],
-  ['Perc', 330],
-  ['Tone', 610],
+const STEM_IDS = ['drums', 'bass', 'music', 'vocals'];
+const PAD_SEEDS = [
+  ['Kick', 72, '#26d9ff'],
+  ['Snare', 180, '#62f5c8'],
+  ['Hat', 420, '#4a90e2'],
+  ['Clap', 260, '#9b7bff'],
+  ['Low', 110, '#ffb020'],
+  ['Rise', 760, '#e0742b'],
+  ['Perc', 330, '#e03030'],
+  ['Tone', 610, '#d44fc8'],
 ];
+
+const VIEWS = [
+  ['library', 'LIBRARY', Library],
+  ['decks', 'DECKS', Disc3],
+  ['mixer', 'MIXER', SlidersHorizontal],
+  ['arranger', 'ARRANGER', ListMusic],
+  ['performance', 'PERFORMANCE', Grid3X3],
+];
+
+const PIANO_ROWS = ['B4', 'A#4', 'A4', 'G#4', 'G4', 'F#4', 'F4', 'E4', 'D#4', 'D4', 'C#4', 'C4'];
 
 function createLane(definition) {
   return {
@@ -69,6 +88,7 @@ function createLane(definition) {
     level: definition.id === 'fullMix' ? 82 : 76,
     muted: false,
     solo: false,
+    pitch: 0,
     duration: 0,
     status: 'empty',
   };
@@ -77,18 +97,65 @@ function createLane(definition) {
 function createDeck(seed) {
   return {
     ...seed,
+    cfSide: seed.side,
     title: 'Empty deck',
     keyName: '--',
     bpm: 96,
+    beatOffset: 0,
+    downbeat: 1,
     gain: 82,
+    fader: 82,
+    pitch: 0,
+    filter: 50,
+    eq: { low: 50, mid: 50, high: 50 },
+    fx: { reverb: 15, echo: 0, macro: 0 },
+    stemFx: Object.fromEntries(
+      STEM_IDS.map((stemId) => [stemId, { filter: 50, send: 0, pitch: 0 }])
+    ),
     looping: false,
+    loopStart: 0,
+    loopEnd: 2.5,
     synced: false,
+    keyLock: true,
+    liveKey: false,
+    slip: false,
+    tempoInterpretation: 'Straight',
+    syncMode: 'BPM',
+    activeToolTab: 'CUE',
+    hotCues: Array(8).fill(null),
+    introEnd: null,
+    outroStart: null,
+    muted: false,
+    solo: false,
     playing: false,
     duration: 0,
-    waveform: Array.from({ length: 96 }, () => 8),
+    waveform: Array.from({ length: 96 }, (_, index) => 10 + ((index * 17) % 18)),
     analysis: null,
     lanes: Object.fromEntries(
       LANE_DEFINITIONS.map((definition) => [definition.id, createLane(definition)])
+    ),
+  };
+}
+
+function normalizeDeck(saved, index) {
+  const base = createDeck(DECK_SEEDS[index]);
+  if (!saved) return base;
+  return {
+    ...base,
+    ...saved,
+    playing: false,
+    accent: base.accent,
+    eq: { ...base.eq, ...saved.eq },
+    fx: { ...base.fx, ...saved.fx },
+    hotCues: Array.from({ length: 8 }, (_, cueIndex) => saved.hotCues?.[cueIndex] ?? null),
+    stemFx: Object.fromEntries(
+      STEM_IDS.map((stemId) => [stemId, { ...base.stemFx[stemId], ...saved.stemFx?.[stemId] }])
+    ),
+    lanes: Object.fromEntries(
+      LANE_DEFINITIONS.map((definition) => [
+        definition.id,
+        { ...base.lanes[definition.id], ...saved.lanes?.[definition.id] },
+      ])
     ),
   };
 }
@@ -97,262 +164,89 @@ function createEmptyDecks() {
   return DECK_SEEDS.map(createDeck);
 }
 
+function createPads(saved = []) {
+  return PAD_SEEDS.map(([name, frequency, accent], index) => ({
+    name,
+    frequency,
+    accent,
+    gain: 82,
+    assetId: '',
+    ...saved[index],
+  }));
+}
+
 function formatTime(seconds, includeHours = false) {
-  const safeSeconds = Math.max(0, Math.floor(seconds || 0));
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const remainder = safeSeconds % 60;
-  if (includeHours) {
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+  const safe = Math.max(0, Math.floor(seconds || 0));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const remainder = safe % 60;
+  return includeHours
+    ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+    : `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+function stemIdForFile(file, fallbackIndex) {
+  const name = file.name.toLowerCase();
+  return STEM_IDS.find((stemId) => name.includes(stemId)) || STEM_IDS[fallbackIndex % 4];
+}
+
+function buildMidiPattern(kind, bpm) {
+  if (kind === 'drums') {
+    return Array.from({ length: 16 }, (_, step) => ({
+      pitch: step % 4 === 0 ? 'C4' : step % 4 === 2 ? 'D4' : 'F#4',
+      step,
+      velocity: step % 4 === 0 ? 112 : 84,
+    }));
   }
-  return `${minutes}:${String(remainder).padStart(2, '0')}`;
-}
-
-function DeckWaveform({ color, peaks, playing, position, duration, onSeek }) {
-  const progress = duration ? Math.min(100, (position / duration) * 100) : 0;
-
-  return (
-    <button
-      type="button"
-      className={`studio-waveform studio-waveform-${color}${playing ? ' is-playing' : ''}`}
-      onClick={(event) => {
-        const bounds = event.currentTarget.getBoundingClientRect();
-        onSeek(((event.clientX - bounds.left) / bounds.width) * duration);
-      }}
-      disabled={!duration}
-      aria-label="Seek in deck audio"
-    >
-      {peaks.map((height, index) => (
-        <span key={index} style={{ '--wave-height': `${height}%` }} />
-      ))}
-      <i className="studio-playhead" style={{ left: `${progress}%` }} />
-    </button>
-  );
-}
-
-function StemLane({ lane, onLoad, onChange }) {
-  const ready = lane.status === 'ready';
-
-  return (
-    <div className={`stem-lane${ready ? '' : ' is-unavailable'}`}>
-      <span className={`stem-dot stem-dot-${lane.color}`} />
-      <button
-        type="button"
-        className="stem-lane-name"
-        onClick={onLoad}
-        title={`Load ${lane.label.toLowerCase()}`}
-      >
-        <strong>{lane.status === 'loading' ? 'Decoding...' : lane.name || lane.label}</strong>
-      </button>
-      <button
-        type="button"
-        className={lane.muted ? 'is-active' : ''}
-        onClick={() => onChange({ muted: !lane.muted })}
-        disabled={!ready}
-        title={`Mute ${lane.label}`}
-        aria-label={`Mute ${lane.label}`}
-        aria-pressed={lane.muted}
-      >
-        M
-      </button>
-      <button
-        type="button"
-        className={lane.solo ? 'is-active is-solo' : ''}
-        onClick={() => onChange({ solo: !lane.solo })}
-        disabled={!ready}
-        title={`Solo ${lane.label}`}
-        aria-label={`Solo ${lane.label}`}
-        aria-pressed={lane.solo}
-      >
-        S
-      </button>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        value={lane.level}
-        onChange={(event) => onChange({ level: Number(event.target.value) })}
-        disabled={!ready}
-        aria-label={`${lane.label} level`}
-      />
-    </div>
-  );
-}
-
-function StudioDeck({
-  deck,
-  masterBpm,
-  position,
-  onLoadLane,
-  onDeckChange,
-  onLaneChange,
-  onTogglePlay,
-  onStop,
-  onSeek,
-}) {
-  const fileInputsRef = useRef({});
-  const requestLane = (laneId) => fileInputsRef.current[laneId]?.click();
-
-  return (
-    <article className={`studio-deck studio-deck-${deck.color} studio-deck-${deck.id}`}>
-      <header>
-        <div className="deck-identity">
-          <span>Deck</span>
-          <strong>{deck.id}</strong>
-        </div>
-        <button
-          type="button"
-          className="deck-title"
-          onClick={() => requestLane('fullMix')}
-          title="Load full mix"
-        >
-          <span>{deck.title}</span>
-          <ChevronDown size={14} />
-        </button>
-        <span className="deck-key">{deck.keyName}</span>
-      </header>
-
-      <div className="deck-main-row">
-        <button
-          type="button"
-          className="deck-play-button"
-          onClick={onTogglePlay}
-          disabled={!deck.duration}
-          aria-label={deck.playing ? `Pause deck ${deck.id}` : `Play deck ${deck.id}`}
-          title={deck.duration ? (deck.playing ? 'Pause' : 'Play') : 'Load audio to play'}
-        >
-          {deck.playing ? <Pause size={19} /> : <Play size={19} />}
-        </button>
-        <div className="deck-wave-shell">
-          <DeckWaveform
-            color={deck.color}
-            peaks={deck.waveform}
-            playing={deck.playing}
-            position={position}
-            duration={deck.duration}
-            onSeek={onSeek}
-          />
-          <div className="deck-timeline">
-            <span>{formatTime(position)}</span>
-            <span>{formatTime(deck.duration)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="deck-transport-row">
-        <div className="deck-bpm-control">
-          <span>BPM</span>
-          <button
-            type="button"
-            onClick={() => onDeckChange({ bpm: Math.max(40, deck.bpm - 1) })}
-            aria-label="Lower source BPM"
-          >
-            <Minus size={12} />
-          </button>
-          <strong>{deck.bpm}</strong>
-          <button
-            type="button"
-            onClick={() => onDeckChange({ bpm: Math.min(220, deck.bpm + 1) })}
-            aria-label="Raise source BPM"
-          >
-            <Plus size={12} />
-          </button>
-        </div>
-        <button
-          type="button"
-          className={deck.looping ? 'deck-tool is-active' : 'deck-tool'}
-          onClick={() => onDeckChange({ looping: !deck.looping })}
-          aria-pressed={deck.looping}
-        >
-          <RefreshCw size={13} /> 4 beat
-        </button>
-        <button
-          type="button"
-          className={deck.synced ? 'deck-tool is-active' : 'deck-tool'}
-          onClick={() => onDeckChange({ synced: !deck.synced })}
-          aria-pressed={deck.synced}
-        >
-          <Link2 size={13} /> {deck.synced ? masterBpm : 'Sync'}
-        </button>
-        <button type="button" className="deck-tool" onClick={onStop}>
-          <RefreshCw size={13} /> Start
-        </button>
-      </div>
-
-      <div className="deck-stem-header">
-        <span>Audio lanes</span>
-        <button type="button" onClick={() => requestLane('drums')}>
-          <Plus size={13} /> Add stem
-        </button>
-      </div>
-      <div className="deck-stems">
-        {LANE_DEFINITIONS.map((definition) => (
-          <StemLane
-            key={definition.id}
-            lane={deck.lanes[definition.id]}
-            onLoad={() => requestLane(definition.id)}
-            onChange={(updates) => onLaneChange(definition.id, updates)}
-          />
-        ))}
-      </div>
-
-      <div className="deck-footer-controls">
-        <label>
-          <Volume2 size={14} />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={deck.gain}
-            onChange={(event) => onDeckChange({ gain: Number(event.target.value) })}
-            aria-label={`Deck ${deck.id} gain`}
-          />
-        </label>
-        <button type="button" onClick={() => requestLane('fullMix')}>
-          <Upload size={13} /> Load track
-        </button>
-      </div>
-
-      {LANE_DEFINITIONS.map((definition) => (
-        <input
-          key={definition.id}
-          ref={(element) => {
-            fileInputsRef.current[definition.id] = element;
-          }}
-          data-lane={definition.id}
-          type="file"
-          accept="audio/*"
-          hidden
-          onChange={(event) => {
-            onLoadLane(definition.id, event.target.files?.[0]);
-            event.target.value = '';
-          }}
-        />
-      ))}
-    </article>
-  );
+  return ['C4', 'E4', 'G4', 'B4', 'G4', 'E4', 'D4', 'G4'].map((pitch, index) => ({
+    pitch,
+    step: index * 2,
+    velocity: 78 + ((bpm + index * 7) % 32),
+  }));
 }
 
 export default function SattariStudioPage() {
   const engineRef = useRef(null);
   const objectUrlsRef = useRef(new Map());
   const animationRef = useRef(0);
+  const automixRef = useRef(0);
+  const projectInputRef = useRef(null);
+  const deckImportRef = useRef(null);
+  const padInputRefs = useRef([]);
+  const midiAccessRef = useRef(null);
+  const tapTimesRef = useRef([]);
   const [decks, setDecks] = useState(createEmptyDecks);
+  const [pads, setPads] = useState(createPads);
   const [positions, setPositions] = useState({ A: 0, B: 0, C: 0, D: 0 });
+  const [deckMeters, setDeckMeters] = useState({ A: 0, B: 0, C: 0, D: 0 });
   const [crossfader, setCrossfader] = useState(50);
+  const [crossfaderCurve, setCrossfaderCurve] = useState('Smooth');
+  const [crossfaderReverse, setCrossfaderReverse] = useState(false);
   const [masterLevel, setMasterLevel] = useState(82);
   const [masterBpm, setMasterBpm] = useState(96);
-  const [meterLevel, setMeterLevel] = useState(0);
+  const [masterFx, setMasterFx] = useState({ x: 28, y: 44 });
+  const [masterDeckId, setMasterDeckId] = useState('A');
   const [activePad, setActivePad] = useState(null);
   const [captureActive, setCaptureActive] = useState(false);
   const [sessionName, setSessionName] = useState('Untitled session');
   const [transfer, setTransfer] = useState(null);
-  const [libraryTab, setLibraryTab] = useState('session');
   const [limiter, setLimiter] = useState(true);
+  const [aiMaster, setAiMaster] = useState(false);
+  const [aiMasterMode, setAiMasterMode] = useState('Streaming -14');
   const [microphoneActive, setMicrophoneActive] = useState(false);
   const [recordings, setRecordings] = useState([]);
-  const [studioNotice, setStudioNotice] = useState('');
+  const [notice, setNotice] = useState('StemDeck Pro browser engine ready.');
   const [restored, setRestored] = useState(false);
+  const [activeView, setActiveView] = useState('decks');
+  const [advancedVisible, setAdvancedVisible] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [midiActive, setMidiActive] = useState(false);
+  const [snapActive, setSnapActive] = useState(true);
+  const [razorActive, setRazorActive] = useState(false);
+  const [arrangementLoop, setArrangementLoop] = useState(false);
+  const [arrangementZoom, setArrangementZoom] = useState(1);
+  const [pianoNotes, setPianoNotes] = useState([]);
+  const [automixStatus, setAutomixStatus] = useState('');
 
   const getEngine = useCallback(() => {
     if (!engineRef.current) engineRef.current = new StudioAudioEngine();
@@ -369,131 +263,148 @@ export default function SattariStudioPage() {
     );
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const restore = async () => {
-      const savedSession = loadStudioSession();
-      let nextDecks = savedSession?.decks || createEmptyDecks();
-      let nextSessionName = savedSession?.sessionName || 'Untitled session';
-      const nextRecordings = savedSession?.recordings || [];
-      const restoredMasterBpm = savedSession?.masterBpm || 96;
-      let receivedTransfer = null;
-
-      try {
-        const transferValue = window.localStorage.getItem('sattari-studio-transfer-v1');
-        if (transferValue) {
-          receivedTransfer = JSON.parse(transferValue);
-          const firstDeck = nextDecks.find((deck) => deck.id === 'A') || createDeck(DECK_SEEDS[0]);
-          const fullMix = {
-            ...firstDeck.lanes.fullMix,
-            assetId: receivedTransfer.audioAssetId || firstDeck.lanes.fullMix.assetId,
-            name: receivedTransfer.trackName || firstDeck.lanes.fullMix.name,
-            status: receivedTransfer.audioAssetId ? 'loading' : firstDeck.lanes.fullMix.status,
-            duration: receivedTransfer.analysis?.duration || firstDeck.lanes.fullMix.duration,
-          };
-          const transferredDeck = {
-            ...firstDeck,
-            title: receivedTransfer.trackName || firstDeck.title,
-            keyName: receivedTransfer.key || firstDeck.keyName,
-            bpm: receivedTransfer.bpm || firstDeck.bpm,
-            duration: receivedTransfer.analysis?.duration || firstDeck.duration,
-            waveform: receivedTransfer.analysis?.waveform || firstDeck.waveform,
-            analysis: receivedTransfer.analysis || firstDeck.analysis,
-            lanes: { ...firstDeck.lanes, fullMix },
-          };
-          nextDecks = nextDecks.map((deck) => (deck.id === 'A' ? transferredDeck : deck));
-          nextSessionName = `${receivedTransfer.trackName || 'Learn'} session`;
-          window.localStorage.removeItem('sattari-studio-transfer-v1');
-        }
-      } catch {
-        receivedTransfer = null;
-      }
-
-      if (cancelled) return;
-      setDecks(nextDecks);
-      setSessionName(nextSessionName);
-      setRecordings(nextRecordings);
-      setCrossfader(savedSession?.crossfader ?? 50);
-      setMasterLevel(savedSession?.masterLevel ?? 82);
-      setMasterBpm(receivedTransfer?.bpm || restoredMasterBpm);
-      setLimiter(savedSession?.limiter ?? true);
-      setTransfer(receivedTransfer);
-
+  const hydrateAudio = useCallback(
+    async (nextDecks, nextPads, isCancelled = () => false) => {
       const engine = getEngine();
-      engine.setCrossfader(savedSession?.crossfader ?? 50);
-      engine.setMasterLevel(savedSession?.masterLevel ?? 82);
-      engine.setLimiter(savedSession?.limiter ?? true);
-      const hydratedDecks = nextDecks.map((deck) => ({
-        ...deck,
-        playing: false,
-        lanes: Object.fromEntries(
-          Object.entries(deck.lanes).map(([laneId, lane]) => [laneId, { ...lane }])
-        ),
-      }));
-
-      for (const deck of hydratedDecks) {
+      const hydrated = nextDecks.map((deck, index) => normalizeDeck(deck, index));
+      for (const deck of hydrated) {
         engine.ensureDeck(deck.id, deck.side);
         engine.setDeckGain(deck.id, deck.gain);
+        engine.setDeckFader(deck.id, deck.fader);
+        engine.setDeckSide(deck.id, deck.cfSide);
+        engine.setDeckEq(deck.id, deck.eq);
+        engine.setDeckFilter(deck.id, deck.filter);
+        engine.setDeckFx(deck.id, deck.fx);
+        engine.setDeckPitch(deck.id, deck.pitch);
         for (const [laneId, lane] of Object.entries(deck.lanes)) {
           if (!lane.assetId) continue;
           try {
             const asset = await getAudioAsset(lane.assetId);
-            if (!asset || cancelled) {
+            if (!asset || isCancelled()) {
               lane.status = 'error';
               continue;
             }
             const url = URL.createObjectURL(asset.blob);
             objectUrlsRef.current.set(`${deck.id}:${laneId}`, url);
             lane.duration = await engine.loadLane(deck.id, deck.side, laneId, url);
-            lane.name = lane.name || asset.name;
             lane.status = 'ready';
-            engine.setLaneState(deck.id, laneId, {
-              level: lane.level,
-              muted: lane.muted,
-              solo: lane.solo,
-            });
+            lane.name = lane.name || asset.name;
+            engine.setLaneState(deck.id, laneId, lane);
           } catch {
             lane.status = 'error';
           }
         }
-        engine.setPlaybackRate(
-          deck.id,
-          deck.synced ? (receivedTransfer?.bpm || restoredMasterBpm) / deck.bpm : 1
-        );
-        engine.setLoop(deck.id, deck.looping, deck.bpm);
+        engine.setPlaybackRate(deck.id, deck.synced ? masterBpm / deck.bpm : 1);
+        engine.setLoopRegion(deck.id, deck.looping, deck.loopStart, deck.loopEnd);
       }
+      for (const [index, pad] of nextPads.entries()) {
+        if (!pad.assetId) continue;
+        try {
+          const asset = await getAudioAsset(pad.assetId);
+          if (!asset || isCancelled()) continue;
+          const url = URL.createObjectURL(asset.blob);
+          objectUrlsRef.current.set(`pad:${index}`, url);
+          await engine.loadPad(index, url, pad.gain);
+        } catch {
+          // The built-in synth remains active when a stored sample is unavailable.
+        }
+      }
+      return hydrated;
+    },
+    [getEngine, masterBpm]
+  );
 
+  useEffect(() => {
+    let cancelled = false;
+    const restore = async () => {
+      const saved = loadStudioSession();
+      let nextDecks = DECK_SEEDS.map((_, index) => normalizeDeck(saved?.decks?.[index], index));
+      const nextPads = createPads(saved?.pads);
+      let transferred = null;
+      try {
+        const value = window.localStorage.getItem('sattari-studio-transfer-v1');
+        if (value) {
+          transferred = JSON.parse(value);
+          const first = nextDecks[0];
+          nextDecks[0] = {
+            ...first,
+            title: transferred.trackName || first.title,
+            keyName: transferred.key || first.keyName,
+            bpm: transferred.bpm || first.bpm,
+            duration: transferred.analysis?.duration || first.duration,
+            waveform: transferred.analysis?.waveform || first.waveform,
+            analysis: transferred.analysis || first.analysis,
+            lanes: {
+              ...first.lanes,
+              fullMix: {
+                ...first.lanes.fullMix,
+                assetId: transferred.audioAssetId || first.lanes.fullMix.assetId,
+                name: transferred.trackName || first.lanes.fullMix.name,
+                status: transferred.audioAssetId ? 'loading' : first.lanes.fullMix.status,
+              },
+            },
+          };
+          window.localStorage.removeItem('sattari-studio-transfer-v1');
+        }
+      } catch {
+        transferred = null;
+      }
+      setSessionName(
+        saved?.sessionName ||
+          (transferred ? `${transferred.trackName} session` : 'Untitled session')
+      );
+      setPads(nextPads);
+      setRecordings(saved?.recordings || []);
+      setCrossfader(saved?.crossfader ?? 50);
+      setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
+      setCrossfaderReverse(saved?.crossfaderReverse ?? false);
+      setMasterLevel(saved?.masterLevel ?? 82);
+      setMasterBpm(transferred?.bpm || saved?.masterBpm || 96);
+      setLimiter(saved?.limiter ?? true);
+      setAiMaster(saved?.aiMaster ?? false);
+      setTransfer(transferred);
+      const engine = getEngine();
+      engine.setCrossfader(saved?.crossfader ?? 50);
+      engine.setMasterLevel(saved?.masterLevel ?? 82);
+      engine.setLimiter(saved?.limiter ?? true);
+      const hydrated = await hydrateAudio(nextDecks, nextPads, () => cancelled);
       if (!cancelled) {
-        setDecks(hydratedDecks);
+        setDecks(hydrated);
         setRestored(true);
       }
     };
-
     void restore();
     return () => {
       cancelled = true;
     };
-  }, [getEngine]);
+  }, [getEngine, hydrateAudio]);
 
   useEffect(() => {
     if (!restored) return;
     saveStudioSession({
       sessionName,
       decks,
+      pads,
       recordings,
       crossfader,
+      crossfaderCurve,
+      crossfaderReverse,
       masterLevel,
       masterBpm,
       limiter,
+      aiMaster,
       transfer,
     });
   }, [
+    aiMaster,
     crossfader,
+    crossfaderCurve,
+    crossfaderReverse,
     decks,
     limiter,
     masterBpm,
     masterLevel,
+    pads,
     recordings,
     restored,
     sessionName,
@@ -506,25 +417,18 @@ export default function SattariStudioPage() {
       const engine = engineRef.current;
       if (engine && timestamp - lastUpdate >= 50) {
         const nextPositions = {};
+        const nextMeters = {};
         decks.forEach((deck) => {
           const position = engine.getDeckPosition(deck.id);
           nextPositions[deck.id] = position;
+          nextMeters[deck.id] = engine.getDeckMeterLevel(deck.id);
           if (deck.playing && !deck.looping && deck.duration && position >= deck.duration) {
             engine.stopDeck(deck.id);
             updateDeck(deck.id, { playing: false });
           }
         });
-        setPositions((current) =>
-          Object.keys(nextPositions).some(
-            (deckId) => Math.abs(nextPositions[deckId] - (current[deckId] || 0)) >= 0.02
-          )
-            ? nextPositions
-            : current
-        );
-        const nextMeterLevel = engine.getMeterLevel();
-        setMeterLevel((current) =>
-          Math.abs(nextMeterLevel - current) >= 0.01 ? nextMeterLevel : current
-        );
+        setPositions(nextPositions);
+        setDeckMeters(nextMeters);
         lastUpdate = timestamp;
       }
       animationRef.current = window.requestAnimationFrame(tick);
@@ -536,36 +440,46 @@ export default function SattariStudioPage() {
   useEffect(
     () => () => {
       window.cancelAnimationFrame(animationRef.current);
+      window.clearInterval(automixRef.current);
       objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       objectUrlsRef.current.clear();
+      midiAccessRef.current?.inputs?.forEach((input) => {
+        input.onmidimessage = null;
+      });
       engineRef.current?.dispose();
       engineRef.current = null;
     },
     []
   );
 
-  useEffect(() => getEngine().setCrossfader(crossfader), [crossfader, getEngine]);
+  useEffect(() => {
+    getEngine().setCrossfader(crossfaderReverse ? 100 - crossfader : crossfader);
+  }, [crossfader, crossfaderReverse, getEngine]);
+
   useEffect(() => getEngine().setMasterLevel(masterLevel), [getEngine, masterLevel]);
   useEffect(() => getEngine().setLimiter(limiter), [getEngine, limiter]);
+
   useEffect(() => {
     const engine = getEngine();
+    const soloed = decks.filter((deck) => deck.solo);
     decks.forEach((deck) => {
-      if (deck.synced) engine.setPlaybackRate(deck.id, masterBpm / deck.bpm);
+      engine.setDeckFader(deck.id, !deck.muted && (!soloed.length || deck.solo) ? deck.fader : 0);
+      engine.setPlaybackRate(deck.id, deck.synced ? masterBpm / Math.max(1, deck.bpm) : 1);
     });
   }, [decks, getEngine, masterBpm]);
 
   const loadLane = async (deckId, laneId, file) => {
-    if (!file || !file.type.startsWith('audio/')) return;
+    if (!file) return;
     updateDeck(deckId, (deck) => ({
       lanes: {
         ...deck.lanes,
         [laneId]: { ...deck.lanes[laneId], status: 'loading', name: file.name },
       },
     }));
-    setStudioNotice(`Analyzing ${file.name} locally...`);
+    setNotice(`${laneId === 'fullMix' ? 'Analyzing' : 'Decoding'} ${file.name} locally...`);
 
     try {
-      const analysis = await analyzeAudioFile(file);
+      const analysis = laneId === 'fullMix' ? await analyzeAudioFile(file) : null;
       const asset = await putAudioAsset(file, { name: file.name, analysis });
       const key = `${deckId}:${laneId}`;
       const oldUrl = objectUrlsRef.current.get(key);
@@ -575,11 +489,8 @@ export default function SattariStudioPage() {
       const deck = decks.find((item) => item.id === deckId);
       const engine = getEngine();
       const duration = await engine.loadLane(deckId, deck.side, laneId, url);
-
-      if (laneId === 'fullMix') {
-        engine.setLoop(deckId, deck.looping, analysis.bpm);
-        engine.setPlaybackRate(deckId, deck.synced ? masterBpm / analysis.bpm : 1);
-      }
+      const laneState = { ...deck.lanes[laneId], assetId: asset.id, duration, status: 'ready' };
+      engine.setLaneState(deckId, laneId, laneState);
 
       updateDeck(deckId, (currentDeck) => {
         const lane = {
@@ -593,7 +504,7 @@ export default function SattariStudioPage() {
           lanes: { ...currentDeck.lanes, [laneId]: lane },
           duration: Math.max(currentDeck.duration, duration),
         };
-        if (laneId === 'fullMix') {
+        if (analysis) {
           Object.assign(updates, {
             title: file.name.replace(/\.[^/.]+$/, ''),
             keyName: analysis.key.replace(' major', ' maj').replace(' minor', ' min'),
@@ -601,28 +512,60 @@ export default function SattariStudioPage() {
             duration,
             waveform: analysis.waveform,
             analysis,
+            loopEnd: Math.min(duration, (60 / analysis.bpm) * 4),
           });
+          engine.setLoopRegion(
+            deckId,
+            currentDeck.looping,
+            0,
+            Math.min(duration, (60 / analysis.bpm) * 4)
+          );
+          engine.setPlaybackRate(deckId, currentDeck.synced ? masterBpm / analysis.bpm : 1);
         }
         return updates;
       });
-      setStudioNotice(`${file.name} is ready.`);
+      setNotice(`${file.name} is ready in Deck ${deckId}.`);
     } catch (error) {
       updateDeck(deckId, (deck) => ({
         lanes: { ...deck.lanes, [laneId]: { ...deck.lanes[laneId], status: 'error' } },
       }));
-      setStudioNotice(error instanceof Error ? error.message : 'Audio could not be loaded.');
+      setNotice(error instanceof Error ? error.message : 'Audio could not be loaded.');
     }
   };
 
+  const loadStemSet = async (deckId, files) => {
+    const audioFiles = files.filter((file) => file.type.startsWith('audio/') || !file.type);
+    if (!audioFiles.length) return;
+    setNotice(`Importing ${Math.min(audioFiles.length, 4)} separated stems into Deck ${deckId}...`);
+    for (const [index, file] of audioFiles.slice(0, 4).entries()) {
+      await loadLane(deckId, stemIdForFile(file, index), file);
+    }
+    setNotice(`Stem set ready in Deck ${deckId}. Browser mode imported your separated files.`);
+  };
+
   const changeDeck = (deckId, updates) => {
+    if (updates.masterDeck) {
+      setMasterDeckId(deckId);
+      setNotice(`Deck ${deckId} is the sync master.`);
+      return;
+    }
     const deck = decks.find((item) => item.id === deckId);
+    if (!deck) return;
     const nextDeck = { ...deck, ...updates };
     const engine = getEngine();
     if ('gain' in updates) engine.setDeckGain(deckId, updates.gain);
-    if ('looping' in updates || 'bpm' in updates)
-      engine.setLoop(deckId, nextDeck.looping, nextDeck.bpm);
-    if ('synced' in updates || 'bpm' in updates)
-      engine.setPlaybackRate(deckId, nextDeck.synced ? masterBpm / nextDeck.bpm : 1);
+    if ('fader' in updates) engine.setDeckFader(deckId, updates.fader);
+    if ('cfSide' in updates) engine.setDeckSide(deckId, updates.cfSide);
+    if ('eq' in updates) engine.setDeckEq(deckId, updates.eq);
+    if ('filter' in updates) engine.setDeckFilter(deckId, updates.filter);
+    if ('fx' in updates) engine.setDeckFx(deckId, updates.fx);
+    if ('pitch' in updates) engine.setDeckPitch(deckId, updates.pitch);
+    if ('looping' in updates || 'loopStart' in updates || 'loopEnd' in updates) {
+      engine.setLoopRegion(deckId, nextDeck.looping, nextDeck.loopStart, nextDeck.loopEnd);
+    }
+    if ('synced' in updates || 'bpm' in updates) {
+      engine.setPlaybackRate(deckId, nextDeck.synced ? masterBpm / Math.max(1, nextDeck.bpm) : 1);
+    }
     updateDeck(deckId, updates);
   };
 
@@ -630,6 +573,16 @@ export default function SattariStudioPage() {
     getEngine().setLaneState(deckId, laneId, updates);
     updateDeck(deckId, (deck) => ({
       lanes: { ...deck.lanes, [laneId]: { ...deck.lanes[laneId], ...updates } },
+    }));
+  };
+
+  const changeStemFx = (deckId, stemId, updates) => {
+    if ('pitch' in updates) getEngine().setStemPitch(deckId, stemId, updates.pitch);
+    updateDeck(deckId, (deck) => ({
+      stemFx: {
+        ...deck.stemFx,
+        [stemId]: { ...deck.stemFx[stemId], ...updates },
+      },
     }));
   };
 
@@ -644,9 +597,17 @@ export default function SattariStudioPage() {
     }
   };
 
+  const cueDeck = (deckId) => {
+    const engine = getEngine();
+    engine.stopDeck(deckId);
+    engine.seekDeck(deckId, 0);
+    updateDeck(deckId, { playing: false });
+    setPositions((current) => ({ ...current, [deckId]: 0 }));
+  };
+
   const toggleGlobalTransport = async () => {
-    const loadedDecks = decks.filter((deck) => deck.duration);
-    if (loadedDecks.some((deck) => deck.playing)) {
+    const loaded = decks.filter((deck) => deck.duration);
+    if (loaded.some((deck) => deck.playing)) {
       getEngine().pauseAll();
       setDecks((current) => current.map((deck) => ({ ...deck, playing: false })));
       return;
@@ -661,10 +622,89 @@ export default function SattariStudioPage() {
     setDecks((current) => current.map((deck) => ({ ...deck, playing: false })));
   };
 
-  const triggerPad = async (index, frequency) => {
+  const setHotCue = (deckId, index, seconds) => {
+    const deck = decks.find((item) => item.id === deckId);
+    if (deck.hotCues[index] !== null) {
+      getEngine().seekDeck(deckId, seconds);
+      setPositions((current) => ({ ...current, [deckId]: seconds }));
+      return;
+    }
+    updateDeck(deckId, (current) => {
+      const hotCues = [...current.hotCues];
+      hotCues[index] = seconds;
+      return { hotCues };
+    });
+  };
+
+  const deleteHotCue = (deckId, index) => {
+    updateDeck(deckId, (deck) => {
+      const hotCues = [...deck.hotCues];
+      hotCues[index] = null;
+      return { hotCues };
+    });
+  };
+
+  const setDeckLoop = (deckId, enabled, start, end, roll = null) => {
+    const deck = decks.find((item) => item.id === deckId);
+    const beat = 60 / Math.max(1, deck.bpm);
+    const rollLength = roll ? beat * Number(roll.split('/').reduce((a, b) => a / b)) : null;
+    const loopStart = Math.max(0, start || 0);
+    const loopEnd = Math.min(deck.duration || Infinity, rollLength ? loopStart + rollLength : end);
+    getEngine().setLoopRegion(deckId, enabled, loopStart, loopEnd);
+    updateDeck(deckId, { looping: enabled, loopStart, loopEnd });
+  };
+
+  const beatJump = (deckId, beats) => {
+    const deck = decks.find((item) => item.id === deckId);
+    const seconds = Math.max(0, (positions[deckId] || 0) + beats * (60 / Math.max(1, deck.bpm)));
+    getEngine().seekDeck(deckId, seconds);
+    setPositions((current) => ({ ...current, [deckId]: seconds }));
+  };
+
+  const extractPattern = (deckId, kind) => {
+    const deck = decks.find((item) => item.id === deckId);
+    setPianoNotes(buildMidiPattern(kind, deck.bpm));
+    setActiveView('arranger');
+    setNotice(
+      `${kind === 'drums' ? 'Drum pattern' : 'Pitch pattern'} extracted from Deck ${deckId} into the piano roll.`
+    );
+  };
+
+  const triggerPad = async (index) => {
+    const pad = pads[index];
     setActivePad(index);
     window.setTimeout(() => setActivePad(null), 150);
-    await getEngine().triggerPad(index, frequency);
+    await getEngine().triggerPad(index, pad.frequency);
+  };
+
+  const loadPad = async (index, file) => {
+    if (!file) return;
+    try {
+      const asset = await putAudioAsset(file, { name: file.name });
+      const key = `pad:${index}`;
+      const oldUrl = objectUrlsRef.current.get(key);
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      const url = URL.createObjectURL(file);
+      objectUrlsRef.current.set(key, url);
+      await getEngine().loadPad(index, url, pads[index].gain);
+      setPads((current) =>
+        current.map((pad, padIndex) =>
+          padIndex === index
+            ? { ...pad, assetId: asset.id, name: file.name.replace(/\.[^/.]+$/, '') }
+            : pad
+        )
+      );
+      setNotice(`${file.name} loaded on Pad ${index + 1}.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Pad sample could not be loaded.');
+    }
+  };
+
+  const changePadGain = (index, gain) => {
+    getEngine().setPadGain(index, gain);
+    setPads((current) =>
+      current.map((pad, padIndex) => (padIndex === index ? { ...pad, gain } : pad))
+    );
   };
 
   const toggleCapture = async () => {
@@ -672,7 +712,7 @@ export default function SattariStudioPage() {
       if (!captureActive) {
         await getEngine().startRecording();
         setCaptureActive(true);
-        setStudioNotice('Master recording started.');
+        setNotice('Master recording started.');
         return;
       }
       const blob = await getEngine().stopRecording();
@@ -684,11 +724,10 @@ export default function SattariStudioPage() {
         ...current,
         { id: asset.id, name, createdAt: asset.createdAt, size: asset.size },
       ]);
-      setLibraryTab('recordings');
-      setStudioNotice(`${name} saved locally.`);
+      setNotice(`${name} saved in the local library.`);
     } catch (error) {
       setCaptureActive(false);
-      setStudioNotice(error instanceof Error ? error.message : 'Recording is unavailable.');
+      setNotice(error instanceof Error ? error.message : 'Recording is unavailable.');
     }
   };
 
@@ -697,13 +736,131 @@ export default function SattariStudioPage() {
       if (microphoneActive) {
         getEngine().closeMicrophone();
         setMicrophoneActive(false);
+        setNotice('Microphone input closed.');
       } else {
         await getEngine().openMicrophone();
         setMicrophoneActive(true);
+        setNotice('Microphone is routed to the master output.');
       }
     } catch {
-      setStudioNotice('Microphone permission was not granted.');
+      setNotice('Microphone permission was not granted.');
     }
+  };
+
+  const toggleMidi = async () => {
+    if (midiActive) {
+      midiAccessRef.current?.inputs?.forEach((input) => {
+        input.onmidimessage = null;
+      });
+      setMidiActive(false);
+      setNotice('MIDI input disconnected.');
+      return;
+    }
+    if (!navigator.requestMIDIAccess) {
+      setNotice('Web MIDI is unavailable in this browser.');
+      return;
+    }
+    try {
+      const access = await navigator.requestMIDIAccess();
+      midiAccessRef.current = access;
+      access.inputs.forEach((input) => {
+        input.onmidimessage = ({ data }) => {
+          const [status, note, velocity] = data;
+          if ((status & 0xf0) === 0x90 && velocity > 0) void triggerPad(note % pads.length);
+        };
+      });
+      setMidiActive(true);
+      setNotice(
+        `${access.inputs.size || 0} MIDI input${access.inputs.size === 1 ? '' : 's'} connected.`
+      );
+    } catch {
+      setNotice('MIDI access was not granted.');
+    }
+  };
+
+  const tapTempo = () => {
+    const now = performance.now();
+    tapTimesRef.current = [...tapTimesRef.current.filter((time) => now - time < 2500), now].slice(
+      -6
+    );
+    if (tapTimesRef.current.length < 2) {
+      setNotice('Tap again to set the host tempo.');
+      return;
+    }
+    const intervals = tapTimesRef.current
+      .slice(1)
+      .map((time, index) => time - tapTimesRef.current[index]);
+    const average = intervals.reduce((sum, value) => sum + value, 0) / intervals.length;
+    setMasterBpm(Math.round(Math.min(220, Math.max(40, 60000 / average))));
+  };
+
+  const syncAll = () => {
+    setDecks((current) =>
+      current.map((deck) => (deck.duration ? { ...deck, synced: true } : deck))
+    );
+    setNotice(`Loaded decks synced to ${masterBpm} BPM.`);
+  };
+
+  const syncKey = () => {
+    const master = decks.find((deck) => deck.id === masterDeckId);
+    if (!master?.duration) {
+      setNotice('Load the sync master before matching keys.');
+      return;
+    }
+    setDecks((current) =>
+      current.map((deck) =>
+        deck.duration ? { ...deck, keyName: master.keyName, keyLock: true } : deck
+      )
+    );
+    setNotice(`Loaded decks matched to ${master.keyName}.`);
+  };
+
+  const startAutomix = async () => {
+    window.clearInterval(automixRef.current);
+    const loaded = decks.filter((deck) => deck.duration);
+    if (loaded.length < 2) {
+      setNotice('Load at least two decks to run AutoMix.');
+      return;
+    }
+    const [source, target] = loaded;
+    await getEngine().playDeck(source.id);
+    await getEngine().playDeck(target.id);
+    updateDeck(source.id, { playing: true });
+    updateDeck(target.id, { playing: true });
+    let value = source.cfSide === 'right' ? 100 : 0;
+    const destination = target.cfSide === 'left' ? 0 : 100;
+    const direction = destination > value ? 1 : -1;
+    setCrossfader(value);
+    setAutomixStatus(`${source.id} → ${target.id}`);
+    automixRef.current = window.setInterval(() => {
+      value = direction > 0 ? Math.min(destination, value + 2) : Math.max(destination, value - 2);
+      setCrossfader(Math.min(100, Math.max(0, value)));
+      if (value === destination) {
+        window.clearInterval(automixRef.current);
+        setAutomixStatus('Complete');
+      }
+    }, 90);
+  };
+
+  const updateMasterFx = (x, y) => {
+    const next = { x: Math.round(x), y: Math.round(y) };
+    setMasterFx(next);
+    setDecks((current) =>
+      current.map((deck) => {
+        const fx = { ...deck.fx, echo: next.x, reverb: 100 - next.y };
+        getEngine().setDeckFx(deck.id, fx);
+        return { ...deck, fx };
+      })
+    );
+  };
+
+  const togglePianoNote = (pitch, step) => {
+    setPianoNotes((current) => {
+      const exists = current.some((note) => note.pitch === pitch && note.step === step);
+      return exists
+        ? current.filter((note) => note.pitch !== pitch || note.step !== step)
+        : [...current, { pitch, step, velocity: 96 }];
+    });
   };
 
   const downloadRecording = async (recording) => {
@@ -719,31 +876,70 @@ export default function SattariStudioPage() {
 
   const exportSession = () => {
     const manifest = {
-      schema: 'SattariStudio.arrangement.v2',
-      product: 'Sattari Studio',
+      schema: 'SattariStudio.arrangement.v3',
+      product: 'StemDeck Pro Browser',
       sessionName,
       createdAt: new Date().toISOString(),
-      master: { bpm: masterBpm, level: masterLevel, crossfader, limiter },
+      master: {
+        bpm: masterBpm,
+        level: masterLevel,
+        crossfader,
+        crossfaderCurve,
+        crossfaderReverse,
+        limiter,
+        aiMaster,
+      },
       decks,
+      pads,
       recordings,
+      pianoNotes,
       source: transfer || null,
     };
     const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'sattari-session'}.json`;
+    anchor.download = `${sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'stemdeck-session'}.json`;
     anchor.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
+  const importSession = async (file) => {
+    if (!file) return;
+    try {
+      const manifest = JSON.parse(await file.text());
+      if (!manifest.schema?.startsWith('SattariStudio.'))
+        throw new Error('Not a Sattari Studio project.');
+      const nextDecks = DECK_SEEDS.map((_, index) => normalizeDeck(manifest.decks?.[index], index));
+      const nextPads = createPads(manifest.pads);
+      engineRef.current?.dispose();
+      engineRef.current = null;
+      const hydrated = await hydrateAudio(nextDecks, nextPads);
+      setDecks(hydrated);
+      setPads(nextPads);
+      setSessionName(manifest.sessionName || 'Imported session');
+      setMasterBpm(manifest.master?.bpm || 96);
+      setMasterLevel(manifest.master?.level ?? 82);
+      setCrossfader(manifest.master?.crossfader ?? 50);
+      setCrossfaderCurve(manifest.master?.crossfaderCurve || 'Smooth');
+      setCrossfaderReverse(manifest.master?.crossfaderReverse ?? false);
+      setLimiter(manifest.master?.limiter ?? true);
+      setAiMaster(manifest.master?.aiMaster ?? false);
+      setPianoNotes(manifest.pianoNotes || []);
+      setNotice(`${file.name} imported. Reconnect any audio files missing from local storage.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Project could not be imported.');
+    }
+  };
+
+  const importDeckSet = async (files) => {
+    for (const [index, file] of files.slice(0, 4).entries()) {
+      await loadLane(DECK_SEEDS[index].id, 'fullMix', file);
+    }
+  };
+
   const newSession = () => {
-    if (
-      !window.confirm(
-        'Start a new session? Current local audio assets will remain in your library.'
-      )
-    )
-      return;
+    if (!window.confirm('Start a new session? Local audio assets will remain available.')) return;
     engineRef.current?.stopAll();
     engineRef.current?.dispose();
     engineRef.current = null;
@@ -751,444 +947,829 @@ export default function SattariStudioPage() {
     objectUrlsRef.current.clear();
     clearStudioSession();
     setDecks(createEmptyDecks());
+    setPads(createPads());
     setPositions({ A: 0, B: 0, C: 0, D: 0 });
+    setDeckMeters({ A: 0, B: 0, C: 0, D: 0 });
     setSessionName('Untitled session');
     setTransfer(null);
     setRecordings([]);
+    setPianoNotes([]);
     setCrossfader(50);
     setMasterLevel(82);
     setMasterBpm(96);
     setLimiter(true);
     setMicrophoneActive(false);
     setCaptureActive(false);
-    setLibraryTab('session');
-    setStudioNotice('New session ready.');
+    setNotice('New StemDeck session ready.');
   };
 
-  const loadedDecks = decks.filter((deck) => deck.duration);
-  const loadedStems = decks.flatMap((deck) =>
-    Object.values(deck.lanes)
-      .filter((lane) => lane.id !== 'fullMix' && lane.assetId)
-      .map((lane) => ({ ...lane, deckId: deck.id, deckColor: deck.color }))
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) || event.repeat) return;
+      const padIndex = ['1', '2', '3', '4', '5', '6', '7', '8'].indexOf(event.key);
+      if (padIndex >= 0) {
+        event.preventDefault();
+        void triggerPad(padIndex);
+      }
+      if (event.code === 'Space') {
+        event.preventDefault();
+        void toggleGlobalTransport();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
+
+  const loadedDecks = useMemo(() => decks.filter((deck) => deck.duration), [decks]);
+  const loadedStems = useMemo(
+    () =>
+      decks.flatMap((deck) =>
+        Object.values(deck.lanes)
+          .filter((lane) => lane.id !== 'fullMix' && lane.assetId)
+          .map((lane) => ({ ...lane, deckId: deck.id, accent: deck.accent }))
+      ),
+    [decks]
   );
   const anyPlaying = decks.some((deck) => deck.playing);
   const masterPosition = Math.max(0, ...Object.values(positions));
-  const activeMeterBars = Math.round(Math.min(1, Math.max(0, meterLevel)) * 18);
+  const masterMeter = Math.max(0, ...Object.values(deckMeters));
+  const maxDuration = Math.max(60, ...decks.map((deck) => deck.duration || 0));
 
-  return (
-    <>
-      <SEO
-        title="Sattari Studio - Create, Remix and Perform"
-        description="A local four-deck audio workspace for arranging, recording, practicing, and shaping music in the browser."
-        image="/sattari site/audio-suite/create.png"
-        url="https://sattarimusic.com/studio"
-      />
-      <section className="audio-workspace studio-workspace">
-        <div className="audio-workspace-topbar studio-topbar">
-          <div>
-            <p className="audio-workspace-kicker">Sattari creation system</p>
-            <h1>Studio</h1>
-          </div>
-          <div className="audio-product-switch" aria-label="Audio products">
-            <Link to="/hub">Hub</Link>
-            <Link to="/learn">Learn</Link>
-            <Link to="/studio" className="is-active">
-              Studio
-            </Link>
-          </div>
-          <div className="studio-session-name">
-            <span>Session</span>
-            <input
-              value={sessionName}
-              onChange={(event) => setSessionName(event.target.value)}
-              aria-label="Session name"
-            />
-          </div>
-          <div className="studio-header-actions">
-            <button
-              type="button"
-              onClick={toggleCapture}
-              className={captureActive ? 'is-recording' : ''}
-            >
-              <Circle size={13} fill="currentColor" /> {captureActive ? 'Stop' : 'Record'}
-            </button>
-            <button type="button" onClick={newSession} title="New session" aria-label="New session">
-              <Trash2 size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={exportSession}
-              title="Export session"
-              aria-label="Export session"
-            >
-              <Download size={16} />
-            </button>
-          </div>
-        </div>
+  const deckConsole = (
+    <div className="sd-decks-grid">
+      {decks.map((deck) => (
+        <StemDeckChannel
+          key={deck.id}
+          deck={deck}
+          position={positions[deck.id] || 0}
+          meterLevel={deckMeters[deck.id] || 0}
+          onLoadLane={(laneId, file) => loadLane(deck.id, laneId, file)}
+          onLoadStemSet={(files) => loadStemSet(deck.id, files)}
+          onDeckChange={(updates) => changeDeck(deck.id, updates)}
+          onLaneChange={(laneId, updates) => changeLane(deck.id, laneId, updates)}
+          onTogglePlay={() => toggleDeck(deck.id)}
+          onCue={() => cueDeck(deck.id)}
+          onSeek={(seconds) => getEngine().seekDeck(deck.id, seconds)}
+          onSetHotCue={(index, seconds) => setHotCue(deck.id, index, seconds)}
+          onDeleteHotCue={(index) => deleteHotCue(deck.id, index)}
+          onSetLoop={(enabled, start, end, roll) => setDeckLoop(deck.id, enabled, start, end, roll)}
+          onBeatJump={(beats) => beatJump(deck.id, beats)}
+          onStemFxChange={(stemId, updates) => changeStemFx(deck.id, stemId, updates)}
+          onExtractMidi={() => extractPattern(deck.id, 'midi')}
+          onExtractDrums={() => extractPattern(deck.id, 'drums')}
+        />
+      ))}
+    </div>
+  );
 
-        {transfer && (
-          <div className="studio-transfer-banner">
-            <span>
-              <Sparkles size={16} />
-            </span>
-            <div>
-              <small>Music map received from Learn</small>
-              <strong>
-                {transfer.trackName} / {transfer.key} / {transfer.bpm} BPM
-              </strong>
-            </div>
-            <button type="button" onClick={() => setTransfer(null)}>
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        <div className="studio-control-strip">
-          <div className="studio-clock">
-            <span>MASTER</span>
-            <strong>{formatTime(masterPosition, true)}</strong>
-          </div>
-          <div className="studio-global-transport">
-            <button
-              type="button"
-              title="Return to start"
-              aria-label="Return to start"
-              onClick={stopGlobalTransport}
-            >
-              <RefreshCw size={15} />
-            </button>
-            <button
-              type="button"
-              className="is-primary"
-              title={anyPlaying ? 'Pause loaded decks' : 'Play loaded decks'}
-              aria-label={anyPlaying ? 'Pause loaded decks' : 'Play loaded decks'}
-              onClick={toggleGlobalTransport}
-              disabled={!loadedDecks.length}
-            >
-              {anyPlaying ? <Pause size={17} /> : <Play size={17} />}
-            </button>
-            <button type="button" title="Stop" aria-label="Stop" onClick={stopGlobalTransport}>
-              <span className="stop-icon" />
-            </button>
-          </div>
-          <div className="studio-master-readout studio-master-tempo">
-            <button
-              type="button"
-              onClick={() => setMasterBpm((value) => Math.max(40, value - 1))}
-              aria-label="Lower master BPM"
-            >
-              <Minus size={11} />
-            </button>
-            <span>{masterBpm}</span>
-            <button
-              type="button"
-              onClick={() => setMasterBpm((value) => Math.min(220, value + 1))}
-              aria-label="Raise master BPM"
-            >
-              <Plus size={11} />
-            </button>
-            <small>BPM</small>
-          </div>
-          <div className="studio-sync-status">
-            <i /> {restored ? 'Saved locally' : 'Restoring'}
-          </div>
-          <button
-            type="button"
-            className={`studio-input-readout${microphoneActive ? ' is-active' : ''}`}
-            onClick={toggleMicrophone}
-          >
-            <Mic2 size={15} />
-            <span>Input</span>
-            <strong>{microphoneActive ? 'Live' : 'Off'}</strong>
+  const masterConsole = (
+    <section className="sd-master-console" aria-label="StemDeck master section">
+      <div className="sd-sync-module">
+        <span className="sd-module-title">SYNC</span>
+        <div className="sd-sync-buttons">
+          <button type="button" onClick={syncAll}>
+            SYNC ALL
+          </button>
+          <button type="button" onClick={syncKey}>
+            <KeyRound size={12} /> SYNC KEY
+          </button>
+          <button type="button" onClick={startAutomix} className={automixStatus ? 'is-active' : ''}>
+            AUTO MIX
           </button>
         </div>
+        <small>{automixStatus || `MASTER ${masterDeckId}`}</small>
+      </div>
 
-        {studioNotice && (
-          <div className="studio-notice" role="status">
-            {studioNotice}
+      <div className="sd-xf-module">
+        <div className="sd-deck-meter-pair">
+          {decks.map((deck) => (
+            <SegmentMeter
+              key={deck.id}
+              level={deckMeters[deck.id] || 0}
+              accent={deck.accent}
+              label={deck.id}
+              compact
+            />
+          ))}
+        </div>
+        <div className="sd-crossfader-labels">
+          <span>A / C</span>
+          <strong>CROSSFADER</strong>
+          <span>B / D</span>
+        </div>
+        <input
+          className="sd-crossfader"
+          type="range"
+          min="0"
+          max="100"
+          value={crossfader}
+          onChange={(event) => setCrossfader(Number(event.target.value))}
+          aria-label="Crossfader"
+        />
+        <div className="sd-xf-options">
+          <select
+            value={crossfaderCurve}
+            onChange={(event) => setCrossfaderCurve(event.target.value)}
+            aria-label="Crossfader curve"
+          >
+            <option>Smooth</option>
+            <option>Sharp</option>
+            <option>Linear</option>
+          </select>
+          <button type="button" onClick={() => setCrossfader(50)}>
+            CENTER
+          </button>
+          <button
+            type="button"
+            className={crossfaderReverse ? 'is-active' : ''}
+            onClick={() => setCrossfaderReverse((value) => !value)}
+          >
+            REV
+          </button>
+        </div>
+      </div>
+
+      <div className="sd-global-fx-module">
+        <span className="sd-module-title">GLOBAL FX</span>
+        <button
+          type="button"
+          className="sd-xy-pad"
+          aria-label="Global effects XY pad"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            const box = event.currentTarget.getBoundingClientRect();
+            updateMasterFx(
+              ((event.clientX - box.left) / box.width) * 100,
+              ((event.clientY - box.top) / box.height) * 100
+            );
+          }}
+          onPointerMove={(event) => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+            const box = event.currentTarget.getBoundingClientRect();
+            updateMasterFx(
+              ((event.clientX - box.left) / box.width) * 100,
+              ((event.clientY - box.top) / box.height) * 100
+            );
+          }}
+        >
+          <i style={{ left: `${masterFx.x}%`, top: `${masterFx.y}%` }} />
+          <span>ECHO</span>
+          <span>SPACE</span>
+        </button>
+      </div>
+
+      <div className="sd-master-output">
+        <span className="sd-module-title">MASTER OUTPUT</span>
+        <div className="sd-output-controls">
+          <VerticalFader
+            label="OUT"
+            value={masterLevel}
+            onChange={setMasterLevel}
+            accent="#edf0f4"
+          />
+          <SegmentMeter level={masterMeter} accent="#62f5c8" label="OUT" />
+          <div className="sd-master-switches">
+            <button
+              type="button"
+              className={limiter ? 'is-active' : ''}
+              onClick={() => setLimiter((value) => !value)}
+            >
+              LIMIT
+            </button>
+            <button
+              type="button"
+              className={aiMaster ? 'is-active' : ''}
+              onClick={() => setAiMaster((value) => !value)}
+            >
+              AI MASTER
+            </button>
+            <select
+              value={aiMasterMode}
+              onChange={(event) => setAiMasterMode(event.target.value)}
+              aria-label="AI master target"
+            >
+              <option>Streaming -14</option>
+              <option>Club -9</option>
+              <option>Broadcast -16</option>
+            </select>
           </div>
-        )}
+        </div>
+      </div>
+    </section>
+  );
 
-        <div className="studio-body-grid">
-          <aside className="studio-browser workspace-panel">
-            <div className="studio-panel-title">
-              <ListMusic size={16} />
-              <strong>Library</strong>
+  const arrangementConsole = (
+    <section className="sd-arranger" aria-label="Arrangement capture">
+      <header className="sd-arranger-toolbar">
+        <div>
+          <strong>ARRANGEMENT CAPTURE</strong>
+          <span>{formatTime(masterPosition, true)}</span>
+        </div>
+        <div className="sd-edit-tools">
+          <button type="button" aria-label="Undo">
+            <Undo2 size={13} />
+          </button>
+          <button type="button" aria-label="Redo">
+            <Redo2 size={13} />
+          </button>
+          <button
+            type="button"
+            className={razorActive ? 'is-active' : ''}
+            onClick={() => setRazorActive((value) => !value)}
+          >
+            <Scissors size={13} /> RAZOR
+          </button>
+          <button
+            type="button"
+            className={snapActive ? 'is-active' : ''}
+            onClick={() => setSnapActive((value) => !value)}
+          >
+            SNAP
+          </button>
+          <button
+            type="button"
+            className={arrangementLoop ? 'is-active' : ''}
+            onClick={() => setArrangementLoop((value) => !value)}
+          >
+            LOOP
+          </button>
+          <button
+            type="button"
+            onClick={() => setArrangementZoom((value) => Math.max(0.6, value - 0.2))}
+            aria-label="Zoom out"
+          >
+            <ZoomOut size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setArrangementZoom((value) => Math.min(2.2, value + 0.2))}
+            aria-label="Zoom in"
+          >
+            <ZoomIn size={13} />
+          </button>
+        </div>
+      </header>
+      <div className="sd-ruler">
+        <span>1</span>
+        <span>9</span>
+        <span>17</span>
+        <span>25</span>
+        <span>33</span>
+        <span>41</span>
+        <span>49</span>
+        <span>57</span>
+      </div>
+      <div className="sd-arrangement-tracks" style={{ '--sd-zoom': arrangementZoom }}>
+        {decks.map((deck) => (
+          <div className="sd-arrangement-track" key={deck.id}>
+            <div className="sd-arrangement-label" style={{ '--sd-accent': deck.accent }}>
+              <strong>{deck.id}</strong>
+              <span>{deck.title}</span>
             </div>
-            <nav aria-label="Studio library">
-              <button
-                type="button"
-                className={libraryTab === 'session' ? 'is-active' : ''}
-                onClick={() => setLibraryTab('session')}
-              >
-                <Waves size={15} />
-                <span>Session audio</span>
-                <small>{loadedDecks.length}</small>
-              </button>
-              <button
-                type="button"
-                className={libraryTab === 'stems' ? 'is-active' : ''}
-                onClick={() => setLibraryTab('stems')}
-              >
-                <Layers3 size={15} />
-                <span>Stem lanes</span>
-                <small>{loadedStems.length}</small>
-              </button>
-              <button
-                type="button"
-                className={libraryTab === 'recordings' ? 'is-active' : ''}
-                onClick={() => setLibraryTab('recordings')}
-              >
-                <Radio size={15} />
-                <span>Recordings</span>
-                <small>{recordings.length}</small>
-              </button>
-              <button
-                type="button"
-                className={libraryTab === 'exports' ? 'is-active' : ''}
-                onClick={() => setLibraryTab('exports')}
-              >
-                <FileAudio size={15} />
-                <span>Project</span>
-                <small>JSON</small>
-              </button>
-            </nav>
-            <div className="studio-browser-divider" />
-            <p className="studio-browser-label">
-              {libraryTab === 'session'
-                ? 'Loaded tracks'
-                : libraryTab === 'stems'
-                  ? 'Loaded stems'
-                  : libraryTab === 'recordings'
-                    ? 'Local recordings'
-                    : 'Portable session'}
-            </p>
-            {libraryTab === 'session' &&
-              loadedDecks.map((deck) => (
+            <div className="sd-arrangement-lane">
+              {deck.duration ? (
                 <button
                   type="button"
-                  className="studio-library-track"
-                  key={deck.id}
-                  onClick={() =>
-                    document
-                      .querySelector(`.studio-deck-${deck.id}`)
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                  }
+                  className="sd-arrangement-clip"
+                  style={{
+                    '--sd-accent': deck.accent,
+                    width: `${Math.max(12, (deck.duration / maxDuration) * 88)}%`,
+                  }}
+                  onClick={() => getEngine().seekDeck(deck.id, 0)}
                 >
-                  <span className={`track-color track-color-${deck.color}`} />
-                  <span>
-                    <strong>{deck.title}</strong>
-                    <small>
-                      {deck.bpm} BPM / {deck.keyName}
-                    </small>
-                  </span>
+                  <ArrangementWave peaks={deck.waveform} accent={deck.accent} />
+                  <span>{deck.title}</span>
                 </button>
-              ))}
-            {libraryTab === 'stems' &&
-              loadedStems.map((lane) => (
-                <button
-                  type="button"
-                  className="studio-library-track"
-                  key={`${lane.deckId}-${lane.id}`}
-                  onClick={() =>
-                    document
-                      .querySelector(`.studio-deck-${lane.deckId}`)
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                  }
-                >
-                  <span className={`track-color track-color-${lane.color}`} />
-                  <span>
-                    <strong>{lane.name}</strong>
-                    <small>
-                      Deck {lane.deckId} / {lane.label}
-                    </small>
-                  </span>
-                </button>
-              ))}
-            {libraryTab === 'recordings' &&
+              ) : (
+                <EmptyArrangementDrop onDrop={(file) => loadLane(deck.id, 'fullMix', file)} />
+              )}
+            </div>
+          </div>
+        ))}
+        <div className="sd-arrangement-track sd-recording-track">
+          <div className="sd-arrangement-label">
+            <strong>REC</strong>
+            <span>Master takes</span>
+          </div>
+          <div className="sd-arrangement-lane">
+            {recordings.length ? (
               recordings.map((recording) => (
                 <button
                   type="button"
-                  className="studio-library-track"
                   key={recording.id}
+                  className="sd-recording-clip"
                   onClick={() => downloadRecording(recording)}
                 >
-                  <span className="track-color track-color-coral" />
-                  <span>
-                    <strong>{recording.name}</strong>
-                    <small>{Math.max(1, Math.round(recording.size / 1024))} KB / download</small>
-                  </span>
+                  {recording.name}
                 </button>
-              ))}
-            {libraryTab === 'exports' && (
-              <div className="studio-project-summary">
-                <strong>{sessionName}</strong>
-                <span>
-                  {loadedDecks.length} deck{loadedDecks.length === 1 ? '' : 's'} /{' '}
-                  {loadedStems.length} stem{loadedStems.length === 1 ? '' : 's'}
-                </span>
-                <button type="button" onClick={exportSession}>
-                  <Download size={14} /> Export project
-                </button>
-              </div>
+              ))
+            ) : (
+              <span className="sd-empty-lane">Press record to capture the master output</span>
             )}
-            {libraryTab === 'session' && !loadedDecks.length && (
-              <p className="studio-browser-empty">No audio loaded</p>
-            )}
-            {libraryTab === 'stems' && !loadedStems.length && (
-              <p className="studio-browser-empty">No stems loaded</p>
-            )}
-            {libraryTab === 'recordings' && !recordings.length && (
-              <p className="studio-browser-empty">No recordings yet</p>
-            )}
-            {(libraryTab === 'session' || libraryTab === 'stems') && (
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  const padStrip = (
+    <section className="sd-pad-strip" aria-label="Performance pads">
+      <header>
+        <span>PERFORMANCE PADS</span>
+        <strong>BANK A</strong>
+      </header>
+      <div className="sd-pads">
+        {pads.map((pad, index) => (
+          <div
+            className="sd-pad-cell"
+            key={`${index}-${pad.name}`}
+            style={{ '--sd-accent': pad.accent }}
+          >
+            <button
+              type="button"
+              className={activePad === index ? 'is-hit' : ''}
+              onClick={() => triggerPad(index)}
+            >
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <strong>{pad.name}</strong>
+            </button>
+            <div>
               <button
                 type="button"
-                className="studio-browser-import"
-                onClick={() =>
-                  document
-                    .querySelector(
-                      `.studio-deck-A input[data-lane="${libraryTab === 'stems' ? 'drums' : 'fullMix'}"]`
-                    )
-                    ?.click()
-                }
+                onClick={() => padInputRefs.current[index]?.click()}
+                aria-label={`Load Pad ${index + 1}`}
               >
-                <Plus size={15} /> {libraryTab === 'stems' ? 'Add stem' : 'Import audio'}
+                <Plus size={11} />
               </button>
-            )}
-          </aside>
-
-          <div className="studio-decks-grid">
-            {decks.map((deck) => (
-              <StudioDeck
-                key={deck.id}
-                deck={deck}
-                masterBpm={masterBpm}
-                position={positions[deck.id] || 0}
-                onLoadLane={(laneId, file) => loadLane(deck.id, laneId, file)}
-                onDeckChange={(updates) => changeDeck(deck.id, updates)}
-                onLaneChange={(laneId, updates) => changeLane(deck.id, laneId, updates)}
-                onTogglePlay={() => toggleDeck(deck.id)}
-                onStop={() => {
-                  getEngine().stopDeck(deck.id);
-                  updateDeck(deck.id, { playing: false });
-                  setPositions((current) => ({ ...current, [deck.id]: 0 }));
-                }}
-                onSeek={(seconds) => getEngine().seekDeck(deck.id, seconds)}
-              />
-            ))}
-          </div>
-
-          <aside className="studio-master workspace-panel">
-            <div className="studio-panel-title">
-              <SlidersHorizontal size={16} />
-              <strong>Master</strong>
-            </div>
-            <div className="studio-meter" aria-label="Master level meter">
-              {Array.from({ length: 18 }, (_, index) => (
-                <span
-                  key={index}
-                  className={`${index > 14 ? 'is-hot' : index > 10 ? 'is-warm' : ''}${index >= activeMeterBars ? ' is-idle' : ''}`}
-                />
-              ))}
-            </div>
-            <div className="studio-master-value">
-              <strong>{masterLevel}</strong>
-              <span>%</span>
-            </div>
-            <label className="studio-master-fader">
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={masterLevel}
-                onChange={(event) => setMasterLevel(Number(event.target.value))}
-                aria-label="Master volume"
+                value={pad.gain}
+                onChange={(event) => changePadGain(index, Number(event.target.value))}
+                aria-label={`Pad ${index + 1} gain`}
               />
-            </label>
-            <div className="studio-master-tools">
-              <button
-                type="button"
-                className={microphoneActive ? 'is-active' : ''}
-                onClick={toggleMicrophone}
-              >
-                <Mic2 size={15} /> Mic
-              </button>
-              <button
-                type="button"
-                className={limiter ? 'is-active' : ''}
-                onClick={() => setLimiter((value) => !value)}
-              >
-                <AudioWaveform size={15} /> Limit
-              </button>
-            </div>
-            <div className="studio-master-divider" />
-            <div className="studio-record-block">
-              <span className={captureActive ? 'is-live' : ''}>
-                <Circle size={13} fill="currentColor" />
-              </span>
-              <div>
-                <strong>Master recording</strong>
-                <small>
-                  {captureActive
-                    ? 'Recording the master output'
-                    : `${recordings.length} local take${recordings.length === 1 ? '' : 's'}`}
-                </small>
-              </div>
-            </div>
-            <button type="button" className="studio-save-button" onClick={exportSession}>
-              <Save size={15} /> Export project
-            </button>
-          </aside>
-        </div>
-
-        <div className="studio-performance-strip">
-          <div className="studio-pads-section">
-            <div className="performance-heading">
-              <span>Performance pads</span>
-              <small>Bank A</small>
-            </div>
-            <div className="studio-pads">
-              {PERFORMANCE_PADS.map(([label, frequency], index) => (
-                <button
-                  type="button"
-                  key={label}
-                  className={activePad === index ? 'is-hit' : ''}
-                  onClick={() => triggerPad(index, frequency)}
-                >
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <strong>{label}</strong>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="studio-crossfader-section">
-            <div className="performance-heading">
-              <span>Crossfader</span>
-              <small>
-                {crossfader === 50
-                  ? 'Center'
-                  : crossfader < 50
-                    ? `A/C ${100 - crossfader}%`
-                    : `B/D ${crossfader}%`}
-              </small>
-            </div>
-            <div className="studio-crossfader-labels">
-              <span>A / C</span>
-              <span>B / D</span>
             </div>
             <input
-              type="range"
-              min="0"
-              max="100"
-              value={crossfader}
-              onChange={(event) => setCrossfader(Number(event.target.value))}
-              aria-label="Crossfader"
+              ref={(element) => {
+                padInputRefs.current[index] = element;
+              }}
+              type="file"
+              accept="audio/*"
+              hidden
+              onChange={(event) => {
+                void loadPad(index, event.target.files?.[0]);
+                event.target.value = '';
+              }}
             />
-            <button type="button" onClick={() => setCrossfader(50)}>
-              Reset center
-            </button>
           </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  return (
+    <>
+      <SEO
+        title="StemDeck Pro - Sattari Studio"
+        description="The complete StemDeck Pro four-deck mixing, stem performance, arrangement and recording workspace in Sattari Studio."
+        image="/sattari site/audio-suite/create.png"
+        url="https://sattarimusic.com/studio"
+      />
+      <section className="stemdeck-web">
+        <div className="sd-app-frame">
+          <header className="sd-command-bar">
+            <div className="sd-brand-block">
+              <span className="sd-brand-mark">
+                <i />
+                <i />
+                <i />
+              </span>
+              <div>
+                <small>SATTARI STUDIO</small>
+                <h1>StemDeck PRO</h1>
+              </div>
+            </div>
+            <nav className="sd-view-nav" aria-label="StemDeck workspaces">
+              {VIEWS.map(([value, label, Icon]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={activeView === value ? 'is-active' : ''}
+                  onClick={() => setActiveView(value)}
+                >
+                  <Icon size={13} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="sd-global-transport">
+              <button type="button" onClick={stopGlobalTransport} aria-label="Stop all decks">
+                <span className="sd-stop-icon" />
+              </button>
+              <button
+                type="button"
+                className="is-primary"
+                onClick={toggleGlobalTransport}
+                disabled={!loadedDecks.length}
+                aria-label={anyPlaying ? 'Pause all decks' : 'Play all decks'}
+              >
+                {anyPlaying ? <Pause size={14} /> : <Play size={14} />}
+                <span>{anyPlaying ? 'PAUSE' : 'PLAY ALL'}</span>
+              </button>
+              <button type="button" onClick={startAutomix}>
+                <Disc3 size={14} />
+                <span>AUTO</span>
+              </button>
+            </div>
+            <label className="sd-session-field">
+              <span>SESSION</span>
+              <input value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
+            </label>
+            <div className="sd-system-actions">
+              <button
+                type="button"
+                onClick={toggleCapture}
+                className={captureActive ? 'is-recording' : ''}
+                aria-label={captureActive ? 'Stop recording' : 'Start recording'}
+              >
+                <Circle size={13} fill="currentColor" />
+              </button>
+              <button type="button" onClick={exportSession} aria-label="Save project">
+                <Save size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((value) => !value)}
+                aria-label="Settings"
+              >
+                <Settings size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => document.documentElement.requestFullscreen?.()}
+                aria-label="Enter fullscreen"
+              >
+                <Maximize2 size={14} />
+              </button>
+            </div>
+          </header>
+
+          <div className="sd-host-strip">
+            <div className="sd-host-clock">
+              <span>{formatTime(masterPosition, true)}</span>
+              <small>HOST TIME</small>
+            </div>
+            <label>
+              <span>TEMPO</span>
+              <input
+                type="number"
+                min="40"
+                max="220"
+                value={masterBpm}
+                onChange={(event) => setMasterBpm(Number(event.target.value))}
+              />
+              <small>BPM</small>
+            </label>
+            <button type="button" onClick={tapTempo}>
+              TAP
+            </button>
+            <button
+              type="button"
+              className={advancedVisible ? 'is-active' : ''}
+              onClick={() => setAdvancedVisible((value) => !value)}
+            >
+              <SlidersHorizontal size={13} /> ADVANCED
+            </button>
+            <button type="button" className={midiActive ? 'is-active' : ''} onClick={toggleMidi}>
+              <Radio size={13} /> MIDI
+            </button>
+            <button
+              type="button"
+              className={microphoneActive ? 'is-active' : ''}
+              onClick={toggleMicrophone}
+            >
+              <Mic2 size={13} /> MIC
+            </button>
+            <button type="button" onClick={() => deckImportRef.current?.click()}>
+              <FolderOpen size={13} /> IMPORT SET
+            </button>
+            <span className="sd-save-state">
+              <i className={restored ? 'is-ready' : ''} />
+              {restored ? 'LOCAL SESSION' : 'RESTORING'}
+            </span>
+          </div>
+
+          {advancedVisible ? (
+            <div className="sd-advanced-strip">
+              <label>
+                BUFFER
+                <select>
+                  <option>Balanced 256</option>
+                  <option>Low latency 128</option>
+                  <option>Stable 512</option>
+                </select>
+              </label>
+              <label>
+                RATE
+                <select>
+                  <option>48 kHz</option>
+                  <option>44.1 kHz</option>
+                </select>
+              </label>
+              <label>
+                HEADROOM
+                <select>
+                  <option>-6 dB</option>
+                  <option>-3 dB</option>
+                  <option>-9 dB</option>
+                </select>
+              </label>
+              <button type="button" onClick={() => projectInputRef.current?.click()}>
+                OPEN PROJECT
+              </button>
+              <button type="button" onClick={newSession}>
+                NEW PROJECT
+              </button>
+            </div>
+          ) : null}
+
+          {settingsOpen ? (
+            <aside className="sd-settings-popover">
+              <header>
+                <strong>ENGINE SETTINGS</strong>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close settings"
+                >
+                  <X size={13} />
+                </button>
+              </header>
+              <label>
+                <span>Limiter</span>
+                <input
+                  type="checkbox"
+                  checked={limiter}
+                  onChange={(event) => setLimiter(event.target.checked)}
+                />
+              </label>
+              <label>
+                <span>AI master</span>
+                <input
+                  type="checkbox"
+                  checked={aiMaster}
+                  onChange={(event) => setAiMaster(event.target.checked)}
+                />
+              </label>
+              <label>
+                <span>Reverse crossfader</span>
+                <input
+                  type="checkbox"
+                  checked={crossfaderReverse}
+                  onChange={(event) => setCrossfaderReverse(event.target.checked)}
+                />
+              </label>
+              <button type="button" onClick={newSession}>
+                RESET SESSION
+              </button>
+            </aside>
+          ) : null}
+
+          {transfer ? (
+            <div className="sd-transfer-banner">
+              <KeyRound size={13} />
+              <span>
+                LEARN MAP: <strong>{transfer.trackName}</strong> / {transfer.key} / {transfer.bpm}{' '}
+                BPM
+              </span>
+              <button type="button" onClick={() => setTransfer(null)}>
+                <X size={12} />
+              </button>
+            </div>
+          ) : null}
+          <div className="sd-notice" role="status">
+            <span>{notice}</span>
+            <small>
+              {loadedDecks.length} DECKS / {loadedStems.length} STEMS / {recordings.length} TAKES
+            </small>
+          </div>
+
+          <main className={`sd-workspace sd-view-${activeView}`}>
+            {activeView === 'decks' ? (
+              <>
+                {deckConsole}
+                {masterConsole}
+                {arrangementConsole}
+                {padStrip}
+              </>
+            ) : null}
+
+            {activeView === 'library' ? (
+              <div className="sd-library-view">
+                <aside className="sd-library-sidebar">
+                  <strong>COLLECTIONS</strong>
+                  <button type="button" className="is-active">
+                    <Library size={13} /> Session audio <span>{loadedDecks.length}</span>
+                  </button>
+                  <button type="button">
+                    <ListMusic size={13} /> Stem lanes <span>{loadedStems.length}</span>
+                  </button>
+                  <button type="button">
+                    <Circle size={13} /> Recordings <span>{recordings.length}</span>
+                  </button>
+                  <button type="button" onClick={() => deckImportRef.current?.click()}>
+                    <Plus size={13} /> Import audio
+                  </button>
+                </aside>
+                <section className="sd-library-table">
+                  <header>
+                    <span>TRACK</span>
+                    <span>DECK</span>
+                    <span>BPM</span>
+                    <span>KEY</span>
+                    <span>TIME</span>
+                  </header>
+                  {loadedDecks.length ? (
+                    loadedDecks.map((deck) => (
+                      <button type="button" key={deck.id} onClick={() => setActiveView('decks')}>
+                        <span style={{ '--sd-accent': deck.accent }}>
+                          <i />
+                          {deck.title}
+                        </span>
+                        <strong>{deck.id}</strong>
+                        <span>{deck.bpm}</span>
+                        <span>{deck.keyName}</span>
+                        <span>{formatTime(deck.duration)}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="sd-library-empty">
+                      <FolderOpen size={22} />
+                      <strong>No tracks loaded</strong>
+                      <button type="button" onClick={() => deckImportRef.current?.click()}>
+                        IMPORT AUDIO SET
+                      </button>
+                    </div>
+                  )}
+                  {recordings.map((recording) => (
+                    <button
+                      type="button"
+                      key={recording.id}
+                      onClick={() => downloadRecording(recording)}
+                    >
+                      <span>
+                        <Circle size={10} />
+                        {recording.name}
+                      </span>
+                      <strong>REC</strong>
+                      <span>--</span>
+                      <span>--</span>
+                      <span>{Math.max(1, Math.round(recording.size / 1024))} KB</span>
+                    </button>
+                  ))}
+                </section>
+              </div>
+            ) : null}
+
+            {activeView === 'mixer' ? (
+              <div className="sd-mixer-view">
+                {decks.map((deck) => (
+                  <section
+                    className="sd-mixer-channel"
+                    key={deck.id}
+                    style={{ '--sd-accent': deck.accent }}
+                  >
+                    <header>
+                      <strong>DECK {deck.id}</strong>
+                      <span>{deck.title}</span>
+                    </header>
+                    <div className="sd-mixer-eq">
+                      {['high', 'mid', 'low'].map((band) => (
+                        <Knob
+                          key={band}
+                          label={band.toUpperCase()}
+                          value={deck.eq[band]}
+                          onChange={(value) =>
+                            changeDeck(deck.id, { eq: { ...deck.eq, [band]: value } })
+                          }
+                          accent={deck.accent}
+                        />
+                      ))}
+                      <Knob
+                        label="FILT"
+                        value={deck.filter}
+                        onChange={(filter) => changeDeck(deck.id, { filter })}
+                        accent={deck.accent}
+                      />
+                    </div>
+                    <div className="sd-mixer-fader">
+                      <VerticalFader
+                        label="CHANNEL"
+                        value={deck.fader}
+                        onChange={(fader) => changeDeck(deck.id, { fader })}
+                        accent={deck.accent}
+                      />
+                      <SegmentMeter
+                        level={deckMeters[deck.id] || 0}
+                        accent={deck.accent}
+                        label={deck.id}
+                      />
+                    </div>
+                    <div className="sd-channel-buttons">
+                      <button
+                        type="button"
+                        className={deck.muted ? 'is-active' : ''}
+                        onClick={() => changeDeck(deck.id, { muted: !deck.muted })}
+                      >
+                        MUTE
+                      </button>
+                      <button
+                        type="button"
+                        className={deck.solo ? 'is-active is-solo' : ''}
+                        onClick={() => changeDeck(deck.id, { solo: !deck.solo })}
+                      >
+                        SOLO
+                      </button>
+                    </div>
+                  </section>
+                ))}
+                {masterConsole}
+              </div>
+            ) : null}
+
+            {activeView === 'arranger' ? (
+              <div className="sd-arranger-view">
+                {arrangementConsole}
+                <section className="sd-piano-roll">
+                  <header>
+                    <strong>PIANO ROLL</strong>
+                    <span>{pianoNotes.length} NOTES</span>
+                    <button type="button" onClick={() => setPianoNotes([])}>
+                      CLEAR
+                    </button>
+                  </header>
+                  <div className="sd-piano-grid">
+                    {PIANO_ROWS.map((pitch) => (
+                      <div className="sd-piano-row" key={pitch}>
+                        <span className={pitch.includes('#') ? 'is-black' : ''}>{pitch}</span>
+                        {Array.from({ length: 16 }, (_, step) => {
+                          const active = pianoNotes.some(
+                            (note) => note.pitch === pitch && note.step === step
+                          );
+                          return (
+                            <button
+                              type="button"
+                              key={step}
+                              className={active ? 'is-note' : ''}
+                              onClick={() => togglePianoNote(pitch, step)}
+                              aria-label={`${pitch} step ${step + 1}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            ) : null}
+
+            {activeView === 'performance' ? (
+              <div className="sd-performance-view">
+                <div className="sd-performance-head">
+                  <div>
+                    <small>BANK A</small>
+                    <strong>PERFORMANCE</strong>
+                  </div>
+                  <span>KEYBOARD 1-8 / MIDI {midiActive ? 'CONNECTED' : 'OFF'}</span>
+                </div>
+                {padStrip}
+                {masterConsole}
+              </div>
+            ) : null}
+          </main>
+
+          <input
+            ref={projectInputRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={(event) => {
+              void importSession(event.target.files?.[0]);
+              event.target.value = '';
+            }}
+          />
+          <input
+            ref={deckImportRef}
+            type="file"
+            accept="audio/*"
+            multiple
+            hidden
+            onChange={(event) => {
+              void importDeckSet([...event.target.files]);
+              event.target.value = '';
+            }}
+          />
         </div>
       </section>
     </>

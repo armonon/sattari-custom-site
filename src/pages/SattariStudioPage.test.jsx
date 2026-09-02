@@ -11,10 +11,18 @@ const engineMethods = vi.hoisted(() => ({
   setLimiter: vi.fn(),
   ensureDeck: vi.fn(),
   setDeckGain: vi.fn(),
+  setDeckFader: vi.fn(),
+  setDeckSide: vi.fn(),
+  setDeckEq: vi.fn(),
+  setDeckFilter: vi.fn(),
+  setDeckFx: vi.fn(),
+  setDeckPitch: vi.fn(),
+  setStemPitch: vi.fn(),
+  setLaneState: vi.fn(),
   setPlaybackRate: vi.fn(),
-  setLoop: vi.fn(),
+  setLoopRegion: vi.fn(),
   getDeckPosition: vi.fn(() => 0),
-  getMeterLevel: vi.fn(() => 0),
+  getDeckMeterLevel: vi.fn(() => 0),
   dispose: vi.fn(),
 }));
 
@@ -46,11 +54,12 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
 
-    expect(screen.getByRole('heading', { name: 'Studio' })).toBeInTheDocument();
-    expect(screen.getAllByText('Empty deck')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: 'StemDeck PRO' })).toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(4);
+    expect(screen.getAllByText('Empty deck').length).toBeGreaterThanOrEqual(4);
     expect(screen.queryByText('Midnight Drive')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Play loaded decks' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Play all decks' })).toBeDisabled();
 
-    await waitFor(() => expect(screen.getByText('Saved locally')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('LOCAL SESSION')).toBeInTheDocument());
   }, 10000);
 });
