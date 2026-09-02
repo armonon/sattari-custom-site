@@ -3,7 +3,6 @@ import {
   Circle,
   Disc3,
   FolderOpen,
-  Grid3X3,
   KeyRound,
   Library,
   ListMusic,
@@ -75,7 +74,7 @@ const VIEWS = [
   ['decks', 'DECKS', Disc3],
   ['mixer', 'MIXER', SlidersHorizontal],
   ['arranger', 'ARRANGER', ListMusic],
-  ['performance', 'PERFORMANCE', Grid3X3],
+  ['files', 'FILES', FolderOpen],
 ];
 
 const PIANO_ROWS = ['B4', 'A#4', 'A4', 'G#4', 'G4', 'F#4', 'F4', 'E4', 'D#4', 'D4', 'C#4', 'C4'];
@@ -1024,68 +1023,96 @@ export default function SattariStudioPage() {
 
   const masterConsole = (
     <section className="sd-master-console" aria-label="StemDeck master section">
-      <div className="sd-sync-module">
-        <span className="sd-module-title">SYNC</span>
-        <div className="sd-sync-buttons">
+      <div className="sd-mixer-module">
+        <span className="sd-module-title">MIXER</span>
+        <div className="sd-power-row">
           <button type="button" onClick={syncAll}>
-            SYNC ALL
+            BPM SYNC
           </button>
           <button type="button" onClick={syncKey}>
-            <KeyRound size={12} /> SYNC KEY
-          </button>
-          <button type="button" onClick={startAutomix} className={automixStatus ? 'is-active' : ''}>
-            AUTO MIX
-          </button>
-        </div>
-        <small>{automixStatus || `MASTER ${masterDeckId}`}</small>
-      </div>
-
-      <div className="sd-xf-module">
-        <div className="sd-deck-meter-pair">
-          {decks.map((deck) => (
-            <SegmentMeter
-              key={deck.id}
-              level={deckMeters[deck.id] || 0}
-              accent={deck.accent}
-              label={deck.id}
-              compact
-            />
-          ))}
-        </div>
-        <div className="sd-crossfader-labels">
-          <span>A / C</span>
-          <strong>CROSSFADER</strong>
-          <span>B / D</span>
-        </div>
-        <input
-          className="sd-crossfader"
-          type="range"
-          min="0"
-          max="100"
-          value={crossfader}
-          onChange={(event) => setCrossfader(Number(event.target.value))}
-          aria-label="Crossfader"
-        />
-        <div className="sd-xf-options">
-          <select
-            value={crossfaderCurve}
-            onChange={(event) => setCrossfaderCurve(event.target.value)}
-            aria-label="Crossfader curve"
-          >
-            <option>Smooth</option>
-            <option>Sharp</option>
-            <option>Linear</option>
-          </select>
-          <button type="button" onClick={() => setCrossfader(50)}>
-            CENTER
+            KEY SYNC
           </button>
           <button
             type="button"
-            className={crossfaderReverse ? 'is-active' : ''}
-            onClick={() => setCrossfaderReverse((value) => !value)}
+            className={aiMaster ? 'is-active' : ''}
+            onClick={() => setAiMaster((value) => !value)}
           >
-            REV
+            AI MASTER
           </button>
+          <select
+            value={aiMasterMode}
+            onChange={(event) => setAiMasterMode(event.target.value)}
+            aria-label="AI master target"
+          >
+            <option>Streaming -14</option>
+            <option>Club -9</option>
+            <option>Broadcast -16</option>
+          </select>
+          <button
+            type="button"
+            className={limiter ? 'is-active' : ''}
+            onClick={() => setLimiter((value) => !value)}
+          >
+            LIMIT
+          </button>
+        </div>
+        <div className="sd-xf-workarea">
+          <div className="sd-meter-stack">
+            {[decks[0], decks[2]].map((deck) => (
+              <SegmentMeter
+                key={deck.id}
+                level={deckMeters[deck.id] || 0}
+                accent={deck.accent}
+                label={deck.id}
+                compact
+              />
+            ))}
+          </div>
+          <div className="sd-xf-center">
+            <div className="sd-xf-options">
+              <select
+                value={crossfaderCurve}
+                onChange={(event) => setCrossfaderCurve(event.target.value)}
+                aria-label="Crossfader curve"
+              >
+                <option>Smooth</option>
+                <option>Sharp</option>
+                <option>Linear</option>
+              </select>
+              <button
+                type="button"
+                className={crossfaderReverse ? 'is-active' : ''}
+                onClick={() => setCrossfaderReverse((value) => !value)}
+              >
+                REV
+              </button>
+            </div>
+            <div className="sd-crossfader-labels">
+              <span>A / C</span>
+              <strong>CROSSFADER</strong>
+              <span>B / D</span>
+            </div>
+            <input
+              className="sd-crossfader"
+              type="range"
+              min="0"
+              max="100"
+              value={crossfader}
+              onChange={(event) => setCrossfader(Number(event.target.value))}
+              aria-label="Crossfader"
+            />
+          </div>
+          <div className="sd-meter-stack">
+            {[decks[1], decks[3]].map((deck) => (
+              <SegmentMeter
+                key={deck.id}
+                level={deckMeters[deck.id] || 0}
+                accent={deck.accent}
+                label={deck.id}
+                compact
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1128,30 +1155,27 @@ export default function SattariStudioPage() {
             accent="#edf0f4"
           />
           <SegmentMeter level={masterMeter} accent="#62f5c8" label="OUT" />
-          <div className="sd-master-switches">
-            <button
-              type="button"
-              className={limiter ? 'is-active' : ''}
-              onClick={() => setLimiter((value) => !value)}
-            >
-              LIMIT
-            </button>
-            <button
-              type="button"
-              className={aiMaster ? 'is-active' : ''}
-              onClick={() => setAiMaster((value) => !value)}
-            >
-              AI MASTER
-            </button>
-            <select
-              value={aiMasterMode}
-              onChange={(event) => setAiMasterMode(event.target.value)}
-              aria-label="AI master target"
-            >
-              <option>Streaming -14</option>
-              <option>Club -9</option>
-              <option>Broadcast -16</option>
-            </select>
+          <div className="sd-tempo-column">
+            <div className="sd-global-tempo">
+              <small>GLOBAL TEMPO</small>
+              <strong>{masterBpm.toFixed(1)}</strong>
+              <i />
+            </div>
+            <div>
+              <button type="button" onClick={tapTempo}>
+                TAP
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDecks((current) =>
+                    current.map((deck) => ({ ...deck, keyLock: !deck.keyLock }))
+                  )
+                }
+              >
+                KEY LOCK
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1165,34 +1189,55 @@ export default function SattariStudioPage() {
           <strong>ARRANGEMENT CAPTURE</strong>
           <span>{formatTime(masterPosition, true)}</span>
         </div>
-        <div className="sd-edit-tools">
-          <button type="button" aria-label="Undo">
-            <Undo2 size={13} />
+        <div className="sd-arrangement-transport">
+          <button type="button" onClick={toggleGlobalTransport} aria-label="Launch arrangement">
+            &gt;&gt;&gt;
           </button>
-          <button type="button" aria-label="Redo">
-            <Redo2 size={13} />
-          </button>
-          <button
-            type="button"
-            className={razorActive ? 'is-active' : ''}
-            onClick={() => setRazorActive((value) => !value)}
-          >
-            <Scissors size={13} /> RAZOR
+          <button type="button" onClick={toggleGlobalTransport} aria-label="Play arrangement">
+            {anyPlaying ? <Pause size={12} /> : <Play size={12} />}
           </button>
           <button
             type="button"
-            className={snapActive ? 'is-active' : ''}
-            onClick={() => setSnapActive((value) => !value)}
+            className={captureActive ? 'is-recording' : ''}
+            onClick={toggleCapture}
+            aria-label="Record arrangement"
           >
-            SNAP
+            <Circle size={11} fill="currentColor" />
           </button>
           <button
             type="button"
             className={arrangementLoop ? 'is-active' : ''}
             onClick={() => setArrangementLoop((value) => !value)}
+            aria-label="Loop arrangement"
           >
             LOOP
           </button>
+        </div>
+        <div className="sd-edit-tools">
+          {advancedVisible ? (
+            <>
+              <button type="button" aria-label="Undo">
+                <Undo2 size={13} />
+              </button>
+              <button type="button" aria-label="Redo">
+                <Redo2 size={13} />
+              </button>
+              <button
+                type="button"
+                className={razorActive ? 'is-active' : ''}
+                onClick={() => setRazorActive((value) => !value)}
+              >
+                <Scissors size={13} />
+              </button>
+              <button
+                type="button"
+                className={snapActive ? 'is-active' : ''}
+                onClick={() => setSnapActive((value) => !value)}
+              >
+                SNAP
+              </button>
+            </>
+          ) : null}
           <button
             type="button"
             onClick={() => setArrangementZoom((value) => Math.max(0.6, value - 0.2))}
@@ -1206,6 +1251,9 @@ export default function SattariStudioPage() {
             aria-label="Zoom in"
           >
             <ZoomIn size={13} />
+          </button>
+          <button type="button" onClick={() => setArrangementZoom(1)} aria-label="Fit arrangement">
+            FIT
           </button>
         </div>
       </header>
@@ -1339,17 +1387,6 @@ export default function SattariStudioPage() {
       <section className="stemdeck-web">
         <div className="sd-app-frame">
           <header className="sd-command-bar">
-            <div className="sd-brand-block">
-              <span className="sd-brand-mark">
-                <i />
-                <i />
-                <i />
-              </span>
-              <div>
-                <small>SATTARI STUDIO</small>
-                <h1>StemDeck PRO</h1>
-              </div>
-            </div>
             <nav className="sd-view-nav" aria-label="StemDeck workspaces">
               {VIEWS.map(([value, label, Icon]) => (
                 <button
@@ -1381,47 +1418,17 @@ export default function SattariStudioPage() {
                 <Disc3 size={14} />
                 <span>AUTO</span>
               </button>
+              <small>{automixStatus}</small>
             </div>
-            <label className="sd-session-field">
-              <span>SESSION</span>
-              <input value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
-            </label>
-            <div className="sd-system-actions">
-              <button
-                type="button"
-                onClick={toggleCapture}
-                className={captureActive ? 'is-recording' : ''}
-                aria-label={captureActive ? 'Stop recording' : 'Start recording'}
-              >
-                <Circle size={13} fill="currentColor" />
-              </button>
-              <button type="button" onClick={exportSession} aria-label="Save project">
-                <Save size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setSettingsOpen((value) => !value)}
-                aria-label="Settings"
-              >
-                <Settings size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => document.documentElement.requestFullscreen?.()}
-                aria-label="Enter fullscreen"
-              >
-                <Maximize2 size={14} />
-              </button>
+            <div className="sd-title-block">
+              <h1>StemDeck PRO</h1>
+              <small>
+                <i className={restored ? 'is-ready' : ''} />
+                {restored ? 'LOCAL SESSION' : 'RESTORING'}
+              </small>
             </div>
-          </header>
-
-          <div className="sd-host-strip">
-            <div className="sd-host-clock">
-              <span>{formatTime(masterPosition, true)}</span>
-              <small>HOST TIME</small>
-            </div>
-            <label>
-              <span>TEMPO</span>
+            <label className="sd-tempo-chip">
+              <span>HOST TEMPO</span>
               <input
                 type="number"
                 min="40"
@@ -1431,37 +1438,55 @@ export default function SattariStudioPage() {
               />
               <small>BPM</small>
             </label>
-            <button type="button" onClick={tapTempo}>
-              TAP
-            </button>
-            <button
-              type="button"
-              className={advancedVisible ? 'is-active' : ''}
-              onClick={() => setAdvancedVisible((value) => !value)}
-            >
-              <SlidersHorizontal size={13} /> ADVANCED
-            </button>
-            <button type="button" className={midiActive ? 'is-active' : ''} onClick={toggleMidi}>
-              <Radio size={13} /> MIDI
-            </button>
-            <button
-              type="button"
-              className={microphoneActive ? 'is-active' : ''}
-              onClick={toggleMicrophone}
-            >
-              <Mic2 size={13} /> MIC
-            </button>
-            <button type="button" onClick={() => deckImportRef.current?.click()}>
-              <FolderOpen size={13} /> IMPORT SET
-            </button>
-            <span className="sd-save-state">
-              <i className={restored ? 'is-ready' : ''} />
-              {restored ? 'LOCAL SESSION' : 'RESTORING'}
-            </span>
-          </div>
+            <label className="sd-session-field">
+              <span>USER PRESETS</span>
+              <input value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
+            </label>
+            <div className="sd-system-actions">
+              <button
+                type="button"
+                onClick={exportSession}
+                className="sd-save-preset"
+                aria-label="Save preset"
+              >
+                <Save size={13} /> <span>SAVE PRESET</span>
+              </button>
+              <button
+                type="button"
+                className={advancedVisible ? 'is-active sd-tools-button' : 'sd-tools-button'}
+                onClick={() => setAdvancedVisible((value) => !value)}
+              >
+                TOOLS
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((value) => !value)}
+                aria-label="Settings"
+              >
+                <Settings size={14} />
+              </button>
+            </div>
+          </header>
 
           {advancedVisible ? (
             <div className="sd-advanced-strip">
+              <span className="sd-alpha-guide">
+                BROWSER APP / LOAD OR DROP A FULL MIX / RECORD THE MASTER / RELOAD BOUNCES INTO
+                DECKS
+              </span>
+              <button type="button" className={midiActive ? 'is-active' : ''} onClick={toggleMidi}>
+                <Radio size={13} /> MIDI
+              </button>
+              <button
+                type="button"
+                className={microphoneActive ? 'is-active' : ''}
+                onClick={toggleMicrophone}
+              >
+                <Mic2 size={13} /> MIC
+              </button>
+              <button type="button" onClick={() => deckImportRef.current?.click()}>
+                <FolderOpen size={13} /> IMPORT SET
+              </button>
               <label>
                 BUFFER
                 <select>
@@ -1490,6 +1515,9 @@ export default function SattariStudioPage() {
               </button>
               <button type="button" onClick={newSession}>
                 NEW PROJECT
+              </button>
+              <button type="button" onClick={() => document.documentElement.requestFullscreen?.()}>
+                <Maximize2 size={13} /> FULLSCREEN
               </button>
             </div>
           ) : null}
@@ -1548,7 +1576,11 @@ export default function SattariStudioPage() {
               </button>
             </div>
           ) : null}
-          <div className="sd-notice" role="status">
+          <div
+            className="sd-notice"
+            role="status"
+            data-visible={notice !== 'StemDeck Pro browser engine ready.'}
+          >
             <span>{notice}</span>
             <small>
               {loadedDecks.length} DECKS / {loadedStems.length} STEMS / {recordings.length} TAKES
@@ -1734,17 +1766,58 @@ export default function SattariStudioPage() {
               </div>
             ) : null}
 
-            {activeView === 'performance' ? (
-              <div className="sd-performance-view">
-                <div className="sd-performance-head">
+            {activeView === 'files' ? (
+              <div className="sd-files-view">
+                <header>
                   <div>
-                    <small>BANK A</small>
-                    <strong>PERFORMANCE</strong>
+                    <small>PROJECT BROWSER</small>
+                    <strong>{sessionName}</strong>
                   </div>
-                  <span>KEYBOARD 1-8 / MIDI {midiActive ? 'CONNECTED' : 'OFF'}</span>
+                  <span>{restored ? 'LOCAL SESSION READY' : 'RESTORING SESSION'}</span>
+                </header>
+                <div className="sd-file-actions">
+                  <button type="button" onClick={() => deckImportRef.current?.click()}>
+                    <FolderOpen size={16} />
+                    <span>IMPORT AUDIO SET</span>
+                    <small>Load up to four tracks into Decks A-D</small>
+                  </button>
+                  <button type="button" onClick={() => projectInputRef.current?.click()}>
+                    <ListMusic size={16} />
+                    <span>OPEN PROJECT</span>
+                    <small>Restore a StemDeck arrangement file</small>
+                  </button>
+                  <button type="button" onClick={exportSession}>
+                    <Save size={16} />
+                    <span>SAVE PROJECT</span>
+                    <small>Export decks, mixer state, pads, and notes</small>
+                  </button>
+                  <button type="button" onClick={newSession}>
+                    <Plus size={16} />
+                    <span>NEW PROJECT</span>
+                    <small>Open a clean four-deck session</small>
+                  </button>
                 </div>
-                {padStrip}
-                {masterConsole}
+                <section className="sd-files-list">
+                  <header>
+                    <span>LOCAL RECORDINGS</span>
+                    <span>{recordings.length} FILES</span>
+                  </header>
+                  {recordings.length ? (
+                    recordings.map((recording) => (
+                      <button
+                        type="button"
+                        key={recording.id}
+                        onClick={() => downloadRecording(recording)}
+                      >
+                        <Circle size={10} />
+                        <strong>{recording.name}</strong>
+                        <span>{Math.max(1, Math.round(recording.size / 1024))} KB</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p>No master recordings yet.</p>
+                  )}
+                </section>
               </div>
             ) : null}
           </main>
