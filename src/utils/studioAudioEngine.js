@@ -8,9 +8,36 @@ function gainFromPercent(value) {
   return Math.pow(clamp(value, 0, 100) / 100, 1.35);
 }
 
+export function crossfaderGains(value, curve = 'Smooth') {
+  const position = clamp(Number(value) || 0, 0, 100) / 100;
+  if (curve === 'Linear') return { left: 1 - position, right: position };
+
+  const exponent = curve === 'Sharp' ? 0.32 : 1;
+  return {
+    left: Math.pow(Math.cos(position * Math.PI * 0.5), exponent),
+    right: Math.pow(Math.sin(position * Math.PI * 0.5), exponent),
+  };
+}
+
+export function masterAssistProfile(enabled, mode = 'Streaming -14') {
+  const profiles = {
+    'Streaming -14': { threshold: -16, ratio: 2.2, attack: 0.012, release: 0.2 },
+    'Club -9': { threshold: -12, ratio: 3.4, attack: 0.006, release: 0.14 },
+    'Broadcast -16': { threshold: -20, ratio: 2.8, attack: 0.018, release: 0.28 },
+  };
+  const profile = profiles[mode] || profiles['Streaming -14'];
+  return enabled ? profile : { ...profile, threshold: -0.01, ratio: 1 };
+}
+
 export class StudioAudioEngine {
   constructor() {
     this.master = new Tone.Gain(0.82);
+    this.masterCompressor = new Tone.Compressor({
+      threshold: 0,
+      ratio: 1,
+      attack: 0.01,
+      release: 0.18,
+    });
     this.limiter = new Tone.Limiter(-1);
     this.limitedGain = new Tone.Gain(1);
     this.dryGain = new Tone.Gain(0);
@@ -21,6 +48,7 @@ export class StudioAudioEngine {
     this.decks = new Map();
     this.padPlayers = new Map();
     this.crossfader = 50;
+    this.crossfaderCurve = 'Smooth';
     this.padSynth = new Tone.Synth({
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.004, decay: 0.12, sustain: 0.08, release: 0.16 },
@@ -42,8 +70,9 @@ export class StudioAudioEngine {
       resonance: 4200,
     }).connect(this.master);
 
-    this.master.connect(this.limiter);
-    this.master.connect(this.dryGain);
+    this.master.connect(this.masterCompressor);
+    this.masterCompressor.connect(this.limiter);
+    this.masterCompressor.connect(this.dryGain);
     this.limiter.connect(this.limitedGain);
     this.limitedGain.connect(this.output);
     this.dryGain.connect(this.output);
@@ -87,6 +116,7 @@ export class StudioAudioEngine {
         offset: 0,
         playbackRate: 1,
         pitch: 0,
+        keyLock: true,
         looping: false,
         loopStart: 0,
         loopEnd: 0,
@@ -103,22 +133,45 @@ export class StudioAudioEngine {
     if (existing) {
       existing.player.stop();
       existing.player.dispose();
+      existing.filterNode.dispose();
+      existing.delayNode.dispose();
       existing.gain.dispose();
     }
 
     const laneGain = new Tone.Gain(1).connect(deck.input);
-    const player = new Tone.Player({ fadeIn: 0.008, fadeOut: 0.015 }).connect(laneGain);
-    await player.load(url);
-    player.playbackRate = this.getLanePlaybackRate(deck);
+    const laneDelay = new Tone.FeedbackDelay({
+      delayTime: '8n',
+      feedback: 0.22,
+      wet: 0,
+    }).connect(laneGain);
+    const laneFilter = new Tone.Filter({
+      frequency: 20000,
+      type: 'lowpass',
+      rolloff: -24,
+    }).connect(laneDelay);
+    const player = new Tone.GrainPlayer({
+      fadeIn: 0.008,
+      fadeOut: 0.015,
+      grainSize: 0.085,
+      overlap: 0.035,
+    }).connect(laneFilter);
+    await player.buffer.load(url);
+    player.playbackRate = deck.playbackRate;
+    player.detune = deck.pitch * 100;
     deck.lanes.set(laneId, {
       player,
       gain: laneGain,
+      filterNode: laneFilter,
+      delayNode: laneDelay,
       level: 76,
       muted: false,
       solo: false,
       pitch: 0,
+      filter: 50,
+      send: 0,
       duration: player.buffer.duration,
     });
+    this.applyPlaybackRates(deck);
     this.applyLaneMix(deckId);
     this.applyLoop(deckId);
     return player.buffer.duration;
@@ -130,6 +183,8 @@ export class StudioAudioEngine {
     if (!lane) return;
     lane.player.stop();
     lane.player.dispose();
+    lane.filterNode.dispose();
+    lane.delayNode.dispose();
     lane.gain.dispose();
     deck.lanes.delete(laneId);
   }
@@ -143,8 +198,21 @@ export class StudioAudioEngine {
     this.dryGain.gain.rampTo(enabled ? 0 : 1, 0.04);
   }
 
+  setMasterAssist(enabled, mode = 'Streaming -14') {
+    const profile = masterAssistProfile(enabled, mode);
+    this.masterCompressor.threshold.value = profile.threshold;
+    this.masterCompressor.ratio.rampTo(profile.ratio, 0.08);
+    this.masterCompressor.attack.rampTo(profile.attack, 0.08);
+    this.masterCompressor.release.rampTo(profile.release, 0.08);
+  }
+
   setCrossfader(value) {
     this.crossfader = value;
+    this.decks.forEach((_, deckId) => this.updateDeckOutput(deckId));
+  }
+
+  setCrossfaderCurve(curve) {
+    this.crossfaderCurve = ['Smooth', 'Sharp', 'Linear'].includes(curve) ? curve : 'Smooth';
     this.decks.forEach((_, deckId) => this.updateDeckOutput(deckId));
   }
 
@@ -169,13 +237,8 @@ export class StudioAudioEngine {
   updateDeckOutput(deckId) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    const normalized = clamp(this.crossfader / 100, 0, 1);
-    const sideGain =
-      deck.side === 'left'
-        ? Math.cos(normalized * Math.PI * 0.5)
-        : deck.side === 'right'
-          ? Math.sin(normalized * Math.PI * 0.5)
-          : 1;
+    const gains = crossfaderGains(this.crossfader, this.crossfaderCurve);
+    const sideGain = deck.side === 'left' ? gains.left : deck.side === 'right' ? gains.right : 1;
     deck.output.gain.rampTo(
       gainFromPercent(deck.gain) * gainFromPercent(deck.fader) * sideGain,
       0.025
@@ -217,8 +280,31 @@ export class StudioAudioEngine {
     const lane = deck?.lanes.get(laneId);
     if (!deck || !lane) return;
     Object.assign(lane, updates);
-    if ('pitch' in updates) lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
+    if ('pitch' in updates) this.applyPlaybackRates(deck);
+    if ('filter' in updates || 'send' in updates) this.applyLaneFx(lane);
     this.applyLaneMix(deckId);
+  }
+
+  setLaneFx(deckId, laneId, updates) {
+    const lane = this.decks.get(deckId)?.lanes.get(laneId);
+    if (!lane) return;
+    Object.assign(lane, updates);
+    this.applyLaneFx(lane);
+  }
+
+  applyLaneFx(lane) {
+    const filter = clamp(lane.filter ?? 50, 0, 100);
+    if (filter < 48) {
+      lane.filterNode.type = 'lowpass';
+      lane.filterNode.frequency.rampTo(70 * Math.pow(20000 / 70, filter / 48), 0.035);
+    } else if (filter > 52) {
+      lane.filterNode.type = 'highpass';
+      lane.filterNode.frequency.rampTo(20 * Math.pow(7500 / 20, (filter - 52) / 48), 0.035);
+    } else {
+      lane.filterNode.type = 'lowpass';
+      lane.filterNode.frequency.rampTo(20000, 0.035);
+    }
+    lane.delayNode.wet.rampTo(clamp(lane.send ?? 0, 0, 100) / 100, 0.04);
   }
 
   applyLaneMix(deckId) {
@@ -254,21 +340,26 @@ export class StudioAudioEngine {
     this.applyPlaybackRates(deck);
   }
 
+  setDeckKeyLock(deckId, enabled) {
+    const deck = this.decks.get(deckId);
+    if (!deck) return;
+    deck.keyLock = Boolean(enabled);
+    this.applyPlaybackRates(deck);
+  }
+
   setStemPitch(deckId, laneId, semitones) {
     const deck = this.decks.get(deckId);
     const lane = deck?.lanes.get(laneId);
     if (!deck || !lane) return;
     lane.pitch = clamp(semitones, -12, 12);
-    lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
-  }
-
-  getLanePlaybackRate(deck, lane = null) {
-    return clamp(deck.playbackRate * Math.pow(2, (deck.pitch + (lane?.pitch || 0)) / 12), 0.25, 4);
+    this.applyPlaybackRates(deck);
   }
 
   applyPlaybackRates(deck) {
+    const transportPitch = deck.keyLock ? 0 : 12 * Math.log2(Math.max(0.01, deck.playbackRate));
     deck.lanes.forEach((lane) => {
-      lane.player.playbackRate = this.getLanePlaybackRate(deck, lane);
+      lane.player.playbackRate = deck.playbackRate;
+      lane.player.detune = (deck.pitch + (lane.pitch || 0) + transportPitch) * 100;
     });
   }
 
@@ -365,8 +456,7 @@ export class StudioAudioEngine {
     const deck = this.decks.get(deckId);
     if (!deck) return 0;
     let position = deck.offset;
-    if (deck.playing)
-      position += Math.max(0, Tone.now() - deck.startedAt) * this.getLanePlaybackRate(deck);
+    if (deck.playing) position += Math.max(0, Tone.now() - deck.startedAt) * deck.playbackRate;
     if (deck.looping && deck.loopEnd > deck.loopStart) {
       position = deck.loopStart + ((position - deck.loopStart) % (deck.loopEnd - deck.loopStart));
     }
@@ -446,6 +536,8 @@ export class StudioAudioEngine {
       deck.lanes.forEach((lane) => {
         lane.player.stop();
         lane.player.dispose();
+        lane.filterNode.dispose();
+        lane.delayNode.dispose();
         lane.gain.dispose();
       });
       deck.input.dispose();
@@ -470,6 +562,7 @@ export class StudioAudioEngine {
     this.padNoise.dispose();
     this.padHat.dispose();
     this.meter.dispose();
+    this.masterCompressor.dispose();
     this.limiter.dispose();
     this.limitedGain.dispose();
     this.dryGain.dispose();

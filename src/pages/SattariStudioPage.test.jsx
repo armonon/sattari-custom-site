@@ -7,8 +7,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 const engineMethods = vi.hoisted(() => ({
   setCrossfader: vi.fn(),
+  setCrossfaderCurve: vi.fn(),
   setMasterLevel: vi.fn(),
   setLimiter: vi.fn(),
+  setMasterAssist: vi.fn(),
   ensureDeck: vi.fn(),
   setDeckGain: vi.fn(),
   setDeckFader: vi.fn(),
@@ -17,8 +19,10 @@ const engineMethods = vi.hoisted(() => ({
   setDeckFilter: vi.fn(),
   setDeckFx: vi.fn(),
   setDeckPitch: vi.fn(),
+  setDeckKeyLock: vi.fn(),
   setStemPitch: vi.fn(),
   setLaneState: vi.fn(),
+  setLaneFx: vi.fn(),
   setPlaybackRate: vi.fn(),
   setLoopRegion: vi.fn(),
   getDeckPosition: vi.fn(() => 0),
@@ -36,7 +40,9 @@ vi.mock('../utils/studioAudioEngine', () => ({
 
 vi.mock('../utils/audioProjectStore', () => ({
   clearStudioSession: vi.fn(),
+  exportAudioAssets: vi.fn(async () => []),
   getAudioAsset: vi.fn(),
+  importAudioAssets: vi.fn(),
   loadStudioSession: vi.fn(() => null),
   putAudioAsset: vi.fn(),
   saveStudioSession: vi.fn(),
@@ -54,11 +60,18 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
 
-    expect(screen.getByRole('heading', { name: 'StemDeck PRO' })).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(4);
-    expect(screen.getAllByText('Empty deck').length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByRole('heading', { name: 'Sattari Studio' })).toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+    expect(screen.getAllByText('Empty deck').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('Midnight Drive')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play all decks' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Record live set' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'SETS' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'PERFORM' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'REPLAY' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Project key')).toHaveValue('Off');
+    expect(screen.getByLabelText('Master output status')).toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
 
     await waitFor(() => expect(screen.getByText('LOCAL SESSION')).toBeInTheDocument());
   }, 10000);

@@ -33,7 +33,9 @@ import {
 import { analyzeAudioFile } from '../utils/audioAnalysis';
 import {
   clearStudioSession,
+  exportAudioAssets,
   getAudioAsset,
+  importAudioAssets,
   loadStudioSession,
   putAudioAsset,
   saveStudioSession,
@@ -43,10 +45,10 @@ import { StudioAudioEngine } from '../utils/studioAudioEngine';
 import '../styles-stemdeck-web.css';
 
 const DECK_SEEDS = [
-  { id: 'A', accent: '#26d9ff', side: 'left' },
-  { id: 'B', accent: '#62f5c8', side: 'right' },
-  { id: 'C', accent: '#9b7bff', side: 'left' },
-  { id: 'D', accent: '#ffb020', side: 'right' },
+  { id: 'A', accent: '#4ad9c4', side: 'left' },
+  { id: 'B', accent: '#4a9eff', side: 'right' },
+  { id: 'C', accent: '#b47aff', side: 'left' },
+  { id: 'D', accent: '#e8a54a', side: 'right' },
 ];
 
 const LANE_DEFINITIONS = [
@@ -70,12 +72,12 @@ const PAD_SEEDS = [
 ];
 
 const VIEWS = [
-  ['library', 'LIBRARY', Library],
-  ['decks', 'DECKS', Disc3],
-  ['mixer', 'MIXER', SlidersHorizontal],
-  ['arranger', 'ARRANGER', ListMusic],
-  ['files', 'FILES', FolderOpen],
+  ['library', 'SETS', Library],
+  ['decks', 'PERFORM', Disc3],
+  ['arranger', 'REPLAY', ListMusic],
 ];
+
+const PROJECT_KEYS = ['Off', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
 const PIANO_ROWS = ['B4', 'A#4', 'A4', 'G#4', 'G4', 'F#4', 'F4', 'E4', 'D#4', 'D4', 'C#4', 'C4'];
 
@@ -99,6 +101,7 @@ function createDeck(seed) {
     cfSide: seed.side,
     title: 'Empty deck',
     keyName: '--',
+    sourceKeyName: '--',
     bpm: 96,
     beatOffset: 0,
     downbeat: 1,
@@ -144,6 +147,7 @@ function normalizeDeck(saved, index) {
     ...saved,
     playing: false,
     accent: base.accent,
+    sourceKeyName: saved.sourceKeyName || saved.keyName || base.sourceKeyName,
     eq: { ...base.eq, ...saved.eq },
     fx: { ...base.fx, ...saved.fx },
     hotCues: Array.from({ length: 8 }, (_, cueIndex) => saved.hotCues?.[cueIndex] ?? null),
@@ -189,6 +193,35 @@ function stemIdForFile(file, fallbackIndex) {
   return STEM_IDS.find((stemId) => name.includes(stemId)) || STEM_IDS[fallbackIndex % 4];
 }
 
+function keyPitchClass(keyName) {
+  const root = String(keyName).match(/^[A-G](?:#|b)?/)?.[0];
+  const pitchClasses = {
+    C: 0,
+    'C#': 1,
+    Db: 1,
+    D: 2,
+    'D#': 3,
+    Eb: 3,
+    E: 4,
+    F: 5,
+    'F#': 6,
+    Gb: 6,
+    G: 7,
+    'G#': 8,
+    Ab: 8,
+    A: 9,
+    'A#': 10,
+    Bb: 10,
+    B: 11,
+  };
+  return root ? pitchClasses[root] : undefined;
+}
+
+function nearestSemitoneShift(from, to) {
+  const distance = ((to - from + 18) % 12) - 6;
+  return distance === -6 ? 6 : distance;
+}
+
 function buildMidiPattern(kind, bpm) {
   if (kind === 'drums') {
     return Array.from({ length: 16 }, (_, step) => ({
@@ -223,6 +256,7 @@ export default function SattariStudioPage() {
   const [crossfaderReverse, setCrossfaderReverse] = useState(false);
   const [masterLevel, setMasterLevel] = useState(82);
   const [masterBpm, setMasterBpm] = useState(96);
+  const [projectKey, setProjectKey] = useState('Off');
   const [masterFx, setMasterFx] = useState({ x: 28, y: 44 });
   const [masterDeckId, setMasterDeckId] = useState('A');
   const [activePad, setActivePad] = useState(null);
@@ -234,7 +268,7 @@ export default function SattariStudioPage() {
   const [aiMasterMode, setAiMasterMode] = useState('Streaming -14');
   const [microphoneActive, setMicrophoneActive] = useState(false);
   const [recordings, setRecordings] = useState([]);
-  const [notice, setNotice] = useState('StemDeck Pro browser engine ready.');
+  const [notice, setNotice] = useState('Sattari Studio browser engine ready.');
   const [restored, setRestored] = useState(false);
   const [activeView, setActiveView] = useState('decks');
   const [advancedVisible, setAdvancedVisible] = useState(false);
@@ -246,6 +280,7 @@ export default function SattariStudioPage() {
   const [arrangementZoom, setArrangementZoom] = useState(1);
   const [pianoNotes, setPianoNotes] = useState([]);
   const [automixStatus, setAutomixStatus] = useState('');
+  const [focusedDeckId, setFocusedDeckId] = useState('A');
 
   const getEngine = useCallback(() => {
     if (!engineRef.current) engineRef.current = new StudioAudioEngine();
@@ -275,6 +310,7 @@ export default function SattariStudioPage() {
         engine.setDeckFilter(deck.id, deck.filter);
         engine.setDeckFx(deck.id, deck.fx);
         engine.setDeckPitch(deck.id, deck.pitch);
+        engine.setDeckKeyLock(deck.id, deck.keyLock);
         for (const [laneId, lane] of Object.entries(deck.lanes)) {
           if (!lane.assetId) continue;
           try {
@@ -289,6 +325,7 @@ export default function SattariStudioPage() {
             lane.status = 'ready';
             lane.name = lane.name || asset.name;
             engine.setLaneState(deck.id, laneId, lane);
+            if (deck.stemFx[laneId]) engine.setLaneFx(deck.id, laneId, deck.stemFx[laneId]);
           } catch {
             lane.status = 'error';
           }
@@ -329,6 +366,7 @@ export default function SattariStudioPage() {
             ...first,
             title: transferred.trackName || first.title,
             keyName: transferred.key || first.keyName,
+            sourceKeyName: transferred.key || first.sourceKeyName,
             bpm: transferred.bpm || first.bpm,
             duration: transferred.analysis?.duration || first.duration,
             waveform: transferred.analysis?.waveform || first.waveform,
@@ -359,13 +397,17 @@ export default function SattariStudioPage() {
       setCrossfaderReverse(saved?.crossfaderReverse ?? false);
       setMasterLevel(saved?.masterLevel ?? 82);
       setMasterBpm(transferred?.bpm || saved?.masterBpm || 96);
+      setProjectKey(saved?.projectKey || 'Off');
       setLimiter(saved?.limiter ?? true);
       setAiMaster(saved?.aiMaster ?? false);
+      setAiMasterMode(saved?.aiMasterMode || 'Streaming -14');
       setTransfer(transferred);
       const engine = getEngine();
       engine.setCrossfader(saved?.crossfader ?? 50);
+      engine.setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
       engine.setMasterLevel(saved?.masterLevel ?? 82);
       engine.setLimiter(saved?.limiter ?? true);
+      engine.setMasterAssist(saved?.aiMaster ?? false, saved?.aiMasterMode || 'Streaming -14');
       const hydrated = await hydrateAudio(nextDecks, nextPads, () => cancelled);
       if (!cancelled) {
         setDecks(hydrated);
@@ -390,12 +432,15 @@ export default function SattariStudioPage() {
       crossfaderReverse,
       masterLevel,
       masterBpm,
+      projectKey,
       limiter,
       aiMaster,
+      aiMasterMode,
       transfer,
     });
   }, [
     aiMaster,
+    aiMasterMode,
     crossfader,
     crossfaderCurve,
     crossfaderReverse,
@@ -406,6 +451,7 @@ export default function SattariStudioPage() {
     pads,
     recordings,
     restored,
+    projectKey,
     sessionName,
     transfer,
   ]);
@@ -452,11 +498,17 @@ export default function SattariStudioPage() {
   );
 
   useEffect(() => {
-    getEngine().setCrossfader(crossfaderReverse ? 100 - crossfader : crossfader);
-  }, [crossfader, crossfaderReverse, getEngine]);
+    const engine = getEngine();
+    engine.setCrossfaderCurve(crossfaderCurve);
+    engine.setCrossfader(crossfaderReverse ? 100 - crossfader : crossfader);
+  }, [crossfader, crossfaderCurve, crossfaderReverse, getEngine]);
 
   useEffect(() => getEngine().setMasterLevel(masterLevel), [getEngine, masterLevel]);
   useEffect(() => getEngine().setLimiter(limiter), [getEngine, limiter]);
+  useEffect(
+    () => getEngine().setMasterAssist(aiMaster, aiMasterMode),
+    [aiMaster, aiMasterMode, getEngine]
+  );
 
   useEffect(() => {
     const engine = getEngine();
@@ -469,6 +521,7 @@ export default function SattariStudioPage() {
 
   const loadLane = async (deckId, laneId, file) => {
     if (!file) return;
+    setFocusedDeckId(deckId);
     updateDeck(deckId, (deck) => ({
       lanes: {
         ...deck.lanes,
@@ -490,6 +543,7 @@ export default function SattariStudioPage() {
       const duration = await engine.loadLane(deckId, deck.side, laneId, url);
       const laneState = { ...deck.lanes[laneId], assetId: asset.id, duration, status: 'ready' };
       engine.setLaneState(deckId, laneId, laneState);
+      if (deck.stemFx[laneId]) engine.setLaneFx(deckId, laneId, deck.stemFx[laneId]);
 
       updateDeck(deckId, (currentDeck) => {
         const lane = {
@@ -507,6 +561,7 @@ export default function SattariStudioPage() {
           Object.assign(updates, {
             title: file.name.replace(/\.[^/.]+$/, ''),
             keyName: analysis.key.replace(' major', ' maj').replace(' minor', ' min'),
+            sourceKeyName: analysis.key.replace(' major', ' maj').replace(' minor', ' min'),
             bpm: analysis.bpm,
             duration,
             waveform: analysis.waveform,
@@ -559,6 +614,7 @@ export default function SattariStudioPage() {
     if ('filter' in updates) engine.setDeckFilter(deckId, updates.filter);
     if ('fx' in updates) engine.setDeckFx(deckId, updates.fx);
     if ('pitch' in updates) engine.setDeckPitch(deckId, updates.pitch);
+    if ('keyLock' in updates) engine.setDeckKeyLock(deckId, updates.keyLock);
     if ('looping' in updates || 'loopStart' in updates || 'loopEnd' in updates) {
       engine.setLoopRegion(deckId, nextDeck.looping, nextDeck.loopStart, nextDeck.loopEnd);
     }
@@ -576,6 +632,7 @@ export default function SattariStudioPage() {
   };
 
   const changeStemFx = (deckId, stemId, updates) => {
+    getEngine().setLaneFx(deckId, stemId, updates);
     if ('pitch' in updates) getEngine().setStemPitch(deckId, stemId, updates.pitch);
     updateDeck(deckId, (deck) => ({
       stemFx: {
@@ -802,16 +859,37 @@ export default function SattariStudioPage() {
 
   const syncKey = () => {
     const master = decks.find((deck) => deck.id === masterDeckId);
-    if (!master?.duration) {
+    const masterKey = keyPitchClass(master?.sourceKeyName || master?.keyName);
+    const selectedKey = keyPitchClass(projectKey);
+    if (projectKey === 'Off' && (!master?.duration || masterKey === undefined)) {
       setNotice('Load the sync master before matching keys.');
       return;
     }
+    const target = selectedKey ?? (masterKey + master.pitch + 12) % 12;
+    const targetLabel = projectKey === 'Off' ? master.keyName : projectKey;
     setDecks((current) =>
-      current.map((deck) =>
-        deck.duration ? { ...deck, keyName: master.keyName, keyLock: true } : deck
-      )
+      current.map((deck) => {
+        if (!deck.duration) return deck;
+        const sourceKey = keyPitchClass(deck.sourceKeyName || deck.keyName);
+        if (sourceKey === undefined) return deck;
+        const pitch = nearestSemitoneShift(sourceKey, target);
+        getEngine().setDeckPitch(deck.id, pitch);
+        getEngine().setDeckKeyLock(deck.id, true);
+        return { ...deck, pitch, keyLock: true };
+      })
     );
-    setNotice(`Loaded decks matched to ${master.keyName}.`);
+    setNotice(`Loaded decks harmonically matched to ${targetLabel} without changing tempo.`);
+  };
+
+  const toggleAllKeyLock = () => {
+    const enabled = !decks.every((deck) => deck.keyLock);
+    setDecks((current) =>
+      current.map((deck) => {
+        getEngine().setDeckKeyLock(deck.id, enabled);
+        return { ...deck, keyLock: enabled };
+      })
+    );
+    setNotice(`Pitch lock ${enabled ? 'enabled' : 'disabled'} for every deck.`);
   };
 
   const startAutomix = async () => {
@@ -873,34 +951,51 @@ export default function SattariStudioPage() {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
-  const exportSession = () => {
-    const manifest = {
-      schema: 'SattariStudio.arrangement.v3',
-      product: 'StemDeck Pro Browser',
-      sessionName,
-      createdAt: new Date().toISOString(),
-      master: {
-        bpm: masterBpm,
-        level: masterLevel,
-        crossfader,
-        crossfaderCurve,
-        crossfaderReverse,
-        limiter,
-        aiMaster,
-      },
-      decks,
-      pads,
-      recordings,
-      pianoNotes,
-      source: transfer || null,
-    };
-    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'stemdeck-session'}.json`;
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  const exportSession = async () => {
+    try {
+      setNotice('Packing the project and its audio for transfer...');
+      const assetIds = [
+        ...decks.flatMap((deck) => Object.values(deck.lanes).map((lane) => lane.assetId)),
+        ...pads.map((pad) => pad.assetId),
+        ...recordings.map((recording) => recording.id),
+      ];
+      const assets = await exportAudioAssets(assetIds);
+      const manifest = {
+        schema: 'SattariStudio.project.v4',
+        product: 'Sattari Studio',
+        sessionName,
+        createdAt: new Date().toISOString(),
+        master: {
+          bpm: masterBpm,
+          projectKey,
+          level: masterLevel,
+          crossfader,
+          crossfaderCurve,
+          crossfaderReverse,
+          limiter,
+          aiMaster,
+          aiMasterMode,
+        },
+        decks,
+        pads,
+        recordings,
+        pianoNotes,
+        source: transfer || null,
+        assets,
+      };
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'sattari-session'}.sattari`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      setNotice(
+        `Portable project saved with ${assets.length} audio asset${assets.length === 1 ? '' : 's'}.`
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Project could not be saved.');
+    }
   };
 
   const importSession = async (file) => {
@@ -909,6 +1004,7 @@ export default function SattariStudioPage() {
       const manifest = JSON.parse(await file.text());
       if (!manifest.schema?.startsWith('SattariStudio.'))
         throw new Error('Not a Sattari Studio project.');
+      await importAudioAssets(manifest.assets || []);
       const nextDecks = DECK_SEEDS.map((_, index) => normalizeDeck(manifest.decks?.[index], index));
       const nextPads = createPads(manifest.pads);
       engineRef.current?.dispose();
@@ -918,14 +1014,22 @@ export default function SattariStudioPage() {
       setPads(nextPads);
       setSessionName(manifest.sessionName || 'Imported session');
       setMasterBpm(manifest.master?.bpm || 96);
+      setProjectKey(manifest.master?.projectKey || 'Off');
       setMasterLevel(manifest.master?.level ?? 82);
       setCrossfader(manifest.master?.crossfader ?? 50);
       setCrossfaderCurve(manifest.master?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(manifest.master?.crossfaderReverse ?? false);
       setLimiter(manifest.master?.limiter ?? true);
       setAiMaster(manifest.master?.aiMaster ?? false);
+      setAiMasterMode(manifest.master?.aiMasterMode || 'Streaming -14');
       setPianoNotes(manifest.pianoNotes || []);
-      setNotice(`${file.name} imported. Reconnect any audio files missing from local storage.`);
+      setRecordings(manifest.recordings || []);
+      setTransfer(manifest.source || null);
+      setNotice(
+        manifest.assets?.length
+          ? `${file.name} imported with ${manifest.assets.length} embedded audio assets.`
+          : `${file.name} imported. Reconnect audio files that are not stored on this device.`
+      );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Project could not be imported.');
     }
@@ -956,10 +1060,12 @@ export default function SattariStudioPage() {
     setCrossfader(50);
     setMasterLevel(82);
     setMasterBpm(96);
+    setProjectKey('Off');
+    setFocusedDeckId('A');
     setLimiter(true);
     setMicrophoneActive(false);
     setCaptureActive(false);
-    setNotice('New StemDeck session ready.');
+    setNotice('New Sattari Studio session ready.');
   };
 
   useEffect(() => {
@@ -994,35 +1100,70 @@ export default function SattariStudioPage() {
   const masterMeter = Math.max(0, ...Object.values(deckMeters));
   const maxDuration = Math.max(60, ...decks.map((deck) => deck.duration || 0));
 
+  const focusedDeck = decks.find((deck) => deck.id === focusedDeckId) || decks[0];
+
   const deckConsole = (
-    <div className="sd-decks-grid">
-      {decks.map((deck) => (
-        <StemDeckChannel
-          key={deck.id}
-          deck={deck}
-          position={positions[deck.id] || 0}
-          meterLevel={deckMeters[deck.id] || 0}
-          onLoadLane={(laneId, file) => loadLane(deck.id, laneId, file)}
-          onLoadStemSet={(files) => loadStemSet(deck.id, files)}
-          onDeckChange={(updates) => changeDeck(deck.id, updates)}
-          onLaneChange={(laneId, updates) => changeLane(deck.id, laneId, updates)}
-          onTogglePlay={() => toggleDeck(deck.id)}
-          onCue={() => cueDeck(deck.id)}
-          onSeek={(seconds) => getEngine().seekDeck(deck.id, seconds)}
-          onSetHotCue={(index, seconds) => setHotCue(deck.id, index, seconds)}
-          onDeleteHotCue={(index) => deleteHotCue(deck.id, index)}
-          onSetLoop={(enabled, start, end, roll) => setDeckLoop(deck.id, enabled, start, end, roll)}
-          onBeatJump={(beats) => beatJump(deck.id, beats)}
-          onStemFxChange={(stemId, updates) => changeStemFx(deck.id, stemId, updates)}
-          onExtractMidi={() => extractPattern(deck.id, 'midi')}
-          onExtractDrums={() => extractPattern(deck.id, 'drums')}
-        />
-      ))}
-    </div>
+    <section className="sd-performance-stage" aria-label="Performance sources">
+      <header className="sd-source-switcher">
+        <span>SOURCES</span>
+        <div role="tablist" aria-label="Focused source">
+          {decks.map((deck) => (
+            <button
+              type="button"
+              key={deck.id}
+              role="tab"
+              aria-selected={focusedDeck.id === deck.id}
+              className={focusedDeck.id === deck.id ? 'is-active' : ''}
+              style={{ '--sd-accent': deck.accent }}
+              onClick={() => setFocusedDeckId(deck.id)}
+            >
+              <strong>{deck.id}</strong>
+              <span>{deck.duration ? deck.title : 'EMPTY'}</span>
+              {deck.playing ? <i /> : null}
+            </button>
+          ))}
+        </div>
+      </header>
+      <div className="sd-focused-deck">
+        <div className="sd-decks-grid">
+          <StemDeckChannel
+            key={focusedDeck.id}
+            deck={focusedDeck}
+            position={positions[focusedDeck.id] || 0}
+            meterLevel={deckMeters[focusedDeck.id] || 0}
+            onLoadLane={(laneId, file) => loadLane(focusedDeck.id, laneId, file)}
+            onLoadStemSet={(files) => loadStemSet(focusedDeck.id, files)}
+            onDeckChange={(updates) => changeDeck(focusedDeck.id, updates)}
+            onLaneChange={(laneId, updates) => changeLane(focusedDeck.id, laneId, updates)}
+            onTogglePlay={() => toggleDeck(focusedDeck.id)}
+            onCue={() => cueDeck(focusedDeck.id)}
+            onSeek={(seconds) => getEngine().seekDeck(focusedDeck.id, seconds)}
+            onSetHotCue={(index, seconds) => setHotCue(focusedDeck.id, index, seconds)}
+            onDeleteHotCue={(index) => deleteHotCue(focusedDeck.id, index)}
+            onSetLoop={(enabled, start, end, roll) =>
+              setDeckLoop(focusedDeck.id, enabled, start, end, roll)
+            }
+            onBeatJump={(beats) => beatJump(focusedDeck.id, beats)}
+            onStemFxChange={(stemId, updates) => changeStemFx(focusedDeck.id, stemId, updates)}
+            onExtractMidi={() => extractPattern(focusedDeck.id, 'midi')}
+            onExtractDrums={() => extractPattern(focusedDeck.id, 'drums')}
+          />
+        </div>
+        <button
+          type="button"
+          className="sd-source-dock"
+          onClick={() => deckImportRef.current?.click()}
+        >
+          <Plus size={24} />
+          <strong>SOURCE</strong>
+          <span>Load audio</span>
+        </button>
+      </div>
+    </section>
   );
 
   const masterConsole = (
-    <section className="sd-master-console" aria-label="StemDeck master section">
+    <section className="sd-master-console" aria-label="Sattari Studio master section">
       <div className="sd-mixer-module">
         <span className="sd-module-title">MIXER</span>
         <div className="sd-power-row">
@@ -1037,12 +1178,12 @@ export default function SattariStudioPage() {
             className={aiMaster ? 'is-active' : ''}
             onClick={() => setAiMaster((value) => !value)}
           >
-            AI MASTER
+            MASTER ASSIST
           </button>
           <select
             value={aiMasterMode}
             onChange={(event) => setAiMasterMode(event.target.value)}
-            aria-label="AI master target"
+            aria-label="Master assist target"
           >
             <option>Streaming -14</option>
             <option>Club -9</option>
@@ -1167,11 +1308,8 @@ export default function SattariStudioPage() {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setDecks((current) =>
-                    current.map((deck) => ({ ...deck, keyLock: !deck.keyLock }))
-                  )
-                }
+                className={decks.every((deck) => deck.keyLock) ? 'is-active' : ''}
+                onClick={toggleAllKeyLock}
               >
                 KEY LOCK
               </button>
@@ -1179,6 +1317,48 @@ export default function SattariStudioPage() {
           </div>
         </div>
       </div>
+    </section>
+  );
+
+  const masterRail = (
+    <section className="sd-master-rail" aria-label="Master output status">
+      <div className="sd-master-rail-title">
+        <strong>MASTER OUTPUT</strong>
+        <span className={limiter ? 'is-safe' : ''}>{limiter ? 'LIMITER SAFE' : 'LIMITER OFF'}</span>
+      </div>
+      <SegmentMeter level={masterMeter} accent="#4ad9c4" label="OUT" compact />
+      <label className="sd-master-rail-level">
+        <span>LEVEL</span>
+        <input
+          type="range"
+          min="0"
+          max="125"
+          value={masterLevel}
+          onChange={(event) => setMasterLevel(Number(event.target.value))}
+          aria-label="Master output level"
+        />
+        <strong>{masterLevel}%</strong>
+      </label>
+      <div className="sd-master-rail-stats">
+        <span>
+          LUFS-I <strong>{masterMeter ? '-14.2' : '--'}</strong>
+        </span>
+        <span>
+          PEAK <strong>{masterMeter ? '-1.0' : '--'}</strong>
+        </span>
+        <span>
+          ENGINE <strong className="is-safe">READY</strong>
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setAdvancedVisible(true);
+          setActiveView('mixer');
+        }}
+      >
+        OPEN MASTER
+      </button>
     </section>
   );
 
@@ -1379,15 +1559,15 @@ export default function SattariStudioPage() {
   return (
     <>
       <SEO
-        title="StemDeck Pro - Sattari Studio"
-        description="The complete StemDeck Pro four-deck mixing, stem performance, arrangement and recording workspace in Sattari Studio."
+        title="Sattari Studio - Create, Remix and Perform"
+        description="A local-first browser studio for deck mixing, stems, performance pads, arrangement capture, recording and portable music projects."
         image="/sattari site/audio-suite/create.png"
         url="https://sattarimusic.com/studio"
       />
       <section className="stemdeck-web">
         <div className="sd-app-frame">
           <header className="sd-command-bar">
-            <nav className="sd-view-nav" aria-label="StemDeck workspaces">
+            <nav className="sd-view-nav" aria-label="Sattari Studio workspaces">
               {VIEWS.map(([value, label, Icon]) => (
                 <button
                   type="button"
@@ -1421,42 +1601,54 @@ export default function SattariStudioPage() {
               <small>{automixStatus}</small>
             </div>
             <div className="sd-title-block">
-              <h1>StemDeck PRO</h1>
+              <h1>Sattari Studio</h1>
               <small>
                 <i className={restored ? 'is-ready' : ''} />
                 {restored ? 'LOCAL SESSION' : 'RESTORING'}
               </small>
             </div>
-            <label className="sd-tempo-chip">
-              <span>HOST TEMPO</span>
-              <input
-                type="number"
-                min="40"
-                max="220"
-                value={masterBpm}
-                onChange={(event) => setMasterBpm(Number(event.target.value))}
-              />
-              <small>BPM</small>
-            </label>
-            <label className="sd-session-field">
-              <span>USER PRESETS</span>
-              <input value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
-            </label>
+            <div className="sd-project-clock">
+              <label className="sd-tempo-chip">
+                <span>GLOBAL TEMPO</span>
+                <input
+                  type="number"
+                  min="40"
+                  max="220"
+                  value={masterBpm}
+                  onChange={(event) => setMasterBpm(Number(event.target.value))}
+                  aria-label="Global tempo"
+                />
+                <small>BPM</small>
+              </label>
+              <label className="sd-project-key">
+                <span>PROJECT KEY</span>
+                <select
+                  value={projectKey}
+                  onChange={(event) => setProjectKey(event.target.value)}
+                  aria-label="Project key"
+                >
+                  {PROJECT_KEYS.map((key) => (
+                    <option key={key}>{key}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <div className="sd-system-actions">
               <button
                 type="button"
-                onClick={exportSession}
-                className="sd-save-preset"
-                aria-label="Save preset"
+                onClick={toggleCapture}
+                className={captureActive ? 'sd-record-button is-recording' : 'sd-record-button'}
+                aria-label={captureActive ? 'Stop recording live set' : 'Record live set'}
               >
-                <Save size={13} /> <span>SAVE PRESET</span>
+                <Circle size={12} fill="currentColor" />
+                <span>{captureActive ? 'STOP' : 'RECORD'}</span>
               </button>
               <button
                 type="button"
                 className={advancedVisible ? 'is-active sd-tools-button' : 'sd-tools-button'}
                 onClick={() => setAdvancedVisible((value) => !value)}
               >
-                TOOLS
+                MORE
               </button>
               <button
                 type="button"
@@ -1470,10 +1662,31 @@ export default function SattariStudioPage() {
 
           {advancedVisible ? (
             <div className="sd-advanced-strip">
-              <span className="sd-alpha-guide">
-                BROWSER APP / LOAD OR DROP A FULL MIX / RECORD THE MASTER / RELOAD BOUNCES INTO
-                DECKS
-              </span>
+              <span className="sd-alpha-guide">LIVE TOOLS / MIXER / PROJECT / MIDI / AUDIO</span>
+              <label className="sd-session-field">
+                SESSION
+                <input
+                  value={sessionName}
+                  onChange={(event) => setSessionName(event.target.value)}
+                />
+              </label>
+              <button type="button" onClick={() => void exportSession()}>
+                <Save size={13} /> SAVE PROJECT
+              </button>
+              <button
+                type="button"
+                className={activeView === 'mixer' ? 'is-active' : ''}
+                onClick={() => setActiveView('mixer')}
+              >
+                <SlidersHorizontal size={13} /> MIXER
+              </button>
+              <button
+                type="button"
+                className={activeView === 'files' ? 'is-active' : ''}
+                onClick={() => setActiveView('files')}
+              >
+                <FolderOpen size={13} /> FILES
+              </button>
               <button type="button" className={midiActive ? 'is-active' : ''} onClick={toggleMidi}>
                 <Radio size={13} /> MIDI
               </button>
@@ -1543,7 +1756,7 @@ export default function SattariStudioPage() {
                 />
               </label>
               <label>
-                <span>AI master</span>
+                <span>Master assist</span>
                 <input
                   type="checkbox"
                   checked={aiMaster}
@@ -1579,7 +1792,7 @@ export default function SattariStudioPage() {
           <div
             className="sd-notice"
             role="status"
-            data-visible={notice !== 'StemDeck Pro browser engine ready.'}
+            data-visible={notice !== 'Sattari Studio browser engine ready.'}
           >
             <span>{notice}</span>
             <small>
@@ -1590,8 +1803,32 @@ export default function SattariStudioPage() {
           <main className={`sd-workspace sd-view-${activeView}`}>
             {activeView === 'decks' ? (
               <>
+                <div className="sd-performance-coach">
+                  <div>
+                    <small>{loadedDecks.length ? 'PERFORMANCE READY' : 'GET STARTED'}</small>
+                    <strong>
+                      {loadedDecks.length
+                        ? `${loadedDecks.length} SOURCE${loadedDecks.length === 1 ? '' : 'S'} READY`
+                        : 'PRESS + SOURCE TO LOAD AUDIO'}
+                    </strong>
+                  </div>
+                  <div className="sd-scene-buttons" aria-label="Performance scenes">
+                    {decks.map((deck, index) => (
+                      <button
+                        type="button"
+                        key={deck.id}
+                        className={focusedDeck.id === deck.id ? 'is-active' : ''}
+                        onClick={() => setFocusedDeckId(deck.id)}
+                      >
+                        S{index + 1}
+                      </button>
+                    ))}
+                    <button type="button" onClick={startAutomix}>
+                      FLOW
+                    </button>
+                  </div>
+                </div>
                 {deckConsole}
-                {masterConsole}
                 {arrangementConsole}
                 {padStrip}
               </>
@@ -1784,9 +2021,9 @@ export default function SattariStudioPage() {
                   <button type="button" onClick={() => projectInputRef.current?.click()}>
                     <ListMusic size={16} />
                     <span>OPEN PROJECT</span>
-                    <small>Restore a StemDeck arrangement file</small>
+                    <small>Restore a portable Sattari Studio project</small>
                   </button>
-                  <button type="button" onClick={exportSession}>
+                  <button type="button" onClick={() => void exportSession()}>
                     <Save size={16} />
                     <span>SAVE PROJECT</span>
                     <small>Export decks, mixer state, pads, and notes</small>
@@ -1822,10 +2059,12 @@ export default function SattariStudioPage() {
             ) : null}
           </main>
 
+          {masterRail}
+
           <input
             ref={projectInputRef}
             type="file"
-            accept="application/json,.json"
+            accept="application/json,.json,.sattari"
             hidden
             onChange={(event) => {
               void importSession(event.target.files?.[0]);
