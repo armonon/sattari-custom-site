@@ -1789,6 +1789,582 @@
   }
 }
 
+/* Faithful StemDeck compact surface. Keep this final so legacy web styles cannot win. */
+.stemdeck-web {
+  width: 100%;
+  min-height: 100dvh;
+  padding: 0;
+  background: #08090b;
+}
+
+.sd-app-frame {
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 16px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: #08090b;
+  box-shadow: none;
+}
+
+.sd-command-bar {
+  grid-template-columns: 252px 108px minmax(130px, 1fr) 205px 214px;
+  gap: 10px;
+  min-height: 56px;
+  padding: 4px 7px;
+  border: 1px solid #2b2f36;
+  border-radius: 18px;
+  background: #15171b;
+}
+
+.sd-view-nav {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.sd-view-nav button {
+  flex-direction: row;
+  gap: 7px;
+  min-height: 46px;
+  border-radius: 9px;
+  font-size: 8px;
+}
+
+.sd-view-nav button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sd-global-transport {
+  display: block;
+  padding: 4px 0;
+}
+
+.sd-global-transport button.is-primary {
+  width: 108px;
+  height: 40px;
+  border-color: #26d9ff;
+  border-radius: 9px;
+  background: #151a20;
+  color: #f1f3f6;
+}
+
+.sd-global-transport button.is-primary svg {
+  color: #26d9ff;
+  fill: #26d9ff;
+}
+
+.sd-title-block {
+  padding: 0 8px;
+}
+
+.sd-title-block h1 {
+  font-family:
+    'Avenir Next',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.sd-title-block small {
+  display: none;
+}
+
+.sd-project-clock {
+  height: 48px;
+  border-color: rgb(85 229 208 / 45%);
+  border-radius: 9px;
+}
+
+.sd-system-actions {
+  grid-template-columns: 112px 58px 38px;
+  padding: 4px 0;
+}
+
+.sd-system-actions button {
+  height: 40px;
+}
+
+.sd-performance-coach {
+  min-height: 38px;
+  margin: 6px 0 0;
+  padding: 4px 7px 4px 13px;
+  border-radius: 10px;
+}
+
+.sd-performance-coach > strong {
+  color: #55e5d0;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.sd-scene-buttons {
+  grid-template-columns: repeat(4, 35px) 58px;
+  gap: 4px;
+}
+
+.sd-scene-buttons button {
+  height: 30px;
+  border-radius: 12px;
+}
+
+.sd-workspace {
+  margin-top: 6px;
+}
+
+.sd-performance-stage {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sd-focused-deck {
+  display: grid;
+  grid-template-columns: minmax(560px, 720px) 58px;
+  justify-content: end;
+  gap: clamp(36px, 10.8vw, 110px);
+  padding: 0;
+}
+
+.sd-focused-deck .sd-deck,
+.sd-focused-deck .sd-deck:nth-child(2) {
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #2b2f36 !important;
+  border-radius: 13px;
+  background: #15171b;
+}
+
+.sd-focused-deck .sd-deck::before {
+  height: 2px;
+  border-radius: 13px 13px 0 0;
+}
+
+.sd-focused-deck .sd-deck-header {
+  grid-template-columns: 24px minmax(120px, 1fr) 84px 62px;
+  min-height: 31px;
+  padding: 5px 7px 3px;
+}
+
+.sd-focused-deck .sd-deck-title span {
+  font-size: 13px;
+}
+
+.sd-focused-deck .sd-waveform {
+  width: calc(100% - 16px);
+  height: 32px;
+  margin: 2px 8px 5px;
+  border-color: #23272d;
+  border-radius: 5px;
+}
+
+.sd-focused-deck .sd-wave-bars {
+  inset: 5px 3px;
+}
+
+.sd-stem-wavefield {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: 160px;
+  margin: 0 8px 5px;
+  overflow: hidden;
+  border: 1px solid #171a1f;
+  border-radius: 7px;
+  background: #0b0d10;
+}
+
+.sd-stem-wave-column {
+  display: grid;
+  grid-template-rows: 20px 1fr 35px;
+  min-width: 0;
+  border-right: 1px solid #171a1f;
+  background: #111317;
+}
+
+.sd-stem-wave-column:last-child {
+  border-right: 0;
+}
+
+.sd-stem-wave-column > header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-bottom: 1px solid #24272d;
+}
+
+.sd-stem-wave-column > header strong {
+  color: var(--sd-stem-color);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.sd-stem-wave-column > header span {
+  color: #5c626c;
+  font-size: 5px;
+  font-weight: 800;
+}
+
+.sd-stem-wave-column.is-ready > header span {
+  color: var(--sd-stem-color);
+}
+
+.sd-vertical-wave {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  background: #0d0f12;
+}
+
+.sd-vertical-wave-grid,
+.sd-vertical-wave-grid::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: repeating-linear-gradient(0deg, transparent 0 33px, rgb(255 255 255 / 6%) 33px 34px);
+}
+
+.sd-vertical-wave-grid::before {
+  background: linear-gradient(
+    90deg,
+    transparent 49.5%,
+    rgb(255 255 255 / 5%) 50%,
+    transparent 50.5%
+  );
+}
+
+.sd-vertical-wave-shape {
+  position: absolute;
+  inset: 4px 3px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sd-vertical-wave-shape i {
+  display: block;
+  flex: 1 1 2px;
+  min-height: 2px;
+  max-height: 4px;
+  border-radius: 2px;
+  background: var(--sd-stem-color);
+  opacity: 0.88;
+}
+
+.sd-stem-wave-column:not(.is-ready) .sd-vertical-wave-shape i {
+  opacity: 0.36;
+}
+
+.sd-vertical-playhead {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: #f1f3f6;
+  box-shadow: 0 0 5px rgb(255 255 255 / 40%);
+}
+
+.sd-stem-wave-controls {
+  display: grid;
+  grid-template-columns: 1fr 28px;
+  align-items: center;
+  padding: 1px 4px;
+  border-top: 1px solid #171a1f;
+  background: #15171b;
+}
+
+.sd-stem-wave-controls .sd-knob {
+  grid-template-columns: 30px 24px;
+  grid-template-rows: 1fr;
+  justify-content: center;
+}
+
+.sd-stem-wave-controls .sd-knob > span:first-child {
+  display: none;
+}
+
+.sd-stem-wave-controls .sd-knob-dial {
+  width: 22px;
+  height: 22px;
+}
+
+.sd-stem-wave-controls .sd-knob-dial i {
+  left: 8px;
+  height: 7px;
+  transform-origin: 1px 8px;
+}
+
+.sd-stem-wave-controls .sd-knob output {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--sd-stem-color);
+  font-size: 8px;
+}
+
+.sd-stem-wave-controls > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.sd-stem-wave-controls > div button {
+  width: 13px;
+  height: 16px;
+  padding: 0;
+  border-radius: 3px;
+  font-size: 6px;
+}
+
+.sd-focused-deck .sd-deck-transport {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 54px;
+  margin: 0 8px 4px;
+}
+
+.sd-focused-deck .sd-deck-transport > button {
+  height: 28px;
+}
+
+.sd-focused-deck .sd-deck-mix-band {
+  min-height: 61px;
+  margin: 0 8px 4px;
+  padding-top: 7px;
+}
+
+.sd-focused-deck .sd-deck-mix-band .sd-knob {
+  grid-template-rows: 8px 25px 7px;
+}
+
+.sd-focused-deck .sd-deck-toolbox {
+  min-height: 68px;
+  margin: 0 8px 7px;
+}
+
+.sd-focused-deck .sd-deck-toolbox > nav {
+  height: 26px;
+  border-radius: 7px;
+  background: #060709;
+}
+
+.sd-focused-deck .sd-tool-content {
+  min-height: 41px;
+  padding-top: 4px;
+}
+
+.sd-focused-deck .sd-hot-cues button {
+  height: 23px;
+}
+
+.sd-source-dock {
+  min-height: 0;
+  border-color: #2b2f36;
+  border-radius: 13px;
+  color: #55e5d0;
+  background: #0b0d10;
+}
+
+.sd-source-dock strong {
+  color: #858b95;
+  font-size: 8px;
+}
+
+.sd-master-rail {
+  grid-template-columns: 130px 76px minmax(220px, 1fr) minmax(240px, 1fr) 82px;
+  gap: 10px;
+  min-height: 57px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border-radius: 10px;
+}
+
+.sd-master-rail-title strong {
+  color: #55e5d0;
+  font-size: 8px;
+}
+
+.sd-master-rail > button {
+  height: 36px;
+}
+
+@media (max-width: 1100px) {
+  .sd-command-bar {
+    grid-template-columns: 252px 108px minmax(120px, 1fr) 205px 214px;
+  }
+
+  .sd-focused-deck {
+    grid-template-columns: minmax(540px, 720px) 58px;
+    gap: clamp(30px, 10vw, 100px);
+  }
+}
+
+@media (max-width: 880px) {
+  .sd-app-frame {
+    padding: 10px;
+    padding-bottom: 78px;
+  }
+
+  .sd-command-bar {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-rows: 48px 44px;
+    min-height: 100px;
+    margin: 0;
+    padding: 4px 6px;
+    border-width: 1px;
+    border-radius: 14px;
+    background: #15171b;
+    backdrop-filter: none;
+  }
+
+  .sd-title-block {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .sd-project-clock {
+    grid-column: 2;
+    grid-row: 1;
+    height: 42px;
+  }
+
+  .sd-global-transport {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .sd-global-transport button.is-primary {
+    width: 108px;
+    height: 36px;
+  }
+
+  .sd-system-actions {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: 100px 54px 36px;
+    padding: 0;
+  }
+
+  .sd-system-actions button {
+    height: 36px;
+  }
+
+  .sd-focused-deck {
+    grid-template-columns: minmax(0, 1fr) 54px;
+    gap: 8px;
+  }
+
+  .sd-master-rail {
+    grid-template-columns: 120px 64px 1fr;
+  }
+
+  .sd-master-rail-stats {
+    grid-column: auto;
+  }
+
+  .sd-master-rail > button {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 620px) {
+  .sd-command-bar {
+    grid-template-columns: minmax(0, 1fr) 160px;
+  }
+
+  .sd-title-block h1 {
+    font-size: 18px;
+  }
+
+  .sd-system-actions {
+    grid-template-columns: 76px 46px 32px;
+  }
+
+  .sd-system-actions .sd-record-button {
+    padding: 0 6px;
+  }
+
+  .sd-performance-coach {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .sd-scene-buttons {
+    grid-template-columns: repeat(4, 30px) 48px;
+    width: auto;
+  }
+
+  .sd-scene-buttons button {
+    min-width: 0;
+  }
+
+  .sd-focused-deck {
+    display: block;
+  }
+
+  .sd-source-dock {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 7px;
+  }
+
+  .sd-stem-wavefield {
+    height: 190px;
+  }
+
+  .sd-stem-wave-column {
+    grid-template-rows: 19px 1fr 31px;
+  }
+
+  .sd-stem-wave-column > header span,
+  .sd-stem-wave-controls > div {
+    display: none;
+  }
+
+  .sd-master-rail {
+    grid-template-columns: 1fr 68px;
+  }
+
+  .sd-master-rail-level,
+  .sd-master-rail-stats,
+  .sd-master-rail > button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 881px) {
+  .sd-view-nav,
+  .sd-global-transport,
+  .sd-title-block,
+  .sd-project-clock,
+  .sd-system-actions {
+    position: static;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .sd-title-block {
+    place-content: center;
+    pointer-events: auto;
+    text-align: center;
+  }
+
+  .sd-stem-wavefield {
+    height: 160px;
+  }
+}
+
 /* Current StemDeck parity pass: mirrors the 1680x1000 JUCE editor geometry. */
 .stemdeck-web {
   padding: 14px;
@@ -4326,5 +4902,393 @@
 
   .sd-master-rail-stats {
     justify-content: space-between;
+  }
+}
+
+/* Absolute final compact parity layer — geometry from the current native StemDeck render. */
+.stemdeck-web {
+  width: 100%;
+  min-height: 100dvh;
+  padding: 0;
+  background: #08090b;
+}
+
+.sd-app-frame {
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 16px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: #08090b;
+  box-shadow: none;
+}
+
+@media (min-width: 881px) {
+  .sd-view-nav,
+  .sd-global-transport,
+  .sd-title-block,
+  .sd-project-clock,
+  .sd-system-actions {
+    position: static;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .sd-title-block {
+    place-content: center;
+    pointer-events: auto;
+    text-align: center;
+  }
+}
+
+.sd-command-bar {
+  grid-template-columns: 252px 108px minmax(130px, 1fr) 205px 214px;
+  gap: 10px;
+  min-height: 56px;
+  padding: 4px 7px;
+  border: 1px solid #2b2f36;
+  border-radius: 18px;
+  background: #15171b;
+}
+
+.sd-view-nav {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.sd-view-nav button {
+  flex-direction: row;
+  gap: 7px;
+  min-height: 46px;
+  border-radius: 9px;
+  font-size: 8px;
+}
+
+.sd-view-nav button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sd-global-transport {
+  display: block;
+  padding: 4px 0;
+}
+
+.sd-global-transport button.is-primary {
+  width: 108px;
+  height: 40px;
+  border-color: #26d9ff;
+  border-radius: 9px;
+  background: #151a20;
+  color: #f1f3f6;
+}
+
+.sd-global-transport button.is-primary svg {
+  color: #26d9ff;
+  fill: #26d9ff;
+}
+
+.sd-title-block {
+  padding: 0 8px;
+}
+
+.sd-title-block h1 {
+  font-family:
+    'Avenir Next',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.sd-title-block small {
+  display: none;
+}
+
+.sd-project-clock {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) minmax(75px, 0.8fr);
+  align-self: center;
+  width: auto;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid rgb(85 229 208 / 45%);
+  border-radius: 9px;
+  background: #0b0d10;
+}
+
+.sd-project-clock .sd-tempo-chip {
+  display: grid;
+  align-self: stretch;
+  height: auto;
+  margin: 0;
+  padding: 5px 10px;
+  border: 0;
+  border-right: 1px solid #2b2f36;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sd-system-actions {
+  display: grid;
+  grid-template-columns: 112px 58px 38px;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.sd-system-actions button {
+  width: auto;
+  height: 40px;
+}
+
+.sd-performance-coach {
+  align-items: center;
+  flex-direction: row;
+  min-height: 38px;
+  margin: 6px 0 0;
+  padding: 4px 7px 4px 13px;
+  border-radius: 10px;
+}
+
+.sd-performance-coach > strong {
+  color: #55e5d0;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.sd-scene-buttons {
+  grid-template-columns: repeat(4, 35px) 58px;
+  width: auto;
+  gap: 4px;
+}
+
+.sd-scene-buttons button {
+  height: 30px;
+  border-radius: 12px;
+}
+
+.sd-workspace {
+  margin-top: 6px;
+}
+
+.sd-performance-stage {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sd-focused-deck {
+  display: grid;
+  grid-template-columns: minmax(560px, 720px) 58px;
+  justify-content: end;
+  gap: clamp(36px, 10.8vw, 110px);
+  padding: 0;
+}
+
+.sd-focused-deck .sd-decks-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.sd-focused-deck .sd-deck,
+.sd-focused-deck .sd-deck:nth-child(2) {
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #2b2f36 !important;
+  border-radius: 13px;
+  background: #15171b;
+  box-shadow: none;
+}
+
+.sd-focused-deck .sd-deck-header {
+  grid-template-columns: 24px minmax(120px, 1fr) 84px 62px;
+  min-height: 31px;
+  padding: 5px 7px 3px;
+}
+
+.sd-focused-deck .sd-deck-title span {
+  font-size: 13px;
+}
+
+.sd-focused-deck .sd-waveform {
+  width: calc(100% - 16px);
+  height: 32px;
+  margin: 2px 8px 5px;
+  border-color: #23272d;
+  border-radius: 5px;
+}
+
+.sd-focused-deck .sd-deck-transport {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 54px;
+  margin: 0 8px 4px;
+}
+
+.sd-focused-deck .sd-deck-mix-band {
+  min-height: 61px;
+  margin: 0 8px 4px;
+  padding-top: 7px;
+}
+
+.sd-focused-deck .sd-deck-toolbox {
+  min-height: 68px;
+  margin: 0 8px 7px;
+}
+
+.sd-focused-deck .sd-deck-toolbox > nav {
+  height: 26px;
+  border-radius: 7px;
+  background: #060709;
+}
+
+.sd-focused-deck .sd-tool-content {
+  min-height: 41px;
+  padding-top: 4px;
+}
+
+.sd-source-dock {
+  min-height: 0;
+  border-color: #2b2f36;
+  border-radius: 13px;
+  color: #55e5d0;
+  background: #0b0d10;
+}
+
+.sd-source-dock strong {
+  color: #858b95;
+  font-size: 8px;
+}
+
+.sd-master-rail {
+  grid-template-columns: 130px 76px minmax(220px, 1fr) minmax(240px, 1fr) 82px;
+  gap: 10px;
+  min-height: 57px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border-radius: 10px;
+}
+
+.sd-master-rail-title strong {
+  color: #55e5d0;
+  font-size: 8px;
+}
+
+.sd-master-rail > button {
+  height: 36px;
+}
+
+@media (max-width: 880px) {
+  .sd-app-frame {
+    padding: 10px 10px 78px;
+  }
+
+  .sd-command-bar {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-rows: 48px 44px;
+    min-height: 100px;
+    margin: 0;
+    padding: 4px 6px;
+    border-width: 1px;
+    border-radius: 14px;
+    background: #15171b;
+    backdrop-filter: none;
+  }
+
+  .sd-title-block {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .sd-project-clock {
+    grid-column: 2;
+    grid-row: 1;
+    height: 42px;
+  }
+
+  .sd-global-transport {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .sd-global-transport button.is-primary {
+    height: 36px;
+  }
+
+  .sd-system-actions {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: 100px 54px 36px;
+    padding: 0;
+  }
+
+  .sd-system-actions button {
+    height: 36px;
+  }
+
+  .sd-focused-deck {
+    grid-template-columns: minmax(0, 1fr) 54px;
+    gap: 8px;
+  }
+
+  .sd-master-rail {
+    grid-template-columns: 120px 64px 1fr;
+  }
+
+  .sd-master-rail-stats {
+    grid-column: auto;
+  }
+
+  .sd-master-rail > button {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 620px) {
+  .sd-command-bar {
+    grid-template-columns: minmax(0, 1fr) 160px;
+  }
+
+  .sd-system-actions {
+    grid-template-columns: 76px 46px 32px;
+  }
+
+  .sd-performance-coach {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .sd-scene-buttons {
+    grid-template-columns: repeat(4, 30px) 48px;
+  }
+
+  .sd-focused-deck {
+    display: block;
+  }
+
+  .sd-source-dock {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 7px;
+  }
+
+  .sd-master-rail {
+    grid-template-columns: 1fr 68px;
+  }
+
+  .sd-master-rail-level,
+  .sd-master-rail-stats,
+  .sd-master-rail > button {
+    grid-column: 1 / -1;
   }
 }

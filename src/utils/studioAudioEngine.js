@@ -26,14 +26,14 @@ export function masterAssistProfile(enabled, mode = 'Streaming -14') {
     'Broadcast -16': { threshold: -20, ratio: 2.8, attack: 0.018, release: 0.28 },
   };
   const profile = profiles[mode] || profiles['Streaming -14'];
-  return enabled ? profile : { ...profile, threshold: -0.01, ratio: 1 };
+  return enabled ? profile : { ...profile, threshold: -1, ratio: 1 };
 }
 
 export class StudioAudioEngine {
   constructor() {
     this.master = new Tone.Gain(0.82);
     this.masterCompressor = new Tone.Compressor({
-      threshold: 0,
+      threshold: -1,
       ratio: 1,
       attack: 0.01,
       release: 0.18,
@@ -201,9 +201,9 @@ export class StudioAudioEngine {
   setMasterAssist(enabled, mode = 'Streaming -14') {
     const profile = masterAssistProfile(enabled, mode);
     this.masterCompressor.threshold.value = profile.threshold;
-    this.masterCompressor.ratio.rampTo(profile.ratio, 0.08);
-    this.masterCompressor.attack.rampTo(profile.attack, 0.08);
-    this.masterCompressor.release.rampTo(profile.release, 0.08);
+    this.masterCompressor.ratio.value = profile.ratio;
+    this.masterCompressor.attack.value = profile.attack;
+    this.masterCompressor.release.value = profile.release;
   }
 
   setCrossfader(value) {

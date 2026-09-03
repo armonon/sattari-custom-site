@@ -60,7 +60,7 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
 
-    expect(screen.getByRole('heading', { name: 'Sattari Studio' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'StemDeck' })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(1);
     expect(screen.getAllByText('Empty deck').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('Midnight Drive')).not.toBeInTheDocument();
@@ -71,7 +71,8 @@ describe('SattariStudioPage', () => {
     expect(screen.getByRole('button', { name: 'REPLAY' })).toBeInTheDocument();
     expect(screen.getByLabelText('Project key')).toHaveValue('Off');
     expect(screen.getByLabelText('Master output status')).toBeInTheDocument();
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'S1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'FLOW' })).toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByText('LOCAL SESSION')).toBeInTheDocument());
   }, 10000);

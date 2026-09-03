@@ -5,6 +5,12 @@ export const TOOL_TABS = ['CUE', 'LOOP', 'FX', 'SYNC', 'SRC'];
 
 const STEM_IDS = ['drums', 'bass', 'music', 'vocals'];
 const STEM_LABELS = ['DRUMS', 'BASS', 'MUSIC', 'VOCALS'];
+const STEM_WAVE_DEFINITIONS = [
+  { id: 'vocals', label: 'VOX', color: '#d4537e', offset: 9 },
+  { id: 'drums', label: 'DRM', color: '#4a9eff', offset: 0 },
+  { id: 'bass', label: 'BAS', color: '#4ad9c4', offset: 18 },
+  { id: 'music', label: 'OTH', color: '#888780', offset: 27 },
+];
 const LOOP_ROLLS = ['1/4', '1/2', '1', '2', '4', '8'];
 const BEAT_JUMPS = [-32, -16, -8, -4, 4, 8, 16, 32];
 
@@ -99,50 +105,82 @@ function Waveform({ deck, position, onSeek }) {
   );
 }
 
-function StemCell({ deck, lane, label, onLoad, onChange }) {
-  const ready = lane.status === 'ready';
+function StemWavefield({ deck, position, onSeek, onLoad, onChange }) {
+  const progress = deck.duration ? Math.min(100, (position / deck.duration) * 100) : 0;
 
   return (
-    <div className={`sd-stem-cell${ready ? ' is-ready' : ''}`}>
-      <button type="button" className="sd-stem-label" onClick={onLoad} title={`Load ${label}`}>
-        {label}
-      </button>
-      <span className="sd-stem-state">
-        {ready ? 'FILE' : lane.status === 'loading' ? '...' : 'DSP'}
-      </span>
-      <input
-        className="sd-stem-fader"
-        type="range"
-        min="0"
-        max="100"
-        value={lane.level}
-        onChange={(event) => onChange({ level: Number(event.target.value) })}
-        disabled={!ready}
-        aria-label={`${label} level`}
-        style={{ '--sd-accent': deck.accent }}
-      />
-      <div className="sd-stem-toggles">
-        <button
-          type="button"
-          className={lane.muted ? 'is-active' : ''}
-          onClick={() => onChange({ muted: !lane.muted })}
-          disabled={!ready}
-          aria-label={`Mute ${label}`}
-          aria-pressed={lane.muted}
-        >
-          M
-        </button>
-        <button
-          type="button"
-          className={lane.solo ? 'is-active is-solo' : ''}
-          onClick={() => onChange({ solo: !lane.solo })}
-          disabled={!ready}
-          aria-label={`Solo ${label}`}
-          aria-pressed={lane.solo}
-        >
-          S
-        </button>
-      </div>
+    <div className="sd-stem-wavefield">
+      {STEM_WAVE_DEFINITIONS.map(({ id, label, color, offset }) => {
+        const lane = deck.lanes[id];
+        const ready = lane.status === 'ready' || deck.lanes.fullMix.status === 'ready';
+        return (
+          <section
+            className={`sd-stem-wave-column${ready ? ' is-ready' : ''}`}
+            style={{ '--sd-stem-color': color }}
+            key={id}
+          >
+            <header>
+              <strong>{label}</strong>
+              <span>
+                {lane.status === 'loading' ? 'ANALYZING' : lane.status === 'ready' ? 'STEM' : 'DSP'}
+              </span>
+            </header>
+            <button
+              type="button"
+              className="sd-vertical-wave"
+              onClick={(event) => {
+                if (!deck.duration) {
+                  onLoad(id);
+                  return;
+                }
+                const bounds = event.currentTarget.getBoundingClientRect();
+                onSeek(((event.clientY - bounds.top) / bounds.height) * deck.duration);
+              }}
+              aria-label={deck.duration ? `Seek ${label} stem` : `Load ${label} stem`}
+            >
+              <span className="sd-vertical-wave-grid" />
+              <span className="sd-vertical-wave-shape">
+                {Array.from({ length: 38 }, (_, index) => {
+                  const peak = deck.waveform[(index * 2 + offset) % deck.waveform.length] || 10;
+                  const width = Math.min(88, Math.max(8, peak * (id === 'bass' ? 0.9 : 1.45)));
+                  return <i key={index} style={{ width: `${width}%` }} />;
+                })}
+              </span>
+              <span className="sd-vertical-playhead" style={{ top: `${progress}%` }} />
+            </button>
+            <div className="sd-stem-wave-controls">
+              <Knob
+                label=""
+                value={lane.level}
+                onChange={(level) => onChange(id, { level })}
+                accent={color}
+              />
+              <div>
+                <button
+                  type="button"
+                  className={lane.muted ? 'is-active' : ''}
+                  onClick={() => onChange(id, { muted: !lane.muted })}
+                  disabled={!ready}
+                  aria-label={`Mute ${label}`}
+                  aria-pressed={lane.muted}
+                >
+                  M
+                </button>
+                <button
+                  type="button"
+                  className={lane.solo ? 'is-active is-solo' : ''}
+                  onClick={() => onChange(id, { solo: !lane.solo })}
+                  disabled={!ready}
+                  aria-label={`Solo ${label}`}
+                  aria-pressed={lane.solo}
+                >
+                  S
+                </button>
+              </div>
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -509,28 +547,13 @@ export function StemDeckChannel({
 
       <Waveform deck={deck} position={position} onSeek={onSeek} />
 
-      <div className="sd-stem-strip">
-        {STEM_IDS.map((stemId, index) => (
-          <StemCell
-            key={stemId}
-            deck={deck}
-            lane={deck.lanes[stemId]}
-            label={STEM_LABELS[index]}
-            onLoad={() => requestLane(stemId)}
-            onChange={(updates) => onLaneChange(stemId, updates)}
-          />
-        ))}
-        <div className="sd-stem-cell sd-fx-cell">
-          <strong>FX</strong>
-          <Knob
-            label=""
-            value={deck.fx.reverb}
-            onChange={(reverb) => onDeckChange({ fx: { ...deck.fx, reverb } })}
-            accent={deck.accent}
-          />
-          <small>Reverb</small>
-        </div>
-      </div>
+      <StemWavefield
+        deck={deck}
+        position={position}
+        onSeek={onSeek}
+        onLoad={requestLane}
+        onChange={onLaneChange}
+      />
 
       <div className="sd-deck-transport">
         <button

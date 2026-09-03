@@ -67,9 +67,9 @@ const App: FC = () => {
 
   return (
     <div className="site-shell">
-      <BackgroundMedia />
+      {location.pathname !== '/studio' && <BackgroundMedia />}
 
-      <Navbar onCartClick={() => setCartOpen(true)} />
+      {location.pathname !== '/studio' && <Navbar onCartClick={() => setCartOpen(true)} />}
 
       {/* Cart Drawer */}
       <div

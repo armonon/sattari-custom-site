@@ -279,7 +279,6 @@ export default function SattariStudioPage() {
   const [arrangementLoop, setArrangementLoop] = useState(false);
   const [arrangementZoom, setArrangementZoom] = useState(1);
   const [pianoNotes, setPianoNotes] = useState([]);
-  const [automixStatus, setAutomixStatus] = useState('');
   const [focusedDeckId, setFocusedDeckId] = useState('A');
 
   const getEngine = useCallback(() => {
@@ -672,12 +671,6 @@ export default function SattariStudioPage() {
     setDecks((current) => current.map((deck) => ({ ...deck, playing: Boolean(deck.duration) })));
   };
 
-  const stopGlobalTransport = () => {
-    getEngine().stopAll();
-    setPositions({ A: 0, B: 0, C: 0, D: 0 });
-    setDecks((current) => current.map((deck) => ({ ...deck, playing: false })));
-  };
-
   const setHotCue = (deckId, index, seconds) => {
     const deck = decks.find((item) => item.id === deckId);
     if (deck.hotCues[index] !== null) {
@@ -908,13 +901,11 @@ export default function SattariStudioPage() {
     const destination = target.cfSide === 'left' ? 0 : 100;
     const direction = destination > value ? 1 : -1;
     setCrossfader(value);
-    setAutomixStatus(`${source.id} → ${target.id}`);
     automixRef.current = window.setInterval(() => {
       value = direction > 0 ? Math.min(destination, value + 2) : Math.max(destination, value - 2);
       setCrossfader(Math.min(100, Math.max(0, value)));
       if (value === destination) {
         window.clearInterval(automixRef.current);
-        setAutomixStatus('Complete');
       }
     }, 90);
   };
@@ -1104,26 +1095,6 @@ export default function SattariStudioPage() {
 
   const deckConsole = (
     <section className="sd-performance-stage" aria-label="Performance sources">
-      <header className="sd-source-switcher">
-        <span>SOURCES</span>
-        <div role="tablist" aria-label="Focused source">
-          {decks.map((deck) => (
-            <button
-              type="button"
-              key={deck.id}
-              role="tab"
-              aria-selected={focusedDeck.id === deck.id}
-              className={focusedDeck.id === deck.id ? 'is-active' : ''}
-              style={{ '--sd-accent': deck.accent }}
-              onClick={() => setFocusedDeckId(deck.id)}
-            >
-              <strong>{deck.id}</strong>
-              <span>{deck.duration ? deck.title : 'EMPTY'}</span>
-              {deck.playing ? <i /> : null}
-            </button>
-          ))}
-        </div>
-      </header>
       <div className="sd-focused-deck">
         <div className="sd-decks-grid">
           <StemDeckChannel
@@ -1156,7 +1127,6 @@ export default function SattariStudioPage() {
         >
           <Plus size={24} />
           <strong>SOURCE</strong>
-          <span>Load audio</span>
         </button>
       </div>
     </section>
@@ -1581,9 +1551,6 @@ export default function SattariStudioPage() {
               ))}
             </nav>
             <div className="sd-global-transport">
-              <button type="button" onClick={stopGlobalTransport} aria-label="Stop all decks">
-                <span className="sd-stop-icon" />
-              </button>
               <button
                 type="button"
                 className="is-primary"
@@ -1594,14 +1561,9 @@ export default function SattariStudioPage() {
                 {anyPlaying ? <Pause size={14} /> : <Play size={14} />}
                 <span>{anyPlaying ? 'PAUSE' : 'PLAY ALL'}</span>
               </button>
-              <button type="button" onClick={startAutomix}>
-                <Disc3 size={14} />
-                <span>AUTO</span>
-              </button>
-              <small>{automixStatus}</small>
             </div>
             <div className="sd-title-block">
-              <h1>Sattari Studio</h1>
+              <h1>StemDeck</h1>
               <small>
                 <i className={restored ? 'is-ready' : ''} />
                 {restored ? 'LOCAL SESSION' : 'RESTORING'}
@@ -1804,14 +1766,7 @@ export default function SattariStudioPage() {
             {activeView === 'decks' ? (
               <>
                 <div className="sd-performance-coach">
-                  <div>
-                    <small>{loadedDecks.length ? 'PERFORMANCE READY' : 'GET STARTED'}</small>
-                    <strong>
-                      {loadedDecks.length
-                        ? `${loadedDecks.length} SOURCE${loadedDecks.length === 1 ? '' : 'S'} READY`
-                        : 'PRESS + SOURCE TO LOAD AUDIO'}
-                    </strong>
-                  </div>
+                  <strong>PRESS PLAY</strong>
                   <div className="sd-scene-buttons" aria-label="Performance scenes">
                     {decks.map((deck, index) => (
                       <button
@@ -1829,8 +1784,6 @@ export default function SattariStudioPage() {
                   </div>
                 </div>
                 {deckConsole}
-                {arrangementConsole}
-                {padStrip}
               </>
             ) : null}
 
@@ -1964,6 +1917,7 @@ export default function SattariStudioPage() {
                   </section>
                 ))}
                 {masterConsole}
+                {padStrip}
               </div>
             ) : null}
 
