@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { ChevronDown, Link2, Pause, Play, Scissors, Upload, WandSparkles } from 'lucide-react';
 
-export const TOOL_TABS = ['CUE', 'LOOP', 'FX', 'SYNC', 'SRC'];
+export const TOOL_TABS = ['CUES', 'LOOP', 'STEMS', 'FX'];
 
 const STEM_IDS = ['drums', 'bass', 'music', 'vocals'];
 const STEM_LABELS = ['DRUMS', 'BASS', 'MUSIC', 'VOCALS'];
@@ -140,7 +140,7 @@ function StemWavefield({ deck, position, onSeek, onLoad, onChange }) {
             >
               <span className="sd-vertical-wave-grid" />
               <span className="sd-vertical-wave-shape">
-                {Array.from({ length: 38 }, (_, index) => {
+                {Array.from({ length: 12 }, (_, index) => {
                   const peak = deck.waveform[(index * 2 + offset) % deck.waveform.length] || 10;
                   const width = Math.min(88, Math.max(8, peak * (id === 'bass' ? 0.9 : 1.45)));
                   return <i key={index} style={{ width: `${width}%` }} />;
@@ -329,86 +329,6 @@ function FxTools({ deck, onDeckChange, onStemFxChange }) {
   );
 }
 
-function SyncTools({ deck, onDeckChange }) {
-  return (
-    <div className="sd-tool-content sd-sync-tools">
-      <label>
-        <span>BPM</span>
-        <input
-          type="number"
-          min="40"
-          max="240"
-          value={deck.bpm}
-          onChange={(event) => onDeckChange({ bpm: Number(event.target.value) })}
-        />
-      </label>
-      <label>
-        <span>BEAT</span>
-        <input
-          type="number"
-          step="0.01"
-          value={deck.beatOffset}
-          onChange={(event) => onDeckChange({ beatOffset: Number(event.target.value) })}
-        />
-      </label>
-      <label>
-        <span>DOWN</span>
-        <input
-          type="number"
-          min="1"
-          max="16"
-          value={deck.downbeat}
-          onChange={(event) => onDeckChange({ downbeat: Number(event.target.value) })}
-        />
-      </label>
-      <select
-        value={deck.tempoInterpretation}
-        onChange={(event) => onDeckChange({ tempoInterpretation: event.target.value })}
-        aria-label="Tempo interpretation"
-      >
-        <option>Straight</option>
-        <option>Half time</option>
-        <option>Double time</option>
-      </select>
-      <select
-        value={deck.syncMode}
-        onChange={(event) => onDeckChange({ syncMode: event.target.value })}
-        aria-label="Sync mode"
-      >
-        <option>BPM</option>
-        <option>Beat grid</option>
-        <option>Off</option>
-      </select>
-      <select
-        value={deck.keyName}
-        onChange={(event) => onDeckChange({ keyName: event.target.value })}
-        aria-label="Target key"
-      >
-        <option>{deck.keyName}</option>
-        <option>C maj</option>
-        <option>A min</option>
-        <option>G maj</option>
-        <option>E min</option>
-        <option>D min</option>
-      </select>
-      <button
-        type="button"
-        className={deck.liveKey ? 'is-active' : ''}
-        onClick={() => onDeckChange({ liveKey: !deck.liveKey })}
-      >
-        LiveKey
-      </button>
-      <button
-        type="button"
-        className={deck.keyLock ? 'is-active' : ''}
-        onClick={() => onDeckChange({ keyLock: !deck.keyLock })}
-      >
-        KeyLock
-      </button>
-    </div>
-  );
-}
-
 function SourceTools({
   deck,
   onRequestLane,
@@ -473,11 +393,10 @@ function DeckToolbox(props) {
           </button>
         ))}
       </nav>
-      {tab === 'CUE' ? <CueTools {...props} /> : null}
+      {tab === 'CUES' ? <CueTools {...props} /> : null}
       {tab === 'LOOP' ? <LoopTools {...props} /> : null}
       {tab === 'FX' ? <FxTools {...props} /> : null}
-      {tab === 'SYNC' ? <SyncTools {...props} /> : null}
-      {tab === 'SRC' ? (
+      {tab === 'STEMS' ? (
         <SourceTools
           {...props}
           onRequestLane={props.onRequestLane}
@@ -517,35 +436,59 @@ export function StemDeckChannel({
       aria-label={`Deck ${deck.id}`}
     >
       <header className="sd-deck-header">
-        <button
-          type="button"
-          className="sd-deck-badge"
-          onClick={() => onDeckChange({ masterDeck: true })}
-          aria-label={`Use Deck ${deck.id} as sync master`}
-        >
-          {deck.id}
-        </button>
-        <button type="button" className="sd-deck-title" onClick={() => requestLane('fullMix')}>
-          <span>{deck.title}</span>
-          <ChevronDown size={12} />
-        </button>
-        <button
-          type="button"
-          className="sd-deck-chip"
-          onClick={() => onDeckChange({ activeToolTab: 'SYNC' })}
-        >
-          {deck.bpm.toFixed ? deck.bpm.toFixed(1) : deck.bpm} BPM
-        </button>
-        <button
-          type="button"
-          className="sd-deck-chip"
-          onClick={() => onDeckChange({ activeToolTab: 'SYNC' })}
-        >
-          ♩ {deck.keyName}
-        </button>
+        <div className="sd-deck-identity">
+          <button
+            type="button"
+            className="sd-deck-badge"
+            onClick={() => onDeckChange({ masterDeck: true })}
+            aria-label={`Use Deck ${deck.id} as sync master`}
+          >
+            {deck.id}
+          </button>
+          <button type="button" className="sd-deck-title" onClick={() => requestLane('fullMix')}>
+            <span>{deck.title}</span>
+            <ChevronDown size={12} />
+          </button>
+          <div className="sd-deck-meta">
+            <button type="button" onClick={() => onDeckChange({ bpm: deck.bpm })}>
+              {deck.bpm.toFixed ? deck.bpm.toFixed(1) : deck.bpm}
+            </button>
+            <button type="button" onClick={() => onDeckChange({ keyLock: !deck.keyLock })}>
+              ♩ {deck.keyName}
+            </button>
+          </div>
+        </div>
+        <div className="sd-deck-live-actions">
+          <button type="button" disabled={!deck.duration}>
+            DSP
+          </button>
+          <button
+            type="button"
+            className={deck.synced ? 'is-active' : ''}
+            onClick={() => onDeckChange({ synced: !deck.synced })}
+            disabled={!deck.duration}
+          >
+            SYNC
+          </button>
+        </div>
       </header>
 
-      <Waveform deck={deck} position={position} onSeek={onSeek} />
+      <div className="sd-deck-overview">
+        <Waveform deck={deck} position={position} onSeek={onSeek} />
+        <div className="sd-deck-density" aria-label="Waveform density">
+          <button type="button">4</button>
+          <button type="button" className="is-active">
+            8
+          </button>
+          <button type="button">16</button>
+        </div>
+        <div className="sd-deck-spectrum" aria-label="Waveform display">
+          <button type="button" className="is-active">
+            STEMS
+          </button>
+          <button type="button">FREQ</button>
+        </div>
+      </div>
 
       <StemWavefield
         deck={deck}

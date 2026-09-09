@@ -43,6 +43,7 @@ import {
 import { SEO } from '../utils/seo';
 import { StudioAudioEngine } from '../utils/studioAudioEngine';
 import '../styles-stemdeck-web.css';
+import '../styles-stemdeck-native.css';
 
 const DECK_SEEDS = [
   { id: 'A', accent: '#4ad9c4', side: 'left' },
@@ -86,7 +87,7 @@ function createLane(definition) {
     ...definition,
     assetId: '',
     name: '',
-    level: definition.id === 'fullMix' ? 82 : 76,
+    level: definition.id === 'fullMix' ? 82 : 100,
     muted: false,
     solo: false,
     pitch: 0,
@@ -123,7 +124,7 @@ function createDeck(seed) {
     slip: false,
     tempoInterpretation: 'Straight',
     syncMode: 'BPM',
-    activeToolTab: 'CUE',
+    activeToolTab: 'CUES',
     hotCues: Array(8).fill(null),
     introEnd: null,
     outroStart: null,
@@ -147,6 +148,12 @@ function normalizeDeck(saved, index) {
     ...saved,
     playing: false,
     accent: base.accent,
+    activeToolTab:
+      saved.activeToolTab === 'CUE'
+        ? 'CUES'
+        : saved.activeToolTab === 'SRC' || saved.activeToolTab === 'SYNC'
+          ? 'STEMS'
+          : saved.activeToolTab || base.activeToolTab,
     sourceKeyName: saved.sourceKeyName || saved.keyName || base.sourceKeyName,
     eq: { ...base.eq, ...saved.eq },
     fx: { ...base.fx, ...saved.fx },
@@ -254,8 +261,8 @@ export default function SattariStudioPage() {
   const [crossfader, setCrossfader] = useState(50);
   const [crossfaderCurve, setCrossfaderCurve] = useState('Smooth');
   const [crossfaderReverse, setCrossfaderReverse] = useState(false);
-  const [masterLevel, setMasterLevel] = useState(82);
-  const [masterBpm, setMasterBpm] = useState(96);
+  const [masterLevel, setMasterLevel] = useState(100);
+  const [masterBpm, setMasterBpm] = useState(120);
   const [projectKey, setProjectKey] = useState('Off');
   const [masterFx, setMasterFx] = useState({ x: 28, y: 44 });
   const [masterDeckId, setMasterDeckId] = useState('A');
@@ -394,8 +401,8 @@ export default function SattariStudioPage() {
       setCrossfader(saved?.crossfader ?? 50);
       setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(saved?.crossfaderReverse ?? false);
-      setMasterLevel(saved?.masterLevel ?? 82);
-      setMasterBpm(transferred?.bpm || saved?.masterBpm || 96);
+      setMasterLevel(saved?.masterLevel ?? 100);
+      setMasterBpm(transferred?.bpm || saved?.masterBpm || 120);
       setProjectKey(saved?.projectKey || 'Off');
       setLimiter(saved?.limiter ?? true);
       setAiMaster(saved?.aiMaster ?? false);
@@ -404,7 +411,7 @@ export default function SattariStudioPage() {
       const engine = getEngine();
       engine.setCrossfader(saved?.crossfader ?? 50);
       engine.setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
-      engine.setMasterLevel(saved?.masterLevel ?? 82);
+      engine.setMasterLevel(saved?.masterLevel ?? 100);
       engine.setLimiter(saved?.limiter ?? true);
       engine.setMasterAssist(saved?.aiMaster ?? false, saved?.aiMasterMode || 'Streaming -14');
       const hydrated = await hydrateAudio(nextDecks, nextPads, () => cancelled);
@@ -1006,7 +1013,7 @@ export default function SattariStudioPage() {
       setSessionName(manifest.sessionName || 'Imported session');
       setMasterBpm(manifest.master?.bpm || 96);
       setProjectKey(manifest.master?.projectKey || 'Off');
-      setMasterLevel(manifest.master?.level ?? 82);
+      setMasterLevel(manifest.master?.level ?? 100);
       setCrossfader(manifest.master?.crossfader ?? 50);
       setCrossfaderCurve(manifest.master?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(manifest.master?.crossfaderReverse ?? false);
@@ -1049,7 +1056,7 @@ export default function SattariStudioPage() {
     setRecordings([]);
     setPianoNotes([]);
     setCrossfader(50);
-    setMasterLevel(82);
+    setMasterLevel(100);
     setMasterBpm(96);
     setProjectKey('Off');
     setFocusedDeckId('A');
@@ -1293,7 +1300,7 @@ export default function SattariStudioPage() {
   const masterRail = (
     <section className="sd-master-rail" aria-label="Master output status">
       <div className="sd-master-rail-title">
-        <strong>MASTER OUTPUT</strong>
+        <strong>MASTER</strong>
         <span className={limiter ? 'is-safe' : ''}>{limiter ? 'LIMITER SAFE' : 'LIMITER OFF'}</span>
       </div>
       <SegmentMeter level={masterMeter} accent="#4ad9c4" label="OUT" compact />
@@ -1317,17 +1324,29 @@ export default function SattariStudioPage() {
           PEAK <strong>{masterMeter ? '-1.0' : '--'}</strong>
         </span>
         <span>
-          ENGINE <strong className="is-safe">READY</strong>
+          ENGINE <strong className="is-safe">AUDIO READY</strong>
         </span>
       </div>
       <button
         type="button"
+        className="sd-master-open"
         onClick={() => {
           setAdvancedVisible(true);
           setActiveView('mixer');
         }}
       >
         OPEN MASTER
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setMasterLevel(100);
+          setLimiter(true);
+          setMasterFx({ x: 50, y: 50 });
+          setNotice('Master output reset to its performance-safe defaults.');
+        }}
+      >
+        RESET OUTPUT
       </button>
     </section>
   );

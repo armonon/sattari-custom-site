@@ -1,0 +1,348 @@
+/*
+ * Current native StemDeck surface parity.
+ * Kept as the final Studio stylesheet so the web shell follows the shipping
+ * desktop geometry without fighting the older exploratory style layers.
+ */
+
+.sd-focused-deck .sd-deck-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 43px;
+  padding: 6px 8px 4px;
+}
+
+.sd-deck-identity {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-rows: 23px 18px;
+  align-items: center;
+  column-gap: 7px;
+  min-width: 0;
+}
+
+.sd-deck-identity .sd-deck-badge {
+  grid-row: 1;
+}
+
+.sd-deck-identity .sd-deck-title {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.sd-deck-meta {
+  display: flex;
+  grid-column: 2;
+  grid-row: 2;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sd-deck-meta button,
+.sd-deck-live-actions button,
+.sd-deck-density button,
+.sd-deck-spectrum button {
+  height: 18px;
+  border: 1px solid #252a31;
+  border-radius: 7px;
+  background: #0d0f12;
+  color: #858b95;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.sd-deck-meta button {
+  min-width: 72px;
+  padding: 0 9px;
+  border-color: color-mix(in srgb, var(--sd-accent) 52%, #252a31);
+  color: var(--sd-accent);
+}
+
+.sd-deck-live-actions {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  gap: 4px;
+  padding-bottom: 1px;
+}
+
+.sd-deck-live-actions button {
+  min-width: 56px;
+  padding: 0 10px;
+}
+
+.sd-deck-live-actions button.is-active {
+  border-color: #10e6a8;
+  background: rgb(16 230 168 / 10%);
+  color: #10e6a8;
+}
+
+.sd-deck-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px 84px;
+  align-items: stretch;
+  gap: 4px;
+  height: 32px;
+  margin: 0 8px 5px;
+}
+
+.sd-focused-deck .sd-deck-overview .sd-waveform {
+  width: 100%;
+  height: 32px;
+  margin: 0;
+}
+
+.sd-deck-density,
+.sd-deck-spectrum {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.sd-deck-spectrum {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.sd-deck-density button,
+.sd-deck-spectrum button {
+  min-width: 0;
+  height: 32px;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 5px;
+  background: transparent;
+}
+
+.sd-deck-density button.is-active {
+  background: #23272f;
+  color: #f1f3f6;
+}
+
+.sd-deck-spectrum button.is-active {
+  background: rgb(85 229 208 / 17%);
+  color: #55e5d0;
+}
+
+.sd-vertical-wave-shape i {
+  flex: 1 1 auto;
+  max-height: none;
+  border-radius: 50%;
+}
+
+.sd-master-open {
+  color: #55e5d0 !important;
+}
+
+@media (min-width: 881px) and (max-width: 1199px) {
+  .sd-focused-deck .sd-deck-header {
+    height: 33px;
+    min-height: 33px;
+    padding: 4px 7px 3px;
+  }
+
+  .sd-deck-identity {
+    grid-template-columns: 24px minmax(120px, 1fr) auto;
+    grid-template-rows: 23px;
+    column-gap: 5px;
+  }
+
+  .sd-deck-identity .sd-deck-badge,
+  .sd-deck-identity .sd-deck-title,
+  .sd-deck-meta {
+    grid-row: 1;
+  }
+
+  .sd-deck-identity .sd-deck-title {
+    grid-column: 2;
+  }
+
+  .sd-deck-meta {
+    grid-column: 3;
+  }
+
+  .sd-deck-meta button {
+    min-width: 64px;
+    height: 22px;
+  }
+
+  .sd-deck-live-actions {
+    align-self: center;
+  }
+
+  .sd-deck-live-actions button {
+    min-width: 48px;
+    height: 22px;
+  }
+
+  .sd-master-rail {
+    grid-template-columns: 120px 64px minmax(220px, 1fr) 82px;
+    min-height: 57px;
+  }
+
+  .sd-master-rail-stats,
+  .sd-master-rail .sd-master-open {
+    display: none;
+  }
+
+  .sd-master-rail > button:last-child {
+    grid-column: auto;
+    height: 36px;
+  }
+}
+
+@media (min-width: 1200px) and (min-height: 850px) {
+  .sd-app-frame {
+    padding: 20px 16px 22px;
+  }
+
+  .sd-command-bar {
+    height: 50px;
+    min-height: 50px;
+    padding: 0 7px;
+  }
+
+  .sd-view-nav button {
+    min-height: 40px;
+  }
+
+  .sd-project-clock {
+    height: 48px;
+  }
+
+  .sd-performance-coach {
+    display: none;
+  }
+
+  .sd-workspace {
+    margin-top: 8px;
+  }
+
+  .sd-focused-deck {
+    position: relative;
+    display: block;
+    height: 864px;
+    padding: 0;
+  }
+
+  .sd-focused-deck .sd-decks-grid {
+    width: 720px;
+    height: 864px;
+    margin: 0 auto;
+    transform: translateX(-34px);
+  }
+
+  .sd-focused-deck .sd-deck,
+  .sd-focused-deck .sd-deck:nth-child(2) {
+    height: 864px;
+  }
+
+  .sd-focused-deck .sd-deck-header {
+    min-height: 52px;
+    padding: 7px 8px 5px;
+  }
+
+  .sd-deck-identity {
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: 21px 18px;
+  }
+
+  .sd-focused-deck .sd-deck-title span {
+    font-size: 14px;
+  }
+
+  .sd-deck-overview {
+    height: 28px;
+    margin-bottom: 5px;
+  }
+
+  .sd-focused-deck .sd-deck-overview .sd-waveform,
+  .sd-deck-density button,
+  .sd-deck-spectrum button {
+    height: 28px;
+  }
+
+  .sd-stem-wavefield {
+    height: 548px;
+  }
+
+  .sd-stem-wave-column {
+    grid-template-rows: 20px 1fr 54px;
+  }
+
+  .sd-vertical-wave-shape {
+    inset: 10px 20px;
+  }
+
+  .sd-vertical-wave-shape i {
+    min-height: 18px;
+  }
+
+  .sd-focused-deck .sd-deck-transport {
+    height: 27px;
+    margin-bottom: 5px;
+  }
+
+  .sd-focused-deck .sd-deck-mix-band {
+    height: 82px;
+    min-height: 82px;
+    margin-bottom: 5px;
+    padding-top: 6px;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox {
+    min-height: 96px;
+    margin-bottom: 8px;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox > nav {
+    height: 31px;
+  }
+
+  .sd-focused-deck .sd-tool-content {
+    min-height: 54px;
+  }
+
+  .sd-source-dock {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 58px;
+    min-height: 864px;
+  }
+
+  .sd-master-rail {
+    position: relative;
+    grid-template-columns: 130px 76px minmax(240px, 1fr) minmax(300px, 1fr);
+    gap: 10px;
+    min-height: 76px;
+    margin-top: 10px;
+    padding: 7px 112px 7px 8px;
+  }
+
+  .sd-master-rail-title {
+    align-self: stretch;
+  }
+
+  .sd-master-rail-title strong {
+    font-size: 10px;
+  }
+
+  .sd-master-rail .sd-master-open,
+  .sd-master-rail > button:last-child {
+    position: absolute;
+    right: 10px;
+    width: 92px;
+    height: 28px;
+    padding: 0 7px;
+  }
+
+  .sd-master-rail .sd-master-open {
+    top: 5px;
+    border-color: transparent;
+    background: transparent;
+    font-size: 7px;
+  }
+
+  .sd-master-rail > button:last-child {
+    bottom: 6px;
+  }
+}

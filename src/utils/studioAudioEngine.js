@@ -163,7 +163,7 @@ export class StudioAudioEngine {
       gain: laneGain,
       filterNode: laneFilter,
       delayNode: laneDelay,
-      level: 76,
+      level: 100,
       muted: false,
       solo: false,
       pitch: 0,

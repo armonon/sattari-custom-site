@@ -71,6 +71,12 @@ describe('SattariStudioPage', () => {
     expect(screen.getByRole('button', { name: 'REPLAY' })).toBeInTheDocument();
     expect(screen.getByLabelText('Project key')).toHaveValue('Off');
     expect(screen.getByLabelText('Master output status')).toBeInTheDocument();
+    expect(screen.getByLabelText('Waveform density')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'CUES' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'STEMS' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'SYNC' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'OPEN MASTER' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'RESET OUTPUT' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'S1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'FLOW' })).toBeInTheDocument();
 
