@@ -61,8 +61,10 @@ describe('SattariStudioPage', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'StemDeck' })).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(1);
-    expect(screen.getAllByText('Empty deck').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryAllByRole('article')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: /Add Source/ })).toBeInTheDocument();
+    expect(screen.getByText('Drop music here, or add something you can play')).toBeInTheDocument();
+    expect(screen.getByText('DROP A TRACK TO BEGIN')).toBeInTheDocument();
     expect(screen.queryByText('Midnight Drive')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play all decks' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Record live set' })).toBeInTheDocument();
@@ -71,12 +73,8 @@ describe('SattariStudioPage', () => {
     expect(screen.getByRole('button', { name: 'REPLAY' })).toBeInTheDocument();
     expect(screen.getByLabelText('Project key')).toHaveValue('Off');
     expect(screen.getByLabelText('Master output status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Waveform density')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'CUES' })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'STEMS' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'SYNC' })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'OPEN MASTER' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'RESET OUTPUT' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /OPEN MASTER/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'S1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'FLOW' })).toBeInTheDocument();
 

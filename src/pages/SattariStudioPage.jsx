@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlignJustify,
   Circle,
-  Disc3,
+  Folder,
   FolderOpen,
+  Grid2X2,
   KeyRound,
   Library,
   ListMusic,
@@ -73,9 +75,9 @@ const PAD_SEEDS = [
 ];
 
 const VIEWS = [
-  ['library', 'SETS', Library],
-  ['decks', 'PERFORM', Disc3],
-  ['arranger', 'REPLAY', ListMusic],
+  ['library', 'SETS', Folder],
+  ['decks', 'PERFORM', Grid2X2],
+  ['arranger', 'REPLAY', AlignJustify],
 ];
 
 const PROJECT_KEYS = ['Off', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -87,7 +89,7 @@ function createLane(definition) {
     ...definition,
     assetId: '',
     name: '',
-    level: definition.id === 'fullMix' ? 82 : 100,
+    level: 100,
     muted: false,
     solo: false,
     pitch: 0,
@@ -103,11 +105,11 @@ function createDeck(seed) {
     title: 'Empty deck',
     keyName: '--',
     sourceKeyName: '--',
-    bpm: 96,
+    bpm: 120,
     beatOffset: 0,
     downbeat: 1,
-    gain: 82,
-    fader: 82,
+    gain: 100,
+    fader: 100,
     pitch: 0,
     filter: 50,
     eq: { low: 50, mid: 50, high: 50 },
@@ -360,6 +362,12 @@ export default function SattariStudioPage() {
     let cancelled = false;
     const restore = async () => {
       const saved = loadStudioSession();
+      const savedHasAudio = Boolean(
+        saved?.decks?.some((deck) => Object.values(deck?.lanes || {}).some((lane) => lane?.assetId))
+      );
+      const migrateLegacyEmptySession = (saved?.uiSchemaVersion || 0) < 2 && !savedHasAudio;
+      const restoredMasterLevel = migrateLegacyEmptySession ? 100 : (saved?.masterLevel ?? 100);
+      const restoredMasterBpm = migrateLegacyEmptySession ? 120 : (saved?.masterBpm ?? 120);
       let nextDecks = DECK_SEEDS.map((_, index) => normalizeDeck(saved?.decks?.[index], index));
       const nextPads = createPads(saved?.pads);
       let transferred = null;
@@ -401,8 +409,8 @@ export default function SattariStudioPage() {
       setCrossfader(saved?.crossfader ?? 50);
       setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(saved?.crossfaderReverse ?? false);
-      setMasterLevel(saved?.masterLevel ?? 100);
-      setMasterBpm(transferred?.bpm || saved?.masterBpm || 120);
+      setMasterLevel(restoredMasterLevel);
+      setMasterBpm(transferred?.bpm || restoredMasterBpm);
       setProjectKey(saved?.projectKey || 'Off');
       setLimiter(saved?.limiter ?? true);
       setAiMaster(saved?.aiMaster ?? false);
@@ -411,7 +419,7 @@ export default function SattariStudioPage() {
       const engine = getEngine();
       engine.setCrossfader(saved?.crossfader ?? 50);
       engine.setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
-      engine.setMasterLevel(saved?.masterLevel ?? 100);
+      engine.setMasterLevel(restoredMasterLevel);
       engine.setLimiter(saved?.limiter ?? true);
       engine.setMasterAssist(saved?.aiMaster ?? false, saved?.aiMasterMode || 'Streaming -14');
       const hydrated = await hydrateAudio(nextDecks, nextPads, () => cancelled);
@@ -429,6 +437,7 @@ export default function SattariStudioPage() {
   useEffect(() => {
     if (!restored) return;
     saveStudioSession({
+      uiSchemaVersion: 2,
       sessionName,
       decks,
       pads,
@@ -1099,43 +1108,78 @@ export default function SattariStudioPage() {
   const maxDuration = Math.max(60, ...decks.map((deck) => deck.duration || 0));
 
   const focusedDeck = decks.find((deck) => deck.id === focusedDeckId) || decks[0];
+  const coachMessage = !loadedDecks.length
+    ? 'DROP A TRACK TO BEGIN'
+    : anyPlaying
+      ? 'LIVE / KEEP THE FLOW MOVING'
+      : 'PRESS PLAY';
 
   const deckConsole = (
     <section className="sd-performance-stage" aria-label="Performance sources">
-      <div className="sd-focused-deck">
-        <div className="sd-decks-grid">
-          <StemDeckChannel
-            key={focusedDeck.id}
-            deck={focusedDeck}
-            position={positions[focusedDeck.id] || 0}
-            meterLevel={deckMeters[focusedDeck.id] || 0}
-            onLoadLane={(laneId, file) => loadLane(focusedDeck.id, laneId, file)}
-            onLoadStemSet={(files) => loadStemSet(focusedDeck.id, files)}
-            onDeckChange={(updates) => changeDeck(focusedDeck.id, updates)}
-            onLaneChange={(laneId, updates) => changeLane(focusedDeck.id, laneId, updates)}
-            onTogglePlay={() => toggleDeck(focusedDeck.id)}
-            onCue={() => cueDeck(focusedDeck.id)}
-            onSeek={(seconds) => getEngine().seekDeck(focusedDeck.id, seconds)}
-            onSetHotCue={(index, seconds) => setHotCue(focusedDeck.id, index, seconds)}
-            onDeleteHotCue={(index) => deleteHotCue(focusedDeck.id, index)}
-            onSetLoop={(enabled, start, end, roll) =>
-              setDeckLoop(focusedDeck.id, enabled, start, end, roll)
-            }
-            onBeatJump={(beats) => beatJump(focusedDeck.id, beats)}
-            onStemFxChange={(stemId, updates) => changeStemFx(focusedDeck.id, stemId, updates)}
-            onExtractMidi={() => extractPattern(focusedDeck.id, 'midi')}
-            onExtractDrums={() => extractPattern(focusedDeck.id, 'drums')}
-          />
+      {loadedDecks.length ? (
+        <div className="sd-focused-deck">
+          <div className="sd-decks-grid">
+            <StemDeckChannel
+              key={focusedDeck.id}
+              deck={focusedDeck}
+              position={positions[focusedDeck.id] || 0}
+              meterLevel={deckMeters[focusedDeck.id] || 0}
+              onLoadLane={(laneId, file) => loadLane(focusedDeck.id, laneId, file)}
+              onLoadStemSet={(files) => loadStemSet(focusedDeck.id, files)}
+              onDeckChange={(updates) => changeDeck(focusedDeck.id, updates)}
+              onLaneChange={(laneId, updates) => changeLane(focusedDeck.id, laneId, updates)}
+              onTogglePlay={() => toggleDeck(focusedDeck.id)}
+              onCue={() => cueDeck(focusedDeck.id)}
+              onSeek={(seconds) => getEngine().seekDeck(focusedDeck.id, seconds)}
+              onSetHotCue={(index, seconds) => setHotCue(focusedDeck.id, index, seconds)}
+              onDeleteHotCue={(index) => deleteHotCue(focusedDeck.id, index)}
+              onSetLoop={(enabled, start, end, roll) =>
+                setDeckLoop(focusedDeck.id, enabled, start, end, roll)
+              }
+              onBeatJump={(beats) => beatJump(focusedDeck.id, beats)}
+              onStemFxChange={(stemId, updates) => changeStemFx(focusedDeck.id, stemId, updates)}
+              onExtractMidi={() => extractPattern(focusedDeck.id, 'midi')}
+              onExtractDrums={() => extractPattern(focusedDeck.id, 'drums')}
+            />
+          </div>
+          <button
+            type="button"
+            className="sd-source-dock"
+            onClick={() => deckImportRef.current?.click()}
+          >
+            <Plus size={24} />
+            <strong>SOURCE</strong>
+          </button>
         </div>
-        <button
-          type="button"
-          className="sd-source-dock"
-          onClick={() => deckImportRef.current?.click()}
+      ) : (
+        <div
+          className="sd-empty-performance"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            event.preventDefault();
+            const file = [...event.dataTransfer.files].find((item) =>
+              item.type.startsWith('audio/')
+            );
+            if (file) void loadLane(focusedDeck.id, 'fullMix', file);
+          }}
         >
-          <Plus size={24} />
-          <strong>SOURCE</strong>
-        </button>
-      </div>
+          <button
+            type="button"
+            className="sd-empty-source-cta"
+            onClick={() => deckImportRef.current?.click()}
+          >
+            <span className="sd-empty-source-icon">
+              <Plus size={31} strokeWidth={1.8} />
+            </span>
+            <strong>Add Source</strong>
+            <small>Drop music here, or add something you can play</small>
+            <em>
+              DJ
+              DECK&nbsp;&nbsp;/&nbsp;&nbsp;INSTRUMENT&nbsp;&nbsp;/&nbsp;&nbsp;MIC&nbsp;&nbsp;/&nbsp;&nbsp;MIDI
+            </em>
+          </button>
+        </div>
+      )}
     </section>
   );
 
@@ -1300,7 +1344,7 @@ export default function SattariStudioPage() {
   const masterRail = (
     <section className="sd-master-rail" aria-label="Master output status">
       <div className="sd-master-rail-title">
-        <strong>MASTER</strong>
+        <strong>MASTER OUTPUT</strong>
         <span className={limiter ? 'is-safe' : ''}>{limiter ? 'LIMITER SAFE' : 'LIMITER OFF'}</span>
       </div>
       <SegmentMeter level={masterMeter} accent="#4ad9c4" label="OUT" compact />
@@ -1335,7 +1379,7 @@ export default function SattariStudioPage() {
           setActiveView('mixer');
         }}
       >
-        OPEN MASTER
+        AUDIO READY&nbsp;&nbsp;/&nbsp;&nbsp;OPEN MASTER
       </button>
       <button
         type="button"
@@ -1346,7 +1390,7 @@ export default function SattariStudioPage() {
           setNotice('Master output reset to its performance-safe defaults.');
         }}
       >
-        RESET OUTPUT
+        Restore
       </button>
     </section>
   );
@@ -1578,7 +1622,7 @@ export default function SattariStudioPage() {
                 aria-label={anyPlaying ? 'Pause all decks' : 'Play all decks'}
               >
                 {anyPlaying ? <Pause size={14} /> : <Play size={14} />}
-                <span>{anyPlaying ? 'PAUSE' : 'PLAY ALL'}</span>
+                <span>{anyPlaying ? 'Pause' : 'Play All'}</span>
               </button>
             </div>
             <div className="sd-title-block">
@@ -1622,14 +1666,14 @@ export default function SattariStudioPage() {
                 aria-label={captureActive ? 'Stop recording live set' : 'Record live set'}
               >
                 <Circle size={12} fill="currentColor" />
-                <span>{captureActive ? 'STOP' : 'RECORD'}</span>
+                <span>{captureActive ? 'Stop' : 'Record'}</span>
               </button>
               <button
                 type="button"
                 className={advancedVisible ? 'is-active sd-tools-button' : 'sd-tools-button'}
                 onClick={() => setAdvancedVisible((value) => !value)}
               >
-                MORE
+                {advancedVisible ? 'Less' : 'More'}
               </button>
               <button
                 type="button"
@@ -1785,19 +1829,25 @@ export default function SattariStudioPage() {
             {activeView === 'decks' ? (
               <>
                 <div className="sd-performance-coach">
-                  <strong>PRESS PLAY</strong>
+                  <strong>{coachMessage}</strong>
                   <div className="sd-scene-buttons" aria-label="Performance scenes">
                     {decks.map((deck, index) => (
                       <button
                         type="button"
                         key={deck.id}
-                        className={focusedDeck.id === deck.id ? 'is-active' : ''}
+                        className={
+                          loadedDecks.length && focusedDeck.id === deck.id ? 'is-active' : ''
+                        }
                         onClick={() => setFocusedDeckId(deck.id)}
                       >
                         S{index + 1}
                       </button>
                     ))}
-                    <button type="button" onClick={startAutomix}>
+                    <button
+                      type="button"
+                      className={!loadedDecks.length ? 'is-active' : ''}
+                      onClick={startAutomix}
+                    >
                       FLOW
                     </button>
                   </div>
