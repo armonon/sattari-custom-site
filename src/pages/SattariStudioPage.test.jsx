@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -27,6 +27,7 @@ const engineMethods = vi.hoisted(() => ({
   setLoopRegion: vi.fn(),
   getDeckPosition: vi.fn(() => 0),
   getDeckMeterLevel: vi.fn(() => 0),
+  seekDeck: vi.fn(),
   dispose: vi.fn(),
 }));
 
@@ -77,6 +78,14 @@ describe('SattariStudioPage', () => {
     expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'S1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'FLOW' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'REPLAY' }));
+    expect(screen.getByText('ARRANGEMENT VIEW')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Track' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bounce Edits' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Show automation for channel A' }));
+    expect(screen.getByText('CHANNEL A')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'SYNC TO PROJECT' })).toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByText('LOCAL SESSION')).toBeInTheDocument());
   }, 10000);

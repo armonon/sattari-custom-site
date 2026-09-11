@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlignJustify,
   Circle,
+  Copy,
   Folder,
   FolderOpen,
   Grid2X2,
@@ -10,6 +11,7 @@ import {
   ListMusic,
   Maximize2,
   Mic2,
+  MousePointer2,
   Pause,
   Play,
   Plus,
@@ -253,6 +255,7 @@ export default function SattariStudioPage() {
   const automixRef = useRef(0);
   const projectInputRef = useRef(null);
   const deckImportRef = useRef(null);
+  const deckImportTargetRef = useRef(null);
   const padInputRefs = useRef([]);
   const midiAccessRef = useRef(null);
   const tapTimesRef = useRef([]);
@@ -287,6 +290,8 @@ export default function SattariStudioPage() {
   const [razorActive, setRazorActive] = useState(false);
   const [arrangementLoop, setArrangementLoop] = useState(false);
   const [arrangementZoom, setArrangementZoom] = useState(1);
+  const [arrangementSelection, setArrangementSelection] = useState(null);
+  const [arrangerInspectorTab, setArrangerInspectorTab] = useState('mix');
   const [pianoNotes, setPianoNotes] = useState([]);
   const [focusedDeckId, setFocusedDeckId] = useState('A');
 
@@ -472,6 +477,14 @@ export default function SattariStudioPage() {
   ]);
 
   useEffect(() => {
+    const visualActivity = decks.some((deck) => deck.playing) || microphoneActive || captureActive;
+    if (!visualActivity) {
+      setDeckMeters((current) =>
+        Object.values(current).some((value) => value !== 0) ? { A: 0, B: 0, C: 0, D: 0 } : current
+      );
+      return undefined;
+    }
+
     let lastUpdate = 0;
     const tick = (timestamp) => {
       const engine = engineRef.current;
@@ -487,15 +500,23 @@ export default function SattariStudioPage() {
             updateDeck(deck.id, { playing: false });
           }
         });
-        setPositions(nextPositions);
-        setDeckMeters(nextMeters);
+        setPositions((current) =>
+          decks.some((deck) => Math.abs((current[deck.id] || 0) - nextPositions[deck.id]) > 0.01)
+            ? nextPositions
+            : current
+        );
+        setDeckMeters((current) =>
+          decks.some((deck) => Math.abs((current[deck.id] || 0) - nextMeters[deck.id]) > 0.005)
+            ? nextMeters
+            : current
+        );
         lastUpdate = timestamp;
       }
       animationRef.current = window.requestAnimationFrame(tick);
     };
     animationRef.current = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(animationRef.current);
-  }, [decks, updateDeck]);
+  }, [captureActive, decks, microphoneActive, updateDeck]);
 
   useEffect(
     () => () => {
@@ -1106,6 +1127,7 @@ export default function SattariStudioPage() {
   const masterPosition = Math.max(0, ...Object.values(positions));
   const masterMeter = Math.max(0, ...Object.values(deckMeters));
   const maxDuration = Math.max(60, ...decks.map((deck) => deck.duration || 0));
+  const arrangementProgress = Math.min(100, (masterPosition / maxDuration) * 100);
 
   const focusedDeck = decks.find((deck) => deck.id === focusedDeckId) || decks[0];
   const coachMessage = !loadedDecks.length
@@ -1113,6 +1135,28 @@ export default function SattariStudioPage() {
     : anyPlaying
       ? 'LIVE / KEEP THE FLOW MOVING'
       : 'PRESS PLAY';
+  const selectedArrangementDeck = decks.find((deck) => deck.id === arrangementSelection);
+
+  const seekArrangement = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const rulerInset = event.currentTarget.classList.contains('sd-ruler')
+      ? Number.parseFloat(window.getComputedStyle(event.currentTarget).paddingLeft) || 0
+      : 0;
+    const laneWidth = Math.max(1, bounds.width - rulerInset);
+    const seconds = Math.max(
+      0,
+      Math.min(maxDuration, ((event.clientX - bounds.left - rulerInset) / laneWidth) * maxDuration)
+    );
+    loadedDecks.forEach((deck) => getEngine().seekDeck(deck.id, seconds));
+  };
+
+  const addArrangementTrack = () => {
+    const emptyDeck = decks.find((deck) => !deck.duration) || decks[0];
+    setFocusedDeckId(emptyDeck.id);
+    setArrangementSelection(emptyDeck.id);
+    deckImportTargetRef.current = emptyDeck.id;
+    deckImportRef.current?.click();
+  };
 
   const deckConsole = (
     <section className="sd-performance-stage" aria-label="Performance sources">
@@ -1396,16 +1440,34 @@ export default function SattariStudioPage() {
   );
 
   const arrangementConsole = (
-    <section className="sd-arranger" aria-label="Arrangement capture">
-      <header className="sd-arranger-toolbar">
-        <div>
-          <strong>ARRANGEMENT CAPTURE</strong>
-          <span>{formatTime(masterPosition, true)}</span>
+    <section className="sd-native-arranger" aria-label="Arrangement capture">
+      <header className="sd-native-arranger-commandbar">
+        <div className="sd-arranger-project-title">
+          <strong>REPLAY&nbsp;&nbsp;/&nbsp;&nbsp;TAKE {Math.max(1, recordings.length)}</strong>
+          <span>{loadedDecks.length ? 'READY TO EDIT' : 'CAPTURE OR ADD AUDIO'}</span>
+        </div>
+        <div className="sd-arranger-project-actions">
+          <button type="button" className="is-add" onClick={addArrangementTrack}>
+            <Plus size={12} /> Track
+          </button>
+          <button
+            type="button"
+            className={snapActive ? 'is-active' : ''}
+            onClick={() => setSnapActive((value) => !value)}
+          >
+            Snap
+          </button>
+          <button type="button" disabled aria-label="Undo">
+            <Undo2 size={12} /> Undo
+          </button>
+          <button type="button" disabled aria-label="Redo">
+            <Redo2 size={12} /> Redo
+          </button>
+          <button type="button" disabled title="Bounce editing is available in StemDeck Desktop">
+            Bounce Edits
+          </button>
         </div>
         <div className="sd-arrangement-transport">
-          <button type="button" onClick={toggleGlobalTransport} aria-label="Launch arrangement">
-            &gt;&gt;&gt;
-          </button>
           <button type="button" onClick={toggleGlobalTransport} aria-label="Play arrangement">
             {anyPlaying ? <Pause size={12} /> : <Play size={12} />}
           </button>
@@ -1423,7 +1485,7 @@ export default function SattariStudioPage() {
             onClick={() => setArrangementLoop((value) => !value)}
             aria-label="Loop arrangement"
           >
-            LOOP
+            Loop
           </button>
         </div>
         <div className="sd-edit-tools">
@@ -1442,13 +1504,6 @@ export default function SattariStudioPage() {
               >
                 <Scissors size={13} />
               </button>
-              <button
-                type="button"
-                className={snapActive ? 'is-active' : ''}
-                onClick={() => setSnapActive((value) => !value)}
-              >
-                SNAP
-              </button>
             </>
           ) : null}
           <button
@@ -1466,69 +1521,262 @@ export default function SattariStudioPage() {
             <ZoomIn size={13} />
           </button>
           <button type="button" onClick={() => setArrangementZoom(1)} aria-label="Fit arrangement">
-            FIT
+            Fit
           </button>
         </div>
       </header>
-      <div className="sd-ruler">
-        <span>1</span>
-        <span>9</span>
-        <span>17</span>
-        <span>25</span>
-        <span>33</span>
-        <span>41</span>
-        <span>49</span>
-        <span>57</span>
-      </div>
-      <div className="sd-arrangement-tracks" style={{ '--sd-zoom': arrangementZoom }}>
-        {decks.map((deck) => (
-          <div className="sd-arrangement-track" key={deck.id}>
-            <div className="sd-arrangement-label" style={{ '--sd-accent': deck.accent }}>
-              <strong>{deck.id}</strong>
-              <span>{deck.title}</span>
-            </div>
-            <div className="sd-arrangement-lane">
-              {deck.duration ? (
-                <button
-                  type="button"
-                  className="sd-arrangement-clip"
-                  style={{
-                    '--sd-accent': deck.accent,
-                    width: `${Math.max(12, (deck.duration / maxDuration) * 88)}%`,
+      <div className="sd-native-arranger-frame">
+        <aside className="sd-arranger-toolrail" aria-label="Arrangement tools">
+          <button
+            type="button"
+            className={!razorActive ? 'is-active' : ''}
+            aria-label="Select tool"
+          >
+            <MousePointer2 size={16} />
+          </button>
+          <button
+            type="button"
+            className={razorActive ? 'is-active' : ''}
+            onClick={() => setRazorActive((value) => !value)}
+            aria-label="Razor tool"
+          >
+            <Scissors size={16} />
+          </button>
+          <button type="button" disabled aria-label="Automation tool">
+            <SlidersHorizontal size={16} />
+          </button>
+          <button type="button" disabled aria-label="Duplicate selected clip">
+            <Copy size={16} />
+          </button>
+        </aside>
+        <div className="sd-arranger-timeline">
+          <header className="sd-arranger-view-head">
+            <strong>ARRANGEMENT VIEW</strong>
+            <span>{loadedDecks.length ? 'READY' : 'EMPTY SET'}</span>
+            <small>
+              {masterBpm.toFixed(1)} BPM&nbsp;&nbsp;&nbsp;4/4&nbsp;&nbsp;&nbsp;
+              {Math.max(1, Math.ceil((maxDuration * masterBpm) / 240))} BARS
+            </small>
+          </header>
+          <div
+            className="sd-ruler"
+            onPointerDown={seekArrangement}
+            style={{ '--sd-progress': arrangementProgress }}
+          >
+            {['1', '9', '17', '25', '33', '41', '49', '57'].map((bar) => (
+              <span key={bar}>{bar}</span>
+            ))}
+            <i className="sd-arrangement-playhead" />
+          </div>
+          <div className="sd-arrangement-tracks" style={{ '--sd-zoom': arrangementZoom }}>
+            {decks.map((deck, index) => (
+              <div
+                className={`sd-arrangement-track${arrangementSelection === deck.id ? ' is-selected' : ''}`}
+                key={deck.id}
+              >
+                <div className="sd-arrangement-label" style={{ '--sd-accent': deck.accent }}>
+                  <div className="sd-arrangement-track-id">
+                    <strong>{index + 1}</strong>
+                    <span>CH {deck.id}</span>
+                    <em>PERFORMANCE</em>
+                  </div>
+                  <div className="sd-arrangement-track-controls">
+                    <button
+                      type="button"
+                      className={deck.muted ? 'is-active' : ''}
+                      onClick={() => changeDeck(deck.id, { muted: !deck.muted })}
+                      aria-label={`Mute channel ${deck.id}`}
+                    >
+                      M
+                    </button>
+                    <button
+                      type="button"
+                      className={deck.solo ? 'is-solo' : ''}
+                      onClick={() => changeDeck(deck.id, { solo: !deck.solo })}
+                      aria-label={`Solo channel ${deck.id}`}
+                    >
+                      S
+                    </button>
+                    <button
+                      type="button"
+                      className={arrangementSelection === deck.id ? 'is-active' : ''}
+                      onClick={() => setArrangementSelection(deck.id)}
+                      aria-label={`Show automation for channel ${deck.id}`}
+                    >
+                      A
+                    </button>
+                    <span>Master</span>
+                  </div>
+                  <label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="125"
+                      value={deck.fader}
+                      onChange={(event) =>
+                        changeDeck(deck.id, { fader: Number(event.target.value) })
+                      }
+                      aria-label={`Channel ${deck.id} arrangement level`}
+                    />
+                    <output>{deck.fader}%</output>
+                  </label>
+                </div>
+                <div
+                  className="sd-arrangement-lane"
+                  onPointerDown={(event) => {
+                    setArrangementSelection(deck.id);
+                    seekArrangement(event);
                   }}
-                  onClick={() => getEngine().seekDeck(deck.id, 0)}
                 >
-                  <ArrangementWave peaks={deck.waveform} accent={deck.accent} />
-                  <span>{deck.title}</span>
-                </button>
-              ) : (
-                <EmptyArrangementDrop onDrop={(file) => loadLane(deck.id, 'fullMix', file)} />
-              )}
+                  {deck.duration ? (
+                    <button
+                      type="button"
+                      className="sd-arrangement-clip"
+                      style={{
+                        '--sd-accent': deck.accent,
+                        width: `${Math.max(12, (deck.duration / maxDuration) * 100)}%`,
+                      }}
+                      onPointerDown={(event) => {
+                        event.stopPropagation();
+                        setArrangementSelection(deck.id);
+                      }}
+                    >
+                      <ArrangementWave peaks={deck.waveform} accent={deck.accent} />
+                      <span>{deck.title}</span>
+                    </button>
+                  ) : (
+                    <EmptyArrangementDrop onDrop={(file) => loadLane(deck.id, 'fullMix', file)} />
+                  )}
+                  <i
+                    className="sd-arrangement-playhead"
+                    style={{ left: `${arrangementProgress}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            <div className="sd-arrangement-track sd-recording-track">
+              <div className="sd-arrangement-label">
+                <div className="sd-arrangement-track-id">
+                  <strong>M</strong>
+                  <span>LIVE MASTER REFERENCE</span>
+                  <em>REFERENCE</em>
+                </div>
+                <small>PRINTED SAFETY MIX</small>
+              </div>
+              <div className="sd-arrangement-lane">
+                {recordings.length ? (
+                  recordings.map((recording) => (
+                    <button
+                      type="button"
+                      key={recording.id}
+                      className="sd-recording-clip"
+                      onClick={() => downloadRecording(recording)}
+                    >
+                      {recording.name}
+                    </button>
+                  ))
+                ) : (
+                  <span className="sd-empty-lane">Printed safety mix appears after recording</span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-        <div className="sd-arrangement-track sd-recording-track">
-          <div className="sd-arrangement-label">
-            <strong>REC</strong>
-            <span>Master takes</span>
-          </div>
-          <div className="sd-arrangement-lane">
-            {recordings.length ? (
-              recordings.map((recording) => (
-                <button
-                  type="button"
-                  key={recording.id}
-                  className="sd-recording-clip"
-                  onClick={() => downloadRecording(recording)}
-                >
-                  {recording.name}
-                </button>
-              ))
-            ) : (
-              <span className="sd-empty-lane">Press record to capture the master output</span>
-            )}
           </div>
         </div>
+        <aside className="sd-arranger-inspector" aria-label="Arrangement inspector">
+          <nav>
+            <button
+              type="button"
+              className={arrangerInspectorTab === 'mix' ? 'is-active' : ''}
+              onClick={() => setArrangerInspectorTab('mix')}
+            >
+              MIX
+            </button>
+            <button
+              type="button"
+              className={arrangerInspectorTab === 'effects' ? 'is-active' : ''}
+              onClick={() => setArrangerInspectorTab('effects')}
+            >
+              EFFECTS
+            </button>
+          </nav>
+          {selectedArrangementDeck ? (
+            <div className="sd-arranger-inspector-content">
+              <small>CHANNEL {selectedArrangementDeck.id}</small>
+              <strong>{selectedArrangementDeck.title}</strong>
+              {arrangerInspectorTab === 'mix' ? (
+                <>
+                  <label>
+                    <span>LEVEL</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="125"
+                      value={selectedArrangementDeck.fader}
+                      onChange={(event) =>
+                        changeDeck(selectedArrangementDeck.id, {
+                          fader: Number(event.target.value),
+                        })
+                      }
+                    />
+                    <output>{selectedArrangementDeck.fader}%</output>
+                  </label>
+                  <button
+                    type="button"
+                    className={selectedArrangementDeck.synced ? 'is-active' : ''}
+                    onClick={() =>
+                      changeDeck(selectedArrangementDeck.id, {
+                        synced: !selectedArrangementDeck.synced,
+                      })
+                    }
+                  >
+                    {selectedArrangementDeck.synced ? 'SYNCED TO PROJECT' : 'SYNC TO PROJECT'}
+                  </button>
+                  <dl>
+                    <div>
+                      <dt>BPM</dt>
+                      <dd>{selectedArrangementDeck.bpm.toFixed(1)}</dd>
+                    </div>
+                    <div>
+                      <dt>KEY</dt>
+                      <dd>{selectedArrangementDeck.keyName}</dd>
+                    </div>
+                    <div>
+                      <dt>LENGTH</dt>
+                      <dd>{formatTime(selectedArrangementDeck.duration)}</dd>
+                    </div>
+                  </dl>
+                </>
+              ) : (
+                <div className="sd-arranger-fx-grid">
+                  {['reverb', 'echo'].map((effect) => (
+                    <label key={effect}>
+                      <span>{effect.toUpperCase()}</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={selectedArrangementDeck.fx[effect]}
+                        onChange={(event) =>
+                          changeDeck(selectedArrangementDeck.id, {
+                            fx: {
+                              ...selectedArrangementDeck.fx,
+                              [effect]: Number(event.target.value),
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="sd-arranger-inspector-empty">
+              <strong>SELECT A TRACK</strong>
+              <span>Choose a track or clip to edit its mix, sync, and effects.</span>
+            </div>
+          )}
+        </aside>
       </div>
     </section>
   );
@@ -2101,7 +2349,11 @@ export default function SattariStudioPage() {
             multiple
             hidden
             onChange={(event) => {
-              void importDeckSet([...event.target.files]);
+              const files = [...event.target.files];
+              const targetDeck = deckImportTargetRef.current;
+              deckImportTargetRef.current = null;
+              if (targetDeck && files[0]) void loadLane(targetDeck, 'fullMix', files[0]);
+              else void importDeckSet(files);
               event.target.value = '';
             }}
           />
