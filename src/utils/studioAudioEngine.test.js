@@ -1,10 +1,51 @@
 /* @vitest-environment jsdom */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   buildArrangementSchedule,
   crossfaderGains,
   masterAssistProfile,
+  StudioAudioEngine,
 } from './studioAudioEngine';
+
+describe('master signal controls', () => {
+  const param = () => ({ rampTo: vi.fn() });
+  it('applies monitor audition only to the speaker branches', () => {
+    const engine = {
+      monitor: { gain: param() },
+      monitorMonoGain: { gain: param() },
+      monitorStereoGain: { gain: param() },
+      master: { gain: param() },
+      output: { gain: param() },
+    };
+    StudioAudioEngine.prototype.setMasterMonitor.call(engine, {
+      mono: true,
+      dimmed: true,
+      muted: true,
+    });
+    expect(engine.monitor.gain.rampTo).toHaveBeenCalledWith(0, 0.04);
+    expect(engine.monitorMonoGain.gain.rampTo).toHaveBeenCalledWith(1, 0.04);
+    expect(engine.monitorStereoGain.gain.rampTo).toHaveBeenCalledWith(0, 0.04);
+    expect(engine.master.gain.rampTo).not.toHaveBeenCalled();
+    expect(engine.output.gain.rampTo).not.toHaveBeenCalled();
+  });
+  it('neutral audition preserves the limiter target and smoothly resets tone', () => {
+    const engine = {
+      masterEq: { low: param(), mid: param(), high: param() },
+      masterLowCut: { frequency: param() },
+      masterWidth: { width: param() },
+      limiter: { threshold: param() },
+    };
+    StudioAudioEngine.prototype.setMasterProcessing.call(engine, {
+      low: 6,
+      width: 150,
+      ceiling: -3,
+      bypass: true,
+    });
+    expect(engine.masterEq.low.rampTo).toHaveBeenCalledWith(0, 0.04);
+    expect(engine.masterWidth.width.rampTo).toHaveBeenCalledWith(0.5, 0.04);
+    expect(engine.limiter.threshold.rampTo).toHaveBeenCalledWith(-3, 0.04);
+  });
+});
 
 describe('crossfaderGains', () => {
   it('fully isolates each side at the endpoints', () => {

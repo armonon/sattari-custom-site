@@ -11,6 +11,20 @@ const engineMethods = vi.hoisted(() => ({
   setMasterLevel: vi.fn(),
   setLimiter: vi.fn(),
   setMasterAssist: vi.fn(),
+  setMasterProcessing: vi.fn(),
+  setMasterMonitor: vi.fn(),
+  getMasterStatus: vi.fn(() => ({
+    left: -96,
+    right: -96,
+    peak: -96,
+    rms: -96,
+    correlation: null,
+    reduction: 0,
+    clipped: false,
+    state: 'running',
+    sampleRate: 48000,
+  })),
+  unlock: vi.fn(async () => {}),
   ensureDeck: vi.fn(),
   setDeckGain: vi.fn(),
   setDeckFader: vi.fn(),
@@ -55,11 +69,61 @@ vi.mock('../utils/audioProjectStore', () => ({
 }));
 
 import SattariStudioPage from './SattariStudioPage';
+import { saveStudioSession } from '../utils/audioProjectStore';
 
 describe('SattariStudioPage', () => {
   beforeEach(() => {
     storeMethods.loadStudioSession.mockReturnValue(null);
     vi.clearAllMocks();
+  });
+
+  it('restores and saves master processing, with independent monitor controls', async () => {
+    storeMethods.loadStudioSession.mockReturnValue({
+      masterProcessing: { low: 3, width: 115, ceiling: -2 },
+    });
+    render(
+      <HelmetProvider>
+        <MemoryRouter>
+          <SattariStudioPage />
+        </MemoryRouter>
+      </HelmetProvider>
+    );
+    await waitFor(() => expect(screen.getByText('LOCAL SESSION')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Open master' }));
+    expect(screen.getByLabelText('Master low EQ')).toHaveValue('3');
+    expect(screen.getByLabelText('Stereo width')).toHaveValue('115');
+    fireEvent.change(screen.getByLabelText('Master low EQ'), { target: { value: '6' } });
+    await waitFor(() =>
+      expect(engineMethods.setMasterProcessing).toHaveBeenLastCalledWith(
+        expect.objectContaining({ low: 6, width: 115, ceiling: -2 })
+      )
+    );
+    expect(saveStudioSession).toHaveBeenLastCalledWith(
+      expect.objectContaining({ masterProcessing: expect.objectContaining({ low: 6 }) })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Mute speakers' }));
+    expect(engineMethods.setMasterMonitor).toHaveBeenLastCalledWith({
+      mono: false,
+      dimmed: false,
+      muted: true,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Mono audition' }));
+    expect(engineMethods.setMasterMonitor).toHaveBeenLastCalledWith({
+      mono: true,
+      dimmed: false,
+      muted: true,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Audition neutral' }));
+    expect(screen.getByLabelText('Master low EQ')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore master defaults' }));
+    expect(screen.getByLabelText('Master low EQ')).toHaveValue('0');
+    expect(screen.getByLabelText('Stereo width')).toHaveValue('100');
+    expect(screen.getByLabelText('Limiter threshold')).toHaveValue('-1');
+    expect(engineMethods.setMasterMonitor).toHaveBeenLastCalledWith({
+      mono: false,
+      dimmed: false,
+      muted: false,
+    });
   });
 
   it('opens a real empty workspace without fictional preloaded audio', async () => {
@@ -84,8 +148,9 @@ describe('SattariStudioPage', () => {
     expect(screen.getByRole('button', { name: 'REPLAY' })).toBeInTheDocument();
     expect(screen.getByLabelText('Project key')).toHaveValue('Off');
     expect(screen.getByLabelText('Master output status')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /OPEN MASTER/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Open master' }));
+    expect(screen.getByRole('button', { name: 'Restore master defaults' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Stereo width')).toHaveValue('100');
     expect(screen.getByRole('button', { name: 'S1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'FLOW' })).toBeInTheDocument();
 

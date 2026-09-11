@@ -1,4 +1,10 @@
 import * as Tone from 'tone';
+import {
+  masterGain,
+  monitorGain,
+  normalizeMasterProcessing,
+  measureMasterChannels,
+} from './masterOutput';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -60,6 +66,20 @@ export class StudioAudioEngine {
     this.limitedGain = new Tone.Gain(1);
     this.dryGain = new Tone.Gain(0);
     this.output = new Tone.Gain(1);
+    this.masterLowCut = new Tone.Filter({ type: 'highpass', frequency: 20, rolloff: -12 });
+    this.masterEq = new Tone.EQ3({
+      low: 0,
+      mid: 0,
+      high: 0,
+      lowFrequency: 250,
+      highFrequency: 2500,
+    });
+    this.masterWidth = new Tone.StereoWidener(0.5);
+    this.monitor = new Tone.Gain(1);
+    this.monitorMono = new Tone.Mono();
+    this.monitorMonoGain = new Tone.Gain(0);
+    this.monitorStereoGain = new Tone.Gain(1);
+    this.masterAnalyser = new Tone.Analyser({ type: 'waveform', size: 1024, channels: 2 });
     this.meter = new Tone.Meter({ normalRange: true, smoothing: 0.84 });
     this.recorder = Tone.Recorder.supported ? new Tone.Recorder() : null;
     this.microphone = null;
@@ -88,13 +108,17 @@ export class StudioAudioEngine {
       resonance: 4200,
     }).connect(this.master);
 
-    this.master.connect(this.masterCompressor);
+    this.master.chain(this.masterLowCut, this.masterEq, this.masterWidth, this.masterCompressor);
     this.masterCompressor.connect(this.limiter);
     this.masterCompressor.connect(this.dryGain);
     this.limiter.connect(this.limitedGain);
     this.limitedGain.connect(this.output);
     this.dryGain.connect(this.output);
-    this.output.toDestination();
+    // Recorder and meters hear the program bus. Monitor audition controls only affect speakers.
+    this.output.chain(this.monitorStereoGain, this.monitor);
+    this.output.chain(this.monitorMono, this.monitorMonoGain, this.monitor);
+    this.monitor.toDestination();
+    this.output.connect(this.masterAnalyser);
     this.output.connect(this.meter);
     if (this.recorder) this.output.connect(this.recorder);
   }
@@ -208,7 +232,33 @@ export class StudioAudioEngine {
   }
 
   setMasterLevel(level) {
-    this.master.gain.rampTo(gainFromPercent(level), 0.04);
+    this.master.gain.rampTo(masterGain(level), 0.04);
+  }
+
+  setMasterProcessing(value) {
+    const settings = normalizeMasterProcessing(value);
+    this.masterEq.low.rampTo(settings.bypass ? 0 : settings.low, 0.04);
+    this.masterEq.mid.rampTo(settings.bypass ? 0 : settings.mid, 0.04);
+    this.masterEq.high.rampTo(settings.bypass ? 0 : settings.high, 0.04);
+    this.masterLowCut.frequency.rampTo(settings.bypass ? 20 : settings.lowCut, 0.04);
+    this.masterWidth.width.rampTo(settings.bypass ? 0.5 : settings.width / 200, 0.04);
+    this.limiter.threshold.rampTo(settings.ceiling, 0.04);
+  }
+
+  setMasterMonitor({ mono = false, dimmed = false, muted = false } = {}) {
+    this.monitor.gain.rampTo(monitorGain({ dimmed, muted }), 0.04);
+    this.monitorMonoGain.gain.rampTo(mono ? 1 : 0, 0.04);
+    this.monitorStereoGain.gain.rampTo(mono ? 0 : 1, 0.04);
+  }
+
+  getMasterStatus() {
+    const [left, right] = this.masterAnalyser.getValue();
+    return {
+      ...measureMasterChannels(left, right),
+      reduction: Math.max(0, -(this.masterCompressor.reduction || 0)),
+      state: this.output.context.state,
+      sampleRate: this.output.context.sampleRate,
+    };
   }
 
   setLimiter(enabled) {
@@ -592,6 +642,14 @@ export class StudioAudioEngine {
     this.padNoise.dispose();
     this.padHat.dispose();
     this.meter.dispose();
+    this.masterAnalyser.dispose();
+    this.masterLowCut.dispose();
+    this.masterEq.dispose();
+    this.masterWidth.dispose();
+    this.monitorMono.dispose();
+    this.monitorMonoGain.dispose();
+    this.monitorStereoGain.dispose();
+    this.monitor.dispose();
     this.masterCompressor.dispose();
     this.limiter.dispose();
     this.limitedGain.dispose();

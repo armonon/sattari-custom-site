@@ -46,6 +46,8 @@ import {
 } from '../utils/audioProjectStore';
 import { SEO } from '../utils/seo';
 import { StudioAudioEngine } from '../utils/studioAudioEngine';
+import MasterOutput from '../components/studio/MasterOutput';
+import { DEFAULT_MASTER_PROCESSING, normalizeMasterProcessing } from '../utils/masterOutput';
 import '../styles-stemdeck-web.css';
 import '../styles-stemdeck-native.css';
 
@@ -378,6 +380,7 @@ export default function SattariStudioPage() {
   const [crossfaderCurve, setCrossfaderCurve] = useState('Smooth');
   const [crossfaderReverse, setCrossfaderReverse] = useState(false);
   const [masterLevel, setMasterLevel] = useState(100);
+  const [masterProcessing, setMasterProcessing] = useState({ ...DEFAULT_MASTER_PROCESSING });
   const [masterBpm, setMasterBpm] = useState(120);
   const [projectKey, setProjectKey] = useState('Off');
   const [masterFx, setMasterFx] = useState({ x: 28, y: 44 });
@@ -569,6 +572,7 @@ export default function SattariStudioPage() {
       setCrossfaderCurve(saved?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(saved?.crossfaderReverse ?? false);
       setMasterLevel(restoredMasterLevel);
+      setMasterProcessing(normalizeMasterProcessing(saved?.masterProcessing));
       setMasterBpm(transferred?.bpm || restoredMasterBpm);
       setProjectKey(saved?.projectKey || 'Off');
       setLimiter(saved?.limiter ?? true);
@@ -605,6 +609,7 @@ export default function SattariStudioPage() {
       crossfaderCurve,
       crossfaderReverse,
       masterLevel,
+      masterProcessing,
       masterBpm,
       projectKey,
       limiter,
@@ -622,6 +627,7 @@ export default function SattariStudioPage() {
     limiter,
     masterBpm,
     masterLevel,
+    masterProcessing,
     pads,
     recordings,
     restored,
@@ -772,12 +778,13 @@ export default function SattariStudioPage() {
     engine.setCrossfader(crossfaderReverse ? 100 - crossfader : crossfader);
   }, [crossfader, crossfaderCurve, crossfaderReverse, getEngine]);
 
-  useEffect(() => getEngine().setMasterLevel(masterLevel), [getEngine, masterLevel]);
-  useEffect(() => getEngine().setLimiter(limiter), [getEngine, limiter]);
-  useEffect(
-    () => getEngine().setMasterAssist(aiMaster, aiMasterMode),
-    [aiMaster, aiMasterMode, getEngine]
-  );
+  useEffect(() => {
+    const engine = getEngine();
+    engine.setMasterLevel(masterLevel);
+    engine.setMasterProcessing(masterProcessing);
+    engine.setLimiter(limiter);
+    engine.setMasterAssist(aiMaster, aiMasterMode);
+  }, [getEngine, masterLevel, masterProcessing, limiter, aiMaster, aiMasterMode]);
 
   useEffect(() => {
     const engine = getEngine();
@@ -1251,6 +1258,7 @@ export default function SattariStudioPage() {
           bpm: masterBpm,
           projectKey,
           level: masterLevel,
+          processing: masterProcessing,
           crossfader,
           crossfaderCurve,
           crossfaderReverse,
@@ -1298,6 +1306,7 @@ export default function SattariStudioPage() {
       setMasterBpm(manifest.master?.bpm || 96);
       setProjectKey(manifest.master?.projectKey || 'Off');
       setMasterLevel(manifest.master?.level ?? 100);
+      setMasterProcessing(normalizeMasterProcessing(manifest.master?.processing));
       setCrossfader(manifest.master?.crossfader ?? 50);
       setCrossfaderCurve(manifest.master?.crossfaderCurve || 'Smooth');
       setCrossfaderReverse(manifest.master?.crossfaderReverse ?? false);
@@ -1341,6 +1350,8 @@ export default function SattariStudioPage() {
     setPianoNotes([]);
     setCrossfader(50);
     setMasterLevel(100);
+    setMasterProcessing({ ...DEFAULT_MASTER_PROCESSING });
+    setAiMaster(false);
     setMasterBpm(96);
     setProjectKey('Off');
     setFocusedDeckId('A');
@@ -1877,57 +1888,18 @@ export default function SattariStudioPage() {
   );
 
   const masterRail = (
-    <section className="sd-master-rail" aria-label="Master output status">
-      <div className="sd-master-rail-title">
-        <strong>MASTER OUTPUT</strong>
-        <span className={limiter ? 'is-safe' : ''}>{limiter ? 'LIMITER SAFE' : 'LIMITER OFF'}</span>
-      </div>
-      <SegmentMeter level={masterMeter} accent="#4ad9c4" label="OUT" compact />
-      <label className="sd-master-rail-level">
-        <span>LEVEL</span>
-        <input
-          type="range"
-          min="0"
-          max="125"
-          value={masterLevel}
-          onChange={(event) => setMasterLevel(Number(event.target.value))}
-          aria-label="Master output level"
-        />
-        <strong>{masterLevel}%</strong>
-      </label>
-      <div className="sd-master-rail-stats">
-        <span>
-          LUFS-I <strong>{masterMeter ? '-14.2' : '--'}</strong>
-        </span>
-        <span>
-          PEAK <strong>{masterMeter ? '-1.0' : '--'}</strong>
-        </span>
-        <span>
-          ENGINE <strong className="is-safe">AUDIO READY</strong>
-        </span>
-      </div>
-      <button
-        type="button"
-        className="sd-master-open"
-        onClick={() => {
-          setAdvancedVisible(true);
-          setActiveView('mixer');
-        }}
-      >
-        AUDIO READY&nbsp;&nbsp;/&nbsp;&nbsp;OPEN MASTER
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setMasterLevel(100);
-          setLimiter(true);
-          setMasterFx({ x: 50, y: 50 });
-          setNotice('Master output reset to its performance-safe defaults.');
-        }}
-      >
-        Restore
-      </button>
-    </section>
+    <MasterOutput
+      getEngine={getEngine}
+      settings={masterProcessing}
+      onSettings={setMasterProcessing}
+      level={masterLevel}
+      onLevel={setMasterLevel}
+      limiter={limiter}
+      onLimiter={setLimiter}
+      compression={aiMaster}
+      onCompression={setAiMaster}
+      captureActive={captureActive}
+    />
   );
 
   const arrangementConsole = (
