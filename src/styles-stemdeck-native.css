@@ -360,7 +360,8 @@
 }
 
 .sd-native-arranger .sd-arrangement-clip {
-  position: relative;
+  position: absolute;
+  top: 0;
   display: block;
   height: 60px;
   min-width: 76px;
@@ -371,6 +372,7 @@
   background: color-mix(in srgb, var(--sd-accent) 22%, #14171b);
   color: #f4f7f9;
   text-align: left;
+  touch-action: none;
 }
 
 .sd-native-arranger .sd-arrangement-clip .sd-arrangement-wave {
@@ -379,7 +381,7 @@
   opacity: 0.82;
 }
 
-.sd-native-arranger .sd-arrangement-clip > span:last-child {
+.sd-native-arranger .sd-arrangement-clip > span:nth-of-type(2) {
   position: absolute;
   z-index: 1;
   top: 3px;
@@ -390,6 +392,120 @@
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sd-native-arranger .sd-arrangement-clip > small {
+  position: absolute;
+  z-index: 2;
+  top: 3px;
+  right: 6px;
+  color: rgb(255 255 255 / 64%);
+  font-size: 6px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.sd-clip-handle {
+  position: absolute;
+  z-index: 7;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.sd-clip-handle::after {
+  position: absolute;
+  top: 20px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 72%);
+  opacity: 0;
+  content: '';
+}
+
+.sd-arrangement-clip:hover .sd-clip-handle::after,
+.sd-arrangement-track.is-selected .sd-clip-handle::after {
+  opacity: 1;
+}
+
+.sd-clip-handle.is-left {
+  left: 0;
+}
+
+.sd-clip-handle.is-left::after {
+  left: 2px;
+}
+
+.sd-clip-handle.is-right {
+  right: 0;
+}
+
+.sd-clip-handle.is-right::after {
+  right: 2px;
+}
+
+.sd-automation-overlay {
+  position: absolute;
+  z-index: 6;
+  inset: 17px 5px 4px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.sd-automation-overlay svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sd-automation-overlay polyline {
+  fill: none;
+  stroke: #fff1a8;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.sd-automation-overlay > button {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 2px solid #fff1a8;
+  border-radius: 50%;
+  background: #27220f;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 44%);
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+}
+
+.sd-automation-overlay > button:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.25);
+}
+
+.sd-restore-arrangement-clip {
+  position: absolute;
+  top: 19px;
+  left: 12px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px dashed #4d5661;
+  border-radius: 5px;
+  background: #15181d;
+  color: #8e97a2;
+  font-size: 7px;
+  font-weight: 800;
 }
 
 .sd-arrangement-playhead {
@@ -463,7 +579,7 @@
 
 .sd-arranger-inspector > nav {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   padding: 6px;
   border-bottom: 1px solid #292d34;
@@ -546,6 +662,87 @@
   border-color: #268f80;
   background: #173934;
   color: #61ead5;
+}
+
+.sd-arranger-inspector-content > button.is-danger {
+  border-color: #5b3439;
+  color: #d98e97;
+}
+
+.sd-arranger-time-fields,
+.sd-arranger-fade-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.sd-arranger-fade-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.sd-arranger-time-fields input[type='number'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 5px;
+  border: 1px solid #303640;
+  border-radius: 5px;
+  outline: 0;
+  background: #0e1013;
+  color: #dce1e6;
+  font: inherit;
+  font-size: 8px;
+}
+
+.sd-arranger-time-fields input[type='number']:focus {
+  border-color: #4fdac6;
+}
+
+.sd-arranger-automation-panel {
+  display: grid;
+  gap: 11px;
+}
+
+.sd-arranger-automation-panel > span {
+  color: #78818c;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.sd-arranger-automation-panel > strong {
+  color: #fff1a8;
+  font-size: 9px;
+}
+
+.sd-arranger-automation-panel p {
+  margin: 0;
+  color: #89919c;
+  font-size: 7px;
+  line-height: 1.5;
+}
+
+.sd-arranger-automation-targets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.sd-arranger-automation-targets button,
+.sd-arranger-automation-panel > button {
+  min-height: 30px;
+  border: 1px solid #333943;
+  border-radius: 5px;
+  background: #1b1e23;
+  color: #808994;
+  font-size: 6px;
+  font-weight: 900;
+}
+
+.sd-arranger-automation-targets button.is-active {
+  border-color: #9e8535;
+  background: #443a18;
+  color: #fff1a8;
 }
 
 .sd-arranger-inspector-content dl {

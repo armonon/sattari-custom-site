@@ -1,6 +1,10 @@
 /* @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
-import { crossfaderGains, masterAssistProfile } from './studioAudioEngine';
+import {
+  buildArrangementSchedule,
+  crossfaderGains,
+  masterAssistProfile,
+} from './studioAudioEngine';
 
 describe('crossfaderGains', () => {
   it('fully isolates each side at the endpoints', () => {
@@ -32,5 +36,21 @@ describe('masterAssistProfile', () => {
 
   it('selects the requested mastering target', () => {
     expect(masterAssistProfile(true, 'Club -9')).toMatchObject({ threshold: -12, ratio: 3.4 });
+  });
+});
+
+describe('buildArrangementSchedule', () => {
+  it('honours clip placement and source trims', () => {
+    const clips = [
+      { deckId: 'A', enabled: true, start: 8, trimStart: 12, trimEnd: 32 },
+      { deckId: 'B', enabled: false, start: 0, trimStart: 0, trimEnd: 20 },
+    ];
+    expect(buildArrangementSchedule(clips, 3)).toEqual([
+      { deckId: 'A', delay: 5, sourceOffset: 12 },
+    ]);
+    expect(buildArrangementSchedule(clips, 13)).toEqual([
+      { deckId: 'A', delay: 0, sourceOffset: 17 },
+    ]);
+    expect(buildArrangementSchedule(clips, 29)).toEqual([]);
   });
 });

@@ -138,10 +138,116 @@ function createDeck(seed) {
     duration: 0,
     waveform: Array.from({ length: 96 }, (_, index) => 10 + ((index * 17) % 18)),
     analysis: null,
+    arrangement: createArrangement(),
     lanes: Object.fromEntries(
       LANE_DEFINITIONS.map((definition) => [definition.id, createLane(definition)])
     ),
   };
+}
+
+const AUTOMATION_DEFAULTS = {
+  volume: [
+    { position: 0, value: 100 },
+    { position: 1, value: 100 },
+  ],
+  filter: [
+    { position: 0, value: 50 },
+    { position: 1, value: 50 },
+  ],
+  reverb: [
+    { position: 0, value: 15 },
+    { position: 1, value: 15 },
+  ],
+};
+
+function clampNumber(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, Number(value) || 0));
+}
+
+function createArrangement(duration = 0) {
+  return {
+    enabled: true,
+    start: 0,
+    trimStart: 0,
+    trimEnd: Math.max(0, duration),
+    gain: 100,
+    fadeIn: 0,
+    fadeOut: 0,
+    automationTarget: 'volume',
+    automation: Object.fromEntries(
+      Object.entries(AUTOMATION_DEFAULTS).map(([target, points]) => [
+        target,
+        points.map((point) => ({ ...point })),
+      ])
+    ),
+  };
+}
+
+function normalizeAutomationPoints(points, fallback) {
+  const normalized = (Array.isArray(points) && points.length ? points : fallback)
+    .map((point) => ({
+      position: clampNumber(point?.position, 0, 1),
+      value: Number(point?.value) || 0,
+    }))
+    .sort((a, b) => a.position - b.position);
+  return normalized.length > 1 ? normalized : fallback.map((point) => ({ ...point }));
+}
+
+function normalizeArrangement(saved, duration = 0) {
+  const base = createArrangement(duration);
+  if (duration <= 0) {
+    return {
+      ...base,
+      ...saved,
+      trimStart: 0,
+      trimEnd: 0,
+      automation: Object.fromEntries(
+        Object.entries(AUTOMATION_DEFAULTS).map(([target, fallback]) => [
+          target,
+          normalizeAutomationPoints(saved?.automation?.[target], fallback),
+        ])
+      ),
+    };
+  }
+  const trimStart = clampNumber(saved?.trimStart, 0, Math.max(0, duration - 0.05));
+  const savedTrimEnd = Number(saved?.trimEnd);
+  const trimEnd = clampNumber(
+    savedTrimEnd > 0 ? savedTrimEnd : duration,
+    Math.min(duration, trimStart + 0.05),
+    Math.max(duration, trimStart + 0.05)
+  );
+  return {
+    ...base,
+    ...saved,
+    enabled: saved?.enabled !== false,
+    start: Math.max(0, Number(saved?.start) || 0),
+    trimStart,
+    trimEnd,
+    gain: clampNumber(saved?.gain ?? 100, 0, 200),
+    fadeIn: clampNumber(saved?.fadeIn, 0, Math.max(0, trimEnd - trimStart)),
+    fadeOut: clampNumber(saved?.fadeOut, 0, Math.max(0, trimEnd - trimStart)),
+    automationTarget: ['volume', 'filter', 'reverb'].includes(saved?.automationTarget)
+      ? saved.automationTarget
+      : 'volume',
+    automation: Object.fromEntries(
+      Object.entries(AUTOMATION_DEFAULTS).map(([target, fallback]) => [
+        target,
+        normalizeAutomationPoints(saved?.automation?.[target], fallback),
+      ])
+    ),
+  };
+}
+
+function automationValueAt(points, position) {
+  if (!points?.length) return 0;
+  const x = clampNumber(position, 0, 1);
+  const rightIndex = points.findIndex((point) => point.position >= x);
+  if (rightIndex <= 0) return points[0].value;
+  if (rightIndex < 0) return points[points.length - 1].value;
+  const left = points[rightIndex - 1];
+  const right = points[rightIndex];
+  const span = Math.max(0.0001, right.position - left.position);
+  return left.value + ((x - left.position) / span) * (right.value - left.value);
 }
 
 function normalizeDeck(saved, index) {
@@ -171,6 +277,7 @@ function normalizeDeck(saved, index) {
         { ...base.lanes[definition.id], ...saved.lanes?.[definition.id] },
       ])
     ),
+    arrangement: normalizeArrangement(saved.arrangement, saved.duration || base.duration),
   };
 }
 
@@ -256,6 +363,10 @@ export default function SattariStudioPage() {
   const projectInputRef = useRef(null);
   const deckImportRef = useRef(null);
   const deckImportTargetRef = useRef(null);
+  const arrangementUndoRef = useRef([]);
+  const arrangementRedoRef = useRef([]);
+  const automationValuesRef = useRef(new Map());
+  const arrangementClockRef = useRef({ cursor: 0, startedAt: 0 });
   const padInputRefs = useRef([]);
   const midiAccessRef = useRef(null);
   const tapTimesRef = useRef([]);
@@ -290,8 +401,10 @@ export default function SattariStudioPage() {
   const [razorActive, setRazorActive] = useState(false);
   const [arrangementLoop, setArrangementLoop] = useState(false);
   const [arrangementZoom, setArrangementZoom] = useState(1);
+  const [arrangementCursor, setArrangementCursor] = useState(0);
   const [arrangementSelection, setArrangementSelection] = useState(null);
   const [arrangerInspectorTab, setArrangerInspectorTab] = useState('mix');
+  const [, setArrangementHistoryVersion] = useState(0);
   const [pianoNotes, setPianoNotes] = useState([]);
   const [focusedDeckId, setFocusedDeckId] = useState('A');
 
@@ -309,6 +422,47 @@ export default function SattariStudioPage() {
       })
     );
   }, []);
+
+  const recordArrangementEdit = useCallback((deckId, before, after, label) => {
+    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    arrangementUndoRef.current.push({ deckId, before, after, label });
+    arrangementUndoRef.current = arrangementUndoRef.current.slice(-80);
+    arrangementRedoRef.current = [];
+    setArrangementHistoryVersion((value) => value + 1);
+  }, []);
+
+  const editArrangement = useCallback(
+    (deckId, updater, label = 'Edit clip') => {
+      const deck = decks.find((item) => item.id === deckId);
+      if (!deck) return;
+      const before = normalizeArrangement(deck.arrangement, deck.duration);
+      const proposed = typeof updater === 'function' ? updater(before) : { ...before, ...updater };
+      const after = normalizeArrangement(proposed, deck.duration);
+      recordArrangementEdit(deckId, before, after, label);
+      updateDeck(deckId, { arrangement: after });
+    },
+    [decks, recordArrangementEdit, updateDeck]
+  );
+
+  const undoArrangement = useCallback(() => {
+    const entry = arrangementUndoRef.current.pop();
+    if (!entry) return;
+    arrangementRedoRef.current.push(entry);
+    updateDeck(entry.deckId, { arrangement: entry.before });
+    setArrangementSelection(entry.deckId);
+    setArrangementHistoryVersion((value) => value + 1);
+    setNotice(`Undid ${entry.label.toLowerCase()}.`);
+  }, [updateDeck]);
+
+  const redoArrangement = useCallback(() => {
+    const entry = arrangementRedoRef.current.pop();
+    if (!entry) return;
+    arrangementUndoRef.current.push(entry);
+    updateDeck(entry.deckId, { arrangement: entry.after });
+    setArrangementSelection(entry.deckId);
+    setArrangementHistoryVersion((value) => value + 1);
+    setNotice(`Redid ${entry.label.toLowerCase()}.`);
+  }, [updateDeck]);
 
   const hydrateAudio = useCallback(
     async (nextDecks, nextPads, isCancelled = () => false) => {
@@ -477,7 +631,11 @@ export default function SattariStudioPage() {
   ]);
 
   useEffect(() => {
-    const visualActivity = decks.some((deck) => deck.playing) || microphoneActive || captureActive;
+    const visualActivity =
+      decks.some((deck) => deck.playing) ||
+      microphoneActive ||
+      captureActive ||
+      (activeView === 'arranger' && Boolean(arrangementClockRef.current.startedAt));
     if (!visualActivity) {
       setDeckMeters((current) =>
         Object.values(current).some((value) => value !== 0) ? { A: 0, B: 0, C: 0, D: 0 } : current
@@ -491,15 +649,90 @@ export default function SattariStudioPage() {
       if (engine && timestamp - lastUpdate >= 50) {
         const nextPositions = {};
         const nextMeters = {};
+        const hasSolo = decks.some((deck) => deck.solo);
         decks.forEach((deck) => {
           const position = engine.getDeckPosition(deck.id);
           nextPositions[deck.id] = position;
           nextMeters[deck.id] = engine.getDeckMeterLevel(deck.id);
-          if (deck.playing && !deck.looping && deck.duration && position >= deck.duration) {
+          if (activeView === 'arranger' && deck.duration && deck.arrangement?.enabled !== false) {
+            const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+            const clipLength = Math.max(0.05, arrangement.trimEnd - arrangement.trimStart);
+            const clipPosition = clampNumber((position - arrangement.trimStart) / clipLength, 0, 1);
+            const volume = automationValueAt(arrangement.automation.volume, clipPosition);
+            const filter = automationValueAt(arrangement.automation.filter, clipPosition);
+            const reverb = automationValueAt(arrangement.automation.reverb, clipPosition);
+            const fadeIn = arrangement.fadeIn
+              ? clampNumber((position - arrangement.trimStart) / arrangement.fadeIn, 0, 1)
+              : 1;
+            const fadeOut = arrangement.fadeOut
+              ? clampNumber((arrangement.trimEnd - position) / arrangement.fadeOut, 0, 1)
+              : 1;
+            const audible = !deck.muted && (!hasSolo || deck.solo);
+            const automatedFader = audible
+              ? deck.fader * (arrangement.gain / 100) * (volume / 100) * fadeIn * fadeOut
+              : 0;
+            const previous = automationValuesRef.current.get(deck.id) || {};
+            if (Math.abs((previous.fader ?? -1) - automatedFader) > 0.4)
+              engine.setDeckFader(deck.id, automatedFader);
+            if (Math.abs((previous.filter ?? -1) - filter) > 0.4)
+              engine.setDeckFilter(deck.id, filter);
+            if (Math.abs((previous.reverb ?? -1) - reverb) > 0.4)
+              engine.setDeckFx(deck.id, { ...deck.fx, reverb });
+            automationValuesRef.current.set(deck.id, {
+              fader: automatedFader,
+              filter,
+              reverb,
+            });
+          }
+          const arrangementEnd = deck.arrangement?.trimEnd || deck.duration;
+          if (
+            deck.playing &&
+            !deck.looping &&
+            deck.duration &&
+            position >= (activeView === 'arranger' ? arrangementEnd : deck.duration)
+          ) {
             engine.stopDeck(deck.id);
             updateDeck(deck.id, { playing: false });
           }
         });
+        if (activeView === 'arranger' && arrangementClockRef.current.startedAt) {
+          const nextCursor =
+            arrangementClockRef.current.cursor +
+            Math.max(0, timestamp - arrangementClockRef.current.startedAt) / 1000;
+          const timelineEnd = Math.max(
+            60,
+            ...decks.map((deck) => {
+              const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+              return arrangement.start + Math.max(0, arrangement.trimEnd - arrangement.trimStart);
+            })
+          );
+          if (nextCursor >= timelineEnd) {
+            engine.stopAll();
+            if (arrangementLoop) {
+              const clips = decks
+                .filter((deck) => deck.duration)
+                .map((deck) => ({
+                  deckId: deck.id,
+                  ...normalizeArrangement(deck.arrangement, deck.duration),
+                }));
+              arrangementClockRef.current = { cursor: 0, startedAt: timestamp };
+              setArrangementCursor(0);
+              void engine
+                .playArrangement(clips, 0)
+                .then((started) =>
+                  setDecks((current) =>
+                    current.map((deck) => ({ ...deck, playing: started.includes(deck.id) }))
+                  )
+                );
+            } else {
+              arrangementClockRef.current = { cursor: timelineEnd, startedAt: 0 };
+              setArrangementCursor(timelineEnd);
+              setDecks((current) => current.map((deck) => ({ ...deck, playing: false })));
+            }
+          } else {
+            setArrangementCursor(nextCursor);
+          }
+        }
         setPositions((current) =>
           decks.some((deck) => Math.abs((current[deck.id] || 0) - nextPositions[deck.id]) > 0.01)
             ? nextPositions
@@ -516,7 +749,7 @@ export default function SattariStudioPage() {
     };
     animationRef.current = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(animationRef.current);
-  }, [captureActive, decks, microphoneActive, updateDeck]);
+  }, [activeView, arrangementLoop, captureActive, decks, microphoneActive, updateDeck]);
 
   useEffect(
     () => () => {
@@ -552,8 +785,13 @@ export default function SattariStudioPage() {
     decks.forEach((deck) => {
       engine.setDeckFader(deck.id, !deck.muted && (!soloed.length || deck.solo) ? deck.fader : 0);
       engine.setPlaybackRate(deck.id, deck.synced ? masterBpm / Math.max(1, deck.bpm) : 1);
+      if (activeView !== 'arranger') {
+        engine.setDeckFilter(deck.id, deck.filter);
+        engine.setDeckFx(deck.id, deck.fx);
+      }
     });
-  }, [decks, getEngine, masterBpm]);
+    if (activeView !== 'arranger') automationValuesRef.current.clear();
+  }, [activeView, decks, getEngine, masterBpm]);
 
   const loadLane = async (deckId, laneId, file) => {
     if (!file) return;
@@ -593,6 +831,7 @@ export default function SattariStudioPage() {
           lanes: { ...currentDeck.lanes, [laneId]: lane },
           duration: Math.max(currentDeck.duration, duration),
         };
+        if (laneId === 'fullMix') updates.arrangement = createArrangement(duration);
         if (analysis) {
           Object.assign(updates, {
             title: file.name.replace(/\.[^/.]+$/, ''),
@@ -701,7 +940,22 @@ export default function SattariStudioPage() {
     const loaded = decks.filter((deck) => deck.duration);
     if (loaded.some((deck) => deck.playing)) {
       getEngine().pauseAll();
+      if (activeView === 'arranger') {
+        arrangementClockRef.current = { cursor: arrangementCursor, startedAt: 0 };
+      }
       setDecks((current) => current.map((deck) => ({ ...deck, playing: false })));
+      return;
+    }
+    if (activeView === 'arranger') {
+      const clips = loaded.map((deck) => ({
+        deckId: deck.id,
+        ...normalizeArrangement(deck.arrangement, deck.duration),
+      }));
+      const started = await getEngine().playArrangement(clips, arrangementCursor);
+      arrangementClockRef.current = { cursor: arrangementCursor, startedAt: performance.now() };
+      setDecks((current) =>
+        current.map((deck) => ({ ...deck, playing: started.includes(deck.id) }))
+      );
       return;
     }
     await getEngine().playAll();
@@ -1108,6 +1362,11 @@ export default function SattariStudioPage() {
         event.preventDefault();
         void toggleGlobalTransport();
       }
+      if (activeView === 'arranger' && (event.metaKey || event.ctrlKey) && event.key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) redoArrangement();
+        else undoArrangement();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -1126,8 +1385,17 @@ export default function SattariStudioPage() {
   const anyPlaying = decks.some((deck) => deck.playing);
   const masterPosition = Math.max(0, ...Object.values(positions));
   const masterMeter = Math.max(0, ...Object.values(deckMeters));
-  const maxDuration = Math.max(60, ...decks.map((deck) => deck.duration || 0));
-  const arrangementProgress = Math.min(100, (masterPosition / maxDuration) * 100);
+  const maxDuration = Math.max(
+    60,
+    ...decks.map((deck) => {
+      const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+      return arrangement.start + Math.max(0, arrangement.trimEnd - arrangement.trimStart);
+    })
+  );
+  const arrangementProgress = Math.min(
+    100,
+    ((activeView === 'arranger' ? arrangementCursor : masterPosition) / maxDuration) * 100
+  );
 
   const focusedDeck = decks.find((deck) => deck.id === focusedDeckId) || decks[0];
   const coachMessage = !loadedDecks.length
@@ -1136,6 +1404,9 @@ export default function SattariStudioPage() {
       ? 'LIVE / KEEP THE FLOW MOVING'
       : 'PRESS PLAY';
   const selectedArrangementDeck = decks.find((deck) => deck.id === arrangementSelection);
+  const selectedArrangement = selectedArrangementDeck
+    ? normalizeArrangement(selectedArrangementDeck.arrangement, selectedArrangementDeck.duration)
+    : null;
 
   const seekArrangement = (event) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -1147,7 +1418,27 @@ export default function SattariStudioPage() {
       0,
       Math.min(maxDuration, ((event.clientX - bounds.left - rulerInset) / laneWidth) * maxDuration)
     );
-    loadedDecks.forEach((deck) => getEngine().seekDeck(deck.id, seconds));
+    setArrangementCursor(seconds);
+    arrangementClockRef.current = {
+      cursor: seconds,
+      startedAt: anyPlaying ? performance.now() : 0,
+    };
+    loadedDecks.forEach((deck) => {
+      const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+      const clipDuration = arrangement.trimEnd - arrangement.trimStart;
+      if (
+        !arrangement.enabled ||
+        seconds < arrangement.start ||
+        seconds > arrangement.start + clipDuration
+      ) {
+        getEngine().stopDeck(deck.id);
+        updateDeck(deck.id, { playing: false });
+        return;
+      }
+      const sourcePosition = arrangement.trimStart + (seconds - arrangement.start);
+      getEngine().seekDeck(deck.id, sourcePosition);
+      setPositions((current) => ({ ...current, [deck.id]: sourcePosition }));
+    });
   };
 
   const addArrangementTrack = () => {
@@ -1156,6 +1447,206 @@ export default function SattariStudioPage() {
     setArrangementSelection(emptyDeck.id);
     deckImportTargetRef.current = emptyDeck.id;
     deckImportRef.current?.click();
+  };
+
+  const beginClipEdit = (event, deck, mode) => {
+    if (!deck.duration || !deck.arrangement?.enabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setArrangementSelection(deck.id);
+    setArrangerInspectorTab('mix');
+    const lane = event.currentTarget.closest('.sd-arrangement-lane');
+    const laneWidth = Math.max(1, lane?.getBoundingClientRect().width || 1);
+    const startX = event.clientX;
+    const before = normalizeArrangement(deck.arrangement, deck.duration);
+    let after = before;
+    const beat = 60 / Math.max(1, masterBpm);
+    const quantize = (value) => (snapActive ? Math.round(value / beat) * beat : value);
+
+    const onMove = (moveEvent) => {
+      const delta = ((moveEvent.clientX - startX) / laneWidth) * maxDuration;
+      if (mode === 'move') {
+        after = normalizeArrangement(
+          { ...before, start: Math.max(0, quantize(before.start + delta)) },
+          deck.duration
+        );
+      } else if (mode === 'trim-start') {
+        const trimStart = clampNumber(quantize(before.trimStart + delta), 0, before.trimEnd - 0.05);
+        after = normalizeArrangement(
+          { ...before, start: Math.max(0, before.start + trimStart - before.trimStart), trimStart },
+          deck.duration
+        );
+      } else {
+        after = normalizeArrangement(
+          {
+            ...before,
+            trimEnd: clampNumber(
+              quantize(before.trimEnd + delta),
+              before.trimStart + 0.05,
+              deck.duration
+            ),
+          },
+          deck.duration
+        );
+      }
+      updateDeck(deck.id, { arrangement: after });
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      recordArrangementEdit(deck.id, before, after, mode === 'move' ? 'Move clip' : 'Trim clip');
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointercancel', onUp, { once: true });
+  };
+
+  const addAutomationPoint = (event, deck) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+    const target = arrangement.automationTarget;
+    const maximum = target === 'volume' ? 125 : 100;
+    const point = {
+      position: clampNumber((event.clientX - bounds.left) / bounds.width, 0, 1),
+      value: clampNumber((1 - (event.clientY - bounds.top) / bounds.height) * maximum, 0, maximum),
+    };
+    editArrangement(
+      deck.id,
+      {
+        ...arrangement,
+        automation: {
+          ...arrangement.automation,
+          [target]: [...arrangement.automation[target], point].sort(
+            (left, right) => left.position - right.position
+          ),
+        },
+      },
+      'Add automation point'
+    );
+  };
+
+  const beginAutomationPointEdit = (event, deck, pointIndex) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const overlay = event.currentTarget.closest('.sd-automation-overlay');
+    const bounds = overlay.getBoundingClientRect();
+    const before = normalizeArrangement(deck.arrangement, deck.duration);
+    const target = before.automationTarget;
+    const maximum = target === 'volume' ? 125 : 100;
+    let after = before;
+    const onMove = (moveEvent) => {
+      const points = before.automation[target].map((point, index) =>
+        index === pointIndex
+          ? {
+              position: clampNumber((moveEvent.clientX - bounds.left) / bounds.width, 0, 1),
+              value: clampNumber(
+                (1 - (moveEvent.clientY - bounds.top) / bounds.height) * maximum,
+                0,
+                maximum
+              ),
+            }
+          : point
+      );
+      after = normalizeArrangement(
+        {
+          ...before,
+          automation: {
+            ...before.automation,
+            [target]: points.sort((left, right) => left.position - right.position),
+          },
+        },
+        deck.duration
+      );
+      updateDeck(deck.id, { arrangement: after });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      recordArrangementEdit(deck.id, before, after, 'Move automation point');
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointercancel', onUp, { once: true });
+  };
+
+  const removeAutomationPoint = (deck, pointIndex) => {
+    const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+    const target = arrangement.automationTarget;
+    if (arrangement.automation[target].length <= 2) return;
+    editArrangement(
+      deck.id,
+      {
+        ...arrangement,
+        automation: {
+          ...arrangement.automation,
+          [target]: arrangement.automation[target].filter((_, index) => index !== pointIndex),
+        },
+      },
+      'Remove automation point'
+    );
+  };
+
+  const duplicateArrangementClip = async () => {
+    const source = selectedArrangementDeck;
+    const target = decks.find((deck) => !deck.duration);
+    const assetId = source?.lanes?.fullMix?.assetId;
+    if (!source?.duration || !assetId || !target) {
+      setNotice(
+        target ? 'Select a loaded clip to duplicate.' : 'All four browser channels are in use.'
+      );
+      return;
+    }
+    try {
+      const asset = await getAudioAsset(assetId);
+      if (!asset?.blob) {
+        setNotice('The clip source is unavailable on this device.');
+        return;
+      }
+      const url = URL.createObjectURL(asset.blob);
+      objectUrlsRef.current.set(`${target.id}:fullMix`, url);
+      const engine = getEngine();
+      const duration = await engine.loadLane(target.id, target.side, 'fullMix', url);
+      engine.setLaneState(target.id, 'fullMix', source.lanes.fullMix);
+      engine.setPlaybackRate(target.id, source.synced ? masterBpm / Math.max(1, source.bpm) : 1);
+      const arrangement = normalizeArrangement(source.arrangement, source.duration);
+      const duplicatedArrangement = {
+        ...arrangement,
+        start: arrangement.start + Math.max(0.25, arrangement.trimEnd - arrangement.trimStart),
+        automation: Object.fromEntries(
+          Object.entries(arrangement.automation).map(([key, points]) => [
+            key,
+            points.map((point) => ({ ...point })),
+          ])
+        ),
+      };
+      updateDeck(target.id, (current) => ({
+        title: `${source.title} copy`,
+        keyName: source.keyName,
+        sourceKeyName: source.sourceKeyName,
+        bpm: source.bpm,
+        duration,
+        waveform: [...source.waveform],
+        analysis: source.analysis,
+        arrangement: duplicatedArrangement,
+        lanes: {
+          ...current.lanes,
+          fullMix: {
+            ...source.lanes.fullMix,
+            duration,
+            status: 'ready',
+          },
+        },
+      }));
+      setArrangementSelection(target.id);
+      setNotice(`Duplicated ${source.title} to channel ${target.id}.`);
+    } catch {
+      setNotice('The browser could not duplicate this clip. The original is unchanged.');
+    }
   };
 
   const deckConsole = (
@@ -1457,14 +1948,35 @@ export default function SattariStudioPage() {
           >
             Snap
           </button>
-          <button type="button" disabled aria-label="Undo">
+          <button
+            type="button"
+            disabled={!arrangementUndoRef.current.length}
+            onClick={undoArrangement}
+            aria-label="Undo"
+          >
             <Undo2 size={12} /> Undo
           </button>
-          <button type="button" disabled aria-label="Redo">
+          <button
+            type="button"
+            disabled={!arrangementRedoRef.current.length}
+            onClick={redoArrangement}
+            aria-label="Redo"
+          >
             <Redo2 size={12} /> Redo
           </button>
-          <button type="button" disabled title="Bounce editing is available in StemDeck Desktop">
-            Bounce Edits
+          <button
+            type="button"
+            disabled={!selectedArrangementDeck?.duration}
+            onClick={() =>
+              selectedArrangementDeck &&
+              editArrangement(
+                selectedArrangementDeck.id,
+                { ...selectedArrangementDeck.arrangement, enabled: true },
+                'Restore clip'
+              )
+            }
+          >
+            Restore Clip
           </button>
         </div>
         <div className="sd-arrangement-transport">
@@ -1491,10 +2003,20 @@ export default function SattariStudioPage() {
         <div className="sd-edit-tools">
           {advancedVisible ? (
             <>
-              <button type="button" aria-label="Undo">
+              <button
+                type="button"
+                disabled={!arrangementUndoRef.current.length}
+                onClick={undoArrangement}
+                aria-label="Undo"
+              >
                 <Undo2 size={13} />
               </button>
-              <button type="button" aria-label="Redo">
+              <button
+                type="button"
+                disabled={!arrangementRedoRef.current.length}
+                onClick={redoArrangement}
+                aria-label="Redo"
+              >
                 <Redo2 size={13} />
               </button>
               <button
@@ -1542,10 +2064,20 @@ export default function SattariStudioPage() {
           >
             <Scissors size={16} />
           </button>
-          <button type="button" disabled aria-label="Automation tool">
+          <button
+            type="button"
+            className={arrangerInspectorTab === 'automation' ? 'is-active' : ''}
+            onClick={() => setArrangerInspectorTab('automation')}
+            aria-label="Automation tool"
+          >
             <SlidersHorizontal size={16} />
           </button>
-          <button type="button" disabled aria-label="Duplicate selected clip">
+          <button
+            type="button"
+            disabled={!selectedArrangementDeck?.duration || !decks.some((deck) => !deck.duration)}
+            onClick={() => void duplicateArrangementClip()}
+            aria-label="Duplicate selected clip"
+          >
             <Copy size={16} />
           </button>
         </aside>
@@ -1569,91 +2101,195 @@ export default function SattariStudioPage() {
             <i className="sd-arrangement-playhead" />
           </div>
           <div className="sd-arrangement-tracks" style={{ '--sd-zoom': arrangementZoom }}>
-            {decks.map((deck, index) => (
-              <div
-                className={`sd-arrangement-track${arrangementSelection === deck.id ? ' is-selected' : ''}`}
-                key={deck.id}
-              >
-                <div className="sd-arrangement-label" style={{ '--sd-accent': deck.accent }}>
-                  <div className="sd-arrangement-track-id">
-                    <strong>{index + 1}</strong>
-                    <span>CH {deck.id}</span>
-                    <em>PERFORMANCE</em>
-                  </div>
-                  <div className="sd-arrangement-track-controls">
-                    <button
-                      type="button"
-                      className={deck.muted ? 'is-active' : ''}
-                      onClick={() => changeDeck(deck.id, { muted: !deck.muted })}
-                      aria-label={`Mute channel ${deck.id}`}
-                    >
-                      M
-                    </button>
-                    <button
-                      type="button"
-                      className={deck.solo ? 'is-solo' : ''}
-                      onClick={() => changeDeck(deck.id, { solo: !deck.solo })}
-                      aria-label={`Solo channel ${deck.id}`}
-                    >
-                      S
-                    </button>
-                    <button
-                      type="button"
-                      className={arrangementSelection === deck.id ? 'is-active' : ''}
-                      onClick={() => setArrangementSelection(deck.id)}
-                      aria-label={`Show automation for channel ${deck.id}`}
-                    >
-                      A
-                    </button>
-                    <span>Master</span>
-                  </div>
-                  <label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="125"
-                      value={deck.fader}
-                      onChange={(event) =>
-                        changeDeck(deck.id, { fader: Number(event.target.value) })
-                      }
-                      aria-label={`Channel ${deck.id} arrangement level`}
-                    />
-                    <output>{deck.fader}%</output>
-                  </label>
-                </div>
+            {decks.map((deck, index) => {
+              const arrangement = normalizeArrangement(deck.arrangement, deck.duration);
+              const clipDuration = Math.max(0, arrangement.trimEnd - arrangement.trimStart);
+              const automationPoints = arrangement.automation[arrangement.automationTarget];
+              const automationMaximum = arrangement.automationTarget === 'volume' ? 125 : 100;
+              return (
                 <div
-                  className="sd-arrangement-lane"
-                  onPointerDown={(event) => {
-                    setArrangementSelection(deck.id);
-                    seekArrangement(event);
-                  }}
+                  className={`sd-arrangement-track${arrangementSelection === deck.id ? ' is-selected' : ''}`}
+                  key={deck.id}
                 >
-                  {deck.duration ? (
-                    <button
-                      type="button"
-                      className="sd-arrangement-clip"
-                      style={{
-                        '--sd-accent': deck.accent,
-                        width: `${Math.max(12, (deck.duration / maxDuration) * 100)}%`,
-                      }}
-                      onPointerDown={(event) => {
-                        event.stopPropagation();
-                        setArrangementSelection(deck.id);
-                      }}
-                    >
-                      <ArrangementWave peaks={deck.waveform} accent={deck.accent} />
-                      <span>{deck.title}</span>
-                    </button>
-                  ) : (
-                    <EmptyArrangementDrop onDrop={(file) => loadLane(deck.id, 'fullMix', file)} />
-                  )}
-                  <i
-                    className="sd-arrangement-playhead"
-                    style={{ left: `${arrangementProgress}%` }}
-                  />
+                  <div className="sd-arrangement-label" style={{ '--sd-accent': deck.accent }}>
+                    <div className="sd-arrangement-track-id">
+                      <strong>{index + 1}</strong>
+                      <span>CH {deck.id}</span>
+                      <em>PERFORMANCE</em>
+                    </div>
+                    <div className="sd-arrangement-track-controls">
+                      <button
+                        type="button"
+                        className={deck.muted ? 'is-active' : ''}
+                        onClick={() => changeDeck(deck.id, { muted: !deck.muted })}
+                        aria-label={`Mute channel ${deck.id}`}
+                      >
+                        M
+                      </button>
+                      <button
+                        type="button"
+                        className={deck.solo ? 'is-solo' : ''}
+                        onClick={() => changeDeck(deck.id, { solo: !deck.solo })}
+                        aria-label={`Solo channel ${deck.id}`}
+                      >
+                        S
+                      </button>
+                      <button
+                        type="button"
+                        className={arrangementSelection === deck.id ? 'is-active' : ''}
+                        onClick={() => setArrangementSelection(deck.id)}
+                        aria-label={`Show automation for channel ${deck.id}`}
+                      >
+                        A
+                      </button>
+                      <span>Master</span>
+                    </div>
+                    <label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="125"
+                        value={deck.fader}
+                        onChange={(event) =>
+                          changeDeck(deck.id, { fader: Number(event.target.value) })
+                        }
+                        aria-label={`Channel ${deck.id} arrangement level`}
+                      />
+                      <output>{deck.fader}%</output>
+                    </label>
+                  </div>
+                  <div
+                    className="sd-arrangement-lane"
+                    onPointerDown={(event) => {
+                      setArrangementSelection(deck.id);
+                      seekArrangement(event);
+                    }}
+                  >
+                    {deck.duration && arrangement.enabled ? (
+                      <div
+                        className="sd-arrangement-clip"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Edit ${deck.title} clip`}
+                        style={{
+                          '--sd-accent': deck.accent,
+                          left: `${(arrangement.start / maxDuration) * 100}%`,
+                          width: `${Math.max(3, (clipDuration / maxDuration) * 100)}%`,
+                        }}
+                        onPointerDown={(event) => {
+                          if (!razorActive) {
+                            beginClipEdit(event, deck, 'move');
+                            return;
+                          }
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const bounds = event.currentTarget.getBoundingClientRect();
+                          const cut =
+                            arrangement.trimStart +
+                            clampNumber((event.clientX - bounds.left) / bounds.width, 0, 1) *
+                              clipDuration;
+                          editArrangement(
+                            deck.id,
+                            { ...arrangement, trimEnd: cut },
+                            'Trim at cursor'
+                          );
+                          setRazorActive(false);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Delete' || event.key === 'Backspace') {
+                            event.preventDefault();
+                            editArrangement(
+                              deck.id,
+                              { ...arrangement, enabled: false },
+                              'Remove clip'
+                            );
+                          }
+                        }}
+                      >
+                        <ArrangementWave peaks={deck.waveform} accent={deck.accent} />
+                        <span>{deck.title}</span>
+                        <small>
+                          {formatTime(arrangement.trimStart)} – {formatTime(arrangement.trimEnd)}
+                        </small>
+                        <button
+                          type="button"
+                          className="sd-clip-handle is-left"
+                          aria-label={`Trim start of ${deck.title}`}
+                          onPointerDown={(event) => beginClipEdit(event, deck, 'trim-start')}
+                        />
+                        <button
+                          type="button"
+                          className="sd-clip-handle is-right"
+                          aria-label={`Trim end of ${deck.title}`}
+                          onPointerDown={(event) => beginClipEdit(event, deck, 'trim-end')}
+                        />
+                        {arrangementSelection === deck.id &&
+                        arrangerInspectorTab === 'automation' ? (
+                          <div
+                            className="sd-automation-overlay"
+                            onPointerDown={(event) => addAutomationPoint(event, deck)}
+                          >
+                            <svg
+                              viewBox="0 0 100 100"
+                              preserveAspectRatio="none"
+                              aria-hidden="true"
+                            >
+                              <polyline
+                                points={automationPoints
+                                  .map(
+                                    (point) =>
+                                      `${point.position * 100},${100 - (point.value / automationMaximum) * 100}`
+                                  )
+                                  .join(' ')}
+                              />
+                            </svg>
+                            {automationPoints.map((point, pointIndex) => (
+                              <button
+                                type="button"
+                                key={`${point.position}-${pointIndex}`}
+                                aria-label={`${arrangement.automationTarget} automation point ${pointIndex + 1}`}
+                                style={{
+                                  left: `${point.position * 100}%`,
+                                  top: `${100 - (point.value / automationMaximum) * 100}%`,
+                                }}
+                                onPointerDown={(event) =>
+                                  beginAutomationPointEdit(event, deck, pointIndex)
+                                }
+                                onDoubleClick={(event) => {
+                                  event.stopPropagation();
+                                  removeAutomationPoint(deck, pointIndex);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : deck.duration ? (
+                      <button
+                        type="button"
+                        className="sd-restore-arrangement-clip"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          editArrangement(
+                            deck.id,
+                            { ...arrangement, enabled: true },
+                            'Restore clip'
+                          );
+                        }}
+                      >
+                        Restore {deck.title} to Replay
+                      </button>
+                    ) : (
+                      <EmptyArrangementDrop onDrop={(file) => loadLane(deck.id, 'fullMix', file)} />
+                    )}
+                    <i
+                      className="sd-arrangement-playhead"
+                      style={{ left: `${arrangementProgress}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div className="sd-arrangement-track sd-recording-track">
               <div className="sd-arrangement-label">
                 <div className="sd-arrangement-track-id">
@@ -1689,7 +2325,14 @@ export default function SattariStudioPage() {
               className={arrangerInspectorTab === 'mix' ? 'is-active' : ''}
               onClick={() => setArrangerInspectorTab('mix')}
             >
-              MIX
+              CLIP
+            </button>
+            <button
+              type="button"
+              className={arrangerInspectorTab === 'automation' ? 'is-active' : ''}
+              onClick={() => setArrangerInspectorTab('automation')}
+            >
+              AUTO
             </button>
             <button
               type="button"
@@ -1699,7 +2342,7 @@ export default function SattariStudioPage() {
               EFFECTS
             </button>
           </nav>
-          {selectedArrangementDeck ? (
+          {selectedArrangementDeck && selectedArrangement ? (
             <div className="sd-arranger-inspector-content">
               <small>CHANNEL {selectedArrangementDeck.id}</small>
               <strong>{selectedArrangementDeck.title}</strong>
@@ -1720,6 +2363,75 @@ export default function SattariStudioPage() {
                     />
                     <output>{selectedArrangementDeck.fader}%</output>
                   </label>
+                  <label>
+                    <span>CLIP GAIN</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={selectedArrangement.gain}
+                      onChange={(event) =>
+                        editArrangement(
+                          selectedArrangementDeck.id,
+                          { ...selectedArrangement, gain: Number(event.target.value) },
+                          'Clip gain'
+                        )
+                      }
+                    />
+                    <output>{selectedArrangement.gain}%</output>
+                  </label>
+                  <div className="sd-arranger-time-fields">
+                    {[
+                      ['START', 'start', maxDuration],
+                      ['IN', 'trimStart', selectedArrangement.trimEnd - 0.05],
+                      ['OUT', 'trimEnd', selectedArrangementDeck.duration],
+                    ].map(([label, key, maximum]) => (
+                      <label key={key}>
+                        <span>{label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={maximum}
+                          step="0.1"
+                          value={Number(selectedArrangement[key].toFixed(1))}
+                          onChange={(event) =>
+                            editArrangement(
+                              selectedArrangementDeck.id,
+                              { ...selectedArrangement, [key]: Number(event.target.value) },
+                              `Clip ${label.toLowerCase()}`
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="sd-arranger-fade-grid">
+                    {[
+                      ['FADE IN', 'fadeIn'],
+                      ['FADE OUT', 'fadeOut'],
+                    ].map(([label, key]) => (
+                      <label key={key}>
+                        <span>{label}</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max={Math.max(
+                            0.1,
+                            selectedArrangement.trimEnd - selectedArrangement.trimStart
+                          )}
+                          step="0.1"
+                          value={selectedArrangement[key]}
+                          onChange={(event) =>
+                            editArrangement(
+                              selectedArrangementDeck.id,
+                              { ...selectedArrangement, [key]: Number(event.target.value) },
+                              label
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
                   <button
                     type="button"
                     className={selectedArrangementDeck.synced ? 'is-active' : ''}
@@ -1731,21 +2443,70 @@ export default function SattariStudioPage() {
                   >
                     {selectedArrangementDeck.synced ? 'SYNCED TO PROJECT' : 'SYNC TO PROJECT'}
                   </button>
-                  <dl>
-                    <div>
-                      <dt>BPM</dt>
-                      <dd>{selectedArrangementDeck.bpm.toFixed(1)}</dd>
-                    </div>
-                    <div>
-                      <dt>KEY</dt>
-                      <dd>{selectedArrangementDeck.keyName}</dd>
-                    </div>
-                    <div>
-                      <dt>LENGTH</dt>
-                      <dd>{formatTime(selectedArrangementDeck.duration)}</dd>
-                    </div>
-                  </dl>
+                  <button
+                    type="button"
+                    className="is-danger"
+                    onClick={() =>
+                      editArrangement(
+                        selectedArrangementDeck.id,
+                        { ...selectedArrangement, enabled: false },
+                        'Remove clip'
+                      )
+                    }
+                  >
+                    REMOVE FROM REPLAY
+                  </button>
                 </>
+              ) : arrangerInspectorTab === 'automation' ? (
+                <div className="sd-arranger-automation-panel">
+                  <span>AUTOMATION TARGET</span>
+                  <div className="sd-arranger-automation-targets">
+                    {['volume', 'filter', 'reverb'].map((target) => (
+                      <button
+                        type="button"
+                        key={target}
+                        className={
+                          selectedArrangement.automationTarget === target ? 'is-active' : ''
+                        }
+                        onClick={() =>
+                          editArrangement(
+                            selectedArrangementDeck.id,
+                            { ...selectedArrangement, automationTarget: target },
+                            'Automation target'
+                          )
+                        }
+                      >
+                        {target.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                  <strong>
+                    {selectedArrangement.automation[selectedArrangement.automationTarget].length}{' '}
+                    POINTS
+                  </strong>
+                  <p>
+                    Click the clip to add a point. Drag points to shape it. Double-click to remove.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedArrangement.automationTarget;
+                      editArrangement(
+                        selectedArrangementDeck.id,
+                        {
+                          ...selectedArrangement,
+                          automation: {
+                            ...selectedArrangement.automation,
+                            [target]: AUTOMATION_DEFAULTS[target].map((point) => ({ ...point })),
+                          },
+                        },
+                        'Reset automation'
+                      );
+                    }}
+                  >
+                    RESET CURVE
+                  </button>
+                </div>
               ) : (
                 <div className="sd-arranger-fx-grid">
                   {['reverb', 'echo'].map((effect) => (

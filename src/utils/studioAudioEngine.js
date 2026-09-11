@@ -29,6 +29,24 @@ export function masterAssistProfile(enabled, mode = 'Streaming -14') {
   return enabled ? profile : { ...profile, threshold: -1, ratio: 1 };
 }
 
+export function buildArrangementSchedule(clips, cursorSeconds = 0) {
+  const cursor = Math.max(0, Number(cursorSeconds) || 0);
+  return clips.flatMap((clip) => {
+    const clipStart = Math.max(0, Number(clip.start) || 0);
+    const sourceStart = Math.max(0, Number(clip.trimStart) || 0);
+    const sourceEnd = Math.max(sourceStart, Number(clip.trimEnd) || sourceStart);
+    const clipEnd = clipStart + (sourceEnd - sourceStart);
+    if (!clip.enabled || cursor > clipEnd) return [];
+    return [
+      {
+        deckId: clip.deckId,
+        delay: Math.max(0, clipStart - cursor),
+        sourceOffset: sourceStart + Math.max(0, cursor - clipStart),
+      },
+    ];
+  });
+}
+
 export class StudioAudioEngine {
   constructor() {
     this.master = new Tone.Gain(0.82);
@@ -442,6 +460,18 @@ export class StudioAudioEngine {
     await Promise.all(
       [...this.decks.keys()].map((deckId) => this.playDeck(deckId, null, startTime))
     );
+  }
+
+  async playArrangement(clips, cursorSeconds = 0) {
+    await this.unlock();
+    const transportStart = Tone.now() + 0.055;
+    const started = [];
+    for (const item of buildArrangementSchedule(clips, cursorSeconds)) {
+      if (await this.playDeck(item.deckId, item.sourceOffset, transportStart + item.delay)) {
+        started.push(item.deckId);
+      }
+    }
+    return started;
   }
 
   pauseAll() {
