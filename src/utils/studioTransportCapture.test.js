@@ -49,3 +49,28 @@ it('rate changes preserve source continuity and identify the operation explicitl
     args: ['A', { action: 'rate', position: 4, playing: true, rate: 1.25 }],
   });
 });
+it('captures the same scheduled time passed to live parameter ramps', () => {
+  const { engine } = engineFixture();
+  engine.master = { gain: { rampTo: vi.fn() } };
+  engine.setMasterLevel(75);
+  expect(engine.master.gain.rampTo).toHaveBeenCalledWith(expect.any(Number), 0.04, 12);
+  expect(engine.performanceEvents[0]).toMatchObject({
+    type: 'setMasterLevel',
+    scheduledTime: 2,
+    scheduledFrame: 96000,
+  });
+  expect(engine.performanceParameterTime).toBeUndefined();
+});
+it('does not journal a rejected parameter mutation', () => {
+  const { engine } = engineFixture();
+  engine.master = {
+    gain: {
+      rampTo: () => {
+        throw new Error('invalid parameter');
+      },
+    },
+  };
+  expect(() => engine.setMasterLevel(75)).toThrow('invalid parameter');
+  expect(engine.performanceEvents).toHaveLength(0);
+  expect(engine.performanceParameterTime).toBeUndefined();
+});

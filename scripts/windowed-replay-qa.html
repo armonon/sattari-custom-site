@@ -1,0 +1,204 @@
+<!doctype html><meta charset="utf-8" /><title>Windowed granular replay qualification</title>
+<pre id="result">Running paged-source acceptance tests…</pre>
+<script type="module">
+  import * as Tone from 'tone';
+  import { SourceWindowPool, describeAudioSource } from '/src/utils/windowedSource.js';
+  import { WindowedGrainPlayer } from '/src/utils/windowedGrainPlayer.js';
+  import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+  import { PerformancePlayer } from '/src/utils/performancePlayer.js';
+  import { putAudioAsset, deleteAudioAsset } from '/src/utils/audioProjectStore.js';
+  const checks = [];
+  const playedSeconds = new URLSearchParams(location.search).get('soak') === '120' ? 120 : 14;
+  const assert = (value, message) => {
+    if (!value) throw Error(message);
+  };
+  try {
+    const blob = await (await fetch('/scripts/fixtures/window-source.mp3')).blob();
+    const descriptor = await describeAudioSource(blob);
+    const cases = [
+      { offset: 3.9, rate: 1, detune: 0 },
+      { offset: 17, rate: 1.5, detune: 700 },
+      { offset: 20.4, rate: 0.75, detune: -500, loop: true, loopStart: 19.5, loopEnd: 20.5 },
+      { offset: 19.9, rate: 1, detune: 0, loop: true, loopStart: 2, loopEnd: 20 },
+    ];
+    for (const sampleRate of [44100, 48000])
+      for (const config of cases) {
+        const render = async (paged) => {
+          const context = new Tone.OfflineContext(2, 1.5, sampleRate);
+          const pool = new SourceWindowPool(context.rawContext);
+          let player;
+          try {
+            const options = {
+              context,
+              grainSize: 0.085,
+              overlap: 0.035,
+              playbackRate: config.rate,
+              detune: config.detune,
+              loop: !!config.loop,
+              loopStart: config.loopStart || 0,
+              loopEnd: config.loopEnd || 0,
+            };
+            player = paged
+              ? new WindowedGrainPlayer(descriptor, pool, options)
+              : new Tone.GrainPlayer({
+                  ...options,
+                  url: await context.rawContext.decodeAudioData(await blob.arrayBuffer()),
+                });
+            Tone.connect(player, context.rawContext.destination);
+            if (paged) await player.prepareWindow(config.offset);
+            player.start(0.1, config.offset / config.rate);
+            player.stop(1.3);
+            const result = (await context.render(false)).get();
+            assert(!player.failure, player.failure?.message);
+            return result.getChannelData(0).slice();
+          } finally {
+            player?.dispose();
+            pool.dispose();
+            context.dispose();
+          }
+        };
+        const reference = await render(false),
+          result = await render(true);
+        let maxError = 0,
+          energy = 0;
+        for (let i = 0; i < result.length; i++) {
+          maxError = Math.max(maxError, Math.abs(reference[i] - result[i]));
+          energy += result[i] ** 2;
+        }
+        assert(
+          energy > 1 && maxError < 0.0001,
+          `Granular parity ${sampleRate} ${JSON.stringify(config)}: error ${maxError}, energy ${energy}`
+        );
+        checks.push({ sampleRate, ...config, maxError });
+      }
+    const longBlob = await (await fetch('/scripts/fixtures/three-minute-source.m4a')).blob();
+    const assets = [],
+      owner = new StudioAudioEngine({ monitor: false });
+    let replay;
+    try {
+      const lanes = {};
+      for (const stem of ['vocals', 'drums', 'bass', 'other']) {
+        const asset = await putAudioAsset(longBlob, { name: `${stem}.m4a` });
+        assets.push(asset.id);
+        lanes[stem] = { assetId: asset.id, duration: 180, level: 100 };
+      }
+      const capture = {
+        duration: playedSeconds,
+        events: [
+          {
+            type: 'initialState',
+            time: 0,
+            args: [
+              {
+                dspVersion: 2,
+                masterLevel: 50,
+                decks: [
+                  {
+                    id: 'A',
+                    playing: true,
+                    position: 15,
+                    playbackRate: 1,
+                    duration: 180,
+                    gain: 70,
+                    fader: 70,
+                    lanes,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'setLaneState',
+            time: 2,
+            disabled: true,
+            args: ['A', 'vocals', { assetId: 'missing-disabled-source' }],
+          },
+          {
+            type: 'deckTransport',
+            time: 5,
+            args: ['A', { playing: true, position: 150, rate: 1, action: 'seek' }],
+          },
+          { type: 'setLoopRegion', time: 7, args: ['A', true, 75, 77] },
+          { type: 'setLoopRegion', time: 9, args: ['A', false, 75, 77] },
+          {
+            type: 'deckTransport',
+            time: 10,
+            args: ['A', { playing: true, position: 40, rate: 1, action: 'seek' }],
+          },
+        ],
+      };
+      let finish;
+      const complete = new Promise((resolve) => {
+        finish = resolve;
+      });
+      replay = new PerformancePlayer(owner, { onFinish: finish });
+      const begin = performance.now();
+      await replay.prepare(capture);
+      const prepareMs = performance.now() - begin;
+      assert(replay.sourceCache.bytes === 0, 'Deck sources retained whole PCM');
+      let peak = 0;
+      const poll = setInterval(() => {
+        peak = Math.max(peak, Number(replay.engine.getDeckMeterLevel('A')) || 0);
+      }, 50);
+      const pressure = setInterval(() => {
+        const end = performance.now() + 4;
+        while (performance.now() < end) {
+          Math.sqrt(performance.now());
+        }
+      }, 32);
+      try {
+        await replay.play({ record: true });
+        const done = await Promise.race([
+          complete,
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(Error('Replay completion timed out')),
+              (playedSeconds + 20) * 1000
+            )
+          ),
+        ]);
+        assert(!done.error, done.error?.message);
+        const pool = replay.engine.sourceWindowPool;
+        const underruns = [...replay.engine.decks.get('A').lanes.values()].reduce(
+          (sum, lane) => sum + lane.player.underruns,
+          0
+        );
+        assert(underruns === 0, `Source underruns: ${underruns}`);
+        assert(pool.peakBytes <= pool.budget, 'Exceeded PCM admission limit');
+        assert(peak > 0.001, `Replay was silent: ${peak}`);
+        checks.push({
+          fourStereoStems: true,
+          sourceSeconds: 180,
+          playedSeconds,
+          seeks: 2,
+          prepareMs,
+          retainedPcmBytes: pool.bytes,
+          peakAdmittedBytes: pool.peakBytes,
+          budgetBytes: pool.budget,
+          underruns,
+          peak,
+          lateEvents: done.lateEvents,
+          maxLateness: done.maxLateness,
+        });
+        for (const track of done.sources?.tracks || [])
+          for (const clip of track.clips || []) assets.push(clip.assetId);
+      } finally {
+        clearInterval(poll);
+        clearInterval(pressure);
+      }
+    } finally {
+      replay?.dispose();
+      owner.dispose();
+      for (const id of new Set(assets)) await deleteAudioAsset(id);
+    }
+    window.qaResult = {
+      pass: true,
+      checks,
+      physicalHardwareMeasured: false,
+      realMusicMeasured: false,
+    };
+  } catch (error) {
+    window.qaResult = { pass: false, checks, error: error.stack };
+  }
+  document.querySelector('#result').textContent = JSON.stringify(window.qaResult, null, 2);
+</script>

@@ -1,6 +1,6 @@
 import { Blob } from 'node:buffer';
 import { it, expect } from 'vitest';
-import { decodeWaveWindow } from './arrangementSourceWindow';
+import { decodeWaveWindow, sourceWindows } from './arrangementSourceWindow';
 import { wavBytes } from './arrangementExport';
 const raw = {
   createBuffer(channels, length, sampleRate) {
@@ -27,4 +27,18 @@ it('reads only the requested PCM source window, preserving absolute offset and s
 });
 it('does not treat compressed or malformed data as PCM', async () => {
   expect(await decodeWaveWindow(raw, new Blob(['not a WAV']), 0, 10, 1e6)).toBeNull();
+});
+it('does not decode the hours between simultaneous clips from distant source positions', () => {
+  const ranges = sourceWindows(
+    [
+      { id: 'a', start: 0, offset: 2, duration: 2, rate: 1 },
+      { id: 'b', start: 0, offset: 6000, duration: 2, rate: 1 },
+      { id: 'c', start: 0, offset: 3, duration: 2, rate: 1 },
+    ],
+    { start: 0, end: 2 }
+  );
+  expect(ranges).toEqual([
+    { start: 2, end: 5, clips: ['a', 'c'] },
+    { start: 6000, end: 6002, clips: ['b'] },
+  ]);
 });

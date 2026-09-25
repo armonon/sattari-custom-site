@@ -1,4 +1,5 @@
 import { performanceAssetIds } from './performanceReplay';
+import { describeAudioSource } from './windowedSource';
 
 // Use the effective plan, never the archival/original event history. The latter
 // intentionally retains disabled and superseded edits for Undo.
@@ -20,11 +21,21 @@ export function replaySourceDurations(plan) {
   return durations;
 }
 
-// Whole-source lookahead cache. It bounds retained PCM across a long sequence
-// of songs; it does NOT pretend a compressed file can be randomly decoded.
+// Effective-plan source catalog. Deck assets are range-readable descriptors;
+// sampled pads retain an explicitly bounded whole-buffer path. The engine owns
+// the separate shared paging pool (128 MiB), for a combined 256 MiB PCM budget.
 export class ReplaySourceCache {
-  constructor(raw, load, { budget = 256 * 1048576, durations = new Map() } = {}) {
-    Object.assign(this, { raw, load, budget, durations });
+  constructor(
+    raw,
+    load,
+    {
+      budget = 128 * 1048576,
+      durations = new Map(),
+      windowedIds = new Set(),
+      describe = describeAudioSource,
+    } = {}
+  ) {
+    Object.assign(this, { raw, load, budget, durations, windowedIds, describe });
     this.buffers = new Map();
     this.bytes = 0;
     this.disposed = false;
@@ -40,7 +51,8 @@ export class ReplaySourceCache {
     const needed = new Set(ids);
     for (const [id, buffer] of this.buffers)
       if (!needed.has(id)) {
-        this.bytes -= buffer.length * buffer.numberOfChannels * 4;
+        if (buffer.kind !== 'windowed-audio')
+          this.bytes -= buffer.length * buffer.numberOfChannels * 4;
         this.buffers.delete(id);
       }
     for (const id of needed) {
@@ -50,6 +62,12 @@ export class ReplaySourceCache {
       if (this.disposed) return;
       if (!asset?.blob)
         throw new Error(`Replay source missing: ${id}. Relink the project audio first.`);
+      if (this.windowedIds.has(id)) {
+        const source = await this.describe(asset.blob);
+        if (this.disposed) return;
+        this.buffers.set(id, source);
+        continue;
+      }
       if (asset.blob.size > this.budget)
         throw new Error('Replay source exceeds the preparation budget. Use captured audio lanes.');
       // Preflight known durations before invoking the browser's allocating decoder.

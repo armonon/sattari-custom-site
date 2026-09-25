@@ -18,6 +18,45 @@ const take = () => ({
     { time: 1.9, type: 'playDeck', args: ['A'] },
   ],
 });
+it('prefetches scheduled seeks and new loops after events have been partitioned for dispatch', async () => {
+  const warm = vi.fn(async () => {});
+  const replay = new PerformancePlayer({});
+  replay.engine = {
+    decks: new Map([
+      ['A', { lanes: new Map([['vocals', { assetId: 'song', player: { prepareWindow: warm } }]]) }],
+    ]),
+    padPlayers: new Map(),
+  };
+  replay.sourceCache = { prepare: vi.fn(async () => {}) };
+  replay.sourceEvents = [];
+  replay.plan = { events: [] };
+  replay.transportEvents = [{ type: 'deckTransport', time: 5, args: ['A', { position: 150 }] }];
+  replay.loopEvents = [{ type: 'setLoopRegion', time: 5, args: ['A', true, 75, 77] }];
+  await replay.queueSources(3);
+  expect(warm).toHaveBeenCalledWith(150, { loop: false });
+  expect(warm).toHaveBeenCalledWith(75, { loop: false });
+  expect(warm).toHaveBeenCalledWith(76.75, { loop: false });
+});
+it('uses source seconds for confirmed transport when a grain player runs at non-unit rate', () => {
+  const source = { start: vi.fn(), stop: vi.fn() };
+  const deck = {
+    playing: false,
+    playbackRate: 1,
+    lanes: new Map([['full', { player: source, duration: 100 }]]),
+  };
+  const engine = { decks: new Map([['A', deck]]), applyPlaybackRates: vi.fn() };
+  PerformancePlayer.prototype.transport.call(
+    { engine },
+    'A',
+    { position: 30, rate: 1.5, playing: true },
+    7.125
+  );
+  expect(source.start).toHaveBeenCalledWith(7.125, 20);
+  expect(deck.playbackRate).toBe(1.5);
+  expect(engine.applyPlaybackRates.mock.invocationCallOrder[0]).toBeLessThan(
+    source.start.mock.invocationCallOrder[0]
+  );
+});
 it('queues stable deck filter sweeps at audio time without switching future filter types early', () => {
   const initial = {
     decks: [

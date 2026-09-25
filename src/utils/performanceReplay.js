@@ -1,5 +1,6 @@
 import { audioClip, audioTrack, bounded, validateArrangement } from './arrangementModel';
 import { crossfaderGains, gainFromPercent } from './studioAudioEngine';
+import { masterStemGain, normalizeMasterStems } from './masterOutput';
 
 // Reconstruct source edits, never apply processing again to a printed reference.
 // Unsupported DSP stays explicitly reported; the safety take remains untouched.
@@ -10,7 +11,7 @@ export function reconstructPerformance(project, capture) {
     .sort((a, b) => a.time - b.time || a.index - b.index);
   const snapshot = events.find((event) => event.type === 'initialState');
   const initial = snapshot?.args[0];
-  if (!initial?.decks?.length)
+  if (!initial?.decks)
     throw new Error('This take has no source snapshot. Use its printed audio lanes.');
   const duration =
     capture.duration ||
@@ -39,9 +40,22 @@ export function reconstructPerformance(project, capture) {
     'setDeckFader',
     'setDeckSide',
     'setLaneState',
+    'removeLane',
+    'setLoop',
+    'setLoopRegion',
+    'setMasterStems',
   ]);
   for (const event of events) if (!supported.has(event.type)) warnings.add(event.type);
-  for (const original of initial.decks) {
+  const allDecks = structuredClone(initial.decks);
+  for (const event of events) {
+    if (
+      event.type === 'setLaneState' &&
+      event.args[2]?.assetId &&
+      !allDecks.some((deck) => deck.id === event.args[0])
+    )
+      allDecks.push({ id: event.args[0], lanes: {}, playing: false, side: 'left' });
+  }
+  for (const original of allDecks) {
     const accurateTransport = events.some(
       (event) => event.type === 'deckTransport' && event.args[0] === original.id
     );
@@ -54,6 +68,7 @@ export function reconstructPerformance(project, capture) {
     let crossfader = initial.crossfader ?? 50,
       curve = initial.crossfaderCurve || 'Smooth',
       previous = snapshot.time || 0;
+    let stems = normalizeMasterStems(initial.masterProcessing?.stems);
     if (
       Object.values(deck.eq || {}).some((value) => value !== 50) ||
       (deck.filter ?? 50) !== 50 ||
@@ -63,11 +78,11 @@ export function reconstructPerformance(project, capture) {
       Object.values(deck.stemFx || {}).some((fx) => fx.send || fx.pitch || (fx.filter ?? 50) !== 50)
     )
       warnings.add(`${deck.id}: original deck/stem FX or pitch needs printed audio`);
-    if (deck.looping) warnings.add(`${deck.id}: loop reconstruction requires manual review`);
-    const rows = Object.entries(deck.lanes || {}).map(([id, lane]) => {
+    const rows = [];
+    const addRow = (id, lane) => {
       const track = {
         ...audioTrack(`Replay ${deck.id} · ${id}`),
-        replayCapture: capture.assetId,
+        replayCapture: capture.id || capture.assetId,
         stemRole:
           id === 'music'
             ? 'other'
@@ -78,9 +93,12 @@ export function reconstructPerformance(project, capture) {
         automation: { volume: [] },
       };
       tracks.push(track);
-      return { id, lane, track };
-    });
-    const gain = (lane) => {
+      const row = { id, lane, track };
+      rows.push(row);
+      return row;
+    };
+    for (const [id, lane] of Object.entries(deck.lanes || {})) addRow(id, lane);
+    const gain = (lane, id) => {
       const solo = rows.some((row) => row.lane.solo),
         gains = crossfaderGains(crossfader, curve);
       return lane.muted || (solo && !lane.solo) || deck.muted
@@ -88,14 +106,15 @@ export function reconstructPerformance(project, capture) {
         : ((gainFromPercent(deck.gain ?? 100) *
             gainFromPercent(deck.fader ?? 100) *
             gainFromPercent(lane.level ?? 100) *
+            masterStemGain(stems, id) *
             (gains[deck.cfSide || deck.side] ?? 1)) /
-            27) *
+            81) *
             100;
     };
     const levels = (time) => {
       for (const row of rows) {
         const points = row.track.automation.volume,
-          value = gain(row.lane);
+          value = gain(row.lane, row.id);
         const last = points.at(-1);
         if (last && last.value === value) continue;
         if (last && timeline + time > last.time)
@@ -108,24 +127,53 @@ export function reconstructPerformance(project, capture) {
         for (const row of rows) {
           if (!row.lane.assetId) continue;
           const length = row.lane.duration || deck.duration || 0;
-          const available = Math.min(end - previous, (length - offset) / rate);
-          if (available < 0.001) continue;
-          row.track.clips.push({
-            ...audioClip(
-              row.lane.assetId,
-              row.lane.name || deck.title,
-              available,
-              timeline + previous
-            ),
-            offset,
-            sourceDuration: length,
-            rate,
-            fadeIn: 0,
-            fadeOut: 0,
-            mixGain: 27,
-          });
+          const loopStart = Math.max(0, deck.loopStart || 0);
+          const loopEnd = Math.min(length, deck.loopEnd || length);
+          const looping = deck.looping && loopEnd > loopStart;
+          let position = offset,
+            at = previous;
+          while (at < end - 0.000001) {
+            if (looping && position >= loopEnd)
+              position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
+            const available = Math.min(end - at, ((looping ? loopEnd : length) - position) / rate);
+            if (available < 0.000001) break;
+            if (available < 0.001) {
+              warnings.add(
+                'Sub-millisecond source fragments cannot be represented as arrangement clips; keep the printed reference.'
+              );
+              at += available;
+              position += available * rate;
+              continue;
+            }
+            if (row.track.clips.length >= 20000)
+              throw new Error(
+                'This performance expands beyond 20,000 loop regions. Shorten the take before reconstruction.'
+              );
+            row.track.clips.push({
+              ...audioClip(
+                row.lane.assetId,
+                row.lane.name || deck.title || `${deck.id} · ${row.id}`,
+                available,
+                timeline + at
+              ),
+              offset: position,
+              sourceDuration: length,
+              rate,
+              fadeIn: 0,
+              fadeOut: 0,
+              mixGain: 81,
+              ...(looping ? { performanceLoop: { start: loopStart, end: loopEnd } } : {}),
+            });
+            at += available;
+            position += available * rate;
+            if (!looping) break;
+          }
         }
         offset += (end - previous) * rate;
+        if (deck.looping && deck.loopEnd > (deck.loopStart || 0) && offset >= deck.loopEnd)
+          offset =
+            (deck.loopStart || 0) +
+            ((offset - (deck.loopStart || 0)) % (deck.loopEnd - (deck.loopStart || 0)));
       }
       previous = end;
     };
@@ -159,14 +207,33 @@ export function reconstructPerformance(project, capture) {
         }
       }
       if (event.type === 'setCrossfader') crossfader = id;
+      else if (event.type === 'setMasterStems') stems = normalizeMasterStems(id);
       else if (event.type === 'setCrossfaderCurve') curve = id;
       else if (id === deck.id) {
+        if (event.type === 'setLoop' || event.type === 'setLoopRegion') {
+          append(time);
+          deck.looping = !!value;
+          deck.loopStart = event.type === 'setLoop' ? 0 : Math.max(0, Number(extra) || 0);
+          deck.loopEnd =
+            event.type === 'setLoop'
+              ? Math.max(0.25, 240 / Math.max(1, Number(extra) || 120))
+              : Math.max(deck.loopStart + 0.05, Number(event.args[3]) || deck.loopStart + 1);
+        }
+        if (event.type === 'removeLane') {
+          append(time);
+          const row = rows.find((row) => row.id === value);
+          if (row) {
+            row.lane = {};
+            row.removed = true;
+          }
+        }
         if (event.type === 'setDeckGain') deck.gain = value;
         if (event.type === 'setDeckFader') deck.fader = value;
         if (event.type === 'setDeckSide') deck.cfSide = value;
         if (event.type === 'setLaneState') {
-          const row = rows.find((row) => row.id === value);
-          if (row && extra?.assetId && extra.assetId !== row.lane.assetId) append(time);
+          let row = rows.find((row) => row.id === value);
+          if (extra?.assetId && extra.assetId !== row?.lane.assetId) append(time);
+          if (!row && extra?.assetId) row = addRow(value, {});
           if (row) Object.assign(row.lane, extra);
           if (
             Object.keys(extra || {}).some(

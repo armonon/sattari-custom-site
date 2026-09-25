@@ -1,4 +1,6 @@
 import * as Tone from 'tone';
+import { SourceWindowPool } from './windowedSource';
+import { TIMED_PARAMETERS, parameterRamp } from './performanceClock';
 import { LiveInput } from './liveInput';
 import { audioLatency } from './sessionTelemetry';
 import { performanceFilter } from './performanceFilter';
@@ -212,9 +214,31 @@ export class StudioAudioEngine {
     ]) {
       const original = this[name].bind(this);
       this[name] = (...args) => {
+        const captureStartedAt = this.performanceStartedAt;
         const previousTransition = this.decks.get(args[0])?.transportTransition;
-        this.capturePerformanceEvent(name, args);
-        const result = original(...args);
+        const previousTime = this.performanceParameterTime;
+        if (TIMED_PARAMETERS.has(name) && this.performanceStartedAt != null) {
+          const sampleRate = Tone.getContext().rawContext.sampleRate || 48000;
+          this.performanceParameterTime =
+            previousTime ?? Math.round(Tone.now() * sampleRate) / sampleRate;
+        }
+        let result;
+        try {
+          result = original(...args);
+          // Failed synchronous mutations must not poison durable replay history.
+          // Transport promises record only after successful application.
+          if (result?.then)
+            result.then(
+              () => {
+                if (captureStartedAt != null && this.performanceStartedAt === captureStartedAt)
+                  this.capturePerformanceEvent(name, args);
+              },
+              () => {}
+            );
+          else this.capturePerformanceEvent(name, args);
+        } finally {
+          this.performanceParameterTime = previousTime;
+        }
         if (['playDeck', 'pauseDeck', 'stopDeck', 'seekDeck', 'setPlaybackRate'].includes(name)) {
           const confirmed = () => {
             const deck = this.decks.get(args[0]);
@@ -222,7 +246,8 @@ export class StudioAudioEngine {
             if (
               !transition ||
               transition === previousTransition ||
-              this.performanceStartedAt == null
+              this.performanceStartedAt == null ||
+              this.performanceStartedAt !== captureStartedAt
             )
               return;
             const { at, ...state } = transition;
@@ -262,9 +287,16 @@ export class StudioAudioEngine {
       args: JSON.parse(serialized),
     };
     event.clockVersion = 1;
-    event.sampleRate = this.getAudioContext().rawContext.sampleRate;
+    event.sampleRate = this.getAudioContext().rawContext.sampleRate || 48000;
     event.frame = Math.round(event.time * event.sampleRate);
     event.sequence = this.performanceEvents.length;
+    if (TIMED_PARAMETERS.has(type)) {
+      event.scheduledTime = Math.max(
+        0,
+        (this.performanceParameterTime ?? Tone.now()) - this.performanceStartedAt
+      );
+      event.scheduledFrame = Math.round(event.scheduledTime * event.sampleRate);
+    }
     this.performanceEvents.push(event);
     this.performanceJournal?.append(event);
   }
@@ -436,14 +468,25 @@ export class StudioAudioEngine {
       type: 'lowpass',
       rolloff: -24,
     }).connect(laneDelay);
-    const player = new Tone.GrainPlayer({
+    const playerOptions = {
       fadeIn: 0.008,
       fadeOut: 0.015,
       grainSize: 0.085,
       overlap: 0.035,
-    }).connect(laneFilter);
+    };
+    const windowed = url?.kind === 'windowed-audio';
+    const WindowedGrainPlayer = windowed
+      ? (await import('./windowedGrainPlayer')).WindowedGrainPlayer
+      : null;
+    if (windowed) this.sourceWindowPool ||= new SourceWindowPool(this.getAudioContext().rawContext);
+    const player = (
+      windowed
+        ? new WindowedGrainPlayer(url, this.sourceWindowPool, playerOptions)
+        : new Tone.GrainPlayer(playerOptions)
+    ).connect(laneFilter);
     try {
-      if (typeof url === 'string') await player.buffer.load(url);
+      if (windowed) await player.prepareWindow(0);
+      else if (typeof url === 'string') await player.buffer.load(url);
       else player.buffer.set(url);
       if (this.disposed || this.pendingLaneLoads.get(loadKey) !== token)
         throw new Error('Audio load was superseded.');
@@ -478,12 +521,12 @@ export class StudioAudioEngine {
       pitch: 0,
       filter: 50,
       send: 0,
-      duration: player.buffer.duration,
+      duration: windowed ? url.duration : player.buffer.duration,
     });
     this.applyPlaybackRates(deck);
     this.applyLaneMix(deckId);
     this.applyLoop(deckId);
-    return player.buffer.duration;
+    return windowed ? url.duration : player.buffer.duration;
   }
 
   removeLane(deckId, laneId) {
@@ -499,23 +542,23 @@ export class StudioAudioEngine {
   }
 
   setMasterLevel(level) {
-    this.master.gain.rampTo(masterGain(level), 0.04);
+    parameterRamp(this, this.master.gain, masterGain(level), 0.04);
   }
 
   setMasterProcessing(value) {
     this.setMasterStems?.(value?.stems);
     const settings = normalizeMasterProcessing(value);
     this.masterInserts?.update(settings.effects || []);
-    this.masterInputTrim.gain.rampTo(trimGain(settings.inputTrim), 0.04);
-    this.masterLimiterDrive.gain.rampTo(trimGain(settings.limiterDrive), 0.04);
-    this.masterEq.lowFrequency.rampTo(settings.lowFrequency, 0.04);
-    this.masterEq.highFrequency.rampTo(settings.highFrequency, 0.04);
-    this.masterEq.low.rampTo(settings.bypass ? 0 : settings.low, 0.04);
-    this.masterEq.mid.rampTo(settings.bypass ? 0 : settings.mid, 0.04);
-    this.masterEq.high.rampTo(settings.bypass ? 0 : settings.high, 0.04);
-    this.masterLowCut.frequency.rampTo(settings.bypass ? 20 : settings.lowCut, 0.04);
-    this.masterWidth.width.rampTo(settings.bypass ? 0.5 : settings.width / 200, 0.04);
-    this.limiter.threshold.rampTo(settings.ceiling, 0.04);
+    parameterRamp(this, this.masterInputTrim.gain, trimGain(settings.inputTrim), 0.04);
+    parameterRamp(this, this.masterLimiterDrive.gain, trimGain(settings.limiterDrive), 0.04);
+    parameterRamp(this, this.masterEq.lowFrequency, settings.lowFrequency, 0.04);
+    parameterRamp(this, this.masterEq.highFrequency, settings.highFrequency, 0.04);
+    parameterRamp(this, this.masterEq.low, settings.bypass ? 0 : settings.low, 0.04);
+    parameterRamp(this, this.masterEq.mid, settings.bypass ? 0 : settings.mid, 0.04);
+    parameterRamp(this, this.masterEq.high, settings.bypass ? 0 : settings.high, 0.04);
+    parameterRamp(this, this.masterLowCut.frequency, settings.bypass ? 20 : settings.lowCut, 0.04);
+    parameterRamp(this, this.masterWidth.width, settings.bypass ? 0.5 : settings.width / 200, 0.04);
+    parameterRamp(this, this.limiter.threshold, settings.ceiling, 0.04);
   }
 
   setMasterMonitor({ mono = false, dimmed = false, muted = false } = {}) {
@@ -541,12 +584,17 @@ export class StudioAudioEngine {
   }
 
   setLimiter(enabled) {
-    this.limitedGain.gain.rampTo(enabled ? 1 : 0, 0.04);
-    this.dryGain.gain.rampTo(enabled ? 0 : 1, 0.04);
+    parameterRamp(this, this.limitedGain.gain, enabled ? 1 : 0, 0.04);
+    parameterRamp(this, this.dryGain.gain, enabled ? 0 : 1, 0.04);
   }
 
   setMasterAssist(enabled, mode = 'Streaming -14') {
     const profile = masterAssistProfile(enabled, mode);
+    if (this.performanceParameterTime != null) {
+      for (const key of ['threshold', 'ratio', 'attack', 'release'])
+        this.masterCompressor[key].setValueAtTime(profile[key], this.performanceParameterTime);
+      return;
+    }
     this.masterCompressor.threshold.value = profile.threshold;
     this.masterCompressor.ratio.value = profile.ratio;
     this.masterCompressor.attack.value = profile.attack;
@@ -586,7 +634,9 @@ export class StudioAudioEngine {
     if (!deck) return;
     const gains = crossfaderGains(this.crossfader, this.crossfaderCurve);
     const sideGain = deck.side === 'left' ? gains.left : deck.side === 'right' ? gains.right : 1;
-    deck.output.gain.rampTo(
+    parameterRamp(
+      this,
+      deck.output.gain,
       gainFromPercent(deck.gain) * gainFromPercent(deck.fader) * sideGain,
       0.025
     );
@@ -594,22 +644,22 @@ export class StudioAudioEngine {
 
   setDeckEq(deckId, { low = 50, mid = 50, high = 50 }) {
     const deck = this.ensureDeck(deckId);
-    deck.eq.low.rampTo(((clamp(low, 0, 100) - 50) / 50) * 12, 0.035);
-    deck.eq.mid.rampTo(((clamp(mid, 0, 100) - 50) / 50) * 12, 0.035);
-    deck.eq.high.rampTo(((clamp(high, 0, 100) - 50) / 50) * 12, 0.035);
+    parameterRamp(this, deck.eq.low, ((clamp(low, 0, 100) - 50) / 50) * 12, 0.035);
+    parameterRamp(this, deck.eq.mid, ((clamp(mid, 0, 100) - 50) / 50) * 12, 0.035);
+    parameterRamp(this, deck.eq.high, ((clamp(high, 0, 100) - 50) / 50) * 12, 0.035);
   }
 
   setDeckFilter(deckId, value) {
     const deck = this.ensureDeck(deckId);
     const settings = performanceFilter(value);
     deck.filter.type = settings.type;
-    deck.filter.frequency.rampTo(settings.frequency, 0.035);
+    parameterRamp(this, deck.filter.frequency, settings.frequency, 0.035);
   }
 
   setDeckFx(deckId, { reverb = 0, echo = 0 }) {
     const deck = this.ensureDeck(deckId);
-    deck.reverb.wet.rampTo(clamp(reverb, 0, 100) / 100, 0.04);
-    deck.delay.wet.rampTo(clamp(echo, 0, 100) / 100, 0.04);
+    parameterRamp(this, deck.reverb.wet, clamp(reverb, 0, 100) / 100, 0.04);
+    parameterRamp(this, deck.delay.wet, clamp(echo, 0, 100) / 100, 0.04);
   }
 
   setLaneState(deckId, laneId, updates) {
@@ -651,7 +701,9 @@ export class StudioAudioEngine {
     const hasSolo = lanes.some((lane) => lane.solo);
     deck.lanes.forEach((lane, laneId) => {
       const audible = !lane.muted && (!hasSolo || lane.solo);
-      lane.gain.gain.rampTo(
+      parameterRamp(
+        this,
+        lane.gain.gain,
         audible ? gainFromPercent(lane.level) * masterStemGain(this.masterStems, laneId) : 0,
         0.025
       );
@@ -661,7 +713,13 @@ export class StudioAudioEngine {
   setMasterStems(value) {
     this.masterStems = normalizeMasterStems(value);
     for (const id of this.decks.keys()) this.applyLaneMix(id);
-    this.unseparated?.gain.rampTo(masterStemGain(this.masterStems, 'unseparated'), 0.025);
+    if (this.unseparated)
+      parameterRamp(
+        this,
+        this.unseparated.gain,
+        masterStemGain(this.masterStems, 'unseparated'),
+        0.025
+      );
   }
 
   getMasterStemSources() {
@@ -1229,6 +1287,7 @@ export class StudioAudioEngine {
 
   dispose() {
     this.disposed = true;
+    this.sourceWindowPool?.dispose();
     if (this.syncTimer != null) Tone.getContext().clearInterval(this.syncTimer);
     clearInterval(this.tempoTimer);
     this.loudness?.dispose();

@@ -13,6 +13,7 @@ import { MIX_EVENTS, canScheduleMix, mixAutomation } from './replayMix';
 import { performanceFilter } from './performanceFilter';
 import { ReplaySourceCache, replaySourceDurations } from './replaySources';
 import { ReplayInput } from './replayInput';
+import { performanceAudioTime } from './performanceClock';
 
 export const REPLAY_METHODS = new Set([
   'setCrossfader',
@@ -242,8 +243,24 @@ export class PerformancePlayer {
         'This take has input events but no dry input capture. Recover source audio or use the printed take.'
       );
     this.sourceEvents = this.plan.events.filter((event) => performanceAssetIds([event]).length);
+    this.transportEvents = this.plan.events.filter((event) => event.type === 'deckTransport');
+    this.loopEvents = this.plan.events.filter((event) =>
+      ['setLoop', 'setLoopRegion'].includes(event.type)
+    );
+    // Only the effective replay plan participates. Pads retain their sampler
+    // path; deck sources are descriptors, never whole decoded song buffers.
+    const padIds = new Set(
+      performanceAssetIds([
+        this.plan.initial.pads || [],
+        ...this.plan.events.filter((event) => event.type === 'padSource'),
+      ])
+    );
+    const windowedIds = new Set(
+      performanceAssetIds([this.plan.initial, ...this.plan.events]).filter((id) => !padIds.has(id))
+    );
     this.sourceCache = new ReplaySourceCache(this.raw, getAudioAsset, {
       durations: replaySourceDurations(this.plan),
+      windowedIds,
     });
     this.buffers = this.sourceCache.buffers;
     // Only the opening and its next ten seconds are prepared. Future source
@@ -280,6 +297,8 @@ export class PerformancePlayer {
       engine.setDeckKeyLock(d.id, d.keyLock !== false);
       engine.setPlaybackRate(d.id, d.playbackRate || 1);
       engine.setLoopRegion(d.id, !!d.looping, d.loopStart || 0, d.loopEnd || d.duration || 1);
+      for (const lane of engine.decks.get(d.id).lanes.values())
+        await lane.player.prepareWindow?.(d.position || 0);
     }
     for (const [index, pad] of (s.pads || []).entries())
       if (pad.assetId) await this.setPadSource(index, pad.assetId, pad.gain);
@@ -304,6 +323,25 @@ export class PerformancePlayer {
         ),
       ])
     );
+    for (const event of this.transportEvents || []) {
+      if (event.type !== 'deckTransport' || event.time < elapsed || event.time > elapsed + 2)
+        continue;
+      const deck = this.engine.decks.get(event.args[0]);
+      for (const lane of deck?.lanes.values() || [])
+        await lane.player.prepareWindow?.(event.args[1].position || 0, { loop: false });
+    }
+    for (const event of this.loopEvents || []) {
+      if (!event.args[1] || event.time < elapsed || event.time > elapsed + 2) continue;
+      const start = event.type === 'setLoopRegion' ? Math.max(0, Number(event.args[2]) || 0) : 0;
+      const end =
+        event.type === 'setLoopRegion'
+          ? Number(event.args[3])
+          : 240 / Math.max(1, Number(event.args[2]) || 120);
+      for (const lane of this.engine.decks.get(event.args[0])?.lanes.values() || []) {
+        await lane.player.prepareWindow?.(start, { loop: false });
+        await lane.player.prepareWindow?.(Math.max(start, end - 0.25), { loop: false });
+      }
+    }
   }
   async setPadSource(index, assetId, level = 100) {
     const buffer = this.buffers.get(assetId);
@@ -319,18 +357,22 @@ export class PerformancePlayer {
   transport(id, state, when) {
     const d = this.engine.decks.get(id);
     if (!d) return;
+    const rate = state.rate || d.playbackRate || 1;
+    // GrainPlayer derives its initial clock ticks from the current rate. Install
+    // the new rate before starting, or an opening rate change misplaces the seek.
+    d.playbackRate = rate;
+    this.engine.applyPlaybackRates(d);
     // A rate-only confirmation must not restart the grain clock or reattack the
     // envelope. Older captures lack this discriminator and retain legacy replay.
     if (state.action !== 'rate')
       for (const lane of d.lanes.values()) {
         if (d.playing) lane.player.stop(when);
-        if (state.playing) lane.player.start(when, Math.max(0, state.position) % lane.duration);
+        if (state.playing)
+          lane.player.start(when, (Math.max(0, state.position) % lane.duration) / rate);
       }
     d.offset = Math.max(0, state.position);
     d.startedAt = when;
     d.playing = !!state.playing;
-    d.playbackRate = state.rate || d.playbackRate;
-    this.engine.applyPlaybackRates(d);
   }
   dispatch(event, when) {
     const [a, b, c] = event.args,
@@ -468,6 +510,7 @@ export class PerformancePlayer {
     this.record = record;
     // Loading and decoding must not consume the transport's scheduling runway.
     await this.queueInputs(0, true);
+    await this.queueSources(0);
     if (this.stopped) return;
     if (record) await this.engine.startRecording({ longSession: true, sources: false });
     this.base = this.raw.currentTime + 0.5;
@@ -486,6 +529,9 @@ export class PerformancePlayer {
         );
     const tick = () => {
       try {
+        for (const deck of this.engine.decks?.values() || [])
+          for (const lane of deck.lanes.values())
+            if (lane.player.failure) throw lane.player.failure;
         const elapsed = this.raw.currentTime - this.base;
         while (
           this.scheduledIndex < this.scheduled.length &&
@@ -495,10 +541,11 @@ export class PerformancePlayer {
           // Confirmed transport already contains its actual scheduled time.
           const at =
             this.base +
-            event.time +
-            (['deckTransport', 'inputState'].includes(event.type)
-              ? 0
-              : this.engine.getAudioContext().lookAhead || 0);
+            performanceAudioTime(
+              event,
+              this.raw.sampleRate || 48000,
+              this.engine.getAudioContext().lookAhead || 0
+            );
           if (this.raw.currentTime - at > 0.25)
             throw new Error(
               'Replay missed an automation deadline by more than 250 ms. Print stopped; recover partial chunks if needed and retry with less system load.'

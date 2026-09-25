@@ -19,6 +19,9 @@ it('keeps original capture history while editing times, arguments and enabled st
   }
   render(<Host />);
   fireEvent.click(screen.getByText('Take · 1 events'));
+  fireEvent.click(screen.getByText('Edit controls'));
+  fireEvent.change(screen.getByLabelText('Event 1 Gain'), { target: { value: '80' } });
+  expect(current.events[0].args).toEqual(['A', 80]);
   fireEvent.change(screen.getByLabelText('Event 1 time'), { target: { value: '2.5' } });
   fireEvent.click(screen.getByText('Event values'));
   fireEvent.blur(screen.getByLabelText('Event 1 arguments'), { target: { value: '["A", 75]' } });

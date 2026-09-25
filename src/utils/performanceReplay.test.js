@@ -77,6 +77,16 @@ it('validates retained original event history and capture bounds when reopening'
   take.duration = Infinity;
   expect(() => validateArrangement(project)).toThrow();
 });
+it('rejects corrupted optional audio-clock metadata without breaking legacy captures', () => {
+  const take = capture();
+  const project = { ...emptyArrangement(), captures: [take] };
+  take.events[1].scheduledTime = Infinity;
+  expect(() => validateArrangement(project)).toThrow();
+  take.events[1].scheduledTime = 2.1;
+  take.events[1].sampleRate = 48000;
+  take.events[1].scheduledFrame = 100800;
+  expect(() => validateArrangement(project)).not.toThrow();
+});
 it('retains songs loaded into an initially empty lane during a set', () => {
   const take = capture();
   take.events[0].args[0].decks[0].lanes.vocals = { assetId: '', duration: 0 };
@@ -92,4 +102,62 @@ it('retains songs loaded into an initially empty lane during a set', () => {
   const result = reconstructPerformance(emptyArrangement(), take);
   expect(result.project.tracks[0].clips[0]).toMatchObject({ start: 11, assetId: 'loaded-later' });
   expect(performanceAssetIds([take])).toContain('loaded-later');
+});
+
+it('expands loop passes into source-correct editable regions and exits at the current loop position', () => {
+  const take = capture();
+  take.duration = 7;
+  take.timelineStart = 0;
+  take.events = take.events.slice(0, 1);
+  Object.assign(take.events[0].args[0].decks[0], {
+    position: 2,
+    looping: true,
+    loopStart: 2,
+    loopEnd: 4,
+  });
+  take.events.push({ time: 5, type: 'setLoopRegion', args: ['A', false, 2, 4] });
+  const result = reconstructPerformance(emptyArrangement(), take);
+  expect(result.tracks[0].clips.map((c) => [c.start, c.offset, c.duration])).toEqual([
+    [0, 2, 2],
+    [2, 2, 2],
+    [4, 2, 1],
+    [5, 3, 2],
+  ]);
+  expect(result.warnings).not.toContain('setLoopRegion');
+});
+
+it('creates late lanes and stops removed lanes instead of retaining stale audio', () => {
+  const take = capture();
+  take.timelineStart = 0;
+  take.events = take.events.slice(0, 1);
+  take.events.push(
+    { time: 1, type: 'setLaneState', args: ['A', 'drums', { assetId: 'drums', duration: 30 }] },
+    { time: 4, type: 'removeLane', args: ['A', 'drums'] }
+  );
+  const result = reconstructPerformance(emptyArrangement(), take);
+  const row = result.tracks.find((t) => t.stemRole === 'drums');
+  expect(row.clips).toHaveLength(1);
+  expect(row.clips[0]).toMatchObject({ start: 1, duration: 3, offset: 3 });
+});
+
+it('preserves master stem mute in editable volume automation', () => {
+  const take = capture();
+  take.events.push({ time: 4, type: 'setMasterStems', args: [{ vocals: { muted: true } }] });
+  const row = reconstructPerformance(emptyArrangement(), take).tracks[0];
+  expect(row.automation.volume.at(-1)).toMatchObject({ time: 14.025, value: 0 });
+});
+
+it('reports sub-millisecond loop fragments without creating an invalid project', () => {
+  const take = capture();
+  take.duration = 6.0005;
+  take.events = take.events.slice(0, 1);
+  Object.assign(take.events[0].args[0].decks[0], {
+    position: 0,
+    looping: true,
+    loopStart: 0,
+    loopEnd: 2,
+  });
+  const result = reconstructPerformance(emptyArrangement(), take);
+  expect(result.tracks[0].clips).toHaveLength(3);
+  expect(result.warnings.join(' ')).toContain('Sub-millisecond');
 });

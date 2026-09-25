@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { takeCapabilities } from '../../utils/takeCapabilities';
+import { performanceControlFields, setPerformanceControl } from '../../utils/performanceControls';
+import { retimePerformanceEvent } from '../../utils/performanceClock';
 
 export default function PerformanceEvents({
   capture,
@@ -15,6 +17,10 @@ export default function PerformanceEvents({
   const [page, setPage] = useState(0),
     [error, setError] = useState('');
   const [rebuildPads, setRebuildPads] = useState(false);
+  const [eventFilter, setEventFilter] = useState('all');
+  const visibleEvents = capture.events
+    .map((event, index) => ({ event, index }))
+    .filter(({ event }) => eventFilter === 'all' || event.type === eventFilter);
   const capabilities = takeCapabilities(capture);
   const change = (index, updates) => {
     onChange({
@@ -25,8 +31,8 @@ export default function PerformanceEvents({
           ? {
               ...event,
               ...updates,
-              ...('time' in updates && event.sampleRate > 0
-                ? { frame: Math.round(updates.time * event.sampleRate) }
+              ...('time' in updates
+                ? retimePerformanceEvent({ ...event, ...updates, time: event.time }, updates.time)
                 : {}),
             }
           : event
@@ -105,11 +111,28 @@ export default function PerformanceEvents({
         </p>
       )}
       {error && <p role="alert">{error}</p>}
+      <label>
+        Show actions{' '}
+        <select
+          aria-label="Filter performance actions"
+          value={eventFilter}
+          onChange={(event) => {
+            setEventFilter(event.target.value);
+            setPage(0);
+          }}
+        >
+          <option value="all">All actions</option>
+          {[...new Set(capture.events.map((event) => event.type))].map((type) => (
+            <option key={type} value={type}>
+              {type.replace(/^set/, '').replace(/([a-z])([A-Z])/g, '$1 $2')}
+            </option>
+          ))}
+        </select>
+      </label>
       <ol start={page * 50 + 1}>
-        {capture.events.slice(page * 50, (page + 1) * 50).map((event, offset) => {
-          const index = page * 50 + offset;
+        {visibleEvents.slice(page * 50, (page + 1) * 50).map(({ event, index }) => {
           return (
-            <li key={`${page}:${offset}`} className="ae-fields">
+            <li key={index} className="ae-fields">
               <label>
                 Time (s)
                 <input
@@ -140,6 +163,39 @@ export default function PerformanceEvents({
                 />
                 Enabled
               </label>
+              {performanceControlFields(event).length > 0 && (
+                <details>
+                  <summary>Edit controls</summary>
+                  <div className="ae-fields">
+                    {performanceControlFields(event).map((field) => (
+                      <label key={field.path.join('.')}>
+                        {field.name}
+                        <input
+                          aria-label={`Event ${index + 1} ${field.name}`}
+                          type={field.type === 'boolean' ? 'checkbox' : 'number'}
+                          step="any"
+                          {...(field.type === 'boolean'
+                            ? { checked: field.value }
+                            : { value: field.value })}
+                          disabled={disabled}
+                          onChange={(e) => {
+                            const value =
+                              field.type === 'boolean' ? e.target.checked : e.target.valueAsNumber;
+                            try {
+                              change(index, {
+                                args: setPerformanceControl(event, field.path, value),
+                              });
+                              setError('');
+                            } catch (failure) {
+                              setError(failure.message);
+                            }
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              )}
               <details>
                 <summary>Event values</summary>
                 <textarea
@@ -168,11 +224,11 @@ export default function PerformanceEvents({
           Previous events
         </button>
         <span>
-          Page {page + 1} of {Math.max(1, Math.ceil(capture.events.length / 50))}
+          Page {page + 1} of {Math.max(1, Math.ceil(visibleEvents.length / 50))}
         </span>
         <button
           type="button"
-          disabled={(page + 1) * 50 >= capture.events.length}
+          disabled={(page + 1) * 50 >= visibleEvents.length}
           onClick={() => setPage(page + 1)}
         >
           Next events

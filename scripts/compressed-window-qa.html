@@ -1,0 +1,114 @@
+<!doctype html><meta charset="utf-8" /><title>Compressed window audio QA</title>
+<pre id="result">Running bounded compressed decoding…</pre>
+<script type="module">
+  import { decodeSourceWindow } from '/src/utils/arrangementSourceWindow.js';
+  import { ArrangementEngine, scheduleArrangement } from '/src/utils/arrangementEngine.js';
+  import { audioClip, audioTrack, emptyArrangement } from '/src/utils/arrangementModel.js';
+  import { putAudioAsset, deleteAudioAsset } from '/src/utils/audioProjectStore.js';
+  import * as Tone from 'tone';
+  const results = [];
+  try {
+    const raw = new OfflineAudioContext(2, 48000, 48000);
+    for (const extension of ['mp3', 'm4a']) {
+      const blob = await (await fetch(`/scripts/fixtures/window-source.${extension}`)).blob();
+      const full = await decodeSourceWindow(raw, blob, 0, 30, 8 * 1048576);
+      const native = await raw.decodeAudioData(await blob.arrayBuffer());
+      const reads = [];
+      const window = await decodeSourceWindow(raw, blob, 17, 18, 256 * 1024, {
+        onRead: (range) => reads.push(range),
+      });
+      let difference = 0,
+        nativeDifference = 0,
+        peak = 0;
+      for (let frame = 0; frame < 48000; frame++) {
+        const value = window.buffer.getChannelData(0)[frame];
+        difference = Math.max(
+          difference,
+          Math.abs(value - full.buffer.getChannelData(0)[17 * 48000 + frame])
+        );
+        nativeDifference = Math.max(
+          nativeDifference,
+          Math.abs(value - native.getChannelData(0)[17 * 48000 + frame])
+        );
+        peak = Math.max(peak, Math.abs(value));
+      }
+      if (difference > 0.0001 || peak < 0.1)
+        throw Error(`${extension}: range/full mismatch ${difference}, peak ${peak}`);
+      if (nativeDifference > 0.0001)
+        throw Error(`${extension}: native decoder timeline mismatch ${nativeDifference}`);
+      if (window.buffer.length > 48001) throw Error('Retained more than requested PCM');
+      const bytesRead = reads.reduce((sum, item) => sum + item.end - item.start, 0);
+      results.push({
+        extension,
+        difference,
+        nativeDifference,
+        frames: window.buffer.length,
+        bytesRead,
+        encodedBytes: blob.size,
+      });
+      let refused = false;
+      try {
+        await decodeSourceWindow(raw, blob, 0, 30, 1024);
+      } catch (error) {
+        refused = /memory budget/.test(error.message);
+      }
+      if (!refused) throw Error('Budget guard did not reject oversized window');
+      const asset = await putAudioAsset(blob, { name: `source.${extension}` });
+      const context = new Tone.OfflineContext(2, 1, 48000);
+      try {
+        const project = emptyArrangement();
+        project.tracks = [2, 17].map((offset) => {
+          const track = audioTrack(`Source ${offset}`);
+          track.clips = [
+            {
+              ...audioClip(asset.id, 'Slice', 1, 0),
+              offset,
+              sourceDuration: 30,
+              fadeIn: 0,
+              fadeOut: 0,
+            },
+          ];
+          return track;
+        });
+        const loader = { context, buffers: new Map() };
+        await ArrangementEngine.prototype.prepare.call(loader, project, true, {
+          start: 0,
+          end: 1,
+          budget: 512 * 1024,
+        });
+        if (loader.buffers.size !== 2) throw Error('Distant source windows were not kept separate');
+        const graph = scheduleArrangement(
+          context,
+          project,
+          loader.buffers,
+          0,
+          0,
+          context.rawContext.destination,
+          {
+            windowDuration: 1,
+            sourceKeys: loader.clipSourceKeys,
+            sourceOffsets: loader.bufferOffsets,
+          }
+        );
+        const rendered = (await context.render(false)).get();
+        let error = 0;
+        for (let frame = 0; frame < 48000; frame++) {
+          const expected =
+            full.buffer.getChannelData(0)[2 * 48000 + frame] +
+            full.buffer.getChannelData(0)[17 * 48000 + frame];
+          error = Math.max(error, Math.abs(rendered.getChannelData(0)[frame] - expected));
+        }
+        graph.nodes.forEach((node) => node.disconnect?.());
+        if (error > 0.0001) throw Error(`Arrangement source-window alignment mismatch ${error}`);
+        results.at(-1).arrangementError = error;
+      } finally {
+        context.dispose();
+        await deleteAudioAsset(asset.id);
+      }
+    }
+    window.qaResult = { pass: true, results, physicalHardwareMeasured: false };
+  } catch (error) {
+    window.qaResult = { pass: false, results, error: error.stack };
+  }
+  document.querySelector('#result').textContent = JSON.stringify(window.qaResult, null, 2);
+</script>

@@ -1,0 +1,8 @@
+StemDeck compressed-audio windowing uses Mediabunny 1.59.1.
+Project and source: https://github.com/Vanilagy/mediabunny
+License: Mozilla Public License 2.0 (MPL-2.0).
+Mediabunny source files are used unmodified; the release's npm package provides
+the corresponding source. License: https://www.mozilla.org/en-US/MPL/2.0/
+
+Codec availability depends on the browser/platform. No guarantee of support for
+every media container, codec, DRM-protected stream or damaged file is implied.

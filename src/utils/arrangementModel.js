@@ -893,6 +893,11 @@ export function validateArrangement(project) {
         !finite(event.time, 0, 86400) ||
         typeof event.type !== 'string' ||
         !Array.isArray(event.args) ||
+        (event.scheduledTime != null && !finite(event.scheduledTime, 0, 86401)) ||
+        (event.sampleRate != null && !finite(event.sampleRate, 8000, 384000)) ||
+        (event.frame != null && (!Number.isSafeInteger(event.frame) || event.frame < 0)) ||
+        (event.scheduledFrame != null &&
+          (!Number.isSafeInteger(event.scheduledFrame) || event.scheduledFrame < 0)) ||
         (event.disabled !== undefined && typeof event.disabled !== 'boolean')
       )
         fail();

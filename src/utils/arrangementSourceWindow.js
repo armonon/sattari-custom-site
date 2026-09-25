@@ -1,5 +1,34 @@
 // PCM WAV (including captured float WAV chunks) can be read by sample range.
-// Compressed formats still require the browser's whole-file decoder.
+// Other formats use packet/range decoding rather than a whole-file fallback.
+import { decodeCompressedWindow } from './compressedAudioWindow';
+
+export function sourceWindows(clips, window) {
+  const ranges = clips
+    .map((clip) => ({
+      start: clip.offset + Math.max(0, window.start - clip.start) * clip.rate,
+      end: clip.offset + Math.min(clip.duration, window.end - clip.start) * clip.rate,
+      clips: [clip.id],
+    }))
+    .filter((range) => range.end > range.start)
+    .sort((a, b) => a.start - b.start);
+  const groups = [];
+  for (const range of ranges) {
+    const previous = groups.at(-1);
+    if (previous && range.start <= previous.end + 0.01) {
+      previous.end = Math.max(previous.end, range.end);
+      previous.clips.push(...range.clips);
+    } else groups.push(range);
+  }
+  return groups;
+}
+
+export async function decodeSourceWindow(raw, blob, start, end, budget, options) {
+  if (options?.signal?.aborted) throw new Error('Source decoding cancelled.');
+  return (
+    (await decodeWaveWindow(raw, blob, start, end, budget)) ||
+    decodeCompressedWindow(raw, blob, start, end, budget, options)
+  );
+}
 export async function decodeWaveWindow(raw, blob, start, end, budget) {
   const header = new DataView(await blob.slice(0, 65536).arrayBuffer());
   const tag = (at) => String.fromCharCode(...new Uint8Array(header.buffer, at, 4));

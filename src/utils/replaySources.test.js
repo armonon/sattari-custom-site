@@ -2,6 +2,27 @@ import { expect, it, vi } from 'vitest';
 import { replayPlan } from './performancePlayer';
 import { ReplaySourceCache, replaySourceDependencies } from './replaySources';
 
+it('ordinary four-stem songs use source descriptors, not a larger whole-decode budget', async () => {
+  const raw = { sampleRate: 48000, decodeAudioData: vi.fn() };
+  const ids = ['vox', 'drm', 'bas', 'oth'];
+  const describe = vi.fn(async (blob) => ({
+    kind: 'windowed-audio',
+    blob,
+    duration: 180,
+    sampleRate: 48000,
+    channels: 2,
+  }));
+  const cache = new ReplaySourceCache(raw, async () => ({ blob: new Blob(['fixture']) }), {
+    windowedIds: new Set(ids),
+    describe,
+  });
+  await cache.prepare(ids);
+  expect(cache.buffers.size).toBe(4);
+  expect(cache.bytes).toBe(0);
+  expect(raw.decodeAudioData).not.toHaveBeenCalled();
+  expect(describe).toHaveBeenCalledTimes(4);
+});
+
 it('disabled source changes and disabled pad sources contribute no replay dependency', () => {
   const capture = {
     duration: 7200,

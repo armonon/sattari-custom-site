@@ -1,6 +1,6 @@
 import * as Tone from 'tone';
 import { getAudioAsset } from './audioProjectStore';
-import { decodeWaveWindow } from './arrangementSourceWindow';
+import { decodeSourceWindow, sourceWindows } from './arrangementSourceWindow';
 import { playbackWindow, needsStreaming } from './arrangementStreaming';
 import {
   arrangementDuration,
@@ -187,14 +187,15 @@ export function scheduleArrangement(
   // not leave an earlier clip playing after a failed transport start.
   for (const { clip, duration, offset } of schedule)
     if (clip.kind === 'audio') {
-      const buffer = buffers.get(clip.assetId);
+      const key = options.sourceKeys?.get(clip.id) || clip.assetId;
+      const buffer = buffers.get(key);
       if (!buffer) throw new Error(`Missing audio: ${clip.name}`);
       const windowDuration = Math.min(
         duration,
         (options.windowDuration ?? Infinity) - Math.max(0, clip.start - cursor)
       );
       if (
-        offset - (options.sourceOffsets?.get(clip.assetId) || 0) + windowDuration * clip.rate >
+        offset - (options.sourceOffsets?.get(key) || 0) + windowDuration * clip.rate >
         buffer.duration + 0.001
       )
         throw new Error(
@@ -323,13 +324,14 @@ export function scheduleArrangement(
       );
       nodes.push(gain, volume, fadeIn, fadeOut, filter, pan, gate);
       if (clip.kind === 'audio') {
-        const buffer = buffers.get(clip.assetId);
+        const key = options.sourceKeys?.get(clip.id) || clip.assetId;
+        const buffer = buffers.get(key);
         if (!buffer) throw new Error(`Missing audio: ${clip.name}`);
         const source = raw.createBufferSource();
         source.buffer = buffer;
         source.playbackRate.value = clip.rate;
         source.connect(gain);
-        source.start(when, Math.max(0, offset - (options.sourceOffsets?.get(clip.assetId) || 0)));
+        source.start(when, Math.max(0, offset - (options.sourceOffsets?.get(key) || 0)));
         source.stop(when + duration);
         nodes.push(source);
         sources.push(source);
@@ -468,20 +470,28 @@ export class ArrangementEngine {
   }
   async prepare(project, prune = true, window = null) {
     validateArrangement(project);
-    const ids = new Set(
-      project.tracks
-        .filter((track) => !track.offline)
-        .flatMap((track) =>
-          track.clips
-            .filter(
-              (clip) => !clip.disabled && (clip.kind === 'audio' || clip.instrument === 'sampler')
-            )
-            .map((clip) => clip.assetId)
-        )
-    );
+    const relevantClips = project.tracks
+      .filter((track) => !track.offline)
+      .flatMap((track) =>
+        track.clips
+          .filter(
+            (clip) => !clip.disabled && (clip.kind === 'audio' || clip.instrument === 'sampler')
+          )
+          .filter(
+            (clip) =>
+              !window || (clip.start < window.end && clip.start + clip.duration > window.start)
+          )
+      );
+    const ids = new Set(relevantClips.map((clip) => clip.assetId));
     if (prune) for (const id of [...this.buffers.keys()]) if (!ids.has(id)) this.buffers.delete(id);
     this.bufferOffsets ||= new Map();
     this.windowedBuffers ||= new Set();
+    this.clipSourceKeys = new Map();
+    if (window) {
+      this.buffers.clear();
+      this.bufferOffsets.clear();
+      this.windowedBuffers.clear();
+    }
     const budget = window?.budget ?? 384 * 1024 * 1024;
     const used = () =>
       [...this.buffers.values()].reduce(
@@ -496,31 +506,25 @@ export class ArrangementEngine {
           throw new Error(
             `Arrangement audio is missing (${id}). Reimport the original project with embedded audio.`
           );
-        const clips = project.tracks
-          .flatMap((track) => track.clips)
-          .filter((clip) => clip.assetId === id);
+        const clips = relevantClips.filter((clip) => clip.assetId === id);
         if (window && clips.every((clip) => clip.kind === 'audio')) {
-          const from = Math.min(
-            ...clips.map((clip) => clip.offset + Math.max(0, window.start - clip.start) * clip.rate)
-          );
-          const to = Math.max(
-            ...clips.map(
-              (clip) => clip.offset + Math.min(clip.duration, window.end - clip.start) * clip.rate
-            )
-          );
-          const decoded = await decodeWaveWindow(
-            this.context.rawContext,
-            asset.blob,
-            from,
-            to,
-            budget - used()
-          );
-          if (decoded) {
-            this.buffers.set(id, decoded.buffer);
-            this.bufferOffsets.set(id, decoded.offset);
-            this.windowedBuffers.add(id);
-            continue;
+          const ranges = sourceWindows(clips, window);
+          for (const [index, range] of ranges.entries()) {
+            const decoded = await decodeSourceWindow(
+              this.context.rawContext,
+              asset.blob,
+              range.start,
+              range.end,
+              budget - used(),
+              { signal: window.signal }
+            );
+            const key = ranges.length === 1 ? id : `${id}:window:${index}`;
+            this.buffers.set(key, decoded.buffer);
+            this.bufferOffsets.set(key, decoded.offset);
+            this.windowedBuffers.add(key);
+            for (const clipId of range.clips) this.clipSourceKeys.set(clipId, key);
           }
+          continue;
         }
         const estimated =
           Math.max(...clips.map((clip) => clip.sourceDuration || 0)) *
@@ -528,7 +532,7 @@ export class ArrangementEngine {
           8;
         if (used() + estimated > budget)
           throw new Error(
-            `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Split long compressed audio into shorter files, or use PCM WAV for windowed playback/export. Your project is unchanged.`
+            `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Use windowed arrangement playback/export or shorter sampler sources. Your project is unchanged.`
           );
         const buffer = await this.context.rawContext.decodeAudioData(
           await asset.blob.arrayBuffer()
@@ -559,6 +563,7 @@ export class ArrangementEngine {
       : this.cursor;
   }
   pause() {
+    this.streamDecodeController?.abort();
     for (const cleanup of this.auditions || []) cleanup();
     const position = this.position();
     this.generation++;
@@ -699,6 +704,8 @@ export class ArrangementEngine {
       ownsBuses: true,
     };
     this.streaming = true;
+    this.streamDecodeController = new AbortController();
+    const decodeSignal = this.streamDecodeController.signal;
     this.streamGraphs = [];
     this.streamFrom = this.cursor;
     this.startedAt = null;
@@ -715,6 +722,7 @@ export class ArrangementEngine {
         start: from,
         end,
         budget: 128 * 1024 * 1024,
+        signal: decodeSignal,
       });
       if (generation !== this.generation) return;
       const now = this.context.rawContext.currentTime;
@@ -742,6 +750,7 @@ export class ArrangementEngine {
           trackBuses: this.graph.buses,
           windowDuration: end - from,
           sourceOffsets: loader.bufferOffsets,
+          sourceKeys: loader.clipSourceKeys,
         }
       );
       part.startsAt = this.streamAt;
@@ -1273,6 +1282,7 @@ export class ArrangementEngine {
           masterStems: trackId ? undefined : settings.processing?.stems,
           windowDuration: duration,
           sourceOffsets: this.bufferOffsets,
+          sourceKeys: this.clipSourceKeys,
         }
       );
       graph = {

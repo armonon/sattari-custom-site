@@ -19,6 +19,8 @@ const browser = await chromium.launch({
   args: ['--mute-audio', '--autoplay-policy=no-user-gesture-required'],
 });
 const checks = [
+  ['compressed-window', null],
+  ['windowed-replay', null],
   ['input-audio', null],
   ['input-recording', null],
   ['sync-audio', '#run'],
