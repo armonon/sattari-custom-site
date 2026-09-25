@@ -1046,6 +1046,7 @@
 
 .sd-deck-meta button,
 .sd-deck-live-actions button,
+.sd-deck-live-actions select,
 .sd-deck-density button,
 .sd-deck-spectrum button {
   height: 18px;
@@ -1073,7 +1074,8 @@
   padding-bottom: 1px;
 }
 
-.sd-deck-live-actions button {
+.sd-deck-live-actions button,
+.sd-deck-live-actions select {
   min-width: 56px;
   padding: 0 10px;
 }

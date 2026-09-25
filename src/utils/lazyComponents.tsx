@@ -9,12 +9,29 @@ export const CartPage = lazy(() => import('@pages/CartPage'));
 export const CheckoutStatus = lazy(() => import('@pages/CheckoutStatus'));
 export const InstagramCallback = lazy(() => import('@pages/InstagramCallback'));
 export const ServicesPage = lazy(() => import('@components/ServicesPage'));
+export const StudioBookingStatus = lazy(() => import('@pages/StudioBookingStatus'));
 export const RepairPage = lazy(() => import('@components/RepairPage'));
 export const LocalSeoPage = lazy(() => import('@components/LocalSeoPage'));
 export const DownloadsPage = lazy(() => import('@pages/DownloadsPage'));
 export const SattariLearnPage = lazy(() => import('@pages/SattariLearnPage'));
 export const SattariStudioPage = lazy(() => import('@pages/SattariStudioPage'));
 export const SattariHubPage = lazy(() => import('@pages/SattariHubPage'));
+export const StemSeparatorPage = lazy(() => import('@pages/StemSeparatorPage'));
+export const GuideIndex = lazy(() =>
+  import('@pages/MusicResources').then((module) => ({ default: module.GuideIndex }))
+);
+export const GuideArticle = lazy(() =>
+  import('@pages/MusicResources').then((module) => ({ default: module.GuideArticle }))
+);
+export const ToolDetailsPage = lazy(() =>
+  import('@pages/MusicResources').then((module) => ({ default: module.ToolDetailsPage }))
+);
+export const VisitPage = lazy(() =>
+  import('@pages/MusicResources').then((module) => ({ default: module.VisitPage }))
+);
+export const PrivacyPage = lazy(() =>
+  import('@pages/MusicResources').then((module) => ({ default: module.PrivacyPage }))
+);
 
 // Fallback loading component
 export const PageLoader = () => (

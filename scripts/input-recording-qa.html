@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><title>Input durable recording qualification</title><pre id="result">Synthetic recording; no physical microphone used.</pre>
+<script type="module">
+import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+import { getAudioAsset } from '/src/utils/audioProjectStore.js';
+import { recoverSourceCaptures } from '/src/utils/sourceCapture.js';
+let engine;
+try {
+  engine = new StudioAudioEngine({monitor:false,recorder:false,metering:false});
+  await engine.unlock();
+  const ctx=engine.getAudioContext().rawContext;
+  // Inject only a local oscillator as the "device". No OS microphone permission.
+  const oscillator=ctx.createOscillator(), gain=ctx.createGain(), destination=ctx.createMediaStreamDestination();
+  gain.gain.value=.2; oscillator.connect(gain); gain.connect(destination); oscillator.start();
+  const input=engine.ensureLiveInput();
+  input.media={getUserMedia:async()=>destination.stream.clone()};
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  await engine.startRecording({longSession:true,sources:true});
+  await wait(200);engine.setInputSettings({armed:true}); await engine.openMicrophone();
+  await wait(350);engine.closeMicrophone();await wait(200);await engine.openMicrophone();
+  await wait(350);await engine.stopRecording();
+  const captured=engine.capturedSources();
+  if(captured.error)throw new Error(captured.error);
+  const dry=captured.tracks.find(t=>t.name.includes('armed dry'));
+  const wet=captured.tracks.find(t=>t.replayInput==='microphone');
+  const energy=async track=>{
+    let peak=0;
+    for(const clip of track.clips){const asset=await getAudioAsset(clip.assetId);const audio=await ctx.decodeAudioData(await asset.blob.arrayBuffer());for(const v of audio.getChannelData(0))peak=Math.max(peak,Math.abs(v));}
+    return peak;
+  };
+  const dryPeak=await energy(dry), wetPeak=await energy(wet);
+  const recovered=(await recoverSourceCaptures()).find(t=>t.id===captured.id);
+  window.qaResult={pass:dryPeak>.1&&wetPeak<1e-6&&!!recovered,dryPeak,monitorOffPeak:wetPeak,recovered:!!recovered,tracks:captured.tracks.length,physicalHardwareMeasured:false};
+  oscillator.stop();oscillator.disconnect();gain.disconnect();destination.stream.getTracks().forEach(t=>t.stop());
+}catch(e){window.qaResult={pass:false,error:e.stack};}
+finally{engine?.dispose();}
+document.getElementById('result').textContent=JSON.stringify(window.qaResult,null,2);
+</script>

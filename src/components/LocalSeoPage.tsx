@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import { SEO, StructuredData } from '../utils/seo';
+import { BUSINESS, businessSchema } from '../data/siteSeo';
 
 type PageKey =
   | 'music-store'
@@ -12,6 +13,7 @@ type PageKey =
   | 'music-lessons'
   | 'woodland-hills'
   | 'calabasas'
+  | 'encino'
   | 'repair-woodland-hills'
   | 'repair-calabasas'
   | 'drums'
@@ -22,14 +24,14 @@ interface LocalSeoPageProps {
   pageKey: PageKey;
 }
 
-const pages = {
+export const localSeoPages = {
   'music-store': {
     eyebrow: 'Los Angeles music store',
     title:
       'A local music store for instruments, accessories, repairs, rentals, classes, and studio space.',
     seoTitle: 'Los Angeles Music Store',
     description:
-      'Shop Sattari Music for instruments, accessories, instrument repair, rentals, rehearsal space, studio rental, teachers, and music classes in Los Angeles and the San Fernando Valley.',
+      'Find instruments, cymbals, guitars, violins and local music services at Sattari Music in Woodland Hills, serving Los Angeles and the San Fernando Valley.',
     url: 'https://sattarimusic.com/los-angeles-music-store',
     schemaType: 'MusicStore',
     schemaName: 'Sattari Music Store',
@@ -72,7 +74,7 @@ const pages = {
     title: 'Shop instruments through Sattari Music and ask about the gear you need next.',
     seoTitle: 'Instruments for Sale in Los Angeles',
     description:
-      'Shop instruments through Sattari Music in Los Angeles, including drums, percussion, guitars, violins, and musician gear availability by request.',
+      'Browse guitars, bass, violins, cymbals and percussion from Sattari Music in Woodland Hills. Shop online or ask about instrument availability in Los Angeles.',
     url: 'https://sattarimusic.com/shop/instruments-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Music Instruments',
@@ -115,7 +117,7 @@ const pages = {
     title: 'Accessories, essentials, and replacement gear for musicians who need to stay ready.',
     seoTitle: 'Music Accessories in Los Angeles',
     description:
-      'Shop music accessories, drum essentials, sticks, cymbal felts, practice pads, hardware support, and musician gear through Sattari Music in Los Angeles.',
+      'Find drumsticks, practice pads, cymbal felts and instrument accessories in Los Angeles. Shop Sattari online or contact our Woodland Hills music store.',
     url: 'https://sattarimusic.com/shop/accessories-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Music Accessories',
@@ -159,7 +161,7 @@ const pages = {
       'Rent instruments and musician gear for rehearsals, sessions, gigs, classes, and events.',
     seoTitle: 'Instrument Rentals in Los Angeles',
     description:
-      'Request instrument rentals, drum rentals, musician gear rentals, and local rental support through Sattari Music in Los Angeles and the San Fernando Valley.',
+      'Need instruments or drum gear for a gig, class or rehearsal? Request local rentals from Sattari Music in Woodland Hills. Availability confirmed before booking.',
     url: 'https://sattarimusic.com/services/instrument-rentals-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Instrument Rentals',
@@ -206,10 +208,10 @@ const pages = {
   },
   'rehearsal-space': {
     eyebrow: 'Rehearsal space in Los Angeles',
-    title: 'Book rehearsal space for bands, drummers, students, teachers, and creative sessions.',
+    title: 'Rehearsal space in Woodland Hills',
     seoTitle: 'Rehearsal Space in Los Angeles',
     description:
-      'Request rehearsal space through Sattari Music for bands, drummers, music students, teachers, classes, and creative sessions in Los Angeles and the San Fernando Valley.',
+      'Request rehearsal space in Woodland Hills: $25 per hour or $60 for four hours. Sattari reviews your time, then emails a payment link to finalize your booking.',
     url: 'https://sattarimusic.com/services/rehearsal-space-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Rehearsal Space',
@@ -235,7 +237,7 @@ const pages = {
       'Teachers and students needing a focused local space',
       'Musicians who also need gear, repairs, rentals, or setup help',
     ],
-    primaryCta: { label: 'Request rehearsal time', href: '#local-inquiry' },
+    primaryCta: { label: 'Book rehearsal time', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Ask about studio rental',
       to: '/services/recording-studio-rental-los-angeles',
@@ -249,7 +251,7 @@ const pages = {
       },
       {
         q: 'How do I book rehearsal time?',
-        a: 'Send a request with your timing and setup needs and we’ll confirm availability and the details before you lock it in.',
+        a: 'Choose a date, start time, and duration in the booking form. Sattari reviews your request and emails a payment link after approval. Payment finalizes your booking. The rate is $25 per hour or $60 for four hours.',
       },
       {
         q: 'Can I also get gear or studio time through the same request?',
@@ -259,10 +261,10 @@ const pages = {
   },
   'recording-studio': {
     eyebrow: 'Rental studio in Los Angeles',
-    title: 'Rental studio support for recording, content, lessons, rehearsals, and music projects.',
-    seoTitle: 'Rental Studio in Los Angeles',
+    title: 'Studio rental in Woodland Hills',
+    seoTitle: 'Recording Studio Rental in Los Angeles',
     description:
-      'Request rental studio time through Sattari Music for recording, rehearsal, lessons, content, classes, and musician projects in Los Angeles and the San Fernando Valley.',
+      'Request Sattari studio time in Woodland Hills for recording, content or teaching. $25 per hour or $60 for four hours, with staff approval before payment.',
     url: 'https://sattarimusic.com/services/recording-studio-rental-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Rental Studio',
@@ -281,7 +283,7 @@ const pages = {
       'Producers and musicians who need a local creative room',
       'Bands or solo players who need rehearsal and recording support together',
     ],
-    primaryCta: { label: 'Request studio time', href: '#local-inquiry' },
+    primaryCta: { label: 'Book studio time', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Ask about rehearsal space',
       to: '/services/rehearsal-space-los-angeles',
@@ -295,7 +297,7 @@ const pages = {
       },
       {
         q: 'How do I request studio time?',
-        a: 'Send a request describing your project and timing and we’ll respond with availability and setup details.',
+        a: 'Choose your date, time, and session length. After Sattari approves the request, you receive an email with a secure payment link. Your booking is finalized after payment. Studio time is $25 per hour or $60 for four hours.',
       },
       {
         q: 'Do you support teaching and content, not just recording?',
@@ -308,7 +310,7 @@ const pages = {
     title: 'Teachers, lessons, and music classes for players who want practical guidance.',
     seoTitle: 'Music Lessons & Classes in Los Angeles',
     description:
-      'Request music teachers, lessons, classes, drum lessons, instrument lessons, and local musician support through Sattari Music in Los Angeles and the San Fernando Valley.',
+      'Ask about music lessons and classes in Woodland Hills, serving Encino, Calabasas and Los Angeles. Match your instrument, experience and goals with local guidance.',
     url: 'https://sattarimusic.com/services/music-lessons-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Lessons and Classes',
@@ -352,7 +354,7 @@ const pages = {
       'Your neighborhood Woodland Hills music store for instruments, gear, repairs, and lessons.',
     seoTitle: 'Woodland Hills Music Store',
     description:
-      'Sattari Music is a Woodland Hills music store for instruments, drum gear, violins, guitars, accessories, repairs, rentals, lessons, and studio time — serving Woodland Hills and the West San Fernando Valley.',
+      'Visit Sattari Music at 4881 Topanga Canyon Blvd in Woodland Hills for instruments, cymbals, guitars, violins, repairs, rentals and music lessons.',
     url: 'https://sattarimusic.com/woodland-hills-music-store',
     schemaType: 'MusicStore',
     schemaName: 'Sattari Music — Woodland Hills',
@@ -394,9 +396,9 @@ const pages = {
     eyebrow: 'Calabasas music store',
     title:
       'A local music store minutes from Calabasas for instruments, repairs, rentals, and lessons.',
-    seoTitle: 'Calabasas Music Store',
+    seoTitle: 'Music Store near Calabasas',
     description:
-      'Looking for a music store near Calabasas? Sattari Music offers instruments, drum gear, violins, guitars, accessories, repairs, rentals, lessons, and studio time just minutes away in Woodland Hills.',
+      'Looking for a music store near Calabasas? Shop instruments, cymbals, guitars and violins at Sattari Music in Woodland Hills, with repairs and lesson inquiries.',
     url: 'https://sattarimusic.com/calabasas-music-store',
     schemaType: 'MusicStore',
     schemaName: 'Sattari Music — near Calabasas',
@@ -434,12 +436,55 @@ const pages = {
       },
     ],
   },
+  encino: {
+    eyebrow: 'Music store serving Encino',
+    title: 'Instruments and music services for Encino musicians',
+    seoTitle: 'Music Store near Encino | Instruments & Repairs',
+    description:
+      'Looking for a music store near Encino? Visit Sattari Music in Woodland Hills for instruments, cymbals, guitars, violins, repair support and lesson inquiries.',
+    url: 'https://sattarimusic.com/encino-music-store',
+    schemaType: 'MusicStore',
+    schemaName: 'Sattari Music',
+    intro:
+      'Shopping for a first instrument, replacing sticks before a rehearsal, or sorting out a guitar buzz? Encino musicians can browse Sattari online and contact our Woodland Hills shop about the instrument, repair or lesson they need. We are at 4881 Topanga Canyon Blvd #202, not an Encino storefront.',
+    highlights: ['Cymbals', 'Guitars & bass', 'Violins', 'Repairs', 'Lessons', 'Rentals'],
+    offerings: [
+      'Compare acoustic, electric and silent violins, guitars and bass in the online catalog',
+      'Choose handcrafted cymbals, drumsticks and practice accessories for your setup',
+      'Send repair symptoms and instrument details before bringing gear from Encino',
+      'Ask about lesson, rehearsal and rental availability before making plans',
+    ],
+    goodFor: [
+      'Encino students and parents comparing starter instruments and lesson options',
+      'Players planning a guitar, violin, drum or hardware repair visit',
+      'Drummers building a practice setup or replacing cymbals and sticks',
+      'Musicians who want to confirm gear availability with a person before traveling',
+    ],
+    primaryCta: { label: 'Browse instruments', to: '/shop' },
+    secondaryCta: { label: 'Ask before visiting', href: '#local-inquiry' },
+    formService: 'instrument-sales',
+    formSource: 'Encino music store page',
+    faqs: [
+      {
+        q: 'Is Sattari Music located in Encino?',
+        a: 'Our shop is in Woodland Hills at 4881 Topanga Canyon Blvd #202, CA 91364. We serve Encino musicians from that location and through our online catalog.',
+      },
+      {
+        q: 'What should I send before a repair visit from Encino?',
+        a: 'Include the instrument, model if known, what is wrong, and when you need it. We will reply about the next step, what to bring, and whether photos would help.',
+      },
+      {
+        q: 'Can I check an instrument or lesson is available before visiting?',
+        a: 'Yes. Call (424) 465-3020 or use the inquiry form with the instrument or lesson you need. Confirm availability and visit arrangements with us before traveling.',
+      },
+    ],
+  },
   'repair-woodland-hills': {
     eyebrow: 'Instrument repair in Woodland Hills',
     title: 'Instrument repair in Woodland Hills for drums, strings, guitars, and more.',
     seoTitle: 'Instrument Repair in Woodland Hills',
     description:
-      'Local instrument repair in Woodland Hills: drum and percussion repair, guitar and violin setup, hardware fixes, tuning, and troubleshooting from Sattari Music in the San Fernando Valley.',
+      'Request guitar and violin setup, drum repair, tuning and hardware troubleshooting at Sattari Music in Woodland Hills. Tell us what needs attention.',
     url: 'https://sattarimusic.com/services/instrument-repair-woodland-hills',
     schemaType: 'Service',
     schemaName: 'Sattari Music Instrument Repair — Woodland Hills',
@@ -489,7 +534,7 @@ const pages = {
     title: 'Instrument repair near Calabasas for drums, guitars, violins, and gear.',
     seoTitle: 'Instrument Repair near Calabasas',
     description:
-      'Instrument repair near Calabasas: drum and percussion repair, guitar and violin setup, hardware fixes, and tuning from Sattari Music, minutes away in Woodland Hills.',
+      'Need instrument repair near Calabasas? Ask Sattari Music in Woodland Hills about guitars, violins, drums, hardware and tuning before bringing in your gear.',
     url: 'https://sattarimusic.com/services/instrument-repair-calabasas',
     schemaType: 'Service',
     schemaName: 'Sattari Music Instrument Repair — near Calabasas',
@@ -539,7 +584,7 @@ const pages = {
     title: 'Drum gear for sale — handcrafted cymbals, sticks, and essentials for LA drummers.',
     seoTitle: 'Drums & Drum Gear in Los Angeles',
     description:
-      'Shop drum gear from Sattari Music: handcrafted cymbals, hi-hats, splashes, drumsticks, practice pads, felts, and drum essentials for drummers in Los Angeles and the San Fernando Valley.',
+      'Handcrafted cymbals, hi-hats, splashes, drumsticks and practice pads for Los Angeles drummers. Shop Sattari Music online or ask our Woodland Hills team.',
     url: 'https://sattarimusic.com/shop/drums-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Drum Gear',
@@ -582,7 +627,7 @@ const pages = {
     title: 'Handcrafted violins for sale — acoustic, electric, and silent, fitted in California.',
     seoTitle: 'Violins for Sale in Los Angeles',
     description:
-      'Shop handcrafted SATTARI violins in Los Angeles: acoustic, electric, and silent violins, individually fitted and tuned in California, with local setup, repair, and lesson support.',
+      'Compare acoustic, electric and silent Sattari violins, fitted and tuned in California. Shop online with violin setup and repair support in Woodland Hills.',
     url: 'https://sattarimusic.com/shop/violins-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Violins',
@@ -632,7 +677,7 @@ const pages = {
     title: 'Guitars and bass for sale — set up and ready, shipped from California.',
     seoTitle: 'Guitars & Bass in Los Angeles',
     description:
-      'Shop electric and acoustic guitars and bass from Sattari Music in Los Angeles, set up and ready to play, with local accessories, setup, and repair support.',
+      'Find electric guitars, acoustic guitars and bass at Sattari Music in Woodland Hills. Shop online or ask about setup, strings and repair support in Los Angeles.',
     url: 'https://sattarimusic.com/shop/guitars-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Guitars & Bass',
@@ -671,6 +716,8 @@ const pages = {
     ],
   },
 } as const;
+
+const pages = localSeoPages;
 
 const ORIGIN = 'https://sattarimusic.com';
 const SHOP_NAP =
@@ -721,6 +768,7 @@ function CtaLink({
 export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
   const page = pages[pageKey];
   const breadcrumbs = getBreadcrumbs(pageKey);
+  const isSpace = pageKey === 'rehearsal-space' || pageKey === 'recording-studio';
 
   return (
     <section className="section page-header-offset services-shell local-seo-shell">
@@ -728,16 +776,13 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
       <StructuredData
         data={{
           '@context': 'https://schema.org',
-          '@type': page.schemaType,
+          '@type': page.schemaType === 'Service' ? 'Service' : 'WebPage',
           name: page.schemaName,
           description: page.description,
           url: page.url,
-          areaServed: ['Los Angeles', 'San Fernando Valley', 'Woodland Hills', 'California'],
-          provider: {
-            '@type': 'Organization',
-            name: 'Sattari Music',
-            url: 'https://sattarimusic.com',
-          },
+          ...(page.schemaType === 'Service'
+            ? { areaServed: BUSINESS.areas, provider: { '@id': businessSchema['@id'] } }
+            : { about: { '@id': businessSchema['@id'] } }),
         }}
       />
       <StructuredData
@@ -809,6 +854,20 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         </div>
       </div>
 
+      {isSpace && (
+        <div className="container service-form-shell" id="local-inquiry">
+          <div className="service-form-copy section-header narrow">
+            <p className="eyebrow">Studio &amp; rehearsal bookings</p>
+            <h2>Your next session starts here.</h2>
+            <p>
+              $25 per hour or $60 for four hours. Send your preferred time; we will review it before
+              you pay.
+            </p>
+          </div>
+          <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
+        </div>
+      )}
+
       <div className="container repair-grid">
         <article className="info-card repair-info-card">
           <p className="card-kicker">What Sattari offers</p>
@@ -846,17 +905,19 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         </div>
       </div>
 
-      <div className="container service-form-shell" id="local-inquiry">
-        <div className="service-form-copy section-header narrow">
-          <p className="eyebrow">Start the conversation</p>
-          <h2>Tell us what you need and we’ll help you find the right next step.</h2>
-          <p>
-            Share the instrument, accessory, class, rental, studio, rehearsal, or repair request and
-            any timing details that matter.
-          </p>
+      {!isSpace && (
+        <div className="container service-form-shell" id="local-inquiry">
+          <div className="service-form-copy section-header narrow">
+            <p className="eyebrow">Start the conversation</p>
+            <h2>Tell us what you need and we’ll help you find the right next step.</h2>
+            <p>
+              Share the instrument, accessory, class, rental, studio, rehearsal, or repair request
+              and any timing details that matter.
+            </p>
+          </div>
+          <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
         </div>
-        <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
-      </div>
+      )}
 
       <div className="container local-seo-crosslinks">
         <div className="section-header narrow">

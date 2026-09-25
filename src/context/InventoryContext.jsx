@@ -13,10 +13,10 @@ const InventoryContext = createContext(null);
 
 const INVENTORY_ENDPOINT = import.meta.env.VITE_INVENTORY_URL || '/api/inventory';
 
-export function InventoryProvider({ children }) {
-  const [stock, setStock] = useState({});
-  const [catalogDoc, setCatalogDoc] = useState(EMPTY_CATALOG_DOC);
-  const [status, setStatus] = useState('loading');
+export function InventoryProvider({ children, initialInventory = null }) {
+  const [stock, setStock] = useState(() => sanitizeStockMap(initialInventory?.stock));
+  const [catalogDoc, setCatalogDoc] = useState(initialInventory?.catalog || EMPTY_CATALOG_DOC);
+  const [status, setStatus] = useState(initialInventory ? 'ready' : 'loading');
 
   const refresh = useCallback(async (signal) => {
     try {

@@ -5,12 +5,14 @@ import {
   AudioWaveform,
   BookOpen,
   CircleDot,
+  Split,
   Radio,
   RadioTower,
   Store,
   Users,
 } from 'lucide-react';
 import { SEO } from '../utils/seo';
+import { PAGE_SEO } from '../data/siteSeo';
 
 const upcomingProjects = [
   {
@@ -33,12 +35,7 @@ const upcomingProjects = [
 export default function SattariHubPage() {
   return (
     <>
-      <SEO
-        title="Sattari Hub - Music Tools and Creative Projects"
-        description="Enter Sattari Hub for Learn, Studio, and the growing family of Sattari music tools, radio, profiles, and community projects."
-        image="/sattari site/audio-suite/create.png"
-        url="https://sattarimusic.com/hub"
-      />
+      <SEO {...PAGE_SEO.hub} />
       <section className="hub-page">
         <header className="hub-masthead">
           <div className="hub-masthead-brand">
@@ -52,7 +49,7 @@ export default function SattariHubPage() {
           </div>
           <div className="hub-masthead-status">
             <i />
-            Two projects live
+            Three projects live
           </div>
           <Link to="/" className="hub-store-return">
             <ArrowLeft size={15} />
@@ -80,8 +77,8 @@ export default function SattariHubPage() {
             <Link to="/learn" className="hub-product hub-product-learn">
               <div className="hub-product-media">
                 <img
-                  src="/sattari site/audio-suite/brain.png"
-                  alt="Sattari music analysis interface"
+                  src="/images/tools/learn.jpg"
+                  alt="Sattari Learn running in a browser"
                   loading="eager"
                 />
                 <span className="hub-live-label">
@@ -113,8 +110,8 @@ export default function SattariHubPage() {
             <Link to="/studio" className="hub-product hub-product-studio">
               <div className="hub-product-media">
                 <img
-                  src="/sattari site/audio-suite/create.png"
-                  alt="Sattari creative effects interface"
+                  src="/images/tools/studio.jpg"
+                  alt="Sattari Studio browser workspace"
                   loading="eager"
                 />
                 <span className="hub-live-label">
@@ -144,6 +141,23 @@ export default function SattariHubPage() {
             </Link>
           </div>
 
+          <Link to="/stem-separator" className="hub-separator-link">
+            <Split size={24} />
+            <div>
+              <p>Separate and export</p>
+              <h2>Stem Separator</h2>
+              <span>Vocals, drums, bass, and instruments. One track or a whole batch.</span>
+            </div>
+            <ArrowUpRight size={22} aria-hidden="true" />
+          </Link>
+
+          <nav className="tool-reference-link" aria-label="Music resources">
+            <Link to="/guides">Music guides</Link>
+            <Link to="/tools/stem-separator">Stem Separator details</Link>
+            <Link to="/tools/learn">Learn details</Link>
+            <Link to="/tools/studio">Studio details</Link>
+            <Link to="/privacy">Privacy choices</Link>
+          </nav>
           <section className="hub-coming-section">
             <div className="hub-section-heading">
               <div>
@@ -155,7 +169,7 @@ export default function SattariHubPage() {
             <div className="hub-coming-grid">
               {upcomingProjects.map(({ title, description, icon: Icon }, index) => (
                 <article key={title}>
-                  <span className="hub-coming-number">0{index + 3}</span>
+                  <span className="hub-coming-number">0{index + 4}</span>
                   <Icon size={20} />
                   <div>
                     <h3>{title}</h3>

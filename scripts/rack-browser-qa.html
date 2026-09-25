@@ -1,0 +1,204 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Arrangement rack audio tests</title>
+<style>body{background:#151922;color:#dfeaff;font:16px system-ui;padding:32px}button{padding:16px}pre{white-space:pre-wrap}</style>
+<h1>Arrangement rack verification</h1><p>Generated audio only. No speaker output or changes to your project.</p>
+<button id="run">Run rack checks</button><pre role="status" id="result">Ready</pre>
+<script>window.addEventListener('error',e=>{document.querySelector('#result').textContent='Initialization error: '+e.message});window.addEventListener('unhandledrejection',e=>{document.querySelector('#result').textContent+='\nUnhandled: '+(e.reason?.stack||e.reason)});</script>
+<script type="module">
+import * as Tone from 'tone';
+import {createEffectRack,createMutableEffectRack,EFFECTS,newEffect,rackTail} from '/src/utils/arrangementEffects.js';
+import {ArrangementEngine,scheduleArrangement} from '/src/utils/arrangementEngine.js';
+import {emptyArrangement,audioTrack,audioClip,arrangementDuration,compRegion,validateArrangement,resizeClip} from '/src/utils/arrangementModel.js';
+import {wavBytes} from '/src/utils/arrangementExport.js';
+import {putAudioAsset,deleteAudioAsset} from '/src/utils/audioProjectStore.js';
+import {clearExportFile} from '/src/utils/arrangementStreamExport.js';
+import {ReplayInput} from '/src/utils/replayInput.js';
+document.querySelector('#run').onclick=async(event)=>{
+ event.target.disabled=true; const result=document.querySelector('#result'); result.textContent=''; let passed=0,failed=0;
+ const assert=(yes,message)=>{if(!yes)throw Error(message)};
+ const test=async(name,fn)=>{try{await fn();passed++;result.textContent+=`PASS ${name}\n`}catch(error){failed++;result.textContent+=`FAIL ${name}: ${error.message}\n`}};
+ const inputState={status:'connected',monitor:true,gainDb:0,lowLatency:true,highpass:80,compression:false};
+ const renderInput=async(events,signal=()=>.2)=>{
+   const raw=new OfflineAudioContext(2,48000,48000),sink=raw.createGain(),input=new ReplayInput(raw,sink);
+   sink.connect(raw.destination);
+   const buffer=raw.createBuffer(2,48000,48000);for(let c=0;c<2;c++)for(let i=0;i<48000;i++)buffer.getChannelData(c)[i]=signal(i/48000);
+   const source=raw.createBufferSource();source.buffer=buffer;source.connect(input.input);source.start(0);
+   for(const [when,state] of events)input.schedule({...inputState,...state},when);
+   try{const audio=await raw.startRendering();const pcm=audio.getChannelData(0);assert(pcm.every(Number.isFinite),'nonfinite input PCM');return pcm;}finally{input.dispose();source.disconnect();sink.disconnect();}
+ };
+ const rms=(pcm,start=.1,end=.24)=>Math.sqrt(pcm.slice(start*48000,end*48000).reduce((sum,v)=>sum+v*v,0)/((end-start)*48000));
+ await test('replay input monitor-off is exact silence in every processing branch',async()=>{
+   for(const state of [{lowLatency:true},{lowLatency:false},{lowLatency:false,compression:true}]){
+     const pcm=await renderInput([[0,{...state,monitor:false}]]);
+     assert(pcm.every(v=>v===0),'monitor-off leaked input audio');
+   }
+ });
+ await test('replay input future gain edits retain sample-clock onset and earlier automation',async()=>{
+   const pcm=await renderInput([[0,{}],[.25,{gainDb:-6}],[.5,{gainDb:-12}],[.75,{gainDb:0}]]);
+   const targets=[1,10**(-6/20),10**(-12/20),1];
+   for(let segment=1;segment<4;segment++){
+     const frame=segment*12000,from=targets[segment-1],to=targets[segment];
+     assert(Math.abs(pcm[frame-1]-.2*from)<2e-6,`gain changed before scheduled sample ${frame}`);
+     for(const delta of [0,1,16,240,2400]){
+       const expected=.2*(to+(from-to)*Math.exp(-delta/240));
+       // Browsers may snap setTarget tails to the target once sufficiently close.
+       assert(Math.abs(pcm[frame+delta]-expected)<(delta===2400?1e-5:2e-6),`gain onset/envelope mismatch at ${frame+delta}: actual ${pcm[frame+delta]}, expected ${expected}`);
+     }
+   }
+ });
+ await test('replay input chooses direct, highpass and compression branches on the audio clock',async()=>{
+   const low=await renderInput([[0,{}],[.25,{lowLatency:false,highpass:300}],[.5,{}]],t=>.4*Math.sin(2*Math.PI*40*t));
+   assert(rms(low,.35,.45)<rms(low,.1,.2)*.05,'highpass branch did not attenuate bass');
+   assert(Math.abs(rms(low,.65,.75)-rms(low,.1,.2))<1e-5,'direct branch did not return');
+   const high=await renderInput([[0,{lowLatency:false,highpass:20}],[.25,{lowLatency:false,highpass:20,compression:true}],[.5,{lowLatency:false,highpass:20}]],t=>.8*Math.sin(2*Math.PI*1000*t));
+   // Native compression includes automatic makeup gain; require measurable DSP,
+   // not a made-up attenuation ratio that assumes a compressor without makeup.
+   assert(rms(high,.35,.45)<rms(high,.1,.2)*.99,`compression branch did not reduce loud input: ${rms(high,.35,.45)} vs ${rms(high,.1,.2)}`);
+   assert(Math.abs(rms(high,.65,.75)-rms(high,.1,.2))<1e-5,'uncompressed branch did not return');
+ });
+ await test('replay input interruption and disconnect gates are exact and scheduled recovery survives',async()=>{
+   const pcm=await renderInput([[0,{}],[.25,{status:'interrupted'}],[.5,{}],[.75,{status:'disconnected'}]]);
+   assert(pcm[11999]>.19,'future interruption erased earlier monitor automation');
+   assert(pcm.slice(12000,24000).every(v=>v===0),'interruption gate leaked audio');
+   assert(pcm[24000]===0&&pcm[24001]>0,'recovery gate did not start at the scheduled sample');
+   assert(pcm[35999]>.19,'future disconnect erased recovery automation');
+   assert(pcm.slice(36000).every(v=>v===0),'disconnect gate leaked audio');
+ });
+ const render=async(effect)=>{
+   const raw=new OfflineAudioContext(2,48000*3,48000),rack=createEffectRack(raw,[effect]);rack.output.connect(raw.destination);
+   const buffer=raw.createBuffer(2,24000,48000);for(let c=0;c<2;c++){const pcm=buffer.getChannelData(c);for(let i=0;i<pcm.length;i++)pcm[i]=.2*Math.sin(i/48000*2*Math.PI*100)*(c?-1:1)}
+   const source=raw.createBufferSource(); source.buffer=buffer;source.connect(rack.input);source.start(0);
+   const pcm=await raw.startRendering();rack.dispose();return pcm;
+ };
+ for(const type of Object.keys(EFFECTS))await test(`${type}: audible DSP, bypass and finite samples`,async()=>{
+   const fx=newEffect(type);if(type==='eq')fx.params.low=12;if(type==='comp')fx.params.threshold=-40;if(type==='imager')fx.params.width=0;
+   const wet=await render(fx),dry=await render({...fx,bypass:true});let diff=0;
+   for(let i=0;i<wet.length;i++){const value=wet.getChannelData(0)[i];assert(Number.isFinite(value),'nonfinite audio');diff=Math.max(diff,Math.abs(value-dry.getChannelData(0)[i]));}
+   assert(diff>.005,`device had no audible effect (${diff})`);
+   assert(Math.abs(dry.getChannelData(0)[120]-.2)<.002,'bypass differs from dry signal');
+ });
+ await Tone.start();const ctx=Tone.getContext(),sink=ctx.rawContext.createGain(),engine=new ArrangementEngine(ctx,sink);let asset;
+ try{
+   const source=ctx.rawContext.createBuffer(2,34*48000,48000);for(let c=0;c<2;c++){const pcm=source.getChannelData(c);for(let i=0;i<pcm.length;i++)pcm[i]=.08*Math.sin(i/48000*2*Math.PI*220);}
+   asset=await putAudioAsset(new Blob([wavBytes(source)],{type:'audio/wav'}),{name:'rack-verification-tone'});
+   const track=audioTrack('Rack test');track.clips=[audioClip(asset.id,'Tone',34)];track.effects=[newEffect('eq'),newEffect('echo'),newEffect('space'),newEffect('comp')];track.effects[0].params.low=6;
+   const project={...emptyArrangement(),tracks:[track]};
+   await test('tail-only range is sample-exact and matches the corresponding full render',async()=>{
+     const data=structuredClone(project); data.tracks[0].clips[0].duration=.5;data.tracks[0].effects=[newEffect('echo')];
+     const settings={limiter:false},whole=await engine.render(data,settings),file=await engine.export(data,settings,false,()=>{},()=>false,{start:.6,end:1.1});
+     try{const bytes=await file.arrayBuffer(),header=new DataView(bytes);assert(header.getUint32(40,true)===24000*6,`range WAV data size ${header.getUint32(40,true)}`);const decoder=new OfflineAudioContext(2,24000,48000),part=await decoder.decodeAudioData(bytes);assert(part.length===24000,`range ${part.length} frames at ${part.sampleRate} Hz`);let error=0,peak=0;
+       for(let i=0;i<part.length;i++){error=Math.max(error,Math.abs(part.getChannelData(0)[i]-whole.getChannelData(0)[28800+i]));peak=Math.max(peak,Math.abs(part.getChannelData(0)[i]));}
+       assert(error<1e-5,`range history difference ${error}`);assert(peak>.001,'tail-only range is silent');
+     }finally{await clearExportFile(file)}
+   });
+   await test('comp preserves processed audio and stem assignment after project reopen',async()=>{
+     const data=structuredClone(project);data.tracks[0].clips[0].duration=1;data.tracks[0].gain=140;data.tracks[0].stemRole='vocals';
+     const before=await engine.render(data,{},track.id),comped=JSON.parse(JSON.stringify(compRegion(data,track.id,0,1)));
+     validateArrangement(comped);const comp=comped.tracks.find(t=>t.compLane),after=await engine.render(comped,{},comp.id);let error=0;
+     for(let i=0;i<before.length;i++)error=Math.max(error,Math.abs(before.getChannelData(0)[i]-after.getChannelData(0)[i]));
+     assert(error<1e-5,`comp changed processed sound ${error}`);assert(comp.stemRole==='vocals','stem routing lost');
+   });
+   await test('track/device automation survives seeked export and WAV source windowing',async()=>{
+     const data=structuredClone(project),row=data.tracks[0],fx=row.effects[0];
+     row.automation={volume:[{time:0,value:20},{time:34,value:110}],pan:[{time:0,value:-.8},{time:34,value:.8}],
+       [`fx:${fx.id}:low`]:[{time:0,value:-12},{time:34,value:12}]};
+     const whole=await engine.render(data,{},row.id),part=await engine.renderSection(data,{},row.id,30*48000,4*48000);let error=0;
+     for(let c=0;c<2;c++)for(let i=0;i<part[c].length;i++)error=Math.max(error,Math.abs(part[c][i]-whole.getChannelData(c)[30*48000+i]));
+     assert(error<.001,`automated window difference ${error}`);
+     assert(engine.buffers.get(asset.id).duration<34,'WAV source still decoded whole');
+   });
+   await test('dense session edits, reopens, relinks and renders under bounded source memory',async()=>{
+     const data={...emptyArrangement(),tracks:Array.from({length:24},(_,t)=>({...audioTrack(`Load ${t}`),gain:3,
+       clips:Array.from({length:40},(_,i)=>({...audioClip(asset.id,`Region ${i}`, .1,i*.1),offset:i*.1,sourceDuration:34}))}))};
+     data.tracks[0].clips[0]=resizeClip(data.tracks[0].clips[0],.05);
+     const reopened=JSON.parse(JSON.stringify(data));validateArrangement(reopened);
+     const missing=structuredClone(reopened);missing.tracks[0].clips[0].assetId='qa-missing-source';
+     let rejected=false;try{await engine.renderSection(missing,{limiter:false},null,0,24000)}catch(e){rejected=/missing/.test(e.message)}
+     assert(rejected,'missing source was not reported');
+     missing.tracks[0].clips[0].assetId=asset.id;
+     const audio=await engine.renderSection(missing,{limiter:false},null,0,4*48000);
+     assert(audio[0].some(v=>Math.abs(v)>.005),'relinked mix silent');assert(audio[0].every(Number.isFinite),'invalid dense-session PCM');
+     assert([...engine.buffers.values()].reduce((n,b)=>n+b.length*b.numberOfChannels*4,0)<4*1024*1024,'source budget grew with clip count');
+   });
+   await test('arrangement playback and live sources share one master insert bus',async()=>{
+     const offline=new Tone.OfflineContext(2,1,48000),raw=offline.rawContext,eq=newEffect('eq');eq.params.low=-18;
+     const rack=createEffectRack(raw,[eq]);rack.output.connect(raw.destination);
+     const shared={input:rack.input},player=new ArrangementEngine(offline,raw.destination,shared);
+     const bus=player.playbackMaster({level:100});assert(bus.input===rack.input,'arranger built a second master chain');assert(!bus.nodes.includes(rack.input),'arranger would dispose shared master');
+     const buffer=raw.createBuffer(2,24000,48000);for(let c=0;c<2;c++)for(let i=0;i<buffer.length;i++)buffer.getChannelData(c)[i]=.05*Math.sin(2*Math.PI*100*i/48000);
+     for(const input of [rack.input,bus.input]){const node=raw.createBufferSource();node.buffer=buffer;node.connect(input);node.start(0)}
+     const audio=(await offline.render(false)).get();const peak=Math.max(...audio.getChannelData(0).slice(10000,10500).map(Math.abs));assert(peak>.001&&peak<.05,'shared master did not process the summed sources');
+     for(const node of bus.nodes)node.dispose();player.dispose();rack.dispose();offline.dispose();
+   });
+   await test('master inserts process mixdowns but not pre-master stem exports',async()=>{
+     const clean=structuredClone(project);clean.tracks[0].effects=[];clean.tracks[0].clips[0].duration=.5;
+     const fx=newEffect('eq');fx.params.low=-18;
+     const settings={limiter:false,processing:{effects:[fx]}};
+     const wet=await engine.render(clean,settings),dry=await engine.render(clean,{limiter:false});
+     let difference=0;for(let i=1000;i<20000;i++)difference=Math.max(difference,Math.abs(wet.getChannelData(0)[i]-dry.getChannelData(0)[i]));
+     assert(difference>.01,'master effect omitted from mixdown');
+     const a=await engine.render(clean,settings,track.id),b=await engine.render(clean,{},track.id);
+     assert(a.getChannelData(0).every((value,i)=>Math.abs(value-b.getChannelData(0)[i])<1e-6),'pre-master stem was processed by master');
+   });
+   await test('master delay tails survive encoded mixdown',async()=>{
+     const clean=structuredClone(project);clean.tracks[0].effects=[];clean.tracks[0].clips[0].duration=.5;
+     const effects=[newEffect('echo')];const file=await engine.export(clean,{limiter:false,processing:{effects}});
+     try{const audio=await ctx.rawContext.decodeAudioData(await file.arrayBuffer());assert(Math.abs(audio.duration-(.6+rackTail(effects)))<.001,'master tail duration missing');assert(audio.getChannelData(0).slice(25000,48000).some(value=>Math.abs(value)>.001),'master echo tail missing');}finally{await clearExportFile(file)}
+   });
+   await test('master effects remain continuous across export section joins',async()=>{
+     const clean=structuredClone(project);clean.tracks[0].effects=[];
+     const settings={processing:{effects:[newEffect('echo'),newEffect('space')]}};
+     const whole=await engine.render(clean,settings),part=await engine.renderSection(clean,settings,null,30*48000,4*48000);
+     let error=0;for(let c=0;c<2;c++)for(let i=0;i<part[c].length;i++)error=Math.max(error,Math.abs(part[c][i]-whole.getChannelData(c)[30*48000+i]));
+     assert(error<.001,`master section difference ${error}`);
+   });
+   await test('master rack topology can change without restarting the source',async()=>{
+     const raw=new OfflineAudioContext(2,48000,48000),rack=createMutableEffectRack(raw),osc=raw.createOscillator();
+     osc.frequency.value=100;osc.connect(rack.input);rack.output.connect(raw.destination);osc.start(0);
+     const eq=newEffect('eq');eq.params.low=-18;rack.update([eq]);
+     const buffer=await raw.startRendering();rack.dispose();
+     assert(buffer.getChannelData(0).every(Number.isFinite),'nonfinite topology swap');
+     const peak=Math.max(...buffer.getChannelData(0).slice(24000,24500).map(Math.abs));assert(peak>.01&&peak<.5,'replacement rack not active');
+   });
+   await test('rapid live track insert swaps preserve sample continuity and gain automation',async()=>{
+     const raw=new OfflineAudioContext(2,48000,48000),buffer=raw.createBuffer(2,48000,48000);
+     for(let c=0;c<2;c++)buffer.getChannelData(c).fill(.1);
+     const row=audioTrack('Continuous tone');row.clips=[audioClip('constant','Constant',1)];
+     row.automation={volume:[{time:0,value:100},{time:1,value:50}]};
+     const data={...emptyArrangement(),tracks:[row]},owner=new ArrangementEngine({rawContext:raw},raw.destination);
+     owner.graph=scheduleArrangement({rawContext:raw},data,new Map([['constant',buffer]]),0,0,raw.destination,{liveMix:true});
+     Object.assign(owner,{playing:true,startedAt:0,cursor:0,end:1});
+     const bus=owner.graph.buses.get(row.id),mix=bus.output;
+     const first=raw.suspend(.1),second=raw.suspend(.1125),rendering=raw.startRendering();
+     try{
+       await first;row.effects=[newEffect('eq'),newEffect('eq')];owner.updateMix(data);await raw.resume();
+       await second;row.effects.reverse();owner.updateMix(data);row.effects=[];owner.updateMix(data);await raw.resume();
+       const audio=await rendering;let error=0;
+       // Exclude the clip's intentional 5 ms entry/exit fades and filter startup.
+       for(let i=1000;i<audio.length-1000;i++)error=Math.max(error,Math.abs(audio.getChannelData(0)[i]-.1*(1-.5*i/48000)));
+       assert(error<1e-5,`swap/automation discontinuity ${error}`);
+       assert(bus.output===mix,'track mix endpoint changed');assert(owner.playing,'transport stopped');
+     }finally{owner.dispose()}
+   });
+   await test('effects match whole render across a long-export boundary',async()=>{
+     const reference=await engine.render(project,{},track.id),segment=await engine.renderSection(project,{},track.id,30*48000,4*48000);let error=0;
+     for(let c=0;c<2;c++)for(let i=0;i<segment[c].length;i++)error=Math.max(error,Math.abs(segment[c][i]-reference.getChannelData(c)[30*48000+i]));
+     assert(error<.001,`boundary difference ${error}`);
+     assert(arrangementDuration(project)>34,'effect tails missing from timeline');
+     const after=reference.getChannelData(0).slice(34*48000,35*48000);assert(after.some(x=>Math.abs(x)>.001),'effect tail cut off');
+   });
+   await test('overlapping clips share one rack and mute silences tails',async()=>{
+     const raw=new OfflineAudioContext(2,48000,48000),data=structuredClone(project);data.tracks[0].clips.push({...data.tracks[0].clips[0],id:'second'});
+     const graph=scheduleArrangement({rawContext:raw},data,new Map([[asset.id,source]]),0,0,raw.destination,{liveMix:true});
+     assert(graph.buses.size===1,'one rack created per clip');assert(graph.controls.every(c=>c.rack),'clip gain is not routed through rack');
+     const owner=new ArrangementEngine({rawContext:raw},raw.destination);owner.graph=graph;data.tracks[0].muted=true;owner.updateMix(data);
+     const audio=await raw.startRendering();assert(audio.getChannelData(0).slice(24000).every(x=>Math.abs(x)<1e-5),'mute left an audible FX tail');owner.dispose();
+   });
+   await test('mixdown encoding includes track effects and their tail',async()=>{
+     const short=structuredClone(project);short.tracks[0].clips[0].duration=.5;short.tracks[0].effects=[newEffect('echo')];
+     const file=await engine.export(short,{limiter:false});
+     try{const audio=await ctx.rawContext.decodeAudioData(await file.arrayBuffer());assert(Math.abs(audio.duration-(.6+rackTail(short.tracks[0].effects)))<.001,'wrong tail duration');assert(audio.getChannelData(0).slice(25000,48000).some(x=>Math.abs(x)>.001),'export omitted delay');}finally{await clearExportFile(file)}
+   });
+ }finally{engine.dispose();sink.disconnect();if(asset)await deleteAudioAsset(asset.id)}
+ result.textContent+=`\n${passed} passed; ${failed} failed.`;event.target.disabled=false;
+};
+</script></html>

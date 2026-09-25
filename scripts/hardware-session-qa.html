@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Opt-in hardware session validation</title>
+  <style>
+    body {
+      font: 16px system-ui;
+      background: #141720;
+      color: #eef;
+      max-width: 900px;
+      margin: auto;
+      padding: 24px;
+    }
+    button,
+    select {
+      font: inherit;
+      padding: 10px;
+      margin: 8px;
+    }
+    pre {
+      white-space: pre-wrap;
+    }
+    label {
+      display: block;
+      margin: 12px 0;
+    }
+    a {
+      color: #8edacb;
+    }
+  </style>
+  <h1>Hardware capture validation</h1>
+  <p>
+    This opt-in test captures your selected input to this browser's local storage. No audio is
+    uploaded or played through speakers. Allow several GB of storage; keep the computer awake and
+    this page foreground. Use a continuous test signal through your interface, then listen to the
+    recovered recording separately.
+  </p>
+  <p>
+    Audio remains in local recovery storage after the test. This page does not delete recordings. A
+    passing report checks captured chunks and event continuity, not physical driver dropouts or
+    sound quality.
+  </p>
+  <button id="find">Allow input access and list devices</button>
+  <label
+    >Hardware input
+    <select id="device" disabled>
+      <option value="">Select an input</option>
+    </select></label
+  >
+  <label
+    >Session length
+    <select id="duration">
+      <option value="1800">30 minutes</option>
+      <option value="3600">60 minutes</option>
+      <option value="7200">120 minutes</option>
+    </select></label
+  >
+  <label
+    ><input type="checkbox" id="consent" /> I consent to recording this input locally for the
+    selected duration.</label
+  >
+  <button id="start" disabled>Start hardware recording</button
+  ><button id="stop" disabled>Stop and check recovery</button>
+  <a id="download" hidden download="stemdeck-hardware-report.json">Download report</a>
+  <pre id="result" role="status">No input opened.</pre>
+  <script type="module">
+    import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+    import { recoverSourceCaptures } from '/src/utils/sourceCapture.js';
+    import { journalStore } from '/src/utils/performanceJournal.js';
+    import { hardwareSessionReport } from '/src/utils/hardwareSessionReport.js';
+    const $ = (id) => document.getElementById(id);
+    let engine,
+      timer,
+      started = false,
+      stopping = false,
+      samples = [],
+      targetSeconds,
+      interrupted = false,
+      reportURL;
+    const log = (text) => {
+      $('result').textContent = text;
+    };
+    const enableStart = () => {
+      $('start').disabled = started || !$('device').value || !$('consent').checked;
+    };
+    $('device').onchange = $('consent').onchange = enableStart;
+    $('find').onclick = async () => {
+      $('find').disabled = true;
+      try {
+        // Explicit user click is the permission boundary; discovery stream is closed immediately.
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
+          (d) => d.kind === 'audioinput'
+        );
+        $('device').replaceChildren(
+          new Option('Select an input', ''),
+          ...devices.map((d) => new Option(d.label || 'Audio input', d.deviceId))
+        );
+        $('device').disabled = false;
+        log('Choose the exact interface/input, duration, and consent checkbox.');
+      } catch (error) {
+        log(error.message);
+      } finally {
+        $('find').disabled = false;
+        enableStart();
+      }
+    };
+    function snapshot() {
+      const health = engine.getRecordingHealth();
+      samples.push(health);
+      return health;
+    }
+    async function finish(early = false) {
+      if (!started || stopping) return;
+      stopping = true;
+      interrupted ||= early;
+      clearInterval(timer);
+      $('stop').disabled = true;
+      try {
+        snapshot();
+        await engine.stopRecording();
+        engine.closeMicrophone();
+        const captured = engine.capturedSources();
+        const recovered = (await recoverSourceCaptures()).find((t) => t.id === captured?.id);
+        const history = (await journalStore.recover()).find(
+          (t) => t.id === engine.performanceJournal?.take?.id
+        );
+        const report = hardwareSessionReport({
+          targetSeconds,
+          sampleRate: engine.getAudioContext().rawContext.sampleRate,
+          samples,
+          captured,
+          recovered,
+          events: engine.capturedPerformance().length,
+          committedEvents: history?.events?.length,
+          interrupted,
+        });
+        report.inputName = $('device').selectedOptions[0].textContent;
+        report.samples = samples;
+        report.loudness = engine.getMasterStatus().loudness;
+        log(JSON.stringify(report, null, 2));
+        if (reportURL) URL.revokeObjectURL(reportURL);
+        reportURL = URL.createObjectURL(
+          new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+        );
+        $('download').href = reportURL;
+        $('download').hidden = false;
+      } catch (error) {
+        log(
+          `Recovery check failed: ${error.message}. Keep this browser's storage; do not clear recovery data.`
+        );
+      } finally {
+        engine?.dispose();
+        engine = null;
+        started = false;
+        stopping = false;
+        $('find').disabled = false;
+        $('device').disabled = false;
+        $('duration').disabled = false;
+        enableStart();
+      }
+    }
+    $('start').onclick = async () => {
+      if (!$('consent').checked || !$('device').value || started) return;
+      started = true;
+      interrupted = false;
+      samples = [];
+      $('start').disabled = true;
+      $('find').disabled = true;
+      $('device').disabled = true;
+      $('duration').disabled = true;
+      $('download').hidden = true;
+      try {
+        targetSeconds = Number($('duration').value);
+        engine = new StudioAudioEngine({ monitor: false, recorder: false, metering: true });
+        await engine.unlock();
+        const estimate = await navigator.storage.estimate();
+        // Master, dry input and pad bus, stereo float32; 20% headroom for manifests/encoding.
+        const needed = targetSeconds * engine.getAudioContext().rawContext.sampleRate * 8 * 3 * 1.2;
+        if (!Number.isFinite(estimate.quota) || estimate.quota - (estimate.usage || 0) < needed)
+          throw Error(
+            `Insufficient or unknown storage quota. This session needs approximately ${(needed / 1073741824).toFixed(1)} GiB free.`
+          );
+        await engine.openMicrophone($('device').value);
+        engine.setInputSettings({ armed: true, monitor: false });
+        await engine.startRecording({ longSession: true });
+        engine.capturePerformanceEvent('initialState', [
+          { dspVersion: 2, decks: [], masterLevel: 100 },
+        ]);
+        engine.capturePerformanceEvent('openMicrophone', []);
+        $('stop').disabled = false;
+        timer = setInterval(() => {
+          if (stopping) return;
+          const h = snapshot();
+          log(
+            `${h.duration.toFixed(1)} / ${targetSeconds}s audio, ${h.wallSeconds.toFixed(1)}s wall\nDurable audio: ${h.durableAudioSeconds.toFixed(1)}s\nPending: ${(h.pendingBytes / 1048576).toFixed(2)} MiB; clock lag: ${h.clockLag.toFixed(3)}s\n${h.error || 'Capture running — final validation pending.'}`
+          );
+          if (h.error) void finish(true);
+          else if (h.duration >= targetSeconds) void finish();
+        }, 5000);
+        log('Recording selected input locally. No speaker monitoring.');
+      } catch (error) {
+        if (engine?.performanceStartedAt != null) await engine.stopRecording().catch(() => {});
+        engine?.closeMicrophone();
+        engine?.dispose();
+        engine = null;
+        started = false;
+        $('find').disabled = false;
+        $('device').disabled = false;
+        $('duration').disabled = false;
+        log(error.message);
+        enableStart();
+      }
+    };
+    $('stop').onclick = () => finish(true);
+    navigator.mediaDevices?.addEventListener('devicechange', async () => {
+      if (!started || stopping) return;
+      const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+      if (!devices.some((d) => d.deviceId === $('device').value)) void finish(true);
+    });
+    window.addEventListener('beforeunload', (event) => {
+      if (started) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    });
+  </script>
+</html>

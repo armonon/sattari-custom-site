@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Long export audio QA</title>
+<style>body{background:#121821;color:#e5eaff;font:16px system-ui;padding:32px}button{padding:16px}pre{white-space:pre-wrap}</style>
+<h1>Long export verification</h1><p>Synthetic test audio; no speaker output. Generated temporary exports are removed after checking.</p>
+<button id="run">Run export checks</button><pre id="result" role="status">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import { ArrangementEngine } from '/src/utils/arrangementEngine.js';
+import { audioTrack, audioClip, emptyArrangement } from '/src/utils/arrangementModel.js';
+import { clearExportFile, savedExportFiles } from '/src/utils/arrangementStreamExport.js';
+import { wavBytes } from '/src/utils/arrangementExport.js';
+import { putAudioAsset, deleteAudioAsset } from '/src/utils/audioProjectStore.js';
+document.querySelector('#run').onclick = async (event) => {
+  event.target.disabled = true; const result = document.querySelector('#result'); result.textContent = '';
+  let passed = 0, failed = 0;
+  const assert = (yes, why) => { if (!yes) throw new Error(why); };
+  const test = async (name, fn) => { try { await fn(); passed++; result.textContent += `PASS ${name}\n`; } catch (e) { failed++; result.textContent += `FAIL ${name}: ${e.message}\n`; } };
+  await Tone.start(); const ctx = Tone.getContext(), sink = ctx.rawContext.createGain(), engine = new ArrangementEngine(ctx, sink);
+  const settings = { level: 70, limiter: true, compression: true, processing: { low: 3, high: -2 } };
+  try {
+    for (const instrument of ['sine', 'pad', 'synth']) await test(`${instrument}: sustained note phase and master processing across 30-second join`, async () => {
+      const track = audioTrack(instrument); track.kind = 'midi';
+      track.clips = [{ ...audioClip('', instrument, 34), kind: 'midi', instrument, notes: [{ pitch: 'C4', time: .125, duration: 33, velocity: .5 }] }];
+      const project = { ...emptyArrangement(), tracks: [track] }, full = await engine.render(project, settings);
+      const section = await engine.renderSection(project, settings, null, 30 * 48000, 4 * 48000);
+      let error = 0; for (let c = 0; c < 2; c++) for (let i = 0; i < section[c].length; i++) error = Math.max(error, Math.abs(section[c][i] - full.getChannelData(c)[30 * 48000 + i]));
+      assert(error < .001, `section/reference error ${error}`);
+    });
+    await test('audio fades, stereo and automation match across section boundaries', async () => {
+      const buffer = ctx.rawContext.createBuffer(2, 34 * 48000, 48000);
+      for (let c = 0; c < 2; c++) { const pcm = buffer.getChannelData(c); for (let i = 0; i < pcm.length; i++) pcm[i] = .15 * Math.sin(i / 48000 * 2 * Math.PI * (c ? 330 : 220)); }
+      const asset = await putAudioAsset(new Blob([wavBytes(buffer)], { type: 'audio/wav' }), { name: 'export-seam-fixture' });
+      try {
+        const track = audioTrack('Tone'); track.clips = [{ ...audioClip(asset.id, 'Tone', 34), fadeIn: 32, fadeOut: 2,
+          automation: { volume: [{time: 0, value: 30}, {time: 33, value: 90}], pan: [{time: 0, value: -.5}, {time: 34, value: .5}], filter: [{time: 0, value: 800}, {time: 34, value: 4000}] } }];
+        const project = { ...emptyArrangement(), tracks: [track] }, full = await engine.render(project, settings);
+        const section = await engine.renderSection(project, settings, null, 30 * 48000, 4 * 48000);
+        let error = 0; for (let c = 0; c < 2; c++) for (let i = 0; i < section[c].length; i++) error = Math.max(error, Math.abs(section[c][i] - full.getChannelData(c)[30 * 48000 + i]));
+        assert(error < .001, `section/reference error ${error}`);
+      } finally { await deleteAudioAsset(asset.id); }
+    });
+    if (!location.search.includes('quick')) await test('25-minute sparse set exports beyond old render limit to real disk', async () => {
+      const track = audioTrack('Long set'); track.kind = 'midi'; track.clips = [{ ...audioClip('', 'Long', 1500), kind: 'midi', instrument: 'sine', notes: [{ pitch: 'C4', time: 0, duration: .2, velocity: .2 }] }];
+      const file = await engine.export({ ...emptyArrangement(), tracks: [track] }, settings, false, (message) => { result.dataset.progress = message; });
+      try {
+        assert(file instanceof File, 'not disk backed');
+        assert(file.size === 44 + Math.round(1500.1 * 48000) * 6, `size ${file.size}`);
+        assert((await savedExportFiles()).some((item) => item.name === file.name), 'download cache missing');
+        const header = new DataView(await file.slice(0,44).arrayBuffer()); assert(header.getUint32(40,true) === file.size - 44, 'incorrect WAV size');
+      } finally { await clearExportFile(file); }
+    });
+    await test('cancel removes partial disk export and preserves completed cache', async () => {
+      const before = (await savedExportFiles()).map((file) => file.name).sort().join(); let cancel = false;
+      const track = audioTrack('Cancel'); track.kind = 'midi'; track.clips = [{ ...audioClip('', 'Cancel', 90), kind: 'midi', notes: [] }];
+      let error; try { await engine.export({ ...emptyArrangement(), tracks: [track] }, {}, false, (message) => { if (message.includes('Rendering')) cancel = true; }, () => cancel); } catch (e) { error = e; }
+      assert(error?.message.includes('cancelled'), 'did not cancel');
+      assert((await savedExportFiles()).map((file) => file.name).sort().join() === before, 'partial output leaked');
+    });
+  } finally { engine.dispose(); sink.disconnect(); }
+  result.textContent += `\n${passed} passed; ${failed} failed.`; event.target.disabled = false;
+};
+</script></html>

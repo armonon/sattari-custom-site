@@ -5,6 +5,8 @@ import { categories, formatPriceRange, categoryTitle, getMinPrice } from '../dat
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
+import { CATEGORY_SEO, breadcrumbSchema } from '../data/siteSeo';
+import NotFoundPage from '../components/NotFoundPage';
 import '../styles-products-premium.css';
 
 const SORT_OPTIONS = [
@@ -64,11 +66,7 @@ export default function Category() {
     `/product/${product.slug ? product.slug : product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
   if (!category) {
-    return (
-      <div className="container">
-        <h2>Category not found</h2>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   const categorySchema = {
@@ -90,12 +88,15 @@ export default function Category() {
 
   return (
     <section className="section page-header-offset">
-      <SEO
-        title={isAll ? 'Shop All Products' : `${category.title} Drum Gear`}
-        description={category.description}
-        url={`https://sattarimusic.com/shop/${category.key}`}
-      />
+      <SEO {...CATEGORY_SEO[category.key]} url={`https://sattarimusic.com/shop/${category.key}`} />
       <StructuredData data={categorySchema} />
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Shop', path: '/shop' },
+          { name: category.title, path: `/shop/${category.key}` },
+        ])}
+      />
       <div className="container section-header narrow">
         <p className="eyebrow">Category spotlight</p>
         <h1>{category.title}</h1>

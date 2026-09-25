@@ -10,6 +10,46 @@
   NODE_VERSION = "20.19.0"
 
 [[redirects]]
+  from = "/api/staff/insights"
+  to = "/.netlify/functions/staff-insights"
+  status = 200
+
+[[redirects]]
+  from = "/buy"
+  to = "/shop"
+  status = 301
+
+[[redirects]]
+  from = "/audio-suite"
+  to = "/downloads"
+  status = 301
+
+[[redirects]]
+  from = "/audio-suite/downloads"
+  to = "/downloads"
+  status = 301
+
+[[redirects]]
+  from = "/audio"
+  to = "/downloads"
+  status = 301
+
+[[redirects]]
+  from = "/services/music-classes-los-angeles"
+  to = "/services/music-lessons-los-angeles"
+  status = 301
+
+[[redirects]]
+  from = "/services/drum-repair-los-angeles"
+  to = "/services/instrument-repair-los-angeles"
+  status = 301
+
+[[redirects]]
+  from = "/stem-seperator"
+  to = "/stem-separator"
+  status = 301
+
+[[redirects]]
   from = "/api/create-checkout-session"
   to = "/.netlify/functions/create-checkout-session"
   status = 200
@@ -32,6 +72,16 @@
 [[redirects]]
   from = "/api/service-inquiry"
   to = "/.netlify/functions/service-inquiry"
+  status = 200
+
+[[redirects]]
+  from = "/api/studio-bookings"
+  to = "/.netlify/functions/studio-bookings"
+  status = 200
+
+[[redirects]]
+  from = "/api/staff/bookings"
+  to = "/.netlify/functions/staff-bookings"
   status = 200
 
 [[redirects]]
@@ -85,6 +135,16 @@
 [functions."nightly-backup"]
   schedule = "0 9 * * *"
 
+[functions."studio-booking-maintenance"]
+  schedule = "*/5 * * * *"
+
+[[headers]]
+  for = "/studio-booking"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+
 # The staff page is unlisted, not secret, so it must stay out of search
 # results. This header does that WITHOUT naming the path in robots.txt —
 # robots.txt is public, and listing a private URL there hands it to anyone
@@ -96,9 +156,29 @@
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
 
-# Must stay last: redirects are matched in order and this one catches
-# everything left over for the single-page app.
+# Products added by staff after a build still need the live catalog lookup.
+[[redirects]]
+  from = "/product/*"
+  to = "/app.html"
+  status = 200
+
+[[headers]]
+  for = "/cart"
+  [headers.values]
+    X-Robots-Tag = "noindex, follow"
+
+[[headers]]
+  for = "/checkout/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, follow"
+
+[[headers]]
+  for = "/instagram/callback"
+  [headers.values]
+    X-Robots-Tag = "noindex, follow"
+
+# Existing prerendered files take precedence; unknown URLs get a real 404.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "/404.html"
+  status = 404

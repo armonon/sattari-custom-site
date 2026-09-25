@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Streaming and storage regression checks</title>
+  <style>
+    body {
+      background: #151922;
+      color: #eef;
+      font: 16px system-ui;
+      padding: 24px;
+    }
+    button {
+      padding: 14px;
+    }
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+  <h1>Streaming and storage regression checks</h1>
+  <p>
+    Generated audio only; no microphone, speakers, or existing project changes. Approximately 20
+    seconds.
+  </p>
+  <button id="run">Run checks</button>
+  <pre id="result" role="status">Ready</pre>
+  <script type="module">
+    import * as Tone from 'tone';
+    import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+    import { ArrangementEngine } from '/src/utils/arrangementEngine.js';
+    import { audioClip, audioTrack, emptyArrangement } from '/src/utils/arrangementModel.js';
+    import { persistentSession } from '/src/utils/sessionPersistence.js';
+    import { writeProjectArchive, readProjectArchive } from '/src/utils/projectArchive.js';
+    import { clearExportFile } from '/src/utils/arrangementStreamExport.js';
+    import {
+      putAudioAsset,
+      getAudioAsset,
+      deleteAudioAsset,
+    } from '/src/utils/audioProjectStore.js';
+    import { journalStore } from '/src/utils/performanceJournal.js';
+    import { wavBytes } from '/src/utils/arrangementExport.js';
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const assert = (condition, message) => {
+      if (!condition) throw Error(message);
+    };
+    document.querySelector('#run').onclick = async (event) => {
+      event.target.disabled = true;
+      const result = document.querySelector('#result');
+      result.textContent = '';
+      let passed = 0,
+        failed = 0,
+        owner,
+        arranger,
+        asset,
+        archive;
+      const databaseName = `studio-session-qa-${crypto.randomUUID()}`;
+      const test = async (name, fn) => {
+        try {
+          await fn();
+          passed++;
+          result.textContent += `PASS ${name}\n`;
+        } catch (error) {
+          failed++;
+          result.textContent += `FAIL ${name}: ${error.stack}\n`;
+        }
+      };
+      try {
+        await test('atomic session saves, reopen, conflicting tabs, and reset', async () => {
+          const options = {
+            databaseName,
+            loadLegacy: () => null,
+            saveLegacy: () => {
+              throw Error('unexpected fallback');
+            },
+            clearLegacy: () => {},
+          };
+          const a = persistentSession(options),
+            b = persistentSession(options);
+          assert((await a.load()) === null, 'initial session not empty');
+          assert((await b.load()) === null, 'other session not empty');
+          const track = audioTrack('QA track'),
+            take = { events: [{ time: 1, type: 'setMasterLevel', args: [80] }] };
+          const session = {
+            decks: [],
+            arranger: { ...emptyArrangement(), tracks: [track], captures: [take] },
+          };
+          await a.save(session);
+          let rejected = false;
+          try {
+            await b.save(session);
+          } catch (error) {
+            rejected = error.message.includes('Another Studio');
+          }
+          assert(rejected, 'stale tab overwrote a newer session');
+          const restored = await b.load();
+          assert(restored.arranger.tracks[0].name === 'QA track', 'track missing');
+          assert(
+            restored.arranger.captures[0].events[0].args[0] === 80,
+            'performance event missing'
+          );
+          await a.save({ ...session, masterLevel: 75 });
+          const c = persistentSession(options);
+          assert((await c.load()).masterLevel === 75, 'incremental save missing');
+          await c.clear();
+          assert(
+            (await persistentSession(options).load()).arranger.tracks.length === 0,
+            'reset resurrected tracks'
+          );
+        });
+        await Tone.start();
+        owner = new StudioAudioEngine({ monitor: false });
+        const raw = owner.getAudioContext().rawContext;
+        const buffer = raw.createBuffer(1, 181 * 8000, 8000);
+        buffer.getChannelData(0).fill(0.1);
+        asset = await putAudioAsset(new Blob([wavBytes(buffer)], { type: 'audio/wav' }), {
+          name: 'QA long constant source',
+          duration: 181,
+        });
+        const project = emptyArrangement(),
+          track = audioTrack('QA reference');
+        track.role = 'reference';
+        track.clips = [{ ...audioClip(asset.id, 'QA long source', 181), fadeIn: 0, fadeOut: 0 }];
+        project.tracks = [track];
+        await test('binary backup round-trip preserves actual asset bytes', async () => {
+          archive = await writeProjectArchive({ decks: [], arranger: project }, [asset.id]);
+          const restored = await readProjectArchive(archive);
+          assert(restored.assets.length === 1, 'asset index missing');
+          const original = await getAudioAsset(asset.id);
+          assert(restored.assets[0].blob.size === original.blob.size, 'asset size changed');
+          assert(restored.arranger.tracks[0].clips[0].assetId === asset.id, 'clip source changed');
+        });
+        await test('long-track seek streams across two window joins with no PCM gaps', async () => {
+          arranger = new ArrangementEngine(owner.getAudioContext(), owner.output);
+          await owner.startRecording({ longSession: true });
+          await arranger.play(project, 120, { level: 100 });
+          assert(arranger.streaming, 'long source used whole-file playback');
+          for (let i = 0; i < 9; i++) {
+            await wait(2000);
+            assert(!arranger.error, arranger.error);
+            assert(!owner.getRecordingHealth().error, owner.getRecordingHealth().error);
+          }
+          const position = arranger.position();
+          arranger.pause();
+          await owner.stopRecording();
+          assert(position >= 137, 'playback did not advance');
+          assert(arranger.buffers.size === 0, 'full source cache was retained');
+          const captured = owner.capturedSources();
+          assert(!captured.error, captured.error);
+          const output = captured.tracks.find((row) => row.role === 'reference');
+          assert(output?.clips.length >= 3, 'capture did not roll over');
+          const samples = [];
+          for (const clip of output.clips) {
+            const item = await getAudioAsset(clip.assetId);
+            const audio = await raw.decodeAudioData(await item.blob.arrayBuffer());
+            samples.push(...audio.getChannelData(0).filter((_, i) => i % 128 === 0));
+          }
+          // Exclude recording startup and shutdown. Constant PCM exposes even a short
+          // fade/dip at the 8- and 16-second joins without a speaker or loopback device.
+          const first = samples.findIndex((value) => value > 0.09),
+            last = samples.findLastIndex((value) => value > 0.09);
+          assert(first >= 0 && last > first, 'streamed audio is silent');
+          const middle = samples.slice(first + 20, last - 20);
+          assert(
+            middle.every((value) => Math.abs(value - 0.1) < 0.002),
+            'PCM discontinuity at a streaming/capture boundary'
+          );
+          result.textContent += `Audio clock advanced to ${position.toFixed(2)}s; ${output.clips.length} durable chunks; ${middle.length} continuity probes.\n`;
+        });
+      } catch (error) {
+        failed++;
+        result.textContent += `SETUP FAILURE ${error.stack}\n`;
+      } finally {
+        arranger?.pause();
+        if (owner) {
+          try {
+            if (owner.performanceStartedAt != null) await owner.stopRecording();
+          } catch {}
+          const captured = owner.capturedSources();
+          for (const track of captured?.tracks || [])
+            for (const clip of track.clips) await deleteAudioAsset(clip.assetId);
+          await journalStore.removeTestTake(owner.performanceJournal?.take?.id, captured?.id);
+          owner.dispose();
+        }
+        if (asset) await deleteAudioAsset(asset.id);
+        if (archive) await clearExportFile(archive);
+        await new Promise((resolve, reject) => {
+          const request = indexedDB.deleteDatabase(databaseName);
+          request.onsuccess = resolve;
+          request.onerror = () => reject(request.error);
+        });
+        result.textContent += `COMPLETE: ${passed} passed, ${failed} failed`;
+        event.target.disabled = false;
+      }
+    };
+  </script>
+</html>

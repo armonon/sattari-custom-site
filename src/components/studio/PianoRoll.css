@@ -1,0 +1,279 @@
+.sd-studio-next .sd-piano-roll {
+  --piano-row-height: 28px;
+  --piano-key-width: 100px;
+  margin-top: 16px;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #37383e;
+  border-radius: 12px;
+  background: #1b1c20;
+}
+.sd-studio-next .sd-piano-roll > header {
+  min-width: 0;
+  min-height: 68px;
+  padding: 12px 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #232428;
+  border-bottom: 1px solid #393b42;
+}
+.sd-piano-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a8cfee;
+}
+.sd-piano-heading > div {
+  display: grid;
+  gap: 4px;
+}
+.sd-studio-next .sd-piano-heading strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f2f5;
+  letter-spacing: 0;
+}
+.sd-studio-next .sd-piano-heading small {
+  font-size: 12px;
+  color: #aaaeb8;
+}
+.sd-piano-meta {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+}
+.sd-studio-next .sd-piano-meta span {
+  font-size: 12px;
+  color: #bbc0cc;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.sd-studio-next .sd-piano-roll > header > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 14px;
+  border: 1px solid #464851;
+  border-radius: 6px;
+  background: #303138;
+  color: #e2e5ed;
+}
+.sd-studio-next .sd-piano-roll > header > button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sd-piano-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: #555861 #202126;
+}
+.sd-piano-surface {
+  display: grid;
+  grid-template-columns: var(--piano-key-width) minmax(640px, 1fr);
+  grid-template-rows: 32px auto;
+  min-width: 740px;
+}
+.sd-piano-corner {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2b2d33;
+  color: #bbc1ce;
+  font-size: 12px;
+  border-right: 1px solid #111216;
+}
+.sd-piano-ruler {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  background: #282a30;
+  border-bottom: 1px solid #555963;
+}
+.sd-piano-ruler > span {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  color: #666b77;
+  font-size: 12px;
+}
+.sd-piano-ruler > .is-beat {
+  color: #c6cbd6;
+  border-left: 1px solid #575c68;
+  font-variant-numeric: tabular-nums;
+}
+.sd-piano-keyboard {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  height: calc(12 * var(--piano-row-height));
+  background: #151619;
+  border-right: 3px solid #101114;
+  box-shadow: 5px 0 10px #0004;
+}
+.sd-piano-key {
+  position: absolute;
+  left: 0;
+  box-sizing: border-box;
+}
+.sd-piano-key.is-natural {
+  width: 100%;
+  background: linear-gradient(90deg, #bcbfc5, #f5f5f3 28%, #fafaf7 85%, #dcddd9);
+  border-bottom: 1px solid #8d9097;
+  border-radius: 0 3px 3px 0;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset -3px 0 0 #c6c8ca;
+}
+.sd-piano-key.is-natural > span {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+  color: #434952;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sd-piano-key.is-accidental {
+  width: 65%;
+  height: var(--piano-row-height);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 9px;
+  border: 1px solid #0d0e12;
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, #50535b, #292b31 16%, #17181d 75%, #101115);
+  box-shadow:
+    3px 3px 3px #0005,
+    inset -4px 0 0 #08090c,
+    inset 0 1px 0 #666973;
+  color: #d1d4dc;
+  font-size: 12px;
+}
+.sd-piano-key.is-natural.has-notes {
+  box-shadow:
+    inset -5px 0 0 #78baf0,
+    inset 0 1px 0 #fff;
+}
+.sd-piano-key.is-accidental.has-notes {
+  box-shadow:
+    inset -4px 0 0 #78baf0,
+    3px 3px 3px #0005;
+}
+.sd-studio-next .sd-piano-grid {
+  min-width: 0;
+  overflow: visible;
+}
+.sd-studio-next .sd-piano-row {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  height: var(--piano-row-height);
+  min-height: 0;
+  background: #282a30;
+}
+.sd-studio-next .sd-piano-row.is-accidental {
+  background: #202126;
+}
+.sd-studio-next .sd-piano-row > button {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid #ffffff07;
+  border-bottom: 1px solid #10111566;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 100ms ease;
+}
+.sd-studio-next .sd-piano-row > button:nth-of-type(4n + 1) {
+  border-left: 1px solid #565c6877;
+}
+.sd-studio-next .sd-piano-row.is-octave > button {
+  border-bottom: 1px solid #7393b077;
+}
+.sd-studio-next .sd-piano-row > button:hover {
+  background: #a8cfee1c;
+}
+.sd-studio-next .sd-piano-row > button.is-note {
+  background: transparent;
+  box-shadow: none;
+}
+.sd-piano-row > button.is-note::before {
+  content: '';
+  position: absolute;
+  inset: 3px 2px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #acd7f7, #77b9ec);
+  border: 1px solid #c4e5ff;
+  box-shadow:
+    0 2px 3px #0004,
+    inset 3px 0 0 #d9eeff;
+}
+.sd-piano-row > button.is-note > span {
+  position: relative;
+  z-index: 1;
+  color: #16344d;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-piano-row > button:focus-visible {
+  outline: 2px solid #e4f2ff;
+  outline-offset: -3px;
+  z-index: 2;
+}
+.sd-piano-scroll:focus-visible {
+  outline: 2px solid #8bc5ff;
+  outline-offset: -2px;
+}
+.sd-piano-roll > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 16px;
+  border-top: 1px solid #393b42;
+  color: #a9aeb9;
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  .sd-studio-next .sd-piano-roll {
+    --piano-row-height: 36px;
+    --piano-key-width: 88px;
+  }
+  .sd-studio-next .sd-piano-roll > header {
+    gap: 10px;
+    padding: 12px;
+  }
+  .sd-piano-heading {
+    flex: 1;
+  }
+  .sd-piano-meta {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+  .sd-studio-next .sd-piano-roll > header > button {
+    min-height: 44px;
+  }
+  .sd-piano-surface {
+    grid-template-columns: var(--piano-key-width) minmax(704px, 1fr);
+    min-width: 792px;
+  }
+  .sd-piano-roll > footer {
+    padding: 10px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-studio-next .sd-piano-row > button {
+    transition: none;
+  }
+}

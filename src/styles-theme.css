@@ -141,6 +141,13 @@ body {
 /* =====================================================================
    DAY palette
    ===================================================================== */
+[data-theme='day'] .repair-callout-card,
+[data-theme='day'] .repair-process-panel {
+  background: var(--panel);
+  border-color: var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
 [data-theme='day'] {
   /* Core tokens (styles.css / styles-enhanced.css) */
   --bg: #f6f1e6;

@@ -1,0 +1,551 @@
+/* Session architecture: persistent transport, dominant musical surface,
+   bounded on-demand inspectors. Audio components stay mounted when hidden. */
+.sd-session-shell .sd-focused-deck .sd-decks-grid[data-deck-count='2'] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+}
+.sd-session-shell .sd-focused-deck .sd-decks-grid {
+  flex: 1;
+  min-width: 0;
+}
+.sd-performance-crossfade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #b8c0cc;
+  font-size: 12px;
+}
+.sd-performance-crossfade input {
+  width: clamp(90px, 18vw, 240px);
+  accent-color: #a5dacb;
+}
+.sd-session-track-mixer {
+  grid-column: 1 / -1;
+  padding: 8px 0 20px;
+}
+.sd-session-track-mixer > header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+.sd-session-track-mixer > header span,
+.sd-session-track-strip > small {
+  font-size: 12px;
+  color: #a2acb9;
+}
+.sd-session-track-mixer > div {
+  display: flex;
+  overflow-x: auto;
+  gap: 1px;
+  background: #ffffff10;
+}
+.sd-session-track-strip {
+  flex: 0 0 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #1b1f25;
+}
+.sd-session-track-strip > strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+.sd-session-track-strip > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.sd-session-track-strip > div {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+.sd-session-track-strip button[aria-pressed='true'] {
+  color: #c3f2e4;
+  background: #3c5750;
+}
+.sd-session-shell .sd-app-frame {
+  position: relative;
+  height: 100dvh;
+  min-height: 0;
+  padding: 0 16px 28px;
+  gap: 0;
+  overflow: hidden;
+}
+.sd-session-shell .sd-command-bar {
+  grid-template-areas: 'brand leading actions' 'navigation navigation navigation';
+  grid-template-columns: minmax(120px, 1fr) auto minmax(380px, 1fr);
+  gap: 8px 16px;
+  min-height: 106px;
+  padding: 10px 0 0;
+  background: #141619;
+  border-bottom: 1px solid #ffffff12;
+}
+.sd-session-shell .sd-title-block {
+  align-items: flex-start;
+  text-align: left;
+}
+.sd-session-shell .sd-title-block h1.sd-product-brand {
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+.sd-session-shell .sd-title-block small {
+  display: none;
+}
+.sd-session-shell .sd-command-bar .sd-view-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 0;
+  background: none;
+  gap: 20px;
+}
+.sd-session-shell .sd-command-bar .sd-view-nav button {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0 4px;
+  color: #a5adb9;
+  background: none;
+  box-shadow: none;
+  transition:
+    color 120ms,
+    background-color 120ms;
+}
+.sd-session-shell .sd-command-bar .sd-view-nav button::after {
+  display: none;
+}
+.sd-session-shell .sd-command-bar .sd-view-nav button:not(.is-active) {
+  border-bottom-color: transparent;
+}
+.sd-session-shell .sd-command-bar .sd-view-nav button.is-active {
+  background: none;
+  border-bottom-color: #9bd8ca;
+  box-shadow: none;
+  color: #edf6f3;
+}
+.sd-session-shell .sd-system-actions {
+  gap: 6px;
+}
+.sd-session-shell .sd-capture-label {
+  display: inline;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.sd-session-shell .sd-record-button {
+  min-width: 106px;
+  padding: 0 10px;
+  gap: 8px;
+}
+.sd-session-shell .sd-session-output {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid #ffffff14;
+  background: #21252a;
+  font-size: 13px;
+}
+.sd-session-output meter {
+  width: 45px;
+  height: 9px;
+}
+.sd-session-output small {
+  font-size: 12px;
+  min-width: 26px;
+}
+.sd-session-shell .sd-workspace {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #141619;
+}
+.sd-session-shell .sd-workspace-heading {
+  min-height: 46px;
+  padding: 6px 0;
+  flex-shrink: 0;
+  border: 0;
+}
+.sd-session-shell .sd-workspace-heading h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.sd-session-shell .sd-workspace-eyebrow {
+  font-size: 12px;
+}
+.sd-session-shell .sd-open-performance {
+  color: #b0e8d8;
+  background: #b0e8d80a;
+  border: 1px solid #b0e8d826;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+.sd-open-performance span {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #a4adb8;
+}
+.sd-session-capture-state {
+  font-size: 13px;
+  color: #ffb3aa;
+}
+.sd-session-shell .sd-notice {
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  z-index: 35;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #ffffff14;
+  border-radius: 0;
+  background: #1b1e22;
+  font-size: 12px;
+}
+.sd-session-shell .sd-notice summary {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.sd-session-shell .sd-notice summary::before {
+  content: 'ⓘ';
+  margin-right: 8px;
+}
+.sd-session-shell .sd-notice summary span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sd-session-shell .sd-notice[open] summary {
+  height: auto;
+  min-height: 28px;
+  padding-block: 8px;
+}
+.sd-session-shell .sd-notice[open] summary span {
+  white-space: normal;
+}
+.sd-session-notice-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  max-height: 40dvh;
+  overflow: auto;
+}
+.sd-session-notice-body label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sd-session-shell .sd-advanced-strip,
+.sd-session-shell .sd-settings-popover {
+  position: absolute;
+  top: 106px;
+  right: 16px;
+  left: auto;
+  z-index: 45;
+  max-width: min(680px, calc(100% - 32px));
+  max-height: calc(100dvh - 145px);
+  overflow: auto;
+  background: #20242a;
+  border: 1px solid #ffffff24;
+  box-shadow: 0 20px 65px #0009;
+  padding: 20px;
+}
+.sd-session-shell .sd-session-inspector {
+  position: absolute;
+  z-index: 40;
+  inset: 106px 0 28px auto;
+  width: min(680px, 50vw);
+  overflow: auto;
+  padding: 16px;
+  background: #1b1e23;
+  border-left: 1px solid #ffffff24;
+  box-shadow: -16px 0 45px #0006;
+}
+.sd-session-inspector > header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.sd-session-inspector > header strong {
+  font-size: 16px;
+}
+.sd-session-inspector > header span {
+  flex: 1;
+  font-size: 12px;
+  color: #aab3c0;
+}
+.sd-session-inspector > header button {
+  margin-left: auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+}
+.sd-session-shell [hidden] {
+  display: none !important;
+}
+.sd-session-shell .sd-session-inspector .sd-output-console {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.sd-session-shell .sd-session-inspector .sd-master-summary {
+  display: grid;
+  grid-template-areas: 'title title' 'meters meters' 'level level' 'stats actions';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+.sd-session-shell .sd-session-inspector .sd-master-stem-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sd-session-shell .sd-session-inspector .sd-master-details {
+  grid-template-columns: 1fr;
+}
+.sd-session-shell .sd-session-inspector .sd-input-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sd-session-shell .sd-performance-coach {
+  margin: 0;
+  min-height: 34px;
+  padding: 0 0 8px;
+  background: none;
+  border: 0;
+}
+.sd-session-shell .sd-performance-stage {
+  min-height: calc(100dvh - 205px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 0;
+}
+.sd-session-shell .sd-performance-stage > .sd-panel-collapse-bar {
+  display: none;
+}
+.sd-session-shell .sd-empty-performance {
+  min-height: calc(100dvh - 230px);
+}
+.sd-session-shell .sd-focused-deck {
+  min-height: calc(100dvh - 215px);
+}
+.sd-session-shell .sd-source-dock {
+  width: 60px;
+  min-width: 60px;
+}
+.sd-session-shell .sd-source-dock strong {
+  font-size: 12px;
+}
+.sd-session-shell .sd-arrangement-editor {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+.sd-session-shell .sd-view-arranger .sd-arrangement-editor:not(.ae-workspace-focused) .ae-scroll {
+  min-height: 240px;
+  height: calc(100dvh - 330px);
+}
+.sd-session-shell .sd-view-arranger .sd-arrangement-editor:not(.ae-workspace-focused):has(.ae-piano-dock) .ae-scroll {
+  height: 40dvh;
+  min-height: 220px;
+}
+.sd-session-shell .sd-view-arranger .ae-main-header > div:first-child {
+  display: none;
+}
+.sd-session-shell .ae-lower-editor {
+  max-height: 34dvh;
+  overflow: auto;
+}
+.sd-session-shell .ae-lower-editor:has(.ae-piano-dock.is-expanded) {
+  max-height: none;
+}
+.sd-session-shell .ae-lower-editor:not(:has(> :not([hidden]))) {
+  display: none;
+}
+.sd-session-shell .sd-arrangement-editor > footer {
+  font-size: 12px;
+}
+.sd-session-shell .sd-performance-editor {
+  padding: 12px;
+}
+.sd-performance-editor > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sd-performance-editor > header select {
+  max-width: 55%;
+}
+@media (max-width: 1100px) {
+  .sd-session-shell .sd-command-bar {
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    gap: 8px;
+  }
+  .sd-session-shell .sd-session-output meter,
+  .sd-session-shell .sd-session-output small {
+    display: none;
+  }
+  .sd-session-shell .sd-title-block h1.sd-product-brand {
+    font-size: 14px;
+  }
+  .sd-session-shell .sd-session-inspector {
+    width: min(680px, 75vw);
+  }
+}
+@media (max-width: 760px) {
+  .sd-session-shell .sd-app-frame {
+    padding: 0 8px 28px;
+  }
+  .sd-session-shell .sd-command-bar {
+    grid-template-areas: 'brand leading' 'navigation actions';
+    grid-template-columns: 1fr auto;
+    min-height: 122px;
+    padding: 8px 0;
+  }
+  .sd-session-shell .sd-command-bar .sd-view-nav {
+    gap: 8px;
+  }
+  .sd-session-shell .sd-command-bar .sd-view-nav button {
+    min-height: 40px;
+    height: 40px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .sd-session-shell .sd-command-bar .sd-view-nav svg {
+    display: none;
+  }
+  .sd-session-shell .sd-system-actions {
+    flex-wrap: wrap;
+    max-width: 240px;
+  }
+  .sd-session-shell .sd-system-actions .sd-session-output span {
+    display: none;
+  }
+  .sd-session-shell .sd-capture-label {
+    font-size: 12px;
+  }
+  .sd-session-shell .sd-record-button {
+    min-width: 74px;
+  }
+  .sd-session-shell .sd-workspace-heading {
+    flex-wrap: nowrap;
+    min-height: 44px;
+    max-height: 44px;
+    gap: 8px;
+  }
+  .sd-session-shell .sd-workspace-heading > div:first-child { flex: 0 0 auto; }
+  .sd-session-shell .sd-workspace-eyebrow { display: none; }
+  .sd-session-shell .sd-workspace-quick-actions {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .sd-session-shell .sd-workspace-quick-actions > * { flex: 0 0 auto; }
+  .sd-session-shell .sd-session-inspector {
+    top: 122px;
+    width: 100%;
+    padding: 12px;
+  }
+  .sd-session-shell .sd-notice {
+    left: 8px;
+    right: 8px;
+  }
+  .sd-session-shell .sd-session-inspector .sd-input-controls {
+    grid-template-columns: 1fr;
+  }
+  .sd-session-shell .sd-performance-stage {
+    min-height: 60dvh;
+  }
+}
+@media (max-width: 600px) {
+  .sd-session-shell .sd-command-bar {
+    grid-template-areas: 'brand leading' 'navigation navigation' 'actions actions';
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 162px;
+  }
+  .sd-session-shell .sd-command-bar .sd-view-nav {
+    justify-content: space-between;
+  }
+  .sd-session-shell .sd-system-actions {
+    max-width: none;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .sd-session-shell .sd-session-inspector,
+  .sd-session-shell .sd-settings-popover,
+  .sd-session-shell .sd-advanced-strip {
+    top: 162px;
+  }
+  .sd-session-shell .sd-performance-coach {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sd-session-shell .sd-view-arranger .sd-arrangement-editor:not(.ae-workspace-focused) .ae-scroll {
+    height: 46dvh;
+  }
+  .sd-session-shell.sd-studio-next .sd-arrangement-editor .ae-main-header > .ae-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+  }
+  .sd-session-shell .sd-arrangement-editor .ae-main-header > .ae-actions > button {
+    flex: 0 0 auto;
+    width: auto;
+    white-space: nowrap;
+    min-width: 44px;
+  }
+  .sd-session-shell .sd-arrangement-editor .ae-zoom-controls {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .sd-session-shell .sd-arrangement-editor .ae-zoom-controls > input {
+    flex: 1;
+    width: 40px;
+    min-width: 40px;
+  }
+  .sd-session-shell .sd-arrangement-editor .ae-zoom-controls > button {
+    flex: 0 0 44px;
+    width: 44px;
+  }
+  .sd-session-shell
+    .sd-view-arranger
+    .sd-arrangement-editor
+    > details:not([open]):not(.ae-captures) {
+    grid-column: auto;
+    line-height: 1.3;
+  }
+  .sd-session-shell .sd-arrangement-editor .ae-more-sources > div {
+    position: fixed;
+    z-index: 50;
+    right: 12px;
+    top: 280px;
+  }
+}
+.sd-session-shell .sd-session-inspector {
+  top: var(--session-command-height, 106px);
+}

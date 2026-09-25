@@ -1,0 +1,152 @@
+.ae-sequencer {
+  padding: 18px;
+  background: #16191e;
+  border: 1px solid #ffffff12;
+  border-radius: 14px;
+  color: #e6e9ee;
+}
+.ae-sequencer-heading,
+.ae-sequencer-actions,
+.ae-beat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ae-sequencer-heading {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.ae-sequencer-heading strong {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.ae-sequencer small {
+  display: block;
+  font-size: 11px;
+  color: #a1a9b7;
+  margin-top: 4px;
+}
+.ae-sequencer-actions button,
+.ae-sequencer-actions select,
+.ae-beat-toolbar button,
+.ae-beat-toolbar select {
+  min-height: 34px;
+}
+.ae-sequencer-actions input[type='number'] {
+  width: 64px;
+  min-height: 34px;
+}
+.ae-beat-toolbar {
+  padding: 10px 0;
+}
+.ae-sequencer-scroll {
+  overflow-x: auto;
+}
+.ae-sequencer-grid {
+  min-width: 690px;
+}
+.ae-sequencer-row {
+  display: grid;
+  grid-template-columns: 112px repeat(16, minmax(26px, 1fr));
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 7px;
+}
+.ae-sequencer-ruler {
+  color: #919aab;
+  font-size: 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ae-sequencer-ruler > :first-child {
+  text-align: left;
+  letter-spacing: 0.12em;
+}
+.ae-sequencer .ae-sequencer-voice {
+  text-align: left;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: #b5bdca;
+  padding: 0 8px;
+  font-size: 12px;
+  border-left: 3px solid var(--lane-color);
+  border-radius: 4px;
+}
+.ae-sequencer .ae-sequencer-voice[aria-pressed='true'] {
+  background: #ffffff0a;
+  color: #fff;
+}
+.ae-sequencer .ae-sequencer-step {
+  position: relative;
+  height: 40px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid #ffffff10;
+  border-radius: 5px;
+  background: #262b34;
+  box-shadow: inset 0 1px #ffffff08;
+}
+.ae-sequencer .ae-sequencer-step:nth-child(8n + 2),
+.ae-sequencer .ae-sequencer-step:nth-child(8n + 3),
+.ae-sequencer .ae-sequencer-step:nth-child(8n + 4),
+.ae-sequencer .ae-sequencer-step:nth-child(8n + 5) {
+  background: #303643;
+}
+.ae-sequencer .ae-sequencer-step[aria-pressed='true'] {
+  background: var(--lane-color);
+  border-color: transparent;
+}
+.ae-sequencer-step span {
+  position: absolute;
+  bottom: 4px;
+  left: 20%;
+  width: 60%;
+  height: 3px;
+  background: #111927;
+  opacity: var(--hit-velocity);
+}
+.ae-sequencer .ae-sequencer-step[data-playing='true'] {
+  outline: 2px solid #f7fafc;
+  outline-offset: -2px;
+}
+.ae-sequencer button:focus-visible,
+.ae-sequencer input:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+.ae-sequencer .ae-sequencer-step:disabled {
+  opacity: 0.3;
+}
+.ae-sequencer-velocity {
+  padding-top: 12px;
+  border-top: 1px solid #ffffff10;
+  font-size: 11px;
+}
+.ae-sequencer-velocity input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 100%;
+  height: 52px;
+  min-height: 0;
+  accent-color: #92aea9;
+  cursor: ns-resize;
+}
+.ae-sequencer-velocity input:disabled {
+  opacity: 0.15;
+}
+.ae-sequencer footer {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #9ca6b5;
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .ae-sequencer {
+    padding: 12px;
+  }
+  .ae-sequencer-heading {
+    align-items: flex-start;
+  }
+}

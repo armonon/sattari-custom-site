@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Bounce library verification</title>
+<style>body{background:#151922;color:#dfeaff;font:16px system-ui;padding:32px}button,a{padding:16px;color:inherit}pre{white-space:pre-wrap}</style>
+<h1>Bounce / StemDeck library fixtures</h1><p>Generated one-second tones on this isolated QA origin only. No microphone or speaker output.</p>
+<button id="seed">Create test collection</button><a href="/studio">Open Studio</a><pre id="result" role="status">Ready</pre>
+<script type="module">
+import {importLibraryTrack,updateLibraryTrack} from '/src/utils/musicLibrary.js';
+import {libraryOrganization} from '/src/utils/libraryOrganization.js';
+document.querySelector('#seed').onclick=async e=>{
+ e.target.disabled=true;try{
+   const ids=[];
+   for(const [i,title] of ['01 Night Drive','02 Glasshouse','01 Afterlight'].entries()){
+     const pcm=new ArrayBuffer(44+48000*2),v=new DataView(pcm);
+     const text=(at,s)=>[...s].forEach((c,j)=>v.setUint8(at+j,c.charCodeAt(0)));
+     text(0,'RIFF');v.setUint32(4,pcm.byteLength-8,true);text(8,'WAVE');text(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,48000,true);v.setUint32(28,96000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);text(36,'data');v.setUint32(40,96000,true);
+     for(let s=0;s<48000;s++)v.setInt16(44+s*2,Math.sin(2*Math.PI*(220+i*100)*s/48000)*1000,true);
+     const artist=i<2?'Sattari Sessions':'Late Hours',album=i<2?'Night Drive':'Afterlight';
+     const result=await importLibraryTrack(new File([pcm],`${title}.wav`,{type:'audio/wav'}),`${artist}/${album}/${title}.wav`);
+     await updateLibraryTrack(result.track.id,{favorite:i===0,analysis:{bpm:120+i*4,key:i===2?'C major':'A minor'}});ids.push(result.track.id);
+   }
+   const org=await libraryOrganization({type:'create',name:'Bounce verification'});
+   await libraryOrganization({type:'addMany',playlistId:org.playlists.at(-1).id,trackIds:ids});
+   document.querySelector('#result').textContent='Ready: 3 songs, 2 albums, 2 artists, 1 favorite and 1 playlist. Open Studio → Library.';
+ }catch(error){document.querySelector('#result').textContent=error.stack}finally{e.target.disabled=false}
+};
+</script></html>

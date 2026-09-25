@@ -1,0 +1,1501 @@
+.sd-studio-next .sd-arrangement-editor {
+  --ae-head-width: 220px;
+  --ae-control-height: 36px;
+  --ae-compact-height: 32px;
+  color: var(--sd-text, #f0f1f3);
+  background: var(--sd-surface, #18191d);
+  border: 1px solid var(--sd-line-soft, #ffffff14);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-shadow: 0 16px 48px #0000001a;
+}
+.sd-studio-next .sd-arrangement-editor[hidden] {
+  display: none;
+}
+
+/* Dense track headers leave the workspace to the actual timeline. */
+.sd-studio-next .sd-view-arranger .ae-track-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 5px 7px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > input {
+  grid-column: 1;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > small {
+  display: none;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > button {
+  grid-column: 2;
+  grid-row: 1;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > details:not([open]) {
+  grid-column: 1;
+  grid-row: 3;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div:last-child {
+  grid-column: 2;
+  grid-row: 3;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div:last-child label {
+  display: none;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div > label {
+  flex-direction: row;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head:has(details[open]) > div:last-child {
+  grid-column: 1 / -1;
+  grid-row: auto;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head:has(details[open]) > div:last-child label {
+  display: flex;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head:has(details[open]) > small {
+  display: block;
+  grid-column: 1 / -1;
+}
+.sd-studio-next .sd-view-arranger .ae-lane .ae-clip {
+  height: 50px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head:has(details[open]) > details {
+  grid-column: 1 / -1;
+}
+.sd-studio-next .ae-editor-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  border-top: 1px solid var(--sd-line-soft, #ffffff18);
+}
+.sd-studio-next .ae-editor-tabs button[aria-pressed='true'] {
+  color: #9de7d7;
+  border-color: #9de7d766;
+  background: #9de7d719;
+}
+.sd-studio-next .ae-lower-editor {
+  max-height: min(var(--editor-height, 500px), 70dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock {
+  position: relative;
+  inset: auto;
+  height: min(var(--editor-height), 70dvh);
+  max-height: none;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.sd-studio-next
+  .ae-lower-editor
+  .ae-piano-dock
+  :is(.ae-dock-header, .ae-instrument-controls, .ae-toolbar) {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 4px 0;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock :is(.ae-dock-header, .ae-instrument-controls) > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock :is(button, select, input) {
+  min-height: 28px;
+  height: 28px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock label {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock .ae-note-scroll {
+  min-height: 240px;
+}
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-stems,
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-summary-stats,
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-insert-bar > span {
+  display: none;
+}
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) {
+  max-height: 125px;
+  padding: 6px 12px;
+}
+.sd-studio-next .sd-view-arranger > .sd-workspace-heading {
+  padding: 5px 4px;
+}
+.sd-studio-next .sd-view-arranger > .sd-workspace-heading h2 {
+  font-size: 18px;
+}
+.sd-studio-next .sd-view-arranger .ae-scroll {
+  min-height: 200px;
+  height: clamp(200px, 38dvh, 480px);
+  margin: 6px 0;
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor {
+  padding: 10px;
+}
+.sd-studio-next .sd-view-arranger .ae-main-header {
+  padding-bottom: 4px;
+}
+.sd-studio-next .sd-view-arranger .ae-session-tools {
+  margin: 4px 0;
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor > details:not([open]):not(.ae-captures) {
+  grid-column: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 6px;
+  border: 0;
+  font-size: 11px;
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor > details:not([open]) > summary {
+  padding: 8px 0;
+  min-height: 32px;
+}
+.sd-studio-next .sd-view-arranger .ae-scroll {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: var(--sd-surface, #191b20);
+}
+.sd-studio-next .sd-view-arranger .sd-arrangement-editor:has(.ae-piano-dock) .ae-scroll {
+  height: clamp(160px, 26dvh, 240px);
+  min-height: 160px;
+}
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-summary {
+  padding: 4px 0;
+  gap: 10px;
+}
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-insert-bar {
+  border: 0;
+  padding: 0 0 4px;
+}
+.sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-notice {
+  margin: 0;
+  padding: 4px;
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .sd-studio-next .sd-view-arranger .sd-arrangement-editor {
+    grid-template-columns: 1fr;
+  }
+  .sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-heading,
+  .sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-summary > label,
+  .sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-insert-bar {
+    display: none;
+  }
+  .sd-studio-next .sd-output-console.is-compact:not(.is-expanded) .sd-master-summary {
+    grid-template-columns: 1fr auto auto;
+  }
+}
+.sd-studio-next .sd-arrangement-editor header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sd-studio-next .sd-arrangement-editor h3 {
+  font-size: 20px;
+  margin: 0 0 5px;
+}
+.sd-studio-next .sd-arrangement-editor :is(small, footer) {
+  color: var(--sd-muted, #aebdd0);
+  font-size: 12px;
+}
+.sd-studio-next .ae-actions,
+.sd-studio-next .ae-toolbar,
+.sd-studio-next .ae-fields,
+.sd-studio-next .ae-automation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.sd-studio-next .ae-toolbar {
+  margin: 8px 0;
+}
+.sd-studio-next :is(.ae-session-tools, .ae-comp-controls) {
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid var(--sd-line, #35404f);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.sd-studio-next :is(.ae-session-tools, .ae-comp-controls) summary {
+  cursor: pointer;
+  padding: 4px;
+}
+.sd-studio-next .ae-session-tools .ae-fields,
+.sd-studio-next .ae-midi-input {
+  margin-top: 10px;
+}
+.sd-studio-next .ae-locator {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+.sd-studio-next .ae-mobile-tools-toggle {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor > header > div:first-child {
+  display: block;
+}
+.sd-studio-next .sd-arrangement-editor > p[role='status']:empty,
+.sd-studio-next .ae-selection-actions[hidden] {
+  display: none;
+}
+.sd-studio-next .ae-export-settings {
+  margin: 6px 0;
+  font-size: 12px;
+}
+.sd-studio-next .ae-export-settings p {
+  color: var(--sd-muted, #aebdd0);
+  font-size: 12px;
+}
+.sd-studio-next:has(.sd-view-arranger) .sd-output-console > footer {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor button {
+  background: var(--sd-raised, #2b2c32);
+  color: var(--sd-text, #edeef2);
+  border: 1px solid var(--sd-line-soft, #ffffff18);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  line-height: 20px;
+}
+.sd-studio-next .sd-arrangement-editor button:hover:not(:disabled) {
+  background-color: var(--sd-hover, #383a43);
+  border-color: #ffffff35;
+}
+.sd-studio-next .ae-actions > button,
+.sd-studio-next .ae-zoom-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.sd-studio-next .ae-main-header .ae-play-button {
+  background: #9de7d7;
+  border-color: transparent;
+  color: #132c26;
+}
+.sd-studio-next .ae-main-header .ae-play-button:hover:not(:disabled) {
+  background: #b8f3e6;
+}
+.sd-studio-next .ae-main-header {
+  align-items: center;
+  padding-bottom: 14px;
+}
+.sd-studio-next .ae-main-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.sd-studio-next .ae-more-sources {
+  position: relative;
+  font-size: 14px;
+}
+.sd-studio-next .ae-more-sources summary {
+  cursor: pointer;
+  padding: 8px 10px;
+}
+.sd-studio-next .ae-more-sources > div {
+  position: absolute;
+  z-index: 12;
+  top: 100%;
+  right: 0;
+  width: 190px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--sd-line, #ffffff20);
+  border-radius: 12px;
+  background: var(--sd-raised, #24252b);
+  box-shadow: 0 12px 30px #0006;
+}
+.sd-studio-next .ae-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #ffffff0e;
+  border-bottom: 1px solid #ffffff0e;
+}
+.sd-studio-next .ae-time-display {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-studio-next .ae-time-display > span {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #8f949f;
+}
+.sd-studio-next .ae-time-display output {
+  font-size: 23px;
+  font-weight: 500;
+  min-width: 58px;
+}
+.sd-studio-next .ae-time-display em {
+  font-style: normal;
+  color: #777d87;
+}
+.sd-studio-next .ae-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.sd-studio-next .ae-zoom-controls input {
+  width: 90px;
+  padding: 0;
+  accent-color: #9de7d7;
+}
+.sd-studio-next :is(.ae-edit-tools, .ae-session-tools, .ae-export-settings) {
+  border: 0;
+  border-bottom: 1px solid #ffffff0b;
+  border-radius: 0;
+  margin: 0;
+  padding: 7px 0;
+  color: #aeb2bd;
+  font-size: 14px;
+}
+.sd-studio-next :is(.ae-edit-tools, .ae-session-tools, .ae-export-settings) > summary {
+  cursor: pointer;
+  padding: 5px;
+}
+.sd-studio-next .ae-edit-tools[open] > summary {
+  color: var(--sd-text, #eef0f5);
+}
+.sd-studio-next .sd-arrangement-editor button[aria-pressed='true'] {
+  border-color: #9de7d7;
+  background: #25413c;
+}
+.sd-studio-next .sd-arrangement-editor button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sd-studio-next .sd-arrangement-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #c6d3e5;
+}
+.sd-studio-next .sd-arrangement-editor :is(input, select) {
+  color: #eef3fa;
+  background: var(--sd-bg, #15161a);
+  border: 1px solid var(--sd-line, #ffffff25);
+  border-radius: 6px;
+  padding: 6px;
+  min-width: 0;
+  max-width: 170px;
+  box-sizing: border-box;
+}
+
+.sd-studio-next .sd-arrangement-editor input[type='number'] {
+  width: 105px;
+}
+.sd-studio-next .sd-arrangement-editor :focus-visible {
+  outline: 2px solid #9ac7ff;
+  outline-offset: 2px;
+}
+.sd-studio-next .ae-scroll {
+  overflow: auto;
+  min-height: 360px;
+  max-height: 62vh;
+  border: 1px solid #ffffff1a;
+  border-radius: 10px;
+  margin: 12px 0;
+  scrollbar-color: #555861 var(--sd-surface, #1c1d22);
+  overscroll-behavior: contain;
+}
+.sd-studio-next .ae-ruler {
+  display: flex;
+  height: 35px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--sd-raised, #292b31);
+}
+.sd-studio-next .ae-ruler > span {
+  width: var(--ae-head-width);
+  flex-shrink: 0;
+  padding: 8px;
+  position: sticky;
+  left: 0;
+  background: var(--sd-raised, #292b31);
+  z-index: 3;
+}
+.sd-studio-next .ae-ruler button {
+  display: block;
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  background: var(--sd-raised, #24262c);
+}
+.sd-studio-next .ae-ruler i {
+  position: absolute;
+  top: 8px;
+  font-style: normal;
+  border-left: 1px solid #718097;
+  padding-left: 5px;
+}
+.sd-studio-next .ae-track {
+  display: flex;
+  border-top: 1px solid var(--sd-line-soft, #ffffff13);
+}
+.sd-studio-next .ae-track-head {
+  width: var(--ae-head-width);
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  padding: 8px;
+  z-index: 4;
+  background: var(--sd-panel, #22242a);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sd-studio-next .ae-track-head > div {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.sd-studio-next .ae-track-head input[type='number'] {
+  width: 55px;
+}
+.sd-studio-next .ae-track-head input[type='range'] {
+  width: 90px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 3px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div:not(:last-child) {
+  grid-column: 1 / -1;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > button {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head button {
+  min-height: 28px;
+  padding: 4px 8px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head input {
+  min-height: 28px;
+  padding: 4px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > small {
+  align-self: center;
+}
+.sd-studio-next .ae-lane {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 140px;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffffff09 0 1px,
+    var(--sd-surface, #191b20) 1px var(--ae-grid, 40px)
+  );
+}
+.sd-studio-next .ae-lane .ae-clip {
+  position: absolute;
+  height: 72px;
+  background: #264b48;
+  border-color: #72bbae;
+  border-radius: 7px;
+  overflow: hidden;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  touch-action: none;
+}
+.ae-trim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: ew-resize;
+  z-index: 2;
+}
+.ae-trim.is-start {
+  left: 0;
+  border-left: 3px solid #c6e1ff;
+}
+.ae-trim.is-end {
+  right: 0;
+  border-right: 3px solid #c6e1ff;
+}
+.ae-track-options {
+  font-size: 11px;
+}
+.ae-track-options[open] {
+  display: flex;
+  flex-wrap: wrap;
+}
+.sd-studio-next .ae-track-options button {
+  font-size: 11px;
+  margin: 3px 0;
+  min-height: 30px;
+}
+.ae-curve {
+  flex-basis: 100%;
+  min-width: 0;
+}
+.ae-curve svg {
+  width: 100%;
+  height: 140px;
+  background: #121925;
+  border: 1px solid #45566d;
+  border-radius: 5px;
+  touch-action: none;
+  overflow: visible;
+}
+.ae-curve circle {
+  cursor: grab;
+}
+.ae-curve p {
+  font-size: 12px;
+}
+.ae-note-scroll {
+  overflow: auto;
+  max-height: 420px;
+  border: 1px solid #34445a;
+  border-radius: 8px;
+  overscroll-behavior: contain;
+}
+.ae-note-surface {
+  position: relative;
+  touch-action: none;
+}
+.ae-ghost-note {
+  position: absolute;
+  top: 5px;
+  height: 14px;
+  border: 1px solid #b6c2d855;
+  border-radius: 3px;
+  background: #a1acc51a;
+  pointer-events: none;
+}
+.ae-note-marquee {
+  position: absolute;
+  background: #8db8ff26;
+  border: 1px solid #91baff;
+  pointer-events: none;
+  z-index: 8;
+}
+.sd-studio-next .ae-piano-dock {
+  position: fixed;
+  z-index: 90;
+  bottom: 12px;
+  left: 20px;
+  right: 20px;
+  height: min(var(--editor-height), 72dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  color: #e4e8f0;
+  background: #171a21;
+  border: 1px solid #ffffff28;
+  border-radius: 14px;
+  box-shadow: 0 -12px 50px #0008;
+  padding: 0 16px 16px;
+}
+.sd-studio-next .ae-dock-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  background: #171a21;
+  border-bottom: 1px solid var(--sd-line-soft, #ffffff18);
+}
+.ae-dock-header strong {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-right: auto;
+}
+.ae-dock-header label,
+.ae-instrument-controls label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+.ae-dock-header select {
+  max-width: 240px;
+}
+.ae-dock-size input {
+  width: 80px;
+}
+.ae-instrument-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+.ae-instrument-controls span {
+  font-size: 12px;
+  color: #b0b8cc;
+}
+.ae-piano-dock .ae-note-scroll {
+  height: 240px;
+  resize: vertical;
+  min-height: 144px;
+  max-height: 60vh;
+}
+.ae-dock-empty {
+  padding: 24px;
+  text-align: center;
+}
+.ae-voice-options {
+  font-size: 12px;
+  position: relative;
+}
+.ae-voice-options summary {
+  cursor: pointer;
+}
+.ae-voice-options > div {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  z-index: 12;
+  display: grid;
+  gap: 8px;
+  width: 250px;
+  padding: 14px;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+  background: #20232c;
+  box-shadow: 0 8px 30px #0009;
+}
+.ae-voice-options input {
+  width: 95px;
+}
+.sd-studio-next .ae-piano-dock {
+  display: flex;
+  flex-direction: column;
+  height: min(var(--editor-height), 62dvh);
+  overflow: hidden;
+  padding-bottom: 8px;
+}
+.sd-studio-next .ae-piano-dock .ae-dock-header {
+  padding: 6px 0;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+.sd-studio-next .ae-piano-dock .ae-dock-header label,
+.sd-studio-next .ae-piano-dock .ae-instrument-controls label {
+  flex-direction: row;
+  margin: 0;
+}
+.sd-studio-next .ae-piano-dock .ae-instrument-controls {
+  padding: 6px 0;
+  flex-shrink: 0;
+}
+.sd-studio-next .ae-piano-dock .ae-notes {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ae-piano-dock .ae-notes > header,
+.ae-piano-dock .ae-note-help {
+  display: none;
+}
+.sd-studio-next .ae-piano-dock .ae-notes .ae-toolbar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 4px 0;
+}
+.ae-piano-dock .ae-notes .ae-toolbar > * {
+  flex-shrink: 0;
+}
+.ae-piano-dock .ae-note-scroll {
+  flex: 1;
+  min-height: 96px;
+  height: auto;
+  resize: none;
+}
+.ae-piano-dock .ae-note-options {
+  flex-shrink: 0;
+  max-height: 130px;
+  overflow: auto;
+  font-size: 12px;
+}
+.ae-piano-dock .ae-note-options summary {
+  padding: 4px 0;
+}
+.ae-piano-dock .ae-velocity-lane {
+  flex-shrink: 0;
+  height: 68px;
+}
+.ae-piano-dock .ae-velocity-surface,
+.ae-piano-dock .ae-velocity-label {
+  height: 54px;
+}
+.ae-piano-dock .ae-velocity-lane label,
+.sd-studio-next .ae-piano-dock .ae-velocity-lane input {
+  height: 46px;
+}
+.ae-piano-dock .ae-note-properties {
+  max-height: 130px;
+  flex-shrink: 0;
+  overflow: auto;
+  font-size: 12px;
+}
+.ae-piano-dock .ae-note-properties summary {
+  padding-top: 4px;
+  cursor: pointer;
+}
+.sd-studio-next .ae-piano-dock .ae-fields {
+  margin: 6px 0;
+}
+@media (max-width: 700px) {
+  .sd-studio-next .ae-piano-dock {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    padding: 0 10px 10px;
+    height: min(var(--editor-height), 65dvh);
+  }
+  .ae-dock-size {
+    display: none !important;
+  }
+  .ae-dock-header select {
+    max-width: 160px;
+  }
+}
+.ae-note-row {
+  display: flex;
+  height: 24px;
+}
+.sd-studio-next .ae-note-row .ae-key {
+  flex: 0 0 64px;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  color: #142235;
+  background: var(--sd-text, #eef1f5);
+  border-radius: 0;
+  min-height: 24px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+.sd-studio-next .ae-note-row .ae-key.is-black {
+  background: #121721;
+  color: #dce9fa;
+  border-right: 12px solid #8293a8;
+}
+.ae-note-cells {
+  display: flex;
+  position: relative;
+  flex: 0 0 auto;
+  background: #1c2430;
+  border-bottom: 1px solid #ffffff09;
+}
+.ae-note-row.is-black .ae-note-cells {
+  background: #141b25;
+}
+.ae-note-row.in-scale .ae-note-cells {
+  background: #263d3c;
+}
+.sd-studio-next .ae-note-row .ae-note-grid {
+  width: 100%;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    repeating-linear-gradient(to right, #ffffff15 0 1px, transparent 1px var(--note-grid)),
+    repeating-linear-gradient(to right, #ffffff28 0 1px, transparent 1px var(--note-beat));
+}
+.ae-note-ruler {
+  position: sticky;
+  top: 0;
+  height: 24px;
+  background: #101720;
+  z-index: 7;
+}
+.ae-note-ruler span {
+  position: absolute;
+  top: 3px;
+  font-size: 11px;
+  color: #b4c8de;
+  padding-left: 5px;
+  border-left: 1px solid #7f92a5;
+}
+.ae-note-help {
+  color: #a9b6c6;
+  font-size: 12px;
+}
+.ae-velocity-lane {
+  overflow-x: auto;
+  padding: 0;
+  height: 94px;
+  border: 1px solid #34445a;
+  border-top: 0;
+}
+.ae-velocity-surface {
+  position: relative;
+  height: 78px;
+}
+.ae-velocity-label {
+  position: sticky;
+  display: inline-flex;
+  left: 0;
+  width: 64px;
+  height: 78px;
+  align-items: center;
+  background: #171a21;
+  z-index: 5;
+  font-size: 10px;
+}
+.ae-velocity-lane label {
+  position: absolute;
+  bottom: 3px;
+  width: 12px;
+  height: 68px;
+}
+.sd-studio-next .ae-velocity-lane input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: slider-vertical;
+  width: 12px;
+  height: 68px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #a28bff;
+}
+.ae-velocity-lane label.is-selected input {
+  accent-color: #78e3d0;
+}
+.ae-velocity-lane label.is-selected {
+  z-index: 3;
+}
+.sd-studio-next .ae-instrument-controls input[type='number'] {
+  width: 72px;
+}
+@media (max-width: 700px) {
+  .sd-studio-next .ae-piano-dock {
+    height: 85dvh;
+    overflow: auto;
+  }
+  .sd-studio-next .ae-piano-dock .ae-notes {
+    min-height: 270px;
+  }
+  .sd-studio-next .ae-piano-dock .ae-instrument-controls {
+    max-height: 125px;
+    overflow: auto;
+  }
+  .ae-voice-options > div {
+    position: static;
+    width: 100%;
+  }
+}
+.ae-note-options summary {
+  cursor: pointer;
+  color: #b4c8de;
+  padding: 8px 0;
+}
+.sd-studio-next .ae-note-row .ae-note-cell {
+  width: 36px;
+  flex: 0 0 36px;
+  padding: 0;
+  background: #1e2938;
+  border-color: #34445a;
+  border-radius: 0;
+  min-height: 30px;
+}
+.sd-studio-next .ae-note-row .ae-midi-note {
+  position: absolute;
+  height: 20px;
+  min-height: 20px;
+  top: 2px;
+  padding: 2px;
+  font-size: 10px;
+  background: #8a67ca;
+  border-color: #c6a6ff;
+  overflow: hidden;
+  touch-action: none;
+}
+.sd-studio-next .ae-note-row .ae-midi-note.is-selected {
+  background: #597ebb;
+  border: 2px solid #d4e9ff;
+}
+.ae-note-end {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  background: #ffffff40;
+}
+.sd-studio-next .ae-notes .ae-toolbar {
+  gap: 8px;
+}
+.sd-studio-next .ae-lane .ae-clip.midi {
+  background: #493762;
+  border-color: #b394de;
+}
+.sd-studio-next .ae-clip strong {
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sd-studio-next .ae-clip svg {
+  width: 100%;
+  height: 20px;
+  fill: none;
+  stroke: #9cd6ff;
+  stroke-width: 1;
+}
+.sd-studio-next .ae-playhead {
+  width: 1px;
+  background: #ffcc80;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.sd-studio-next .ae-empty {
+  padding: 40px;
+  max-width: 700px;
+  color: #bac8d9;
+}
+.sd-studio-next .ae-canvas-tail {
+  display: flex;
+  min-height: 160px;
+  border-top: 1px solid #ffffff10;
+}
+.sd-studio-next .ae-canvas-tail.is-empty {
+  min-height: 320px;
+}
+.sd-studio-next .ae-tail-head {
+  width: var(--ae-head-width);
+  flex: 0 0 var(--ae-head-width);
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  background: #202228;
+}
+.sd-studio-next .ae-tail-head > svg {
+  color: #9de7d7;
+}
+.sd-studio-next .ae-tail-head strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.sd-studio-next .ae-tail-head small {
+  line-height: 1.6;
+}
+.sd-studio-next .ae-tail-head button {
+  width: 100%;
+  text-align: left;
+}
+.sd-studio-next .ae-empty-grid {
+  position: relative;
+  flex: 0 0 auto;
+  background-color: var(--sd-surface, #191b20);
+  background-image:
+    repeating-linear-gradient(90deg, #ffffff07 0 1px, transparent 1px var(--ae-grid)),
+    repeating-linear-gradient(0deg, #ffffff0b 0 1px, transparent 1px 80px),
+    repeating-linear-gradient(90deg, #ffffff0b 0 1px, transparent 1px var(--ae-bar));
+}
+.sd-studio-next .ae-empty-hint {
+  position: sticky;
+  left: calc(var(--ae-head-width) + 24px);
+  margin: 84px 28px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(330px, calc(100vw - var(--ae-head-width) - 100px));
+  color: #969ca8;
+  pointer-events: none;
+}
+.sd-studio-next .ae-empty-hint strong {
+  color: #d6d9e0;
+  font-size: 16px;
+  font-weight: 500;
+}
+.sd-studio-next .ae-empty-hint span {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.sd-studio-next .ae-inspector {
+  border: 1px solid var(--sd-line-soft, #ffffff18);
+  border-radius: 12px;
+  background: #202228;
+  padding: 14px;
+  margin: 15px 0;
+}
+.sd-studio-next .sd-arrangement-editor > footer {
+  font-size: 12px;
+  line-height: 1.6;
+  padding-top: 10px;
+  opacity: 0.7;
+}
+.sd-studio-next .ae-inspector h4 {
+  margin: 8px 0;
+  flex-basis: 100%;
+}
+.sd-studio-next .ae-fields {
+  margin: 15px 0;
+}
+.sd-studio-next .ae-automation ul {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 0;
+  list-style: none;
+}
+.sd-studio-next .ae-automation li button {
+  margin-left: 8px;
+}
+.sd-studio-next .ae-captures {
+  margin: 14px 0;
+}
+.sd-studio-next .ae-captures ol {
+  max-height: 240px;
+  overflow: auto;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .sd-studio-next .ae-navigation {
+    gap: 10px;
+  }
+  .sd-studio-next .sd-view-arranger .ae-editor-tabs,
+  .sd-studio-next .sd-view-arranger .ae-zoom-controls {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .sd-studio-next .sd-view-arranger .ae-editor-tabs button,
+  .sd-studio-next .sd-view-arranger .ae-zoom-controls button {
+    flex-shrink: 0;
+  }
+  .sd-studio-next .ae-zoom-controls {
+    width: 100%;
+  }
+  .sd-studio-next .ae-zoom-controls input {
+    flex: 1;
+    max-width: 110px;
+    min-width: 40px;
+  }
+  .sd-studio-next .ae-zoom-controls button {
+    min-height: 40px;
+    padding: 8px;
+  }
+  .sd-studio-next .ae-main-header {
+    gap: 12px;
+  }
+  .sd-studio-next .ae-empty-hint {
+    margin: 72px 14px 0;
+    left: calc(var(--ae-head-width) + 14px);
+  }
+  .sd-studio-next .ae-tail-head {
+    padding: 14px 8px;
+  }
+  .sd-studio-next .ae-tail-head button {
+    font-size: 12px;
+    min-height: 40px;
+    padding: 8px;
+  }
+  .sd-studio-next .ae-more-sources > div {
+    position: static;
+  }
+  .sd-studio-next .ae-mobile-tools-toggle {
+    display: block;
+    margin: 8px 0;
+    width: 100%;
+  }
+  .sd-studio-next :is(.ae-toolbar, .ae-export-settings)[data-mobile-open='false'] {
+    display: none;
+  }
+  .sd-studio-next .sd-arrangement-editor {
+    padding: 10px;
+    --ae-head-width: 150px;
+  }
+  .sd-studio-next .sd-arrangement-editor > header .ae-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 4px;
+  }
+  .sd-studio-next .sd-arrangement-editor > header .ae-actions button {
+    flex-shrink: 0;
+  }
+  .sd-studio-next .ae-track-head input {
+    max-width: 130px;
+  }
+  .sd-studio-next .ae-track-head > div {
+    flex-wrap: wrap;
+  }
+  .sd-studio-next .sd-arrangement-editor button {
+    min-height: 44px;
+  }
+}
+
+/* Align control edges, not the midpoint of a field plus its caption. Keep
+   timeline clips, piano keys and velocity handles out of this sizing contract. */
+.sd-studio-next .sd-arrangement-editor :is(.ae-toolbar, .ae-fields, .ae-automation) {
+  align-items: flex-end;
+  gap: 8px;
+}
+.sd-studio-next
+  .sd-arrangement-editor
+  :is(
+    .ae-actions,
+    .ae-toolbar,
+    .ae-fields,
+    .ae-automation,
+    .ae-navigation,
+    .ae-editor-tabs,
+    .ae-dock-header,
+    .ae-instrument-controls,
+    .ae-rack-heading,
+    .ae-rack-presets,
+    .ae-rack-device-heading,
+    .ae-rack-instrument
+  )
+  > button,
+.sd-studio-next .sd-arrangement-editor .ae-zoom-controls > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--ae-control-height);
+  height: var(--ae-control-height);
+  padding: 0 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sd-studio-next .sd-arrangement-editor button > svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.sd-studio-next
+  .sd-arrangement-editor
+  :is(
+    .ae-toolbar,
+    .ae-fields,
+    .ae-automation,
+    .ae-dock-header,
+    .ae-instrument-controls,
+    .ae-rack-heading,
+    .ae-rack-presets
+  )
+  > label {
+  margin: 0;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+.sd-studio-next
+  .sd-arrangement-editor
+  :is(
+    .ae-toolbar,
+    .ae-fields,
+    .ae-automation,
+    .ae-dock-header,
+    .ae-instrument-controls,
+    .ae-rack-heading,
+    .ae-rack-presets
+  )
+  > label
+  > :is(select, input:not([type='checkbox'])) {
+  min-height: var(--ae-control-height);
+  height: var(--ae-control-height);
+  margin: 0;
+}
+.sd-studio-next
+  .sd-arrangement-editor
+  :is(.ae-fields, .ae-toolbar, .ae-automation)
+  > label:has(> input[type='checkbox']) {
+  flex-direction: row;
+  align-items: center;
+  min-height: var(--ae-control-height);
+  gap: 6px;
+}
+.sd-studio-next .sd-arrangement-editor .ae-main-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.sd-studio-next .sd-arrangement-editor .ae-main-header > .ae-actions {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sd-studio-next .sd-arrangement-editor .ae-more-sources > summary {
+  box-sizing: border-box;
+  min-height: var(--ae-control-height);
+  padding: 7px 10px;
+  line-height: 20px;
+  border: 1px solid var(--sd-line-soft, #ffffff18);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.sd-studio-next .ae-zoom-controls > button[aria-label] {
+  width: var(--ae-control-height);
+  padding: 0;
+}
+.sd-studio-next .ae-zoom-controls > input[type='range'] {
+  height: var(--ae-control-height);
+  min-height: var(--ae-control-height);
+  margin: 0;
+  flex-shrink: 0;
+}
+.sd-studio-next .ae-editor-tabs {
+  align-items: center;
+  gap: 8px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 6px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head :is(button, input:not([type='range'])),
+.sd-studio-next .sd-view-arranger .ae-track-head > details > summary {
+  box-sizing: border-box;
+  min-height: var(--ae-compact-height);
+  height: var(--ae-compact-height);
+  line-height: 20px;
+  padding: 5px 6px;
+  margin: 0;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > input {
+  width: 100%;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div {
+  align-items: center;
+  gap: 6px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > div > button[aria-pressed] {
+  width: var(--ae-compact-height);
+  padding: 0;
+  flex-shrink: 0;
+}
+.sd-studio-next .sd-view-arranger .ae-track-head > details > summary {
+  height: auto;
+  font-size: 11px;
+}
+.sd-studio-next .sd-view-arranger .ae-track-options[open] > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 6px;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock {
+  --ae-control-height: 32px;
+}
+.sd-studio-next .ae-lower-editor .ae-piano-dock.is-expanded {
+  position: fixed;
+  inset: 12px;
+  height: calc(100dvh - 24px);
+  max-height: none;
+  z-index: 120;
+  box-shadow: 0 12px 80px #000b;
+  border-radius: 14px;
+}
+.sd-studio-next .sd-arrangement-editor .ae-voice-options > summary {
+  box-sizing: border-box;
+  min-height: var(--ae-control-height);
+  padding: calc((var(--ae-control-height) - 22px) / 2) 8px;
+  line-height: 20px;
+  border: 1px solid var(--sd-line-soft, #ffffff18);
+  border-radius: 8px;
+}
+.sd-studio-next .sd-arrangement-editor .ae-voice-options > div {
+  top: 100%;
+}
+.sd-studio-next .sd-arrangement-editor .ae-rack :is(.ae-rack-heading, .ae-rack-presets) {
+  align-items: flex-end;
+  gap: 8px;
+}
+@media (max-width: 1000px) {
+  .sd-studio-next .sd-arrangement-editor .ae-main-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-main-header > .ae-actions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-dock-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px 64px;
+    gap: 6px;
+    overflow: visible;
+  }
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-dock-header > strong {
+    grid-row: 1;
+    grid-column: 1;
+    min-width: 0;
+    font-size: 12px;
+  }
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-piano-expand {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-piano-close {
+    grid-row: 1;
+    grid-column: 3;
+  }
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-dock-header > label:not(.ae-dock-size) {
+    grid-row: 2;
+    grid-column: 1 / 3;
+    min-width: 0;
+  }
+  .sd-studio-next .ae-lower-editor .ae-piano-dock .ae-dock-header select {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1;
+  }
+  .sd-studio-next
+    .ae-lower-editor
+    .ae-piano-dock
+    .ae-dock-header
+    > button:not(.ae-piano-expand):not(.ae-piano-close) {
+    grid-row: 2;
+    grid-column: 3;
+    white-space: normal;
+    line-height: 1.1;
+    font-size: 10px;
+  }
+  .sd-studio-next .sd-arrangement-editor,
+  .sd-studio-next .ae-lower-editor .ae-piano-dock {
+    --ae-control-height: 44px;
+    --ae-compact-height: 44px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-main-header > .ae-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    width: 100%;
+    padding: 0;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-main-header > .ae-actions > button {
+    width: 100%;
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-more-sources > summary {
+    padding: 11px 6px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-more-sources > div {
+    position: absolute;
+    width: min(240px, 75vw);
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-navigation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-navigation > button {
+    grid-column: 2;
+    grid-row: 1;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-time-display {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .sd-studio-next .ae-time-display > span {
+    display: none;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-zoom-controls {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-block: 2px;
+    overflow: visible;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-zoom-controls > input {
+    grid-column: 2 / 6;
+    width: 100%;
+    max-width: none;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-zoom-controls > button {
+    width: 100%;
+    padding-inline: 6px;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-zoom-controls > button:nth-last-child(2) {
+    grid-column: 1 / 4;
+  }
+  .sd-studio-next .sd-arrangement-editor .ae-zoom-controls > button:last-child {
+    grid-column: 4 / 7;
+  }
+  .sd-studio-next .sd-view-arranger .ae-track-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sd-studio-next .sd-view-arranger .ae-track-head > :is(input, button, details, div),
+  .sd-studio-next .sd-view-arranger .ae-track-head > details:not([open]),
+  .sd-studio-next .sd-view-arranger .ae-track-head > div:last-child {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .sd-studio-next .sd-view-arranger .ae-track-head > div {
+    flex-wrap: wrap;
+  }
+}

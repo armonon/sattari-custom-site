@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Master processing verification</title>
+<style>body{background:#151922;color:#dfeaff;font:16px system-ui;padding:32px}button{padding:16px}pre{white-space:pre-wrap}</style>
+<h1>Master processing verification</h1>
+<p>Offline generated audio only. No microphone, speaker output or existing project changes.</p>
+<button id="run">Run master checks</button><pre id="result" role="status">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import {StudioAudioEngine} from '/src/utils/studioAudioEngine.js';
+import {ArrangementEngine} from '/src/utils/arrangementEngine.js';
+import {emptyArrangement,audioTrack,audioClip} from '/src/utils/arrangementModel.js';
+import {wavBytes} from '/src/utils/arrangementExport.js';
+import {putAudioAsset,deleteAudioAsset} from '/src/utils/audioProjectStore.js';
+const assert=(ok,message)=>{if(!ok)throw Error(message)};
+const rms=buffer=>{const pcm=buffer.getChannelData(0);let sum=0;for(let i=24000;i<40000;i++)sum+=pcm[i]*pcm[i];return Math.sqrt(sum/16000)};
+const difference=(a,b)=>{let maximum=0;for(let i=24000;i<40000;i++)maximum=Math.max(maximum,Math.abs(a.getChannelData(0)[i]-b.getChannelData(0)[i]));return maximum};
+const tone=(raw)=>{const b=raw.createBuffer(2,48000,48000);for(let c=0;c<2;c++)for(let i=0;i<b.length;i++)b.getChannelData(c)[i]=.08*Math.sin(2*Math.PI*400*i/48000);return b};
+document.querySelector('#run').onclick=async event=>{
+ event.target.disabled=true;const result=document.querySelector('#result');result.textContent='';let passed=0,failed=0,asset;
+ const test=async(name,fn)=>{try{await fn();passed++;result.textContent+=`PASS ${name}\n`}catch(e){failed++;result.textContent+=`FAIL ${name}: ${e.stack}\n`}};
+ const previous=Tone.getContext();
+ const live=async(processing,monitor={})=>{
+   const context=new Tone.OfflineContext(2,1.1,48000);Tone.setContext(context);let engine;
+   try{
+     engine=new StudioAudioEngine({monitor:false,recorder:false,metering:false});engine.setMasterLevel(100);engine.setLimiter(false);engine.setMasterProcessing(processing);engine.setMasterMonitor(monitor);
+     Tone.connect(engine.output,context.rawContext.destination);
+     const source=context.rawContext.createBufferSource();source.buffer=tone(context.rawContext);Tone.connect(source,engine.master);source.start(0);
+     return (await context.render(false)).get();
+   }finally{engine?.dispose();Tone.setContext(previous);context.dispose()}
+ };
+ const context=new Tone.OfflineContext(2,1.1,48000),engine=new ArrangementEngine(context,context.rawContext.destination);
+ try{
+   asset=await putAudioAsset(new Blob([wavBytes(tone(context.rawContext))],{type:'audio/wav'}),{name:'master-pro-generated-verification'});
+   const track=audioTrack('Generated check');track.clips=[audioClip(asset.id,'Tone',1)];
+   const project={...emptyArrangement(),tracks:[track]};
+   const render=(processing,trackId=null)=>engine.render(project,{level:100,limiter:false,compression:false,processing},trackId);
+   const clean=await render({});
+   await test('input trim and pre-limiter trim each change rendered amplitude by exactly -6 dB',async()=>{
+     for(const key of ['inputTrim','limiterDrive']){const changed=await render({[key]:-6});assert(Math.abs(20*Math.log10(rms(changed)/rms(clean))+6)<.01,`${key}: wrong gain`)}
+   });
+   await test('equal and opposite trims cancel with dynamics disabled',async()=>{
+     const changed=await render({inputTrim:-6,limiterDrive:6});assert(difference(clean,changed)<1e-5,'gain staging mismatch');
+   });
+   await test('EQ crossover frequency changes the actual rendered sound',async()=>{
+     const a=await render({low:-12,lowFrequency:100}),b=await render({low:-12,lowFrequency:800});assert(Math.abs(rms(a)-rms(b))>.005,'crossover disconnected');
+   });
+   await test('live and exported master processing agree after smoothing settles',async()=>{
+     const settings={inputTrim:-4,limiterDrive:2,low:-3,mid:2,high:-1,lowFrequency:400,highFrequency:4000};
+     const a=await live(settings),b=await render(settings);assert(difference(a,b)<1e-4,`live/export difference ${difference(a,b)}`);
+   });
+   await test('speaker mute/mono/dim do not alter program output',async()=>{
+     const a=await live({inputTrim:-4}),b=await live({inputTrim:-4},{muted:true,mono:true,dimmed:true});assert(difference(a,b)<1e-6,'monitor changed program');
+   });
+   await test('raw stem export excludes new master trims and EQ',async()=>{
+     const a=await render({},track.id),b=await render({inputTrim:-18,limiterDrive:6,low:-12,lowFrequency:800},track.id);assert(difference(a,b)<1e-6,'pre-master stem processed');
+   });
+   await test('delivery references do not change exported audio',async()=>{
+     const b=await render({targetLufs:-8,targetPeak:-6});assert(difference(clean,b)<1e-6,'target changed audio');
+   });
+ }catch(e){failed++;result.textContent+=`FAIL setup: ${e.stack}\n`}
+ finally{engine.dispose();context.dispose();if(asset)await deleteAudioAsset(asset.id);Tone.setContext(previous);result.textContent+=`\n${passed} passed, ${failed} failed`;event.target.disabled=false}
+};
+</script></html>

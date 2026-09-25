@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Performance recovery and replay QA</title>
+  <style>
+    body {
+      background: #151922;
+      color: #eef;
+      font: 16px system-ui;
+      padding: 24px;
+    }
+    button {
+      padding: 14px;
+    }
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+  <h1>Performance recovery and replay verification</h1>
+  <p>
+    Generated signals only. No microphone permission, speaker output or live-session data. The
+    recording soak runs for 60 seconds.
+  </p>
+  <button id="quick">Run replay and journal checks</button>
+  <button id="run">Run replay and recording soak</button>
+  <pre id="result" role="status">Ready</pre>
+  <script type="module">
+    import * as Tone from 'tone';
+    import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+    import { PerformancePlayer } from '/src/utils/performancePlayer.js';
+    import { PerformanceJournal, journalStore } from '/src/utils/performanceJournal.js';
+    import { recoverSourceCaptures } from '/src/utils/sourceCapture.js';
+    import {
+      putAudioAsset,
+      getAudioAsset,
+      deleteAudioAsset,
+    } from '/src/utils/audioProjectStore.js';
+    import { wavBytes } from '/src/utils/arrangementExport.js';
+    import { newEffect } from '/src/utils/arrangementEffects.js';
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      assert = (v, m) => {
+        if (!v) throw Error(m);
+      };
+    document.querySelector('#quick').onclick = document.querySelector('#run').onclick = async (
+      event
+    ) => {
+      event.target.disabled = true;
+      const result = document.querySelector('#result');
+      result.textContent = '';
+      let passed = 0,
+        failed = 0;
+      const test = async (name, fn) => {
+        try {
+          await fn();
+          passed++;
+          result.textContent += `PASS ${name}\n`;
+        } catch (e) {
+          failed++;
+          result.textContent += `FAIL ${name}: ${e.stack}\n`;
+        }
+      };
+      let owner, player, asset, journal, soak, tone, automation;
+      const cleanup = async (engine) => {
+        const sources = engine?.capturedSources?.();
+        for (const track of sources?.tracks || [])
+          for (const clip of track.clips) await deleteAudioAsset(clip.assetId);
+        if (engine?.performanceJournal?.take?.id || sources?.id)
+          await journalStore.removeTestTake(engine?.performanceJournal?.take?.id, sources?.id);
+      };
+      try {
+        await Tone.start();
+        owner = new StudioAudioEngine({ monitor: false });
+        const raw = owner.getAudioContext().rawContext;
+        await test('disabled source changes do not load missing assets during actual replay preparation', async () => {
+          const capture = {
+            duration: 2,
+            events: [
+              { time: 0, type: 'initialState', args: [{ dspVersion: 2, decks: [], pads: [] }] },
+              {
+                time: 1,
+                type: 'setLaneState',
+                args: ['A', 'full', { assetId: 'qa-missing-disabled-lane' }],
+                disabled: true,
+              },
+              {
+                time: 1.5,
+                type: 'padSource',
+                args: [0, { assetId: 'qa-missing-disabled-pad' }],
+                disabled: true,
+              },
+            ],
+          };
+          const disabled = new PerformancePlayer(owner);
+          try {
+            await disabled.prepare(capture);
+            assert(disabled.buffers.size === 0, 'disabled events left decoded dependencies');
+          } finally {
+            disabled.dispose();
+          }
+          for (const index of [1, 2]) {
+            const enabled = structuredClone(capture),
+              replay = new PerformancePlayer(owner);
+            enabled.events[index].disabled = false;
+            let rejected = false;
+            try {
+              await replay.prepare(enabled);
+            } catch (error) {
+              rejected = /source missing/i.test(error.message);
+            } finally {
+              replay.dispose();
+            }
+            assert(
+              rejected,
+              `enabled missing source ${enabled.events[index].type} was not rejected`
+            );
+          }
+        });
+        await test('committed in-progress events survive closing and reopening the journal', async () => {
+          journal = new PerformanceJournal({ clock: () => 3 });
+          await journal.start({ name: 'QA interrupted take' });
+          journal.append({ time: 0, type: 'initialState', args: [{ dspVersion: 2, decks: [] }] });
+          journal.append({
+            time: 2,
+            type: 'setMasterProcessing',
+            args: [{ effects: [newEffect('echo')] }],
+          });
+          await journal.flush();
+          journal.dispose();
+          const recovered = (await journalStore.recover()).find((t) => t.id === journal.take.id);
+          assert(
+            recovered.state === 'recording' && recovered.events.length === 2,
+            'in-progress event history missing'
+          );
+          assert(recovered.duration === 3, 'recovery duration missing');
+        });
+        const buffer = raw.createBuffer(2, raw.sampleRate * 4, raw.sampleRate);
+        for (let c = 0; c < 2; c++)
+          for (let i = 0; i < buffer.length; i++)
+            buffer.getChannelData(c)[i] = 0.1 * Math.sin((i / raw.sampleRate) * Math.PI * 440);
+        asset = await putAudioAsset(new Blob([wavBytes(buffer)], { type: 'audio/wav' }), {
+          name: 'QA replay source',
+        });
+        await test('edited deck, stem, pitch, loop and master events replay through the live engine and print durable audio', async () => {
+          const eq = newEffect('eq');
+          eq.params.mid = 6;
+          const events = [
+            {
+              time: 0,
+              type: 'initialState',
+              args: [
+                {
+                  dspVersion: 2,
+                  masterLevel: 100,
+                  crossfader: 0,
+                  limiter: true,
+                  decks: [
+                    {
+                      id: 'A',
+                      gain: 100,
+                      fader: 100,
+                      playing: false,
+                      lanes: { vocals: { assetId: asset.id, duration: 4, level: 100 } },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              time: 0.1,
+              type: 'deckTransport',
+              args: ['A', { position: 0, playing: true, rate: 1 }],
+            },
+            { time: 0.2, type: 'setDeckFx', args: ['A', { echo: 25, reverb: 20 }] },
+            { time: 0.3, type: 'setLaneFx', args: ['A', 'vocals', { filter: 60, send: 12 }] },
+            { time: 0.4, type: 'setDeckEq', args: ['A', { low: 40, mid: 60, high: 50 }] },
+            {
+              time: 0.5,
+              type: 'setMasterProcessing',
+              args: [{ effects: [eq], width: 90, ceiling: -2 }],
+            },
+            { time: 0.6, type: 'setDeckPitch', args: ['A', 2] },
+            { time: 0.7, type: 'setLoopRegion', args: ['A', true, 0, 0.5] },
+            { time: 1, type: 'setMasterStems', args: [{ vocals: { level: 80 } }] },
+            {
+              time: 1.5,
+              type: 'deckTransport',
+              args: ['A', { position: 1, playing: false, rate: 1 }],
+            },
+          ];
+          let finish;
+          const done = new Promise((resolve) => (finish = resolve));
+          player = new PerformancePlayer(owner, { onFinish: finish });
+          await player.prepare({ duration: 2, events }, []);
+          await player.play({ record: true });
+          const saved = await done;
+          assert(!saved.error, saved.error?.message);
+          assert(saved.sources?.tracks.length, 'no rendered take');
+          const track = saved.sources.tracks.find((t) => t.role === 'reference'),
+            item = await getAudioAsset(track.clips[0].assetId);
+          const audio = await raw.decodeAudioData(await item.blob.arrayBuffer());
+          assert(
+            audio.getChannelData(0).some((v) => Math.abs(v) > 0.001),
+            'replay print is silent'
+          );
+          assert(audio.getChannelData(0).every(Number.isFinite), 'replay print has invalid PCM');
+          assert(player.engine.decks.get('A').pitch === 2, 'pitch event missing');
+          assert(player.engine.decks.get('A').looping, 'loop event missing');
+          result.textContent += `Replay timing: ${saved.lateEvents} events >25ms late; worst ${(saved.maxLateness * 1000).toFixed(1)}ms\n`;
+          await cleanup(player.engine);
+          player.dispose();
+          player = null;
+        });
+        if (event.target.id === 'run')
+          await test('60-second real audio-clock recording remains aligned, incremental and recoverable under control/UI load', async () => {
+            soak = new StudioAudioEngine({ monitor: false });
+            tone = raw.createOscillator();
+            const gain = raw.createGain();
+            gain.gain.value = 0.05;
+            tone.connect(gain);
+            Tone.connect(gain, soak.master);
+            tone.start();
+            await soak.startRecording({ longSession: true });
+            soak.capturePerformanceEvent('initialState', [
+              { dspVersion: 2, decks: [], masterLevel: 100 },
+            ]);
+            let changes = 0,
+              maxPending = 0;
+            automation = setInterval(() => {
+              soak.setMasterLevel(75 + (changes++ % 25));
+              const until = performance.now() + 2;
+              while (performance.now() < until) {} // bounded simulated UI load
+              const h = soak.getRecordingHealth();
+              maxPending = Math.max(maxPending, h.pendingBytes);
+            }, 50);
+            for (let i = 0; i < 6; i++) {
+              await wait(10000);
+              const h = soak.getRecordingHealth();
+              result.textContent += `Soak ${Math.floor(h.duration)}s: ${h.committedEvents} events saved, audio ${h.durableAudioSeconds.toFixed(1)}s, pending ${(h.pendingBytes / 1048576).toFixed(2)}MiB; ${h.contextState}, ${h.visibility}, ${h.wallSeconds.toFixed(1)}s wall, ${h.capturedFrames} frames\n`;
+              assert(!h.error, h.error);
+            }
+            clearInterval(automation);
+            await soak.stopRecording();
+            tone.stop();
+            gain.disconnect();
+            const captured = soak.capturedSources(),
+              track = captured.tracks.find((t) => t.role === 'reference');
+            assert(!captured.error, captured.error);
+            assert(track.clips.length >= 12, 'chunk rollover missing');
+            for (let i = 1; i < track.clips.length; i++)
+              assert(
+                Math.abs(
+                  track.clips[i].start - track.clips[i - 1].start - track.clips[i - 1].duration
+                ) <
+                  1 / raw.sampleRate,
+                'chunk gap'
+              );
+            assert(maxPending < 64 * 1048576, 'pending recording memory unbounded');
+            const recovered = (await recoverSourceCaptures()).find((t) => t.id === captured.id);
+            assert(
+              recovered.tracks.find((t) => t.role === 'reference').clips.length ===
+                track.clips.length,
+              'audio recovery incomplete'
+            );
+            const history = (await journalStore.recover()).find(
+              (t) => t.id === soak.performanceJournal.take.id
+            );
+            assert(
+              history.events.length === soak.capturedPerformance().length,
+              'committed event count differs'
+            );
+            assert(history.state === 'stopped', 'take not finalized');
+          });
+      } catch (e) {
+        failed++;
+        result.textContent += `SETUP FAILURE ${e.stack}\n`;
+      } finally {
+        clearInterval(automation);
+        try {
+          tone?.stop();
+        } catch {}
+        if (soak) {
+          if (soak.performanceStartedAt != null) await soak.stopRecording();
+          await cleanup(soak);
+          soak.dispose();
+        }
+        if (player) {
+          await player.stop();
+          await cleanup(player.engine);
+          player.dispose();
+        }
+        owner?.dispose();
+        if (journal) {
+          journal.dispose();
+          await journalStore.removeTestTake(journal.take.id);
+        }
+        if (asset) await deleteAudioAsset(asset.id);
+        result.textContent += `COMPLETE: ${passed} passed, ${failed} failed`;
+        event.target.disabled = false;
+      }
+    };
+  </script>
+</html>

@@ -1,0 +1,339 @@
+/* Session workspace: the timeline owns remaining space; controls cannot push
+   it below the fold. Expanded setup panels overlay instead of resizing music. */
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused {
+  display: flex;
+  flex-direction: column;
+  height: var(--ae-workspace-height, calc(100dvh - 190px));
+  min-height: 480px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  gap: 4px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused > * {
+  flex-shrink: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused[hidden],
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused [hidden] {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 2px;
+  margin: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header > .ae-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  width: auto;
+  scrollbar-width: thin;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-navigation {
+  display: flex;
+  flex-wrap: nowrap;
+  margin: 0;
+  padding: 2px 0;
+  overflow-x: auto;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-zoom-controls {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: visible;
+  flex: 0 0 auto;
+  width: auto;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-zoom-controls > input {
+  width: 90px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-project-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 28px;
+  overflow-x: auto;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-project-tools > details {
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-project-tools > details > summary {
+  padding: 3px 5px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-project-tools > details[open] {
+  position: absolute;
+  z-index: 30;
+  top: 106px;
+  left: 10px;
+  right: 10px;
+  max-height: calc(100% - 120px);
+  overflow: auto;
+  padding: 12px;
+  background: var(--sd-surface, #18191d);
+  border: 1px solid var(--sd-line-soft, #ffffff30);
+  box-shadow: 0 10px 35px #0009;
+  border-radius: 10px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused > [role='status'] {
+  margin: 0;
+  max-height: 36px;
+  overflow: auto;
+  font-size: 11px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused > [role='status']:empty {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-selection-actions {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-selection-actions > small {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-scroll {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 150px;
+  margin: 0;
+  overflow: auto;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 2px 0;
+  gap: 4px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-tabs > button {
+  min-height: 30px;
+  height: 30px;
+  font-size: 11px;
+  padding: 0 8px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-divider {
+  height: 8px;
+  border-radius: 5px;
+  cursor: ns-resize;
+  touch-action: none;
+  background: linear-gradient(90deg, transparent 44%, #768296 44%, #768296 56%, transparent 56%);
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-divider:focus-visible {
+  outline: 2px solid #a7c4ff;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-lower-editor {
+  flex: 0 0 var(--editor-height);
+  height: var(--editor-height);
+  max-height: calc(100% - 310px);
+  min-height: 0;
+  overflow: auto;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-lower-editor
+  .ae-piano-dock:not(.is-expanded) {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  padding: 4px;
+  overflow: hidden;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-piano-dock .ae-dock-header {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  overflow-x: auto;
+  min-height: 32px;
+  padding: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-dock-header > strong,
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-dock-size {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-instrument-settings {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-instrument-settings > summary {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-instrument-settings[open]
+  > .ae-instrument-controls {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 220px;
+  overflow: auto;
+  padding: 10px;
+  background: #20232b;
+  border: 1px solid #ffffff30;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-notes.ae-notes-modern {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .pr-context-controls {
+  position: relative;
+  order: 4;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .pr-context-controls > summary {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .pr-context-controls[open]
+  > .pr-context-content {
+  max-height: 150px;
+  overflow: auto;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  .ae-note-scroll {
+  min-height: 100px;
+  height: auto;
+  flex: 1 1 0;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-notes.ae-notes-modern .pr-edit-bar,
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  .ae-note-options,
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  .ae-note-properties {
+  order: 4;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-notes.ae-notes-modern .pr-edit-bar {
+  min-height: 26px;
+  padding: 0 6px;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  .ae-velocity-lane {
+  flex: 0 0 42px;
+  height: 42px;
+  min-height: 42px;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  :is(.ae-velocity-surface, .ae-velocity-label) {
+  height: 40px;
+}
+.sd-studio-next
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-notes.ae-notes-modern
+  .ae-velocity-lane
+  :is(label, input) {
+  height: 30px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-mobile-editor-nav {
+  display: none;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused > footer {
+  font-size: 9px;
+  padding: 0;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+@media (max-width: 700px) {
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused {
+    min-height: 440px;
+    --ae-head-width: 140px;
+    padding: 6px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header > div:first-child {
+    display: none;
+  }
+  .sd-studio-next
+    .sd-arrangement-editor.ae-workspace-focused
+    .ae-main-header
+    > .ae-actions
+    > button {
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-time-display {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-time-display small {
+    display: none;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-navigation > button,
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-zoom-controls > button {
+    width: auto;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-tabs > button {
+    min-height: 44px;
+    height: 44px;
+  }
+  .sd-studio-next
+    .sd-arrangement-editor.ae-workspace-focused[data-editor-open='true']
+    .ae-lower-editor {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    height: 100dvh;
+    max-height: none;
+    padding: env(safe-area-inset-top) 6px env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: #18191d;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-mobile-editor-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 auto;
+    gap: 6px;
+    min-height: 52px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-mobile-editor-nav strong {
+    text-transform: capitalize;
+  }
+  .sd-studio-next
+    .sd-arrangement-editor.ae-workspace-focused
+    .ae-lower-editor
+    .ae-piano-dock:not(.is-expanded) {
+    flex: 1 1 0;
+    height: auto;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-editor-divider {
+    display: none;
+  }
+  .sd-studio-next
+    .sd-arrangement-editor.ae-workspace-focused
+    .ae-notes.ae-notes-modern
+    .ae-note-scroll {
+    min-height: 200px;
+  }
+}

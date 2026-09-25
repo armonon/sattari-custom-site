@@ -1,17 +1,54 @@
 import * as Tone from 'tone';
+import { LiveInput } from './liveInput';
+import { audioLatency } from './sessionTelemetry';
+import { performanceFilter } from './performanceFilter';
+import { alignedBeatPosition } from './beatGrid';
+import { SyncClock, phaseError, sourceBeat, sourceTime } from './syncClock';
+import { connectLoudness } from './liveLoudness';
+import { tempoAt } from './tempoMap';
+import { SourceCapture } from './sourceCapture';
+import { PerformanceJournal } from './performanceJournal';
+import { performanceReverb } from './performanceReverb';
+import { createMutableEffectRack } from './arrangementEffects';
 import {
   masterGain,
+  trimGain,
   monitorGain,
   normalizeMasterProcessing,
   measureMasterChannels,
+  normalizeMasterStems,
+  masterStemGain,
+  masterStemId,
 } from './masterOutput';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function gainFromPercent(value) {
-  return Math.pow(clamp(value, 0, 100) / 100, 1.35);
+function markTransport(deck, action, at) {
+  deck.transportTransition = {
+    action,
+    at,
+    position: deck.offset,
+    playing: deck.playing,
+    rate: deck.playbackRate,
+  };
+}
+
+export function gainFromPercent(value) {
+  // Unity is 100%; boosting above unity must not silently clamp to silence's
+  // opposite endpoint. Preserve the existing taper below unity.
+  const number = Number(value);
+  const percent = clamp(Number.isFinite(number) ? number : 100, 0, 300);
+  return percent <= 100 ? Math.pow(percent / 100, 1.35) : percent / 100;
+}
+
+export function recordingMimeType(isSupported) {
+  // Prefer AAC where available: the release QA WebKit build produced a WebM
+  // Opus stream with a malformed trailing packet when using its default codec.
+  return ['audio/mp4;codecs=mp4a.40.2', 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus'].find(
+    (type) => isSupported?.(type)
+  );
 }
 
 export function crossfaderGains(value, curve = 'Smooth') {
@@ -42,7 +79,7 @@ export function buildArrangementSchedule(clips, cursorSeconds = 0) {
     const sourceStart = Math.max(0, Number(clip.trimStart) || 0);
     const sourceEnd = Math.max(sourceStart, Number(clip.trimEnd) || sourceStart);
     const clipEnd = clipStart + (sourceEnd - sourceStart);
-    if (!clip.enabled || cursor > clipEnd) return [];
+    if (!clip.enabled || cursor >= clipEnd) return [];
     return [
       {
         deckId: clip.deckId,
@@ -54,8 +91,13 @@ export function buildArrangementSchedule(clips, cursorSeconds = 0) {
 }
 
 export class StudioAudioEngine {
-  constructor() {
+  constructor({ monitor = true, recorder = true, metering = monitor } = {}) {
+    this.meteringEnabled = metering;
     this.master = new Tone.Gain(0.82);
+    this.masterInputTrim = new Tone.Gain(1);
+    this.masterLimiterDrive = new Tone.Gain(1);
+    this.unseparated = new Tone.Gain(1).connect(this.master);
+    this.masterStems = normalizeMasterStems();
     this.masterCompressor = new Tone.Compressor({
       threshold: -1,
       ratio: 1,
@@ -81,8 +123,9 @@ export class StudioAudioEngine {
     this.monitorStereoGain = new Tone.Gain(1);
     this.masterAnalyser = new Tone.Analyser({ type: 'waveform', size: 1024, channels: 2 });
     this.meter = new Tone.Meter({ normalRange: true, smoothing: 0.84 });
-    this.recorder = Tone.Recorder.supported ? new Tone.Recorder() : null;
-    this.microphone = null;
+    const mimeType = recordingMimeType((type) => globalThis.MediaRecorder?.isTypeSupported(type));
+    this.recorder =
+      recorder && Tone.Recorder.supported ? new Tone.Recorder(mimeType ? { mimeType } : {}) : null;
     this.decks = new Map();
     this.padPlayers = new Map();
     this.crossfader = 50;
@@ -90,50 +133,254 @@ export class StudioAudioEngine {
     this.padSynth = new Tone.Synth({
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.004, decay: 0.12, sustain: 0.08, release: 0.16 },
-    }).connect(this.master);
+    }).connect(this.unseparated);
     this.padKick = new Tone.MembraneSynth({
       pitchDecay: 0.035,
       octaves: 5,
       envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.05 },
-    }).connect(this.master);
+    }).connect(this.unseparated);
     this.padNoise = new Tone.NoiseSynth({
       noise: { type: 'pink' },
       envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 },
-    }).connect(this.master);
+    }).connect(this.unseparated);
     this.padHat = new Tone.MetalSynth({
       frequency: 260,
       envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
       harmonicity: 4.8,
       modulationIndex: 25,
       resonance: 4200,
-    }).connect(this.master);
+    }).connect(this.unseparated);
 
-    this.master.chain(this.masterLowCut, this.masterEq, this.masterWidth, this.masterCompressor);
-    this.masterCompressor.connect(this.limiter);
-    this.masterCompressor.connect(this.dryGain);
+    this.masterInserts = createMutableEffectRack(this.master.context.rawContext);
+    this.master.chain(this.masterInputTrim, this.masterLowCut, this.masterEq, this.masterWidth);
+    Tone.connect(this.masterWidth, this.masterInserts.input);
+    Tone.connect(this.masterInserts.output, this.masterCompressor);
+    this.masterCompressor.connect(this.masterLimiterDrive);
+    this.masterLimiterDrive.connect(this.limiter);
+    this.masterLimiterDrive.connect(this.dryGain);
     this.limiter.connect(this.limitedGain);
     this.limitedGain.connect(this.output);
     this.dryGain.connect(this.output);
     // Recorder and meters hear the program bus. Monitor audition controls only affect speakers.
     this.output.chain(this.monitorStereoGain, this.monitor);
     this.output.chain(this.monitorMono, this.monitorMonoGain, this.monitor);
-    this.monitor.toDestination();
+    if (monitor) this.monitor.toDestination();
     this.output.connect(this.masterAnalyser);
     this.output.connect(this.meter);
     if (this.recorder) this.output.connect(this.recorder);
+    this.installPerformanceCapture();
+  }
+
+  getAudioContext() {
+    return this.output.context;
+  }
+
+  installPerformanceCapture() {
+    this.performanceEvents = [];
+    this.performanceLast = new Map();
+    for (const name of [
+      'playDeck',
+      'pauseDeck',
+      'stopDeck',
+      'seekDeck',
+      'setCrossfader',
+      'setCrossfaderCurve',
+      'setDeckGain',
+      'setDeckFader',
+      'setDeckSide',
+      'setDeckEq',
+      'setDeckFilter',
+      'setDeckFx',
+      'setLaneState',
+      'setLaneFx',
+      'removeLane',
+      'setPlaybackRate',
+      'setDeckPitch',
+      'setDeckKeyLock',
+      'setStemPitch',
+      'setLoopRegion',
+      'setMasterLevel',
+      'setMasterStems',
+      'setPadGain',
+      'setLoop',
+      'setMasterProcessing',
+      'setMasterAssist',
+      'setLimiter',
+      'triggerPad',
+      'openMicrophone',
+      'closeMicrophone',
+    ]) {
+      const original = this[name].bind(this);
+      this[name] = (...args) => {
+        const previousTransition = this.decks.get(args[0])?.transportTransition;
+        this.capturePerformanceEvent(name, args);
+        const result = original(...args);
+        if (['playDeck', 'pauseDeck', 'stopDeck', 'seekDeck', 'setPlaybackRate'].includes(name)) {
+          const confirmed = () => {
+            const deck = this.decks.get(args[0]);
+            const transition = deck?.transportTransition;
+            if (
+              !transition ||
+              transition === previousTransition ||
+              this.performanceStartedAt == null
+            )
+              return;
+            const { at, ...state } = transition;
+            const event = {
+              time: Math.max(0, at - this.performanceStartedAt),
+              type: 'deckTransport',
+              args: [args[0], state],
+            };
+            event.clockVersion = 1;
+            event.sampleRate = this.getAudioContext().rawContext.sampleRate;
+            event.frame = Math.round(event.time * event.sampleRate);
+            event.sequence = this.performanceEvents.length;
+            this.performanceEvents.push(event);
+            this.performanceJournal?.append(event);
+          };
+          if (result?.then) result.then(confirmed, () => {});
+          else confirmed();
+        }
+        return result;
+      };
+    }
+  }
+
+  capturePerformanceEvent(type, args = []) {
+    if (this.performanceStartedAt == null) return;
+    const key = `${type}:${typeof args[0] === 'string' ? args[0] : ''}`,
+      serialized = JSON.stringify(args);
+    if (
+      (type.startsWith('set') || type === 'inputState') &&
+      this.performanceLast.get(key) === serialized
+    )
+      return;
+    this.performanceLast.set(key, serialized);
+    const event = {
+      time: Math.max(0, this.getAudioContext().rawContext.currentTime - this.performanceStartedAt),
+      type,
+      args: JSON.parse(serialized),
+    };
+    event.clockVersion = 1;
+    event.sampleRate = this.getAudioContext().rawContext.sampleRate;
+    event.frame = Math.round(event.time * event.sampleRate);
+    event.sequence = this.performanceEvents.length;
+    this.performanceEvents.push(event);
+    this.performanceJournal?.append(event);
+  }
+
+  capturedPerformance() {
+    return this.performanceEvents || [];
   }
 
   async unlock() {
     await Tone.start();
+    if (this.meteringEnabled && !this.loudnessPending && !this.loudness) {
+      this.loudnessPending = connectLoudness(
+        this.getAudioContext(),
+        this.output,
+        Tone.connect,
+        Tone.disconnect
+      )
+        .then((meter) => {
+          if (this.disposed) meter.dispose();
+          else {
+            this.loudness = meter;
+            this.loudnessError = null;
+          }
+        })
+        .catch((error) => {
+          this.loudnessError = error.message;
+        })
+        .finally(() => {
+          this.loudnessPending = null;
+        });
+    }
+  }
+
+  resetLoudness() {
+    this.loudness?.reset();
+  }
+  setLoudnessRunning(running) {
+    this.loudness?.setRunning(running);
+  }
+
+  setTempoFollow(id, beats, targetBpm) {
+    this.tempoFollowers ||= new Map();
+    if (beats?.length > 1) this.tempoFollowers.set(id, { beats, targetBpm });
+    else this.tempoFollowers.delete(id);
+    if (!this.tempoFollowers.size) {
+      clearInterval(this.tempoTimer);
+      this.tempoTimer = null;
+    } else if (!this.tempoTimer)
+      this.tempoTimer = setInterval(() => {
+        for (const [id, { beats, targetBpm }] of this.tempoFollowers) {
+          const deck = this.decks.get(id);
+          if (!deck?.playing) continue;
+          if (this.syncFollowers?.has(id)) continue; // one owner of the playback rate
+          const rate = clamp(targetBpm / tempoAt(beats, this.getDeckPosition(id)), 0.5, 2);
+          if (Math.abs(rate - deck.playbackRate) > 0.001) this.setPlaybackRate(id, rate);
+        }
+      }, 100);
+  }
+
+  setProjectTempo(bpm) {
+    const now = Tone.now();
+    this.syncClock ||= new SyncClock(bpm, now);
+    this.syncClock.setTempo(bpm, now);
+  }
+
+  setDeckSync(id, enabled, grid, reference = null) {
+    this.syncFollowers ||= new Map();
+    if (enabled && grid?.bpm > 0) this.syncFollowers.set(id, { grid, reference });
+    else this.syncFollowers.delete(id);
+    if (this.syncFollowers.size && this.syncTimer == null)
+      this.syncTimer = Tone.getContext().setInterval(() => this.updateBeatSync(), 0.025);
+    if (!this.syncFollowers.size && this.syncTimer != null) {
+      Tone.getContext().clearInterval(this.syncTimer);
+      this.syncTimer = null;
+    }
+  }
+
+  updateBeatSync() {
+    if (!this.syncClock) return;
+    const now = Tone.now();
+    for (const [id, { grid, reference }] of this.syncFollowers || []) {
+      const deck = this.decks.get(id);
+      if (!deck?.playing || now < deck.startedAt) continue;
+      const position = this.getDeckPosition(id);
+      const master = reference && this.decks.get(reference.id);
+      const target = master?.playing
+        ? sourceBeat(this.getDeckPosition(reference.id), reference)
+        : this.syncClock.beatAt(now);
+      const actual = sourceBeat(position, grid);
+      const error = phaseError(target, actual, grid.syncQuantum === 4 ? 4 : 1);
+      const localBpm =
+        grid.followTempoMap && grid.analysis?.tempoMap?.beats?.length > 1
+          ? tempoAt(grid.analysis.tempoMap.beats, position)
+          : grid.bpm;
+      const masterPosition = master?.playing ? this.getDeckPosition(reference.id) : 0;
+      const leaderBpm = master?.playing
+        ? (reference.followTempoMap && reference.analysis?.tempoMap?.beats?.length > 1
+            ? tempoAt(reference.analysis.tempoMap.beats, masterPosition)
+            : reference.bpm) * master.playbackRate
+        : this.syncClock.bpm;
+      const base = leaderBpm / localBpm;
+      // No repeated seek/restart: bounded phase slew, max +/-2% pitch-preserved.
+      const rate = clamp(base * (1 + clamp(error * 0.5, -0.02, 0.02)), 0.5, 2);
+      deck.syncErrorBeats = error;
+      deck.syncLocked = Math.abs(error) < 0.02;
+      if (Math.abs(rate - deck.playbackRate) > 0.00005) this.setPlaybackRate(id, rate);
+    }
   }
 
   ensureDeck(deckId, side = 'left') {
     if (!this.decks.has(deckId)) {
       const output = new Tone.Gain(1).connect(this.master);
       const meter = new Tone.Meter({ normalRange: true, smoothing: 0.82 });
-      const reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.012, wet: 0 }).connect(output);
+      const reverb = performanceReverb().connect(output);
       const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.24, wet: 0 }).connect(
-        reverb
+        reverb.input
       );
       const filter = new Tone.Filter({ frequency: 20000, type: 'lowpass', rolloff: -24 }).connect(
         delay
@@ -169,16 +416,14 @@ export class StudioAudioEngine {
   }
 
   async loadLane(deckId, side, laneId, url) {
-    await this.unlock();
+    // Decoding does not require playback permission. Waiting for Tone.start()
+    // here can leave session restoration pending until a user gesture occurs.
+    // playDeck/triggerPad remain responsible for resuming the output context.
     const deck = this.ensureDeck(deckId, side);
-    const existing = deck.lanes.get(laneId);
-    if (existing) {
-      existing.player.stop();
-      existing.player.dispose();
-      existing.filterNode.dispose();
-      existing.delayNode.dispose();
-      existing.gain.dispose();
-    }
+    this.pendingLaneLoads ??= new Map();
+    const loadKey = `${deckId}:${laneId}`;
+    const token = Symbol(loadKey);
+    this.pendingLaneLoads.set(loadKey, token);
 
     const laneGain = new Tone.Gain(1).connect(deck.input);
     const laneDelay = new Tone.FeedbackDelay({
@@ -197,7 +442,29 @@ export class StudioAudioEngine {
       grainSize: 0.085,
       overlap: 0.035,
     }).connect(laneFilter);
-    await player.buffer.load(url);
+    try {
+      if (typeof url === 'string') await player.buffer.load(url);
+      else player.buffer.set(url);
+      if (this.disposed || this.pendingLaneLoads.get(loadKey) !== token)
+        throw new Error('Audio load was superseded.');
+    } catch (error) {
+      player.dispose();
+      laneFilter.dispose();
+      laneDelay.dispose();
+      laneGain.dispose();
+      if (this.pendingLaneLoads.get(loadKey) === token) this.pendingLaneLoads.delete(loadKey);
+      throw error;
+    }
+    this.pendingLaneLoads.delete(loadKey);
+    // Keep the current source alive until its replacement has decoded.
+    const existing = deck.lanes.get(laneId);
+    this.stopDeck(deckId);
+    if (existing) {
+      existing.player.dispose();
+      existing.filterNode.dispose();
+      existing.delayNode.dispose();
+      existing.gain.dispose();
+    }
     player.playbackRate = deck.playbackRate;
     player.detune = deck.pitch * 100;
     deck.lanes.set(laneId, {
@@ -236,7 +503,13 @@ export class StudioAudioEngine {
   }
 
   setMasterProcessing(value) {
+    this.setMasterStems?.(value?.stems);
     const settings = normalizeMasterProcessing(value);
+    this.masterInserts?.update(settings.effects || []);
+    this.masterInputTrim.gain.rampTo(trimGain(settings.inputTrim), 0.04);
+    this.masterLimiterDrive.gain.rampTo(trimGain(settings.limiterDrive), 0.04);
+    this.masterEq.lowFrequency.rampTo(settings.lowFrequency, 0.04);
+    this.masterEq.highFrequency.rampTo(settings.highFrequency, 0.04);
     this.masterEq.low.rampTo(settings.bypass ? 0 : settings.low, 0.04);
     this.masterEq.mid.rampTo(settings.bypass ? 0 : settings.mid, 0.04);
     this.masterEq.high.rampTo(settings.bypass ? 0 : settings.high, 0.04);
@@ -255,9 +528,15 @@ export class StudioAudioEngine {
     const [left, right] = this.masterAnalyser.getValue();
     return {
       ...measureMasterChannels(left, right),
-      reduction: Math.max(0, -(this.masterCompressor.reduction || 0)),
+      reduction: Math.max(
+        0,
+        -(this.masterCompressor.reduction || 0),
+        this.arrangementReduction?.() || 0
+      ),
       state: this.output.context.state,
       sampleRate: this.output.context.sampleRate,
+      latency: audioLatency(this.output.context.rawContext),
+      loudness: this.loudness?.read() || { available: false, error: this.loudnessError },
     };
   }
 
@@ -322,19 +601,9 @@ export class StudioAudioEngine {
 
   setDeckFilter(deckId, value) {
     const deck = this.ensureDeck(deckId);
-    const normalized = clamp(value, 0, 100);
-    if (normalized < 48) {
-      deck.filter.type = 'lowpass';
-      const frequency = 70 * Math.pow(20000 / 70, normalized / 48);
-      deck.filter.frequency.rampTo(frequency, 0.035);
-    } else if (normalized > 52) {
-      deck.filter.type = 'highpass';
-      const frequency = 20 * Math.pow(7500 / 20, (normalized - 52) / 48);
-      deck.filter.frequency.rampTo(frequency, 0.035);
-    } else {
-      deck.filter.type = 'lowpass';
-      deck.filter.frequency.rampTo(20000, 0.035);
-    }
+    const settings = performanceFilter(value);
+    deck.filter.type = settings.type;
+    deck.filter.frequency.rampTo(settings.frequency, 0.035);
   }
 
   setDeckFx(deckId, { reverb = 0, echo = 0 }) {
@@ -380,21 +649,39 @@ export class StudioAudioEngine {
     if (!deck) return;
     const lanes = [...deck.lanes.values()];
     const hasSolo = lanes.some((lane) => lane.solo);
-    lanes.forEach((lane) => {
+    deck.lanes.forEach((lane, laneId) => {
       const audible = !lane.muted && (!hasSolo || lane.solo);
-      lane.gain.gain.rampTo(audible ? gainFromPercent(lane.level) : 0, 0.025);
+      lane.gain.gain.rampTo(
+        audible ? gainFromPercent(lane.level) * masterStemGain(this.masterStems, laneId) : 0,
+        0.025
+      );
     });
+  }
+
+  setMasterStems(value) {
+    this.masterStems = normalizeMasterStems(value);
+    for (const id of this.decks.keys()) this.applyLaneMix(id);
+    this.unseparated?.gain.rampTo(masterStemGain(this.masterStems, 'unseparated'), 0.025);
+  }
+
+  getMasterStemSources() {
+    const counts = { vocals: 0, drums: 0, bass: 0, other: 0, unseparated: 0 };
+    for (const deck of this.decks.values())
+      for (const id of deck.lanes.keys()) counts[masterStemId(id)]++;
+    return counts;
   }
 
   setPlaybackRate(deckId, rate) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
+    if (Math.abs(deck.playbackRate - clamp(rate, 0.5, 2)) < 0.000001) return;
     if (deck.playing) {
       deck.offset = this.getDeckPosition(deckId);
       deck.startedAt = Tone.now();
     }
     deck.playbackRate = clamp(rate, 0.5, 2);
     this.applyPlaybackRates(deck);
+    markTransport(deck, 'rate', Tone.now());
   }
 
   setDeckPitch(deckId, semitones) {
@@ -471,11 +758,77 @@ export class StudioAudioEngine {
 
     deck.lanes.forEach((lane) => {
       const safeOffset = lane.duration ? requestedOffset % lane.duration : 0;
-      lane.player.start(startTime, safeOffset);
+      // Tone 15 GrainPlayer converts the start offset to ticks using its
+      // rate-scaled grain interval, then reads ticks * unscaled grainSize.
+      // Compensate here so our public transport always uses SOURCE seconds.
+      lane.player.start(startTime, safeOffset / deck.playbackRate);
     });
     deck.offset = requestedOffset;
     deck.startedAt = startTime;
     deck.playing = true;
+    markTransport(deck, 'play', startTime);
+    return true;
+  }
+
+  async alignDeck(deckId, grid, reference, tempo, start = false) {
+    await this.unlock();
+    const deck = this.decks.get(deckId);
+    if (!deck?.lanes.size) return false;
+    const now = Tone.now(),
+      when = now + 0.06;
+    const master = reference && this.decks.get(reference.id);
+    const referenceBpm = master?.playing ? reference.bpm : tempo;
+    const referencePosition = master?.playing
+      ? this.getDeckPosition(reference.id) + (when - now) * master.playbackRate
+      : this.syncClock
+        ? (this.syncClock.beatAt(when) * 60) / tempo
+        : when;
+    const position =
+      this.getDeckPosition(deckId) + (deck.playing ? (when - now) * deck.playbackRate : 0);
+    let offset = alignedBeatPosition(
+      position,
+      grid.bpm,
+      grid.beatOffset || 0,
+      referencePosition,
+      referenceBpm,
+      master?.playing ? reference.beatOffset || 0 : 0,
+      grid.syncQuantum === 4 ? 4 : 1
+    );
+    if (grid.followTempoMap || reference?.followTempoMap) {
+      const quantum = grid.syncQuantum === 4 ? 4 : 1;
+      const target = master?.playing
+        ? sourceBeat(referencePosition, reference)
+        : (this.syncClock?.beatAt(when) ?? (when * tempo) / 60);
+      let beat = sourceBeat(position, grid);
+      beat += phaseError(target, beat, quantum);
+      offset = sourceTime(beat, grid);
+      while (offset < 0) {
+        beat += quantum;
+        offset = sourceTime(beat, grid);
+      }
+    }
+    this.setPlaybackRate(deckId, tempo / grid.bpm);
+    const playing = deck.playing || start;
+    for (const lane of deck.lanes.values()) {
+      if (deck.playing) lane.player.stop(when);
+      if (playing) lane.player.start(when, (offset % lane.duration) / deck.playbackRate);
+    }
+    deck.offset = offset;
+    deck.startedAt = when;
+    deck.playing = playing;
+    if (this.performanceStartedAt != null) {
+      const event = {
+        type: 'deckTransport',
+        time: Math.max(0, when - this.performanceStartedAt),
+        args: [deckId, { position: offset, playing, rate: deck.playbackRate, action: 'align' }],
+      };
+      event.clockVersion = 1;
+      event.sampleRate = this.getAudioContext().rawContext.sampleRate;
+      event.frame = Math.round(event.time * event.sampleRate);
+      event.sequence = this.performanceEvents.length;
+      this.performanceEvents.push(event);
+      this.performanceJournal?.append(event);
+    }
     return true;
   }
 
@@ -483,33 +836,48 @@ export class StudioAudioEngine {
     const deck = this.decks.get(deckId);
     if (!deck?.playing) return;
     deck.offset = this.getDeckPosition(deckId);
-    deck.lanes.forEach((lane) => lane.player.stop());
+    const when = Tone.now();
+    deck.lanes.forEach((lane) => lane.player.stop(when));
     deck.playing = false;
+    markTransport(deck, 'pause', when);
   }
 
   stopDeck(deckId, reset = true) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    deck.lanes.forEach((lane) => lane.player.stop());
+    const position = this.getDeckPosition(deckId);
+    const when = Tone.now();
+    deck.lanes.forEach((lane) => lane.player.stop(when));
     deck.playing = false;
-    deck.offset = reset ? 0 : this.getDeckPosition(deckId);
+    deck.offset = reset ? 0 : position;
+    markTransport(deck, 'stop', when);
   }
 
   seekDeck(deckId, seconds) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    const wasPlaying = deck.playing;
-    this.stopDeck(deckId);
-    deck.offset = Math.max(0, seconds);
-    if (wasPlaying) void this.playDeck(deckId);
+    const when = Tone.now() + 0.035;
+    deck.offset = Math.max(0, Number(seconds) || 0);
+    // One atomic seek, not a nested stop plus asynchronous play with three
+    // contradictory confirmations and a gap in the captured transport history.
+    if (deck.playing)
+      for (const lane of deck.lanes.values()) {
+        lane.player.stop(when);
+        lane.player.start(
+          when,
+          lane.duration ? (deck.offset % lane.duration) / deck.playbackRate : 0
+        );
+      }
+    deck.startedAt = when;
+    markTransport(deck, 'seek', when);
   }
 
   async playAll() {
     await this.unlock();
     const startTime = Tone.now() + 0.055;
-    await Promise.all(
-      [...this.decks.keys()].map((deckId) => this.playDeck(deckId, null, startTime))
-    );
+    const ids = [...this.decks.keys()];
+    const results = await Promise.all(ids.map((deckId) => this.playDeck(deckId, null, startTime)));
+    return ids.filter((_, index) => results[index]);
   }
 
   async playArrangement(clips, cursorSeconds = 0) {
@@ -557,10 +925,132 @@ export class StudioAudioEngine {
     return Array.isArray(value) ? Math.max(...value) : Number(value) || 0;
   }
 
-  async startRecording() {
-    if (!this.recorder) throw new Error('Audio recording is not supported by this browser.');
+  async startRecording({ sources = true, timelineStart = 0, longSession = false } = {}) {
+    if (!this.recorder && !longSession)
+      throw new Error(
+        'Compressed audio recording is not supported by this browser. Use long-session WAV capture.'
+      );
     await this.unlock();
-    await this.recorder.start();
+    await this.loudnessPending;
+    this.recordingClock = this.getAudioContext().rawContext.currentTime;
+    this.resetLoudness();
+    this.recordingWallClock = performance.now();
+    this.stopRecordingDiagnostics?.();
+    this.recordingDiagnostics = [];
+    const raw = this.getAudioContext().rawContext;
+    const sampleState = () => {
+      const state = {
+        wallSeconds: (performance.now() - this.recordingWallClock) / 1000,
+        audioSeconds: raw.currentTime - this.recordingClock,
+        state: raw.state,
+        visibility: globalThis.document?.visibilityState || 'unknown',
+      };
+      if (this.recordingDiagnostics.length >= 64) this.recordingDiagnostics.shift();
+      this.recordingDiagnostics.push(state);
+      if (this.performanceJournal?.take)
+        this.performanceJournal.take.diagnostics = [...this.recordingDiagnostics];
+    };
+    raw.addEventListener?.('statechange', sampleState);
+    globalThis.document?.addEventListener('visibilitychange', sampleState);
+    this.stopRecordingDiagnostics = () => {
+      raw.removeEventListener?.('statechange', sampleState);
+      globalThis.document?.removeEventListener('visibilitychange', sampleState);
+    };
+    sampleState();
+    this.lastRecordingDuration = 0;
+    this.performanceEvents = [];
+    this.performanceLast?.clear();
+    this.performanceStartedAt = this.recordingClock;
+    this.recordingFault = null;
+    this.performanceJournal?.dispose();
+    this.performanceJournal = new PerformanceJournal({
+      clock: () =>
+        this.performanceStartedAt == null
+          ? this.lastRecordingDuration
+          : Math.max(0, this.getAudioContext().rawContext.currentTime - this.recordingClock),
+      onError: (error) => {
+        this.recordingFault = `Event recovery: ${error}`;
+      },
+    });
+    try {
+      await this.performanceJournal.start({
+        timelineStart,
+        diagnostics: this.recordingDiagnostics,
+      });
+    } catch (error) {
+      this.recordingFault = `Event recovery unavailable: ${error.message}`;
+    }
+    this.longSession = longSession;
+    if (!longSession) {
+      try {
+        await this.recorder.start();
+      } catch (error) {
+        this.performanceStartedAt = null;
+        this.stopRecordingDiagnostics?.();
+        this.performanceJournal?.dispose();
+        throw error;
+      }
+    }
+    this.sourceCaptureResult = null;
+    {
+      const inputs = (sources ? [...this.decks.entries()] : [])
+        .filter(([, deck]) => deck.lanes.size)
+        .map(([id, deck]) => ({ name: `Deck ${id} · performed`, nodes: [deck.output] }));
+      // Reserve a stable lane even when the input connects or reconnects mid-take.
+      inputs.push({
+        name: 'Mic / input · armed dry',
+        omitSilence: true,
+        nodes: [this.ensureLiveInput().record],
+      });
+      inputs.push({
+        name: 'Mic / input · performed monitor',
+        replayInput: 'microphone',
+        omitSilence: true,
+        keepEmpty: true,
+        nodes: [this.ensureLiveInput().monitor],
+      });
+      inputs.push({
+        name: 'Mic / input · editable source',
+        replayInput: 'microphoneRaw',
+        omitSilence: true,
+        keepEmpty: true,
+        nodes: [this.ensureLiveInput().rawRecord],
+      });
+      inputs.push({
+        name: 'Pad instruments',
+        replayInput: 'pads',
+        nodes: [this.padSynth, this.padKick, this.padNoise, this.padHat],
+      });
+      for (const [id, pad] of this.padPlayers)
+        inputs.push({ name: `Pad ${id + 1}`, replayInput: `pad:${id}`, nodes: [pad.gain] });
+      inputs.unshift({ name: 'Master safety', role: 'reference', nodes: [this.output] });
+      this.sourceCapture = new SourceCapture();
+      try {
+        await this.sourceCapture.start(
+          this.getAudioContext(),
+          inputs,
+          (from, to, index) => Tone.connect(from, to, 0, index),
+          (from, to) => Tone.disconnect(from, to),
+          { timelineStart, referenceClock: this.recordingClock }
+        );
+        await this.performanceJournal
+          ?.attach({ sourceCaptureId: this.sourceCapture.id })
+          .catch((error) => {
+            this.recordingFault = `Event recovery: ${error.message}`;
+          });
+      } catch (error) {
+        this.sourceCapture?.dispose();
+        this.sourceCapture = null;
+        this.sourceCaptureResult = { tracks: [], error: `Master recording only: ${error.message}` };
+        if (longSession) {
+          this.performanceStartedAt = null;
+          this.stopRecordingDiagnostics?.();
+          this.performanceJournal?.dispose();
+          this.longSession = false;
+          throw new Error(`Long-session capture could not start: ${error.message}`);
+        }
+      }
+    }
   }
 
   async triggerPad(index, frequency) {
@@ -576,16 +1066,28 @@ export class StudioAudioEngine {
   }
 
   async loadPad(index, url, level = 82) {
-    await this.unlock();
+    this.pendingPadLoads ??= new Map();
+    const token = Symbol('pad');
+    this.pendingPadLoads.set(index, token);
+    const gain = new Tone.Gain(gainFromPercent(level)).connect(this.unseparated || this.master);
+    const player = new Tone.Player().connect(gain);
+    try {
+      await player.load(url);
+      if (this.disposed || this.pendingPadLoads.get(index) !== token)
+        throw new Error('Pad load was superseded.');
+    } catch (error) {
+      player.dispose();
+      gain.dispose();
+      if (this.pendingPadLoads.get(index) === token) this.pendingPadLoads.delete(index);
+      throw error;
+    }
+    this.pendingPadLoads.delete(index);
     const existing = this.padPlayers.get(index);
     if (existing) {
       existing.player.stop();
       existing.player.dispose();
       existing.gain.dispose();
     }
-    const gain = new Tone.Gain(gainFromPercent(level)).connect(this.master);
-    const player = new Tone.Player().connect(gain);
-    await player.load(url);
     this.padPlayers.set(index, { player, gain, level });
   }
 
@@ -597,21 +1099,142 @@ export class StudioAudioEngine {
   }
 
   async stopRecording() {
-    if (!this.recorder || this.recorder.state === 'stopped') return null;
-    return this.recorder.stop();
+    if (!this.longSession && (!this.recorder || this.recorder.state === 'stopped')) return null;
+    this.lastRecordingDuration = Math.max(
+      0,
+      this.getAudioContext().rawContext.currentTime - this.recordingClock
+    );
+    this.lastClockLag = Math.max(
+      0,
+      (performance.now() - this.recordingWallClock) / 1000 - this.lastRecordingDuration
+    );
+    if (this.lastClockLag > 1)
+      this.recordingFault = `Audio clock fell ${this.lastClockLag.toFixed(1)}s behind wall time. Review this take for dropouts or suspension.`;
+    this.performanceStartedAt = null;
+    this.stopRecordingDiagnostics?.();
+    // Stop both paths immediately; chunk encoding/storage may finish afterwards.
+    const [masterResult, capturedResult] = await Promise.allSettled([
+      this.longSession ? Promise.resolve(null) : this.recorder.stop(),
+      this.sourceCapture?.stop().catch((error) => ({
+        tracks: [],
+        error: `Source capture interrupted: ${error.message}. Recover completed chunks.`,
+      })),
+    ]);
+    const master = masterResult.status === 'fulfilled' ? masterResult.value : null;
+    const captured = capturedResult.status === 'fulfilled' ? capturedResult.value : null;
+    if (masterResult.status === 'rejected')
+      this.recordingFault = `Compressed recording failed: ${masterResult.reason?.message}. Recover the WAV safety chunks.`;
+    await this.performanceJournal
+      ?.finish({
+        duration: this.lastRecordingDuration,
+        clockLag: this.lastClockLag,
+        warning: this.recordingFault,
+        diagnostics: this.recordingDiagnostics,
+      })
+      .catch((error) => {
+        this.recordingFault = `Event recovery: ${error.message}`;
+      });
+    if (captured)
+      this.sourceCaptureResult = {
+        ...captured,
+        error: captured.error || this.recordingFault,
+        offset: Math.max(0, (captured.startTime || this.recordingClock) - this.recordingClock),
+      };
+    this.sourceCapture = null;
+    this.longSession = false;
+    return master;
+  }
+  getRecordingHealth() {
+    const duration =
+      this.performanceStartedAt == null
+        ? this.lastRecordingDuration || 0
+        : Math.max(0, this.getAudioContext().rawContext.currentTime - this.recordingClock);
+    const clockLag =
+      this.performanceStartedAt == null
+        ? this.lastClockLag || 0
+        : Math.max(0, (performance.now() - this.recordingWallClock) / 1000 - duration);
+    return {
+      contextState: this.getAudioContext().rawContext.state,
+      visibility: globalThis.document?.visibilityState || 'unknown',
+      wallSeconds:
+        this.performanceStartedAt == null
+          ? duration + (this.lastClockLag || 0)
+          : (performance.now() - this.recordingWallClock) / 1000,
+      capturedFrames: this.sourceCapture?.totalFrames || 0,
+      error:
+        this.sourceCapture?.error ||
+        this.performanceJournal?.error ||
+        this.recordingFault ||
+        (clockLag > 1
+          ? `Audio clock is ${clockLag.toFixed(1)}s behind wall time. Keep Studio foreground and reduce system load; this take needs review.`
+          : null),
+      clockLag,
+      duration:
+        this.performanceStartedAt == null
+          ? this.lastRecordingDuration || 0
+          : Math.max(0, this.getAudioContext().rawContext.currentTime - this.recordingClock),
+      pendingBytes: this.sourceCapture?.pendingBytes || 0,
+      pendingEvents: this.performanceJournal?.pending.length || 0,
+      committedEvents: this.performanceJournal?.take?.committedEvents || 0,
+      durableAudioSeconds:
+        this.sourceCapture?.committedFrames / this.getAudioContext().rawContext.sampleRate || 0,
+    };
+  }
+  capturedSources() {
+    return this.sourceCaptureResult;
   }
 
-  async openMicrophone() {
+  async openMicrophone(deviceId) {
+    const request = (this.inputRequest = (this.inputRequest || 0) + 1);
     await this.unlock();
-    if (!this.microphone) this.microphone = new Tone.UserMedia().connect(this.master);
-    await this.microphone.open();
+    if (this.disposed || request !== this.inputRequest)
+      throw new Error('Input connection cancelled.');
+    await this.ensureLiveInput().open(deviceId);
+  }
+
+  ensureLiveInput() {
+    if (!this.liveInput) {
+      this.liveInput = new LiveInput(this.getAudioContext().rawContext);
+      this.liveInput.onStateChange = (state) => this.capturePerformanceEvent('inputState', [state]);
+      Tone.connect(this.liveInput.monitor, this.unseparated || this.master);
+    }
+    return this.liveInput;
+  }
+
+  setInputSettings(patch) {
+    this.ensureLiveInput().update(patch);
+  }
+
+  getInputState() {
+    return (
+      this.liveInput?.snapshot() || {
+        status: 'disconnected',
+        channel: -1,
+        gainDb: 0,
+        armed: false,
+        monitor: false,
+        lowLatency: false,
+        highpass: 80,
+        compression: false,
+        peak: 0,
+        channelCount: 0,
+      }
+    );
   }
 
   closeMicrophone() {
-    this.microphone?.close();
+    this.inputRequest = (this.inputRequest || 0) + 1;
+    this.liveInput?.close();
   }
 
   dispose() {
+    this.disposed = true;
+    if (this.syncTimer != null) Tone.getContext().clearInterval(this.syncTimer);
+    clearInterval(this.tempoTimer);
+    this.loudness?.dispose();
+    this.stopRecordingDiagnostics?.();
+    this.performanceJournal?.dispose();
+    this.sourceCapture?.dispose();
     this.decks.forEach((deck) => {
       deck.lanes.forEach((lane) => {
         lane.player.stop();
@@ -628,8 +1251,8 @@ export class StudioAudioEngine {
       deck.meter.dispose();
       deck.output.dispose();
     });
-    this.microphone?.close();
-    this.microphone?.dispose();
+    this.closeMicrophone();
+    this.liveInput?.dispose();
     this.padPlayers.forEach(({ player, gain }) => {
       player.stop();
       player.dispose();
@@ -644,8 +1267,11 @@ export class StudioAudioEngine {
     this.meter.dispose();
     this.masterAnalyser.dispose();
     this.masterLowCut.dispose();
+    this.masterInputTrim.dispose();
+    this.masterLimiterDrive.dispose();
     this.masterEq.dispose();
     this.masterWidth.dispose();
+    this.masterInserts?.dispose();
     this.monitorMono.dispose();
     this.monitorMonoGain.dispose();
     this.monitorStereoGain.dispose();
@@ -656,6 +1282,7 @@ export class StudioAudioEngine {
     this.dryGain.dispose();
     this.output.dispose();
     this.master.dispose();
+    this.unseparated?.dispose();
     this.decks.clear();
   }
 }

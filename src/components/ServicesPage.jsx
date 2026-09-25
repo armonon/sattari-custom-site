@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import { SEO, StructuredData } from '../utils/seo';
+import { BUSINESS, PAGE_SEO, businessSchema } from '../data/siteSeo';
 
 const services = [
   {
@@ -40,10 +41,10 @@ const services = [
     kicker: 'Creative space',
     icon: DoorOpen,
     title: 'Studio & rehearsal',
-    short: 'Space for bands, lessons, practice, recording, and content.',
+    short: '$25 per hour or $60 for four hours. Request a time.',
     href: '/services/rehearsal-space-los-angeles',
-    body: 'Request a rehearsal or rental studio setup for your band, class, practice session, recording, or content shoot.',
-    points: ['Band and drum rehearsal', 'Recording and content', 'Teaching and practice'],
+    body: 'Choose your date and time. We review your request, then email a payment link. Your booking is finalized when payment succeeds.',
+    points: ['$25 per hour', '$60 for a four-hour session', 'Staff approval before payment'],
   },
   {
     value: 'lessons',
@@ -69,21 +70,14 @@ export default function ServicesPage() {
 
   return (
     <section className="section page-header-offset services-shell">
-      <SEO
-        title="Local Instrument Services"
-        description="Book Sattari Music for local instrument repair, rare drum repair, guitar and violin repair, instrument rentals, rehearsal space, rental studio time, teachers, and music classes in California."
-        url="https://sattarimusic.com/services"
-      />
+      <SEO {...PAGE_SEO.services} />
       <StructuredData
         data={{
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: 'Sattari Music Local Services',
-          provider: {
-            '@type': 'Organization',
-            name: 'Sattari Music',
-          },
-          areaServed: 'California',
+          provider: { '@id': businessSchema['@id'] },
+          areaServed: BUSINESS.areas,
           serviceType: [
             'Instrument repair',
             'Instrument rentals',
@@ -100,8 +94,8 @@ export default function ServicesPage() {
       <div className="container services-intake">
         <header className="services-intake-header">
           <div className="services-intake-title">
-            <p className="eyebrow">Sattari local services</p>
-            <h1>What do you need help with?</h1>
+            <p className="eyebrow">Woodland Hills · Encino · Calabasas · Los Angeles</p>
+            <h1>Instrument repairs, rentals &amp; lessons</h1>
             <p>
               Choose a service and send the essentials. We will reply with availability and the next
               step.
@@ -205,8 +199,14 @@ export default function ServicesPage() {
                 2
               </span>
               <div>
-                <h2 id="service-request-title">Send your request</h2>
-                <p>Share the timing and a few useful details. No commitment required.</p>
+                <h2 id="service-request-title">
+                  {selectedService.value === 'rehearsal' ? 'Book a time' : 'Send your request'}
+                </h2>
+                <p>
+                  {selectedService.value === 'rehearsal'
+                    ? 'Request first. Pay after approval.'
+                    : 'Share the timing and a few useful details. No commitment required.'}
+                </p>
               </div>
             </div>
             <ServiceInquiryForm
@@ -221,7 +221,7 @@ export default function ServicesPage() {
           <div className="services-location-copy">
             <p className="eyebrow">Visit the shop</p>
             <h2 id="services-location-title">SATTARI Musical Instruments</h2>
-            <address>4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364</address>
+            <address>{BUSINESS.addressLine}</address>
             <p>
               Bring in an instrument, talk through a repair, or plan a rental, lesson, or session
               with us in person.

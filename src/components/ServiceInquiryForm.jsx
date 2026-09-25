@@ -1,6 +1,8 @@
 // ServiceInquiryForm.jsx
 import * as Sentry from '@sentry/react';
 import { useEffect, useState } from 'react';
+import StudioBookingForm from './StudioBookingForm';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 
 const SERVICE_OPTIONS = [
   { value: 'instrument-sales', label: 'Instruments / gear' },
@@ -89,6 +91,7 @@ export default function ServiceInquiryForm({
       }
 
       setSubmitted(true);
+      trackSiteEvent('inquiry_sent');
     } catch (submitError) {
       if (!submitError.sentryCaptured) {
         Sentry.captureException(submitError, {
@@ -100,6 +103,28 @@ export default function ServiceInquiryForm({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (['studio', 'rehearsal'].includes(form.service)) {
+    return (
+      <div className="service-form-glass">
+        <label>
+          <span>Service Type</span>
+          <select name="service" value={form.service} onChange={handleChange}>
+            {SERVICE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <StudioBookingForm
+          initialPurpose={form.service === 'studio' ? 'Recording' : 'Rehearsal'}
+          initialContact={form}
+          onContactChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))}
+        />
+      </div>
+    );
   }
 
   if (submitted) {

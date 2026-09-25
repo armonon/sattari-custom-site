@@ -1,0 +1,2175 @@
+/* StemDeck Console — shared with native DesignTokens.h.
+   Scope the new shell so storefront typography and legacy editor tools cannot
+   leak into the performance workspace. No animated blur or ambient repaint. */
+.stemdeck-web.sd-studio-next {
+  --sd-bg: #111214;
+  --sd-surface: #17191c;
+  --sd-panel: #202226;
+  --sd-raised: #2c2f34;
+  --sd-hover: #393d44;
+  --sd-line: #464b54;
+  --sd-line-soft: #32363e;
+  --sd-text: #f5f5f7;
+  --sd-muted: #b6bdc8;
+  --sd-dim: #9da6b4;
+  --sd-primary: #aacaff;
+  --sd-primary-wash: #aacaff14;
+  --sd-primary-edge: #aacaff66;
+  --sd-control-height: 36px;
+  --sd-panel-shadow: inset 0 1px 0 #ffffff04, 0 4px 16px #00000014;
+  --sd-radius: 14px;
+  --sd-control-radius: 8px;
+  color-scheme: dark;
+  min-height: 100dvh;
+  padding: 0;
+  background: var(--sd-bg);
+  color: var(--sd-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-studio-next .sd-app-frame {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  padding: 16px 16px 16px 104px;
+  height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  background: var(--sd-bg);
+  box-shadow: none;
+  overflow: clip;
+}
+.sd-studio-next :is(button, input, select, textarea) {
+  font-family: inherit;
+}
+.sd-studio-next button {
+  transition:
+    background-color 100ms ease,
+    border-color 100ms ease;
+  touch-action: manipulation;
+}
+.sd-studio-next button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.sd-studio-next button:not(:disabled):active {
+  filter: brightness(0.88);
+}
+.sd-studio-next button:focus-visible,
+.sd-studio-next input:focus-visible,
+.sd-studio-next select:focus-visible,
+.sd-studio-next a:focus-visible,
+.sd-studio-next summary:focus-visible,
+.sd-studio-next [tabindex='0']:focus-visible {
+  outline: 2px solid var(--sd-primary);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-workspace-rail {
+  position: absolute;
+  inset: 16px auto 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  min-height: 360px;
+  padding: 16px 4px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 12px;
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--sd-primary-wash);
+  color: var(--sd-primary);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.sd-studio-next .sd-view-nav {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 6px;
+  margin-top: 26px;
+  padding: 0;
+  background: none;
+  border: 0;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+.sd-studio-next .sd-view-nav button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 64px;
+  min-height: 64px;
+  padding: 7px 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sd-muted);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.sd-studio-next .sd-view-nav button::after {
+  display: none;
+}
+.sd-studio-next .sd-view-nav button.is-active {
+  background: var(--sd-raised);
+  border-color: transparent;
+  color: var(--sd-primary);
+  box-shadow: none;
+}
+.sd-studio-next .sd-view-nav button:hover:not(.is-active) {
+  background: var(--sd-raised);
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-rail-caption {
+  margin-top: auto;
+  padding-top: 24px;
+  color: var(--sd-dim);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+}
+.sd-studio-next .sd-command-bar {
+  display: grid;
+  grid-template-columns: 145px 112px minmax(0, 1fr) 212px auto;
+  grid-template-areas: 'brand transport space clock actions';
+  grid-template-rows: auto;
+  gap: 12px;
+  min-height: 64px;
+  height: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 12px;
+  background: var(--sd-panel);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.sd-studio-next .sd-command-bar > * {
+  border: 0;
+}
+.sd-studio-next .sd-title-block {
+  grid-area: brand;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+  text-align: left;
+}
+.sd-studio-next .sd-title-block h1 {
+  margin: 0;
+  font:
+    700 22px/1.15 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  letter-spacing: -0.7px;
+}
+.sd-studio-next .sd-title-block small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--sd-dim);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.sd-studio-next .sd-title-block h1.sd-product-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.15px;
+  white-space: normal;
+}
+.sd-studio-next .sd-product-brand img {
+  display: block;
+  width: 132px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.sd-studio-next .sd-workspace-rail > .sd-view-nav {
+  margin-top: 0;
+}
+.sd-studio-next .sd-global-transport {
+  grid-area: transport;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.sd-studio-next .sd-global-transport button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 112px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--sd-control-radius);
+  background: var(--sd-primary);
+  color: var(--sd-bg);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: none;
+}
+.sd-studio-next .sd-global-transport button span {
+  display: inline;
+}
+.sd-studio-next .sd-global-transport button:disabled {
+  opacity: 0.42;
+}
+.sd-studio-next .sd-project-clock {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px;
+  grid-area: clock;
+  min-height: 50px;
+  height: auto;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 10px;
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-project-clock label > span {
+  color: var(--sd-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.sd-studio-next .sd-project-clock input {
+  color: var(--sd-text);
+  font-size: 19px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-project-clock select {
+  color: var(--sd-text);
+  font-size: 13px;
+}
+.sd-studio-next .sd-system-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+.sd-studio-next .sd-system-actions button {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--sd-line);
+  border-radius: 6px;
+  background: var(--sd-raised);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.sd-studio-next .sd-system-actions .sd-record-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 100px;
+  min-height: 44px;
+  background: var(--sd-raised);
+  border-color: #ff667735;
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-system-actions .sd-record-button svg {
+  color: #ff6677;
+}
+.sd-studio-next .sd-record-button.is-recording {
+  background: #be3044;
+  color: white;
+  border-color: #ff9299;
+  animation: none;
+}
+.sd-studio-next .sd-record-button.is-recording svg {
+  color: white;
+}
+.sd-studio-next .sd-workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  scrollbar-color: #434b54 transparent;
+  scrollbar-width: thin;
+}
+.sd-studio-next .sd-workspace-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 4px 18px;
+}
+.sd-studio-next .sd-workspace-eyebrow {
+  color: var(--sd-muted);
+  font-size: 11px;
+}
+.sd-studio-next .sd-workspace-heading h2 {
+  margin: 5px 0 6px;
+  color: var(--sd-text);
+  font:
+    600 28px/1.1 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  letter-spacing: -0.7px;
+}
+.sd-studio-next .sd-workspace-heading p {
+  margin: 0;
+  color: var(--sd-muted);
+  font-size: 12px;
+}
+.sd-studio-next .sd-workspace-quick-actions {
+  display: flex;
+  gap: 8px;
+}
+.sd-studio-next .sd-workspace-quick-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  background: var(--sd-panel);
+  border-radius: 6px;
+  color: var(--sd-text);
+  font-size: 12px;
+}
+.sd-studio-next .sd-performance-coach {
+  min-height: 44px;
+  padding: 6px 2px;
+  margin: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--sd-line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+.sd-studio-next .sd-performance-coach strong {
+  color: var(--sd-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sd-studio-next .sd-scene-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  width: auto;
+  gap: 6px;
+}
+.sd-studio-next .sd-scene-buttons button {
+  min-width: 32px;
+  min-height: 30px;
+  border-radius: 5px;
+  background: var(--sd-raised);
+  font-size: 11px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-scene-buttons button:last-child {
+  min-width: 76px;
+}
+.sd-studio-next .sd-scene-buttons button.is-active {
+  background: var(--sd-primary-wash);
+  border-color: var(--sd-primary-edge);
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-performance-stage {
+  height: auto;
+  min-height: 0;
+  margin: 0 0 16px;
+}
+.sd-studio-next .sd-empty-performance {
+  min-height: 330px;
+  height: clamp(330px, calc(100dvh - 400px), 620px);
+  padding: 20px;
+  border: 1px dashed var(--sd-line);
+  border-radius: 12px;
+  background: var(--sd-surface);
+}
+.sd-studio-next button.sd-empty-source-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  padding: 0;
+  transform: none;
+  border: 0;
+  background: transparent;
+}
+.sd-studio-next .sd-empty-source-cta > strong {
+  color: var(--sd-text);
+  font-size: 29px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+}
+.sd-studio-next .sd-empty-source-cta > small {
+  color: var(--sd-muted);
+  font-size: 13px;
+}
+.sd-studio-next .sd-empty-source-cta > em {
+  margin-top: 4px;
+  color: var(--sd-primary);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 2px;
+}
+.sd-studio-next .sd-empty-source-cta .sd-import-hint {
+  font-size: 10px;
+  color: var(--sd-dim);
+}
+.sd-studio-next .sd-import-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 12px 20px;
+  background: var(--sd-primary);
+  color: var(--sd-bg);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sd-studio-next .sd-empty-instrument {
+  display: grid;
+  grid-template-columns: repeat(4, 44px);
+  gap: 5px;
+  margin: 0 0 8px;
+  transform: none;
+}
+.sd-studio-next .sd-empty-instrument > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 5px;
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-line);
+  border-top: 2px solid var(--lane-color);
+  border-radius: 6px;
+}
+.sd-studio-next .sd-empty-instrument b {
+  font-size: 7px;
+  color: var(--lane-color);
+}
+.sd-studio-next .sd-empty-instrument svg {
+  width: 28px;
+  height: 52px;
+  fill: none;
+  stroke: var(--lane-color);
+  stroke-width: 2;
+  opacity: 0.75;
+}
+.sd-studio-next .sd-empty-instrument i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--lane-color);
+}
+.sd-studio-next .sd-focused-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 12px;
+  height: auto;
+  padding: 0;
+}
+.sd-studio-next .sd-focused-deck .sd-decks-grid {
+  width: 100%;
+  max-width: 1060px;
+  height: auto;
+  margin: 0 auto;
+  transform: none;
+}
+.sd-studio-next .sd-focused-deck .sd-deck {
+  height: auto;
+  min-height: 580px;
+  padding: 20px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 16px;
+  background: var(--sd-panel);
+  box-shadow: 0 4px 16px #0002;
+}
+.sd-studio-next .sd-deck-header {
+  min-height: 58px;
+}
+.sd-studio-next .sd-deck-title {
+  min-height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+}
+.sd-studio-next .sd-deck-title span {
+  font-size: 19px;
+  line-height: 1.2;
+}
+.sd-studio-next .sd-deck-identity {
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: 30px 28px;
+}
+.sd-studio-next .sd-deck-meta button {
+  height: 25px;
+  font-size: 12px;
+}
+.sd-studio-next .sd-deck-meta input {
+  width: 84px;
+  min-width: 0;
+  height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 6px;
+  background: var(--sd-surface);
+  color: var(--sd-text);
+  font: inherit;
+  font-size: 14px;
+}
+.sd-studio-next .sd-deck-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--sd-accent);
+  color: var(--sd-bg);
+  font-size: 15px;
+  font-weight: 700;
+}
+.sd-studio-next .sd-deck-live-actions button,
+.sd-studio-next .sd-deck-live-actions select {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.sd-studio-next .sd-deck-overview {
+  height: 40px;
+  margin: 10px 0;
+}
+.sd-studio-next .sd-focused-deck .sd-deck-overview .sd-waveform {
+  height: 40px;
+}
+.sd-studio-next .sd-processing-badge {
+  padding: 6px 8px;
+  border: 1px solid var(--sd-line);
+  border-radius: 6px;
+  color: var(--sd-muted);
+  font-size: 12px;
+}
+.sd-studio-next .sd-stem-wavefield {
+  height: clamp(230px, 32vh, 400px);
+}
+.sd-studio-next .sd-stem-wave-column {
+  grid-template-rows: 28px minmax(0, 1fr) 78px;
+  background: var(--sd-surface);
+  border: 0;
+  border-radius: 8px;
+}
+.sd-studio-next .sd-vertical-wave-shape {
+  inset: 6px 12px;
+}
+.sd-studio-next .sd-vertical-wave-shape i {
+  min-height: 1px;
+  border-radius: 0;
+}
+.sd-studio-next .sd-stem-wave-column > header strong {
+  font-size: 12px;
+}
+.sd-studio-next .sd-deck-density button {
+  min-width: 28px;
+  height: 40px;
+  font-size: 11px;
+}
+.sd-studio-next .sd-stem-wave-controls {
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 8px 4px;
+}
+.sd-studio-next .sd-stem-wave-controls .sd-knob {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sd-studio-next .sd-stem-wave-controls .sd-knob output {
+  font-size: 11px;
+}
+.sd-studio-next .sd-stem-wave-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sd-studio-next .sd-stem-wave-controls > div button {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  font-size: 10px;
+}
+.sd-studio-next .sd-deck-transport {
+  display: grid;
+  grid-template-columns: 112px 88px minmax(0, 1fr);
+  min-height: 48px;
+  margin-top: 10px;
+  gap: 8px;
+}
+.sd-studio-next .sd-deck-transport .sd-cf-assign {
+  justify-self: end;
+}
+.sd-studio-next .sd-deck-transport > button {
+  min-height: 40px;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 11px;
+}
+.sd-studio-next .sd-knob-dial {
+  background: var(--sd-raised);
+  box-shadow: none;
+}
+.sd-studio-next .sd-channel-mixstrip {
+  min-height: 84px;
+}
+.sd-studio-next .sd-tool-tabs button {
+  min-height: 34px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+.sd-studio-next .sd-hot-cues button {
+  min-height: 34px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.sd-studio-next .sd-source-dock {
+  position: static;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px dashed var(--sd-line);
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-output-console {
+  flex-shrink: 0;
+  max-height: 55dvh;
+  overflow-y: auto;
+  margin-top: 12px;
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-master-summary {
+  gap: 18px;
+  padding: 18px;
+}
+.sd-studio-next .sd-master-heading strong {
+  color: var(--sd-text);
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+.sd-studio-next .sd-master-heading svg {
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-output-console button {
+  min-height: 36px;
+  border-radius: 6px;
+  background: var(--sd-raised);
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-output-console input[type='range'] {
+  accent-color: var(--sd-primary);
+}
+.sd-studio-next .sd-master-summary-stats {
+  font-size: 10px;
+}
+.sd-studio-next .sd-native-arranger {
+  margin: 0 0 16px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-native-arranger-commandbar {
+  min-height: 56px;
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-native-arranger-commandbar button {
+  min-height: 34px;
+  font-size: 11px;
+}
+.sd-studio-next .sd-arranger-project-title strong {
+  font-size: 12px;
+}
+.sd-studio-next .sd-arranger-project-title span {
+  font-size: 9px;
+}
+.sd-studio-next .sd-arranger-toolrail button {
+  min-height: 36px;
+}
+.sd-studio-next .sd-native-arranger-frame {
+  min-height: 440px;
+}
+.sd-studio-next .sd-arrangement-label {
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-library-view {
+  border: 1px solid var(--sd-line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-library-table {
+  min-width: 0;
+  overflow-x: auto;
+}
+.sd-studio-next .sd-library-table th {
+  height: 40px;
+  font-size: 10px;
+}
+.sd-studio-next .sd-library-table td {
+  height: 52px;
+  font-size: 12px;
+}
+.sd-studio-next .sd-library-empty {
+  min-height: 240px;
+  padding: 48px 20px;
+}
+.sd-studio-next .sd-library-empty button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.sd-studio-next .sd-library-sidebar button {
+  font-size: 12px;
+}
+.sd-studio-next .sd-advanced-strip {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--sd-line);
+  border-radius: 8px;
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-advanced-strip button {
+  min-height: 36px;
+  font-size: 11px;
+}
+.sd-studio-next .sd-notice[data-visible='false'] {
+  display: none;
+}
+.sd-studio-next .sd-notice[data-visible='true'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--sd-primary-wash);
+  color: var(--sd-text);
+  font-size: 12px;
+}
+
+/* One hierarchy across the live stage, editor, library and output. Keep these
+   rules scoped: the shop and account screens intentionally retain their theme. */
+.sd-studio-next
+  :is(
+    .sd-workspace-rail,
+    .sd-command-bar,
+    .sd-focused-deck .sd-deck,
+    .sd-output-console,
+    .sd-library-view,
+    .sd-native-arranger
+  ) {
+  border-radius: var(--sd-radius);
+}
+.sd-studio-next
+  :is(
+    .sd-system-actions button,
+    .sd-workspace-quick-actions button,
+    .sd-deck-transport > button,
+    .sd-output-console button,
+    .sd-tool-tabs button
+  ) {
+  border-radius: var(--sd-control-radius);
+}
+.sd-studio-next
+  :is(
+    .sd-system-actions button,
+    .sd-workspace-quick-actions button,
+    .sd-output-console button
+  ):hover:not(:disabled) {
+  border-color: var(--sd-primary-edge);
+}
+.sd-studio-next .sd-tool-tabs {
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-tool-tabs button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-tool-tabs button.is-active {
+  background: var(--sd-raised);
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-library-table th {
+  background: var(--sd-surface);
+  color: var(--sd-muted);
+  letter-spacing: 0.04em;
+}
+.sd-studio-next .sd-library-table tbody tr:hover {
+  background: var(--sd-raised);
+}
+.sd-studio-next .sd-native-arranger {
+  background: var(--sd-surface);
+  border-color: var(--sd-line);
+}
+.sd-studio-next :is(.sd-arranger-inspector, .sd-arranger-toolrail) {
+  background: var(--sd-panel);
+  border-color: var(--sd-line-soft);
+}
+.sd-studio-next .sd-master-summary-stats {
+  gap: 18px;
+  padding-left: 16px;
+  border-left: 1px solid var(--sd-line-soft);
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-master-summary-stats strong {
+  font-size: 16px;
+  color: var(--sd-text);
+}
+.sd-studio-next
+  :is(
+    .sd-master-heading small,
+    .sd-master-details p,
+    .sd-master-details small,
+    .sd-master-details dt,
+    .sd-master-control > span
+  ) {
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-master-heading small {
+  font-size: 11px;
+}
+.sd-studio-next .sd-master-details {
+  border-color: var(--sd-line-soft);
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-master-details > section {
+  border-color: var(--sd-line-soft);
+}
+.sd-studio-next .sd-output-console button[aria-pressed='true'] {
+  background: var(--sd-primary-wash);
+  border-color: var(--sd-primary-edge);
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-output-console > footer {
+  color: var(--sd-dim);
+  font-size: 10px;
+  line-height: 1.5;
+  border-color: var(--sd-line-soft);
+}
+.sd-studio-next .sd-skip-link {
+  position: absolute;
+  top: 8px;
+  left: 104px;
+  z-index: 100;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: var(--sd-primary);
+  color: var(--sd-bg);
+  transform: translateY(-150%);
+}
+.sd-studio-next .sd-skip-link:focus {
+  transform: none;
+}
+/* Quiet material hierarchy. Workspaces are surfaces; buttons are touchable
+   objects; colour belongs to transport, signal and explicit active state. */
+.sd-studio-next .sd-source-chooser {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid var(--sd-line);
+  border-radius: 20px;
+  background: var(--sd-panel);
+  color: var(--sd-text);
+  box-shadow: 0 24px 80px #0008;
+}
+.sd-studio-next .sd-source-chooser::backdrop {
+  background: #0008;
+}
+.sd-studio-next .sd-source-chooser header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.sd-studio-next .sd-source-chooser h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.sd-studio-next .sd-source-chooser button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--sd-raised);
+  color: var(--sd-text);
+  font-size: 14px;
+}
+.sd-studio-next .sd-source-chooser button:hover:not(:disabled) {
+  background: var(--sd-hover);
+}
+.sd-studio-next .sd-source-chooser header button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+}
+.sd-studio-next .sd-source-choices {
+  display: grid;
+  gap: 10px;
+}
+.sd-studio-next .sd-source-choices button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  text-align: left;
+}
+.sd-studio-next .sd-source-choices svg {
+  flex-shrink: 0;
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-source-choices span,
+.sd-studio-next .sd-live-input span {
+  display: grid;
+  gap: 5px;
+}
+.sd-studio-next .sd-source-choices strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-source-choices small,
+.sd-studio-next .sd-source-setup small {
+  color: var(--sd-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sd-studio-next .sd-source-setup {
+  display: grid;
+  gap: 16px;
+}
+.sd-studio-next .sd-source-setup p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.sd-studio-next .sd-source-setup label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.sd-studio-next .sd-source-setup select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  background: var(--sd-surface);
+  color: var(--sd-text);
+  border: 1px solid var(--sd-line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.sd-studio-next .sd-source-setup footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sd-studio-next .sd-source-setup [role='alert'] {
+  color: #ffb4ad;
+}
+.sd-studio-next .sd-source-setup .sd-source-connect {
+  background: var(--sd-primary);
+  color: var(--sd-bg);
+}
+.sd-studio-next .sd-live-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 12px;
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-live-input span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sd-studio-next .sd-live-input small {
+  font-size: 12px;
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-live-input button {
+  min-height: 44px;
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--sd-raised);
+  color: var(--sd-text);
+  font-size: 14px;
+}
+.sd-studio-next
+  :is(
+    .sd-command-bar,
+    .sd-workspace-rail,
+    .sd-output-console,
+    .sd-library-view,
+    .sd-native-arranger
+  ) {
+  border-color: var(--sd-line-soft);
+}
+.sd-studio-next
+  :is(
+    .sd-system-actions button,
+    .sd-workspace-quick-actions button,
+    .sd-output-console button,
+    .sd-deck-transport > button,
+    .sd-scene-buttons button
+  ) {
+  border-color: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.sd-studio-next
+  :is(
+    .sd-system-actions button,
+    .sd-workspace-quick-actions button,
+    .sd-output-console button
+  ):hover:not(:disabled) {
+  background: var(--sd-hover);
+  border-color: transparent;
+}
+.sd-studio-next .sd-system-actions .sd-record-button.is-recording {
+  background: #be3044;
+}
+.sd-studio-next .sd-output-console button.is-danger[aria-pressed='true'] {
+  background: #ff3b301c;
+  color: #ff9a94;
+  border-color: #ff3b3040;
+}
+.sd-studio-next .sd-workspace-heading h2 {
+  letter-spacing: -0.6px;
+}
+.sd-studio-next .sd-workspace-eyebrow {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.sd-studio-next .sd-workspace-quick-actions button {
+  background: var(--sd-raised);
+}
+.sd-studio-next .sd-deck-transport > button {
+  min-height: 44px;
+}
+.sd-studio-next
+  :is(
+    .sd-tool-tabs button,
+    .sd-hot-cues button,
+    .sd-library-sidebar button,
+    .sd-library-table td,
+    .sd-library-empty button,
+    .sd-native-arranger-commandbar button
+  ) {
+  font-size: 0.875rem;
+}
+.sd-studio-next
+  :is(
+    .sd-library-table th,
+    .sd-master-heading small,
+    .sd-master-summary-stats,
+    .sd-output-console > footer
+  ) {
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+.sd-studio-next .sd-master-summary-stats strong {
+  font-size: 18px;
+  font-weight: 500;
+}
+.sd-studio-next .sd-master-summary-stats strong small {
+  font-size: 12px;
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-native-arranger-commandbar {
+  gap: 12px;
+}
+.sd-studio-next .sd-tool-tabs {
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-tool-tabs button.is-active {
+  box-shadow: 0 1px 3px #0003;
+}
+.sd-studio-next .sd-source-dock {
+  border-style: solid;
+  border-color: var(--sd-line-soft);
+  background: var(--sd-panel);
+}
+.sd-studio-next .sd-empty-performance {
+  border-style: solid;
+  border-color: var(--sd-line-soft);
+}
+
+/* Shared finish for secondary workspaces. Keep transport colours, meters,
+   note geometry and warning states in their owning component styles. */
+.sd-studio-next
+  :is(
+    .sd-music-library,
+    .sd-arrangement-editor,
+    .sd-input-strip,
+    .sd-output-console.sd-master-modern
+  ) {
+  box-shadow: var(--sd-panel-shadow);
+  border-color: var(--sd-line-soft);
+}
+.sd-studio-next
+  :is(.sd-music-library h3, .sd-arrangement-editor h3, .sd-input-strip header strong) {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+}
+.sd-studio-next :is(.sd-music-library, .sd-arrangement-editor, .sd-input-strip) input::placeholder {
+  color: var(--sd-dim);
+  opacity: 1;
+}
+.sd-studio-next :is(.sd-workspace, .ae-lower-editor, .sd-music-table-wrap, .ae-rack-chain ol) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sd-line) transparent;
+}
+.sd-studio-next .sd-record-glyph {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #ff667755;
+  border-radius: 50%;
+}
+.sd-studio-next .is-recording .sd-record-glyph {
+  border-color: #ffffff66;
+}
+.sd-studio-next .sd-view-nav button.is-active {
+  box-shadow: inset 3px 0 0 var(--sd-primary);
+}
+.sd-studio-next .sd-input-controls {
+  align-items: end;
+}
+.sd-studio-next .sd-input-controls label,
+.sd-studio-next .sd-input-strip small {
+  font-size: 12px;
+}
+.sd-studio-next .sd-input-controls :is(button, select) {
+  min-height: var(--sd-control-height);
+  font-size: 13px;
+}
+.sd-studio-next .sd-input-controls label {
+  min-width: 0;
+}
+.sd-studio-next .sd-input-controls select {
+  max-width: 100%;
+}
+.sd-studio-next .sd-music-library .sd-music-preview {
+  background: var(--sd-surface);
+  border-color: var(--sd-line-soft);
+  border-top: 2px solid var(--sd-primary-edge);
+}
+.sd-studio-next .sd-music-library th {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.sd-studio-next .sd-music-library td {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.sd-studio-next .sd-music-library td small {
+  font-size: 12px;
+}
+.sd-studio-next .sd-music-library tbody tr:focus-within {
+  background: var(--sd-primary-wash);
+}
+.sd-studio-next .sd-library-queue li::marker {
+  color: var(--sd-primary);
+  font-variant-numeric: tabular-nums;
+}
+.sd-studio-next .sd-library-queue li {
+  padding-block: 12px;
+}
+.sd-studio-next .sd-library-queue li:first-child {
+  border-top: 1px solid var(--sd-primary-edge);
+}
+.sd-studio-next .sd-library-planning h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.sd-studio-next .ae-editor-tabs {
+  border-bottom: 1px solid var(--sd-line-soft);
+  padding-block: 8px;
+}
+.sd-studio-next .ae-rack-heading small {
+  color: var(--sd-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.sd-studio-next .ae-rack-tabs button {
+  font-size: 12px;
+}
+.sd-studio-next
+  .sd-master-modern
+  :is(
+    .sd-master-heading small,
+    .sd-master-summary-stats,
+    .sd-master-details p,
+    .sd-master-details dl > div,
+    .sd-master-stem-help > summary,
+    .sd-master-notice
+  ) {
+  font-size: 12px;
+}
+.sd-studio-next .sd-master-modern .sd-master-summary-stats strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.sd-studio-next .sd-master-modern .sd-master-summary-stats small {
+  font-size: 11px;
+}
+.sd-studio-next .sd-master-modern .sd-master-stereo > div {
+  font-size: 11px;
+}
+.sd-studio-next .sd-master-modern .sd-master-stereo > .sd-master-meter-scale {
+  height: 13px;
+  font-size: 10px;
+}
+.sd-studio-next .sd-master-modern .sd-master-details button {
+  min-height: 36px;
+  font-size: 13px;
+}
+.sd-studio-next .sd-master-modern > footer {
+  font-size: 12px;
+}
+.sd-studio-next .sd-master-modern .sd-master-stem {
+  border-color: var(--sd-line-soft);
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-master-modern .sd-master-stem-scale {
+  font-size: 11px;
+}
+.sd-studio-next .sd-mixer-view {
+  gap: 12px;
+  padding: 0 0 16px;
+}
+.sd-studio-next .sd-mixer-channel {
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-line-soft);
+  border-radius: var(--sd-radius);
+  overflow: hidden;
+}
+.sd-studio-next .sd-mixer-channel > header {
+  padding: 16px;
+}
+.sd-studio-next .sd-mixer-channel > header strong {
+  font-size: 14px;
+}
+.sd-studio-next .sd-mixer-channel > header span {
+  font-size: 12px;
+}
+.sd-studio-next .sd-channel-buttons button {
+  height: 36px;
+  font-size: 12px;
+  border-radius: var(--sd-control-radius);
+}
+.sd-studio-next .sd-pad-cell > button {
+  border-radius: 10px;
+}
+.sd-studio-next .sd-pad-cell > button strong {
+  font-size: 13px;
+}
+.sd-studio-next .sd-pad-cell > button span {
+  font-size: 12px;
+}
+.sd-studio-next .sd-files-view {
+  background: var(--sd-panel);
+  border-color: var(--sd-line-soft);
+  border-radius: var(--sd-radius);
+  padding: 20px;
+}
+.sd-studio-next .sd-files-view > header {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sd-studio-next .sd-files-view > header strong {
+  font-size: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sd-studio-next .sd-files-view > header small,
+.sd-studio-next .sd-files-view > header > span,
+.sd-studio-next .sd-files-list > header {
+  color: var(--sd-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sd-studio-next .sd-file-actions {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.sd-studio-next .sd-file-actions button {
+  min-width: 0;
+  gap: 8px 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--sd-line-soft);
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-file-actions button:hover:not(:disabled) {
+  background: var(--sd-raised);
+  border-color: var(--sd-line);
+}
+.sd-studio-next .sd-file-actions button svg {
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-file-actions button span {
+  font-size: 14px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-file-actions button small {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-files-list > button {
+  min-height: 48px;
+  gap: 12px;
+  font-size: 13px;
+}
+.sd-studio-next .sd-files-list > button strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sd-studio-next .sd-files-list p {
+  color: var(--sd-muted);
+  font-size: 14px;
+}
+.sd-studio-next .sd-settings-popover {
+  position: fixed;
+  inset: 108px 24px auto auto;
+  z-index: 60;
+  width: min(340px, calc(100vw - 32px));
+  max-height: calc(100dvh - 132px);
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-line);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px #0006;
+  backdrop-filter: none;
+}
+.sd-studio-next .sd-settings-popover header {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  font-size: 16px;
+}
+.sd-studio-next .sd-settings-popover header button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+}
+.sd-studio-next .sd-settings-popover label {
+  gap: 16px;
+  min-height: 48px;
+  font-size: 14px;
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-settings-popover input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--sd-primary);
+}
+.sd-studio-next .sd-settings-popover > button {
+  height: auto;
+  min-height: 40px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: #ff667710;
+  border-color: #ff667740;
+  color: #ffadb6;
+  font-size: 14px;
+}
+@media (pointer: coarse) {
+  .sd-studio-next
+    :is(.sd-input-controls, .sd-music-library, .sd-master-modern .sd-master-details)
+    button {
+    min-height: 44px;
+  }
+}
+@media (min-width: 961px) {
+  .sd-studio-next .sd-workspace-heading {
+    padding: 12px 4px;
+  }
+  .sd-studio-next .sd-workspace-heading h2 {
+    font-size: 24px;
+    margin: 4px 0 0;
+  }
+  .sd-studio-next .sd-workspace-heading p {
+    display: none;
+  }
+}
+@media (min-width: 961px) and (max-height: 800px) {
+  .sd-studio-next .sd-empty-performance {
+    min-height: 260px;
+    height: 260px;
+    padding: 12px;
+  }
+  .sd-studio-next .sd-empty-source-cta {
+    gap: 7px;
+  }
+  .sd-studio-next .sd-empty-source-cta > strong {
+    font-size: 24px;
+  }
+  .sd-studio-next .sd-empty-source-cta > small {
+    font-size: 12px;
+  }
+  .sd-studio-next .sd-empty-source-cta > em {
+    margin-top: 0;
+  }
+  .sd-studio-next .sd-empty-instrument {
+    margin: 0;
+  }
+  .sd-studio-next .sd-empty-instrument > span {
+    gap: 4px;
+    padding: 6px 5px;
+  }
+  .sd-studio-next .sd-empty-instrument svg {
+    height: 30px;
+  }
+  .sd-studio-next .sd-import-action {
+    margin: 0;
+    padding: 10px 18px;
+  }
+}
+@media (max-width: 1080px) {
+  .sd-studio-next .sd-command-bar {
+    grid-template-columns: 124px 102px minmax(0, 1fr) 180px auto;
+    gap: 8px;
+  }
+  .sd-studio-next .sd-global-transport button {
+    width: 102px;
+  }
+  .sd-studio-next .sd-system-actions button {
+    padding: 0 9px;
+  }
+  .sd-studio-next .sd-system-actions .sd-record-button {
+    min-width: 82px;
+  }
+  .sd-studio-next .sd-master-summary {
+    grid-template-columns: 1fr 1.5fr 1fr;
+  }
+}
+@media (max-width: 960px) {
+  .sd-studio-next .sd-app-frame {
+    height: auto;
+    padding: 10px 10px calc(92px + env(safe-area-inset-bottom));
+  }
+  .sd-studio-next .sd-skip-link {
+    left: 12px;
+  }
+  .sd-studio-next .sd-workspace {
+    overflow: visible;
+  }
+  .sd-studio-next .sd-output-console {
+    max-height: none;
+    overflow: visible;
+  }
+  .sd-studio-next .sd-workspace-rail {
+    position: fixed;
+    z-index: 50;
+    inset: auto 10px max(8px, env(safe-area-inset-bottom)) 10px;
+    width: auto;
+    min-height: 0;
+    height: 66px;
+    padding: 3px;
+    border: 1px solid var(--sd-line);
+    box-shadow: 0 -8px 22px #0005;
+  }
+  .sd-studio-next .sd-brand-mark,
+  .sd-studio-next .sd-rail-caption {
+    display: none;
+  }
+  .sd-studio-next .sd-view-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0;
+    gap: 3px;
+  }
+  .sd-studio-next .sd-view-nav button {
+    height: 58px;
+    min-height: 58px;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .sd-studio-next .sd-view-nav button.is-active {
+    box-shadow: none;
+  }
+  .sd-studio-next .sd-command-bar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'brand actions' 'clock transport';
+    gap: 12px 8px;
+    padding: 12px;
+  }
+  .sd-studio-next .sd-title-block h1 {
+    font-size: 21px;
+  }
+  .sd-studio-next .sd-system-actions {
+    gap: 6px;
+  }
+  .sd-studio-next .sd-system-actions button {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .sd-studio-next .sd-system-actions .sd-record-button {
+    min-width: 72px;
+  }
+  .sd-studio-next .sd-tools-button {
+    max-width: 65px;
+  }
+  .sd-studio-next .sd-project-clock {
+    grid-template-columns: minmax(70px, 1fr) 60px;
+    min-width: 0;
+    width: 100%;
+    max-width: 220px;
+    height: 46px;
+  }
+  .sd-studio-next .sd-project-clock .sd-tempo-chip {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 5px 7px;
+  }
+  .sd-studio-next .sd-project-clock .sd-tempo-chip input {
+    width: 100%;
+  }
+  .sd-studio-next .sd-project-clock .sd-tempo-chip small {
+    display: none;
+  }
+  .sd-studio-next .sd-project-clock label > span {
+    font-size: 12px;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  .sd-studio-next .sd-global-transport {
+    justify-content: flex-end;
+  }
+  .sd-studio-next .sd-global-transport button {
+    width: 100%;
+    min-width: 104px;
+    height: 44px;
+  }
+  .sd-studio-next .sd-workspace-heading {
+    align-items: center;
+    padding: 20px 2px 18px;
+    gap: 10px;
+  }
+  .sd-studio-next .sd-workspace-heading h2 {
+    font-size: 27px;
+  }
+  .sd-studio-next .sd-workspace-heading p {
+    max-width: 200px;
+    font-size: 11px;
+  }
+  .sd-studio-next .sd-workspace-quick-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sd-studio-next .sd-workspace-quick-actions button {
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+  .sd-studio-next .sd-performance-coach {
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 9px;
+  }
+  .sd-studio-next .sd-performance-coach strong {
+    font-size: 12px;
+  }
+  .sd-studio-next .sd-scene-buttons button {
+    min-height: 36px;
+  }
+  .sd-studio-next .sd-empty-performance {
+    min-height: 430px;
+    height: auto;
+    padding: 32px 12px;
+  }
+  .sd-studio-next .sd-empty-source-cta > strong {
+    font-size: 25px;
+  }
+  .sd-studio-next .sd-empty-source-cta > small {
+    max-width: 260px;
+    font-size: 12px;
+  }
+  .sd-studio-next .sd-focused-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sd-studio-next .sd-source-dock {
+    height: 48px;
+    min-height: 48px;
+    flex-direction: row;
+    gap: 12px;
+  }
+  .sd-studio-next .sd-focused-deck .sd-deck {
+    padding: 10px;
+    min-height: 570px;
+  }
+  .sd-studio-next .sd-deck-title span {
+    font-size: 16px;
+  }
+  .sd-studio-next .sd-deck-overview {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .sd-studio-next .sd-deck-spectrum {
+    display: none;
+  }
+  .sd-studio-next .sd-stem-wavefield {
+    height: 240px;
+    gap: 4px;
+  }
+  .sd-studio-next .sd-stem-wave-column {
+    grid-template-rows: 23px minmax(0, 1fr) 76px;
+  }
+  .sd-studio-next .sd-stem-wave-controls {
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 2px;
+  }
+  .sd-studio-next .sd-stem-wave-controls .sd-knob {
+    flex-direction: row;
+    gap: 5px;
+  }
+  .sd-studio-next .sd-vertical-wave-shape {
+    inset: 4px;
+  }
+  .sd-studio-next .sd-master-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px 12px;
+  }
+  .sd-studio-next .sd-master-heading,
+  .sd-studio-next .sd-master-stereo {
+    grid-column: 1 / -1;
+  }
+  .sd-studio-next .sd-native-arranger-commandbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+  .sd-studio-next .sd-arranger-project-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    overflow: visible;
+  }
+  .sd-studio-next .sd-native-arranger-commandbar .sd-edit-tools {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    width: 100%;
+    overflow: visible;
+  }
+  .sd-studio-next .sd-native-arranger-frame {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .sd-studio-next .sd-arranger-inspector {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--sd-line);
+  }
+  .sd-studio-next .sd-library-view {
+    display: block;
+  }
+  .sd-studio-next .sd-library-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px;
+    border-bottom: 1px solid var(--sd-line);
+  }
+  .sd-studio-next .sd-library-sidebar button {
+    min-height: 40px;
+  }
+  .sd-studio-next .sd-advanced-strip {
+    flex-wrap: wrap;
+  }
+  .sd-studio-next .sd-settings-popover {
+    position: fixed;
+    inset: auto 10px calc(84px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: calc(100dvh - 112px - env(safe-area-inset-bottom));
+    z-index: 60;
+  }
+  .sd-studio-next .sd-advanced-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    overflow: visible;
+  }
+  .sd-studio-next .sd-advanced-strip > span,
+  .sd-studio-next .sd-advanced-strip > label {
+    grid-column: 1 / -1;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .sd-studio-next .sd-advanced-strip input {
+    min-width: 0;
+    width: 100%;
+  }
+  .sd-studio-next .sd-advanced-strip > button {
+    min-width: 0;
+    min-height: 44px;
+    white-space: normal;
+  }
+  .sd-studio-next
+    :is(
+      .sd-workspace-quick-actions button,
+      .sd-deck-transport > button,
+      .sd-tool-tabs button,
+      .sd-output-console button,
+      .sd-library-sidebar button
+    ) {
+    min-height: 44px;
+  }
+  .sd-studio-next .sd-native-arranger-commandbar button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 380px) {
+  .sd-studio-next .sd-command-bar {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    grid-template-areas: 'brand brand' 'actions actions' 'clock transport';
+  }
+  .sd-studio-next .sd-system-actions {
+    justify-content: space-between;
+  }
+  .sd-studio-next .sd-system-actions button {
+    flex: 1;
+  }
+  .sd-studio-next .sd-tools-button {
+    max-width: none;
+  }
+  .sd-studio-next .sd-deck-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .sd-studio-next .sd-deck-live-actions {
+    justify-content: flex-end;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-studio-next *,
+  .sd-studio-next *::before,
+  .sd-studio-next *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Only explicitly marked action labels participate; names, values and warnings stay visible. */
+.sd-studio-next .sd-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.sd-studio-next .sd-icon-action svg {
+  flex-shrink: 0;
+}
+.sd-studio-next[data-compact-icons='true'] .sd-action-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.sd-studio-next[data-compact-icons='true'] button.sd-icon-action {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
+  gap: 0;
+}
+.sd-studio-next[data-compact-icons='true'] .sd-system-actions .sd-record-button {
+  min-width: 44px;
+}
+.sd-studio-next[data-compact-icons='true'] .sd-arrangement-editor .ae-main-header > .ae-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sd-studio-next[data-compact-icons='true']
+  .sd-arrangement-editor
+  .ae-main-header
+  > .ae-actions
+  > .sd-icon-action {
+  flex: 0 0 44px;
+  width: 44px;
+}
+.sd-studio-next .sd-setting-help {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sd-muted);
+}
+@media (pointer: coarse), (max-width: 700px) {
+  .sd-studio-next[data-compact-icons='true'] button.sd-icon-action {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Workspace shell: navigation, transport and session actions share one quiet
+   toolbar. Component styles still own waveform/note geometry and safety states. */
+.sd-studio-next .sd-app-frame {
+  padding: 0 20px 12px;
+}
+.sd-studio-next .sd-command-bar {
+  flex-shrink: 0;
+  grid-template-columns: auto auto minmax(100px, 1fr) auto;
+  grid-template-areas: 'navigation leading brand actions';
+  gap: 24px;
+  min-height: 76px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--sd-line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+.sd-studio-next .sd-command-bar .sd-view-nav {
+  grid-area: navigation;
+  position: static;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sd-surface);
+}
+.sd-studio-next .sd-command-bar .sd-view-nav button {
+  flex-direction: row;
+  gap: 8px;
+  width: auto;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: 7px;
+}
+.sd-studio-next .sd-command-bar .sd-view-nav button.is-active {
+  color: var(--sd-text);
+  background: var(--sd-raised);
+  box-shadow: 0 1px 3px #00000030;
+}
+.sd-studio-next .sd-command-bar .sd-view-nav svg {
+  width: 17px;
+  height: 17px;
+}
+.sd-studio-next .sd-command-leading {
+  grid-area: leading;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sd-studio-next .sd-command-leading .sd-project-clock {
+  flex: 1;
+  min-width: 150px;
+  max-width: 190px;
+}
+.sd-studio-next .sd-command-leading .sd-global-transport {
+  flex: 0 0 88px;
+  width: 88px;
+}
+.sd-studio-next .sd-command-leading .sd-global-transport button {
+  width: 100%;
+}
+.sd-studio-next[data-compact-icons='true'] .sd-command-leading .sd-global-transport {
+  flex: 0 0 44px;
+  width: 44px;
+}
+.sd-studio-next .sd-title-block {
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+.sd-studio-next .sd-title-block h1.sd-product-brand {
+  display: block;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: 0.1em;
+  text-indent: 0.1em;
+  color: var(--sd-text);
+  white-space: nowrap;
+}
+.sd-studio-next .sd-title-block small {
+  justify-content: center;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.sd-studio-next .sd-system-actions {
+  justify-self: end;
+}
+.sd-studio-next .sd-workspace-heading {
+  padding: 14px 0;
+  gap: 12px;
+}
+.sd-studio-next .sd-workspace-heading > div:first-child {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+.sd-studio-next .sd-workspace-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.sd-studio-next .sd-workspace-eyebrow {
+  margin: 0;
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sd-dim);
+}
+.sd-studio-next .sd-workspace-quick-actions {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+.sd-studio-next .sd-workspace-quick-actions > button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--sd-muted);
+}
+.sd-studio-next .sd-workspace-quick-actions > button:hover {
+  background: var(--sd-raised);
+  color: var(--sd-text);
+}
+.sd-studio-next :is(.sd-music-library, .sd-arrangement-editor) {
+  border-radius: 10px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-arrangement-editor {
+  padding: 12px;
+}
+.sd-studio-next .sd-arrangement-editor .ae-main-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sd-line-soft);
+}
+.sd-studio-next .ae-editor-tabs {
+  gap: 2px;
+  padding: 8px 0;
+}
+.sd-studio-next .ae-editor-tabs button {
+  border-color: transparent;
+  background: transparent;
+}
+.sd-studio-next .ae-editor-tabs button[aria-pressed='true'] {
+  color: var(--sd-text);
+  background: var(--sd-raised);
+  border-color: transparent;
+}
+.sd-studio-next .sd-input-strip {
+  margin: 0 0 12px;
+  padding: 8px 12px 12px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.sd-studio-next .sd-output-console.sd-master-modern {
+  border-radius: 10px;
+  box-shadow: none;
+  margin-top: 12px;
+}
+.sd-studio-next .sd-master-modern .sd-master-summary {
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+.sd-studio-next .sd-master-heading .sd-panel-collapse-bar {
+  margin: 0;
+}
+.sd-studio-next .sd-master-heading .sd-panel-collapse-bar > button {
+  padding: 4px 0;
+  color: var(--sd-text);
+  white-space: nowrap;
+}
+.sd-studio-next .sd-master-modern .sd-master-stem,
+.sd-studio-next .sd-master-modern .sd-master-stem:last-child {
+  border-radius: 6px;
+  background: var(--sd-surface);
+  border-color: transparent;
+}
+.sd-studio-next .sd-master-modern .sd-master-stems > .sd-panel-collapse-bar {
+  margin-bottom: 8px;
+}
+.sd-studio-next .sd-master-modern .sd-master-details > section {
+  border: 0;
+  border-left: 1px solid var(--sd-line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+.sd-studio-next .sd-master-modern .sd-master-details > section:first-child {
+  border-left: 0;
+}
+.sd-studio-next .sd-empty-performance {
+  border: 0;
+  background: var(--sd-surface);
+  border-radius: 10px;
+}
+.sd-studio-next .sd-source-dock {
+  border-style: dashed;
+  background: transparent;
+}
+@media (max-width: 1250px) {
+  .sd-studio-next .sd-command-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'brand actions' 'navigation leading';
+    gap: 10px 16px;
+  }
+  .sd-studio-next .sd-title-block {
+    align-items: flex-start;
+  }
+  .sd-studio-next .sd-title-block small {
+    justify-content: flex-start;
+  }
+  .sd-studio-next .sd-command-leading {
+    justify-content: flex-end;
+  }
+  .sd-studio-next .sd-command-bar .sd-view-nav {
+    justify-self: start;
+  }
+}
+@media (max-width: 960px) {
+  .sd-studio-next .sd-app-frame {
+    padding: 0 12px calc(12px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 700px) {
+  .sd-studio-next .sd-command-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'brand actions' 'leading leading' 'navigation navigation';
+    padding: 12px 0 8px;
+    gap: 12px 8px;
+  }
+  .sd-studio-next .sd-command-bar .sd-view-nav {
+    justify-self: stretch;
+    width: 100%;
+  }
+  .sd-studio-next .sd-command-bar .sd-view-nav button {
+    flex: 1;
+    min-height: 44px;
+    padding: 0 8px;
+  }
+  .sd-studio-next .sd-command-leading {
+    gap: 8px;
+  }
+  .sd-studio-next .sd-command-leading .sd-global-transport {
+    flex: 0 0 88px;
+    width: 88px;
+  }
+  .sd-studio-next .sd-command-leading .sd-global-transport button {
+    width: 100%;
+  }
+  .sd-studio-next .sd-command-leading .sd-project-clock {
+    min-width: 0;
+    max-width: none;
+  }
+  .sd-studio-next .sd-system-actions {
+    justify-self: end;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .sd-studio-next .sd-system-actions button,
+  .sd-studio-next .sd-system-actions .sd-record-button {
+    min-width: 44px;
+  }
+  .sd-studio-next .sd-system-actions .sd-action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .sd-studio-next .sd-title-block h1.sd-product-brand {
+    font-size: 18px;
+  }
+  .sd-studio-next .sd-workspace-heading {
+    flex-wrap: wrap;
+    padding: 12px 0;
+  }
+  .sd-studio-next .sd-workspace-quick-actions {
+    margin-left: auto;
+  }
+  .sd-studio-next .sd-settings-popover {
+    inset: auto 10px max(10px, env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 24px);
+  }
+  .sd-studio-next .sd-panel-layout-menu > summary {
+    min-height: 44px;
+  }
+  .sd-studio-next .sd-arrangement-editor {
+    padding: 8px;
+  }
+}

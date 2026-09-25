@@ -7,6 +7,9 @@ import { redirectToCheckout } from '@utils/stripe';
 import CartSidebar from '@components/CartSidebar';
 import Footer from '@components/Footer';
 import ShopAssistant from '@components/ShopAssistant';
+import NotFoundPage from '@components/NotFoundPage';
+import SiteMeasurement from './components/SiteMeasurement';
+import { OrganizationSchema, SEO } from '@utils/seo';
 import {
   Category,
   CartPage,
@@ -21,8 +24,15 @@ import {
   SattariHubPage,
   SattariLearnPage,
   SattariStudioPage,
+  StemSeparatorPage,
   ServicesPage,
+  StudioBookingStatus,
   ShopPage,
+  GuideIndex,
+  GuideArticle,
+  ToolDetailsPage,
+  VisitPage,
+  PrivacyPage,
 } from '@utils/lazyComponents';
 
 const App: FC = () => {
@@ -30,7 +40,10 @@ const App: FC = () => {
   const [checkoutError, setCheckoutError] = useState('');
   const { cartItems } = useCart();
   const location = useLocation();
-  const isAudioWorkspace = ['/hub', '/learn', '/studio'].includes(location.pathname);
+  const isAudioWorkspace = ['/hub', '/learn', '/studio', '/stem-separator'].includes(
+    location.pathname
+  );
+  const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(location.pathname);
 
   const handleCheckout = async () => {
     setCheckoutError('');
@@ -67,7 +80,18 @@ const App: FC = () => {
 
   return (
     <div className="site-shell">
-      {location.pathname !== '/studio' && <BackgroundMedia />}
+      <OrganizationSchema />
+      {['/cart', '/checkout/success', '/checkout/cancel', '/instagram/callback'].includes(
+        location.pathname
+      ) && (
+        <SEO
+          title="Your Sattari Music Account & Checkout"
+          description="Manage your Sattari Music cart, checkout or account connection."
+          url={`https://sattarimusic.com${location.pathname}`}
+          noindex
+        />
+      )}
+      {!['/studio', '/stem-separator'].includes(location.pathname) && <BackgroundMedia />}
 
       {location.pathname !== '/studio' && <Navbar onCartClick={() => setCartOpen(true)} />}
 
@@ -104,6 +128,54 @@ const App: FC = () => {
 
       <main>
         <Routes>
+          <Route
+            path="/guides"
+            element={
+              <LazyPage>
+                <GuideIndex />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/guides/:slug"
+            element={
+              <LazyPage>
+                <GuideArticle />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/tools/:tool"
+            element={
+              <LazyPage>
+                <ToolDetailsPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/visit"
+            element={
+              <LazyPage>
+                <VisitPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+              <LazyPage>
+                <PrivacyPage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/studio-booking"
+            element={
+              <LazyPage>
+                <StudioBookingStatus />
+              </LazyPage>
+            }
+          />
           <Route
             path="/"
             element={
@@ -145,6 +217,14 @@ const App: FC = () => {
               </LazyPage>
             }
           />
+          <Route
+            path="/stem-separator"
+            element={
+              <LazyPage>
+                <StemSeparatorPage />
+              </LazyPage>
+            }
+          />
           {/* The Audio Suite and its downloads are one page, on /downloads. */}
           <Route
             path="/downloads"
@@ -170,6 +250,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <LocalSeoPage pageKey="woodland-hills" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/encino-music-store"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="encino" />
               </LazyPage>
             }
           />
@@ -311,11 +399,7 @@ const App: FC = () => {
           />
           <Route
             path="/services/music-classes-los-angeles"
-            element={
-              <LazyPage>
-                <LocalSeoPage pageKey="music-lessons" />
-              </LazyPage>
-            }
+            element={<Navigate to="/services/music-lessons-los-angeles" replace />}
           />
           <Route
             path="/services/instrument-repair-los-angeles"
@@ -327,11 +411,7 @@ const App: FC = () => {
           />
           <Route
             path="/services/drum-repair-los-angeles"
-            element={
-              <LazyPage>
-                <RepairPage />
-              </LazyPage>
-            }
+            element={<Navigate to="/services/instrument-repair-los-angeles" replace />}
           />
           <Route
             path="/services/instrument-repair-woodland-hills"
@@ -349,11 +429,14 @@ const App: FC = () => {
               </LazyPage>
             }
           />
+          <Route path="/stem-seperator" element={<Navigate to="/stem-separator" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 
       {!isAudioWorkspace && <Footer />}
-      {!isAudioWorkspace && <ShopAssistant />}
+      <SiteMeasurement />
+      {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { categories, formatPriceRange } from '../data/catalog';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
+import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
 
 const productSellingPoints = {
@@ -141,18 +142,20 @@ export default function ShopPage() {
 
   return (
     <section className="section page-header-offset">
-      <SEO
-        title="Shop Instruments & Music Accessories"
-        description="Browse instruments, accessories, premium Sattari cymbals, sticks, drum essentials, and musician gear with secure checkout and California-based support."
-        url="https://sattarimusic.com/shop"
+      <SEO {...PAGE_SEO.shop} />
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Shop', path: '/shop' },
+        ])}
       />
       <StructuredData data={itemListSchema} />
       <div className="container section-header narrow shop-page-intro">
         <p className="eyebrow">Shop Sattari Music</p>
-        <h1>Build your setup with instruments, accessories, and handcrafted Sattari gear</h1>
+        <h1>Musical instruments &amp; accessories</h1>
         <p>
           Shop the current catalog online, or ask about instruments, accessories, repairs, rentals,
-          rehearsal space, studio time, teachers, and classes locally.
+          rehearsal space, studio time, teachers, and classes at our Woodland Hills music store.
         </p>
         <div className="shop-trust-bar" aria-label="Storefront trust highlights">
           {trustPoints.map((point) => (

@@ -40,10 +40,32 @@ jobs:
         run: npm run lint
 
       - name: Run tests
-        run: npm run test
+        run: npm run test -- --maxWorkers=2 --minWorkers=1
+
+      - name: Qualify generated audio metering and tempo fixtures
+        run: |
+          npm run test:meter-qualification
+          npm run test:tempo-qualification
 
       - name: Build
         run: npm run build
+
+      - name: Install Chromium for release checks
+        run: npx --no-install playwright install --with-deps chromium
+
+      - name: Browser audio and built-artifact workspace checks
+        run: node scripts/run-studio-browser-qa.mjs
+        env:
+          STUDIO_BROWSER_OUTPUT: ${{ runner.temp }}/stemdeck-browser-qa
+        timeout-minutes: 15
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-qa-${{ matrix.node-version }}
+          path: ${{ runner.temp }}/stemdeck-browser-qa/
+          if-no-files-found: warn
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
@@ -68,13 +90,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      # Deploy the exact build that passed validation, not a second build.
+      - name: Download validated production build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-20.19.0
+          path: dist/
 
       - name: Deploy to Netlify
         run: >-
           npx --yes netlify-cli@26.0.2 deploy
           --dir=dist
+          --no-build
           --prod
           --auth "$NETLIFY_AUTH_TOKEN"
           --site "$NETLIFY_SITE_ID"

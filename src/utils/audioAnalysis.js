@@ -1,3 +1,4 @@
+import { trackTempo } from './tempoMap';
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
@@ -326,6 +327,7 @@ export function analyzeDecodedAudio(audioBuffer) {
   const originalSamples = downmixAudioBuffer(audioBuffer);
   const { samples, sampleRate } = compactSamples(originalSamples, audioBuffer.sampleRate);
   const tempo = estimateTempo(samples, sampleRate);
+  const tempoMap = trackTempo(samples, sampleRate);
   const globalChroma = chromaForRange(samples, sampleRate, 0.05, 0.95, 20);
   const key = estimateKeyFromChroma(globalChroma);
   const chords = Array.from({ length: 4 }, (_, index) =>
@@ -343,6 +345,7 @@ export function analyzeDecodedAudio(audioBuffer) {
     tonic: key.tonic,
     mode: key.mode,
     bpm: tempo.bpm,
+    tempoMap,
     feel:
       tempo.bpm < 82
         ? 'Slow pulse'
@@ -376,7 +379,43 @@ export async function analyzeAudioFile(file, onProgress) {
     const audioBuffer = await context.decodeAudioData(arrayBuffer.slice(0));
     onProgress?.({ value: 58, label: 'Finding pulse and key' });
     await new Promise((resolve) => window.setTimeout(resolve, 0));
-    const analysis = analyzeDecodedAudio(audioBuffer);
+    const analysis =
+      typeof Worker === 'undefined'
+        ? analyzeDecodedAudio(audioBuffer)
+        : await new Promise((resolve, reject) => {
+            const worker = new Worker(new URL('./audioAnalysis.worker.js', import.meta.url), {
+              type: 'module',
+            });
+            const timeout = setTimeout(() => {
+              worker.terminate();
+              reject(new Error('Track analysis timed out. Try a shorter source.'));
+            }, 120000);
+            const finish = () => {
+              clearTimeout(timeout);
+              worker.terminate();
+            };
+            worker.onmessage = ({ data }) => {
+              finish();
+              if (data.error) reject(new Error(data.error));
+              else resolve(data.result);
+            };
+            worker.onerror = () => {
+              finish();
+              reject(new Error('Track analysis worker failed. Your source is unchanged.'));
+            };
+            try {
+              const channels = Array.from({ length: audioBuffer.numberOfChannels }, (_, i) =>
+                audioBuffer.getChannelData(i).slice()
+              );
+              worker.postMessage(
+                { channels, rate: audioBuffer.sampleRate },
+                channels.map((c) => c.buffer)
+              );
+            } catch (error) {
+              finish();
+              reject(error);
+            }
+          });
     onProgress?.({ value: 100, label: 'Lesson ready' });
     return analysis;
   } finally {

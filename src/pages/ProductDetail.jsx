@@ -10,6 +10,8 @@ import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
+import { absoluteUrl, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import NotFoundPage from '../components/NotFoundPage';
 import '../styles-products-premium.css';
 
 const detailHighlights = {
@@ -51,6 +53,7 @@ export default function ProductDetail() {
     // A product an employee added lives in the catalog layer, which arrives a
     // moment after the page does. Showing "not found" during that window would
     // flash a 404 on a product that exists.
+    if (status !== 'loading') return <NotFoundPage />;
     return (
       <div className="container page-header-offset">
         <h2>{status === 'loading' ? 'Loading…' : 'Product not found'}</h2>
@@ -71,12 +74,15 @@ export default function ProductDetail() {
   const galleryImages = product.gallery?.length ? product.gallery : [];
   const mainImage = galleryImages.length ? galleryImages[activeImage] : detailImage;
   const productUrl = `https://sattarimusic.com/product/${product.slug}`;
+  const searchDescription = `${product.name}. ${product.description}`;
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
+    sku: product.slug,
+    url: productUrl,
     description: product.description,
-    image: detailImage ? [`https://sattarimusic.com${detailImage}`] : undefined,
+    image: detailImage ? [absoluteUrl(detailImage)] : undefined,
     brand: {
       '@type': 'Brand',
       name: 'Sattari Music',
@@ -93,6 +99,7 @@ export default function ProductDetail() {
             : 'https://schema.org/InStock',
           url: productUrl,
           sku: `${product.slug}-${option.size.replace(/[^a-zA-Z0-9]/g, '')}`,
+          seller: { '@id': businessSchema['@id'] },
         }))
       : {
           '@type': 'Offer',
@@ -101,6 +108,7 @@ export default function ProductDetail() {
           availability,
           url: productUrl,
           sku: product.slug,
+          seller: { '@id': businessSchema['@id'] },
         },
   };
 
@@ -115,15 +123,27 @@ export default function ProductDetail() {
     <section className="section page-header-offset">
       <SEO
         title={product.name}
-        description={product.description.slice(0, 155)}
+        description={
+          searchDescription.length > 160
+            ? `${searchDescription.slice(0, 157).replace(/\s+\S*$/, '')}...`
+            : searchDescription
+        }
         image={detailImage || product.image}
         url={productUrl}
         type="product"
         price={unitPrice}
-        availability="in stock"
+        availability={variantSoldOut ? 'out of stock' : 'in stock'}
         retailerId={product.slug}
       />
       <StructuredData data={productSchema} />
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Shop', path: '/shop' },
+          { name: categoryTitle(product.category), path: `/shop/${product.category}` },
+          { name: product.name, path: `/product/${product.slug}` },
+        ])}
+      />
       <div className="container product-detail-shell">
         <div className="product-detail-media-column">
           <div className="product-detail-image">

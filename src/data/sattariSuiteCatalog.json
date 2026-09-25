@@ -1,0 +1,386 @@
+[
+  {
+    "id": "auto-pitch",
+    "name": "Sattari Auto Pitch",
+    "category": "Vocal tuning",
+    "role": "effect",
+    "suite": "auto-pitch",
+    "lifecycle": "validation"
+  },
+  {
+    "id": "song-key",
+    "name": "Sattari Key",
+    "category": "Key detection",
+    "role": "session",
+    "suite": "compass",
+    "lifecycle": "validation"
+  },
+  {
+    "id": "voxkey",
+    "name": "Sattari VoxKey",
+    "category": "Voice-to-MIDI",
+    "role": "utility",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "voxsynth",
+    "name": "Sattari VoxSynth",
+    "category": "Voice instrument",
+    "role": "instrument",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "morph",
+    "name": "Sattari Morph",
+    "category": "Voice character",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "mix",
+    "name": "Sattari Mix",
+    "category": "Mix rack",
+    "role": "rack",
+    "suite": "mix",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "create",
+    "name": "Sattari Create",
+    "category": "Creative FX rack",
+    "role": "rack",
+    "suite": "create",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "vocal",
+    "name": "Sattari Vocal",
+    "category": "Vocal rack",
+    "role": "rack",
+    "suite": "vocal",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "stack",
+    "name": "Sattari Stack",
+    "category": "Instrument rack",
+    "role": "rack",
+    "suite": "instruments",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "sub-conjurer",
+    "name": "Sub Conjurer",
+    "category": "Low-end",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "side-chain-master",
+    "name": "Side Chain Master",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "royal-chain",
+    "name": "Sattari Royal Chain",
+    "category": "Vocal chain",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "harmony",
+    "name": "Sattari Harmony",
+    "category": "Vocal harmony",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "maqam",
+    "name": "Sattari Maqam",
+    "category": "Microtonal tuning",
+    "role": "effect",
+    "suite": "auto-pitch",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "vocal-master",
+    "name": "Sattari Vocal Master",
+    "category": "Vocal master",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "rhythm-genie",
+    "name": "Sattari Rhythm Genie",
+    "category": "MIDI / drums",
+    "role": "instrument",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "chop",
+    "name": "Sattari Chop",
+    "category": "Slicing sampler",
+    "role": "instrument",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "sattari-arp",
+    "name": "Sattari Arp",
+    "category": "MIDI / creative",
+    "role": "midi",
+    "suite": "instruments",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "bus",
+    "name": "Sattari Bus",
+    "category": "Bus / mix",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "align",
+    "name": "Sattari Align",
+    "category": "Timing alignment",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "warp",
+    "name": "Sattari Warp",
+    "category": "Creative vocal FX",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "tuner",
+    "name": "Sattari Tuner",
+    "category": "Tuning",
+    "role": "utility",
+    "suite": "compass",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "double",
+    "name": "Sattari Double",
+    "category": "Vocal doubler",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "deess",
+    "name": "Sattari De-Ess",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "face",
+    "name": "Sattari Face",
+    "category": "Creative vocal FX",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "transient",
+    "name": "Sattari Transient",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "meter",
+    "name": "Sattari Meter",
+    "category": "Metering",
+    "role": "utility",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "scaler",
+    "name": "Sattari Scaler",
+    "category": "MIDI / creative",
+    "role": "midi",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "eq",
+    "name": "Sattari EQ",
+    "category": "EQ",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "space",
+    "name": "Sattari Space",
+    "category": "Reverb / delay",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "clean",
+    "name": "Sattari Clean",
+    "category": "Restoration",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "comp",
+    "name": "Sattari Comp",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "peak",
+    "name": "Sattari Peak",
+    "category": "Mastering",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "vocoder",
+    "name": "Sattari Vocoder",
+    "category": "Creative vocal FX",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "shimmer",
+    "name": "Sattari Shimmer",
+    "category": "Reverb / delay",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "echo",
+    "name": "Sattari Echo",
+    "category": "Reverb / delay",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "heat",
+    "name": "Sattari Heat",
+    "category": "Saturation",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "multiband",
+    "name": "Sattari Multiband",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "gate",
+    "name": "Sattari Gate",
+    "category": "Dynamics",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "riser",
+    "name": "Sattari Riser",
+    "category": "Creative FX",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "pulse",
+    "name": "Sattari Pulse",
+    "category": "Creative FX",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "eightoheight",
+    "name": "Sattari 808",
+    "category": "Low-end",
+    "role": "instrument",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "imager",
+    "name": "Sattari Image",
+    "category": "Stereo / imaging",
+    "role": "effect",
+    "suite": "mix",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "warble",
+    "name": "Sattari Warble",
+    "category": "Lo-fi / tape",
+    "role": "effect",
+    "suite": "create",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "scope",
+    "name": "Sattari Scope",
+    "category": "Analysis",
+    "role": "utility",
+    "suite": "compass",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "granulator",
+    "name": "Sattari Granulator",
+    "category": "Granular instrument",
+    "role": "instrument",
+    "suite": "instruments",
+    "lifecycle": "experimental"
+  },
+  {
+    "id": "brain",
+    "name": "Sattari Compass",
+    "category": "Session conductor",
+    "role": "session",
+    "suite": "compass",
+    "lifecycle": "alpha"
+  },
+  {
+    "id": "glass-choir",
+    "name": "Sattari Glass Choir",
+    "category": "Creative vocal FX",
+    "role": "effect",
+    "suite": "vocal",
+    "lifecycle": "experimental"
+  }
+]

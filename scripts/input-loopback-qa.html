@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>StemDeck physical loopback</title>
+  <style>
+    body {
+      font: 16px system-ui;
+      background: #141820;
+      color: #eef;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin: 16px 0;
+    }
+    button,
+    select {
+      padding: 10px;
+    }
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+  <h1>Measure physical round-trip latency</h1>
+  <p>
+    Connect one interface line output by cable to one line input. Disconnect speakers. Turn hardware
+    direct monitoring OFF. Do not use a microphone or enable phantom power on the loopback input.
+    This emits three quiet test bursts; it never routes captured audio to speakers. Nothing is
+    uploaded.
+  </p>
+  <button id="find">Allow access and list devices</button>
+  <label
+    >Input device
+    <select id="input"></select
+  ></label>
+  <label>Mono input channel <input id="channel" type="number" min="1" max="32" value="1" /></label>
+  <label
+    >Output device
+    <select id="output">
+      <option value="">System default</option>
+    </select></label
+  >
+  <p>The probe uses output channel 1. Choose that physical output for your loopback cable.</p>
+  <label
+    ><input id="consent" type="checkbox" /> Cable connected, speakers disconnected, direct
+    monitoring off. Play the test bursts.</label
+  >
+  <button id="run">Measure three trials</button>
+  <pre id="result" role="status">Not measured. Driver estimates are not measurements.</pre>
+  <script type="module">
+    import { probeSignal, measureLoopback } from '/src/utils/latencyProbe.js';
+    const $ = (id) => document.getElementById(id);
+    $('find').onclick = async () => {
+      try {
+        const permission = await navigator.mediaDevices.getUserMedia({ audio: true });
+        permission.getTracks().forEach((t) => t.stop());
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        for (const [id, kind] of [
+          ['input', 'audioinput'],
+          ['output', 'audiooutput'],
+        ]) {
+          $(id).replaceChildren(new Option('System default', ''));
+          devices
+            .filter((d) => d.kind === kind)
+            .forEach((d) => $(id).add(new Option(d.label, d.deviceId)));
+        }
+      } catch (e) {
+        $('result').textContent = e.message;
+      }
+    };
+    $('run').onclick = async () => {
+      if (!$('consent').checked) {
+        $('result').textContent = 'Confirm the physical loopback setup first.';
+        return;
+      }
+      let context, stream, node, source;
+      $('run').disabled = true;
+      try {
+        context = new AudioContext({ latencyHint: 'interactive' });
+        if ($('output').value) {
+          if (!context.setSinkId)
+            throw new Error(
+              'Output selection unavailable in this browser. Use system default after selecting the interface in system settings.'
+            );
+          await context.setSinkId($('output').value);
+        }
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            deviceId: $('input').value ? { exact: $('input').value } : undefined,
+            channelCount: { ideal: 32 },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+        const channel = Number($('channel').value) - 1,
+          count = stream.getAudioTracks()[0].getSettings().channelCount || 1;
+        if (!Number.isInteger(channel) || channel < 0 || channel >= count)
+          throw new Error('Input channel unavailable.');
+        await context.audioWorklet.addModule('/scripts/loopback.worklet.js');
+        const signal = probeSignal();
+        node = new AudioWorkletNode(context, 'stemdeck-loopback-probe', {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [1],
+          processorOptions: { signal },
+        });
+        source = context.createMediaStreamSource(stream);
+        const splitter = context.createChannelSplitter(count);
+        source.connect(splitter);
+        splitter.connect(node, channel, 0);
+        const result = new Promise((resolve, reject) => {
+          const timer = setTimeout(
+            () => reject(new Error('Audio probe timed out. No measured result.')),
+            10000
+          );
+          node.port.onmessage = ({ data }) => {
+            clearTimeout(timer);
+            resolve(data);
+          };
+        });
+        const merger = context.createChannelMerger(2);
+        node.connect(merger, 0, 0);
+        merger.connect(context.destination);
+        await context.resume();
+        $('result').textContent = 'Measuring…';
+        const captured = await result;
+        $('result').textContent = JSON.stringify(
+          measureLoopback(captured.capture, signal, captured.starts, context.sampleRate),
+          null,
+          2
+        );
+      } catch (e) {
+        $('result').textContent = e.message;
+      } finally {
+        node?.disconnect();
+        source?.disconnect();
+        stream?.getTracks().forEach((t) => t.stop());
+        await context?.close();
+        $('run').disabled = false;
+      }
+    };
+  </script>
+</html>

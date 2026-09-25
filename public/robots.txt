@@ -1,9 +1,13 @@
 User-agent: *
 Allow: /
-Disallow: /checkout/
-Disallow: /cart
+Disallow: /api/
+Disallow: /.netlify/functions/
+
+# Search access is separate from model-training access. Public pages remain
+# available to search crawlers; API endpoints are not search content.
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /.netlify/functions/
 
 Sitemap: https://sattarimusic.com/sitemap.xml
-
-User-agent: Googlebot
-Allow: /

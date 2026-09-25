@@ -1,0 +1,103 @@
+import { PassThrough } from 'node:stream';
+import { Buffer } from 'node:buffer';
+import { renderToPipeableStream } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom/server';
+import { HelmetProvider } from 'react-helmet-async';
+import App from './App';
+import { CartProvider } from './context/CartContext';
+import { InventoryProvider } from './context/InventoryContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { localSeoPages } from './components/LocalSeoPage';
+import { categories, products } from './data/catalog';
+import { mergeCatalog, EMPTY_CATALOG_DOC } from './utils/catalogMerge';
+import { musicGuides } from './data/musicGuides';
+import { toolDetails } from './data/toolDetails';
+
+export function getPrerenderRoutes(inventory) {
+  const routes = [
+    ...[
+      '/guides',
+      '/visit',
+      '/privacy',
+      ...musicGuides.map((guide) => `/guides/${guide.slug}`),
+      ...Object.values(toolDetails).map((tool) => `/tools${tool.path}`),
+    ].map((path) => [path, 'src/pages/MusicResources.jsx']),
+    ['/', 'src/components/HomePage.jsx'],
+    ['/shop', 'src/components/ShopPage.jsx'],
+    ['/services', 'src/components/ServicesPage.jsx'],
+    ['/services/instrument-repair-los-angeles', 'src/components/RepairPage.tsx'],
+    ['/hub', 'src/pages/SattariHubPage.jsx'],
+    ['/learn', 'src/pages/SattariLearnPage.jsx'],
+    ['/studio', 'src/pages/SattariStudioPage.jsx'],
+    ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
+    ['/downloads', 'src/pages/DownloadsPage.tsx'],
+    ...Object.values(localSeoPages).map((page) => [
+      new URL(page.url).pathname,
+      'src/components/LocalSeoPage.tsx',
+    ]),
+    ...[...categories.map((category) => category.key), 'all'].map((key) => [
+      `/shop/${key}`,
+      'src/pages/Category.jsx',
+    ]),
+    ...mergeCatalog(products, inventory.catalog || EMPTY_CATALOG_DOC).map((product) => [
+      `/product/${product.slug}`,
+      'src/pages/ProductDetail.jsx',
+    ]),
+  ].map(([path, entry]) => ({ path, entry, indexable: true }));
+  return [
+    ...routes,
+    ...[
+      ['/cart', 'src/pages/CartPage.tsx'],
+      ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],
+      ['/checkout/success', 'src/pages/CheckoutStatus.jsx'],
+      ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],
+      ['/instagram/callback', 'src/pages/InstagramCallback.jsx'],
+      ['/404', 'src/components/NotFoundPage.tsx'],
+    ].map(([path, entry]) => ({ path, entry, indexable: false })),
+  ];
+}
+
+// Render the actual routes without effects, user data, network requests or audio
+// initialization. The browser then mounts the same application normally.
+export function renderPage(path, inventory) {
+  return new Promise((resolve, reject) => {
+    const helmetContext = {};
+    const output = new PassThrough();
+    const chunks = [];
+    const timeout = setTimeout(() => {
+      stream.abort();
+      reject(new Error(`Prerender timed out: ${path}`));
+    }, 30000);
+    output.on('data', (chunk) => chunks.push(chunk));
+    output.on('end', () => {
+      clearTimeout(timeout);
+      const { helmet } = helmetContext;
+      resolve({
+        html: Buffer.concat(chunks).toString(),
+        head: ['title', 'meta', 'link', 'script'].map((key) => helmet[key].toString()).join('\n'),
+      });
+    });
+    const stream = renderToPipeableStream(
+      <HelmetProvider context={helmetContext}>
+        <ThemeProvider>
+          <InventoryProvider initialInventory={inventory}>
+            <CartProvider>
+              <StaticRouter location={path}>
+                <App />
+              </StaticRouter>
+            </CartProvider>
+          </InventoryProvider>
+        </ThemeProvider>
+      </HelmetProvider>,
+      {
+        onAllReady() {
+          stream.pipe(output);
+        },
+        onError(error) {
+          clearTimeout(timeout);
+          reject(error);
+        },
+      }
+    );
+  });
+}

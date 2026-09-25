@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import { SEO, StructuredData } from '../utils/seo';
+import { BUSINESS, PAGE_SEO, businessSchema } from '../data/siteSeo';
 
 const repairServices = [
   'Violin, guitar, bass, and string-instrument troubleshooting',
@@ -21,22 +22,14 @@ const repairSignals = [
 export default function RepairPage() {
   return (
     <section className="section page-header-offset services-shell repair-shell">
-      <SEO
-        title="Instrument Repair in Los Angeles"
-        description="Book Sattari Music for local instrument repair, violin repair, guitar repair, rare drum repair, drum tuning, pedal repair, hardware fixes, and musician gear support in Los Angeles and the San Fernando Valley."
-        url="https://sattarimusic.com/services/instrument-repair-los-angeles"
-      />
+      <SEO {...PAGE_SEO.repair} />
       <StructuredData
         data={{
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: 'Sattari Music Instrument Repair',
-          provider: {
-            '@type': 'Organization',
-            name: 'Sattari Music',
-            url: 'https://sattarimusic.com',
-          },
-          areaServed: ['Los Angeles', 'San Fernando Valley', 'Woodland Hills', 'California'],
+          provider: { '@id': businessSchema['@id'] },
+          areaServed: BUSINESS.areas,
           serviceType: [
             'Instrument repair',
             'Violin repair',
@@ -56,11 +49,11 @@ export default function RepairPage() {
       <div className="container repair-hero">
         <div className="repair-hero-copy">
           <p className="eyebrow">Los Angeles instrument repair</p>
-          <h1>Instrument repair for violins, guitars, rare drums, hardware, and musician gear.</h1>
+          <h1>Instrument repair in Woodland Hills</h1>
           <p>
             Sattari Music helps local musicians diagnose, repair, tune, and dial in instruments and
-            performance gear across the Los Angeles and San Fernando Valley area — from everyday
-            fixes to rare or sentimental pieces that need thoughtful care.
+            performance gear for Woodland Hills, Encino, Calabasas, and Los Angeles musicians — from
+            everyday fixes to rare or sentimental pieces that need thoughtful care.
           </p>
           <div className="hero-actions services-actions">
             <a className="button button-solid" href="#repair-inquiry">

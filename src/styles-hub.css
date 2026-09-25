@@ -186,7 +186,10 @@
   border: 1px solid var(--hub-line);
   border-radius: 7px;
   background: var(--hub-panel);
-  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .hub-product:hover {
@@ -343,6 +346,43 @@
   border: 1px solid var(--hub-line);
   border-radius: 7px;
   background: var(--hub-panel);
+}
+
+.hub-separator-link {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 8px;
+  margin: 12px 0;
+  border-top: 1px solid var(--hub-line);
+  border-bottom: 1px solid var(--hub-line);
+  color: var(--hub-green);
+}
+.hub-separator-link div {
+  min-width: 0;
+  flex: 1;
+}
+.hub-separator-link svg {
+  flex-shrink: 0;
+}
+.hub-separator-link p {
+  margin: 0 0 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--hub-muted);
+}
+.hub-separator-link h2 {
+  margin: 0 0 7px;
+  font-size: 22px;
+  color: var(--hub-text);
+  letter-spacing: 0;
+}
+.hub-separator-link span {
+  font-size: 12px;
+  color: var(--hub-muted);
+}
+.hub-separator-link:hover {
+  border-color: var(--hub-green);
 }
 
 .hub-section-heading {

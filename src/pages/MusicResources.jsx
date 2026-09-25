@@ -1,0 +1,381 @@
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { ArrowRight, Download, MapPin, Phone } from 'lucide-react';
+import { SEO, StructuredData } from '../utils/seo';
+import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import { musicGuides } from '../data/musicGuides';
+import { toolDetails } from '../data/toolDetails';
+import NotFoundPage from '../components/NotFoundPage';
+import { AnalyticsChoice } from '../components/SiteMeasurement';
+import './MusicResources.css';
+
+const guidePath = (guide) => `/guides/${guide.slug}`;
+function labelFor(path) {
+  const guide = musicGuides.find((item) => guidePath(item) === path);
+  const tool = Object.values(toolDetails).find((item) => `/tools${item.path}` === path);
+  return (
+    guide?.title || (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
+  );
+}
+function Page({ title, description, children, image, category = 'Sattari Music' }) {
+  const { pathname } = useLocation();
+  return (
+    <section className="resource-page">
+      <SEO title={title} description={description} url={absoluteUrl(pathname)} image={image} />
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Sattari Music', path: '/' },
+          { name: title, path: pathname },
+        ])}
+      />
+      <div className="resource-shell">
+        <nav className="resource-nav" aria-label="Music resources">
+          <Link to="/guides">Guides</Link>
+          <Link to="/hub">Music tools</Link>
+          <Link to="/visit">Visit Sattari</Link>
+        </nav>
+        <header className="resource-heading">
+          <p>{category}</p>
+          <h1>{title}</h1>
+        </header>
+        {children}
+      </div>
+    </section>
+  );
+}
+function Related({ paths }) {
+  return (
+    <nav className="resource-related" aria-label="Related pages">
+      <h2>Keep exploring</h2>
+      {paths.map((path) => (
+        <Link key={path} to={path}>
+          {labelFor(path)}
+          <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+export function GuideIndex() {
+  return (
+    <Page
+      title="Music Guides"
+      description="Practical Sattari guides to stem separation, bass practice, local instrument repairs and choosing cymbals. Start with a real question and a useful next step."
+    >
+      <p className="resource-lead">Good questions. More music.</p>
+      <div className="guide-list">
+        {musicGuides.map((guide) => (
+          <article key={guide.slug}>
+            <Link className="guide-image" to={guidePath(guide)} tabIndex={-1} aria-hidden="true">
+              <img src={guide.image} alt="" loading="lazy" width="1280" height="800" />
+            </Link>
+            <div>
+              <p className="resource-label">{guide.category}</p>
+              <h2>
+                <Link to={guidePath(guide)}>{guide.title}</Link>
+              </h2>
+              <p>{guide.answer}</p>
+              <Link className="resource-link" to={guidePath(guide)}>
+                Read guide <ArrowRight size={16} />
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+      <section className="resource-section">
+        <h2>Know your tools</h2>
+        <div className="resource-tool-links">
+          {Object.values(toolDetails).map((tool) => (
+            <Link to={`/tools${tool.path}`} key={tool.key}>
+              {tool.name}
+              <ArrowRight size={18} />
+            </Link>
+          ))}
+        </div>
+      </section>
+    </Page>
+  );
+}
+
+export function GuideArticle() {
+  const { slug } = useParams();
+  const guide = musicGuides.find((item) => item.slug === slug);
+  if (!guide) return <NotFoundPage />;
+  return (
+    <Page
+      title={guide.title}
+      description={guide.description}
+      image={guide.image}
+      category={guide.category}
+    >
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: guide.title,
+          description: guide.description,
+          image: absoluteUrl(guide.image),
+          mainEntityOfPage: absoluteUrl(guidePath(guide)),
+          author: { '@id': businessSchema['@id'] },
+          publisher: { '@id': businessSchema['@id'] },
+        }}
+      />
+      <p className="resource-lead">{guide.answer}</p>
+      <Link className="resource-action" to={guide.action.path}>
+        {guide.action.label}
+        <ArrowRight size={18} />
+      </Link>
+      <figure className="resource-figure">
+        <img src={guide.image} alt={guide.imageAlt} width="1280" height="800" loading="lazy" />
+      </figure>
+      <div className="resource-article">
+        {guide.sections.map((section) => (
+          <section key={section.title} className="resource-section">
+            <h2>{section.title}</h2>
+            {section.paragraphs?.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            {section.steps && (
+              <ol>
+                {section.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            )}
+          </section>
+        ))}
+        {guide.sources && (
+          <section className="resource-section">
+            <h2>Further reading</h2>
+            {guide.sources.map((source) => (
+              <p key={source.url}>
+                <a href={source.url}>{source.label}</a>
+              </p>
+            ))}
+          </section>
+        )}
+        <Related paths={guide.related} />
+      </div>
+    </Page>
+  );
+}
+
+export function ToolDetailsPage() {
+  const { tool: key } = useParams();
+  const tool = toolDetails[key];
+  if (!tool) return <NotFoundPage />;
+  return (
+    <Page
+      title={`${tool.name}: Formats, Privacy & Limits`}
+      description={tool.description}
+      image={tool.screenshot}
+      category={`${tool.status} / Tool reference`}
+    >
+      <p className="resource-lead">{tool.summary}</p>
+      <Link className="resource-action" to={tool.path}>
+        Open {tool.name}
+        <ArrowRight size={18} />
+      </Link>
+      <figure className="resource-figure">
+        <img
+          src={tool.screenshot}
+          alt={`${tool.name} running in a web browser`}
+          width="1280"
+          height="800"
+        />
+        <figcaption>{tool.screenshotCaption}</figcaption>
+      </figure>
+      <dl className="resource-facts">
+        {tool.facts.map(([name, value]) => (
+          <div key={name}>
+            <dt>{name}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <section className="resource-section resource-demo">
+        <h2>Try the same audio</h2>
+        <p>
+          An original eight-second synthesized A minor groove at 120 BPM: bass, chords and
+          percussion, with no vocals. Free to download and use for practice. This is a workflow
+          demonstration, not a commercial-song benchmark.
+        </p>
+        <audio
+          controls
+          preload="none"
+          src="/audio/sattari-practice-demo.wav"
+          aria-label="Original Sattari practice demo"
+        />
+        <a className="resource-link" href="/audio/sattari-practice-demo.wav" download>
+          <Download size={18} />
+          Download demo WAV
+        </a>
+        <ol>
+          {tool.demo.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </section>
+      <section className="resource-section">
+        <h2>Your browser and your files</h2>
+        <p>
+          Start with a short file and verify a small export before a long session. Browser storage
+          is not a backup. No all-device performance guarantee is implied by these screenshots.
+        </p>
+        <Link to="/privacy">Audio privacy and measurement choices</Link>
+      </section>
+      {key === 'stem-separator' && (
+        <section className="resource-section resource-demo">
+          <h2>Hear the actual separated results</h2>
+          <p>
+            These are the unedited bass and drum estimates returned by HTDemucs for the demo above.
+            They are not the clean synthesis sources. Compare leakage, attack and note length with
+            the original; this sample contains no vocals.
+          </p>
+          {['bass', 'drums'].map((stem) => (
+            <div key={stem}>
+              <h3>{stem === 'bass' ? 'Bass stem' : 'Drum stem'}</h3>
+              <audio
+                controls
+                preload="none"
+                src={`/audio/sattari-demo-${stem}.wav`}
+                aria-label={`Separated ${stem} demo`}
+              />
+              <a className="resource-link" download href={`/audio/sattari-demo-${stem}.wav`}>
+                <Download size={16} />
+                Download {stem} result
+              </a>
+            </div>
+          ))}
+        </section>
+      )}
+      <Related paths={tool.guides.map((slug) => `/guides/${slug}`)} />
+    </Page>
+  );
+}
+
+export function VisitPage() {
+  return (
+    <Page
+      title="Visit Sattari Music in Woodland Hills"
+      description="Find Sattari Music at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Contact the shop for instruments, repairs, rentals, lessons and rehearsal inquiries."
+    >
+      <p className="resource-lead">Instruments, music tools, and local support.</p>
+      <dl className="resource-facts">
+        <div>
+          <dt>Business</dt>
+          <dd>
+            {BUSINESS.name} / {BUSINESS.alternateName}
+          </dd>
+        </div>
+        <div>
+          <dt>Address</dt>
+          <dd>
+            <address>{BUSINESS.addressLine}</address>
+          </dd>
+        </div>
+        <div>
+          <dt>Phone</dt>
+          <dd>
+            <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Shop visits</dt>
+          <dd>{BUSINESS.shopHoursNote}</dd>
+        </div>
+        <div>
+          <dt>Studio & rehearsal</dt>
+          <dd>
+            {BUSINESS.studioHoursNote} $25 per hour or $60 for four hours. Availability and approval
+            required; contact the shop while online booking is being set up.
+          </dd>
+        </div>
+        <div>
+          <dt>Service area</dt>
+          <dd>
+            {BUSINESS.areas.join(', ')}. One Woodland Hills location, not separate storefronts in
+            each city.
+          </dd>
+        </div>
+      </dl>
+      <div className="resource-actions">
+        <a className="resource-action" href={BUSINESS.directions}>
+          <MapPin size={18} />
+          Get directions
+        </a>
+        <a className="resource-link" href={BUSINESS.phoneHref}>
+          <Phone size={18} />
+          Call the shop
+        </a>
+      </div>
+      <section className="resource-section">
+        <h2>How can we help?</h2>
+        <p>
+          Shop cymbals, drumsticks, violins, guitars, bass and accessories. Ask about instrument
+          repairs and setups, rentals, teachers and classes, or studio and rehearsal time. Confirm
+          the specific service, price and timing with our team.
+        </p>
+        <Link className="resource-link" to="/services">
+          Request local support
+          <ArrowRight size={18} />
+        </Link>
+      </section>
+    </Page>
+  );
+}
+
+export function PrivacyPage() {
+  return (
+    <Page
+      title="Audio Privacy & Measurement Choices"
+      description="How Sattari browser tools handle audio, local saves, optional site measurements and service inquiries. Control anonymous usage measurement on this device."
+    >
+      <section className="resource-section">
+        <h2>Music tools</h2>
+        <p>
+          Stem Separator, Studio and Learn process source audio on your device. Source audio,
+          microphone audio, filenames and musical analysis are not sent to our usage measurement
+          endpoint. Stem Separator downloads a model from Hugging Face, which receives the network
+          information associated with that download.
+        </p>
+        <p>
+          Studio uses local browser storage for projects and audio assets. Learn can pass local
+          assets to Studio. Stem Separator results last only for the current page session. Download
+          backups; clearing browser data can remove local projects.
+        </p>
+      </section>
+      <section className="resource-section">
+        <h2>Optional site measurement</h2>
+        <p>
+          With your permission, we count page groups, recognized referral sources and actions such
+          as a completed inquiry, analysis or separation. We do not add visitor IDs or store raw
+          referring URLs, query strings, IP addresses, contact fields or audio in these aggregate
+          reports. Counts are not unique visitors or verified sales.
+        </p>
+        <p>
+          Measurement is off until you allow it. We respect Global Privacy Control and Do Not Track.
+          A local preference remembers your choice; session storage remembers only a broad source
+          such as ChatGPT or Google. Reports cover the latest 90 days. Hosting providers still
+          receive normal network requests and may maintain operational logs.
+        </p>
+        <AnalyticsChoice />
+      </section>
+      <section className="resource-section">
+        <h2>Forms, checkout and external services</h2>
+        <p>
+          Information you submit in an inquiry or booking request is sent to Sattari and the
+          services used to store and deliver it. Stripe handles checkout. Those operational requests
+          are separate from optional usage measurement. Map embeds and links to third-party services
+          follow those providers&apos; practices.
+        </p>
+        <p>
+          The website also contains Sentry error reporting, enabled only when a Sentry connection is
+          configured. Do not include confidential information in filenames or error reports. Contact
+          the shop about information you have submitted.
+        </p>
+        <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
+      </section>
+    </Page>
+  );
+}

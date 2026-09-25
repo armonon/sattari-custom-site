@@ -1,30 +1,37 @@
 import { Link } from 'react-router-dom';
 import AboutSection from './AboutSection';
 import OptimizedProductImage from './OptimizedProductImage';
-import { SEO, OrganizationSchema } from '../utils/seo';
+import { SEO, StructuredData } from '../utils/seo';
+import { PAGE_SEO, SITE_ORIGIN } from '../data/siteSeo';
 
 export default function HomePage() {
   return (
     <>
-      <SEO
-        title="Instruments, Gear & Local Music Services"
-        description="Sattari Music is a home for all musicians — handcrafted cymbals and drums, violins, guitars, bass, and accessories, plus local repairs, rentals, lessons, and studio time in California."
-        url="https://sattarimusic.com/"
+      <SEO {...PAGE_SEO.home} />
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          '@id': `${SITE_ORIGIN}/#website`,
+          name: 'Sattari Music',
+          url: `${SITE_ORIGIN}/`,
+          publisher: { '@id': `${SITE_ORIGIN}/#business` },
+        }}
       />
-      <OrganizationSchema />
       <section className="hero-section hero-shell">
         <div className="container hero-grid hero-premium-grid">
           <div className="hero-copy-panel">
             <div className="hero-kicker-row">
-              <p className="eyebrow">California instrument craft</p>
+              <p className="eyebrow">Music store in Woodland Hills, Los Angeles</p>
               <Link to="/services" className="hero-status-pill hero-status-pill-link">
                 California-crafted support
               </Link>
             </div>
-            <h1>A home for all musicians.</h1>
+            <h1>Sattari Music</h1>
             <p className="hero-copy">
               Handcrafted cymbals and drums, violins, guitars, bass, and the accessories that
-              complete your setup — plus local repairs, rentals, lessons, and studio time.
+              complete your setup — plus local repairs, rentals, lessons, and studio time in
+              Woodland Hills, serving Encino, Calabasas, and the San Fernando Valley.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">

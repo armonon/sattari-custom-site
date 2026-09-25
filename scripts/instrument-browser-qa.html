@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>StemDeck instrument audio checks</title>
+<style>body{font:16px system-ui;color:#e6eaf0;background:#171a21;padding:32px}button{padding:14px}pre{white-space:pre-wrap;line-height:1.8}</style>
+<h1>Instrument audio verification</h1><p>Uses generated audio only. Nothing is sent to speakers. Does not change the Studio project.</p>
+<button id="run">Run instrument checks</button><pre id="result" role="status">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import { INSTRUMENTS, instrumentVoice } from '/src/utils/arrangementInstruments.js';
+import { ArrangementEngine, scheduleArrangement } from '/src/utils/arrangementEngine.js';
+import { audioTrack, audioClip, emptyArrangement } from '/src/utils/arrangementModel.js';
+const result = document.querySelector('#result');
+document.querySelector('#run').addEventListener('click', async (event) => {
+  event.target.disabled = true; result.textContent = '';
+  let passed = 0, failed = 0;
+  const assert = (value, message) => { if (!value) throw new Error(message); };
+  const test = async (name, work) => { try { await work(); passed++; result.textContent += `PASS ${name}\n`; } catch (error) { failed++; result.textContent += `FAIL ${name}: ${error.message}\n`; } };
+  const peak = (buffer) => buffer.getChannelData(0).reduce((a, b) => Math.max(a, Math.abs(b)), 0);
+  for (const [instrument] of INSTRUMENTS.filter(([id]) => id !== 'sampler')) await test(`${instrument}: real rendered audio, velocity and note end`, async () => {
+    const render = async (velocity) => {
+      const raw = new OfflineAudioContext(2, 48000, 48000);
+      instrumentVoice(raw, raw.destination, { instrument }, { pitch: 'C4', velocity }, 0.1, 0.5);
+      return raw.startRendering();
+    };
+    const full = await render(0.8), half = await render(0.4);
+    assert(peak(full) > 0.005, 'silent voice');
+    assert(Math.abs(peak(half) / peak(full) - 0.5) < 0.01, 'velocity does not scale');
+    assert(full.getChannelData(0).slice(30000).every((n) => Math.abs(n) < 1e-6), 'voice leaks after note end');
+  });
+  await test('sampler uses real PCM, transposes and resumes from the sample offset', async () => {
+    const raw = new OfflineAudioContext(2, 48000, 48000), sample = raw.createBuffer(1, 48000, 48000);
+    sample.getChannelData(0).fill(0.4, 12000, 36000);
+    instrumentVoice(raw, raw.destination, { instrument: 'sampler', assetId: 'fixture', sampleRoot: 'C4' },
+      { pitch: 'C5', velocity: 1 }, 0.1, 0.5, 0.25, new Map([['fixture', sample]]));
+    const pcm = await raw.startRendering();
+    assert(peak(pcm) > 0.3, 'sample did not sound');
+    assert(pcm.getChannelData(0).slice(13000).every((n) => Math.abs(n) < 1e-6), 'sample offset/rate wrong');
+  });
+  await test('shared clip path applies track gain, pan, automation and master stem gain', async () => {
+    const render = async (gain) => {
+      const raw = new OfflineAudioContext(2, 48000, 48000), track = { ...audioTrack('Keys'), kind: 'midi', gain, pan: -1, stemRole: 'bass' };
+      track.clips = [{ ...audioClip('', 'Keys', 0.8), kind: 'midi', instrument: 'piano', notes: [{ pitch: 'C4', time: 0.1, duration: 0.3, velocity: 0.7 }] }];
+      scheduleArrangement({ rawContext: raw }, { ...emptyArrangement(), tracks: [track] }, new Map(), 0, 0, raw.destination, { masterStems: { bass: { level: 50 } } });
+      return raw.startRendering();
+    };
+    const full = await render(100), half = await render(50);
+    assert(peak(full) > 0.01, 'silent scheduled instrument');
+    assert(Math.abs(peak(half) / peak(full) - 0.5) < 0.01, 'track gain mismatch');
+    assert(full.getChannelData(1).every((n) => Math.abs(n) < 1e-6), 'pan ignored');
+  });
+  await test('real-time scheduling creates no far-future voices and pause releases everything', async () => {
+    await Tone.start(); const context = Tone.getContext(), sink = context.rawContext.createGain();
+    const engine = new ArrangementEngine(context, sink), track = { ...audioTrack('Dense keys'), kind: 'midi' };
+    track.clips = [{ ...audioClip('', 'Dense', 600), kind: 'midi', instrument: 'piano',
+      notes: Array.from({ length: 20000 }, (_, i) => ({ pitch: 'C4', time: 20 + i * 0.02, duration: 0.01, velocity: 0.3 })) }];
+    try {
+      await engine.play({ ...emptyArrangement(), tracks: [track] });
+      assert(engine.voiceBudget.voices.length === 0, 'future voices created eagerly');
+      engine.pause(); assert(engine.voiceBudget.voices.length === 0, 'voice reservations leaked');
+      assert(engine.midiTimer === null, 'MIDI clock leaked');
+    } finally { engine.dispose(); sink.disconnect(); }
+  });
+  result.textContent += `\n${passed} passed; ${failed} failed.`;
+  event.target.disabled = false;
+});
+</script></html>

@@ -1,0 +1,70 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>StemDeck beat-sync audio qualification</title>
+<style>body{font:16px system-ui;background:#151820;color:#f5f6fa;padding:32px}pre{white-space:pre-wrap}button{padding:12px}</style>
+<h1>Two-deck audio test</h1><p>Generated clicks. Offline audio only; no speaker output or saved project access.</p>
+<button id="run">Run audio test</button><pre id="result">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+const result = document.querySelector('#result');
+document.querySelector('#run').onclick = async () => {
+  result.textContent = 'Rendering production GrainPlayer audio…';
+  try {
+    const reports = [];
+    for (const keyLock of [false, true]) {
+      let engine;
+      const audio = await Tone.Offline(async context => {
+        engine = new StudioAudioEngine({monitor:false,recorder:false,metering:false});
+        engine.unlock = async () => {};
+        const merger = context.rawContext.createChannelMerger(2);
+        merger.connect(context.rawContext.destination);
+        for (const [id, bpm, channel] of [['A',120,0],['B',100,1]]) {
+          const buffer = context.rawContext.createBuffer(1, 48000*30, 48000);
+          const pcm = buffer.getChannelData(0);
+          for (let time=0; time<29.9; time+=60/bpm)
+            for(let j=0;j<240;j++) pcm[Math.round(time*48000)+j] = .8*Math.sin(j*.43)*Math.exp(-j/48);
+          await engine.loadLane(id, 'left', 'fullMix', buffer);
+          const deck=engine.decks.get(id), lane=deck.lanes.get('fullMix');
+          // Inspect actual player output, before creative FX and master processing.
+          lane.player.disconnect(); Tone.connect(lane.player, merger, 0, channel);
+          engine.setDeckKeyLock(id,keyLock);
+          engine.setPlaybackRate(id,120/bpm);
+          await engine.playDeck(id, 4*60/bpm, .1);
+        }
+        engine.setProjectTempo(120);
+        engine.setDeckSync('B',true,{bpm:100},{id:'A',bpm:120});
+        context.setTimeout(()=>{
+          engine.setProjectTempo(124);
+          engine.setPlaybackRate('A',124/120);
+          engine.setPlaybackRate('B',124/100);
+        },6.1);
+        context.setTimeout(()=>{
+          for(const [id,bpm] of [['A',120],['B',100]])
+            engine.seekDeck(id,engine.getDeckPosition(id)+4*60/bpm);
+        },10.1);
+        if(keyLock) {
+          context.setTimeout(()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,false); },12.1);
+          context.setTimeout(()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,true); },13.1);
+        }
+      },16,2,48000);
+      engine.dispose();
+      const peaks = channel => {
+        const pcm=audio.getChannelData(channel), list=[];
+        for(let i=48000;i<pcm.length-4800;i++) {
+          if(Math.abs(pcm[i])<.025) continue;
+          let best=i;
+          for(let j=i;j<Math.min(pcm.length,i+4800);j++)
+            if(Math.abs(pcm[j])>Math.abs(pcm[best]))best=j;
+          list.push(best/48000); i+=12000;
+        }
+        return list;
+      };
+      const a=peaks(0),b=peaks(1);
+      const errors=a.map(t=>Math.min(...b.map(u=>Math.abs(t-u)))*1000);
+      const maxMs=Math.max(...errors);
+      reports.push({keyLock,transientsA:a.length,transientsB:b.length,maxPairMs:maxMs,
+        pass:a.length>=25 && b.length>=25 && maxMs<20});
+    }
+    result.textContent=JSON.stringify({pass:reports.every(r=>r.pass),reports},null,2);
+  } catch(error) { result.textContent='FAIL '+error.stack; }
+};
+</script></html>

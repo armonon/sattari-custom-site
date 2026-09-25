@@ -1,0 +1,56 @@
+<!doctype html><meta charset="utf-8"><title>Input PCM qualification</title><pre id="result">Running synthetic audio, no microphone opened.</pre>
+<script type="module">
+import { LiveInput } from '/src/utils/liveInput.js';
+import { measureLoopback, probeSignal } from '/src/utils/latencyProbe.js';
+try {
+  const ctx = new OfflineAudioContext(2, 48000, 48000);
+  const buffer = ctx.createBuffer(1, 48000, 48000);
+  const samples = buffer.getChannelData(0);
+  for (let i=0;i<samples.length;i++) samples[i] = 0.25 * Math.sin(i * 2 * Math.PI * 440 / 48000);
+  const fakeContext = {
+    get currentTime(){return ctx.currentTime;},
+    createMediaStreamSource() {const s = ctx.createBufferSource();s.buffer=buffer;s.start(ctx.currentTime);return s;},
+  };
+  for (const name of ['createGain','createBiquadFilter','createDynamicsCompressor','createAnalyser','createChannelSplitter']) fakeContext[name] = ctx[name].bind(ctx);
+  const track = {getSettings:()=>({deviceId:'synthetic',channelCount:1}),stop(){},label:'Synthetic PCM'};
+  const stream = {getTracks:()=>[track],getAudioTracks:()=>[track]};
+  const input = new LiveInput(fakeContext,null,{getUserMedia:async()=>stream});
+  const merger = ctx.createChannelMerger(2);
+  input.record.connect(merger,0,0);input.monitor.connect(merger,0,1);merger.connect(ctx.destination);
+  const bus = input.record;
+  const steps = [
+    [.128,async()=>{input.update({armed:true});await input.open('synthetic');}],
+    [.256,()=>input.update({monitor:true})],
+    [.384,()=>input.close()],
+    [.512,()=>input.open('synthetic')],
+    [.640,()=>input.update({monitor:true,lowLatency:true})],
+    [.768,()=>input.update({armed:false})],
+  ];
+  const work = steps.map(([at,fn])=>ctx.suspend(at).then(async()=>{await fn();await ctx.resume();}));
+  const output = await ctx.startRendering(); await Promise.all(work);
+  const rms = (channel,a,b) => {
+    const values=output.getChannelData(channel);let sum=0;
+    for(let i=Math.floor(a*48000);i<Math.floor(b*48000);i++)sum+=values[i]*values[i];
+    return Math.sqrt(sum/((b-a)*48000));
+  };
+  const checks = {
+    lateConnectRecorded:rms(0,.18,.23)>.15,
+    monitorOffSilent:rms(1,.18,.23)<1e-6,
+    monitorOnAudible:rms(1,.30,.35)>.1,
+    disconnectedSilence:rms(0,.43,.48)<1e-6,
+    reconnectSameBus:input.record===bus,
+    reconnectRecorded:rms(0,.56,.61)>.15,
+    reconnectMonitorOff:rms(1,.56,.61)<1e-6,
+    lowLatencyAudible:rms(1,.69,.74)>.15,
+    disarmedSilence:rms(0,.84,.90)<1e-6,
+    disarmKeepsMonitor:rms(1,.84,.90)>.15,
+  };
+  const signal=probeSignal(256), capture=new Float32Array(20000),starts=[1000,6000,11000];
+  for(const start of starts)capture.set(signal,start+480);
+  const measured=measureLoopback(capture,signal,starts,48000,.02);
+  checks.syntheticDelayMeasured=measured.medianMs===10;
+  window.qaResult={pass:Object.values(checks).every(Boolean),checks,syntheticLoopbackMs:measured.medianMs,physicalHardwareMeasured:false};
+  input.dispose();
+} catch(e) {window.qaResult={pass:false,error:e.stack};}
+document.getElementById('result').textContent=JSON.stringify(window.qaResult,null,2);
+</script>

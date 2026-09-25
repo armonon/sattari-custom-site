@@ -198,6 +198,7 @@
       }
       .tabs {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
         margin-bottom: 1rem;
         border-bottom: 1px solid var(--line);
@@ -341,6 +342,8 @@
           <button class="tab is-active" id="tab-stock" type="button">Stock</button>
           <button class="tab" id="tab-listings" type="button">Listings</button>
           <button class="tab" id="tab-orders" type="button">Orders</button>
+          <button class="tab" id="tab-bookings" type="button">Studio bookings</button>
+          <button class="tab" id="tab-insights" type="button">Site insights</button>
           <button class="tab" id="tab-backups" type="button">Backups</button>
         </div>
 
@@ -380,6 +383,26 @@
             Restoring takes a snapshot of the current state first, so an accidental restore can
             itself be undone.
           </p>
+        </div>
+
+        <div class="hidden" id="panel-insights">
+          <h2 style="font-size:1.2rem">Site insights</h2>
+          <p class="note">Opt-in counts from the last 90 days (UTC). Not unique visitors, confirmed bookings, completed calls or revenue. Unidentified AI visits cannot be separated from other traffic. Google AI features are included in Google's overall search traffic.</p>
+          <p><a href="https://search.google.com/search-console?resource_id=https%3A%2F%2Fsattarimusic.com%2F" target="_blank" rel="noopener">Open Google Search Console</a></p>
+          <label for="insights-source">Referral source</label>
+          <select id="insights-source"><option value="all">All sources</option><option value="chatgpt">ChatGPT</option><option value="perplexity">Perplexity</option><option value="claude">Claude</option><option value="copilot">Copilot</option><option value="gemini">Gemini</option><option value="google">Google</option><option value="bing">Bing</option><option value="other_referral">Other referral</option><option value="direct">Direct / unknown</option></select>
+          <button type="button" id="insights-refresh" class="secondary">Refresh report</button>
+          <label for="insights-period">Period</label>
+          <select id="insights-period"><option value="7">Last 7 days</option><option value="28" selected>Last 28 days</option><option value="90">Last 90 days</option></select>
+          <p id="insights-status" role="status"></p>
+          <div style="overflow-x:auto"><table><thead><tr><th>Source</th><th>Page group</th><th>Action</th><th>Count</th></tr></thead><tbody id="insights-rows"></tbody></table></div>
+        </div>
+
+        <div class="hidden" id="panel-bookings">
+          <h2 style="font-size:1.2rem">Studio &amp; rehearsal bookings</h2>
+          <div id="booking-setup" class="msg hidden"></div>
+          <div id="booking-msg" role="status"></div>
+          <div id="booking-rows"></div>
         </div>
 
         <!-- Orders -->
@@ -791,6 +814,7 @@
           render();
           updateDirty();
           show('stock');
+          if (location.hash === '#bookings') { showTab('bookings'); await loadBookings(); }
         }
 
         el('login-form').addEventListener('submit', async function (submitEvent) {
@@ -853,6 +877,7 @@
           message('stock-msg', '');
           // Refresh whatever is on screen, not just stock.
           if (!el('panel-orders').classList.contains('hidden')) return loadOrders();
+          if (!el('panel-bookings').classList.contains('hidden')) return loadBookings();
           if (!el('panel-listings').classList.contains('hidden')) return loadListings();
           loadStock().catch(function (error) {
             if (error.message !== 'unauthorized') message('stock-msg', error.message, 'error');
@@ -888,7 +913,7 @@
         var pendingImage = '';
 
         function showTab(which) {
-          ['stock', 'listings', 'orders', 'backups'].forEach(function (name) {
+          ['stock', 'listings', 'orders', 'bookings', 'backups', 'insights'].forEach(function (name) {
             el('tab-' + name).classList.toggle('is-active', which === name);
           });
           el('panel-stock').classList.toggle('hidden', which !== 'stock');
@@ -896,6 +921,8 @@
           el('panel-listings').classList.toggle('hidden', which !== 'listings');
           el('listings-note').classList.toggle('hidden', which !== 'listings');
           el('panel-orders').classList.toggle('hidden', which !== 'orders');
+          el('panel-bookings').classList.toggle('hidden', which !== 'bookings');
+          el('panel-insights').classList.toggle('hidden', which !== 'insights');
           el('panel-backups').classList.toggle('hidden', which !== 'backups');
           if (which !== 'listings') el('panel-editor').classList.add('hidden');
         }
@@ -915,6 +942,114 @@
           showTab('backups');
           loadBackups();
         });
+
+        el('tab-bookings').addEventListener('click', function () {
+          showTab('bookings');
+          loadBookings();
+        });
+
+        var insightsDays = [];
+        function renderInsights() {
+          var source = el('insights-source').value;
+          var totals = {};
+          var cutoff = new Date(Date.now() - (Number(el('insights-period').value) - 1) * 86400000).toISOString().slice(0, 10);
+          insightsDays.forEach(function (day) {
+            if (day.date < cutoff) return;
+            Object.entries(day.counts).forEach(function (entry) {
+              if (source === 'all' || entry[0].split('|')[0] === source) totals[entry[0]] = (totals[entry[0]] || 0) + entry[1];
+            });
+          });
+          var rows = el('insights-rows');
+          rows.replaceChildren();
+          Object.entries(totals).sort(function (a, b) { return b[1] - a[1]; }).forEach(function (entry) {
+            var tr = document.createElement('tr');
+            entry[0].split('|').concat([String(entry[1])]).forEach(function (value) {
+              var td = document.createElement('td'); td.textContent = value; tr.appendChild(td);
+            });
+            rows.appendChild(tr);
+          });
+          el('insights-status').textContent = Object.keys(totals).length ? 'Aggregate action counts. Only visitors who allowed measurement are included.' : 'No measurements for this selection yet. Reports start after publication and visitor opt-in.';
+        }
+        async function loadInsights() {
+          el('insights-status').textContent = 'Loading report...';
+          try { var data = await api('/api/staff/insights', { method: 'GET' }); insightsDays = data.days; renderInsights(); }
+          catch (error) { el('insights-status').textContent = error.message || 'Unable to load report.'; }
+        }
+        el('tab-insights').addEventListener('click', function () { showTab('insights'); loadInsights(); });
+        el('insights-refresh').addEventListener('click', loadInsights);
+        el('insights-source').addEventListener('change', renderInsights);
+        el('insights-period').addEventListener('change', renderInsights);
+
+        async function loadBookings() {
+          try {
+            var data = await api('/api/staff/bookings', { method: 'GET' });
+            var setup = el('booking-setup');
+            setup.classList.toggle('hidden', !data.setupMissing.length);
+            setup.textContent = data.setupMissing.length ? 'Online booking is disabled. Setup needed: ' + data.setupMissing.join('; ') + '.' : '';
+            var rows = el('booking-rows');
+            rows.replaceChildren();
+            if (!data.bookings.length) rows.textContent = 'No studio requests yet.';
+            data.bookings.forEach(function (booking) {
+              var row = document.createElement('article');
+              row.style.cssText = 'border-bottom:1px solid var(--line);padding:1.2rem 0;overflow-wrap:anywhere';
+              var title = document.createElement('h3');
+              title.style.cssText = 'font-size:1rem;margin:0 0 .5rem';
+              var start = booking.startHour;
+              function hour(h) { return (h % 12 || 12) + (h >= 12 && h < 24 ? ' PM' : ' AM'); }
+              title.textContent = booking.date + ' | ' + hour(start) + ' - ' + hour(start + booking.hours) + ' (Los Angeles) | $' + (booking.amountCents / 100);
+              row.appendChild(title);
+              var labels = { requested: 'Awaiting approval', approving: 'Preparing payment link', awaiting_payment: 'Approved - awaiting payment', paid: 'Booked and paid', declined: 'Declined', cancelled: 'Cancelled', expired: 'Payment link expired' };
+              var status = document.createElement('strong');
+              status.textContent = labels[booking.status] || booking.status;
+              row.appendChild(status);
+              var contact = document.createElement('p');
+              contact.textContent = booking.name + ' | ' + booking.email + (booking.phone ? ' | ' + booking.phone : '');
+              row.appendChild(contact);
+              var notes = document.createElement('p');
+              notes.textContent = booking.purpose + (booking.notes ? ': ' + booking.notes : '');
+              row.appendChild(notes);
+              var notice = document.createElement('p');
+              notice.className = 'state';
+              notice.textContent = Object.entries(booking.notifications || {}).map(function (entry) { return entry[0] + ': ' + (entry[1].state === 'sent' ? 'accepted by provider' : entry[1].state); }).join(' | ');
+              row.appendChild(notice);
+              var actions = document.createElement('div');
+              actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:.5rem';
+              var choices = [];
+              if (booking.status === 'requested') choices.push(['approve', 'Approve & email payment link'], ['decline', 'Decline']);
+              if (booking.status === 'approving') choices.push(['approve', 'Retry approval'], ['sync', 'Check Stripe']);
+              if (booking.status === 'awaiting_payment') choices.push(['sync', 'Check payment'], ['cancel', 'Cancel unpaid reservation']);
+              if (Object.values(booking.notifications || {}).some(function (n) { return n.state === 'failed'; })) choices.push(['retry', 'Retry notifications']);
+              choices.forEach(function (choice) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = choice[0] === 'approve' ? '' : 'secondary';
+                button.textContent = choice[1];
+                button.addEventListener('click', async function () {
+                  if (['approve', 'decline', 'cancel'].includes(choice[0]) && !window.confirm(choice[1] + ' for ' + booking.name + ' on ' + booking.date + '?')) return;
+                  actions.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+                  message('booking-msg', '');
+                  try {
+                    await api('/api/staff/bookings', { method: 'POST', body: JSON.stringify({ id: booking.id, action: choice[0] }) });
+                    await loadBookings();
+                    message('booking-msg', 'Updated. Check the booking and notification status below.', 'ok');
+                  } catch (error) {
+                    if (error.message !== 'unauthorized') message('booking-msg', error.message, 'error');
+                    actions.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                  }
+                });
+                actions.appendChild(button);
+              });
+              row.appendChild(actions);
+              var reference = document.createElement('p');
+              reference.className = 'state';
+              reference.textContent = booking.id + (booking.checkoutSessionId ? ' | Stripe: ' + booking.checkoutSessionId : '');
+              row.appendChild(reference);
+              rows.appendChild(row);
+            });
+          } catch (error) {
+            if (error.message !== 'unauthorized') message('booking-msg', error.message, 'error');
+          }
+        }
 
         function money(value) {
           return typeof value === 'number' ? '$' + value.toFixed(2) : '—';

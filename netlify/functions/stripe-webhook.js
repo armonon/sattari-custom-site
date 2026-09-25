@@ -8,6 +8,7 @@ import {
 import { sendOrderNotification } from '../../server/orderNotifications.js';
 import { applyStockDeltas } from '../../src/utils/inventory.js';
 import { updateStock } from '../../server/stockStore.js';
+import { applyBookingPayment } from '../../server/studioBookings.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
@@ -99,6 +100,13 @@ export async function handler(event) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
+    if (stripeEvent.data.object?.metadata?.kind === 'studio_booking') {
+      if (['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired'].includes(stripeEvent.type)) {
+        await applyBookingPayment(event, stripeEvent.data.object);
+      }
+      return { statusCode: 200, body: JSON.stringify({ received: true }) };
+    }
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;

@@ -25,9 +25,12 @@ import {
   Zap,
 } from 'lucide-react';
 import LearnArranger from '../components/LearnArranger';
+import ToolReferenceLink from '../components/ToolReferenceLink';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 import { analyzeAudioFile, detectPitch } from '../utils/audioAnalysis';
 import { putAudioAsset } from '../utils/audioProjectStore';
-import { SEO } from '../utils/seo';
+import { SEO, StructuredData } from '../utils/seo';
+import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 
 const STARTER_ANALYSIS = {
   source: 'starter',
@@ -275,16 +278,19 @@ export default function SattariLearnPage() {
     }
 
     setIsAnalyzing(true);
+    trackSiteEvent('learn_started');
     setAnalysisResult(null);
     setAnalysisError('');
     try {
       const result = await analyzeAudioFile(selectedFile, setAnalysisProgress);
       setAnalysisResult(result);
+      trackSiteEvent('learn_completed');
       setSelectedSection(0);
       setTapTimes([]);
       setActiveMode('analyze');
     } catch (error) {
       setAnalysisError(error instanceof Error ? error.message : 'This file could not be analyzed.');
+      trackSiteEvent('learn_failed');
     } finally {
       setIsAnalyzing(false);
     }
@@ -438,11 +444,14 @@ export default function SattariLearnPage() {
 
   return (
     <>
-      <SEO
-        title="Sattari Learn - Turn Songs Into Lessons"
-        description="Analyze songs, understand the music, and build guided practice for piano, guitar, drums, and bass with Sattari Learn."
-        image="/sattari site/audio-suite/brain.png"
-        url="https://sattarimusic.com/learn"
+      <SEO {...PAGE_SEO.learn} />
+      <StructuredData
+        data={musicToolSchema('learn', [
+          'Song key and tempo estimates',
+          'Chord exploration',
+          'Piano, guitar, bass and drum practice',
+          'Practice arrangement',
+        ])}
       />
       <section className="audio-workspace learn-workspace">
         <div className="audio-workspace-topbar">
@@ -477,6 +486,7 @@ export default function SattariLearnPage() {
           </p>
         </div>
 
+        <ToolReferenceLink tool="learn" />
         <div className="learn-command-grid">
           <aside className="learn-source-panel workspace-panel">
             <div className="workspace-panel-heading">

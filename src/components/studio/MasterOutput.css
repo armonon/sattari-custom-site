@@ -1,3 +1,6 @@
+.stemdeck-web .sd-output-console[hidden] {
+  display: none !important;
+}
 .stemdeck-web .sd-output-console {
   margin-top: 12px;
   border: 1px solid #30363d;
@@ -5,6 +8,366 @@
   background: #14171b;
   color: #e2e8ee;
   overflow: hidden;
+}
+.sd-master-stems {
+  padding: 16px;
+  border-top: 1px solid #ffffff12;
+}
+.stemdeck-web .sd-output-console.is-effect-drop {
+  border-color: #63ddc5;
+  box-shadow: inset 0 0 0 2px #63ddc5;
+}
+.sd-master-insert-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid #ffffff12;
+}
+.sd-master-insert-bar span {
+  color: #abb8c7;
+  font-size: 12px;
+}
+.sd-master-drop-error {
+  color: #ffb5a8;
+  padding: 0 16px;
+}
+.sd-output-console > .ae-rack {
+  margin: 0 12px 12px;
+}
+.sd-output-console .sd-master-stems {
+  padding: 18px;
+  background: linear-gradient(180deg, #ffffff02, transparent 100px);
+}
+.sd-master-stems > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sd-master-stems-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sd-master-stems-heading > svg {
+  color: #b6d6d1;
+  flex-shrink: 0;
+}
+.sd-master-stems > header strong {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.sd-master-stems > header span {
+  display: block;
+  font-size: 12px;
+  margin-top: 3px;
+  color: #a0a6b1;
+}
+.sd-master-stem-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.sd-master-stem {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #ffffff16;
+  border-radius: 14px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--stem-color) 8%, #202126),
+    #202126 70%
+  );
+  box-shadow: inset 0 1px 0 #ffffff06;
+}
+.sd-master-stem-title,
+.sd-master-stem-title > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sd-master-stem-title {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.sd-master-stem-title > div {
+  flex: 1;
+}
+.sd-master-stem-title strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #eef0f4;
+}
+.sd-master-stem-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--stem-color) 13%, transparent);
+  color: var(--stem-color);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.sd-master-stem-state {
+  font-size: 10px;
+  color: #adb2bc;
+  white-space: nowrap;
+}
+.sd-master-stem-gain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+.sd-master-stem-gain output {
+  color: #f1f3f7;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-master-stem-gain output > span {
+  font-size: 13px;
+  color: #9ba2af;
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+.stemdeck-web .sd-output-console .sd-master-stem-gain > button {
+  width: 32px;
+  flex-shrink: 0;
+  min-height: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #ffffff10;
+  border-radius: 50%;
+  background: #ffffff04;
+  color: #aeb5c1;
+}
+.sd-master-stem .sd-master-control {
+  display: block;
+  margin: 8px 0 0;
+}
+.sd-master-stem .sd-master-control > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.stemdeck-web .sd-output-console .sd-master-stem input[type='range'] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--stem-color);
+}
+.sd-master-stem-scale {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  color: #989faa;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-master-stem-scale > span:nth-child(2) {
+  position: absolute;
+  left: calc(33.333% + 2px);
+  transform: translateX(-50%);
+}
+.sd-master-stem-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 14px 0 10px;
+}
+.stemdeck-web .sd-output-console .sd-master-stem-actions > button {
+  min-height: 34px;
+  height: 34px;
+  padding: 0 6px;
+  gap: 5px;
+  border-radius: 8px;
+  border: 1px solid #ffffff12;
+  background: #ffffff04;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.stemdeck-web .sd-output-console .sd-master-stem-actions > button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--stem-color) 16%, #202126);
+  color: var(--stem-color);
+  border-color: color-mix(in srgb, var(--stem-color) 45%, transparent);
+}
+.stemdeck-web .sd-output-console .sd-master-stem-actions > button:first-child[aria-pressed='true'] {
+  background: #ff9a9414;
+  color: #ffb1aa;
+  border-color: #ff9a9445;
+}
+.sd-master-stem.is-suppressed {
+  background: #1b1c20;
+}
+.sd-master-stem.is-suppressed .sd-master-stem-gain output {
+  color: #a5abb6;
+}
+.sd-master-stem.is-suppressed .sd-master-stem-state {
+  color: #e7b9af;
+}
+.sd-master-stem.is-solo:not(.is-suppressed) {
+  border-color: color-mix(in srgb, var(--stem-color) 45%, transparent);
+}
+.sd-master-stem.is-solo:not(.is-suppressed) .sd-master-stem-state {
+  color: var(--stem-color);
+}
+.sd-master-stem > small {
+  display: block;
+  color: #a0a6b1;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.sd-master-stem-help {
+  margin-top: 12px;
+}
+.sd-master-stem-help > summary {
+  width: fit-content;
+  padding: 5px 0;
+  color: #a7aeba;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 18px;
+}
+.sd-master-stem-help > summary:focus-visible {
+  outline: 2px solid #81f0de;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.sd-master-stem-help > p {
+  max-width: 900px;
+  margin: 6px 0 0;
+  color: #a7aeba;
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 1250px) {
+  .sd-master-stem-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sd-master-stem:last-child {
+    grid-column: 1 / -1;
+  }
+  .sd-master-stem:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 18px;
+    align-items: center;
+  }
+  .sd-master-stem:last-child .sd-master-stem-gain {
+    margin: 0;
+  }
+  .sd-master-stem:last-child .sd-master-control {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .sd-master-stem:last-child .sd-master-stem-scale {
+    grid-column: 3;
+  }
+  .sd-master-stem:last-child .sd-master-stem-actions {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 6px 0 0;
+  }
+  .sd-master-stem:last-child > small {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+@media (max-width: 900px) {
+  .sd-master-stem-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .sd-output-console .sd-master-stems {
+    padding: 12px;
+  }
+  .sd-master-stem {
+    padding: 12px;
+  }
+  .sd-master-stem-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sd-master-stem-title > div {
+    gap: 6px;
+  }
+  .sd-master-stem-title strong {
+    font-size: 12px;
+  }
+  .sd-master-stem-title {
+    min-height: 48px;
+  }
+  .sd-master-stem-gain {
+    margin-top: 8px;
+  }
+  .sd-master-stem:last-child {
+    display: block;
+  }
+  .sd-master-stem:last-child .sd-master-stem-title {
+    flex-direction: row;
+    min-height: 28px;
+    align-items: center;
+  }
+  .sd-master-stem:last-child .sd-master-stem-gain {
+    margin-top: 8px;
+  }
+  .sd-master-stem:last-child .sd-master-stem-actions {
+    margin-top: 14px;
+  }
+  .stemdeck-web .sd-output-console .sd-master-stem-actions > button,
+  .stemdeck-web .sd-output-console .sd-master-stem-gain > button {
+    min-height: 44px;
+    height: 44px;
+  }
+  .stemdeck-web .sd-output-console .sd-master-stem-gain > button {
+    width: 44px;
+  }
+  .sd-master-stems-heading > svg {
+    display: none;
+  }
+  .sd-master-stems > header span {
+    font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .sd-master-stem-gain output {
+    font-size: 24px;
+  }
+  .sd-master-stem-gain output > span {
+    font-size: 11px;
+    margin-left: 2px;
+  }
+  .sd-master-stem-gain {
+    gap: 4px;
+  }
+  .stemdeck-web .sd-output-console .sd-master-stem-actions > button {
+    padding-inline: 4px;
+    gap: 4px;
+    font-size: 11px;
+  }
 }
 .sd-master-summary {
   display: grid;

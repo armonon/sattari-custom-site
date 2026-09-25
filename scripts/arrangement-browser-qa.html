@@ -1,0 +1,126 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>StemDeck arrangement audio QA</title>
+<style>body{background:#111923;color:#e6efff;font:16px system-ui;padding:32px}button{padding:12px 20px}pre{white-space:pre-wrap;line-height:1.7}</style>
+<h1>Arrangement native-audio verification</h1><p>Synthetic audio only. Uses this test origin’s storage, never your Studio session. Output is not sent to speakers.</p><button id="run">Run native audio checks</button><pre id="result" role="status">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import { ArrangementEngine } from '/src/utils/arrangementEngine.js';
+import { audioTrack, audioClip, emptyArrangement, splitClip } from '/src/utils/arrangementModel.js';
+import { peakOf, wavBytes } from '/src/utils/arrangementExport.js';
+import { clearExportFile } from '/src/utils/arrangementStreamExport.js';
+import { putAudioAsset, getAudioAsset, deleteAudioAsset } from '/src/utils/audioProjectStore.js';
+import { SourceCapture, recoverSourceCaptures } from '/src/utils/sourceCapture.js';
+import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+const button = document.querySelector('#run'), result = document.querySelector('#result');
+button.addEventListener('click', async () => {
+  button.disabled = true; result.textContent = 'Running…\n'; let failed = 0, passed = 0, asset, engine, sink, live;
+  const assert = (condition, message) => { if (!condition) throw new Error(message); };
+  const test = async (name, work) => { try { await work(); passed++; result.textContent += `PASS ${name}\n`; } catch (error) { failed++; result.textContent += `FAIL ${name}: ${error.message}\n`; } };
+  try {
+    await Tone.start(); const context = Tone.getContext(); sink = context.rawContext.createGain();
+    const audio = context.rawContext.createBuffer(2, 48000, 48000);
+    for (let c = 0; c < 2; c++) { const data = audio.getChannelData(c); for (let i = 0; i < data.length; i++) data[i] = Math.sin(i / 48000 * Math.PI * 2 * 220) * .2; }
+    asset = await putAudioAsset(new Blob([wavBytes(audio)], { type: 'audio/wav' }), { name: 'Synthetic arrangement QA.wav' });
+    const project = emptyArrangement(), track = audioTrack('Test tone'); track.clips.push(audioClip(asset.id, 'Tone', 1, 1)); project.tracks.push(track);
+    engine = new ArrangementEngine(context, sink);
+    await test('real offline audio has the correct silent gap, duration, gain and stop', async () => {
+      const rendered = await engine.render(project, {}, track.id), pcm = rendered.getChannelData(0);
+      assert(Math.abs(rendered.duration - 2.1) < .001, `wrong duration ${rendered.duration}`);
+      assert(pcm.slice(0, 47000).every((v) => Math.abs(v) < 1e-8), 'audio before clip start');
+      assert(peakOf(rendered) > .19 && peakOf(rendered) < .21, `unexpected peak ${peakOf(rendered)}`);
+      assert(pcm.slice(97000).every((v) => Math.abs(v) < 1e-6), 'audio after clip end');
+    });
+    await test('splitting a fade preserves rendered PCM', async () => {
+      const original = structuredClone(project); original.tracks[0].clips[0].fadeIn = .8;
+      const split = structuredClone(original); split.tracks[0].clips = splitClip(split.tracks[0].clips[0], 1.4);
+      const a = (await engine.render(original, {}, track.id)).getChannelData(0), b = (await engine.render(split, {}, track.id)).getChannelData(0);
+      let error = 0; for (let i = 0; i < a.length; i++) error = Math.max(error, Math.abs(a[i] - b[i]));
+      assert(error < .002, `split changed PCM by ${error}`);
+    });
+    await test('seek into silence retains future clips and uses audio-clock position', async () => {
+      await engine.play(project, .5, { limiter: false }); assert(engine.playing, 'did not start');
+      assert(Math.abs(engine.position() - .5) < .08, 'incorrect seek position'); engine.pause();
+      await engine.play(project, 1.5, { limiter: false }); assert(Math.abs(engine.position() - 1.5) < .08, 'incorrect resumed position'); engine.pause();
+    });
+    const instrument = emptyArrangement(), midi = audioTrack('Instrument'); midi.kind = 'midi'; midi.clips.push({ ...audioClip('', 'Notes', 1), kind: 'midi', notes: [{ pitch: 'A4', time: 0, duration: .5, velocity: .7 }, { pitch: 'C4', time: .25, duration: .5, velocity: .5 }] }); instrument.tracks.push(midi);
+    await test('piano notes render actual non-silent polyphonic audio', async () => { const rendered = await engine.render(instrument, {}, midi.id); assert(peakOf(rendered) > .04, 'silent instrument'); });
+    await test('master gain affects mixdown and produces a valid 24-bit WAV', async () => {
+      const full = await engine.render(instrument, { level: 100, limiter: false }), half = await engine.render(instrument, { level: 50, limiter: false });
+      assert(peakOf(half) < peakOf(full) * .6 && peakOf(half) > peakOf(full) * .3, 'master gain mismatch');
+      const blob = await engine.export(instrument, { level: 100, limiter: true }); const view = new DataView(await blob.arrayBuffer());
+      assert(view.getUint32(24, true) === 48000 && view.getUint16(34, true) === 24, 'wrong WAV format');
+      await clearExportFile(blob);
+    });
+    await test('more than four independent tracks render and export aligned stems', async () => {
+      const multi = emptyArrangement(); for (let i = 0; i < 6; i++) { const row = audioTrack(`Track ${i}`); row.clips.push(audioClip(asset.id, 'Tone', 1, i / 8)); multi.tracks.push(row); }
+      const archive = await engine.export(multi, {}, true); const data = new Uint8Array(await archive.arrayBuffer()), view = new DataView(data.buffer);
+      assert(view.getUint32(0, true) === 0x04034b50, 'bad ZIP header'); assert(view.getBigUint64(data.length - 98 + 32, true) === 7n, 'missing stem files');
+      let offset = 0, length = null;
+      for (let i = 0; i < 6; i++) { const nameLength = view.getUint16(offset + 26, true), extraLength = view.getUint16(offset + 28, true), extra = offset + 30 + nameLength, size = Number(view.getBigUint64(extra + 4, true)), start = extra + extraLength; const pcmLength = view.getUint32(start + 40, true); assert(length == null || length === pcmLength, 'unaligned stem lengths'); length = pcmLength; offset = start + size + 24; }
+      await clearExportFile(archive);
+    });
+    await test('printed references bypass repeated processing but follow master level', async () => {
+      const reference = structuredClone(project); reference.tracks[0].role = 'reference';
+      const full = await engine.render(reference, { level: 100, compression: true, processing: { low: 10, high: -10 } });
+      const half = await engine.render(reference, { level: 50, compression: true });
+      const silent = await engine.render(reference, { level: 0 });
+      assert(Math.abs(peakOf(full) - .2) < .002, 'reference was processed again');
+      assert(Math.abs(peakOf(half) / peakOf(full) - .5) < .01, 'reference ignored master gain');
+      assert(peakOf(silent) < 1e-7, 'reference ignored zero master output');
+    });
+    await test('range exports rebase source offsets and preserve requested length', async () => {
+      const blob = await engine.export(project, { limiter: false }, false, () => {}, () => false, { start: 1.25, end: 1.75 });
+      // Verify the file at its export rate, not after hardware-rate resampling.
+      const bytes = await blob.arrayBuffer(), header = new DataView(bytes);
+      assert(header.getUint32(24, true) === 48000 && header.getUint32(40, true) === 24000 * 6, 'range WAV header/frame count incorrect');
+      const decoded = await new OfflineAudioContext(2, 24000, 48000).decodeAudioData(bytes);
+      assert(decoded.length === 24000, `range length ${decoded.length} frames at ${decoded.sampleRate} Hz`);
+      assert(peakOf(decoded) > .05, 'range export is silent');
+      await clearExportFile(blob);
+    });
+    await test('live mute and gain changes do not restart arrangement transport', async () => {
+      await engine.play(project, 0, {}); const started = engine.startedAt;
+      const changed = structuredClone(project); changed.tracks[0].muted = true; engine.updateMix(changed);
+      changed.tracks[0].muted = false; changed.tracks[0].gain = 150; engine.updateMix(changed);
+      assert(engine.playing && engine.startedAt === started, 'mixer restarted transport'); engine.pause();
+    });
+    await test('loop playback schedules repeated regions and preserves live mixer control', async () => {
+      await engine.play(project, 1, {}, { start: 1, end: 1.5 });
+      const clock = engine.startedAt;
+      await new Promise((resolve) => setTimeout(resolve, 1150));
+      assert(!engine.error && engine.playing, engine.error || 'loop stopped');
+      assert(engine.position() >= 1 && engine.position() < 1.5, 'loop did not wrap');
+      engine.updateMix(project); assert(engine.startedAt === clock, 'loop mixer restarted transport'); engine.pause();
+    });
+    await test('source capture produces aligned durable chunks and recoverable float WAV audio', async () => {
+      const capture = new SourceCapture(), raw = context.rawContext;
+      const tone = raw.createOscillator(), gain = raw.createGain(); gain.gain.value = .2; tone.connect(gain); tone.start();
+      let captured;
+      try {
+        await capture.start(context, [{ name: 'Left test', nodes: [gain] }, { name: 'Right test', nodes: [gain] }], (from, to, index) => from.connect(to, 0, index), (from, to) => from.disconnect(to));
+        await new Promise((resolve) => setTimeout(resolve, 5350));
+        captured = await capture.stop();
+        assert(!captured.error, captured.error); assert(captured.tracks.length === 2, 'source lanes missing');
+        const [a, b] = captured.tracks;
+        assert(a.clips.length >= 2 && a.clips.length === b.clips.length, 'chunk rollover failed');
+        assert(a.clips.every((clip, i) => clip.start === b.clips[i].start && clip.duration === b.clips[i].duration), 'source frames misaligned');
+        for (let i = 1; i < a.clips.length; i++) assert(Math.abs(a.clips[i].start - a.clips[i - 1].start - a.clips[i - 1].duration) < 1 / raw.sampleRate, 'gap between chunks');
+        const asset = await getAudioAsset(a.clips[0].assetId), bytes = await asset.blob.arrayBuffer();
+        assert(new DataView(bytes).getUint16(20, true) === 3, 'source capture not floating-point WAV');
+        const decoded = await raw.decodeAudioData(bytes); assert(peakOf(decoded) > .19, 'source recording silent');
+        assert((await recoverSourceCaptures()).some((take) => take.id === captured.id), 'recovery manifest missing');
+      } finally {
+        tone.stop(); gain.disconnect(); capture.dispose();
+        for (const track of captured?.tracks || capture.tracks || []) for (const clip of track.clips) await deleteAudioAsset(clip.assetId);
+        if (capture.id) localStorage.removeItem('sattari-source-capture:' + capture.id);
+      }
+    });
+    await test('recording captures playable audio and timestamped performance controls', async () => {
+      live = new StudioAudioEngine(); live.setMasterMonitor({ muted: true }); await live.startRecording(); live.setMasterLevel(80); await live.triggerPad(0, 72);
+      await new Promise((resolve) => setTimeout(resolve, 600)); const blob = await live.stopRecording();
+      assert(blob && blob.size > 100, 'empty recording'); const recording = await context.rawContext.decodeAudioData(await blob.arrayBuffer()); assert(recording.duration > .2, 'take is too short'); assert(peakOf(recording) > .001, 'take is silent');
+      const events = live.capturedPerformance(); assert(events.some((event) => event.type === 'triggerPad'), 'pad event missing'); assert(events.some((event) => event.type === 'setMasterLevel' && event.args[0] === 80), 'gain event missing'); assert(events.every((event) => Number.isFinite(event.time) && event.time >= 0), 'bad timestamps');
+    });
+  } catch (error) { failed++; result.textContent += `SETUP FAILURE: ${error.stack}\n`; }
+  finally { engine?.dispose(); sink?.disconnect(); live?.dispose(); if (asset) await deleteAudioAsset(asset.id); result.textContent += `\nCOMPLETE: ${passed} passed, ${failed} failed`; button.disabled = false; }
+});
+</script></html>

@@ -1,0 +1,113 @@
+/* Layout only: never unmount a panel's audio, editors or pending imports. */
+.sd-studio-next [data-panel-collapsed='true'] > :not([data-panel-summary]):not([role='alert']) {
+  display: none !important;
+}
+.sd-studio-next [data-panel-collapsed='true']:not([hidden]) {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  align-content: start;
+}
+.sd-studio-next .sd-panel-collapse-bar {
+  display: flex !important;
+  grid-column: 1 / -1;
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-bottom: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sd-studio-next [data-panel-collapsed='true'] > .sd-panel-collapse-bar {
+  margin-bottom: 0;
+}
+.sd-studio-next .sd-panel-collapse-bar > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  height: auto;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sd-muted, #b6bdc8);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.sd-studio-next .sd-panel-collapse-bar > button > svg {
+  flex-shrink: 0;
+}
+.sd-studio-next .sd-panel-collapse-bar > button > span {
+  overflow-wrap: anywhere;
+}
+.sd-studio-next .sd-panel-collapse-bar:has(.sd-panel-summary-content) > button {
+  width: auto;
+  flex: 1 0 auto;
+}
+.sd-studio-next .sd-panel-summary-content {
+  min-width: 0;
+}
+.sd-studio-next .sd-panel-summary-content > header {
+  margin: 0;
+}
+.sd-studio-next .sd-panel-layout-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 190px;
+  padding: 8px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: 10px;
+  background: var(--sd-panel);
+  box-shadow: 0 12px 32px #00000055;
+}
+.sd-studio-next .sd-panel-layout-menu {
+  position: relative;
+}
+.sd-studio-next .sd-panel-layout-menu > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 10px;
+  list-style: none;
+  color: var(--sd-muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.sd-studio-next .sd-panel-layout-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.sd-studio-next .sd-panel-layout-menu > summary:hover,
+.sd-studio-next .sd-panel-collapse-bar > button:hover {
+  background: var(--sd-raised);
+  color: var(--sd-text);
+}
+.sd-studio-next .sd-workspace-quick-actions {
+  flex-wrap: wrap;
+}
+.sd-studio-next .sd-panel-layout-actions button {
+  white-space: nowrap;
+}
+.sd-studio-next .sd-output-console > .sd-panel-collapse-bar {
+  margin: 8px 12px;
+}
+.sd-studio-next .ae-lower-editor > .sd-panel-collapse-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+@media (pointer: coarse) {
+  .sd-studio-next .sd-panel-collapse-bar > button,
+  .sd-studio-next .sd-panel-layout-menu > summary {
+    min-height: 44px;
+  }
+}
