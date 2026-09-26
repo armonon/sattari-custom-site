@@ -151,7 +151,7 @@ export default function ArrangementRack({
                   ['effects', 'Effects'],
                   ['instruments', 'Instruments'],
                   ['suite', 'Sattari suite'],
-                  ['disk', 'On disk'],
+                  ['disk', 'Desktop host required'],
                 ]
                   .filter(([id]) => !master || id !== 'instruments')
                   .map(([id, label]) => (
@@ -166,6 +166,12 @@ export default function ArrangementRack({
                   ))}
               </div>
               <div className="ae-rack-browser-list">
+                {['effects', 'instruments'].includes(tab) && (
+                  <p>
+                    <strong>Playable here</strong> · Built-in browser DSP. These devices can process
+                    audio in this runtime.
+                  </p>
+                )}
                 {tab === 'effects' &&
                   Object.entries(EFFECTS)
                     .filter(([, def]) =>
@@ -183,7 +189,7 @@ export default function ArrangementRack({
                       >
                         <strong>{def.name}</strong>
                         <span>{def.description}</span>
-                        <small>Built-in web edition · Add +</small>
+                        <small>Playable here · Web edition · Add +</small>
                       </button>
                     ))}
                 {tab === 'instruments' &&
@@ -198,8 +204,9 @@ export default function ArrangementRack({
                 {tab === 'suite' && (
                   <>
                     <p>
-                      Full native suite catalog. Web editions below use browser DSP, not the native
-                      plugin algorithms. Other products require a native desktop host.
+                      Suite catalog, not a list of installed playable plugins. Web editions below
+                      use browser DSP, not the native plugin algorithms. Other products require a
+                      native desktop host.
                     </p>
                     {suite
                       .filter((item) =>
@@ -225,10 +232,12 @@ export default function ArrangementRack({
                               }
                               onClick={() => insert(presets[item.id] || [item.id])}
                             >
-                              Add web {presets[item.id] ? 'chain' : 'edition'}
+                              Playable here · Add web {presets[item.id] ? 'chain' : 'edition'}
                             </button>
                           ) : (
-                            <small>Native edition · not hosted in this browser</small>
+                            <small>
+                              Desktop host required · Native edition is not playable here
+                            </small>
                           )}
                         </article>
                       ))}
@@ -237,8 +246,9 @@ export default function ArrangementRack({
                 {tab === 'disk' && (
                   <>
                     <p>
-                      Choose your plugin folder to catalog AU, VST, VST3 and CLAP packages. Files
-                      stay on your device. This is an inventory—not a native plugin host.
+                      <strong>Desktop host required.</strong> Choose your plugin folder to catalog
+                      AU, VST, VST3 and CLAP packages. Files stay on your device. This is an
+                      inventory—not a native plugin host.
                     </p>
                     <button type="button" disabled={busy} onClick={() => folder.current.click()}>
                       Choose plugin folder

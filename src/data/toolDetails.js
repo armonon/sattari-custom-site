@@ -7,7 +7,7 @@ export const toolDetails = {
     description:
       'Separate songs into vocals, drums, bass and other instruments locally. Compare supported files, limits, privacy and real output before starting.',
     summary:
-      'Extract vocals, drums, bass and other instruments from one track or a batch, then preview and download your chosen parts.',
+      'Extract vocals, drums, bass and other instruments from one track or a batch, with estimated song and stem keys, tempo, prominent notes and audio levels.',
     screenshot: '/images/tools/separator.jpg',
     screenshotCaption:
       'Actual completed HTDemucs separation of the original Sattari synthetic demo into bass and drums. The audio below is the real output from this run, not hand-isolated source tracks.',
@@ -19,6 +19,10 @@ export const toolDetails = {
       [
         'Output',
         '44.1 kHz, 32-bit float stereo WAV. Individual stems, per-track ZIP and batch ZIP. Instruments is the other source, excluding vocals, drums and bass.',
+      ],
+      [
+        'Musical analysis',
+        'On-device key and pulse estimates for the song and selected stems, prominent pitch classes, duration, sample peak and RMS levels. Download an analysis JSON report separately or in the ZIP. Musical estimates sample up to three 20-second sections; levels cover the full audio.',
       ],
       [
         'Limits',
@@ -42,7 +46,7 @@ export const toolDetails = {
       ],
       [
         'Limitations',
-        'AI estimates may contain bleed and artifacts. All four sources are computed even when fewer outputs are selected. This is not recovery of the original studio multitracks.',
+        'AI estimates may contain bleed and artifacts. All four sources are computed even when fewer outputs are selected. This is not recovery of the original studio multitracks. Musical analysis is approximate, not a transcription: sparse stems, relative keys, tempo changes and half/double-time pulses can be ambiguous. No key is assigned to drums; weak estimates may remain undetermined.',
       ],
     ],
     demo: [

@@ -1,14 +1,16 @@
+// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sendMock = vi.fn();
 
 vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(() => ({ emails: { send: sendMock } })),
+  Resend: vi.fn().mockImplementation(function () {
+    return { emails: { send: sendMock } };
+  }),
 }));
 
-const { parseRecipients, sendOrderNotification } = await import(
-  '../../server/orderNotifications.js'
-);
+const { parseRecipients, sendOrderNotification } =
+  await import('../../server/orderNotifications.js');
 
 const orderRecord = {
   id: 'cs_test_1',

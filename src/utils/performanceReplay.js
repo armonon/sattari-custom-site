@@ -1,14 +1,22 @@
 import { audioClip, audioTrack, bounded, validateArrangement } from './arrangementModel';
 import { crossfaderGains, gainFromPercent } from './studioAudioEngine';
 import { masterStemGain, normalizeMasterStems } from './masterOutput';
+import { performanceAudioTime } from './performanceClock';
+import { RECONSTRUCTION_EVENTS, performanceSupportForTake } from './performanceSupport';
 
 // Reconstruct source edits, never apply processing again to a printed reference.
 // Unsupported DSP stays explicitly reported; the safety take remains untouched.
 export function reconstructPerformance(project, capture) {
   const events = (capture.events || [])
     .filter((event) => !event.disabled)
-    .map((event, index) => ({ ...event, index }))
-    .sort((a, b) => a.time - b.time || a.index - b.index);
+    .map((event, index) => ({
+      ...event,
+      index,
+      // Use the same audible clock as replay, not the earlier UI request time.
+      // Legacy captures have no scheduled time; keep their recorded timing.
+      time: performanceAudioTime(event, event.sampleRate || 48000, 0),
+    }))
+    .sort((a, b) => a.time - b.time || (a.sequence ?? a.index) - (b.sequence ?? b.index));
   const snapshot = events.find((event) => event.type === 'initialState');
   const initial = snapshot?.args[0];
   if (!initial?.decks)
@@ -26,25 +34,7 @@ export function reconstructPerformance(project, capture) {
   const timeline = capture.timelineStart || 0,
     warnings = new Set(),
     tracks = [];
-  const supported = new Set([
-    'initialState',
-    'deckTransport',
-    'playDeck',
-    'pauseDeck',
-    'stopDeck',
-    'seekDeck',
-    'setPlaybackRate',
-    'setCrossfader',
-    'setCrossfaderCurve',
-    'setDeckGain',
-    'setDeckFader',
-    'setDeckSide',
-    'setLaneState',
-    'removeLane',
-    'setLoop',
-    'setLoopRegion',
-    'setMasterStems',
-  ]);
+  const supported = new Set(RECONSTRUCTION_EVENTS);
   for (const event of events) if (!supported.has(event.type)) warnings.add(event.type);
   const allDecks = structuredClone(initial.decks);
   for (const event of events) {
@@ -117,8 +107,19 @@ export function reconstructPerformance(project, capture) {
           value = gain(row.lane, row.id);
         const last = points.at(-1);
         if (last && last.value === value) continue;
-        if (last && timeline + time > last.time)
-          points.push({ time: timeline + time, value: last.value });
+        const at = timeline + time;
+        if (last) {
+          // Fast knob moves can interrupt the preceding ramp. Preserve its
+          // value at the interruption, not a future endpoint out of time order.
+          const left = points.at(-2);
+          const held =
+            last.time > at && left
+              ? left.value +
+                (last.value - left.value) * ((at - left.time) / (last.time - left.time))
+              : last.value;
+          while (points.length && points.at(-1).time >= at) points.pop();
+          if (time) points.push({ time: at, value: held });
+        }
         points.push({ time: timeline + time + (time ? 0.025 : 0), value });
       }
     };
@@ -256,10 +257,13 @@ export function reconstructPerformance(project, capture) {
     tracks: [...project.tracks, ...tracks.filter((track) => track.clips.length)],
   };
   validateArrangement(next);
+  const support = performanceSupportForTake(capture);
   return {
     project: next,
+    support,
     warnings: [
       ...warnings,
+      ...support.printed.map((item) => `Printed audio required: ${item}`),
       'Master processing uses the current mix settings; compare with the printed reference.',
     ],
     tracks,

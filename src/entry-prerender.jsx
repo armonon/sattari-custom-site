@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream';
 import { Buffer } from 'node:buffer';
 import { renderToPipeableStream } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
+import { StaticRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
 import { CartProvider } from './context/CartContext';
@@ -22,7 +22,8 @@ export function getPrerenderRoutes(inventory) {
       ...musicGuides.map((guide) => `/guides/${guide.slug}`),
       ...Object.values(toolDetails).map((tool) => `/tools${tool.path}`),
     ].map((path) => [path, 'src/pages/MusicResources.jsx']),
-    ['/', 'src/components/HomePage.jsx'],
+    ['/', 'src/pages/HomePage.jsx'],
+    ['/about', 'src/components/AboutPage.jsx'],
     ['/shop', 'src/components/ShopPage.jsx'],
     ['/services', 'src/components/ServicesPage.jsx'],
     ['/services/instrument-repair-los-angeles', 'src/components/RepairPage.tsx'],

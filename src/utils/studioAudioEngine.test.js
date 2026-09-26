@@ -130,8 +130,8 @@ describe('master signal controls', () => {
     const engine = {
       unlock: vi.fn(async () => {}),
       decks: new Map([
-        ['A', {}],
-        ['B', {}],
+        ['A', { lanes: new Map() }],
+        ['B', { lanes: new Map() }],
       ]),
       playDeck: vi.fn(async (id) => id === 'B'),
     };

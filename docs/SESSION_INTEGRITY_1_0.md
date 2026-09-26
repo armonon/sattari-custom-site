@@ -4,6 +4,12 @@ Milestone: prepare → perform → capture → edit → save → close → reope
 
 **Status: NOT QUALIFIED. No category is certified 10/10.** This ledger distinguishes engineering evidence from musical and hardware qualification. The last review's opinion scores remain frozen; “unscored” is not zero and does not imply a pass. No scores are raised by this implementation pass.
 
+Current follow-through: [release-candidate hardening](RELEASE_CANDIDATE_2026-09-25.md). The latest full Node 20 gate passed 719 tests and static/build checks, but failed replay deadlines and live preparation under heavy concurrent machine load. That failure remains recorded; this is not a qualified release. Dependency security updates and further validation are in progress.
+
+Previous scheduling evidence: [bounded native-audio queues](NATIVE_AUDIO_QUEUE_2026-09-25.md). Its unchanged-source gate passed 711 unit tests, all 12 audio suites, three UI widths and the mandatory 120-second soak. Actual audio-thread probes measured uninterrupted deck/MIDI output across 650 ms UI stalls. Those results identify that earlier snapshot, not subsequent edits or unrestricted load tolerance.
+
+Latest engineering follow-up: [bounded live sources and scheduled loops](./LIVE_SOURCE_QUALIFICATION_2026-09-24.md). Ordinary deck import/analysis now uses bounded sources, but the new full gate failed UI timeouts and the repeated playback stress run exposed a message-thread scheduling failure. The earlier evidence below does not qualify those later changes or the production release.
+
 ## Scorecard and acceptance contracts
 
 | Section | Baseline score | Professional acceptance test | Current evidence/status | Gap to 10 |
@@ -68,10 +74,12 @@ Two additional acceptance-test failures were fixed: per-grain sample-rate conver
 4. Decoder internals, encoded Blob/cache storage, DSP graphs, inputs/recording queues and browser heap are additional to the source PCM counters. Whole-process long-session memory qualification remains open.
 5. Complete FX/input/MIDI/routing reconstruction into standard arrangement lanes, native hosting, physical hardware/mobile sessions and human listening remain open. No supported capability claim is broadened by this pass.
 6. Repository contains the prior pass plus this pass as intentional uncommitted work. Fixtures/tests/notices are source assets, not garbage. No release commit/tag or deployment is justified yet.
-7. Dependency audit currently reports five moderate findings (Vitest/mocker/UI and React Router packages), zero high/critical in that audit. Suggested fixes involve major versions and require a separate migration/regression pass; no forced upgrade was performed. This is not a completed security review.
+7. The historical pre-migration dependency audit reported five moderate findings. The [release-candidate pass](RELEASE_CANDIDATE_2026-09-25.md) updates React Router and Vitest/UI and reports zero known audit findings. Its complete regression gate is still blocked; a clean dependency audit is not a completed application security review.
 
 Next highest-leverage task: finish bounded source preparation and seek-aware admission for ordinary live loading, without changing musical timing while a cold source prepares. Move the remaining timing-critical dispatched mutations onto the audio/session clock and make dispatch lateness a distinct failing qualification gate; the final soak's 52 ms event is explicit evidence this remains necessary. Then qualify the entire live → replay → Arrange lifecycle against full-length rights-cleared material.
 
 ## Human / environment gate
+
+Historical repair evidence: [September 25 critical-review repairs](REVIEW_REPAIRS_2026-09-25.md) records the initial failed full-suite run and intermittent MIDI scheduling failure. The subsequent [release follow-through](RELEASE_FOLLOWTHROUGH_2026-09-25.md) records a green shorter gate and separate two-minute soak, followed by a repeat with **697 unit tests passing but live audio deadlines failing under load**. Release approval remains blocked; earlier passing snapshots do not certify later changes or override the failed repeat.
 
 Needed: rights-cleared music folder (with stems), interface and driver, MIDI controller, monitoring topology, sample rates/buffer settings, and explicit authorization for physical recording. No permission to capture a microphone is inferred from a general request to improve the application. Until these are supplied, physical and musical tests remain **not run**, not passed.

@@ -4,13 +4,21 @@
   import * as Tone from 'tone';
   import { SourceWindowPool, describeAudioSource } from '/src/utils/windowedSource.js';
   import { WindowedGrainPlayer } from '/src/utils/windowedGrainPlayer.js';
+  import { GrainSchedule } from '/src/utils/grainSchedule.js';
   import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
-  import { PerformancePlayer } from '/src/utils/performancePlayer.js';
+  import { PerformancePlayer, replayScheduling } from '/src/utils/performancePlayer.js';
   import { putAudioAsset, deleteAudioAsset } from '/src/utils/audioProjectStore.js';
   const checks = [];
   const playedSeconds = new URLSearchParams(location.search).get('soak') === '120' ? 120 : 14;
   const assert = (value, message) => {
     if (!value) throw Error(message);
+  };
+  // Exercise the realtime queue deterministically in an offline graph as well.
+  const queuePlayer = (player) => {
+    player.grainSchedule = new GrainSchedule(player);
+    player._clock.callback = () => {};
+    player.pumpGrains = () => player.grainSchedule.pump();
+    player.context.on('tick', player.pumpGrains);
   };
   try {
     const blob = await (await fetch('/scripts/fixtures/window-source.mp3')).blob();
@@ -23,10 +31,11 @@
     ];
     for (const sampleRate of [44100, 48000])
       for (const config of cases) {
-        const render = async (paged) => {
+        const render = async (paged, queued = false) => {
           const context = new Tone.OfflineContext(2, 1.5, sampleRate);
           const pool = new SourceWindowPool(context.rawContext);
           let player;
+          const grainTimes = [];
           try {
             const options = {
               context,
@@ -45,12 +54,25 @@
                   url: await context.rawContext.decodeAudioData(await blob.arrayBuffer()),
                 });
             Tone.connect(player, context.rawContext.destination);
+            const tick = player._tick.bind(player);
+            player._tick = (time) => {
+              // Tone 15 can deliver one tick twice a few ULPs apart (observed
+              // at 1.12s/48kHz). Compare DSP with one grain per actual tick,
+              // never with an accidental doubled attack from the clock oracle.
+              if (Math.abs(time - grainTimes.at(-1)) < 1e-8) return;
+              grainTimes.push(time);
+              return tick(time);
+            };
+            player._clock.callback = player._tick;
             if (paged) await player.prepareWindow(config.offset);
+            if (queued) queuePlayer(player);
             player.start(0.1, config.offset / config.rate);
             player.stop(1.3);
             const result = (await context.render(false)).get();
             assert(!player.failure, player.failure?.message);
-            return result.getChannelData(0).slice();
+            const samples = result.getChannelData(0).slice();
+            samples.grainTimes = grainTimes;
+            return samples;
           } finally {
             player?.dispose();
             pool.dispose();
@@ -60,17 +82,193 @@
         const reference = await render(false),
           result = await render(true);
         let maxError = 0,
-          energy = 0;
+          energy = 0,
+          referenceEnergy = 0,
+          maxErrorFrame = 0,
+          firstDifferentFrame = -1;
         for (let i = 0; i < result.length; i++) {
-          maxError = Math.max(maxError, Math.abs(reference[i] - result[i]));
+          const error = Math.abs(reference[i] - result[i]);
+          if (error > maxError) {
+            maxError = error;
+            maxErrorFrame = i;
+          }
+          if (firstDifferentFrame < 0 && error > 0.0001) firstDifferentFrame = i;
           energy += result[i] ** 2;
+          referenceEnergy += reference[i] ** 2;
         }
         assert(
           energy > 1 && maxError < 0.0001,
-          `Granular parity ${sampleRate} ${JSON.stringify(config)}: error ${maxError}, energy ${energy}`
+          `Granular parity ${sampleRate} ${JSON.stringify(config)}: error ${maxError} at ${maxErrorFrame / sampleRate}s, first difference ${firstDifferentFrame / sampleRate}s, energy ${energy}, reference energy ${referenceEnergy}`
         );
         checks.push({ sampleRate, ...config, maxError });
+        const queued = await render(true, true);
+        let queueError = 0;
+        let queueErrorFrame = -1;
+        let firstQueueDifference = -1;
+        for (let i = 0; i < queued.length; i++)
+          if (Math.abs(queued[i] - reference[i]) > queueError) {
+            queueError = Math.abs(queued[i] - reference[i]);
+            queueErrorFrame = i;
+            if (queueError > 0.0001 && firstQueueDifference < 0) firstQueueDifference = i;
+          }
+        assert(
+          queueError < 0.0001,
+          `Queued granular parity ${sampleRate}: ${queueError} at ${queueErrorFrame / sampleRate}, first ${firstQueueDifference / sampleRate}, reference ticks ${JSON.stringify(reference.grainTimes)}, queued ticks ${JSON.stringify(queued.grainTimes)}`
+        );
+        checks.push({ nativeQueueParity: true, sampleRate, ...config, maxError: queueError });
       }
+    for (const sampleRate of [44100, 48000]) {
+      const renderCommands = async (lateDelivery, queued = false) => {
+        const context = new Tone.OfflineContext(2, 1.5, sampleRate);
+        const pool = new SourceWindowPool(context.rawContext);
+        const player = new WindowedGrainPlayer(descriptor, pool, {
+          context,
+          grainSize: 0.085,
+          overlap: 0.035,
+        });
+        try {
+          Tone.connect(player, context.rawContext.destination);
+          await player.prepareWindow(15);
+          await player.prepareWindow(2);
+          if (queued) queuePlayer(player);
+          context.setTimeout(
+            () => player.scheduleLoop({ loop: true, loopStart: 2, loopEnd: 4 }, 0.5),
+            lateDelivery ? 0.3 : 0
+          );
+          context.setTimeout(
+            () => player.scheduleLoop({ loop: false, loopStart: 2, loopEnd: 4 }, 0.9),
+            lateDelivery ? 0.7 : 0
+          );
+          context.setTimeout(
+            () => player.schedulePlaybackRate(1.5, 0.65, 700),
+            lateDelivery ? 0.4 : 0
+          );
+          context.setTimeout(
+            () => player.schedulePlaybackRate(0.75, 1, -500),
+            lateDelivery ? 0.8 : 0
+          );
+          player.start(0.1, 15);
+          player.stop(1.3);
+          const result = (await context.render(false)).get().getChannelData(0).slice();
+          assert(!player.failure, player.failure?.message);
+          return result;
+        } finally {
+          player.dispose();
+          pool.dispose();
+          context.dispose();
+        }
+      };
+      const early = await renderCommands(false),
+        late = await renderCommands(true);
+      let error = 0,
+        energy = 0;
+      for (let i = 0; i < early.length; i++) {
+        error = Math.max(error, Math.abs(early[i] - late[i]));
+        energy += early[i] ** 2;
+      }
+      assert(error < 0.0001 && energy > 1, `Loop delivery changed PCM: ${error}`);
+      checks.push({ scheduledLoopAndRateDeliveryParity: true, sampleRate, maxError: error });
+      const queued = await renderCommands(true, true);
+      let queueError = 0;
+      for (let i = 0; i < early.length; i++)
+        queueError = Math.max(queueError, Math.abs(early[i] - queued[i]));
+      assert(queueError < 0.0001, `Queued loop delivery changed PCM: ${queueError}`);
+      checks.push({ nativeQueueLoopAndRateParity: true, sampleRate, maxError: queueError });
+    }
+    for (const sampleRate of [44100, 48000]) {
+      const renderMusicalEdits = async (queued, late) => {
+        const context = new Tone.OfflineContext(2, 1.7, sampleRate);
+        const pool = new SourceWindowPool(context.rawContext);
+        const player = new WindowedGrainPlayer(descriptor, pool, {
+          context,
+          grainSize: 0.085,
+          overlap: 0.035,
+        });
+        try {
+          Tone.connect(player, context.rawContext.destination);
+          await player.prepareWindow(2);
+          if (queued) queuePlayer(player);
+          const replay = new PerformancePlayer({});
+          replay.raw = context.rawContext;
+          replay.engine = {
+            decks: new Map([
+              [
+                'A',
+                {
+                  pitch: 0,
+                  keyLock: true,
+                  playbackRate: 1,
+                  playing: false,
+                  lanes: new Map([['vocals', { player, pitch: 0, duration: descriptor.duration }]]),
+                },
+              ],
+            ]),
+          };
+          const initial = { decks: [{ id: 'A', keyLock: true, lanes: { vocals: { pitch: 0 } } }] };
+          const events = [
+            {
+              time: 0.1,
+              type: 'deckTransport',
+              args: ['A', { position: 2, playing: true, rate: 1 }],
+            },
+            { time: 0.35, type: 'setDeckPitch', args: ['A', 3] },
+            { time: 0.45, type: 'setStemPitch', args: ['A', 'vocals', -2] },
+            { time: 0.55, type: 'setDeckKeyLock', args: ['A', false] },
+            {
+              time: 0.7,
+              type: 'deckTransport',
+              args: ['A', { position: 2.6, playing: true, rate: 1.5, action: 'rate' }],
+            },
+            { time: 1, type: 'setDeckKeyLock', args: ['A', true] },
+            {
+              time: 1.4,
+              type: 'deckTransport',
+              args: ['A', { position: 3.65, playing: false, rate: 1.5 }],
+            },
+          ];
+          const compiled = replayScheduling(
+            { initial, events },
+            { scheduledPitchDecks: new Set(['A']) }
+          );
+          assert(
+            compiled.dispatched.length === 0 && compiled.scheduled.length === events.length,
+            'Musical edits escaped audio-clock compilation'
+          );
+          for (const event of compiled.scheduled)
+            context.setTimeout(
+              () => replay.scheduleControl(event, event.time),
+              late ? Math.max(0, event.time - 0.08) : 0
+            );
+          const samples = (await context.render(false)).get().getChannelData(0).slice();
+          assert(!player.failure, player.failure?.message);
+          return samples;
+        } finally {
+          player.dispose();
+          pool.dispose();
+          context.dispose();
+        }
+      };
+      const reference = await renderMusicalEdits(false, false);
+      for (const late of [false, true]) {
+        const actual = await renderMusicalEdits(true, late);
+        let error = 0,
+          energy = 0;
+        for (let i = 0; i < actual.length; i++) {
+          error = Math.max(error, Math.abs(reference[i] - actual[i]));
+          energy += actual[i] ** 2;
+        }
+        assert(
+          error < 0.0001 && energy > 1,
+          `Compiled musical state changed PCM (${sampleRate}, late=${late}): ${error}`
+        );
+        checks.push({
+          compiledPitchKeyLockStemRateParity: true,
+          sampleRate,
+          lateDelivery: late,
+          maxError: error,
+        });
+      }
+    }
     const longBlob = await (await fetch('/scripts/fixtures/three-minute-source.m4a')).blob();
     const assets = [],
       owner = new StudioAudioEngine({ monitor: false });
@@ -157,6 +355,13 @@
             )
           ),
         ]);
+        if (done.error)
+          checks.push({
+            failure: [...replay.engine.decks.get('A').lanes].map(([id, lane]) => ({
+              id,
+              details: lane.player.lastUnderrun,
+            })),
+          });
         assert(!done.error, done.error?.message);
         const pool = replay.engine.sourceWindowPool;
         const underruns = [...replay.engine.decks.get('A').lanes.values()].reduce(
@@ -166,6 +371,10 @@
         assert(underruns === 0, `Source underruns: ${underruns}`);
         assert(pool.peakBytes <= pool.budget, 'Exceeded PCM admission limit');
         assert(peak > 0.001, `Replay was silent: ${peak}`);
+        assert(
+          done.lateEvents === 0 && done.maxLateness === 0,
+          `Scheduled loop/seek deadline missed: ${done.maxLateness}`
+        );
         checks.push({
           fourStereoStems: true,
           sourceSeconds: 180,

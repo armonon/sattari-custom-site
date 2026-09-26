@@ -10,7 +10,7 @@ export class StemSeparatorClient {
     this.pending = null;
   }
 
-  separate(audio, stems, signal, onProgress = () => {}) {
+  separate(audio, stems, signal, onProgress = () => {}, onAnalysis = () => {}) {
     signal.throwIfAborted();
     if (this.pending) return Promise.reject(new Error('A track is already processing.'));
     if (!selectedStemIds(stems).length)
@@ -35,6 +35,7 @@ export class StemSeparatorClient {
       this.worker.onmessage = ({ data }) => {
         if (settled) return;
         if (data.type === 'progress') onProgress(data);
+        else if (data.type === 'analysis') onAnalysis(data.analysis);
         else if (data.type === 'result') finish(null, data.outputs);
         else if (data.type === 'error') finish(new Error(data.message));
       };
@@ -48,7 +49,12 @@ export class StemSeparatorClient {
       };
       try {
         this.worker.postMessage(
-          { left: audio.left, right: audio.right, stems: selectedStemIds(stems) },
+          {
+            left: audio.left,
+            right: audio.right,
+            channels: audio.channels,
+            stems: selectedStemIds(stems),
+          },
           [audio.left.buffer, audio.right.buffer]
         );
       } catch (error) {

@@ -33,38 +33,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npm run type-check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test -- --maxWorkers=2 --minWorkers=1
-
-      - name: Qualify generated audio metering and tempo fixtures
-        run: |
-          npm run test:meter-qualification
-          npm run test:tempo-qualification
-
-      - name: Build
-        run: npm run build
-
       - name: Install Chromium for release checks
         run: npx --no-install playwright install --with-deps chromium
 
-      - name: Browser audio and built-artifact workspace checks
-        run: node scripts/run-studio-browser-qa.mjs
-        env:
-          STUDIO_BROWSER_OUTPUT: ${{ runner.temp }}/stemdeck-browser-qa
-        timeout-minutes: 15
+      - name: Check dependency security advisories
+        run: npm audit --audit-level=moderate
 
-      - name: Upload browser evidence
+      - name: Frozen-source release gate including audio and mandatory soak
+        run: npm run test:studio-release
+        env:
+          STUDIO_GATE_OUTPUT: ${{ runner.temp }}/stemdeck-release-qa
+        timeout-minutes: 25
+
+      - name: Upload complete qualification evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: browser-qa-${{ matrix.node-version }}
-          path: ${{ runner.temp }}/stemdeck-browser-qa/
+          name: release-qa-${{ matrix.node-version }}
+          path: ${{ runner.temp }}/stemdeck-release-qa/
           if-no-files-found: warn
 
       - name: Upload build artifacts
@@ -96,6 +82,9 @@ jobs:
         with:
           name: dist-20.19.0
           path: dist/
+
+      - name: Verify the exact qualified artifact before deployment
+        run: node scripts/release-artifact.mjs dist
 
       - name: Deploy to Netlify
         run: >-

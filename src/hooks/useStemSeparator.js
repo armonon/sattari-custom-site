@@ -109,7 +109,8 @@ export default function useStemSeparator() {
             audio,
             stems,
             controller.signal,
-            ({ message, progress }) => update(job.id, { message, progress })
+            ({ message, progress }) => update(job.id, { message, progress }),
+            (analysis) => update(job.id, { analysis })
           );
           controller.signal.throwIfAborted();
           const outputs = result.map((output) => ({

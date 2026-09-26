@@ -1,8 +1,18 @@
 import { decodeSourceWindow } from './arrangementSourceWindow';
 import { mp3Gapless } from './mp3Gapless';
 import { wavBytes } from './arrangementExport';
+import { describeAiff } from './aiffWindow';
 
 export async function describeAudioSource(blob) {
+  const aiff = await describeAiff(blob);
+  if (aiff)
+    return {
+      kind: 'windowed-audio',
+      blob,
+      duration: aiff.duration,
+      sampleRate: aiff.sampleRate,
+      channels: aiff.channels,
+    };
   const { Input, BlobSource, ALL_FORMATS } = await import('mediabunny');
   const input = new Input({
     source: new BlobSource(blob, { maxCacheSize: 2 * 1048576 }),
@@ -15,8 +25,14 @@ export async function describeAudioSource(blob) {
     const sampleRate = await track.getSampleRate();
     const channels = await track.getNumberOfChannels();
     const padding = await mp3Gapless(blob);
+    const metadataDuration = await input.getDurationFromMetadata([track]);
+    // Missing container duration is not missing audio. Scan packet timing with
+    // the same bounded encoded cache; never fall back to decoding the whole song.
     const duration =
-      (await input.getDurationFromMetadata([track])) - (padding?.trimFrames || 0) / sampleRate;
+      (Number.isFinite(metadataDuration) && metadataDuration > 0
+        ? metadataDuration
+        : await input.computeDuration([track])) -
+      (padding?.trimFrames || 0) / sampleRate;
     if (
       !Number.isFinite(duration) ||
       duration <= 0 ||
@@ -134,18 +150,30 @@ export class SourceWindowPool {
       this.pending.delete(key);
     }
   }
-  async prepare(source, position, { loop = false, loopStart = 0, loopEnd = source.duration } = {}) {
+  async prepare(
+    source,
+    position,
+    { loop = false, loopStart = 0, loopEnd = source.duration, prepareSeconds = 8 } = {},
+    isCurrent = () => true
+  ) {
     if (loop && position >= loopEnd)
       position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
     const start = Math.max(0, Math.min(position, source.duration - 1 / source.sampleRate));
-    const end = Math.min(source.duration, start + 8, loop ? loopEnd : Infinity);
+    const ahead = Math.max(1, Math.min(8, Number(prepareSeconds) || 8));
+    const end = Math.min(source.duration, start + ahead, loop ? loopEnd : Infinity);
     const indices = new Set();
     for (let i = Math.floor(start / 4); i * 4 < end; i++) indices.add(i);
     if (loop && end >= loopEnd) {
-      for (let i = Math.floor(loopStart / 4); i * 4 < Math.min(loopEnd, loopStart + 8); i++)
+      for (let i = Math.floor(loopStart / 4); i * 4 < Math.min(loopEnd, loopStart + ahead); i++)
         indices.add(i);
     }
-    for (const index of indices) await this.page(source, index);
+    for (const index of indices) {
+      // A seek can supersede a multi-page background read. Finish the one
+      // admitted decode, but never queue its obsolete remaining pages ahead
+      // of the currently audible destination.
+      if (!isCurrent()) return;
+      await this.page(source, index);
+    }
   }
   acquire(source, offset, span, { loop = false, loopStart = 0, loopEnd = source.duration } = {}) {
     if (loop && offset >= loopEnd)

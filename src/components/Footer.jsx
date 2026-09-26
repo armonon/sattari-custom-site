@@ -13,6 +13,7 @@ export default function Footer() {
             Instruments, cymbals, accessories, repairs, rentals, and lessons in Woodland Hills.
           </p>
           <div className="footer-quick-links" aria-label="Footer quick links">
+            <Link to="/about">About Sattari</Link>
             <Link to="/shop">Shop gear</Link>
             <Link to="/services">Book local support</Link>
             <Link to="/hub">Enter Sattari Hub</Link>

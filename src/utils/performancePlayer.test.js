@@ -1,3 +1,4 @@
+import { deferred } from '../test/deferred';
 import { it, expect, vi } from 'vitest';
 import {
   replayPlan,
@@ -18,12 +19,61 @@ const take = () => ({
     { time: 1.9, type: 'playDeck', args: ['A'] },
   ],
 });
+it.each([true, false])(
+  'schedules rate and key-lock=%s pitch together without moving the UI early',
+  (keyLock) => {
+    const player = { schedulePlaybackRate: vi.fn(), stop: vi.fn(), start: vi.fn() };
+    const deck = {
+      playbackRate: 1,
+      pitch: 2,
+      keyLock,
+      offset: 0,
+      playing: false,
+      lanes: new Map([['vocals', { player, duration: 100, pitch: -1 }]]),
+    };
+    const replay = new PerformancePlayer({});
+    replay.raw = { currentTime: 5 };
+    replay.engine = { decks: new Map([['A', deck]]), applyPlaybackRates: vi.fn() };
+    replay.transport('A', { rate: 2, position: 20, playing: true }, 6);
+    expect(player.schedulePlaybackRate).toHaveBeenCalledWith(2, 6, keyLock ? 100 : 1300);
+    expect(player.start).toHaveBeenCalledWith(6, 10);
+    expect(replay.engine.applyPlaybackRates).not.toHaveBeenCalled();
+    expect(deck).toMatchObject({ playbackRate: 1, offset: 0, playing: false });
+    replay.commitLoopStates(5.999);
+    expect(deck.playing).toBe(false);
+    replay.commitLoopStates(6);
+    expect(deck).toMatchObject({ playbackRate: 2, offset: 20, playing: true, startedAt: 6 });
+  }
+);
+it('commits replay loop display state only at its audible time and ignores replaced decks', () => {
+  const lane = { duration: 60, player: { scheduleLoop: vi.fn() } };
+  const deck = { looping: false, lanes: new Map([['vocals', lane]]) };
+  const replay = new PerformancePlayer({});
+  replay.engine = { decks: new Map([['A', deck]]) };
+  replay.scheduleControl({ type: 'setLoopRegion', args: ['A', true, 4, 8] }, 10);
+  expect(lane.player.scheduleLoop).toHaveBeenCalledWith(
+    { loop: true, loopStart: 4, loopEnd: 8 },
+    10
+  );
+  replay.commitLoopStates(9.999);
+  expect(deck.looping).toBe(false);
+  replay.commitLoopStates(10);
+  expect(deck).toMatchObject({ looping: true, loopStart: 4, loopEnd: 8, loopTransitionTime: 10 });
+  replay.scheduleControl({ type: 'setLoopRegion', args: ['A', false, 4, 8] }, 12);
+  replay.commitLoopStates(11);
+  expect(deck.looping).toBe(true);
+  const replacement = { looping: true };
+  replay.engine.decks.set('A', replacement);
+  replay.commitLoopStates(12);
+  expect(replacement.looping).toBe(true);
+  expect(replay.pendingLoopStates).toHaveLength(0);
+});
 it('prefetches scheduled seeks and new loops after events have been partitioned for dispatch', async () => {
   const warm = vi.fn(async () => {});
   const replay = new PerformancePlayer({});
   replay.engine = {
     decks: new Map([
-      ['A', { lanes: new Map([['vocals', { assetId: 'song', player: { prepareWindow: warm } }]]) }],
+      ['A', { lanes: new Map([['vocals', { assetId: 'song', player: { warmWindow: warm } }]]) }],
     ]),
     padPlayers: new Map(),
   };
@@ -33,9 +83,13 @@ it('prefetches scheduled seeks and new loops after events have been partitioned 
   replay.transportEvents = [{ type: 'deckTransport', time: 5, args: ['A', { position: 150 }] }];
   replay.loopEvents = [{ type: 'setLoopRegion', time: 5, args: ['A', true, 75, 77] }];
   await replay.queueSources(3);
-  expect(warm).toHaveBeenCalledWith(150, { loop: false });
-  expect(warm).toHaveBeenCalledWith(75, { loop: false });
-  expect(warm).toHaveBeenCalledWith(76.75, { loop: false });
+  expect(warm).toHaveBeenCalledWith(150, { loop: false, prepareSeconds: 1 });
+  expect(warm).toHaveBeenCalledWith(75, {
+    loop: true,
+    loopStart: 75,
+    loopEnd: 77,
+    prepareSeconds: 1,
+  });
 });
 it('uses source seconds for confirmed transport when a grain player runs at non-unit rate', () => {
   const source = { start: vi.fn(), stop: vi.fn() };
@@ -158,18 +212,57 @@ it('schedules common effect ramps on AudioParams at their target time, not the t
     [0.25, 0.04, 123.456],
   ]);
 });
-it('schedules fixed master racks but keeps topology and interdependent stem changes on the dispatcher', () => {
+it('schedules stem gains independently while keeping changed insert topology on the dispatcher', () => {
   const effect = newEffect('echo');
   const initial = { masterProcessing: { effects: [effect] } };
   const event = {
     type: 'setMasterProcessing',
     args: [{ effects: [{ ...effect, params: { ...effect.params, mix: 0.8 } }] }],
   };
-  expect(replayScheduling({ initial, events: [event] }).scheduled).toEqual([event]);
+  expect(replayScheduling({ initial, events: [event] }).scheduled.map((e) => e.type)).toEqual([
+    'compiledMix',
+    'setMasterProcessing',
+  ]);
   const topology = { type: 'setMasterProcessing', args: [{ effects: [] }] };
-  expect(replayScheduling({ initial, events: [event, topology] }).scheduled).toEqual([]);
+  expect(
+    replayScheduling({ initial, events: [event, topology] }).scheduled.map((e) => e.type)
+  ).toEqual(['compiledMix', 'compiledMix']);
+  expect(
+    replayScheduling({ initial, events: [event, topology] }).dispatched.every((e) => e.mixScheduled)
+  ).toBe(true);
   const stems = { type: 'setMasterStems', args: [{ vocals: { muted: true } }] };
-  expect(replayScheduling({ initial, events: [event, stems] }).scheduled).toEqual([]);
+  expect(
+    replayScheduling({ initial, events: [event, stems] }).scheduled.map((e) => e.type)
+  ).toEqual(['compiledMix', 'setMasterStems']);
+});
+it('does not overwrite queued master-stem ramps when dispatching an insert graph change', () => {
+  const replay = new PerformancePlayer({});
+  replay.engine = { setMasterProcessing: vi.fn() };
+  const settings = { effects: [], stems: { vocals: { level: 40 } } };
+  replay.dispatch({ type: 'setMasterProcessing', args: [settings], mixScheduled: true }, 4);
+  expect(replay.engine.setMasterProcessing).toHaveBeenCalledWith(settings, { applyStems: false });
+});
+it('commits scheduled mixer metadata at audio time without issuing new gain ramps', () => {
+  const replay = new PerformancePlayer({});
+  const rampTo = vi.fn();
+  const deck = { side: 'left', lanes: new Map([['vocals', { level: 100 }]]) };
+  replay.engine = { decks: new Map([['A', deck]]), unseparated: { gain: { rampTo } } };
+  replay.scheduleControl(
+    {
+      type: 'setMasterStems',
+      args: [{ vocals: { level: 80 } }],
+      mixRamps: [{ target: 'unseparated', value: 1 }],
+    },
+    10
+  );
+  replay.scheduleControl({ type: 'setDeckSide', args: ['A', 'right'], mixRamps: [] }, 10);
+  replay.commitLoopStates(9);
+  expect(replay.engine.masterStems).toBeUndefined();
+  expect(deck.side).toBe('left');
+  replay.commitLoopStates(10);
+  expect(replay.engine.masterStems.vocals.level).toBe(80);
+  expect(deck.side).toBe('right');
+  expect(rampTo).toHaveBeenCalledExactlyOnceWith(1, 0.025, 10);
 });
 it('master automation uses the same values and smoothing as the live graph at a future audio time', () => {
   const param = () => ({ rampTo: vi.fn(), setValueAtTime: vi.fn() });
@@ -251,6 +344,7 @@ it('preloads captured input before starting the recording clock and primes confi
     const player = new PerformancePlayer({});
     player.raw = raw;
     player.engine = {
+      decks: new Map(),
       unlock: async () => {},
       startRecording: async () => {
         order.push('record');
@@ -279,10 +373,37 @@ it('preloads captured input before starting the recording clock and primes confi
   }
 });
 
+it('schedules loops and seeks ahead only when the granular players support timestamped loop state', () => {
+  const initial = { decks: [{ id: 'A', playbackRate: 1 }] };
+  const loop = { type: 'setLoopRegion', time: 2, args: ['A', true, 50, 52] };
+  const seek = {
+    type: 'deckTransport',
+    time: 3,
+    args: ['A', { position: 80, rate: 1, playing: true }],
+  };
+  expect(replayScheduling({ initial, events: [loop, seek] }).dispatched).toEqual([loop, seek]);
+  expect(
+    replayScheduling({ initial, events: [loop, seek] }, { scheduledLoopDecks: new Set(['A']) })
+      .scheduled
+  ).toEqual([loop, seek]);
+  const scheduleLoop = vi.fn();
+  const deck = {
+    looping: false,
+    lanes: new Map([['vocals', { duration: 180, player: { scheduleLoop } }]]),
+  };
+  PerformancePlayer.prototype.scheduleControl.call(
+    { engine: { decks: new Map([['A', deck]]) } },
+    loop,
+    123
+  );
+  expect(scheduleLoop).toHaveBeenCalledWith({ loop: true, loopStart: 50, loopEnd: 52 }, 123);
+  expect(deck.looping).toBe(false); // Future scheduling does not flip present state.
+});
+
 it('does not retain decoded input or revive playback after disposal during async preparation', async () => {
   const player = new PerformancePlayer({});
-  const decoding = Promise.withResolvers();
-  const enteredDecode = Promise.withResolvers();
+  const decoding = deferred();
+  const enteredDecode = deferred();
   player.raw = {
     decodeAudioData: vi.fn(() => {
       enteredDecode.resolve();
@@ -309,7 +430,7 @@ it('does not retain decoded input or revive playback after disposal during async
 });
 
 it('does not restart if stopped while waiting for audio unlock', async () => {
-  const unlocking = Promise.withResolvers();
+  const unlocking = deferred();
   const player = new PerformancePlayer({});
   player.engine = { unlock: () => unlocking.promise, dispose: vi.fn() };
   player.queueInputs = vi.fn();

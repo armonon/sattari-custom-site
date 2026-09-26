@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sendMock = vi.fn();
@@ -12,11 +13,13 @@ vi.mock('@netlify/blobs', () => ({
 }));
 
 vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
-      send: sendMock,
-    },
-  })),
+  Resend: vi.fn().mockImplementation(function () {
+    return {
+      emails: {
+        send: sendMock,
+      },
+    };
+  }),
 }));
 
 const { handler } = await import('../../netlify/functions/service-inquiry.js');

@@ -1669,7 +1669,41 @@ function ArrangementEditor(
                   Devices · {track.effects?.length || 0} FX
                 </button>
                 <details className="ae-track-options">
-                  <summary>Track options</summary>
+                  <summary aria-label={`Track options for ${track.name}`} title="Track options">
+                    <span className="ae-track-options-label">Track options</span>
+                    <span className="ae-track-options-symbol" aria-hidden="true">
+                      •••
+                    </span>
+                  </summary>
+                  <label>
+                    Gain
+                    <input
+                      aria-label={`Gain ${track.name}`}
+                      type="number"
+                      min="0"
+                      max="300"
+                      value={track.gain}
+                      onChange={(event) =>
+                        changeTrack(track.id, { gain: bounded(event.target.value, 0, 300) })
+                      }
+                      disabled={busy}
+                    />
+                  </label>
+                  <label>
+                    Pan
+                    <input
+                      aria-label={`Pan ${track.name}`}
+                      type="range"
+                      min="-1"
+                      max="1"
+                      step=".05"
+                      value={track.pan}
+                      onChange={(event) =>
+                        changeTrack(track.id, { pan: Number(event.target.value) })
+                      }
+                      disabled={busy}
+                    />
+                  </label>
                   <label>
                     Master stem group
                     <select
@@ -1780,7 +1814,7 @@ function ArrangementEditor(
                     />
                   </label>
                 </details>
-                <div>
+                <div className="ae-track-mix">
                   <button
                     type="button"
                     aria-label={`Mute ${track.name}`}
@@ -1799,39 +1833,16 @@ function ArrangementEditor(
                   >
                     S
                   </button>
-                  <label>
-                    Gain
-                    <input
-                      aria-label={`Gain ${track.name}`}
-                      type="number"
-                      min="0"
-                      max="300"
-                      value={track.gain}
-                      onChange={(event) =>
-                        changeTrack(track.id, { gain: bounded(event.target.value, 0, 300) })
-                      }
-                      disabled={busy}
-                    />
-                  </label>
                 </div>
-                <div>
-                  <label>
-                    Pan
-                    <input
-                      aria-label={`Pan ${track.name}`}
-                      type="range"
-                      min="-1"
-                      max="1"
-                      step=".05"
-                      value={track.pan}
-                      onChange={(event) =>
-                        changeTrack(track.id, { pan: Number(event.target.value) })
-                      }
-                      disabled={busy}
-                    />
-                  </label>
+                <div className="ae-track-add">
                   <button
                     type="button"
+                    aria-label={track.kind === 'midi' ? '+ Pattern' : '+ Audio'}
+                    title={
+                      track.kind === 'midi'
+                        ? `Add pattern to ${track.name}`
+                        : `Add audio to ${track.name}`
+                    }
                     disabled={busy}
                     onClick={() => {
                       if (track.kind === 'midi') {
@@ -1842,7 +1853,10 @@ function ArrangementEditor(
                       input.current?.click();
                     }}
                   >
-                    {track.kind === 'midi' ? '+ Pattern' : '+ Audio'}
+                    <span aria-hidden="true">+</span>
+                    <span className="ae-track-add-label">
+                      {track.kind === 'midi' ? ' Pattern' : ' Audio'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1984,6 +1998,7 @@ function ArrangementEditor(
                       }}
                       aria-pressed={selectionIds.includes(clip.id)}
                       aria-label={`Select clip ${clip.name}`}
+                      title={`${clip.name} · ${clip.start.toFixed(2)}s · ${clip.duration.toFixed(2)}s long`}
                       className={`ae-clip ${clip.kind}`}
                       style={{
                         left: (dragPreview?.id === clip.id ? dragPreview.start : clip.start) * zoom,

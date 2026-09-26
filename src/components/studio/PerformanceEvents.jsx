@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { takeCapabilities } from '../../utils/takeCapabilities';
 import { performanceControlFields, setPerformanceControl } from '../../utils/performanceControls';
 import { retimePerformanceEvent } from '../../utils/performanceClock';
+import { PERFORMANCE_STAGES, SUPPORT_LABELS } from '../../utils/performanceSupport';
 
 export default function PerformanceEvents({
   capture,
@@ -50,7 +51,69 @@ export default function PerformanceEvents({
         <strong>{capabilities.label}</strong> · {capabilities.actions} enabled actions ·{' '}
         {capabilities.safety ? 'Safety audio linked' : 'No safety audio linked'}
       </p>
-      {capabilities.editable.length > 0 && <p>Editable: {capabilities.editable.join(' · ')}</p>}
+      <section aria-label="Capture editability">
+        <p>
+          <strong>Editable in Arrange:</strong>{' '}
+          {capabilities.editable.join(' · ') || 'No reconstructed source data identified'}
+        </p>
+        {capabilities.printed.length > 0 && (
+          <p>
+            <strong>Printed audio required:</strong> {capabilities.printed.join(' · ')}
+          </p>
+        )}
+        {!capabilities.safety && capabilities.printed.length > 0 && (
+          <p role="alert">
+            No safety recording is linked. These processing details cannot be recovered from source
+            clips alone.
+          </p>
+        )}
+        <p>
+          Event controls below edit replay history, not necessarily arrangement devices. Keep the
+          original print as the sound reference.
+        </p>
+      </section>
+      <details>
+        <summary>Five-stage action support</summary>
+        <p>
+          Implementation inventory—not an audio-parity qualification. No action in this take is
+          certified across all five stages.
+        </p>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <caption>Enabled performance actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">Action / destination</th>
+                {PERFORMANCE_STAGES.map((stage) => (
+                  <th key={stage} scope="col">
+                    {stage}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {capabilities.support.rows.map((item) => (
+                <tr key={item.id}>
+                  <th scope="row">
+                    {item.label}
+                    <small>{item.destination}</small>
+                  </th>
+                  {PERFORMANCE_STAGES.map((stage) => (
+                    <td key={stage} title={item.limit}>
+                      {SUPPORT_LABELS[item.stages[stage]]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {capabilities.support.rows.map((item) => (
+          <p key={item.id}>
+            <strong>{item.label}:</strong> {item.limit}
+          </p>
+        ))}
+      </details>
       {capabilities.limits.length > 0 && (
         <details>
           <summary>Replay limits</summary>
@@ -100,8 +163,8 @@ export default function PerformanceEvents({
         </label>
       )}
       <p>
-        Replay creates new muted lanes. Original events and printed audio are kept. Compare before
-        replacing the safety mix.
+        Building editable sources creates new muted lanes. Original events and printed audio are
+        kept. Compare before replacing the safety mix.
       </p>
       {onReplay && (
         <p>

@@ -17,7 +17,8 @@ it('never calls a printed or partially reconstructed recording fully editable', 
   ).toMatchObject({
     label: 'Performance Take',
     actions: 1,
-    editable: ['Decks', 'Input processing'],
+    editable: [],
+    printed: ['Input processing: compare its separate captured input lane'],
     safety: false,
   });
 });

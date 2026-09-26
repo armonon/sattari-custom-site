@@ -17,7 +17,7 @@ export async function hashLibraryAudio(blob) {
   for (let offset = 0; offset < blob.size; offset += 1048576) {
     const digest = await crypto.subtle.digest(
       'SHA-256',
-      await readBlob(blob.slice(offset, offset + 1048576))
+      new Uint8Array(await readBlob(blob.slice(offset, offset + 1048576)))
     );
     parts.push(...new Uint8Array(digest));
   }

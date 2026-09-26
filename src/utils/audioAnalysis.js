@@ -160,14 +160,12 @@ function compactSamples(samples, sampleRate, targetRate = 11025) {
   return { samples: output, sampleRate: sampleRate / ratio };
 }
 
-function goertzelPower(samples, start, frameSize, frequency, sampleRate) {
-  const coefficient = 2 * Math.cos((2 * Math.PI * frequency) / sampleRate);
+function goertzelPower(frame, coefficient) {
   let previous = 0;
   let previousPrevious = 0;
 
-  for (let index = 0; index < frameSize; index += 1) {
-    const window = 0.5 - 0.5 * Math.cos((2 * Math.PI * index) / (frameSize - 1));
-    const current = samples[start + index] * window + coefficient * previous - previousPrevious;
+  for (let index = 0; index < frame.length; index += 1) {
+    const current = frame[index] + coefficient * previous - previousPrevious;
     previousPrevious = previous;
     previous = current;
   }
@@ -178,7 +176,13 @@ function goertzelPower(samples, start, frameSize, frequency, sampleRate) {
   );
 }
 
-function chromaForRange(samples, sampleRate, startRatio = 0, endRatio = 1, windowCount = 12) {
+export function chromaForRange(
+  samples,
+  sampleRate,
+  startRatio = 0,
+  endRatio = 1,
+  windowCount = 12
+) {
   if (!samples.length) return Array.from({ length: 12 }, () => 0);
   const frameSize = Math.min(
     samples.length,
@@ -189,6 +193,18 @@ function chromaForRange(samples, sampleRate, startRatio = 0, endRatio = 1, windo
   const endSample = Math.max(startSample + frameSize, Math.floor(samples.length * endRatio));
   const available = Math.max(0, endSample - startSample - frameSize);
   const chroma = Array.from({ length: 12 }, () => 0);
+  // Previously the same Hann cosine and sample multiplication ran once per
+  // pitch, per frame (~10 million cosines per analysis). Reuse double-precision
+  // windowed samples without changing the Goertzel recurrence or its inputs.
+  const hann = Float64Array.from({ length: frameSize }, (_, i) =>
+    frameSize === 1 ? 1 : 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (frameSize - 1))
+  );
+  const frame = new Float64Array(frameSize);
+  const pitches = Array.from({ length: 48 }, (_, index) => {
+    const midi = index + 36,
+      frequency = 440 * 2 ** ((midi - 69) / 12);
+    return { midi, frequency, coefficient: 2 * Math.cos((2 * Math.PI * frequency) / sampleRate) };
+  }).filter((pitch) => pitch.frequency < sampleRate / 2);
 
   for (let windowIndex = 0; windowIndex < windowCount; windowIndex += 1) {
     const positionRatio = windowCount === 1 ? 0.5 : (windowIndex + 0.5) / windowCount;
@@ -198,14 +214,9 @@ function chromaForRange(samples, sampleRate, startRatio = 0, endRatio = 1, windo
       samples.length - frameSize
     );
     const frameChroma = Array.from({ length: 12 }, () => 0);
-
-    for (let midi = 36; midi <= 83; midi += 1) {
-      const frequency = 440 * 2 ** ((midi - 69) / 12);
-      if (frequency >= sampleRate / 2) continue;
-      frameChroma[midi % 12] += Math.sqrt(
-        goertzelPower(samples, frameStart, frameSize, frequency, sampleRate)
-      );
-    }
+    for (let i = 0; i < frameSize; i++) frame[i] = samples[frameStart + i] * hann[i];
+    for (const { midi, coefficient } of pitches)
+      frameChroma[midi % 12] += Math.sqrt(goertzelPower(frame, coefficient));
 
     const normalizedFrame = normalize(frameChroma);
     normalizedFrame.forEach((value, index) => {
@@ -281,6 +292,10 @@ function estimateSections(samples, sampleRate, duration) {
     energy.push(Math.sqrt(sum / Math.max(1, end - start)));
   }
 
+  return sectionsFromEnergy(energy, windowSeconds, duration);
+}
+
+export function sectionsFromEnergy(energy, windowSeconds, duration) {
   const novelty = energy.map((value, index) => (index ? Math.abs(value - energy[index - 1]) : 0));
   const candidates = novelty
     .map((value, index) => ({ value, time: index * windowSeconds }))
@@ -366,20 +381,23 @@ export function analyzeDecodedAudio(audioBuffer) {
   };
 }
 
-export async function analyzeAudioFile(file, onProgress) {
+let analysisTail = Promise.resolve();
+export function analyzeAudioFile(file, onProgress) {
+  // Imports from different decks/library actions share one bounded analysis job.
+  const job = analysisTail.then(() => analyzeFileWindows(file, onProgress));
+  analysisTail = job.catch(() => {});
+  return job;
+}
+
+async function analyzeFileWindows(file, onProgress) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) throw new Error('Web Audio is not supported by this browser.');
 
   onProgress?.({ value: 12, label: 'Reading audio' });
-  const arrayBuffer = await file.arrayBuffer();
   const context = new AudioContextClass();
 
   try {
-    onProgress?.({ value: 34, label: 'Decoding track' });
-    const audioBuffer = await context.decodeAudioData(arrayBuffer.slice(0));
-    onProgress?.({ value: 58, label: 'Finding pulse and key' });
-    await new Promise((resolve) => window.setTimeout(resolve, 0));
-    const analysis =
+    const analyze = async (audioBuffer) =>
       typeof Worker === 'undefined'
         ? analyzeDecodedAudio(audioBuffer)
         : await new Promise((resolve, reject) => {
@@ -416,7 +434,9 @@ export async function analyzeAudioFile(file, onProgress) {
               reject(error);
             }
           });
-    onProgress?.({ value: 100, label: 'Lesson ready' });
+    const { analyzeWindowedAudio } = await import('./windowedAudioAnalysis');
+    const analysis = await analyzeWindowedAudio(file, context, { analyze, onProgress });
+    onProgress?.({ value: 100, label: 'Analysis ready' });
     return analysis;
   } finally {
     await context.close().catch(() => {});

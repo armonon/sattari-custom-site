@@ -25,9 +25,11 @@ import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import useStemSeparator from '../hooks/useStemSeparator';
 import ToolReferenceLink from '../components/ToolReferenceLink';
+import StemAnalysisSummary from '../components/StemAnalysisSummary';
 import { trackSiteEvent } from '../utils/siteMeasurement';
 import { AUDIO_ACCEPT, formatDuration, safeTrackName, STEMS } from '../utils/stemSeparator';
 import { createStemArchive } from '../utils/stemSeparatorDownload';
+import { stemAnalysisReport } from '../utils/stemAnalysisReport';
 import './StemSeparatorPage.css';
 
 const icons = { vocals: Mic2, drums: Drum, bass: Guitar, other: Music2 };
@@ -100,6 +102,7 @@ function StemOutput({ output }) {
       >
         <Download size={17} />
       </a>
+      <StemAnalysisSummary analysis={output.analysis} compact label={`${stem.label} analysis`} />
     </div>
   );
 }
@@ -138,6 +141,24 @@ export default function StemSeparatorPage() {
     },
     []
   );
+
+  const downloadReport = (job) => {
+    const blob = new Blob([JSON.stringify(stemAnalysisReport(job), null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    links.current.add(url);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeTrackName(job.file.name)}-analysis.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      links.current.delete(url);
+    }, 60000);
+  };
 
   const downloadZip = async (rows) => {
     if (locked) return;
@@ -182,6 +203,8 @@ export default function StemSeparatorPage() {
           'Vocal isolation',
           'Drum, bass and instrument stems',
           'On-device audio processing',
+          'Estimated song and stem key, tempo and prominent notes',
+          'Audio levels and downloadable analysis reports',
           'WAV and ZIP downloads',
         ])}
       />
@@ -433,6 +456,18 @@ export default function StemSeparatorPage() {
                         <p className="separator-track-error" role="alert">
                           {job.message}
                         </p>
+                      )}
+                      {job.analysis && (
+                        <div className="separator-song-analysis">
+                          <StemAnalysisSummary analysis={job.analysis} />
+                          <button
+                            className="separator-text-button separator-report-download"
+                            onClick={() => downloadReport(job)}
+                            aria-label={`Download analysis for ${job.file.name}`}
+                          >
+                            <Download size={14} /> Analysis JSON
+                          </button>
+                        </div>
                       )}
                       {job.status === 'done' && (
                         <details className="separator-results" open>

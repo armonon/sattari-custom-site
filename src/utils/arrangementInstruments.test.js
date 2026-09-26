@@ -67,6 +67,24 @@ it('sampler transposes from the root and seeks into the sample instead of restar
     'Load a sample'
   );
 });
+
+it('orders offline harmonic sums without adding summing nodes to live voices', () => {
+  const live = context(),
+    offline = context(),
+    output = {};
+  offline.startRendering = vi.fn();
+  const args = [{ instrument: 'piano' }, { pitch: 'C4', velocity: 0.5 }, 0, 1];
+  const liveVoice = instrumentVoice(live, output, ...args);
+  const offlineVoice = instrumentVoice(offline, output, ...args);
+  expect(offlineVoice.sources).toHaveLength(liveVoice.sources.length);
+  expect(offlineVoice.nodes.length - liveVoice.nodes.length).toBe(3);
+  const sums = offline.nodes.filter((node) => node.gain.value === 1);
+  expect(sums).toHaveLength(3);
+  expect(sums[0].disconnect).toHaveBeenCalledWith(output);
+  expect(sums[0].connect).toHaveBeenLastCalledWith(sums[1]);
+  expect(sums[1].connect).toHaveBeenLastCalledWith(sums[2]);
+  expect(sums[2].connect).toHaveBeenLastCalledWith(output);
+});
 it('schedules only a short horizon from 100,000 future notes and reclaims completed voices', () => {
   const notes = Array.from({ length: 100000 }, (_, i) => ({
     pitch: 'C4',
@@ -79,14 +97,26 @@ it('schedules only a short horizon from 100,000 future notes and reclaims comple
     budget = new VoiceBudget(8);
   const scheduler = rollingNotes(notes, 0, 1, 50000, emit, budget);
   scheduler.pump(0.95);
-  expect(emit).toHaveBeenCalledTimes(1);
-  scheduler.pump(1.3);
   expect(emit).toHaveBeenCalledTimes(2);
+  scheduler.pump(1.3);
+  expect(emit).toHaveBeenCalledTimes(3);
   expect(dispose).toHaveBeenCalledTimes(1);
   scheduler.cancel();
   expect(budget.voices).toHaveLength(0);
   scheduler.pump(2);
-  expect(emit).toHaveBeenCalledTimes(2);
+  expect(emit).toHaveBeenCalledTimes(3);
+});
+it('keeps notes queued through a 650ms UI stall without widening the missed-note tolerance', () => {
+  const emit = vi.fn(() => () => {});
+  const notes = Array.from({ length: 20 }, (_, i) => ({ time: i * 0.1, duration: 0.09 }));
+  const scheduler = rollingNotes(notes, 0, 1, 2, emit);
+  scheduler.pump(0.95);
+  const firstBatch = emit.mock.calls.length;
+  expect(firstBatch).toBeGreaterThan(5);
+  expect(() => scheduler.pump(1.6)).not.toThrow();
+  expect(emit.mock.calls[firstBatch][0].start).toBeGreaterThan(1.6);
+  expect(() => scheduler.pump(3)).toThrow('fell behind');
+  scheduler.cancel();
 });
 it('resumes held notes on seek, stops explicitly on underrun, and rejects excessive polyphony', () => {
   const emit = vi.fn(() => () => {});

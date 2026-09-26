@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // A tiny in-memory stand-in for a Netlify Blobs store, including the etag

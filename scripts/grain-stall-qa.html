@@ -1,0 +1,177 @@
+<!doctype html><meta charset="utf-8" /><title>Native grain queue stall qualification</title>
+<pre id="result">Measuring audio across a blocked UI thread…</pre>
+<script type="module">
+  import * as Tone from 'tone';
+  import { WindowedGrainPlayer } from '/src/utils/windowedGrainPlayer.js';
+  import { rollingNotes, instrumentVoice, VoiceBudget } from '/src/utils/arrangementInstruments.js';
+  const checks = [];
+  const assert = (condition, message) => {
+    if (!condition) throw Error(message);
+  };
+  let context, player, probe, mute, midi, midiTimer;
+  try {
+    context = new Tone.Context({ latencyHint: 'interactive' });
+    await context.resume();
+    const raw = context.rawContext;
+    const buffer = raw.createBuffer(2, raw.sampleRate * 4, raw.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const data = buffer.getChannelData(c);
+      for (let i = 0; i < data.length; i++)
+        data[i] = 0.2 * Math.sin((2 * Math.PI * 220 * i) / raw.sampleRate);
+    }
+    const source = { duration: 4, sampleRate: raw.sampleRate };
+    let pins = 0;
+    const pool = {
+      prepare: async () => {},
+      acquire: (source, offset) => {
+        pins++;
+        return {
+          buffer,
+          offset,
+          loop: false,
+          release: () => {
+            pins--;
+          },
+        };
+      },
+    };
+    const url = URL.createObjectURL(
+      new Blob(
+        [
+          `
+      class GrainProbe extends AudioWorkletProcessor {
+        process(inputs) {
+          const samples = inputs[0]?.[0];
+          let energy = 0;
+          if (samples) for (const sample of samples) energy += sample * sample;
+          this.port.postMessage({ time: currentTime, rms: Math.sqrt(energy / (samples?.length || 128)) });
+          return true;
+        }
+      }
+      registerProcessor('grain-probe', GrainProbe);
+    `,
+        ],
+        { type: 'text/javascript' }
+      )
+    );
+    try {
+      await raw.audioWorklet.addModule(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    probe = context.createAudioWorkletNode('grain-probe');
+    mute = raw.createGain();
+    mute.gain.value = 0;
+    probe.connect(mute).connect(raw.destination);
+    const blocks = [];
+    probe.port.onmessage = ({ data }) => blocks.push(data);
+    player = new WindowedGrainPlayer(source, pool, { context, grainSize: 0.085, overlap: 0.035 });
+    Tone.connect(player, probe);
+    const start = raw.currentTime + 0.2;
+    player.start(start, 0);
+    player.stop(start + 2);
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    const stallStart = raw.currentTime;
+    const until = performance.now() + 650;
+    while (performance.now() < until) Math.sqrt(performance.now());
+    const stallEnd = raw.currentTime;
+    await new Promise((resolve) => setTimeout(resolve, 1300));
+    assert(!player.failure, player.failure?.message);
+    const during = blocks.filter((b) => b.time > stallStart + 0.03 && b.time < stallEnd - 0.03);
+    assert(during.length > 80, 'The audio-thread probe did not cover the deliberate stall');
+    const minRms = Math.min(...during.map((b) => b.rms));
+    assert(minRms > 0.07, `Audio dropped out while UI was blocked: ${minRms}`);
+    const after = blocks.filter((b) => b.time > start + 2.05);
+    checks.push({
+      stallBlocks: during.length,
+      minRms,
+      afterStopBlocks: after.length,
+      afterStopMaxRms: Math.max(0, ...after.map((b) => b.rms)),
+      pins,
+    });
+    assert(after.length > 40 && after.every((b) => b.rms < 1e-7), 'Scheduled stop leaked audio');
+    assert(pins === 0, `Source pages were not released after playback: ${pins}`);
+    checks.push({
+      uiStallMs: (stallEnd - stallStart) * 1000,
+      measuredAudioBlocks: during.length,
+      minimumRms: minRms,
+      scheduledStopSilent: true,
+      pageLeasesAfterStop: pins,
+    });
+    const midiStart = raw.currentTime + 0.2;
+    const budget = new VoiceBudget(16);
+    const notes = Array.from({ length: 12 }, (_, i) => ({
+      time: i * 0.2,
+      duration: 0.25,
+      pitch: 'A3',
+      velocity: 1,
+    }));
+    midi = rollingNotes(
+      notes,
+      0,
+      midiStart,
+      2.6,
+      (item) => {
+        const voice = instrumentVoice(
+          raw,
+          probe,
+          { instrument: 'sine' },
+          item.note,
+          item.start,
+          item.end - item.start,
+          item.elapsed
+        );
+        return () => {
+          for (const source of voice.sources) source.stop();
+          for (const node of voice.nodes) node.disconnect();
+        };
+      },
+      budget
+    );
+    let midiError;
+    const pump = () => {
+      try {
+        midi.pump(raw.currentTime);
+      } catch (error) {
+        midiError = error;
+      }
+    };
+    pump();
+    midiTimer = setInterval(pump, 25);
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    const midiStallStart = raw.currentTime;
+    const midiUntil = performance.now() + 650;
+    while (performance.now() < midiUntil) Math.sqrt(performance.now());
+    const midiStallEnd = raw.currentTime;
+    await new Promise((resolve) => setTimeout(resolve, 1600));
+    assert(!midiError, midiError?.message);
+    const midiBlocks = blocks.filter(
+      (b) => b.time > midiStallStart + 0.03 && b.time < midiStallEnd - 0.03
+    );
+    const midiRms = Math.min(...midiBlocks.map((b) => b.rms));
+    assert(
+      midiBlocks.length > 80 && midiRms > 0.01,
+      `MIDI audio dropped out during UI stall: ${midiRms}`
+    );
+    midi.cancel();
+    assert(budget.voices.length === 0, 'MIDI voice leases were not released');
+    checks.push({
+      midiUiStallMs: (midiStallEnd - midiStallStart) * 1000,
+      measuredMidiBlocks: midiBlocks.length,
+      minimumMidiRms: midiRms,
+      midiVoicesAfterStop: budget.voices.length,
+    });
+    window.qaResult = { pass: true, checks, physicalHardwareMeasured: false };
+  } catch (error) {
+    window.qaResult = { pass: false, checks, error: error.stack };
+  } finally {
+    clearInterval(midiTimer);
+    midi?.cancel();
+    player?.dispose();
+    probe?.disconnect();
+    probe?.port.close();
+    mute?.disconnect();
+    context?.dispose();
+  }
+  document.querySelector('#result').textContent = JSON.stringify(window.qaResult, null, 2);
+</script>

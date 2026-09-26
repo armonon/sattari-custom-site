@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { useState } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import ArrangementNotes from './ArrangementNotes';
 const audition = vi.fn();
@@ -133,20 +133,22 @@ it('creates and edits notes over multiple bars and octaves with independent velo
 });
 it('moves chords, duplicates notes and edits their velocity together', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add E4 note', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Select all notes' }));
-  fireEvent.keyDown(screen.getByRole('region', { name: 'Piano roll' }), {
+  fireEvent.click(screen.getByLabelText('Add C4 note'));
+  fireEvent.click(screen.getByLabelText('Add E4 note'));
+  const controls = within(screen.getByText('Selection, velocity & quantize').closest('details'));
+  const roll = screen.getByLabelText('Piano roll');
+  fireEvent.click(controls.getByRole('button', { name: 'Select all notes' }));
+  fireEvent.keyDown(roll, {
     key: 'ArrowUp',
     shiftKey: true,
   });
   expect(saved.map((note) => note.pitch)).toEqual(['C5', 'E5']);
   fireEvent.change(screen.getByLabelText('Selected notes velocity'), { target: { value: '127' } });
   expect(saved.every((note) => note.velocity === 1)).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Duplicate notes' }));
+  fireEvent.click(controls.getByRole('button', { name: 'Duplicate notes' }));
   expect(saved).toHaveLength(4);
   expect(saved[2].time).toBe(0.125);
-  fireEvent.keyDown(screen.getByRole('region', { name: 'Piano roll' }), { key: 'Delete' });
+  fireEvent.keyDown(roll, { key: 'Delete' });
   expect(saved).toHaveLength(2);
 });
 
@@ -212,16 +214,27 @@ it('fits the whole pattern and shows a clip-relative playhead only inside its bo
   expect(container.querySelector('.pr-playhead')).not.toBeInTheDocument();
 });
 
-it('keeps velocity editing attached to its note and fits 63 natural and 45 black keys', () => {
+it('keeps velocity editing attached to its note while virtualizing the full keyboard', () => {
   const { container } = render(<Host />);
-  expect(container.querySelectorAll('.pr-key-slot:not(.is-black)')).toHaveLength(63);
-  expect(container.querySelectorAll('.pr-key-slot.is-black')).toHaveLength(45);
+  expect(container.querySelectorAll('.pr-key-slot').length).toBeLessThan(40);
+  expect(container.querySelectorAll('.pr-key-slot.is-black').length).toBeGreaterThan(0);
   fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
   fireEvent.change(screen.getByRole('slider', { name: 'Velocity note 1' }), {
     target: { value: '64' },
   });
   expect(saved[0].velocity).toBeCloseTo(64 / 127);
   expect(container.querySelector('.pr-velocity-bar')).toBeInTheDocument();
+  const viewport = screen.getByRole('region', {
+    name: 'Piano notes, scroll to change pitch or time',
+  });
+  const seen = new Set();
+  for (let top = 0; top <= 108 * 28; top += 140) {
+    fireEvent.scroll(viewport, { target: { scrollTop: top } });
+    for (const key of container.querySelectorAll('.ae-key'))
+      seen.add(key.getAttribute('aria-label'));
+  }
+  expect(seen.size).toBe(108);
+  expect(screen.getByRole('button', { name: 'Add C0 note', exact: true })).toBeInTheDocument();
 });
 
 it('updates the playback cursor from the transport clock and stops animation when unmounted', () => {

@@ -1,15 +1,18 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createSessionMock = vi.fn();
 
 vi.mock('stripe', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    checkout: {
-      sessions: {
-        create: createSessionMock,
+  default: vi.fn().mockImplementation(function () {
+    return {
+      checkout: {
+        sessions: {
+          create: createSessionMock,
+        },
       },
-    },
-  })),
+    };
+  }),
 }));
 
 const { handler } = await import('../../netlify/functions/create-checkout-session.js');

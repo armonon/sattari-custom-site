@@ -52,6 +52,7 @@ async function geometry(locator) {
 try {
   for (const viewport of [
     { width: 1440, height: 900 },
+    { width: 615, height: 988 },
     { width: 390, height: 900 },
   ]) {
     const context = await browser.newContext({ viewport });
@@ -79,7 +80,10 @@ try {
         mimeType: 'application/json',
         buffer: Buffer.from(JSON.stringify(releaseProjectFixture())),
       });
-      await page.getByText('Session Integrity QA', { exact: true }).first().waitFor({ state: 'attached' });
+      await page
+        .getByText('Session Integrity QA', { exact: true })
+        .first()
+        .waitFor({ state: 'attached' });
       const navigate = (name) =>
         page
           .getByRole('navigation', { name: 'STEMDECK workspaces' })
@@ -95,6 +99,18 @@ try {
         );
       }
       await page.getByRole('button', { name: 'Select clip QA melody', exact: true }).waitFor();
+      const clipLabel = await page
+        .locator('.ae-clip strong')
+        .first()
+        .evaluate((label) => ({
+          height: label.clientHeight,
+          contentHeight: label.scrollHeight,
+        }));
+      assert.ok(clipLabel.height >= 16, 'clip title retains a readable line height');
+      assert.ok(
+        clipLabel.contentHeight <= clipLabel.height,
+        'clip title is not vertically cropped'
+      );
       assert.equal(
         await page.locator('input[aria-label^="Track name QA "]').count(),
         6,
@@ -104,6 +120,21 @@ try {
         page.getByRole('region', { name: 'Arrangement timeline', exact: true })
       );
       row.workspace = await geometry(page.locator('#studio-workspace'));
+      if (viewport.width <= 700) {
+        row.trackHeader = await geometry(page.locator('.ae-track-head').first());
+        assert.ok(row.trackHeader.height <= 160, 'compact track header preserves timeline density');
+        const options = page.locator('.ae-track-options').first();
+        await options.locator('summary').click();
+        assert.ok(
+          await options.locator('input[type="number"]').isVisible(),
+          'track gain remains reachable'
+        );
+        assert.ok(
+          await options.locator('input[type="range"]').isVisible(),
+          'track pan remains reachable'
+        );
+        await options.locator('summary').click();
+      }
       assert.ok(row.timeline.top < viewport.height * 0.45, 'timeline must appear immediately');
       assert.ok(
         row.timeline.visibleHeight >= (viewport.width < 600 ? 240 : 360),
@@ -179,7 +210,10 @@ try {
         row.exports.push({ label, bytes: bytes.length, filename: download.suggestedFilename() });
       }
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.getByText('Session Integrity QA', { exact: true }).first().waitFor({ state: 'attached' });
+      await page
+        .getByText('Session Integrity QA', { exact: true })
+        .first()
+        .waitFor({ state: 'attached' });
       await navigate('Arrange');
       await page.getByRole('button', { name: 'Select clip QA melody', exact: true }).waitFor();
       assert.equal(

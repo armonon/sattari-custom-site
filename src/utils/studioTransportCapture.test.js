@@ -1,3 +1,4 @@
+import { deferred } from '../test/deferred';
 import { it, expect, vi } from 'vitest';
 vi.mock('tone', async (original) => ({ ...(await original()), now: () => 12 }));
 import { StudioAudioEngine } from './studioAudioEngine';
@@ -73,4 +74,44 @@ it('does not journal a rejected parameter mutation', () => {
   expect(() => engine.setMasterLevel(75)).toThrow('invalid parameter');
   expect(engine.performanceEvents).toHaveLength(0);
   expect(engine.performanceParameterTime).toBeUndefined();
+});
+
+it('confirms a cold seek only after preparation, preserving audio before the atomic switch', async () => {
+  const { engine, player, deck } = engineFixture();
+  const ready = deferred();
+  player.prepareWindow = () => ready.promise;
+  const seeking = engine.seekDeck('A', 75);
+  expect(player.stop).not.toHaveBeenCalled();
+  expect(deck.offset).toBe(2);
+  expect(engine.performanceEvents).toHaveLength(0);
+  ready.resolve();
+  expect(await seeking).toBe(true);
+  expect(player.start).toHaveBeenCalledWith(12.035, 75);
+  expect(engine.performanceEvents.filter((event) => event.type === 'deckTransport')).toHaveLength(
+    1
+  );
+});
+it('does not journal or restart a cold seek cancelled by Pause', async () => {
+  const { engine, player, deck } = engineFixture();
+  const ready = deferred();
+  player.prepareWindow = () => ready.promise;
+  const seeking = engine.seekDeck('A', 75);
+  engine.pauseDeck('A');
+  ready.resolve();
+  expect(await seeking).toBe(false);
+  expect(deck.playing).toBe(false);
+  expect(player.start).not.toHaveBeenCalled();
+  expect(engine.performanceEvents.some((event) => event.type === 'seekDeck')).toBe(false);
+});
+it('does not start after Stop while playback permission is pending', async () => {
+  const { engine, player, deck } = engineFixture();
+  deck.playing = false;
+  const ready = deferred();
+  engine.unlock = () => ready.promise;
+  const playing = engine.playDeck('A');
+  engine.stopDeck('A');
+  ready.resolve();
+  expect(await playing).toBe(false);
+  expect(player.start).not.toHaveBeenCalled();
+  expect(deck.playing).toBe(false);
 });

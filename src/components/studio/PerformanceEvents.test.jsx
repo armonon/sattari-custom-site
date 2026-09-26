@@ -34,3 +34,33 @@ it('keeps original capture history while editing times, arguments and enabled st
   fireEvent.click(screen.getByRole('button', { name: 'Restore original events' }));
   expect(current.events[0]).toEqual({ time: 1, type: 'setDeckGain', args: ['A', 100] });
 });
+
+it('separates editable sources from printed FX before reconstruction and warns when safety audio is absent', () => {
+  render(
+    <PerformanceEvents
+      expanded
+      capture={{
+        name: 'FX take',
+        events: [
+          {
+            type: 'initialState',
+            time: 0,
+            args: [{ decks: [{ id: 'A', lanes: { vocals: { assetId: 'source' } } }] }],
+          },
+          { type: 'setDeckFx', time: 1, args: ['A', { echo: 40 }] },
+        ],
+      }}
+      onChange={() => {}}
+      onBuild={() => {}}
+    />
+  );
+  expect(screen.getByRole('region', { name: 'Capture editability' })).toHaveTextContent(
+    'Editable in Arrange: Source clips'
+  );
+  expect(screen.getByRole('region', { name: 'Capture editability' })).toHaveTextContent(
+    'Printed audio required: Deck / stem FX parameters'
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent('No safety recording is linked');
+  fireEvent.click(screen.getByText('Five-stage action support'));
+  expect(screen.getByRole('table')).toHaveTextContent('PRINTED ONLY');
+});

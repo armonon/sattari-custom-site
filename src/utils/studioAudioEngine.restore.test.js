@@ -1,7 +1,8 @@
+import { deferred } from '../test/deferred';
 /* @vitest-environment jsdom */
 import { describe, expect, it, vi } from 'vitest';
 
-const loading = vi.hoisted(() => ({ fail: false }));
+const loading = vi.hoisted(() => ({ fail: false, wait: null }));
 
 vi.mock('tone', () => {
   class AudioNode {
@@ -9,6 +10,7 @@ vi.mock('tone', () => {
       this.buffer = {
         duration: 8,
         load: vi.fn(async () => {
+          if (loading.wait) await loading.wait;
           if (loading.fail) throw new Error('Invalid audio');
         }),
       };
@@ -35,6 +37,36 @@ vi.mock('tone', () => {
 import { StudioAudioEngine } from './studioAudioEngine';
 
 describe('restoring audio before playback permission', () => {
+  it('does not resurrect a lane removed while its first load is pending', async () => {
+    const ready = deferred();
+    loading.wait = ready.promise;
+    const deck = { lanes: new Map(), input: {}, playbackRate: 1, pitch: 0 };
+    const engine = {
+      decks: new Map([['A', deck]]),
+      ensureDeck: () => deck,
+      stopDeck: vi.fn(),
+      applyPlaybackRates: vi.fn(),
+      applyLaneMix: vi.fn(),
+      applyLoop: vi.fn(),
+    };
+    try {
+      const pending = StudioAudioEngine.prototype.loadLane.call(
+        engine,
+        'A',
+        'left',
+        'fullMix',
+        'blob:test'
+      );
+      StudioAudioEngine.prototype.removeLane.call(engine, 'A', 'fullMix');
+      ready.resolve();
+      await expect(pending).rejects.toThrow('superseded');
+      expect(deck.lanes.size).toBe(0);
+      expect(engine.pendingLaneLoads.size).toBe(0);
+      expect(engine.stopDeck).not.toHaveBeenCalled();
+    } finally {
+      loading.wait = null;
+    }
+  });
   it('loads a deck lane without requesting an audio-context resume', async () => {
     const deck = { lanes: new Map(), input: {}, playbackRate: 1, pitch: 0 };
     const engine = {

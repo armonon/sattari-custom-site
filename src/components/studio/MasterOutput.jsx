@@ -209,7 +209,7 @@ export default function MasterOutput({
               {captureActive
                 ? 'Recording program mix'
                 : limiter
-                  ? `Limit ${settings.ceiling.toFixed(1)} dB`
+                  ? `Threshold ${settings.ceiling.toFixed(1)} dB`
                   : 'Limiter off'}
             </small>
           </div>
@@ -661,6 +661,10 @@ export default function MasterOutput({
               unit=" dB"
               onChange={(value) => change('ceiling', value)}
             />
+            <small>
+              Dynamics threshold, not a guaranteed output ceiling. Intersample peaks may exceed it;
+              check the rendered file before delivery.
+            </small>
             <dl>
               <div>
                 <dt>Integrated LUFS</dt>

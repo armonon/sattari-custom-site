@@ -57,6 +57,57 @@ it('respects partial clip boundaries and project tempo', () => {
   expect(saved.notes[0].duration).toBeCloseTo(0.2);
 });
 
+it('extends repeatedly into empty bars without copying or changing earlier hits', () => {
+  const notes = [{ id: 'free', pitch: 'C2', time: 0.032, duration: 0.33, velocity: 0.7 }];
+  render(<Host initial={{ start: 8, duration: 2, notes }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  expect(saved.duration).toBe(4);
+  expect(saved.notes).toEqual(notes);
+  expect(screen.getByRole('status')).toHaveTextContent('Bar 2 of 2');
+  expect(screen.getByRole('button', { name: 'Kick step 1', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Snare step 5', exact: true }));
+  expect(saved.notes[1]).toMatchObject({ pitch: 'D2', time: 2.5 });
+  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  expect(saved.duration).toBe(6);
+  expect(saved.notes).toHaveLength(2);
+  expect(screen.getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(3);
+  fireEvent.click(screen.getByRole('button', { name: 'Previous beat bar' }));
+  expect(screen.getByRole('button', { name: 'Snare step 5', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+});
+
+it('appends on the next bar boundary at the project tempo from a partial bar', () => {
+  render(<Host initial={{ start: 0, duration: 0.7, notes: [] }} bpm={60} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  expect(saved.duration).toBe(8);
+  fireEvent.click(screen.getByRole('button', { name: 'Kick step 1', exact: true }));
+  expect(saved.notes[0].time).toBe(4);
+});
+
+it.each([
+  { duration: 2, disabled: true },
+  { duration: 86400, disabled: false },
+])('prevents extension at the length limit or when editing is disabled: %j', (state) => {
+  const onChange = vi.fn();
+  render(
+    <ArrangementSequencer
+      clip={{ start: 0, notes: [], duration: state.duration }}
+      bpm={120}
+      disabled={state.disabled}
+      onChange={onChange}
+      onAudition={() => {}}
+    />
+  );
+  expect(screen.getByRole('button', { name: 'Add empty bar' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  expect(onChange).not.toHaveBeenCalled();
+});
+
 it('keeps long patterns bounded to a single visible bar and stops edits when disabled', () => {
   const onChange = vi.fn();
   render(

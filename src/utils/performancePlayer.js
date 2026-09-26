@@ -14,6 +14,7 @@ import { performanceFilter } from './performanceFilter';
 import { ReplaySourceCache, replaySourceDurations } from './replaySources';
 import { ReplayInput } from './replayInput';
 import { performanceAudioTime } from './performanceClock';
+import { PITCH_EVENTS, pitchAutomation } from './replayPitch';
 
 export const REPLAY_METHODS = new Set([
   'setCrossfader',
@@ -56,10 +57,27 @@ const scheduledControls = new Set([
   'setMasterAssist',
 ]);
 
-export function replayScheduling(plan) {
-  // Start/stop/seek can be queued on a stable grain graph. Pitch/rate/loop and
-  // source mutations still need the conservative dispatcher: their setters
-  // mutate graph state immediately rather than accepting an audio timestamp.
+export function replayScheduling(
+  plan,
+  { scheduledLoopDecks = new Set(), scheduledPitchDecks = new Set() } = {}
+) {
+  // Start/stop/seek and supported granular loop states can be queued ahead.
+  // Mutable sources/legacy transport still require the monitored dispatcher.
+  // Pitch-capable fixed-source decks compile their whole musical-state history.
+  const pitchDecks = new Set(
+    [...scheduledPitchDecks].filter(
+      (id) =>
+        !plan.events.some(
+          (event) =>
+            event.args[0] === id &&
+            (requestedTransport.has(event.type) ||
+              event.type === 'removeLane' ||
+              (event.type === 'setLaneState' &&
+                (event.args[2]?.assetId || 'pitch' in (event.args[2] || {}))))
+        )
+    )
+  );
+  const compilePitch = pitchAutomation(plan.initial);
   const initialRates = new Map(
     (plan.initial.decks || []).map((deck) => [deck.id, deck.playbackRate || 1])
   );
@@ -79,10 +97,16 @@ export function replayScheduling(plan) {
   const unstableDecks = new Set();
   for (const event of plan.events)
     if (
-      mutableTransport.has(event.type) ||
+      (mutableTransport.has(event.type) &&
+        !(
+          (scheduledLoopDecks.has(event.args[0]) &&
+            ['setLoop', 'setLoopRegion'].includes(event.type)) ||
+          (pitchDecks.has(event.args[0]) && PITCH_EVENTS.has(event.type))
+        )) ||
       (event.type === 'setLaneState' &&
         (event.args[2]?.assetId || 'pitch' in (event.args[2] || {}))) ||
       (event.type === 'deckTransport' &&
+        !pitchDecks.has(event.args[0]) &&
         (event.args[1]?.action === 'rate' ||
           (event.args[1]?.rate || 1) !== (initialRates.get(event.args[0]) || 1)))
     )
@@ -117,6 +141,33 @@ export function replayScheduling(plan) {
   const stableMix = canScheduleMix(plan.events),
     compileMix = mixAutomation(plan.initial);
   for (const event of plan.events) {
+    if (
+      pitchDecks.has(event.args[0]) &&
+      !unstableDecks.has(event.args[0]) &&
+      (PITCH_EVENTS.has(event.type) || event.type === 'deckTransport')
+    ) {
+      scheduled.push({ ...event, grainState: compilePitch(event) });
+      continue;
+    }
+    // Stem gains are independent of insert topology. Compile their complete
+    // history even when the FX graph itself still needs monitored dispatch.
+    if (stableMix && event.type === 'setMasterProcessing') {
+      scheduled.push({
+        ...event,
+        type: 'compiledMix',
+        mixState: event,
+        mixRamps: compileMix(event),
+      });
+      (stableMaster ? scheduled : dispatched).push({ ...event, mixScheduled: true });
+      continue;
+    }
+    if (
+      scheduledLoopDecks.has(event.args[0]) &&
+      ['setLoop', 'setLoopRegion'].includes(event.type)
+    ) {
+      scheduled.push(event);
+      continue;
+    }
     if (event.type === 'deckTransport' && !unstableDecks.has(event.args[0])) {
       scheduled.push(event);
       continue;
@@ -296,7 +347,17 @@ export class PerformancePlayer {
       engine.setDeckPitch(d.id, d.pitch || 0);
       engine.setDeckKeyLock(d.id, d.keyLock !== false);
       engine.setPlaybackRate(d.id, d.playbackRate || 1);
-      engine.setLoopRegion(d.id, !!d.looping, d.loopStart || 0, d.loopEnd || d.duration || 1);
+      if (
+        (await engine.setLoopRegion(
+          d.id,
+          !!d.looping,
+          d.loopStart || 0,
+          d.loopEnd || d.duration || 1
+        )) === false
+      )
+        throw new Error(
+          engine.getDeckTransportStatus(d.id).error || 'Opening loop could not be prepared.'
+        );
       for (const lane of engine.decks.get(d.id).lanes.values())
         await lane.player.prepareWindow?.(d.position || 0);
     }
@@ -324,23 +385,39 @@ export class PerformancePlayer {
       ])
     );
     for (const event of this.transportEvents || []) {
-      if (event.type !== 'deckTransport' || event.time < elapsed || event.time > elapsed + 2)
+      if (event.type !== 'deckTransport' || event.time < elapsed || event.time > elapsed + 3)
         continue;
       const deck = this.engine.decks.get(event.args[0]);
-      for (const lane of deck?.lanes.values() || [])
-        await lane.player.prepareWindow?.(event.args[1].position || 0, { loop: false });
+      // Prepare the launch window, not eight speculative seconds for every
+      // upcoming seek. The audible player's normal read-ahead fills the tail;
+      // otherwise an earlier seek's tail can starve the next musical deadline.
+      // The shared pool still serializes decoding and enforces its memory cap.
+      await Promise.all(
+        [...(deck?.lanes.values() || [])].map((lane) =>
+          lane.player.warmWindow?.(event.args[1].position || 0, {
+            loop: false,
+            prepareSeconds: 1,
+          })
+        )
+      );
     }
     for (const event of this.loopEvents || []) {
-      if (!event.args[1] || event.time < elapsed || event.time > elapsed + 2) continue;
+      if (!event.args[1] || event.time < elapsed || event.time > elapsed + 3) continue;
       const start = event.type === 'setLoopRegion' ? Math.max(0, Number(event.args[2]) || 0) : 0;
       const end =
         event.type === 'setLoopRegion'
           ? Number(event.args[3])
           : 240 / Math.max(1, Number(event.args[2]) || 120);
-      for (const lane of this.engine.decks.get(event.args[0])?.lanes.values() || []) {
-        await lane.player.prepareWindow?.(start, { loop: false });
-        await lane.player.prepareWindow?.(Math.max(start, end - 0.25), { loop: false });
-      }
+      await Promise.all(
+        [...(this.engine.decks.get(event.args[0])?.lanes.values() || [])].map((lane) =>
+          lane.player.warmWindow?.(start, {
+            loop: true,
+            loopStart: start,
+            loopEnd: end,
+            prepareSeconds: 1,
+          })
+        )
+      );
     }
   }
   async setPadSource(index, assetId, level = 100) {
@@ -354,30 +431,51 @@ export class PerformancePlayer {
     this.engine.padPlayers.set(index, { player, gain, level, assetId });
     this.engine.setPadGain(index, level);
   }
-  transport(id, state, when) {
+  transport(id, state, when, grainState) {
     const d = this.engine.decks.get(id);
     if (!d) return;
-    const rate = state.rate || d.playbackRate || 1;
+    const rate = grainState?.rate || state.rate || d.playbackRate || 1;
     // GrainPlayer derives its initial clock ticks from the current rate. Install
     // the new rate before starting, or an opening rate change misplaces the seek.
-    d.playbackRate = rate;
-    this.engine.applyPlaybackRates(d);
+    const scheduledRates = [...d.lanes.values()].every((lane) => lane.player.schedulePlaybackRate);
+    if (scheduledRates) {
+      const transportPitch = d.keyLock ? 0 : 12 * Math.log2(Math.max(0.01, rate));
+      for (const [laneId, lane] of d.lanes)
+        lane.player.schedulePlaybackRate(
+          rate,
+          when,
+          grainState?.detunes[laneId] ?? ((d.pitch || 0) + (lane.pitch || 0) + transportPitch) * 100
+        );
+    } else {
+      d.playbackRate = rate;
+      this.engine.applyPlaybackRates(d);
+    }
     // A rate-only confirmation must not restart the grain clock or reattack the
     // envelope. Older captures lack this discriminator and retain legacy replay.
     if (state.action !== 'rate')
       for (const lane of d.lanes.values()) {
-        if (d.playing) lane.player.stop(when);
+        if (d.playing || scheduledRates) lane.player.stop(when);
         if (state.playing)
           lane.player.start(when, (Math.max(0, state.position) % lane.duration) / rate);
       }
-    d.offset = Math.max(0, state.position);
-    d.startedAt = when;
-    d.playing = !!state.playing;
+    const values = {
+      offset: Math.max(0, state.position),
+      startedAt: when,
+      playing: !!state.playing,
+      playbackRate: rate,
+    };
+    if (scheduledRates && this.raw && when > this.raw.currentTime) {
+      this.pendingTransportStates ||= [];
+      this.pendingTransportStates.push({ deck: d, id, when, values });
+      this.pendingTransportStates.sort((a, b) => a.when - b.when);
+    } else Object.assign(d, values);
   }
   dispatch(event, when) {
     const [a, b, c] = event.args,
       e = this.engine;
     if (event.type === 'deckTransport') return this.transport(a, b, when);
+    if (event.type === 'setMasterProcessing' && event.mixScheduled)
+      return e.setMasterProcessing(a, { applyStems: false });
     if (
       event.type === 'setLaneState' &&
       c?.assetId &&
@@ -398,9 +496,51 @@ export class PerformancePlayer {
     const [id, value] = event.args,
       e = this.engine,
       ramp = (param, v, d) => param.rampTo(v, d, when);
-    if (event.type === 'deckTransport') return this.transport(id, value, when);
+    if (event.grainState) {
+      const deck = e.decks.get(id);
+      if (!deck) return;
+      if (event.type !== 'deckTransport')
+        for (const [laneId, lane] of deck.lanes)
+          lane.player.schedulePlaybackRate(
+            event.grainState.rate,
+            when,
+            event.grainState.detunes[laneId]
+          );
+      this.pendingPitchStates ||= [];
+      this.pendingPitchStates.push({ deck, id, when, state: event.grainState });
+      this.pendingPitchStates.sort((a, b) => a.when - b.when);
+      if (event.type !== 'deckTransport') return;
+    }
+    if (event.type === 'deckTransport') return this.transport(id, value, when, event.grainState);
+    if (['setLoop', 'setLoopRegion'].includes(event.type)) {
+      const deck = e.decks.get(id);
+      if (!deck) return;
+      const start = event.type === 'setLoop' ? 0 : Math.max(0, Number(event.args[2]) || 0);
+      const end =
+        event.type === 'setLoop'
+          ? Math.max(0.25, 240 / Math.max(1, event.args[2]))
+          : Math.max(start + 0.05, Number(event.args[3]) || start + 1);
+      for (const lane of deck.lanes.values()) {
+        const loopStart = Math.min(Math.max(0, lane.duration - 0.001), start);
+        lane.player.scheduleLoop(
+          {
+            loop: !!value,
+            loopStart,
+            loopEnd: Math.min(lane.duration, Math.max(loopStart + 0.001, end)),
+          },
+          when
+        );
+      }
+      // Audio receives the change ahead of time; the public deck state follows
+      // only when it becomes audible. Reapplying the engine setter here would
+      // either change the UI early or schedule the audio twice.
+      this.pendingLoopStates ||= [];
+      this.pendingLoopStates.push({ deck, id, when, looping: !!value, start, end });
+      this.pendingLoopStates.sort((a, b) => a.when - b.when);
+      return;
+    }
     if (event.type === 'inputState') return this.inputReplay?.schedule(id, when);
-    if (MIX_EVENTS.has(event.type) && event.mixRamps) {
+    if (event.mixRamps) {
       for (const step of event.mixRamps) {
         const deck = e.decks.get(step.deckId);
         const param =
@@ -411,6 +551,9 @@ export class PerformancePlayer {
               : deck?.lanes.get(step.laneId)?.gain.gain;
         if (param) ramp(param, step.value, 0.025);
       }
+      this.pendingMixStates ||= [];
+      this.pendingMixStates.push({ event: event.mixState || event, when });
+      this.pendingMixStates.sort((a, b) => a.when - b.when);
       return;
     }
     if (event.type === 'setDeckFx') {
@@ -447,6 +590,45 @@ export class PerformancePlayer {
       ramp(e.masterLowCut.frequency, settings.bypass ? 20 : settings.lowCut, 0.04);
       ramp(e.masterWidth.width, settings.bypass ? 0.5 : settings.width / 200, 0.04);
       ramp(e.limiter.threshold, settings.ceiling, 0.04);
+    }
+  }
+  commitLoopStates(now) {
+    while (this.pendingPitchStates?.length && this.pendingPitchStates[0].when <= now) {
+      const { deck, id, state } = this.pendingPitchStates.shift();
+      if (this.engine.decks.get(id) !== deck) continue;
+      deck.pitch = state.pitch;
+      deck.keyLock = state.keyLock;
+      for (const [laneId, pitch] of Object.entries(state.stems))
+        if (deck.lanes.has(laneId)) deck.lanes.get(laneId).pitch = pitch;
+    }
+    while (this.pendingMixStates?.length && this.pendingMixStates[0].when <= now) {
+      const { event } = this.pendingMixStates.shift();
+      const [id, value, updates] = event.args;
+      const deck = this.engine.decks.get(id);
+      if (event.type === 'setMasterStems') this.engine.masterStems = normalizeMasterStems(id);
+      if (event.type === 'setMasterProcessing')
+        this.engine.masterStems = normalizeMasterStems(id?.stems);
+      if (event.type === 'setCrossfader') this.engine.crossfader = id;
+      if (event.type === 'setCrossfaderCurve') this.engine.crossfaderCurve = id;
+      if (deck && event.type === 'setDeckGain') deck.gain = value;
+      if (deck && event.type === 'setDeckFader') deck.fader = value;
+      if (deck && event.type === 'setDeckSide') deck.side = value;
+      if (event.type === 'setLaneState' && deck?.lanes.has(value))
+        Object.assign(deck.lanes.get(value), updates);
+    }
+    while (this.pendingTransportStates?.length && this.pendingTransportStates[0].when <= now) {
+      const state = this.pendingTransportStates.shift();
+      if (this.engine.decks.get(state.id) === state.deck) Object.assign(state.deck, state.values);
+    }
+    while (this.pendingLoopStates?.length && this.pendingLoopStates[0].when <= now) {
+      const state = this.pendingLoopStates.shift();
+      if (this.engine.decks.get(state.id) !== state.deck) continue;
+      Object.assign(state.deck, {
+        looping: state.looping,
+        loopStart: state.start,
+        loopEnd: state.end,
+        loopTransitionTime: state.when,
+      });
     }
   }
   async queueInputs(elapsed, preload = false) {
@@ -515,7 +697,28 @@ export class PerformancePlayer {
     if (record) await this.engine.startRecording({ longSession: true, sources: false });
     this.base = this.raw.currentTime + 0.5;
     this.inputReplay?.schedule(this.plan.initial.inputState || {}, this.base, true);
-    const schedule = replayScheduling(this.plan);
+    const scheduledLoopDecks = new Set(
+      [...this.engine.decks]
+        .filter(
+          ([id, deck]) =>
+            [...deck.lanes.values()].every((lane) => lane.player.scheduleLoop) &&
+            !this.plan.events.some(
+              (event) =>
+                event.args[0] === id &&
+                (event.type === 'removeLane' ||
+                  (event.type === 'setLaneState' && event.args[2]?.assetId))
+            )
+        )
+        .map(([id]) => id)
+    );
+    const scheduledPitchDecks = new Set(
+      [...scheduledLoopDecks].filter((id) =>
+        [...this.engine.decks.get(id).lanes.values()].every(
+          (lane) => lane.player.schedulePlaybackRate
+        )
+      )
+    );
+    const schedule = replayScheduling(this.plan, { scheduledLoopDecks, scheduledPitchDecks });
     this.scheduled = schedule.scheduled;
     this.plan.events = schedule.dispatched;
     this.scheduledIndex = 0;
@@ -535,7 +738,7 @@ export class PerformancePlayer {
         const elapsed = this.raw.currentTime - this.base;
         while (
           this.scheduledIndex < this.scheduled.length &&
-          this.scheduled[this.scheduledIndex].time <= elapsed + 0.5
+          this.scheduled[this.scheduledIndex].time <= elapsed + 1
         ) {
           const event = this.scheduled[this.scheduledIndex++];
           // Confirmed transport already contains its actual scheduled time.
@@ -548,7 +751,7 @@ export class PerformancePlayer {
             );
           if (this.raw.currentTime - at > 0.25)
             throw new Error(
-              'Replay missed an automation deadline by more than 250 ms. Print stopped; recover partial chunks if needed and retry with less system load.'
+              `Replay missed ${event.type} automation by ${Math.round((this.raw.currentTime - at) * 1000)} ms (limit 250 ms). Print stopped; recover partial chunks if needed and retry with less system load.`
             );
           if (this.raw.currentTime > at) {
             this.lateEvents++;
@@ -556,6 +759,7 @@ export class PerformancePlayer {
           }
           this.scheduleControl(event, Math.max(at, this.raw.currentTime));
         }
+        this.commitLoopStates(this.raw.currentTime);
         while (
           this.index < this.plan.events.length &&
           this.plan.events[this.index].time <= elapsed
@@ -564,12 +768,27 @@ export class PerformancePlayer {
             late = elapsed - event.time;
           if (late > 0.25)
             throw new Error(
-              'Replay missed a performance event by more than 250 ms. Print stopped; recover partial chunks if needed and retry with less system load.'
+              `Replay missed ${event.type} dispatch by ${Math.round(late * 1000)} ms (limit 250 ms). Print stopped; recover partial chunks if needed and retry with less system load.`
             );
           this.maxLateness = Math.max(this.maxLateness, late);
           if (late > 0.025) this.lateEvents++;
           const result = this.dispatch(event, this.raw.currentTime + 0.005);
-          result?.catch?.((error) => void this.fail(error));
+          if (result?.then)
+            result.then(
+              (value) => {
+                if (value === false)
+                  void this.fail(
+                    new Error(
+                      'Replay could not apply a transport change. Keep the safety recording.'
+                    )
+                  );
+              },
+              (error) => void this.fail(error)
+            );
+          else if (result === false)
+            throw new Error(
+              'Replay could not apply a transport change. Keep the safety recording.'
+            );
         }
         if (!this.loadingInputs) {
           this.loadingInputs = this.queueInputs(elapsed)
@@ -602,6 +821,11 @@ export class PerformancePlayer {
   async stop(error) {
     if (this.stopped) return;
     this.stopped = true;
+    this.commitLoopStates(this.raw.currentTime);
+    this.pendingLoopStates = [];
+    this.pendingTransportStates = [];
+    this.pendingMixStates = [];
+    this.pendingPitchStates = [];
     clearInterval(this.timer);
     this.engine?.stopAll();
     for (const node of this.inputNodes) {

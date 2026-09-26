@@ -69,7 +69,7 @@ export default function ArrangementNotes({
     [velocity, setVelocity] = useState(0.7),
     [noteLength, setNoteLength] = useState(1),
     [pixels, setPixels] = useState(96),
-    [view, setView] = useState({ left: 0, width: 1000 }),
+    [view, setView] = useState({ left: 0, width: 1000, top: 0, height: 240 }),
     [preview, setPreview] = useState(null),
     [strength, setStrength] = useState(100),
     [swing, setSwing] = useState(0),
@@ -94,6 +94,15 @@ export default function ArrangementNotes({
     width = Math.max(view.width - keyWidth, clip.duration * zoom),
     chosen = selection.filter((index) => clip.notes[index]),
     note = clip.notes[chosen[0]];
+  // Keep the full pitch range scrollable without mounting hundreds of offscreen
+  // key/grid controls on every note edit. Overscan covers neighboring keys;
+  // retain all rows during a gesture so pointer capture cannot be unmounted.
+  const firstRow =
+    preview || marquee ? 0 : Math.max(0, Math.floor((view.top - rulerHeight) / rowHeight) - 8);
+  const lastRow =
+    preview || marquee
+      ? pitches.length
+      : Math.min(pitches.length, Math.ceil((view.top + view.height) / rowHeight) + 8);
   const rows = useMemo(() => {
     const result = new Map();
     clip.notes.forEach((item, index) => {
@@ -118,15 +127,22 @@ export default function ArrangementNotes({
     return result;
   }, [ghosts, zoom, view]);
   useEffect(() => {
-    if (scroll.current)
+    if (scroll.current) {
       scroll.current.scrollTop = Math.max(
         0,
         (107 - octave * 12) * rowHeight - (scroll.current.clientHeight || 240) / 2
       );
+      setView((value) => ({ ...value, top: scroll.current.scrollTop }));
+    }
   }, [octave]);
   useEffect(() => {
     const element = scroll.current;
-    const measure = () => setView((value) => ({ ...value, width: element.clientWidth || 1000 }));
+    const measure = () =>
+      setView((value) => ({
+        ...value,
+        width: element.clientWidth || 1000,
+        height: element.clientHeight || 240,
+      }));
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
@@ -662,6 +678,8 @@ export default function ArrangementNotes({
           setView({
             left: event.currentTarget.scrollLeft,
             width: event.currentTarget.clientWidth || 1000,
+            top: event.currentTarget.scrollTop,
+            height: event.currentTarget.clientHeight || 240,
           });
           if (velocityScroll.current)
             velocityScroll.current.scrollLeft = event.currentTarget.scrollLeft;
@@ -715,7 +733,8 @@ export default function ArrangementNotes({
                 </span>
               ))}
           </div>
-          {pitches.map((pitch) => (
+          <div aria-hidden="true" style={{ height: firstRow * rowHeight, flexShrink: 0 }} />
+          {pitches.slice(firstRow, lastRow).map((pitch) => (
             <div
               key={pitch}
               className={`ae-note-row ${pitch.includes('#') ? 'is-black' : ''} ${pitch.startsWith('C') && !pitch.includes('#') ? 'is-octave' : ''} ${root !== 'off' && intervals.includes((noteNumber(pitch) - Number(root) + 120) % 12) ? 'in-scale' : ''}`}
@@ -829,6 +848,10 @@ export default function ArrangementNotes({
               </div>
             </div>
           ))}
+          <div
+            aria-hidden="true"
+            style={{ height: (pitches.length - lastRow) * rowHeight, flexShrink: 0 }}
+          />
           {marquee && <div className="ae-note-marquee" style={marquee} />}
           {width > clip.duration * zoom && (
             <div

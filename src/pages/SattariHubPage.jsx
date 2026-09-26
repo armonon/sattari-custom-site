@@ -1,187 +1,199 @@
 import { Link } from 'react-router-dom';
 import {
-  ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
-  AudioWaveform,
+  AudioLines,
   BookOpen,
-  CircleDot,
-  Split,
+  Headphones,
+  Library,
   Radio,
-  RadioTower,
+  SlidersHorizontal,
+  Split,
   Store,
   Users,
 } from 'lucide-react';
+import HubListeningDesk from '../components/HubListeningDesk';
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
 
-const upcomingProjects = [
+const workspaces = [
   {
-    title: 'Sattari Radio',
-    description: 'Live shows, charts, DJ picks, and local artist discovery.',
-    icon: Radio,
+    id: 'studio',
+    name: 'Sattari Studio',
+    category: 'Create',
+    detail: 'Mixing, performance & arrangement',
+    path: '/studio',
+    image: '/images/tools/studio.jpg',
+    alt: 'Four-deck Sattari Studio workspace with audio loaded',
+    icon: SlidersHorizontal,
+    status: 'Alpha',
+    tools: ['Four decks', 'Instruments', 'Arrangement'],
   },
   {
-    title: 'Musician Profiles',
-    description: 'A home for tracks, gear, lessons, credits, and creative identity.',
-    icon: Users,
+    id: 'learn',
+    name: 'Sattari Learn',
+    category: 'Practice',
+    detail: 'Song analysis & instrument practice',
+    path: '/learn',
+    image: '/images/tools/learn.jpg',
+    alt: 'Sattari Learn showing a song map and estimated key and tempo',
+    icon: BookOpen,
+    status: 'Practice lab',
+    tools: ['Key & tempo', 'Chords', 'Rhythm'],
   },
   {
-    title: 'Community Market',
-    description: 'A trusted place to list, discover, and trade instruments.',
-    icon: Store,
+    id: 'stem-separator',
+    name: 'Stem Separator',
+    category: 'Explore',
+    detail: 'Find the individual parts of a track',
+    path: '/stem-separator',
+    image: '/images/tools/separator.jpg',
+    alt: 'Stem Separator with completed bass and drum files',
+    icon: Split,
+    status: 'Local processing',
+    tools: ['Vocals', 'Drums', 'Bass', 'Instruments'],
   },
+];
+
+const reading = [
+  {
+    path: '/guides/how-to-separate-vocals-drums-bass',
+    category: '01 / Separation',
+    title: 'A song, taken apart.',
+    detail: 'Vocals, drums, bass and everything between.',
+  },
+  {
+    path: '/guides/practice-bass-with-isolated-stems',
+    category: '02 / Practice',
+    title: 'Get closer to the bassline.',
+    detail: 'Listen, loop and find your place in the groove.',
+  },
+];
+
+const upcoming = [
+  { name: 'Radio', detail: 'Shows, selections & artist discovery', icon: Radio },
+  { name: 'Community', detail: 'Musicians, music & connections', icon: Users },
+  { name: 'Market', detail: 'Instruments with a next chapter', icon: Store },
 ];
 
 export default function SattariHubPage() {
   return (
     <>
       <SEO {...PAGE_SEO.hub} />
-      <section className="hub-page">
-        <header className="hub-masthead">
-          <div className="hub-masthead-brand">
-            <span className="hub-mark">
-              <CircleDot size={18} />
-            </span>
-            <div>
-              <p>Sattari Music</p>
-              <strong>Hub</strong>
-            </div>
-          </div>
-          <div className="hub-masthead-status">
-            <i />
-            Three projects live
-          </div>
-          <Link to="/" className="hub-store-return">
-            <ArrowLeft size={15} />
-            Back to store
-          </Link>
-        </header>
-
+      <div className="hub-page">
         <div className="hub-shell">
-          <div className="hub-intro">
+          <header className="hub-heading">
             <div>
-              <p className="hub-eyebrow">Your Sattari creative home</p>
+              <p className="hub-eyebrow">
+                <AudioLines size={17} aria-hidden="true" /> Music in motion
+              </p>
               <h1>
-                Learn the music.
-                <br />
-                Then make it yours.
+                Sattari Hub<span aria-hidden="true">.</span>
               </h1>
             </div>
-            <p>
-              One place for Sattari&apos;s music technology, learning tools, creative workspaces,
-              and the community experiences ahead.
-            </p>
-          </div>
-
-          <div className="hub-primary-grid">
-            <Link to="/learn" className="hub-product hub-product-learn">
-              <div className="hub-product-media">
-                <img
-                  src="/images/tools/learn.jpg"
-                  alt="Sattari Learn running in a browser"
-                  loading="eager"
-                />
-                <span className="hub-live-label">
-                  <i /> Live preview
-                </span>
-              </div>
-              <div className="hub-product-copy">
-                <span className="hub-product-icon">
-                  <BookOpen size={20} />
-                </span>
-                <div>
-                  <p>Analyze and practice</p>
-                  <h2>Sattari Learn</h2>
-                  <span>
-                    Turn songs into concepts, exercises, and challenges for your instrument.
-                  </span>
-                </div>
-                <span className="hub-open-product" aria-hidden="true">
-                  <ArrowUpRight size={20} />
-                </span>
-              </div>
-              <div className="hub-product-meta">
-                <span>Song maps</span>
-                <span>Piano + guitar</span>
-                <span>Rhythm + MIDI</span>
-              </div>
-            </Link>
-
-            <Link to="/studio" className="hub-product hub-product-studio">
-              <div className="hub-product-media">
-                <img
-                  src="/images/tools/studio.jpg"
-                  alt="Sattari Studio browser workspace"
-                  loading="eager"
-                />
-                <span className="hub-live-label">
-                  <i /> Alpha workspace
-                </span>
-              </div>
-              <div className="hub-product-copy">
-                <span className="hub-product-icon">
-                  <AudioWaveform size={20} />
-                </span>
-                <div>
-                  <p>Create, remix, perform</p>
-                  <h2>Sattari Studio</h2>
-                  <span>
-                    Shape audio across four decks with stems, sync, pads, and arrangement tools.
-                  </span>
-                </div>
-                <span className="hub-open-product" aria-hidden="true">
-                  <ArrowUpRight size={20} />
-                </span>
-              </div>
-              <div className="hub-product-meta">
-                <span>Four decks</span>
-                <span>Stem workflow</span>
-                <span>Performance pads</span>
-              </div>
-            </Link>
-          </div>
-
-          <Link to="/stem-separator" className="hub-separator-link">
-            <Split size={24} />
-            <div>
-              <p>Separate and export</p>
-              <h2>Stem Separator</h2>
-              <span>Vocals, drums, bass, and instruments. One track or a whole batch.</span>
+            <div className="hub-heading-aside">
+              <p>A place for your next session.</p>
+              <a href="#hub-listening-desk" className="hub-text-link">
+                <Headphones size={16} /> Listening desk <ArrowRight size={15} />
+              </a>
             </div>
-            <ArrowUpRight size={22} aria-hidden="true" />
-          </Link>
+          </header>
 
-          <nav className="tool-reference-link" aria-label="Music resources">
-            <Link to="/guides">Music guides</Link>
-            <Link to="/tools/stem-separator">Stem Separator details</Link>
-            <Link to="/tools/learn">Learn details</Link>
-            <Link to="/tools/studio">Studio details</Link>
-            <Link to="/privacy">Privacy choices</Link>
-          </nav>
-          <section className="hub-coming-section">
+          <section className="hub-workspaces" aria-labelledby="hub-workspaces-title">
             <div className="hub-section-heading">
-              <div>
-                <p className="hub-eyebrow">Growing inside the Hub</p>
-                <h2>What comes next</h2>
-              </div>
-              <RadioTower size={22} />
+              <h2 id="hub-workspaces-title">Your workspaces</h2>
+              <span>01 / 03</span>
             </div>
-            <div className="hub-coming-grid">
-              {upcomingProjects.map(({ title, description, icon: Icon }, index) => (
-                <article key={title}>
-                  <span className="hub-coming-number">0{index + 4}</span>
-                  <Icon size={20} />
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                  </div>
-                  <span className="hub-coming-state">In development</span>
-                </article>
+            <div className="hub-workspace-grid">
+              {workspaces.map(
+                (
+                  { id, name, category, detail, path, image, alt, icon: Icon, status, tools },
+                  index
+                ) => (
+                  <article key={id} className={`hub-tool hub-tool-${id}`}>
+                    <div className="hub-tool-topline">
+                      <span>
+                        <Icon size={17} aria-hidden="true" /> {category}
+                      </span>
+                      <span className="hub-tool-number">0{index + 1}</span>
+                    </div>
+                    <Link to={path} className="hub-tool-launch" aria-label={`Open ${name}`}>
+                      <div className="hub-tool-name">
+                        <h3>{name}</h3>
+                        <ArrowUpRight size={24} aria-hidden="true" />
+                      </div>
+                      <p>{detail}</p>
+                      <div className="hub-tool-image">
+                        <img src={image} alt={alt} width="1440" height="1000" loading="eager" />
+                      </div>
+                      <ul className="hub-tool-capabilities">
+                        {tools.map((tool) => (
+                          <li key={tool}>{tool}</li>
+                        ))}
+                      </ul>
+                    </Link>
+                    <div className="hub-tool-footer">
+                      <span>{status}</span>
+                      <Link to={`/tools${path}`} aria-label={`${name} formats, privacy and limits`}>
+                        Details <ArrowRight size={14} aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </article>
+                )
+              )}
+            </div>
+          </section>
+
+          <HubListeningDesk />
+
+          <section className="hub-reading" aria-labelledby="hub-reading-title">
+            <div className="hub-section-heading">
+              <h2 id="hub-reading-title">
+                <Library size={18} aria-hidden="true" /> Field notes
+              </h2>
+              <Link to="/guides" className="hub-text-link">
+                All guides <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="hub-reading-grid">
+              {reading.map(({ path, category, title, detail }) => (
+                <Link key={path} to={path} className="hub-reading-link">
+                  <span className="hub-eyebrow">{category}</span>
+                  <h3>
+                    {title}
+                    <ArrowUpRight size={20} aria-hidden="true" />
+                  </h3>
+                  <p>{detail}</p>
+                </Link>
               ))}
             </div>
           </section>
+
+          <section className="hub-horizon" aria-labelledby="hub-horizon-title">
+            <div className="hub-section-heading">
+              <h2 id="hub-horizon-title">On the horizon</h2>
+              <span>Planned projects</span>
+            </div>
+            <ul>
+              {upcoming.map(({ name, detail, icon: Icon }) => (
+                <li key={name}>
+                  <Icon size={20} aria-hidden="true" />
+                  <div>
+                    <h3>{name}</h3>
+                    <p>{detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <div className="hub-bottom-links">
+            <Link to="/privacy">Privacy choices</Link>
+            <Link to="/services">
+              Visit the real-world Sattari <ArrowUpRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
-      </section>
+      </div>
     </>
   );
 }

@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
-import { SourceWindowPool } from './windowedSource';
+import { SourceWindowPool, describeAudioSource } from './windowedSource';
+import { preparedTransport, prepareDeckAudio, cancelPreparedTransport } from './preparedTransport';
 import { TIMED_PARAMETERS, parameterRamp } from './performanceClock';
 import { LiveInput } from './liveInput';
 import { audioLatency } from './sessionTelemetry';
@@ -229,13 +230,17 @@ export class StudioAudioEngine {
           // Transport promises record only after successful application.
           if (result?.then)
             result.then(
-              () => {
-                if (captureStartedAt != null && this.performanceStartedAt === captureStartedAt)
+              (value) => {
+                if (
+                  value !== false &&
+                  captureStartedAt != null &&
+                  this.performanceStartedAt === captureStartedAt
+                )
                   this.capturePerformanceEvent(name, args);
               },
               () => {}
             );
-          else this.capturePerformanceEvent(name, args);
+          else if (result !== false) this.capturePerformanceEvent(name, args);
         } finally {
           this.performanceParameterTime = previousTime;
         }
@@ -263,8 +268,14 @@ export class StudioAudioEngine {
             this.performanceEvents.push(event);
             this.performanceJournal?.append(event);
           };
-          if (result?.then) result.then(confirmed, () => {});
-          else confirmed();
+          if (result?.then)
+            result.then(
+              (value) => {
+                if (value !== false) confirmed();
+              },
+              () => {}
+            );
+          else if (result !== false) confirmed();
         }
         return result;
       };
@@ -291,9 +302,12 @@ export class StudioAudioEngine {
     event.frame = Math.round(event.time * event.sampleRate);
     event.sequence = this.performanceEvents.length;
     if (TIMED_PARAMETERS.has(type)) {
+      const loopTime = ['setLoop', 'setLoopRegion'].includes(type)
+        ? this.decks.get(args[0])?.loopTransitionTime
+        : undefined;
       event.scheduledTime = Math.max(
         0,
-        (this.performanceParameterTime ?? Tone.now()) - this.performanceStartedAt
+        (loopTime ?? this.performanceParameterTime ?? Tone.now()) - this.performanceStartedAt
       );
       event.scheduledFrame = Math.round(event.scheduledTime * event.sampleRate);
     }
@@ -457,6 +471,19 @@ export class StudioAudioEngine {
     const token = Symbol(loadKey);
     this.pendingLaneLoads.set(loadKey, token);
 
+    // Ordinary imports and restored assets use the same bounded source path as replay.
+    // Describe before constructing DSP so invalid media cannot leak an unused graph.
+    if (typeof Blob !== 'undefined' && url instanceof Blob) {
+      try {
+        url = await describeAudioSource(url);
+        if (this.disposed || this.pendingLaneLoads.get(loadKey) !== token)
+          throw new Error('Audio load was superseded.');
+      } catch (error) {
+        if (this.pendingLaneLoads.get(loadKey) === token) this.pendingLaneLoads.delete(loadKey);
+        throw error;
+      }
+    }
+
     const laneGain = new Tone.Gain(1).connect(deck.input);
     const laneDelay = new Tone.FeedbackDelay({
       delayTime: '8n',
@@ -531,6 +558,8 @@ export class StudioAudioEngine {
 
   removeLane(deckId, laneId) {
     const deck = this.decks.get(deckId);
+    this.pendingLaneLoads?.delete(`${deckId}:${laneId}`);
+    if (deck) cancelPreparedTransport(deck);
     const lane = deck?.lanes.get(laneId);
     if (!lane) return;
     lane.player.stop();
@@ -545,8 +574,8 @@ export class StudioAudioEngine {
     parameterRamp(this, this.master.gain, masterGain(level), 0.04);
   }
 
-  setMasterProcessing(value) {
-    this.setMasterStems?.(value?.stems);
+  setMasterProcessing(value, { applyStems = true } = {}) {
+    if (applyStems) this.setMasterStems?.(value?.stems);
     const settings = normalizeMasterProcessing(value);
     this.masterInserts?.update(settings.effects || []);
     parameterRamp(this, this.masterInputTrim.gain, trimGain(settings.inputTrim), 0.04);
@@ -777,61 +806,108 @@ export class StudioAudioEngine {
   }
 
   setLoop(deckId, enabled, bpm) {
-    const deck = this.decks.get(deckId);
-    if (!deck) return;
-    deck.looping = enabled;
-    deck.loopStart = 0;
-    deck.loopEnd = Math.max(0.25, (60 / Math.max(1, bpm)) * 4);
-    this.applyLoop(deckId);
+    return StudioAudioEngine.prototype.setLoopRegion.call(
+      this,
+      deckId,
+      enabled,
+      0,
+      Math.max(0.25, (60 / Math.max(1, bpm)) * 4)
+    );
   }
 
   setLoopRegion(deckId, enabled, start, end) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    deck.looping = enabled;
-    deck.loopStart = Math.max(0, Number(start) || 0);
-    deck.loopEnd = Math.max(deck.loopStart + 0.05, Number(end) || deck.loopStart + 1);
-    this.applyLoop(deckId);
+    const loopStart = Math.max(0, Number(start) || 0);
+    const loopEnd = Math.max(loopStart + 0.05, Number(end) || loopStart + 1);
+    const apply = () => {
+      deck.looping = enabled;
+      deck.loopStart = loopStart;
+      deck.loopEnd = loopEnd;
+      this.applyLoop(deckId);
+      return true;
+    };
+    return preparedTransport(this, deck, this.getDeckPosition(deckId), apply, {
+      loop: !!enabled,
+      loopStart,
+      loopEnd,
+    });
   }
 
-  applyLoop(deckId) {
+  applyLoop(deckId, when = Tone.now()) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
+    deck.loopTransitionTime = when;
     deck.lanes.forEach((lane) => {
+      if (lane.player.scheduleLoop) {
+        const loopStart = Math.min(Math.max(0, lane.duration - 0.001), deck.loopStart);
+        lane.player.scheduleLoop(
+          {
+            loop: deck.looping,
+            loopStart,
+            loopEnd: Math.min(lane.duration, Math.max(loopStart + 0.001, deck.loopEnd)),
+          },
+          when
+        );
+        return;
+      }
       lane.player.loop = deck.looping;
       if (deck.looping) {
-        lane.player.loopStart = deck.loopStart;
-        lane.player.loopEnd = Math.min(lane.duration, deck.loopEnd);
+        lane.player.loopStart = Math.min(Math.max(0, lane.duration - 0.001), deck.loopStart);
+        lane.player.loopEnd = Math.min(
+          lane.duration,
+          Math.max(lane.player.loopStart + 0.001, deck.loopEnd)
+        );
       }
     });
   }
 
   async playDeck(deckId, offset = null, when = undefined) {
+    const initialDeck = this.decks?.get(deckId);
+    const generation = initialDeck?.transportGeneration;
     await this.unlock();
     const deck = this.decks.get(deckId);
     if (!deck || !deck.lanes.size) return false;
+    if (deck !== initialDeck || deck.transportGeneration !== generation) return false;
     if (deck.playing) return true;
     const requestedOffset = offset === null ? deck.offset : offset;
-    const startTime = when ?? Tone.now() + 0.035;
-
-    deck.lanes.forEach((lane) => {
-      const safeOffset = lane.duration ? requestedOffset % lane.duration : 0;
-      // Tone 15 GrainPlayer converts the start offset to ticks using its
-      // rate-scaled grain interval, then reads ticks * unscaled grainSize.
-      // Compensate here so our public transport always uses SOURCE seconds.
-      lane.player.start(startTime, safeOffset / deck.playbackRate);
-    });
-    deck.offset = requestedOffset;
-    deck.startedAt = startTime;
-    deck.playing = true;
-    markTransport(deck, 'play', startTime);
-    return true;
+    return preparedTransport(
+      this,
+      deck,
+      requestedOffset,
+      () => {
+        const startTime = Math.max(when ?? 0, Tone.now() + 0.035);
+        deck.lanes.forEach((lane) => {
+          const safeOffset = lane.duration ? requestedOffset % lane.duration : 0;
+          // Tone 15 GrainPlayer converts the start offset to ticks using its
+          // rate-scaled grain interval, then reads ticks * unscaled grainSize.
+          // Compensate here so our public transport always uses SOURCE seconds.
+          lane.player.start(startTime, safeOffset / deck.playbackRate);
+        });
+        deck.offset = requestedOffset;
+        deck.startedAt = startTime;
+        deck.playing = true;
+        markTransport(deck, 'play', startTime);
+        return true;
+      },
+      undefined,
+      { restart: true }
+    );
   }
 
   async alignDeck(deckId, grid, reference, tempo, start = false) {
+    const originalDeck = this.decks.get(deckId);
+    const originalGeneration = originalDeck?.transportGeneration;
     await this.unlock();
     const deck = this.decks.get(deckId);
     if (!deck?.lanes.size) return false;
+    if (deck !== originalDeck || deck.transportGeneration !== originalGeneration) return false;
+    const generation = deck.transportGeneration;
+    const positionBeforePrepare = this.getDeckPosition(deckId);
+    const margin = (60 / Math.max(20, grid.bpm)) * (grid.syncQuantum === 4 ? 4 : 1);
+    await prepareDeckAudio(deck, Math.max(0, positionBeforePrepare - margin));
+    await prepareDeckAudio(deck, positionBeforePrepare + margin);
+    if (this.disposed || deck.transportGeneration !== generation) return false;
     const now = Tone.now(),
       when = now + 0.06;
     const master = reference && this.decks.get(reference.id);
@@ -892,6 +968,7 @@ export class StudioAudioEngine {
 
   pauseDeck(deckId) {
     const deck = this.decks.get(deckId);
+    if (deck) cancelPreparedTransport(deck);
     if (!deck?.playing) return;
     deck.offset = this.getDeckPosition(deckId);
     const when = Tone.now();
@@ -903,6 +980,7 @@ export class StudioAudioEngine {
   stopDeck(deckId, reset = true) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
+    cancelPreparedTransport(deck);
     const position = this.getDeckPosition(deckId);
     const when = Tone.now();
     deck.lanes.forEach((lane) => lane.player.stop(when));
@@ -914,24 +992,41 @@ export class StudioAudioEngine {
   seekDeck(deckId, seconds) {
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    const when = Tone.now() + 0.035;
-    deck.offset = Math.max(0, Number(seconds) || 0);
-    // One atomic seek, not a nested stop plus asynchronous play with three
-    // contradictory confirmations and a gap in the captured transport history.
-    if (deck.playing)
-      for (const lane of deck.lanes.values()) {
-        lane.player.stop(when);
-        lane.player.start(
-          when,
-          lane.duration ? (deck.offset % lane.duration) / deck.playbackRate : 0
-        );
-      }
-    deck.startedAt = when;
-    markTransport(deck, 'seek', when);
+    const position = Math.max(0, Number(seconds) || 0);
+    return preparedTransport(
+      this,
+      deck,
+      position,
+      () => {
+        const when = Tone.now() + 0.035;
+        deck.offset = position;
+        // One atomic seek, not a nested stop plus asynchronous play with three
+        // contradictory confirmations and a gap in the captured transport history.
+        if (deck.playing)
+          for (const lane of deck.lanes.values()) {
+            lane.player.stop(when);
+            lane.player.start(
+              when,
+              lane.duration ? (deck.offset % lane.duration) / deck.playbackRate : 0
+            );
+          }
+        deck.startedAt = when;
+        markTransport(deck, 'seek', when);
+        return true;
+      },
+      undefined,
+      { restart: deck.playing }
+    );
   }
 
   async playAll() {
+    const candidates = [...this.decks.values()];
+    const generations = candidates.map((deck) => deck.transportGeneration);
     await this.unlock();
+    if (this.disposed || candidates.some((deck, i) => deck.transportGeneration !== generations[i]))
+      return [];
+    await Promise.all(candidates.map((deck) => prepareDeckAudio(deck, deck.offset || 0)));
+    if (candidates.some((deck, i) => deck.transportGeneration !== generations[i])) return [];
     const startTime = Tone.now() + 0.055;
     const ids = [...this.decks.keys()];
     const results = await Promise.all(ids.map((deckId) => this.playDeck(deckId, null, startTime)));
@@ -971,6 +1066,21 @@ export class StudioAudioEngine {
 
   isDeckPlaying(deckId) {
     return Boolean(this.decks.get(deckId)?.playing);
+  }
+
+  getDeckTransportStatus(deckId) {
+    const deck = this.decks.get(deckId);
+    if (!deck) return { playing: false, preparing: false, error: null };
+    const failure = [...deck.lanes.values()].find((lane) => lane.player.failure)?.player.failure;
+    if (failure && deck.playing) {
+      this.pauseDeck(deckId);
+      deck.transportError = failure.message;
+    }
+    return {
+      playing: deck.playing,
+      preparing: !!deck.preparing,
+      error: deck.transportError || null,
+    };
   }
 
   getMeterLevel() {

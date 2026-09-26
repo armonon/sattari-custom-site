@@ -102,5 +102,11 @@ export async function decodeTrack(file, signal) {
     throw new Error('Export a mono or stereo mix first; surround audio is not supported.');
   const left = buffer.getChannelData(0).slice();
   const right = buffer.getChannelData(buffer.numberOfChannels > 1 ? 1 : 0).slice();
-  return { left, right, duration: buffer.duration, peaks: waveformPeaks([left, right]) };
+  return {
+    left,
+    right,
+    channels: buffer.numberOfChannels,
+    duration: buffer.duration,
+    peaks: waveformPeaks([left, right]),
+  };
 }

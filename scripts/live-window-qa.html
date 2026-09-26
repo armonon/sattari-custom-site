@@ -1,0 +1,108 @@
+<!doctype html><meta charset="utf-8" /><title>
+  Bounded live import and transport qualification
+</title>
+<pre id="result">Running live source acceptance…</pre>
+<script type="module">
+  import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+  import { analyzeAudioFile } from '/src/utils/audioAnalysis.js';
+  const assert = (value, message) => {
+    if (!value) throw Error(message);
+  };
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const checks = [];
+  let engine;
+  try {
+    const blob = await (await fetch('/scripts/fixtures/three-minute-source.m4a')).blob();
+    // A regression to whole-Blob reading must fail, not quietly allocate a song.
+    blob.arrayBuffer = () => {
+      throw Error('Whole-source read attempted');
+    };
+    const started = performance.now();
+    const analysis = await analyzeAudioFile(blob);
+    assert(
+      analysis.analysisCoverage?.wholeSourceDecoded === false,
+      'Analysis used whole-source PCM'
+    );
+    assert(
+      Math.abs(analysis.analysisCoverage.seconds - analysis.duration) < 0.01,
+      'Analysis skipped source samples'
+    );
+    assert(analysis.waveform.length === 96, 'Missing complete waveform');
+    checks.push({
+      fullTrackAnalysisSeconds: analysis.duration,
+      analysisMs: performance.now() - started,
+      coverage: analysis.analysisCoverage,
+    });
+    engine = new StudioAudioEngine({ monitor: false });
+    engine.setMasterLevel(30);
+    for (const deck of ['A', 'B'])
+      for (const stem of ['vocals', 'drums', 'bass', 'other']) {
+        await engine.loadLane(deck, 'center', stem, blob);
+        engine.setLaneState(deck, stem, { level: 50 });
+        assert(
+          engine.decks.get(deck).lanes.get(stem).player.source?.kind === 'windowed-audio',
+          'Live lane used a whole-song player'
+        );
+      }
+    assert((await engine.playAll()).length === 2, 'Both decks did not start');
+    await sleep(800);
+    const before = performance.now();
+    await Promise.all(['A', 'B'].map((id) => engine.seekDeck(id, 150)));
+    const seekMs = performance.now() - before;
+    assert(engine.getDeckPosition('A') >= 150, 'Cold seek did not commit');
+    assert(engine.getDeckPosition('B') >= 150, 'Second deck seek did not commit');
+    await engine.setLoopRegion('A', true, 75, 77);
+    // The generated fixture contains gaps between transients. Measure across
+    // the loop, not one arbitrary silent sample of the smoothed meter.
+    let level = 0;
+    for (let sample = 0; sample < 36; sample++) {
+      await sleep(50);
+      level = Math.max(level, Number(engine.getDeckMeterLevel('A')) || 0);
+    }
+    checks.push({
+      statuses: ['A', 'B'].map((id) => ({
+        id,
+        status: engine.getDeckTransportStatus(id),
+        lanes: [...engine.decks.get(id).lanes].map(([id, lane]) => ({
+          id,
+          failure: lane.player.failure?.message,
+          underrun: lane.player.lastUnderrun,
+          clockState: lane.player.state,
+        })),
+      })),
+    });
+    assert(Number(level) > 0.001, 'Live loop was silent');
+    await engine.setLoopRegion('A', false, 75, 77);
+    await sleep(500);
+    for (const id of ['A', 'B']) {
+      const status = engine.getDeckTransportStatus(id);
+      assert(!status.error && status.playing, `Deck ${id} failed: ${status.error}`);
+      for (const lane of engine.decks.get(id).lanes.values())
+        assert(lane.player.underruns === 0, 'Live source underrun');
+    }
+    assert(
+      engine.sourceWindowPool.peakBytes <= engine.sourceWindowPool.budget,
+      'Source pool exceeded admission budget'
+    );
+    checks.push({
+      decks: 2,
+      stereoSources: 8,
+      coldSeekMs: seekMs,
+      peakLevel: Number(level),
+      peakAdmittedBytes: engine.sourceWindowPool.peakBytes,
+      budgetBytes: engine.sourceWindowPool.budget,
+      sourceUnderruns: 0,
+    });
+    window.qaResult = {
+      pass: true,
+      checks,
+      physicalHardwareMeasured: false,
+      realMusicMeasured: false,
+    };
+  } catch (error) {
+    window.qaResult = { pass: false, checks, error: error.stack };
+  } finally {
+    engine?.dispose();
+  }
+  document.querySelector('#result').textContent = JSON.stringify(window.qaResult, null, 2);
+</script>

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Two stores: 'orders' (written by the Stripe webhook) and 'fulfillment'.

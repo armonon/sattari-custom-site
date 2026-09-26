@@ -1,5 +1,5 @@
 .ae-sequencer {
-  padding: 18px;
+  padding: 12px;
   background: #16191e;
   border: 1px solid #ffffff12;
   border-radius: 14px;
@@ -10,15 +10,15 @@
 .ae-beat-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .ae-sequencer-heading {
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 .ae-sequencer-heading strong {
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: -0.02em;
 }
 .ae-sequencer small {
@@ -27,15 +27,23 @@
   color: #a1a9b7;
   margin-top: 4px;
 }
-.ae-sequencer-actions button,
+.sd-studio-next .ae-sequencer .ae-sequencer-actions button,
 .ae-sequencer-actions select,
 .ae-beat-toolbar button,
 .ae-beat-toolbar select {
-  min-height: 34px;
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 12px;
 }
-.ae-sequencer-actions input[type='number'] {
-  width: 64px;
-  min-height: 34px;
+.sd-studio-next .ae-sequencer .ae-sequencer-actions label {
+  flex-direction: row;
+  align-items: center;
+  font-size: 12px;
+}
+.sd-studio-next .ae-sequencer .ae-sequencer-actions input[type='number'] {
+  width: 52px;
+  min-height: 30px;
+  padding: 4px;
 }
 .ae-beat-toolbar {
   padding: 10px 0;
@@ -44,14 +52,15 @@
   overflow-x: auto;
 }
 .ae-sequencer-grid {
-  min-width: 690px;
+  min-width: 544px;
+  max-width: 672px;
 }
 .ae-sequencer-row {
   display: grid;
-  grid-template-columns: 112px repeat(16, minmax(26px, 1fr));
-  gap: 5px;
+  grid-template-columns: 96px repeat(16, minmax(24px, 1fr));
+  gap: 4px;
   align-items: center;
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 .ae-sequencer-ruler {
   color: #919aab;
@@ -63,24 +72,26 @@
   text-align: left;
   letter-spacing: 0.12em;
 }
-.ae-sequencer .ae-sequencer-voice {
+.sd-studio-next .ae-sequencer .ae-sequencer-voice {
   text-align: left;
-  min-height: 40px;
+  height: 28px;
+  min-height: 28px;
   border: 0;
   background: transparent;
   color: #b5bdca;
   padding: 0 8px;
-  font-size: 12px;
+  font-size: 11px;
   border-left: 3px solid var(--lane-color);
   border-radius: 4px;
 }
-.ae-sequencer .ae-sequencer-voice[aria-pressed='true'] {
+.sd-studio-next .ae-sequencer .ae-sequencer-voice[aria-pressed='true'] {
   background: #ffffff0a;
   color: #fff;
 }
-.ae-sequencer .ae-sequencer-step {
+.sd-studio-next .ae-sequencer .ae-sequencer-step {
   position: relative;
-  height: 40px;
+  height: 28px;
+  min-height: 28px;
   min-width: 0;
   padding: 0;
   border: 1px solid #ffffff10;
@@ -88,15 +99,22 @@
   background: #262b34;
   box-shadow: inset 0 1px #ffffff08;
 }
-.ae-sequencer .ae-sequencer-step:nth-child(8n + 2),
-.ae-sequencer .ae-sequencer-step:nth-child(8n + 3),
-.ae-sequencer .ae-sequencer-step:nth-child(8n + 4),
-.ae-sequencer .ae-sequencer-step:nth-child(8n + 5) {
+.sd-studio-next .ae-sequencer .ae-sequencer-step:nth-child(8n + 2),
+.sd-studio-next .ae-sequencer .ae-sequencer-step:nth-child(8n + 3),
+.sd-studio-next .ae-sequencer .ae-sequencer-step:nth-child(8n + 4),
+.sd-studio-next .ae-sequencer .ae-sequencer-step:nth-child(8n + 5) {
   background: #303643;
 }
-.ae-sequencer .ae-sequencer-step[aria-pressed='true'] {
+.sd-studio-next .ae-sequencer .ae-sequencer-step[aria-pressed='true'] {
   background: var(--lane-color);
   border-color: transparent;
+}
+.sd-studio-next .ae-sequencer .ae-sequencer-step:hover:not(:disabled) {
+  border-color: var(--lane-color);
+  filter: brightness(1.15);
+}
+.sd-studio-next .ae-sequencer .ae-sequencer-step[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--lane-color);
 }
 .ae-sequencer-step span {
   position: absolute;
@@ -120,27 +138,63 @@
   opacity: 0.3;
 }
 .ae-sequencer-velocity {
-  padding-top: 12px;
+  padding-top: 8px;
   border-top: 1px solid #ffffff10;
   font-size: 11px;
 }
-.ae-sequencer-velocity input[type='range'] {
+.sd-studio-next .ae-sequencer-velocity input[type='range'] {
   writing-mode: vertical-lr;
   direction: rtl;
   width: 100%;
-  height: 52px;
+  height: 40px;
   min-height: 0;
+  padding: 0;
   accent-color: #92aea9;
   cursor: ns-resize;
 }
 .ae-sequencer-velocity input:disabled {
   opacity: 0.15;
 }
-.ae-sequencer footer {
-  margin-top: 12px;
+.ae-sequencer .ae-sequencer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
   font-size: 11px;
   color: #9ca6b5;
   line-height: 1.6;
+}
+.ae-sequencer-continue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.sd-studio-next .ae-sequencer .ae-sequencer-add-bar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #baf4e6;
+  border-color: #9de7d744;
+  background: #9de7d713;
+}
+@media (pointer: coarse) {
+  .sd-studio-next .ae-sequencer :is(.ae-sequencer-step, .ae-sequencer-voice) {
+    height: 36px;
+    min-height: 36px;
+  }
+  .sd-studio-next .ae-sequencer .ae-sequencer-add-bar,
+  .sd-studio-next .ae-sequencer .ae-sequencer-actions button {
+    min-height: 44px;
+  }
 }
 @media (max-width: 700px) {
   .ae-sequencer {
@@ -148,5 +202,8 @@
   }
   .ae-sequencer-heading {
     align-items: flex-start;
+  }
+  .ae-sequencer .ae-sequencer-footer {
+    flex-wrap: wrap;
   }
 }

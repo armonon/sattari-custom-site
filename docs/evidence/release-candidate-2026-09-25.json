@@ -1,0 +1,63 @@
+{
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 25769803776
+  },
+  "commit": "604fa8061c966d22db742f1af02889bbe8957058",
+  "sourceHash": "aa541f09215773b99554460d1d262c784ab053fcc33ce7d785c42483f40f6554",
+  "unchanged": true,
+  "at": "2026-09-26T02:06:35.659Z",
+  "softwarePassed": false,
+  "audioChecked": false,
+  "builtArtifactUiChecked": false,
+  "releaseApproved": false,
+  "results": [
+    {
+      "name": "lint",
+      "status": 0,
+      "seconds": 78.04,
+      "hostBefore": {
+        "loadAverage": [
+          16.80029296875,
+          26.4921875,
+          26.35888671875
+        ],
+        "freeMemoryBytes": 364118016
+      },
+      "hostAfter": {
+        "loadAverage": [
+          35.220703125,
+          30.00732421875,
+          27.7001953125
+        ],
+        "freeMemoryBytes": 1451687936
+      }
+    },
+    {
+      "name": "unit",
+      "status": 1,
+      "seconds": 609.497,
+      "hostBefore": {
+        "loadAverage": [
+          35.220703125,
+          30.00732421875,
+          27.7001953125
+        ],
+        "freeMemoryBytes": 1451704320
+      },
+      "hostAfter": {
+        "loadAverage": [
+          15.49267578125,
+          30.9541015625,
+          33.216796875
+        ],
+        "freeMemoryBytes": 1394884608
+      }
+    }
+  ],
+  "output": "/tmp/stemdeck-release-hardened-final",
+  "artifact": null
+}

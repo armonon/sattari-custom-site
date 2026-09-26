@@ -310,14 +310,12 @@ describe('SattariStudioPage', () => {
           </MemoryRouter>
         </HelmetProvider>
       );
+      await waitFor(() => expect(screen.getByLabelText('Record live set')).toBeEnabled());
+      fireEvent.click(screen.getByLabelText('Record live set'));
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Record live set' })).toBeEnabled()
+        expect(screen.getByLabelText('Stop recording live set')).toBeInTheDocument()
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Record live set' }));
-      await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Stop recording live set' })).toBeInTheDocument()
-      );
-      fireEvent.click(screen.getByRole('button', { name: 'Stop recording live set' }));
+      fireEvent.click(screen.getByLabelText('Stop recording live set'));
       await waitFor(() =>
         expect(screen.getByRole('button', { name: 'Download unsaved take' })).toBeInTheDocument()
       );
@@ -327,7 +325,7 @@ describe('SattariStudioPage', () => {
       const closing = new Event('beforeunload', { cancelable: true });
       window.dispatchEvent(closing);
       expect(closing.defaultPrevented).toBe(true);
-      fireEvent.click(screen.getByRole('button', { name: 'Record live set' }));
+      fireEvent.click(screen.getByLabelText('Record live set'));
       expect(engineMethods.startRecording).toHaveBeenCalledOnce();
     } finally {
       click.mockRestore();
@@ -716,20 +714,23 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
     await screen.findByText('Local session');
-    fireEvent.click(screen.getByRole('button', { name: 'Library', exact: true }));
+    const navigation = within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' }));
+    fireEvent.click(navigation.getByRole('button', { name: 'Library', exact: true }));
     expect(screen.queryByRole('region', { name: 'Master output status' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Current session audio & recordings'));
-    fireEvent.click(screen.getByRole('button', { name: /Stem lanes/ }));
+    const summary = screen.getByText('Current session audio & recordings');
+    const sessionAudio = within(summary.closest('details'));
+    fireEvent.click(summary);
+    fireEvent.click(sessionAudio.getByRole('button', { name: /Stem lanes/ }));
     expect(screen.getByText('No separated stems loaded')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Second track/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Recordings/ }));
+    expect(sessionAudio.queryByRole('button', { name: /Second track/ })).not.toBeInTheDocument();
+    fireEvent.click(sessionAudio.getByRole('button', { name: /Recordings/ }));
     expect(screen.getByText('No recordings yet')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Session audio/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Second track/ }));
+    fireEvent.click(sessionAudio.getByRole('button', { name: /Session audio/ }));
+    fireEvent.click(sessionAudio.getByRole('button', { name: /Second track/ }));
     expect(screen.getByRole('article', { name: 'Deck B' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Master output status' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Master inspector' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Perform', exact: true })).toHaveAttribute(
+    expect(navigation.getByRole('button', { name: 'Perform', exact: true })).toHaveAttribute(
       'aria-current',
       'page'
     );

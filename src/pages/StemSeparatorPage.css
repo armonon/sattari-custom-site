@@ -429,7 +429,7 @@
 .separator-results {
   padding: 16px 0 0 32px;
 }
-.separator-results summary {
+.separator-results > summary {
   cursor: pointer;
   font-size: 11px;
   color: var(--sep-muted);
@@ -476,6 +476,106 @@
   display: flex;
   justify-content: flex-end;
   padding-top: 6px;
+}
+.separator-song-analysis {
+  margin: 20px 0 0 32px;
+  border-left: 2px solid var(--sep-accent);
+  padding: 2px 0 2px 16px;
+}
+.separator-analysis {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+.separator-analysis h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 15px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.separator-analysis h4 span {
+  color: var(--sep-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+.separator-musical-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.3fr);
+  gap: 12px;
+  margin: 0;
+}
+.separator-musical-stats dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--sep-muted);
+  margin-bottom: 7px;
+}
+.separator-musical-stats dd {
+  margin: 0;
+  color: var(--sep-text);
+  font-size: 19px;
+  font-weight: 550;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.separator-musical-stats dd span,
+.separator-note-stat dd {
+  font-size: 12px;
+  font-weight: 450;
+}
+.separator-musical-stats small {
+  display: block;
+  color: var(--sep-muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+.separator-analysis-details {
+  margin-top: 12px;
+}
+.separator-analysis-details summary {
+  color: var(--sep-muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.separator-signal-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.separator-signal-stats dt,
+.separator-analysis-details p {
+  font-size: 10px;
+  color: var(--sep-muted);
+  line-height: 1.6;
+}
+.separator-signal-stats dd {
+  font-size: 11px;
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+.separator-analysis-details p {
+  margin: 8px 0;
+  max-width: 75ch;
+}
+.separator-report-download {
+  margin-top: 10px;
+}
+.separator-analysis.is-compact {
+  padding: 2px 0 5px;
+}
+.is-compact .separator-musical-stats dd {
+  font-size: 13px;
+}
+.separator-analysis-unavailable {
+  grid-column: 1 / -1;
+  color: var(--sep-muted);
+  font-size: 11px;
 }
 .separator-actions {
   display: flex;
@@ -650,6 +750,19 @@
   }
   .separator-results {
     padding-left: 0;
+  }
+  .separator-song-analysis {
+    margin-left: 0;
+    padding-left: 12px;
+  }
+  .separator-musical-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .separator-note-stat {
+    grid-column: 1 / -1;
+  }
+  .separator-signal-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .separator-output {
     grid-template-columns: 85px minmax(0, 1fr) 32px;

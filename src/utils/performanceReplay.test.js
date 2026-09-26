@@ -38,6 +38,60 @@ const capture = () => ({
     { time: 5, type: 'deckTransport', args: ['A', { position: 14, playing: false, rate: 1 }] },
   ],
 });
+it('reconstructs loop boundaries at confirmed audible time after a save/reopen round trip', () => {
+  const take = capture();
+  take.timelineStart = 0;
+  take.duration = 2;
+  take.events = take.events.slice(0, 1);
+  take.events[0].args[0].decks[0].position = 0;
+  take.events.push({
+    type: 'setLoopRegion',
+    time: 1,
+    scheduledTime: 1.1,
+    sampleRate: 48000,
+    scheduledFrame: 52800,
+    args: ['A', true, 0, 0.5],
+  });
+  const saved = JSON.stringify(take);
+  const result = reconstructPerformance(emptyArrangement(), JSON.parse(saved));
+  expect(result.tracks[0].clips[0].duration).toBeCloseTo(1.1, 8);
+  expect(result.tracks[0].clips[1].start).toBeCloseTo(1.1, 8);
+  expect(JSON.stringify(take)).toBe(saved);
+});
+it('orders mix changes by audible time and excludes changes after the take ends', () => {
+  const take = capture();
+  take.timelineStart = 0;
+  take.duration = 3;
+  take.events = take.events.slice(0, 1);
+  take.events.push(
+    { type: 'setDeckGain', time: 0.8, scheduledTime: 1.2, args: ['A', 10] },
+    { type: 'setDeckGain', time: 1, scheduledTime: 1.1, args: ['A', 50] },
+    { type: 'setDeckGain', time: 2.9, scheduledTime: 3.1, args: ['A', 0] }
+  );
+  const result = reconstructPerformance(emptyArrangement(), take);
+  const points = result.tracks[0].automation.volume;
+  expect(points.some((p) => Math.abs(p.time - 1.125) < 1e-8)).toBe(true);
+  expect(points.at(-1).time).toBeCloseTo(1.225, 8);
+  expect(points.at(-1).value).toBeGreaterThan(0);
+  expect(points.every((p, i) => !i || p.time >= points[i - 1].time)).toBe(true);
+});
+it('preserves valid continuous automation when rapid knob moves interrupt a ramp', () => {
+  const take = capture();
+  take.timelineStart = 0;
+  take.events = take.events.slice(0, 1);
+  take.events.push(
+    { type: 'setDeckGain', time: 1, args: ['A', 0] },
+    { type: 'setDeckGain', time: 1.01, args: ['A', 100] },
+    { type: 'setDeckGain', time: 1.01, args: ['A', 50] }
+  );
+  const result = reconstructPerformance(emptyArrangement(), take);
+  const points = result.tracks[0].automation.volume;
+  expect(points.every((p, i) => !i || p.time > points[i - 1].time)).toBe(true);
+  const held = points.find((p) => p.time === 1.01);
+  expect(held.value).toBeGreaterThan(0);
+  expect(held.value).toBeLessThan(points[0].value);
+  expect(() => validateArrangement(result.project)).not.toThrow();
+});
 it('reopens stored events into editable source intervals and absolute gain automation', () => {
   const take = JSON.parse(JSON.stringify(capture()));
   const result = reconstructPerformance(emptyArrangement(), take);
@@ -65,6 +119,16 @@ it('reports unsupported effect replay without silently replacing the safety take
   const take = capture();
   take.events.push({ time: 2, type: 'setDeckFx', args: ['A', { echo: 40 }] });
   expect(reconstructPerformance(emptyArrangement(), take).warnings).toContain('setDeckFx');
+});
+
+it('uses the canonical editability report and warns about opening key-locked rate processing', () => {
+  const take = capture();
+  Object.assign(take.events[0].args[0].decks[0], { keyLock: true, playbackRate: 1.25 });
+  const result = reconstructPerformance(emptyArrangement(), take);
+  expect(result.support.qualified).toBe(false);
+  expect(result.warnings).toContain('Printed audio required: Opening key-locked tempo processing');
+  expect(result.tracks.every((track) => track.muted)).toBe(true);
+  expect(take.assetId).toBe('safety');
 });
 it('validates retained original event history and capture bounds when reopening', () => {
   const take = capture();

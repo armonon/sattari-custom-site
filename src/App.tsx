@@ -16,6 +16,7 @@ import {
   DownloadsPage,
   CheckoutStatus,
   HomePage,
+  AboutPage,
   InstagramCallback,
   LazyPage,
   LocalSeoPage,
@@ -79,7 +80,7 @@ const App: FC = () => {
   }, [cartOpen]);
 
   return (
-    <div className="site-shell">
+    <div className={`site-shell${location.pathname === '/' ? ' is-home' : ''}`}>
       <OrganizationSchema />
       {['/cart', '/checkout/success', '/checkout/cancel', '/instagram/callback'].includes(
         location.pathname
@@ -91,7 +92,7 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/studio', '/stem-separator'].includes(location.pathname) && <BackgroundMedia />}
+      {!['/', '/studio', '/stem-separator'].includes(location.pathname) && <BackgroundMedia />}
 
       {location.pathname !== '/studio' && <Navbar onCartClick={() => setCartOpen(true)} />}
 
@@ -181,6 +182,14 @@ const App: FC = () => {
             element={
               <LazyPage>
                 <HomePage />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <LazyPage>
+                <AboutPage />
               </LazyPage>
             }
           />
@@ -436,7 +445,7 @@ const App: FC = () => {
 
       {!isAudioWorkspace && <Footer />}
       <SiteMeasurement />
-      {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
+      {!isAudioWorkspace && !isResourcePage && location.pathname !== '/' && <ShopAssistant />}
     </div>
   );
 };

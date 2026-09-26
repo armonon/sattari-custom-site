@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { stockKey } from '../../src/utils/inventory.js';
 
@@ -6,9 +7,11 @@ const blobGetMock = vi.fn();
 const catalogGetMock = vi.fn();
 
 vi.mock('stripe', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    checkout: { sessions: { create: createSessionMock } },
-  })),
+  default: vi.fn().mockImplementation(function () {
+    return {
+      checkout: { sessions: { create: createSessionMock } },
+    };
+  }),
 }));
 
 vi.mock('@netlify/blobs', () => ({

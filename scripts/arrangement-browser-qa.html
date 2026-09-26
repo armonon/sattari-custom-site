@@ -3,7 +3,8 @@
 <h1>Arrangement native-audio verification</h1><p>Synthetic audio only. Uses this test origin’s storage, never your Studio session. Output is not sent to speakers.</p><button id="run">Run native audio checks</button><pre id="result" role="status">Ready</pre>
 <script type="module">
 import * as Tone from 'tone';
-import { ArrangementEngine } from '/src/utils/arrangementEngine.js';
+import { ArrangementEngine, arrangementMasterEqualizer } from '/src/utils/arrangementEngine.js';
+import { normalizeMasterProcessing } from '/src/utils/masterOutput.js';
 import { audioTrack, audioClip, emptyArrangement, splitClip } from '/src/utils/arrangementModel.js';
 import { peakOf, wavBytes } from '/src/utils/arrangementExport.js';
 import { clearExportFile } from '/src/utils/arrangementStreamExport.js';
@@ -22,6 +23,24 @@ button.addEventListener('click', async () => {
     asset = await putAudioAsset(new Blob([wavBytes(audio)], { type: 'audio/wav' }), { name: 'Synthetic arrangement QA.wav' });
     const project = emptyArrangement(), track = audioTrack('Test tone'); track.clips.push(audioClip(asset.id, 'Tone', 1, 1)); project.tracks.push(track);
     engine = new ArrangementEngine(context, sink);
+    await test('ordered offline EQ retains the original crossover response at 44.1 and 48 kHz', async () => {
+      for (const sampleRate of [44100, 48000]) {
+        const settings = normalizeMasterProcessing({ low: 6, mid: -3, high: 4, lowFrequency: 180, highFrequency: 4200 });
+        const renderEq = async (ordered) => {
+          const offline = new Tone.OfflineContext(2, .25, sampleRate), raw = offline.rawContext;
+          const eq = ordered ? arrangementMasterEqualizer(offline, settings) : new Tone.EQ3({ context: offline, ...settings });
+          const source = raw.createBufferSource(); source.buffer = raw.createBuffer(2, Math.round(.25 * sampleRate), sampleRate);
+          for (let c = 0; c < 2; c++) for (let i = 0; i < source.buffer.length; i++)
+            source.buffer.getChannelData(c)[i] = i === 0 ? .5 : .05 * Math.sin(2 * Math.PI * (c ? 3300 : 110) * i / sampleRate);
+          Tone.connect(source, eq.input); Tone.connect(eq.output, raw.destination); source.start(0);
+          try { return (await offline.render(false)).get(); }
+          finally { source.disconnect(); eq.dispose(); offline.dispose(); }
+        };
+        const a = await renderEq(false), b = await renderEq(true); let error = 0;
+        for (let c = 0; c < 2; c++) for (let i = 0; i < a.length; i++) error = Math.max(error, Math.abs(a.getChannelData(c)[i] - b.getChannelData(c)[i]));
+        assert(error < 2e-6, `EQ response changed at ${sampleRate}: ${error}`);
+      }
+    });
     await test('real offline audio has the correct silent gap, duration, gain and stop', async () => {
       const rendered = await engine.render(project, {}, track.id), pcm = rendered.getChannelData(0);
       assert(Math.abs(rendered.duration - 2.1) < .001, `wrong duration ${rendered.duration}`);

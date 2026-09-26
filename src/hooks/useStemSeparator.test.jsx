@@ -75,6 +75,45 @@ it('continues after a bad file and retries only that file', async () => {
   expect(separate).toHaveBeenCalledTimes(2);
 });
 
+it('keeps song analysis before separation completes and individual stem measurements afterward', async () => {
+  const song = { status: 'ready', key: 'C major', bpm: 120 };
+  const stem = { status: 'ready', key: 'A minor', bpm: 60 };
+  let finish;
+  separate.mockImplementationOnce((_audio, _stems, _signal, _progress, onAnalysis) => {
+    onAnalysis(song);
+    return new Promise((resolve) => {
+      finish = resolve;
+    });
+  });
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('one.wav')]));
+  let run;
+  act(() => {
+    run = result.current.run();
+  });
+  await waitFor(() => expect(result.current.jobs[0].analysis).toEqual(song));
+  expect(result.current.jobs[0].status).toBe('processing');
+  await act(async () => {
+    finish([{ ...outputs(['bass'])[0], analysis: stem }]);
+    await run;
+  });
+  expect(result.current.jobs[0].outputs[0].analysis).toEqual(stem);
+  expect(result.current.jobs[0].analysis).toEqual(song);
+});
+
+it('does not lose song analysis if the model fails to load', async () => {
+  separate.mockImplementationOnce(async (_audio, _stems, _signal, _progress, onAnalysis) => {
+    onAnalysis({ status: 'ready', bpm: 120 });
+    throw new Error('Model download failed');
+  });
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('one.wav')]));
+  await act(async () => {
+    await result.current.run();
+  });
+  expect(result.current.jobs[0]).toMatchObject({ status: 'error', analysis: { bpm: 120 } });
+});
+
 it('cancels the active file, preserves pending files, and can resume', async () => {
   separate.mockImplementationOnce(
     (_audio, _stems, signal) =>

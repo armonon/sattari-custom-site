@@ -1,23 +1,17 @@
 // Capability labels describe stored data, not an unearned audio-parity guarantee.
 // Full Editable is deliberately reserved until source/replay qualification exists.
+import { performanceSupportForTake } from './performanceSupport';
+
 export function takeCapabilities(capture) {
   const events = (capture.events || []).filter((event) => !event.disabled);
   const initial = events.find((event) => event.type === 'initialState')?.args?.[0];
   const actions = events.filter((event) => event.type !== 'initialState');
   const types = new Set(actions.map((event) => event.type));
-  const editable = [];
-  if (initial?.decks?.length) editable.push('Decks');
-  if ([...types].some((type) => /Gain|Fader|Crossfader|Level|Eq|MasterStems/.test(type)))
-    editable.push('Mixer');
-  if ([...types].some((type) => /Fx|Filter|Processing|Assist|Limiter/.test(type)))
-    editable.push('FX');
-  if (types.has('setLoop') || types.has('setLoopRegion')) editable.push('Loops');
-  if (types.has('inputState'))
-    editable.push(initial?.inputCaptureVersion === 1 ? 'Input processing' : 'Input history');
+  const support = performanceSupportForTake(capture);
   const limits = [];
   if (initial)
     limits.push(
-      'Pitch, loop, source and some effect changes still use measured real-time dispatch; exact replay is not certified.'
+      'Fixed-source transport and supported pitch changes can use audio-clock scheduling. Source changes and some effects still use real-time dispatch; exhaustive exact replay is not qualified.'
     );
   if (initial?.decks?.some((deck) => deck.playing))
     limits.push('Opening effect tails and grain phase may differ.');
@@ -34,7 +28,9 @@ export function takeCapabilities(capture) {
   return {
     label: initial ? 'Performance Take' : 'Audio Take',
     actions: actions.length,
-    editable,
+    editable: support.editable,
+    printed: support.printed,
+    support,
     safety: !!(capture.assetId || capture.sourceCaptureId),
     limits,
   };

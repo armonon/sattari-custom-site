@@ -13,7 +13,6 @@ export function canScheduleMix(events) {
   return !events.some(
     (event) =>
       event.type === 'removeLane' ||
-      event.type === 'setMasterProcessing' ||
       (event.type === 'setLaneState' &&
         Object.keys(event.args[2] || {}).some((key) => !['level', 'muted', 'solo'].includes(key)))
   );
@@ -49,11 +48,13 @@ export function mixAutomation(initial) {
     if (deck && type === 'setDeckSide') deck.side = value;
     if (deck?.lanes[value] && type === 'setLaneState') Object.assign(deck.lanes[value], updates);
     if (type === 'setMasterStems') state.stems = normalizeMasterStems(id);
+    if (type === 'setMasterProcessing') state.stems = normalizeMasterStems(id?.stems);
     const ramps = [];
-    const global = ['setCrossfader', 'setCrossfaderCurve', 'setMasterStems'].includes(type);
+    const stemChange = ['setMasterStems', 'setMasterProcessing'].includes(type);
+    const global = stemChange || ['setCrossfader', 'setCrossfaderCurve'].includes(type);
     for (const [deckId, current] of state.decks) {
       if (!global && deckId !== id) continue;
-      if (type === 'setLaneState' || type === 'setMasterStems') {
+      if (type === 'setLaneState' || stemChange) {
         const solo = Object.values(current.lanes).some((lane) => lane.solo);
         for (const [laneId, lane] of Object.entries(current.lanes)) {
           const gain =
@@ -73,7 +74,7 @@ export function mixAutomation(initial) {
         });
       }
     }
-    if (type === 'setMasterStems')
+    if (stemChange)
       ramps.push({ target: 'unseparated', value: masterStemGain(state.stems, 'unseparated') });
     return ramps;
   };

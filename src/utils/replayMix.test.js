@@ -23,13 +23,24 @@ it('compiles ordered fader/crossfader and stem solo edits from independent futur
   ).toBe(true);
   expect(initial.decks[0].lanes.vocals).toEqual({ level: 100 });
 });
-it('does not schedule gain automation across source or topology mutations', () => {
+it('keeps gain automation independent of inserts but rejects lane source mutations', () => {
   expect(canScheduleMix([{ type: 'setLaneState', args: ['A', 'vocals', { level: 120 }] }])).toBe(
     true
   );
   expect(
     canScheduleMix([{ type: 'setLaneState', args: ['A', 'vocals', { assetId: 'new' }] }])
   ).toBe(false);
-  expect(canScheduleMix([{ type: 'setMasterProcessing', args: [{}] }])).toBe(false);
+  expect(canScheduleMix([{ type: 'setMasterProcessing', args: [{}] }])).toBe(true);
   expect(canScheduleMix([{ type: 'removeLane', args: ['A', 'vocals'] }])).toBe(false);
+});
+
+it('includes embedded master-stem state in order across insert topology changes', () => {
+  const compile = mixAutomation({ decks: [{ id: 'A', lanes: { vocals: { level: 100 } } }] });
+  const first = compile({
+    type: 'setMasterProcessing',
+    args: [{ stems: { vocals: { level: 40 } } }],
+  });
+  expect(first[0].value).toBe(0.4);
+  expect(compile({ type: 'setMasterStems', args: [{ vocals: { level: 80 } }] })[0].value).toBe(0.8);
+  expect(compile({ type: 'setMasterProcessing', args: [{}] })[0].value).toBe(1);
 });

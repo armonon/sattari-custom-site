@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { arrangementId } from '../../utils/arrangementModel';
 import './ArrangementSequencer.css';
 
@@ -28,6 +29,7 @@ export default function ArrangementSequencer({
   const pages = Math.max(1, Math.ceil((clip.duration - 0.000001) / bar));
   const currentPage = Math.min(page, pages - 1);
   const start = currentPage * bar;
+  const canExtend = (pages + 1) * bar <= 86400;
   const hits = useMemo(() => {
     const result = new Map();
     clip.notes.forEach((note, index) => {
@@ -48,6 +50,7 @@ export default function ArrangementSequencer({
 
   useEffect(() => {
     if (!playing || !positionRef) return;
+    const element = grid.current;
     let frame;
     let previous = -1;
     const tick = () => {
@@ -57,7 +60,7 @@ export default function ArrangementSequencer({
           ? Math.floor((local - start) / unit)
           : -1;
       if (previous !== index) {
-        grid.current?.querySelectorAll('[data-step]').forEach((element) => {
+        element?.querySelectorAll('[data-step]').forEach((element) => {
           element.dataset.playing = Number(element.dataset.step) === index ? 'true' : 'false';
         });
         previous = index;
@@ -67,7 +70,7 @@ export default function ArrangementSequencer({
     frame = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(frame);
-      grid.current?.querySelectorAll('[data-playing]').forEach((element) => {
+      element?.querySelectorAll('[data-playing]').forEach((element) => {
         element.dataset.playing = 'false';
       });
     };
@@ -101,6 +104,12 @@ export default function ArrangementSequencer({
         time: destination + note.time - start,
       }));
     onChange({ duration: destination + bar, notes: [...clip.notes, ...notes] });
+    setPage(pages);
+  };
+  const addBar = () => {
+    if (disabled || !canExtend) return;
+    // Leave existing hits (including free-timed notes) untouched and open a blank bar.
+    onChange({ duration: (pages + 1) * bar });
     setPage(pages);
   };
 
@@ -145,7 +154,7 @@ export default function ArrangementSequencer({
           >
             ›
           </button>
-          <button type="button" disabled={disabled || (pages + 1) * bar > 86400} onClick={copyBar}>
+          <button type="button" disabled={disabled || !canExtend} onClick={copyBar}>
             Copy bar to end
           </button>
         </div>
@@ -229,10 +238,31 @@ export default function ArrangementSequencer({
           </div>
         </div>
       </div>
-      <footer>
-        Click steps to add or remove hits. Click a voice to audition and edit its velocities.
-        Free-timed notes stay intact in the piano roll. Copying a bar extends this clip and unlinks
-        its pattern.
+      <footer className="ae-sequencer-footer">
+        <span className="ae-sequencer-help">
+          Click a step to toggle a hit. Select a voice for velocity.
+          <small>Free-timed notes stay intact. Extending makes this pattern independent.</small>
+        </span>
+        <div className="ae-sequencer-continue">
+          <span role="status" aria-live="polite" aria-atomic="true">
+            Bar {currentPage + 1} of {pages}
+          </span>
+          <button
+            type="button"
+            className="ae-sequencer-add-bar"
+            aria-label="Add empty bar"
+            title={
+              canExtend
+                ? 'Add 16 empty steps and open the new bar'
+                : 'Maximum pattern length reached'
+            }
+            disabled={disabled || !canExtend}
+            onClick={addBar}
+          >
+            <span>+16</span>
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </div>
       </footer>
     </section>
   );

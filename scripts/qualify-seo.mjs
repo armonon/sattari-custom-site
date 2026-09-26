@@ -6,7 +6,7 @@ const base = process.env.SEO_URL;
 if (!base) throw new Error('Set SEO_URL to the Netlify preview or production origin.');
 const output = process.env.SEO_QA_DIR || '/tmp/sattari-seo-qa';
 await mkdir(output, { recursive: true });
-const paths = ['/', '/shop', '/shop/violins', '/product/pirouz-series-cymbals', '/services', '/encino-music-store', '/woodland-hills-music-store', '/calabasas-music-store', '/los-angeles-music-store', '/stem-separator', '/learn', '/studio'];
+const paths = ['/', '/about', '/shop', '/shop/violins', '/product/pirouz-series-cymbals', '/services', '/encino-music-store', '/woodland-hills-music-store', '/calabasas-music-store', '/los-angeles-music-store', '/stem-separator', '/learn', '/studio'];
 for (const path of paths) {
   const response = await fetch(`${base}${path}`, { redirect: 'manual', signal: AbortSignal.timeout(30000) });
   assert.equal(response.status, 200, `${path}: expected a directly accessible canonical route`);
@@ -43,7 +43,7 @@ try {
   page.on('pageerror', (error) => errors.push(error.message));
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    for (const path of ['/', '/services', '/encino-music-store', '/stem-separator']) {
+    for (const path of ['/', '/about', '/services', '/encino-music-store', '/stem-separator']) {
       await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => !document.getElementById('root').innerHTML.includes('<!--$-->'));
       await page.locator('h1').waitFor();

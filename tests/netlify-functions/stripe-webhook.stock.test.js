@@ -1,11 +1,14 @@
+// @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { applyStockDeltas, stockKey } from '../../src/utils/inventory.js';
 
 vi.mock('stripe', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    webhooks: { constructEvent: vi.fn() },
-    checkout: { sessions: { listLineItems: vi.fn() } },
-  })),
+  default: vi.fn().mockImplementation(function () {
+    return {
+      webhooks: { constructEvent: vi.fn() },
+      checkout: { sessions: { listLineItems: vi.fn() } },
+    };
+  }),
 }));
 
 vi.mock('@netlify/blobs', () => ({
@@ -21,9 +24,7 @@ function lineItem(metadata, quantity = 1) {
 
 describe('buildStockDeltas', () => {
   it('turns expanded line items into negative deltas', () => {
-    const deltas = buildStockDeltas([
-      lineItem({ slug: 'a', size: '15"', color: 'Blue' }, 2),
-    ]);
+    const deltas = buildStockDeltas([lineItem({ slug: 'a', size: '15"', color: 'Blue' }, 2)]);
 
     expect(deltas).toEqual([{ slug: 'a', size: '15"', color: 'Blue', delta: -2 }]);
   });

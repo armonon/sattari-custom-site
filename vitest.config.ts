@@ -9,15 +9,11 @@ export default defineConfig({
     passWithNoTests: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'tests/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/types.ts',
-      ],
+      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/types.ts'],
     },
   },
   resolve: {

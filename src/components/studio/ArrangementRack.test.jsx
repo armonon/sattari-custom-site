@@ -52,8 +52,11 @@ it('exposes instruments and clearly separates native suite products from web edi
   fireEvent.click(screen.getByRole('button', { name: 'Sattari suite', exact: true }));
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Auto Pitch' } });
   expect(screen.getByText('Sattari Auto Pitch')).toBeInTheDocument();
-  expect(screen.getByText('Native edition · not hosted in this browser')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'On disk', exact: true }));
+  expect(
+    screen.getByText('Desktop host required · Native edition is not playable here')
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Add web/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Desktop host required', exact: true }));
   expect(screen.getByText(/This is an inventory/)).toBeInTheDocument();
 });
 it('drags a browser effect as a validated copy without changing the source track', () => {

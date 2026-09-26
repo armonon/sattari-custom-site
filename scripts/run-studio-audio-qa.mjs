@@ -21,12 +21,15 @@ const browser = await chromium.launch({
 const checks = [
   ['compressed-window', null],
   ['windowed-replay', null],
+  ['grain-stall', null],
+  ['live-window', null],
   ['input-audio', null],
   ['input-recording', null],
   ['sync-audio', '#run'],
   ['master-pro-browser', '#run'],
   ['rack-browser', '#run'],
   ['arrangement-browser', '#run'],
+  ['reference-lifecycle', '#run'],
   ['loudness-tempo', '#run'],
   ['performance-recovery', '#run'], // includes the 60-second recording soak
 ];

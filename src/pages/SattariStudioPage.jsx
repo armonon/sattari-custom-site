@@ -512,9 +512,7 @@ export default function SattariStudioPage() {
               lane.status = 'error';
               continue;
             }
-            const url = URL.createObjectURL(asset.blob);
-            objectUrlsRef.current.set(`${deck.id}:${laneId}`, url);
-            lane.duration = await engine.loadLane(deck.id, deck.side, laneId, url);
+            lane.duration = await engine.loadLane(deck.id, deck.side, laneId, asset.blob);
             lane.status = 'ready';
             lane.name = lane.name || asset.name;
             engine.setLaneState(deck.id, laneId, lane);
@@ -524,7 +522,7 @@ export default function SattariStudioPage() {
           }
         }
         engine.setPlaybackRate(deck.id, deck.synced ? tempo / Math.max(1, deck.bpm) : 1);
-        engine.setLoopRegion(deck.id, deck.looping, deck.loopStart, deck.loopEnd);
+        await engine.setLoopRegion(deck.id, deck.looping, deck.loopStart, deck.loopEnd);
       }
       for (const [index, pad] of nextPads.entries()) {
         if (!pad.assetId) continue;
@@ -727,6 +725,11 @@ export default function SattariStudioPage() {
         const nextPositions = {};
         const nextMeters = {};
         decks.forEach((deck) => {
+          const status = engine.getDeckTransportStatus?.(deck.id);
+          if (status?.error) {
+            setNotice(`Deck ${deck.id}: ${status.error}`);
+            if (deck.playing && !status.playing) updateDeck(deck.id, { playing: false });
+          }
           const position = engine.getDeckPosition(deck.id);
           nextPositions[deck.id] = position;
           nextMeters[deck.id] = engine.getDeckMeterLevel(deck.id);
@@ -831,7 +834,6 @@ export default function SattariStudioPage() {
     }
     pendingLoadsRef.current.add(key);
     const previousLane = decks.find((deck) => deck.id === deckId)?.lanes[laneId];
-    let candidateUrl;
     setFocusedDeckId(deckId);
     updateDeck(deckId, (deck) => ({
       lanes: {
@@ -862,13 +864,11 @@ export default function SattariStudioPage() {
       }
       const asset = await putAudioAsset(file, { name: file.name, analysis });
       const oldUrl = objectUrlsRef.current.get(key);
-      const url = (candidateUrl = URL.createObjectURL(file));
       const deck = decks.find((item) => item.id === deckId);
       const engine = getEngine();
-      const duration = await engine.loadLane(deckId, deck.side, laneId, url);
+      const duration = await engine.loadLane(deckId, deck.side, laneId, file);
       if (oldUrl) URL.revokeObjectURL(oldUrl);
-      objectUrlsRef.current.set(key, url);
-      candidateUrl = null;
+      objectUrlsRef.current.delete(key);
       const laneState = {
         ...deck.lanes[laneId],
         assetId: asset.id,
@@ -878,6 +878,15 @@ export default function SattariStudioPage() {
       };
       engine.setLaneState(deckId, laneId, laneState);
       if (deck.stemFx[laneId]) engine.setLaneFx(deckId, laneId, deck.stemFx[laneId]);
+      if (analysis) {
+        await engine.setLoopRegion(
+          deckId,
+          deck.looping,
+          0,
+          Math.min(duration, (60 / analysis.bpm) * 4)
+        );
+        engine.setPlaybackRate(deckId, deck.synced ? masterBpm / analysis.bpm : 1);
+      }
 
       updateDeck(deckId, (currentDeck) => {
         const lane = {
@@ -907,13 +916,6 @@ export default function SattariStudioPage() {
             loopStart: 0,
             loopEnd: Math.min(duration, (60 / analysis.bpm) * 4),
           });
-          engine.setLoopRegion(
-            deckId,
-            currentDeck.looping,
-            0,
-            Math.min(duration, (60 / analysis.bpm) * 4)
-          );
-          engine.setPlaybackRate(deckId, currentDeck.synced ? masterBpm / analysis.bpm : 1);
         }
         return updates;
       });
@@ -921,7 +923,6 @@ export default function SattariStudioPage() {
       trackSiteEvent('studio_imported');
       return true;
     } catch (error) {
-      if (candidateUrl) URL.revokeObjectURL(candidateUrl);
       updateDeck(deckId, (deck) => ({
         lanes: {
           ...deck.lanes,
@@ -982,7 +983,7 @@ export default function SattariStudioPage() {
     return tempo;
   };
 
-  const changeDeck = (deckId, updates) => {
+  const changeDeck = async (deckId, updates) => {
     if (updates.masterDeck) {
       setMasterDeckId(deckId);
       const selected = decks.find((deck) => deck.id === deckId);
@@ -1022,7 +1023,17 @@ export default function SattariStudioPage() {
     if ('pitch' in updates) engine.setDeckPitch(deckId, updates.pitch);
     if ('keyLock' in updates) engine.setDeckKeyLock(deckId, updates.keyLock);
     if ('looping' in updates || 'loopStart' in updates || 'loopEnd' in updates) {
-      engine.setLoopRegion(deckId, nextDeck.looping, nextDeck.loopStart, nextDeck.loopEnd);
+      if (
+        (await engine.setLoopRegion(
+          deckId,
+          nextDeck.looping,
+          nextDeck.loopStart,
+          nextDeck.loopEnd
+        )) === false
+      ) {
+        setNotice(engine.getDeckTransportStatus?.(deckId).error || 'Loop change cancelled.');
+        return;
+      }
     }
     if ('synced' in updates || 'bpm' in updates) {
       engine.setPlaybackRate(deckId, nextDeck.synced ? masterBpm / Math.max(1, nextDeck.bpm) : 1);
@@ -1078,7 +1089,10 @@ export default function SattariStudioPage() {
       ) {
         updateDeck(deckId, { playing: true });
       } else {
-        setNotice(`Deck ${deckId} has no playable audio. Load a track first.`);
+        setNotice(
+          engine.getDeckTransportStatus?.(deckId).error ||
+            `Deck ${deckId} did not start. Load audio or retry playback.`
+        );
       }
     } catch (error) {
       setNotice(
@@ -1133,11 +1147,27 @@ export default function SattariStudioPage() {
     }
   };
 
+  const seekTo = async (deckId, seconds) => {
+    try {
+      const engine = getEngine();
+      const pending = engine.seekDeck(deckId, seconds);
+      if (engine.getDeckTransportStatus?.(deckId).preparing) setNotice(`Preparing Deck ${deckId}…`);
+      if ((await pending) === false) {
+        const error = engine.getDeckTransportStatus?.(deckId).error;
+        if (error) setNotice(`Deck ${deckId}: ${error}`);
+        return;
+      }
+      setPositions((current) => ({ ...current, [deckId]: engine.getDeckPosition(deckId) }));
+      setNotice(`Deck ${deckId} ready.`);
+    } catch (error) {
+      setNotice(error.message || 'Could not seek. Your source is unchanged.');
+    }
+  };
+
   const setHotCue = (deckId, index, seconds) => {
     const deck = decks.find((item) => item.id === deckId);
     if (deck.hotCues[index] !== null) {
-      getEngine().seekDeck(deckId, seconds);
-      setPositions((current) => ({ ...current, [deckId]: seconds }));
+      void seekTo(deckId, seconds);
       return;
     }
     updateDeck(deckId, (current) => {
@@ -1155,21 +1185,24 @@ export default function SattariStudioPage() {
     });
   };
 
-  const setDeckLoop = (deckId, enabled, start, end, roll = null) => {
+  const setDeckLoop = async (deckId, enabled, start, end, roll = null) => {
     const deck = decks.find((item) => item.id === deckId);
     const beat = 60 / Math.max(1, deck.bpm);
     const rollLength = roll ? beat * Number(roll.split('/').reduce((a, b) => a / b)) : null;
     const loopStart = Math.max(0, start || 0);
     const loopEnd = Math.min(deck.duration || Infinity, rollLength ? loopStart + rollLength : end);
-    getEngine().setLoopRegion(deckId, enabled, loopStart, loopEnd);
+    const engine = getEngine();
+    if ((await engine.setLoopRegion(deckId, enabled, loopStart, loopEnd)) === false) {
+      setNotice(engine.getDeckTransportStatus?.(deckId).error || 'Loop change cancelled.');
+      return;
+    }
     updateDeck(deckId, { looping: enabled, loopStart, loopEnd });
   };
 
   const beatJump = (deckId, beats) => {
     const deck = decks.find((item) => item.id === deckId);
     const seconds = Math.max(0, (positions[deckId] || 0) + beats * (60 / Math.max(1, deck.bpm)));
-    getEngine().seekDeck(deckId, seconds);
-    setPositions((current) => ({ ...current, [deckId]: seconds }));
+    void seekTo(deckId, seconds);
   };
 
   const extractPattern = (deckId, kind) => {
@@ -1943,7 +1976,7 @@ export default function SattariStudioPage() {
                 onLaneChange={(laneId, updates) => changeLane(focusedDeck.id, laneId, updates)}
                 onTogglePlay={() => toggleDeck(focusedDeck.id)}
                 onCue={() => cueDeck(focusedDeck.id)}
-                onSeek={(seconds) => getEngine().seekDeck(focusedDeck.id, seconds)}
+                onSeek={(seconds) => seekTo(focusedDeck.id, seconds)}
                 onSetHotCue={(index, seconds) => setHotCue(focusedDeck.id, index, seconds)}
                 onDeleteHotCue={(index) => deleteHotCue(focusedDeck.id, index)}
                 onSetLoop={(enabled, start, end, roll) =>

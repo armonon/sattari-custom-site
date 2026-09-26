@@ -4,18 +4,30 @@ import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, SITE_ORIGIN } from '../data/siteSeo';
 
-export default function HomePage() {
+export default function AboutPage() {
   return (
     <>
-      <SEO {...PAGE_SEO.home} />
+      <SEO {...PAGE_SEO.about} />
       <StructuredData
         data={{
           '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          '@id': `${SITE_ORIGIN}/#website`,
-          name: 'Sattari Music',
-          url: `${SITE_ORIGIN}/`,
-          publisher: { '@id': `${SITE_ORIGIN}/#business` },
+          '@graph': [
+            {
+              '@type': 'WebSite',
+              '@id': `${SITE_ORIGIN}/#website`,
+              name: 'Sattari Music',
+              url: `${SITE_ORIGIN}/`,
+              publisher: { '@id': `${SITE_ORIGIN}/#business` },
+            },
+            {
+              '@type': 'AboutPage',
+              '@id': `${PAGE_SEO.about.url}#page`,
+              name: 'About Sattari Music',
+              url: PAGE_SEO.about.url,
+              about: { '@id': `${SITE_ORIGIN}/#business` },
+              isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+            },
+          ],
         }}
       />
       <section className="hero-section hero-shell">
@@ -27,7 +39,7 @@ export default function HomePage() {
                 California-crafted support
               </Link>
             </div>
-            <h1>Sattari Music</h1>
+            <h1>About Sattari Music</h1>
             <p className="hero-copy">
               Handcrafted cymbals and drums, violins, guitars, bass, and the accessories that
               complete your setup — plus local repairs, rentals, lessons, and studio time in

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -37,9 +38,8 @@ vi.mock('@netlify/blobs', () => ({
   })),
 }));
 vi.mock('stripe', () => ({
-  default: vi
-    .fn()
-    .mockImplementation(() => ({
+  default: vi.fn().mockImplementation(function () {
+    return {
       checkout: {
         sessions: {
           create: mocks.create,
@@ -49,10 +49,13 @@ vi.mock('stripe', () => ({
         },
       },
       webhooks: { constructEvent: mocks.webhook },
-    })),
+    };
+  }),
 }));
 vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(() => ({ emails: { send: mocks.send } })),
+  Resend: vi.fn().mockImplementation(function () {
+    return { emails: { send: mocks.send } };
+  }),
 }));
 
 import { handler } from '../../netlify/functions/studio-bookings.js';

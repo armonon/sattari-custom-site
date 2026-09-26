@@ -23,13 +23,39 @@
   padding-bottom: 2px;
   margin: 0;
 }
-.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header > .ae-actions {
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header > .ae-actions,
+.sd-studio-next[data-compact-icons]
+  .sd-arrangement-editor.ae-workspace-focused
+  .ae-main-header
+  > .ae-actions {
   display: flex;
   flex-wrap: nowrap;
   justify-content: flex-start;
   overflow-x: auto;
   width: auto;
   scrollbar-width: thin;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-lane .ae-clip {
+  display: grid;
+  grid-template-rows: 16px 12px 10px;
+  align-content: start;
+  gap: 1px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-clip strong {
+  font-size: 12px;
+  line-height: 16px;
+  min-height: 16px;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-clip small {
+  font-size: 11px;
+  line-height: 12px;
+  white-space: nowrap;
+}
+.sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-clip svg {
+  height: 10px;
+  min-height: 10px;
 }
 .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-navigation {
   display: flex;
@@ -259,11 +285,85 @@
   white-space: nowrap;
   overflow-x: auto;
 }
+.ae-track-options-symbol {
+  display: none;
+}
 @media (max-width: 700px) {
   .sd-studio-next .sd-arrangement-editor.ae-workspace-focused {
     min-height: 440px;
-    --ae-head-width: 140px;
+    --ae-head-width: 164px;
     padding: 6px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-rows: repeat(3, 44px);
+    gap: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > input {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > button {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 10px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > details {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > .ae-track-mix {
+    grid-column: 1;
+    grid-row: 3;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > .ae-track-add {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-add > button {
+    width: 44px;
+    font-size: 20px;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-options > summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-options-symbol {
+    display: inline;
+  }
+  .sd-studio-next
+    .sd-arrangement-editor.ae-workspace-focused
+    :is(.ae-track-options-label, .ae-track-add-label) {
+    display: none;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head:has(details[open]) {
+    z-index: 25;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > details[open] {
+    position: absolute;
+    top: 54px;
+    left: 6px;
+    width: min(260px, calc(100vw - 48px));
+    max-height: 45dvh;
+    overflow: auto;
+    padding: 8px;
+    background: var(--sd-panel, #22242a);
+    border: 1px solid var(--sd-line-soft, #ffffff30);
+    border-radius: 10px;
+    box-shadow: 0 12px 30px #0008;
+  }
+  .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-track-head > small {
+    display: none;
   }
   .sd-studio-next .sd-arrangement-editor.ae-workspace-focused .ae-main-header {
     grid-template-columns: minmax(0, 1fr);

@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
 
 // Lazy load pages for code splitting
-export const HomePage = lazy(() => import('@components/HomePage'));
+export const HomePage = lazy(() => import('@pages/HomePage'));
+export const AboutPage = lazy(() => import('@components/AboutPage'));
 export const ShopPage = lazy(() => import('@components/ShopPage'));
 export const Category = lazy(() => import('@pages/Category'));
 export const ProductDetail = lazy(() => import('@pages/ProductDetail'));

@@ -82,6 +82,7 @@ describe('stem separator inputs', () => {
         new AbortController().signal
       );
       expect(constructor).toHaveBeenCalledWith(2, 1, 44100);
+      expect(result.channels).toBe(1);
       expect(result.left).toEqual(result.right);
       expect(result.left.buffer).not.toBe(result.right.buffer);
       expect(result.left.buffer).not.toBe(samples.buffer);

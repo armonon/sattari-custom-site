@@ -58,6 +58,62 @@ function project() {
   return result;
 }
 describe('audio-clock scheduling', () => {
+  it('uses ordered offline track sums and keeps reference audio outside master processing', () => {
+    const ctx = context(),
+      data = project(),
+      output = { id: 'master' },
+      referenceOutput = { id: 'reference' };
+    const second = { ...structuredClone(data.tracks[0]), id: 'second' };
+    const reference = { ...structuredClone(data.tracks[0]), id: 'print', role: 'reference' };
+    data.tracks.push(second, reference);
+    scheduleArrangement(ctx, data, new Map([['asset', { duration: 10 }]]), 0, 0, output, {
+      orderedMix: true,
+      referenceOutput,
+    });
+    const [firstBus, secondBus, referenceBus] = ctx.gains;
+    expect(firstBus.connect).toHaveBeenCalledWith(secondBus);
+    expect(secondBus.connect).toHaveBeenCalledWith(output);
+    expect(referenceBus.connect).toHaveBeenCalledWith(referenceOutput);
+    expect(referenceBus.connect).not.toHaveBeenCalledWith(output);
+  });
+  it('uses the same source-window render path for preview renders and export independent of hardware rate', async () => {
+    const ctx = context();
+    ctx.rawContext.sampleRate = 44100;
+    ctx.rawContext.createBuffer = (channels, length, sampleRate) => {
+      const data = Array.from({ length: channels }, () => new Float32Array(length));
+      return { length, sampleRate, getChannelData: (channel) => data[channel] };
+    };
+    const engine = new ArrangementEngine(ctx, {}),
+      data = project(),
+      settings = { limiter: false };
+    engine.renderSection = vi.fn(async (_project, _settings, _track, _first, frames) => [
+      new Float32Array(frames).fill(0.25),
+      new Float32Array(frames).fill(-0.25),
+    ]);
+    const buffer = await engine.render(data, settings, null, 48000, 6);
+    expect(engine.renderSection).toHaveBeenCalledWith(data, settings, null, 0, 292800, 48000);
+    expect(buffer.sampleRate).toBe(48000);
+    expect(buffer.getChannelData(0)[0]).toBe(0.25);
+    expect(buffer.getChannelData(1).at(-1)).toBe(-0.25);
+  });
+  it('chooses the transport start after cold master-rack construction', async () => {
+    const ctx = context();
+    const engine = new ArrangementEngine(ctx, {});
+    engine.prepare = vi.fn(async () => {});
+    engine.playbackMaster = vi.fn(() => {
+      ctx.rawContext.currentTime += 0.4;
+      return { nodes: [], input: {} };
+    });
+    engine.queueLoops = vi.fn();
+    engine.startMidiClock = vi.fn();
+    try {
+      expect(await engine.play(project(), 0, {}, { start: 0, end: 1 })).toBe(true);
+      expect(engine.startedAt).toBeCloseTo(10.44);
+      expect(engine.nextLoopAt).toBe(engine.startedAt);
+    } finally {
+      engine.pause();
+    }
+  });
   it('ends a streamed source at its window without restarting the original clip fade', () => {
     const ctx = context(),
       data = project();

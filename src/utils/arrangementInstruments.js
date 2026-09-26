@@ -77,6 +77,7 @@ export function instrumentVoice(
     output = filter;
     nodes.push(filter);
   }
+  let offlineSum;
   const add = (source, level, decay = 0, defaultAttack = 0.005, voiceLength = naturalLength) => {
     const attack = Math.max(0.001, settings.attack ?? defaultAttack);
     const envelope = raw.createGain();
@@ -105,7 +106,20 @@ export function instrumentVoice(
         end - release
       );
     envelope.gain.linearRampToValueAtTime(0, end);
-    source.connect(envelope).connect(output);
+    source.connect(envelope);
+    if (typeof raw.startRendering === 'function') {
+      // Stabilize harmonic addition order without adding nodes to live voices.
+      const sum = raw.createGain();
+      sum.gain.value = 1;
+      if (offlineSum) {
+        offlineSum.disconnect(output);
+        offlineSum.connect(sum);
+      }
+      envelope.connect(sum);
+      sum.connect(output);
+      offlineSum = sum;
+      nodes.push(sum);
+    } else envelope.connect(output);
     nodes.push(source, envelope);
     sources.push(source);
     return { source, end: Math.min(end, at + length) };
@@ -269,7 +283,10 @@ export function rollingNotes(notes, elapsed, when, duration, emit, budget = new 
           voice.dispose();
           active.delete(voice);
         }
-      while (index < pending.length && pending[index].start < now + 0.3) {
+      // Voices already use native audio-clock starts/stops. Queue one bounded
+      // second so normal UI work cannot starve the next notes. VoiceBudget
+      // still caps overlap and queued allocations; cancel retires future voices.
+      while (index < pending.length && pending[index].start < now + 1) {
         const item = pending[index++];
         if (item.start < now - 0.08)
           throw new Error(

@@ -52,10 +52,17 @@ export const businessSchema = {
 
 export const PAGE_SEO = {
   home: {
-    title: 'Music Store in Woodland Hills',
+    title: 'Instruments, Local Services & Online Music Tools',
     description:
-      'Shop instruments, cymbals, violins, guitars and accessories at Sattari Music in Woodland Hills. Repairs, rentals and lessons for Encino, Calabasas and Los Angeles.',
+      'Find your sound at Sattari Music. Shop instruments, book repairs and rehearsal time in Woodland Hills, or create, learn and separate stems in Sattari Hub.',
     url: `${SITE_ORIGIN}/`,
+    image: '/images/home/sattari-instruments-hero.jpg',
+  },
+  about: {
+    title: 'About Us | Woodland Hills Music Store',
+    description:
+      'Meet Sattari Music and founder Mohammad Sattari. Instruments, craftsmanship and musician support in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
+    url: `${SITE_ORIGIN}/about`,
   },
   shop: {
     title: 'Shop Musical Instruments & Accessories',

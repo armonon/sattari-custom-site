@@ -1,6 +1,7 @@
 // PCM WAV (including captured float WAV chunks) can be read by sample range.
 // Other formats use packet/range decoding rather than a whole-file fallback.
 import { decodeCompressedWindow } from './compressedAudioWindow';
+import { decodeAiffWindow } from './aiffWindow';
 
 export function sourceWindows(clips, window) {
   const ranges = clips
@@ -26,6 +27,7 @@ export async function decodeSourceWindow(raw, blob, start, end, budget, options)
   if (options?.signal?.aborted) throw new Error('Source decoding cancelled.');
   return (
     (await decodeWaveWindow(raw, blob, start, end, budget)) ||
+    (await decodeAiffWindow(raw, blob, start, end, budget)) ||
     decodeCompressedWindow(raw, blob, start, end, budget, options)
   );
 }

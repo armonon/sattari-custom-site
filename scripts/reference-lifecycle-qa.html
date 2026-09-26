@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><title>StemDeck reference lifecycle — synthetic subset</title>
+<h1>Reference lifecycle — synthetic subset</h1>
+<p>Generated sources and isolated storage only. No microphone, speakers, or user session. This does not qualify the full musical/hardware acceptance project.</p>
+<button id="run">Run reconstruction / reopen / export checks</button><pre id="result">Ready</pre>
+<script type="module">
+import * as Tone from 'tone';
+import { ArrangementEngine } from '/src/utils/arrangementEngine.js';
+import { audioTrack, audioClip, emptyArrangement, splitClip, validateArrangement } from '/src/utils/arrangementModel.js';
+import { reconstructPerformance } from '/src/utils/performanceReplay.js';
+import { performanceSupportForTake } from '/src/utils/performanceSupport.js';
+import { putAudioAsset, getAudioAsset, saveStudioSession, loadStudioSession } from '/src/utils/audioProjectStore.js';
+import { wavBytes, peakOf } from '/src/utils/arrangementExport.js';
+import { clearExportFile } from '/src/utils/arrangementStreamExport.js';
+import { newEffect } from '/src/utils/arrangementEffects.js';
+
+const key = 'reference-lifecycle-expectation';
+const result = document.querySelector('#result');
+const button = document.querySelector('#run');
+const settings = { level: 50, limiter: false, compression: false };
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const digest = async (audio) => {
+  const bytes = new Uint8Array(audio.length * audio.numberOfChannels * 4);
+  for (let channel = 0; channel < audio.numberOfChannels; channel++)
+    bytes.set(new Uint8Array(audio.getChannelData(channel).buffer), channel * audio.length * 4);
+  return [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(v => v.toString(16).padStart(2, '0')).join('');
+};
+async function generatedAsset(raw, frequency, seconds, name) {
+  const buffer = raw.createBuffer(1, seconds * 12000, 12000), data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = .035 * Math.sin(i / 12000 * Math.PI * 2 * frequency);
+  return putAudioAsset(new Blob([wavBytes(buffer)], { type: 'audio/wav' }), { name });
+}
+async function run() {
+  button.disabled = true;
+  let engine, sink;
+  const report = { pass: false, scope: 'synthetic reconstruction/reopen/export subset', physicalHardwareMeasured: false,
+    fullReferenceProjectQualified: false, checks: [], errors: [] };
+  try {
+    await Tone.start();
+    const context = Tone.getContext();
+    sink = context.rawContext.createGain(); // Deliberately not connected to speakers.
+    engine = new ArrangementEngine(context, sink);
+    const expected = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (!expected) {
+      result.textContent = 'Preparing two 180-second generated sources, each with four stems…';
+      const roles = ['vocals', 'drums', 'bass', 'other'], decks = [];
+      for (let deck = 0; deck < 2; deck++) {
+        const lanes = {};
+        for (let lane = 0; lane < roles.length; lane++) {
+          const asset = await generatedAsset(context.rawContext, 110 + deck * 77 + lane * 33, 180, `Generated ${deck}-${roles[lane]}.wav`);
+          lanes[roles[lane]] = { assetId: asset.id, duration: 180, level: 100, name: asset.name };
+        }
+        decks.push({ id: deck ? 'B' : 'A', playing: true, position: deck ? 30 : 10,
+          duration: 180, gain: 100, fader: 100, side: deck ? 'right' : 'left', lanes });
+      }
+      const take = { id: 'reference-subset', assetId: '', name: 'Generated acceptance subset', duration: 8, timelineStart: 0,
+        events: [
+          { type: 'initialState', time: 0, args: [{ decks, crossfader: 50 }] },
+          { type: 'deckTransport', time: 0, args: ['A', { position: 10, playing: true, rate: 1 }] },
+          { type: 'deckTransport', time: 0, args: ['B', { position: 30, playing: true, rate: 1 }] },
+          { type: 'setLaneState', time: 1, args: ['A', 'drums', { muted: true }] },
+          { type: 'setLaneState', time: 1.5, args: ['A', 'drums', { muted: false }] },
+          { type: 'setLoopRegion', time: 2, args: ['B', true, 32, 33] },
+          { type: 'setCrossfader', time: 3, args: [70] },
+          { type: 'setDeckGain', time: 3.5, args: ['A', 65] },
+          { type: 'deckTransport', time: 4, args: ['A', { position: 60, playing: true, rate: 1.25 }] },
+          { type: 'setLoopRegion', time: 5, args: ['B', false, 32, 33] },
+          { type: 'setMasterStems', time: 6, args: [{ bass: { level: 80 } }] },
+        ] };
+      const base = { ...emptyArrangement(), captures: [take] };
+      const built = reconstructPerformance(base, take);
+      assert(built.tracks.length === 8, 'Not all source stems reconstructed');
+      assert(built.tracks.every(track => track.muted), 'Reconstruction unexpectedly replaced the audible mix');
+      const project = built.project;
+      for (const track of project.tracks) track.muted = false;
+      const first = project.tracks[0];
+      first.clips = [...splitClip(first.clips[0], .75), ...first.clips.slice(1)];
+      first.effects = [newEffect('eq')];
+      first.automation[`fx:${first.effects[0].id}:low`] = [{ time: 0, value: 0 }, { time: 8, value: 3 }];
+      const input = await generatedAsset(context.rawContext, 440, 2, 'Generated input proxy.wav');
+      const inputTrack = audioTrack('Generated input proxy — not hardware');
+      inputTrack.clips = [audioClip(input.id, input.name, 2, 1.25)];
+      project.tracks.push(inputTrack);
+      const midi = audioTrack('Added MIDI');
+      midi.kind = 'midi';
+      midi.clips = [{ ...audioClip('', 'Editable melody', 8), kind: 'midi', instrument: 'piano',
+        notes: [{ id: 'note-a', pitch: 'A4', time: 1.125, duration: .713, velocity: .4 }] }];
+      project.tracks.push(midi);
+      validateArrangement(project);
+      const rendered = await engine.render(project, settings);
+      assert(peakOf(rendered) > .01, 'Silent arrangement');
+      const referenceAsset = await putAudioAsset(new Blob([wavBytes(rendered, true)], { type: 'audio/wav' }), { name: 'Expected pre-reload float PCM.wav' });
+      saveStudioSession({ sessionName: 'Reference lifecycle subset', decks: [], arranger: project });
+      sessionStorage.setItem(key, JSON.stringify({ project, referenceAsset: referenceAsset.id, digest: await digest(rendered), support: performanceSupportForTake(take) }));
+      engine.dispose(); engine = null; sink.disconnect(); sink = null;
+      location.reload(); // Recreate the document/engine, not an in-memory JSON-only round trip.
+      return;
+    }
+    const project = loadStudioSession()?.arranger;
+    assert(JSON.stringify(project) === JSON.stringify(expected.project), 'Saved arrangement changed across reload');
+    assert(JSON.stringify(performanceSupportForTake(project.captures[0])) === JSON.stringify(expected.support), 'Action support changed on reopen');
+    report.checks.push('Reconstruction, split, MIDI, automation and action status survive document reload');
+    for (const id of new Set(project.tracks.flatMap(track => track.clips.map(clip => clip.assetId)).filter(Boolean)))
+      assert((await getAudioAsset(id))?.blob?.size > 0, `Missing asset ${id}`);
+    const rendered = await engine.render(project, settings);
+    const expectedFile = await getAudioAsset(expected.referenceAsset);
+    const before = await new OfflineAudioContext(2, rendered.length, 48000).decodeAudioData(await expectedFile.blob.arrayBuffer());
+    let reopenError = 0, worstFrame = 0;
+    for (let c = 0; c < 2; c++) for (let i = 0; i < rendered.length; i++) {
+      const difference = Math.abs(rendered.getChannelData(c)[i] - before.getChannelData(c)[i]);
+      if (difference > reopenError) { reopenError = difference; worstFrame = i; }
+    }
+    report.reopenMaxError = reopenError; report.worstReopenFrame = worstFrame;
+    report.bitExactReopen = await digest(rendered) === expected.digest;
+    if (report.bitExactReopen) report.checks.push('Reopened render matches pre-close PCM SHA-256');
+    else report.errors.push(`Exact PCM hash differs after reopen; maximum sample error ${reopenError}. Retained qualification failure, not waived.`);
+    project.tracks.at(-1).clips[0].notes[0].velocity = .25;
+    saveStudioSession({ decks: [], arranger: project });
+    assert(loadStudioSession().arranger.tracks.at(-1).clips[0].notes[0].velocity === .25, 'Cannot continue editing');
+    report.checks.push('Further MIDI edits persist after reopen');
+    const reference = await engine.render(project, settings);
+    const file = await engine.export(project, settings);
+    try {
+      const decoded = await new OfflineAudioContext(2, reference.length, 48000).decodeAudioData(await file.arrayBuffer());
+      assert(decoded.length === reference.length, 'Master export duration mismatch');
+      let maximumError = 0;
+      for (let channel = 0; channel < 2; channel++) {
+        const a = reference.getChannelData(channel), b = decoded.getChannelData(channel);
+        for (let i = 0; i < a.length; i++) maximumError = Math.max(maximumError, Math.abs(a[i] - b[i]));
+      }
+      report.masterPcmMaxError = maximumError;
+      assert(maximumError < 2e-6, `Master PCM mismatch: ${maximumError}`);
+      report.checks.push('24-bit master export matches arrangement render within 2e-6');
+    } finally { await clearExportFile(file); }
+    const archive = await engine.export(project, settings, true);
+    try {
+      const bytes = new Uint8Array(await archive.arrayBuffer()), view = new DataView(bytes.buffer);
+      let offset = 0, wavCount = 0, pcmBytes;
+      while (view.getUint32(offset, true) === 0x04034b50) {
+        const nameLength = view.getUint16(offset + 26, true), extraLength = view.getUint16(offset + 28, true);
+        const name = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + nameLength));
+        const extra = offset + 30 + nameLength, size = Number(view.getBigUint64(extra + 4, true)), start = extra + extraLength;
+        if (name.endsWith('.wav')) {
+          const length = view.getUint32(start + 40, true);
+          assert(pcmBytes == null || pcmBytes === length, 'Stem lengths are not aligned');
+          pcmBytes = length; wavCount++;
+        }
+        offset = start + size + 24;
+      }
+      assert(wavCount === project.tracks.length, 'Missing stem export');
+      report.checks.push(`${wavCount} aligned track stems exported (pre-master)`);
+    } finally { await clearExportFile(archive); }
+    report.pass = report.errors.length === 0;
+  } catch (error) { report.errors.push(error.stack || error.message); }
+  finally { engine?.dispose(); sink?.disconnect(); }
+  window.qaResult = report;
+  result.textContent = JSON.stringify(report, null, 2);
+  button.disabled = false;
+}
+button.addEventListener('click', run);
+if (sessionStorage.getItem(key)) void run();
+</script></html>

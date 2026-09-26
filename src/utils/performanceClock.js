@@ -15,6 +15,8 @@ export const TIMED_PARAMETERS = new Set([
   'setLimiter',
   'setMasterAssist',
   'setMasterProcessing',
+  'setLoop',
+  'setLoopRegion',
 ]);
 
 export function parameterRamp(engine, param, value, duration) {

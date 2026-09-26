@@ -1,3 +1,5 @@
+import { stemAnalysisReport } from './stemAnalysisReport';
+
 export function createStemArchive(jobs, signal) {
   signal.throwIfAborted();
   return new Promise((resolve, reject) => {
@@ -20,6 +22,7 @@ export function createStemArchive(jobs, signal) {
         jobs.map((job) => ({
           name: job.file.name,
           outputs: job.outputs.map(({ name, blob }) => ({ name, blob })),
+          ...(job.analysis ? { report: stemAnalysisReport(job) } : {}),
         }))
       );
     } catch (error) {

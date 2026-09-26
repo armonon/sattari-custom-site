@@ -146,6 +146,13 @@ it('opens a connected beat sequencer without converting melodic clips', async ()
   expect(screen.getByRole('button', { name: 'Select C2 note 1' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Show sequencer editor' }));
   expect(saved.tracks).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  expect(saved.tracks[1].clips[0].duration).toBe(4);
+  expect(saved.tracks[1].clips[0].notes).toHaveLength(1);
+  expect(screen.getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Undo edit' }));
+  expect(saved.tracks[1].clips[0].duration).toBe(2);
+  expect(screen.getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(1);
   fireEvent.click(screen.getByRole('button', { name: 'Undo edit' }));
   expect(saved.tracks[1].clips[0].notes).toEqual([]);
   fireEvent.click(screen.getByRole('button', { name: 'Add instrument' }));

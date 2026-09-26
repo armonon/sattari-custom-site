@@ -62,6 +62,44 @@ function automateTrack(rack, track, cursor, duration, when, scale = 1) {
   }
 }
 
+export function arrangementMasterEqualizer(context, processing) {
+  const values = {
+    context,
+    low: processing.bypass ? 0 : processing.low,
+    mid: processing.bypass ? 0 : processing.mid,
+    high: processing.bypass ? 0 : processing.high,
+    lowFrequency: processing.lowFrequency,
+    highFrequency: processing.highFrequency,
+  };
+  if (typeof context.rawContext.startRendering !== 'function') return new Tone.EQ3(values);
+  // Same public crossover and decibel-gain components as Tone.EQ3, but sum the
+  // three bands in a defined order instead of an unordered three-input fan-in.
+  const split = new Tone.MultibandSplit(values);
+  const bands = ['low', 'mid', 'high'].map((key) => {
+    const gain = new Tone.Gain({ context, gain: values[key], units: 'decibels' });
+    split[key].connect(gain);
+    return gain;
+  });
+  const lowMid = new Tone.Gain({ context, gain: 1 });
+  const output = new Tone.Gain({ context, gain: 1 });
+  bands[0].connect(lowMid);
+  bands[1].connect(lowMid);
+  lowMid.connect(output);
+  bands[2].connect(output);
+  return {
+    input: split,
+    output,
+    low: bands[0].gain,
+    mid: bands[1].gain,
+    high: bands[2].gain,
+    lowFrequency: split.lowFrequency,
+    highFrequency: split.highFrequency,
+    dispose() {
+      for (const node of [split, ...bands, lowMid, output]) node.dispose();
+    },
+  };
+}
+
 function masterGraph(context, settings, output, preMaster = false) {
   const input = new Tone.Gain({ context, gain: preMaster ? 1 : masterGain(settings.level ?? 100) });
   if (preMaster) {
@@ -79,14 +117,7 @@ function masterGraph(context, settings, output, preMaster = false) {
     frequency: processing.bypass ? 20 : processing.lowCut,
     rolloff: -12,
   });
-  const eq = new Tone.EQ3({
-    context,
-    low: processing.bypass ? 0 : processing.low,
-    mid: processing.bypass ? 0 : processing.mid,
-    high: processing.bypass ? 0 : processing.high,
-    lowFrequency: processing.lowFrequency,
-    highFrequency: processing.highFrequency,
-  });
+  const eq = arrangementMasterEqualizer(context, processing);
   const width = new Tone.StereoWidener({
     context,
     width: processing.bypass ? 0.5 : processing.width / 200,
@@ -99,7 +130,9 @@ function masterGraph(context, settings, output, preMaster = false) {
   const limited = new Tone.Gain({ context, gain: settings.limiter !== false ? 1 : 0 });
   const dry = new Tone.Gain({ context, gain: settings.limiter === false ? 1 : 0 });
   const inserts = createMutableEffectRack(context.rawContext, processing.effects);
-  input.chain(inputTrim, lowCut, eq, width);
+  input.chain(inputTrim, lowCut);
+  Tone.connect(lowCut, eq.input);
+  Tone.connect(eq.output, width);
   Tone.connect(width, inserts.input);
   Tone.connect(inserts.output, compressor);
   compressor.chain(limiterDrive, limiter, limited);
@@ -173,6 +206,28 @@ export function scheduleArrangement(
   const audible = (track) => !track.muted && (!solo || track.solo);
   const buses = options.trackBuses || new Map(),
     ownsBuses = !options.trackBuses;
+  const trackOutputs = new Map();
+  const connectOrderedMix = () => {
+    if (!options.orderedMix) return;
+    // Web Audio fan-in summation order is implementation-dependent. A chain of
+    // two-input unity buses fixes track addition order for offline qualification.
+    // Keep printed references on their separate, unprocessed output path.
+    for (const reference of [false, true]) {
+      let tail;
+      for (const track of project.tracks.filter(
+        (track) => (track.role === 'reference') === reference
+      )) {
+        const sum = raw.createGain();
+        sum.gain.value = 1;
+        tail?.connect(sum);
+        trackOutputs.set(track.id, sum);
+        nodes.push(sum);
+        tail = sum;
+      }
+      if (tail)
+        Tone.connect(tail, reference && options.referenceOutput ? options.referenceOutput : output);
+    }
+  };
   const automatedBuses = new Set();
   const schedule = arrangementSchedule(
     options.liveMix
@@ -203,6 +258,7 @@ export function scheduleArrangement(
         );
     }
   try {
+    connectOrderedMix();
     for (const item of schedule) {
       const { track, clip, elapsed, delay, offset } = item,
         when = start + delay,
@@ -233,7 +289,10 @@ export function scheduleArrangement(
         rack.output.connect(rack.trackPan);
         Tone.connect(
           rack.trackPan,
-          track.role === 'reference' && options.referenceOutput ? options.referenceOutput : output
+          trackOutputs.get(track.id) ||
+            (track.role === 'reference' && options.referenceOutput
+              ? options.referenceOutput
+              : output)
         );
         buses.set(track.id, rack);
       }
@@ -318,9 +377,10 @@ export function scheduleArrangement(
         gate,
         rack
           ? rack.input
-          : track.role === 'reference' && options.referenceOutput
-            ? options.referenceOutput
-            : output
+          : trackOutputs.get(track.id) ||
+              (track.role === 'reference' && options.referenceOutput
+                ? options.referenceOutput
+                : output)
       );
       nodes.push(gain, volume, fadeIn, fadeOut, filter, pan, gate);
       if (clip.kind === 'audio') {
@@ -619,8 +679,10 @@ export class ArrangementEngine {
     if (!contentEnd) return false;
     this.end = contentEnd + rackTail(settings.processing?.effects);
     if (!loop && this.cursor >= this.end) return false;
-    const when = this.context.rawContext.currentTime + 0.04;
     const master = this.playbackMaster(settings);
+    // Constructing the master rack can be expensive on a cold start. Do not
+    // spend the transport's scheduling runway before its graph exists.
+    const when = this.context.rawContext.currentTime + 0.04;
     try {
       if (loop) {
         this.loop = { ...loop };
@@ -1191,29 +1253,14 @@ export class ArrangementEngine {
       throw new Error(
         'This mix exceeds the 512 MB offline render budget. Export a shorter arrangement.'
       );
-    await this.prepare(project);
-    const offline = new Tone.OfflineContext(2, duration + 0.1, sampleRate);
-    let graph;
-    try {
-      const selection = trackId
-        ? { ...project, tracks: project.tracks.filter((track) => track.id === trackId) }
-        : project;
-      const master = masterGraph(offline, settings, offline.rawContext.destination, !!trackId);
-      graph = { nodes: master.nodes, sources: [] };
-      const scheduled = scheduleArrangement(offline, selection, this.buffers, 0, 0, master.input, {
-        referenceOutput: master.referenceOutput || offline.rawContext.destination,
-        masterStems: trackId ? undefined : settings.processing?.stems,
-      });
-      graph = {
-        ...scheduled,
-        nodes: [...scheduled.nodes, ...master.nodes],
-        sources: scheduled.sources,
-      };
-      return (await offline.render()).get();
-    } finally {
-      releaseGraph(graph);
-      offline.dispose();
-    }
+    // Use the export decoder and graph, not decodeAudioData on the hardware
+    // context followed by a second resample in the offline context. That older
+    // route changed source PCM when device and export sample rates differed.
+    const frames = Math.round((duration + 0.1) * sampleRate);
+    const channels = await this.renderSection(project, settings, trackId, 0, frames, sampleRate);
+    const buffer = this.context.rawContext.createBuffer(2, frames, sampleRate);
+    channels.forEach((channel, index) => buffer.getChannelData(index).set(channel));
+    return buffer;
   }
   async renderSection(project, settings, trackId, firstFrame, frameCount, sampleRate = 48000) {
     // Pre-roll exceeds the longest master release by >40x. Retain original clip
@@ -1279,6 +1326,7 @@ export class ArrangementEngine {
         master.input,
         {
           referenceOutput: master.referenceOutput || offline.rawContext.destination,
+          orderedMix: true,
           masterStems: trackId ? undefined : settings.processing?.stems,
           windowDuration: duration,
           sourceOffsets: this.bufferOffsets,

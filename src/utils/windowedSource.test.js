@@ -1,3 +1,4 @@
+import { deferred } from '../test/deferred';
 import { expect, it, vi } from 'vitest';
 import { SourceWindowPool } from './windowedSource';
 
@@ -70,7 +71,7 @@ it('joins large loop boundaries without decoding the span between the loop ends'
   expect(pool.reserved).toBe(0);
 });
 it('does not retain a decode completed after disposal', async () => {
-  const pending = Promise.withResolvers();
+  const pending = deferred();
   const pool = new SourceWindowPool(raw, { decode: () => pending.promise });
   const job = pool.page(source(), 0);
   pool.dispose();
@@ -78,4 +79,34 @@ it('does not retain a decode completed after disposal', async () => {
   await expect(job).rejects.toThrow('cancelled');
   expect(pool.bytes).toBe(0);
   expect(pool.reserved).toBe(0);
+});
+
+it('does not enqueue remaining read-ahead pages after a seek supersedes the read', async () => {
+  const pending = deferred();
+  let current = true;
+  const read = vi.fn(() => pending.promise);
+  const pool = new SourceWindowPool(raw, { decode: read });
+  const job = pool.prepare(source(), 1, {}, () => current);
+  await Promise.resolve();
+  expect(read).toHaveBeenCalledOnce();
+  current = false;
+  pending.resolve({ buffer: raw.createBuffer(2, 48001, 8000), offset: 0 });
+  await job;
+  expect(read).toHaveBeenCalledOnce();
+  expect(pool.pending.size).toBe(0);
+  pool.dispose();
+});
+
+it('warms a scheduled launch without decoding its speculative tail, then fills normal read-ahead', async () => {
+  const read = vi.fn((...args) => decode(...args));
+  const pool = new SourceWindowPool(raw, { decode: read });
+  const song = source();
+  await pool.prepare(song, 40, { prepareSeconds: 1 });
+  expect(read.mock.calls.map((call) => call[2])).toEqual([40]);
+  const grain = pool.acquire(song, 40, 0.12);
+  expect(grain).toBeTruthy();
+  grain.release();
+  await pool.prepare(song, 40);
+  expect(read.mock.calls.map((call) => call[2])).toEqual([40, 44]);
+  pool.dispose();
 });

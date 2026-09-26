@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 const memory = vi.hoisted(() => new Map());
 const target = vi.hoisted(() => ({
