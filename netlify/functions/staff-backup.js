@@ -6,6 +6,7 @@ import {
   restoreSnapshot,
   writeSnapshot,
 } from '../../server/backupStore.js';
+import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { requireStaff } from '../../server/staffAuth.js';
 
 function json(statusCode, body) {
@@ -17,7 +18,7 @@ function json(statusCode, body) {
 }
 
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
@@ -74,7 +75,7 @@ export async function handler(event) {
   if (body.action === 'snapshot') {
     const snapshot = await captureSnapshot(event, `manual by ${session.staff}`);
     const key = await writeSnapshot(event, snapshot);
-    console.log(JSON.stringify({ type: 'staff-backup-snapshot', staff: session.staff, key }));
+    logEvent({ type: 'staff-backup-snapshot', staff: session.staff, key });
     return json(200, { staff: session.staff, key, summary: describeSnapshot(snapshot) });
   }
 
@@ -100,22 +101,39 @@ export async function handler(event) {
     const safety = await captureSnapshot(event, `before restore by ${session.staff}`);
     const safetyKey = await writeSnapshot(event, safety);
 
-    await restoreSnapshot(event, snapshot);
-
-    console.log(
-      JSON.stringify({
-        type: 'staff-backup-restore',
+    let reconciliation;
+    try {
+      reconciliation = await restoreSnapshot(event, snapshot);
+    } catch (error) {
+      logError('staff-backup-restore-error', {
         staff: session.staff,
         restored: key,
+        message: errorMessage(error),
+      });
+      return json(503, {
+        error: `The restore could not be completed. Try again in a moment. The state before this attempt was saved as ${safetyKey}.`,
         safetyKey,
-      })
-    );
+      });
+    }
 
+    logEvent({
+      type: 'staff-backup-restore',
+      staff: session.staff,
+      restored: key,
+      safetyKey,
+      salesSinceBackup: reconciliation.salesSinceBackup.length,
+      adjustedVariants: reconciliation.adjusted.length,
+      unreconciledOrders: reconciliation.unreconciledOrders.length,
+    });
+
+    // Stock is not simply rolled back: units sold since the backup stay sold.
+    // `reconciliation` lists each variant that was adjusted and why.
     return json(200, {
       staff: session.staff,
       restored: key,
       safetyKey,
       summary: describeSnapshot(snapshot),
+      reconciliation,
     });
   }
 

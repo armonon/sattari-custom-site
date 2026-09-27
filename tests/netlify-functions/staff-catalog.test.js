@@ -1,12 +1,15 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const fake = { value: null, etag: null, writes: 0 };
+// `failCatalogReads` and `conflict` simulate a storage outage on the catalog
+// document and a write race that never resolves.
+const fake = { value: null, etag: null, writes: 0, failCatalogReads: false, conflict: false };
 
 vi.mock('@netlify/blobs', () => ({
   connectLambda: vi.fn(),
   getStore: vi.fn(() => ({
-    async get() {
+    async get(key) {
+      if (fake.failCatalogReads && key === 'overrides') throw new Error('backend detail 0xDEAD');
       return fake.value === null ? null : JSON.parse(JSON.stringify(fake.value));
     },
     async getWithMetadata() {
@@ -15,6 +18,7 @@ vi.mock('@netlify/blobs', () => ({
     },
     async setJSON(key, value, options = {}) {
       fake.writes += 1;
+      if (fake.conflict) return { modified: false };
       if (options.onlyIfNew && fake.value !== null) return { modified: false };
       if (options.onlyIfMatch && options.onlyIfMatch !== fake.etag) return { modified: false };
       fake.value = JSON.parse(JSON.stringify(value));
@@ -42,6 +46,8 @@ beforeEach(() => {
   fake.value = null;
   fake.etag = null;
   fake.writes = 0;
+  fake.failCatalogReads = false;
+  fake.conflict = false;
   process.env.STAFF_PASSWORD_SALT = 'salt';
   process.env.STAFF_PASSWORD_HASH = hashPassword('pw', 'salt');
   process.env.STAFF_SESSION_SECRET = 'secret';
@@ -119,9 +125,9 @@ describe('adding', () => {
 
     expect(response.statusCode).toBe(200);
     expect(body.slug).toBe('test-snare');
-    expect(body.listings.some((item) => item.slug === 'test-snare' && item.origin === 'added')).toBe(
-      true
-    );
+    expect(
+      body.listings.some((item) => item.slug === 'test-snare' && item.origin === 'added')
+    ).toBe(true);
   });
 
   it('refuses a duplicate slug rather than shadowing a real product', async () => {
@@ -166,5 +172,30 @@ describe('unknown actions', () => {
   it('rejects anything it does not recognize', async () => {
     expect((await call('POST', { action: 'drop-table' })).statusCode).toBe(400);
     expect((await call('PUT', { action: 'edit' })).statusCode).toBe(405);
+  });
+});
+
+describe('failures', () => {
+  it('reports a lost edit race as a conflict staff can retry', async () => {
+    fake.conflict = true;
+    const response = await call('POST', { action: 'hide', slug: EXISTING });
+
+    expect(response.statusCode).toBe(409);
+    expect(JSON.parse(response.body).error).toMatch(/being edited by someone else/);
+  });
+
+  it('logs storage errors instead of returning them', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fake.failCatalogReads = true;
+
+    const read = await call('GET');
+    const write = await call('POST', { action: 'edit', slug: EXISTING, changes: { price: 5 } });
+
+    for (const response of [read, write]) {
+      expect(response.statusCode).toBe(503);
+      expect(response.body).not.toContain('0xDEAD');
+    }
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('0xDEAD'));
+    spy.mockRestore();
   });
 });

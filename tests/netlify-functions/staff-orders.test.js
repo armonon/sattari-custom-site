@@ -1,4 +1,5 @@
 // @vitest-environment node
+import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Two stores: 'orders' (written by the Stripe webhook) and 'fulfillment'.
@@ -14,8 +15,12 @@ vi.mock('@netlify/blobs', () => ({
         async get(key) {
           return stores.orders[key] ? JSON.parse(JSON.stringify(stores.orders[key])) : null;
         },
-        async list() {
-          return { blobs: Object.keys(stores.orders).map((key) => ({ key })) };
+        async list({ prefix = '' } = {}) {
+          return {
+            blobs: Object.keys(stores.orders)
+              .filter((key) => key.startsWith(prefix))
+              .map((key) => ({ key })),
+          };
         },
       };
     }
@@ -94,6 +99,27 @@ describe('listing orders', () => {
     expect(body.orders[0].fulfillment.status).toBe('new');
     expect(body.openCount).toBe(1);
     expect(body.stats.revenueCents.allTime).toBe(25000);
+  });
+
+  it('flags paid orders stock could not cover, and never lists work markers as orders', async () => {
+    stores.orders['orders/cs_2.json'] = {
+      ...ORDER,
+      id: 'cs_2',
+      stock: {
+        state: 'applied',
+        oversold: [{ key: 'cymbal::::', name: 'Cymbal', requested: 1, available: 0 }],
+      },
+      notification: { state: 'sent' },
+    };
+    stores.orders['outbox/cs_2'] = { orderId: 'cs_2', markedAt: Date.now() };
+
+    const body = JSON.parse((await call('GET')).body);
+    const flagged = body.orders.find((order) => order.id === 'cs_2');
+
+    expect(body.total).toBe(2);
+    expect(flagged.oversold).toHaveLength(1);
+    expect(flagged.notificationState).toBe('sent');
+    expect(body.orders.find((order) => order.id === 'cs_1').oversold).toEqual([]);
   });
 });
 

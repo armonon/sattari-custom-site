@@ -16,9 +16,11 @@ export default function Navbar({ onCartClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
+  // Every navigation gets a new key, including tapping the link for the page
+  // already open, which leaves the pathname unchanged.
   useEffect(() => {
     setMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.key]);
 
   const handleCartClick = () => {
     setMenuOpen(false);
@@ -35,8 +37,8 @@ export default function Navbar({ onCartClick }) {
               <img
                 src="/sattari site/sattari logo.png"
                 alt="Sattari Music Logo"
-                width="176"
-                height="44"
+                width="529"
+                height="143"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"

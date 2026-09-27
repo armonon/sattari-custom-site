@@ -2,8 +2,6 @@ import { useEffect, useState, FC } from 'react';
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from '@components/Navbar';
 import BackgroundMedia from './components/BackgroundMedia';
-import { useCart } from '@context/CartContext';
-import { redirectToCheckout } from '@utils/stripe';
 import CartSidebar from '@components/CartSidebar';
 import Footer from '@components/Footer';
 import ShopAssistant from '@components/ShopAssistant';
@@ -36,31 +34,18 @@ import {
   PrivacyPage,
 } from '@utils/lazyComponents';
 
-const App: FC = () => {
+interface AppProps {
+  /** The browser entry passes Sentry's instrumented <Routes>; prerendering uses the plain one. */
+  RoutesComponent?: typeof Routes;
+}
+
+const App: FC<AppProps> = ({ RoutesComponent = Routes }) => {
   const [cartOpen, setCartOpen] = useState(false);
-  const [checkoutError, setCheckoutError] = useState('');
-  const { cartItems } = useCart();
   const location = useLocation();
   const isAudioWorkspace = ['/hub', '/learn', '/studio', '/stem-separator'].includes(
     location.pathname
   );
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(location.pathname);
-
-  const handleCheckout = async () => {
-    setCheckoutError('');
-
-    if (!cartItems.length) {
-      setCheckoutError('Your cart is empty. Add a product before checkout.');
-      return;
-    }
-
-    try {
-      await redirectToCheckout({ cartItems });
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Checkout failed.');
-      console.error('Checkout failed:', error);
-    }
-  };
 
   useEffect(() => {
     document.body.classList.toggle('cart-lock-scroll', cartOpen);
@@ -111,11 +96,7 @@ const App: FC = () => {
         >
           ×
         </button>
-        <CartSidebar
-          onCheckout={handleCheckout}
-          onNavigate={() => setCartOpen(false)}
-          checkoutError={checkoutError}
-        />
+        <CartSidebar onNavigate={() => setCartOpen(false)} />
       </div>
 
       {/* Overlay */}
@@ -128,7 +109,7 @@ const App: FC = () => {
       )}
 
       <main>
-        <Routes>
+        <RoutesComponent>
           <Route
             path="/guides"
             element={
@@ -246,6 +227,38 @@ const App: FC = () => {
           <Route path="/audio-suite" element={<Navigate to="/downloads" replace />} />
           <Route path="/audio-suite/downloads" element={<Navigate to="/downloads" replace />} />
           <Route path="/audio" element={<Navigate to="/downloads" replace />} />
+          <Route
+            path="/woodland-hills-drum-shop"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="woodland-drums" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/encino-violin-shop"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="encino-violins" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/violin-repair-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="violin-repair" />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/services/guitar-setup-los-angeles"
+            element={
+              <LazyPage>
+                <LocalSeoPage pageKey="guitar-setup" />
+              </LazyPage>
+            }
+          />
           <Route
             path="/los-angeles-music-store"
             element={
@@ -440,7 +453,7 @@ const App: FC = () => {
           />
           <Route path="/stem-seperator" element={<Navigate to="/stem-separator" replace />} />
           <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        </RoutesComponent>
       </main>
 
       {!isAudioWorkspace && <Footer />}

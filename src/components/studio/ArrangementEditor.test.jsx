@@ -58,6 +58,19 @@ function Host({ initial = emptyArrangement() }) {
   );
 }
 beforeEach(() => vi.clearAllMocks());
+// Whole-document role queries walk hundreds of step, key and cell buttons;
+// each lookup is scoped to the panel that owns the control.
+const actionsBar = () => within(screen.getByRole('group', { name: 'Arrangement actions' }));
+const beatTools = () => within(screen.getByRole('group', { name: 'Beat pattern tools' }));
+const stepSequencer = () => within(screen.getByRole('region', { name: 'Drum step sequencer' }));
+const pianoRoll = () => within(screen.getByRole('region', { name: 'Piano roll' }));
+const editTools = () => within(screen.getByRole('group', { name: 'Editing and export tools' }));
+const editorTabs = () => within(screen.getByRole('navigation', { name: 'Lower editor' }));
+const instrumentSettings = () => within(screen.getByRole('group', { name: 'Instrument settings' }));
+const editorNav = () => within(screen.getByRole('group', { name: 'Editor navigation' }));
+// The piano roll has a key and an add-note row per pitch: find its buttons by
+// label rather than computing every button's accessible name.
+const labelled = (name) => screen.getByLabelText(name, { selector: 'button' });
 it('keeps the context editor collapsed until selected and restores the timeline on return', () => {
   render(<Host />);
   const workspace = screen.getByRole('region', { name: 'Multitrack arrangement' });
@@ -65,16 +78,16 @@ it('keeps the context editor collapsed until selected and restores the timeline 
   expect(
     screen.queryByRole('separator', { name: 'Resize context editor' })
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Add instrument' }));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Add instrument' }));
   expect(workspace).toHaveAttribute('data-editor-open', 'true');
-  expect(screen.getByRole('button', { name: 'Add C4 note', exact: true })).toBeInTheDocument();
+  expect(labelled('Add C4 note')).toBeInTheDocument();
   expect(screen.getByText('Instrument settings').closest('details')).not.toHaveAttribute('open');
   const divider = screen.getByRole('separator', { name: 'Resize context editor' });
   fireEvent.keyDown(divider, { key: 'ArrowUp' });
   expect(divider).toHaveAttribute('aria-valuenow', '400');
   fireEvent.keyDown(divider, { key: 'Home' });
   expect(divider).toHaveAttribute('aria-valuenow', '260');
-  fireEvent.click(screen.getByRole('button', { name: '← Arrangement' }));
+  fireEvent.click(editorNav().getByRole('button', { name: '← Arrangement' }));
   expect(workspace).toHaveAttribute('data-editor-open', 'false');
   expect(screen.getByRole('region', { name: 'Arrangement timeline' })).toBeInTheDocument();
   expect(saved.tracks[0].clips).toHaveLength(1);
@@ -123,10 +136,11 @@ it('edits the selected captured take without touching another take or the origin
   expect(saved.captures[1].events[0].time).toBe(2);
   expect(saved.captures[1].originalEvents[0].time).toBe(1);
 });
+
 it('opens a connected beat sequencer without converting melodic clips', async () => {
   renderWithTools();
-  fireEvent.click(screen.getByRole('button', { name: 'Add instrument' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Beat sequencer', exact: true }));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Add instrument' }));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Beat sequencer', exact: true }));
   expect(saved.tracks).toHaveLength(2);
   expect(saved.tracks[0].clips[0].instrument).toBe('piano');
   expect(saved.tracks[1].clips[0]).toMatchObject({
@@ -134,29 +148,34 @@ it('opens a connected beat sequencer without converting melodic clips', async ()
     instrument: 'drums',
     timebase: 'beats',
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Kick step 1', exact: true }));
+  fireEvent.click(stepSequencer().getByRole('button', { name: 'Kick step 1', exact: true }));
   expect(saved.tracks[1].clips[0].notes[0]).toMatchObject({ pitch: 'C2', time: 0 });
   await waitFor(() => expect(audio.audition).toHaveBeenCalled());
-  fireEvent.click(screen.getByRole('button', { name: 'Set pattern loop' }));
+  fireEvent.click(beatTools().getByRole('button', { name: 'Set pattern loop' }));
   fireEvent.click(
-    screen.getByRole('button', { name: 'Play arrangement from sequencer', exact: true })
+    beatTools().getByRole('button', { name: 'Play arrangement from sequencer', exact: true })
   );
   await waitFor(() => expect(audio.play).toHaveBeenCalledWith(saved, 0, {}, { start: 0, end: 2 }));
-  fireEvent.click(screen.getByRole('button', { name: 'Open piano roll' }));
-  expect(screen.getByRole('button', { name: 'Select C2 note 1' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Show sequencer editor' }));
+  fireEvent.click(beatTools().getByRole('button', { name: 'Open piano roll' }));
+  expect(
+    within(pianoRoll().getByRole('region', { name: /^Piano notes/ })).getByLabelText(
+      'Select C2 note 1',
+      { selector: 'button' }
+    )
+  ).toBeInTheDocument();
+  fireEvent.click(editorTabs().getByRole('button', { name: 'Show sequencer editor' }));
   expect(saved.tracks).toHaveLength(2);
-  fireEvent.click(screen.getByRole('button', { name: 'Add empty bar' }));
+  fireEvent.click(stepSequencer().getByRole('button', { name: 'Add empty bar' }));
   expect(saved.tracks[1].clips[0].duration).toBe(4);
   expect(saved.tracks[1].clips[0].notes).toHaveLength(1);
-  expect(screen.getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(2);
-  fireEvent.click(screen.getByRole('button', { name: 'Undo edit' }));
+  expect(stepSequencer().getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(2);
+  fireEvent.click(editTools().getByRole('button', { name: 'Undo edit' }));
   expect(saved.tracks[1].clips[0].duration).toBe(2);
-  expect(screen.getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(1);
-  fireEvent.click(screen.getByRole('button', { name: 'Undo edit' }));
+  expect(stepSequencer().getByRole('spinbutton', { name: 'Beat bar' })).toHaveValue(1);
+  fireEvent.click(editTools().getByRole('button', { name: 'Undo edit' }));
   expect(saved.tracks[1].clips[0].notes).toEqual([]);
-  fireEvent.click(screen.getByRole('button', { name: 'Add instrument' }));
-  expect(screen.getByRole('button', { name: 'Add C4 note', exact: true })).toBeInTheDocument();
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Add instrument' }));
+  expect(labelled('Add C4 note')).toBeInTheDocument();
 });
 it('retains completed export downloads and clears only their temporary copy', async () => {
   const project = emptyArrangement(),
@@ -206,10 +225,10 @@ function renderWithTools(initial) {
 it('adds more than four independent tracks and creates audible instrument notes', async () => {
   render(<Host />);
   for (let i = 0; i < 6; i++)
-    fireEvent.click(screen.getByRole('button', { name: 'Add audio track' }));
+    fireEvent.click(actionsBar().getByRole('button', { name: 'Add audio track' }));
   expect(saved.tracks).toHaveLength(6);
-  fireEvent.click(screen.getByRole('button', { name: 'Add instrument' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Add instrument' }));
+  fireEvent.click(labelled('Add C4 note'));
   expect(saved.tracks[6].clips[0].notes[0]).toMatchObject({ pitch: 'C4', time: 0 });
   await waitFor(() =>
     expect(audio.audition).toHaveBeenCalledWith(
@@ -335,32 +354,32 @@ it('adds new patterns on the same instrument track', () => {
 it('expands the piano workspace without changing patterns and restores its dock on reopen', () => {
   render(<Host />);
   fireEvent.click(screen.getByRole('button', { name: 'New instrument track' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
   const before = JSON.stringify(saved);
-  fireEvent.click(screen.getByRole('button', { name: 'Expand piano roll' }));
+  fireEvent.click(labelled('Expand piano roll'));
   expect(screen.getByRole('region', { name: 'Instrument editor' })).toHaveClass('is-expanded');
-  fireEvent.click(screen.getByRole('button', { name: 'Close instrument editor' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Piano roll', exact: true }));
+  fireEvent.click(labelled('Close instrument editor'));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Piano roll', exact: true }));
   expect(screen.getByRole('region', { name: 'Instrument editor' })).not.toHaveClass('is-expanded');
   expect(JSON.stringify(saved)).toBe(before);
 });
 
 it('opens a dock from the toolbar and propagates linked notes with independent-copy escape', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Piano roll', exact: true }));
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Piano roll', exact: true }));
   expect(screen.getByRole('region', { name: 'Instrument editor' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Add instrument pattern' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Repeat linked pattern' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add E4 note', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
+  fireEvent.click(instrumentSettings().getByRole('button', { name: 'Repeat linked pattern' }));
+  fireEvent.click(labelled('Add E4 note'));
   expect(saved.tracks[0].clips.map((clip) => clip.notes.length)).toEqual([2, 2]);
   fireEvent.change(screen.getByLabelText('Instrument', { exact: true }), {
     target: { value: 'synth' },
   });
   expect(saved.tracks[0].clips.every((clip) => clip.instrument === 'synth')).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Make independent' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add G4 note', exact: true }));
+  fireEvent.click(instrumentSettings().getByRole('button', { name: 'Make independent' }));
+  fireEvent.click(labelled('Add G4 note'));
   expect(saved.tracks[0].clips.map((clip) => clip.notes.length)).toEqual([2, 3]);
-  fireEvent.click(screen.getByRole('button', { name: 'Close instrument editor' }));
+  fireEvent.click(labelled('Close instrument editor'));
   expect(screen.queryByRole('region', { name: 'Instrument editor' })).not.toBeInTheDocument();
 });

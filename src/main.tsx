@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  createRoutesFromChildren,
+  matchRoutes,
+  useLocation,
+  useNavigationType,
+} from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import * as Sentry from '@sentry/react';
 import App from './App';
@@ -9,8 +16,7 @@ import './fonts.css';
 import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';
-import './styles-audio-workspaces.css';
-import './styles-hub.css';
+import './styles-nav-hub.css';
 import { CartProvider } from './context/CartContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -21,10 +27,23 @@ import { ThemeProvider } from './context/ThemeContext';
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
+  // React Router 7 keeps the v6 hooks this integration needs, so page loads
+  // and navigations are named by route ("/product/:slug"), not by raw URL.
+  integrations: [
+    Sentry.reactRouterV6BrowserTracingIntegration({
+      useEffect,
+      useLocation,
+      useNavigationType,
+      createRoutesFromChildren,
+      matchRoutes,
+    }),
+  ],
   tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
 });
 
-const SentryRoutes = Sentry.withSentryRouting(BrowserRouter);
+// Must run after Sentry.init. Without a DSN Sentry stays disabled and this
+// returns the plain <Routes>.
+const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -33,9 +52,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <InventoryProvider>
             <CartProvider>
-              <SentryRoutes>
-                <App />
-              </SentryRoutes>
+              <BrowserRouter>
+                <App RoutesComponent={SentryRoutes} />
+              </BrowserRouter>
             </CartProvider>
           </InventoryProvider>
         </ThemeProvider>

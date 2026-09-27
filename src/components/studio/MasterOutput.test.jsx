@@ -5,6 +5,9 @@ import { expect, it, vi } from 'vitest';
 import MasterOutput from './MasterOutput';
 import { DEFAULT_MASTER_PROCESSING } from '../../utils/masterOutput';
 import { EFFECT_DRAG_TYPE } from '../../utils/arrangementEffects';
+
+// Scoped lookups: a whole-panel role query checks every control's visibility.
+const abCompare = () => within(screen.getByRole('group', { name: 'Tone and dynamics A/B' }));
 const engine = {
   setMasterMonitor: vi.fn(),
   resetLoudness: vi.fn(),
@@ -66,9 +69,9 @@ it('exposes independent master stem gain, mute, solo and reset without resetting
     target: { value: '200' },
   });
   expect(saved.stems.vocals.level).toBe(200);
-  fireEvent.click(screen.getByRole('button', { name: 'Solo master vocals' }));
+  fireEvent.click(screen.getByLabelText('Solo master vocals', { selector: 'button' }));
   expect(saved.stems.vocals.solo).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Mute master bass' }));
+  fireEvent.click(screen.getByLabelText('Mute master bass', { selector: 'button' }));
   expect(saved.stems.bass.muted).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Reset stem mix' }));
   expect(saved.stems.vocals).toEqual({ level: 100, solo: false, muted: false });
@@ -87,7 +90,7 @@ it('wires trims, crossover and delivery controls, and recalls A/B without revert
   ]) {
     fireEvent.change(screen.getByRole('slider', { name }), { target: { value } });
   }
-  fireEvent.click(screen.getByRole('button', { name: 'Store A' }));
+  fireEvent.click(abCompare().getByRole('button', { name: 'Store A' }));
   fireEvent.change(screen.getByRole('slider', { name: 'Input trim' }), { target: { value: '5' } });
   fireEvent.change(screen.getByRole('slider', { name: 'Loudness target' }), {
     target: { value: '-18' },
@@ -95,11 +98,11 @@ it('wires trims, crossover and delivery controls, and recalls A/B without revert
   fireEvent.change(screen.getByRole('slider', { name: 'True-peak target' }), {
     target: { value: '-2' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Mute master bass' }));
+  fireEvent.click(screen.getByLabelText('Mute master bass', { selector: 'button' }));
   fireEvent.drop(screen.getByRole('region', { name: 'Master output status' }), {
     dataTransfer: { files: [], getData: () => '["echo"]' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Recall A' }));
+  fireEvent.click(abCompare().getByRole('button', { name: 'Recall A' }));
   expect(saved).toMatchObject({
     inputTrim: -4,
     limiterDrive: 2,
@@ -113,19 +116,19 @@ it('wires trims, crossover and delivery controls, and recalls A/B without revert
   expect(onLevel).toHaveBeenLastCalledWith(100);
   expect(onLimiter).toHaveBeenLastCalledWith(true);
   expect(onCompression).toHaveBeenLastCalledWith(false);
-  expect(screen.getByRole('button', { name: 'Recall B' })).toBeDisabled();
+  expect(abCompare().getByRole('button', { name: 'Recall B' })).toBeDisabled();
   rerender(<Host captureActive />);
-  expect(screen.getByRole('button', { name: 'Recall A' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Replace A' })).toBeDisabled();
+  expect(abCompare().getByRole('button', { name: 'Recall A' })).toBeDisabled();
+  expect(abCompare().getByRole('button', { name: 'Replace A' })).toBeDisabled();
 });
 it('hides the output controls without resetting the stem mix', () => {
   const { rerender } = render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Mute master bass' }));
+  fireEvent.click(screen.getByLabelText('Mute master bass', { selector: 'button' }));
   rerender(<Host visible={false} />);
   expect(screen.queryByRole('region', { name: 'Master output status' })).not.toBeInTheDocument();
   expect(saved.stems.bass.muted).toBe(true);
   rerender(<Host />);
-  expect(screen.getByRole('button', { name: 'Mute master bass' })).toHaveAttribute(
+  expect(screen.getByLabelText('Mute master bass', { selector: 'button' })).toHaveAttribute(
     'aria-pressed',
     'true'
   );

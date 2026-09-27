@@ -14,9 +14,43 @@ import { bookingConfig } from './studioBookingConfig.js';
 import { patchBooking, readBookings, updateBookings } from './studioBookingStore.js';
 import { deliverBookingNotifications, queueNotifications } from './studioBookingNotifications.js';
 import { getClientIp } from './staffAuth.js';
+import { hashIp } from './ipHash.js';
 
+// `expose` marks a message written for the person reading it. Anything else
+// (Stripe errors also carry a statusCode) is logged and replaced with a
+// generic answer by the functions.
 export function bookingError(message, statusCode = 400) {
-  return Object.assign(new Error(message), { statusCode });
+  return Object.assign(new Error(message), { statusCode, expose: true });
+}
+
+export function bookingJson(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'X-Robots-Tag': 'noindex',
+      'Referrer-Policy': 'no-referrer',
+    },
+    body: JSON.stringify(body),
+  };
+}
+
+// Every request emails the owner (on the same Resend key as order emails) and
+// texts each alert number, and both the IP address and the email address of a
+// request are cheap to rotate. So beyond the per-sender limit there is a
+// ceiling for the whole site, and texts stop well before it.
+export const BOOKING_LIMITS = {
+  perSenderHourly: 5,
+  siteHourly: 10,
+  siteDaily: 30,
+  textHourly: 4,
+  textDaily: 12,
+};
+
+// Bots fill in every field they find; people never see these.
+export function honeypotFilled(payload) {
+  return ['website', 'bot-field'].some((field) => String(payload?.[field] ?? '').trim() !== '');
 }
 
 function requireReady() {
@@ -39,7 +73,18 @@ function clean(value, max) {
 
 export async function requestBooking(event, payload) {
   const { publicConfig: config } = requireReady();
-  if (payload.website) throw bookingError('Unable to submit this request.');
+  if (honeypotFilled(payload)) {
+    // Answer like a real request so the bot learns nothing, and store, email
+    // and text nothing.
+    console.log(JSON.stringify({ type: 'studio-booking-honeypot' }));
+    const echoedId = clean(payload.requestId, 80);
+    const hours = Number(payload.hours);
+    return {
+      id: `studio_${/^[a-f0-9-]{36}$/i.test(echoedId) ? echoedId : crypto.randomUUID()}`,
+      status: 'requested',
+      amountCents: bookingPrice(config.durations.includes(hours) ? hours : config.durations[0]),
+    };
+  }
   const requestId = clean(payload.requestId, 80);
   if (!/^[a-f0-9-]{36}$/i.test(requestId)) throw bookingError('Please refresh and try again.');
   const date = clean(payload.date, 10);
@@ -66,7 +111,7 @@ export async function requestBooking(event, payload) {
   const id = `studio_${requestId}`;
   const input = { date, startHour, hours, name, email, phone, notes, purpose };
   const fingerprint = crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex');
-  const ipHash = crypto.createHash('sha256').update(getClientIp(event)).digest('hex');
+  const ipHash = hashIp(getClientIp(event));
   const now = Date.now();
   const result = await updateBookings(event, (doc) => {
     if (doc[id]) {
@@ -77,16 +122,26 @@ export async function requestBooking(event, payload) {
         );
       return null;
     }
-    const recent = Object.values(doc).filter(
-      (b) => Date.parse(b.createdAt) > now - 3600000 && (b.ipHash === ipHash || b.email === email)
-    );
-    if (recent.length >= 5)
+    const all = Object.values(doc);
+    const lastHour = all.filter((b) => Date.parse(b.createdAt) > now - 3600000);
+    const lastDay = all.filter((b) => Date.parse(b.createdAt) > now - 86400000);
+    if (
+      lastHour.filter((b) => b.ipHash === ipHash || b.email === email).length >=
+      BOOKING_LIMITS.perSenderHourly
+    )
       throw bookingError(
         'Too many booking requests. Please call the shop or try again later.',
         429
       );
-    if (Object.values(doc).some((b) => holdsTime(b) && overlaps(input, b)))
+    if (lastHour.length >= BOOKING_LIMITS.siteHourly || lastDay.length >= BOOKING_LIMITS.siteDaily)
+      throw bookingError(
+        'We are receiving an unusual number of booking requests. Please call (424) 465-3020 or try again later.',
+        429
+      );
+    if (all.some((b) => holdsTime(b) && overlaps(input, b)))
       throw bookingError('That time was just reserved. Please choose another time.', 409);
+    const textOwner =
+      lastHour.length < BOOKING_LIMITS.textHourly && lastDay.length < BOOKING_LIMITS.textDaily;
     const booking = {
       ...input,
       id,
@@ -98,7 +153,13 @@ export async function requestBooking(event, payload) {
       status: 'requested',
       createdAt: new Date(now).toISOString(),
     };
-    return { ...doc, [id]: { ...booking, notifications: queueNotifications(booking, 'request') } };
+    return {
+      ...doc,
+      [id]: {
+        ...booking,
+        notifications: queueNotifications(booking, 'request', { text: textOwner }),
+      },
+    };
   });
   // The durable request is the source of truth. A provider outage is retried by
   // the scheduled job and exposed to staff, never disguised as sent.

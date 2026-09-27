@@ -92,6 +92,27 @@ describe('canonical five-stage action support', () => {
     );
   });
 
+  it('reports mixer sends, returns and deck inserts as printed in Arrange', () => {
+    const opening = performanceSupportForTake({
+      events: [initial({ sends: { a: 25, b: 0 }, inserts: [{ id: 'fx', type: 'eq' }] })],
+    });
+    expect(opening.printed).toContain('Opening deck sends and inserts');
+    const quiet = performanceSupportForTake({
+      events: [initial({ sends: { a: 0, b: 0 }, inserts: [] })],
+    });
+    expect(quiet.printed).not.toContain('Opening deck sends and inserts');
+    const live = takeCapabilities({
+      assetId: 'print',
+      events: [
+        initial(),
+        { type: 'setDeckSend', args: ['A', 'a', 40] },
+        { type: 'setReturn', args: ['b', { division: '1/8' }] },
+      ],
+    });
+    expect(live.printed).toContain('Mixer sends / returns / channel inserts');
+    expect(live.unknown || []).toEqual([]);
+  });
+
   it('ignores disabled actions, flags unknown actions and survives save/reopen', () => {
     const capture = {
       events: [
@@ -106,6 +127,26 @@ describe('canonical five-stage action support', () => {
     expect(result.printed).toContain('Unclassified action: futurePluginMutation');
     expect(performanceSupportForTake(JSON.parse(JSON.stringify(capture)))).toEqual(result);
     expect(result.qualified).toBe(false);
+  });
+
+  it('classifies journaled sync intent instead of reporting unclassified actions', () => {
+    const grid = { id: 'B', bpm: 100, beatOffset: 0, syncQuantum: 1, followTempoMap: false };
+    const capture = {
+      events: [
+        initial(),
+        { type: 'setProjectTempo', args: [120, 0] },
+        { type: 'setDeckSync', args: ['B', true, grid, { ...grid, id: 'A', bpm: 120 }] },
+        { type: 'setTempoFollow', args: ['A', [{ time: 0 }, { time: 0.5 }], 120] },
+      ],
+    };
+    const result = performanceSupportForTake(capture);
+    expect(result.unknown).toEqual([]);
+    expect(result.printed.join(' ')).not.toContain('Unclassified');
+    expect(result.rows.map((row) => row.id)).toEqual(['sync']);
+    expect(result.editable).toContain('Re-derived clip playback rates');
+    expect(takeCapabilities({ assetId: 'print', ...capture }).printed.join(' ')).not.toContain(
+      'Unclassified'
+    );
   });
 
   it('does not promise editable source clips when the take has no source snapshot', () => {

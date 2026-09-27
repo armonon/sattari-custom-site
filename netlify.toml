@@ -60,24 +60,20 @@
   status = 200
 
 [[redirects]]
+  from = "/api/checkout-release"
+  to = "/.netlify/functions/checkout-release"
+  status = 200
+
+[[redirects]]
   from = "/api/stripe-webhook"
   to = "/.netlify/functions/stripe-webhook"
   status = 200
 
-[[redirects]]
-  from = "/api/admin/orders"
-  to = "/.netlify/functions/admin-orders"
-  status = 200
-
-[[redirects]]
-  from = "/api/service-inquiry"
-  to = "/.netlify/functions/service-inquiry"
-  status = 200
-
-[[redirects]]
-  from = "/api/studio-bookings"
-  to = "/.netlify/functions/studio-bookings"
-  status = 200
+# Not here on purpose: /api/admin/orders, /api/service-inquiry,
+# /api/studio-bookings, /api/staff/login and /api/site-event. Those are v2
+# functions whose routes are declared in their own `config.path`, which Netlify
+# requires for a code-defined rate limit and matches before any redirect, so
+# a rule here would be dead and could drift from the real route.
 
 [[redirects]]
   from = "/api/staff/bookings"
@@ -85,18 +81,18 @@
   status = 200
 
 [[redirects]]
-  from = "/api/now/profile"
-  to = "/.netlify/functions/now-profile"
+  from = "/api/staff/inquiries"
+  to = "/.netlify/functions/staff-inquiries"
+  status = 200
+
+[[redirects]]
+  from = "/api/staff/logout"
+  to = "/.netlify/functions/staff-logout"
   status = 200
 
 [[redirects]]
   from = "/api/inventory"
   to = "/.netlify/functions/inventory"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/login"
-  to = "/.netlify/functions/staff-login"
   status = 200
 
 [[redirects]]

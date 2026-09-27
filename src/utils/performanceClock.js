@@ -9,6 +9,8 @@ export const TIMED_PARAMETERS = new Set([
   'setDeckEq',
   'setDeckFilter',
   'setDeckFx',
+  'setDeckSend',
+  'setReturn',
   'setLaneState',
   'setMasterStems',
   'setMasterLevel',

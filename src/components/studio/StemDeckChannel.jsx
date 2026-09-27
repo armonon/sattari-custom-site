@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Link2, Pause, Play, Scissors, Upload } from 'lucide-react';
+import { useDeckMeter, useDeckPosition, useTransport } from '../../studio/transport/transportStore';
 
 export const TOOL_TABS = ['CUES', 'LOOP', 'STEMS', 'FX'];
 
@@ -18,16 +19,19 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+/** `inputProps` adds handlers to the range input, e.g. gesture start/end. */
 export function Knob({
   label,
   ariaLabel,
   value,
   min = 0,
   max = 100,
+  step,
   onChange,
   accent,
   suffix = '',
   disabled = false,
+  inputProps,
 }) {
   const normalized = (clamp(value, min, max) - min) / Math.max(1, max - min);
   const angle = -135 + normalized * 270;
@@ -38,10 +42,12 @@ export function Knob({
       <span className="sd-knob-dial">
         <i />
         <input
+          {...inputProps}
           type="range"
           disabled={disabled}
           min={min}
           max={max}
+          step={step}
           value={value}
           onChange={(event) => onChange(Number(event.target.value))}
           aria-label={ariaLabel || label}
@@ -55,17 +61,28 @@ export function Knob({
   );
 }
 
-export function VerticalFader({ label, value, min = 0, max = 100, onChange, accent }) {
+/** `inputProps` adds handlers to the range input, e.g. gesture start/end. */
+export function VerticalFader({
+  label,
+  ariaLabel,
+  value,
+  min = 0,
+  max = 100,
+  onChange,
+  accent,
+  inputProps,
+}) {
   return (
     <label className="sd-vfader" style={{ '--sd-accent': accent }}>
       <span>{label}</span>
       <input
+        {...inputProps}
         type="range"
         min={min}
         max={max}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        aria-label={label}
+        aria-label={ariaLabel || label}
       />
       <output>{value}</output>
     </label>
@@ -77,7 +94,14 @@ export function SegmentMeter({ level, accent, label, compact = false }) {
   const count = compact ? 9 : 14;
 
   return (
-    <div className={`sd-segment-meter${compact ? ' is-compact' : ''}`} aria-label={label}>
+    <div
+      className={`sd-segment-meter${compact ? ' is-compact' : ''}`}
+      role="meter"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clamp(level, 0, 1) * 100) || 0}
+    >
       {Array.from({ length: count }, (_, index) => (
         <i
           key={index}
@@ -90,9 +114,25 @@ export function SegmentMeter({ level, accent, label, compact = false }) {
   );
 }
 
-function Waveform({ deck, position, onSeek }) {
-  const progress = deck.duration ? Math.min(100, (position / deck.duration) * 100) : 0;
+/** A deck's live meter; only this component re-renders on transport ticks. */
+export function DeckMeter({ deckId, ...props }) {
+  return <SegmentMeter level={useDeckMeter(deckId)} {...props} />;
+}
 
+const progressOf = (position, duration) =>
+  duration ? Math.min(100, (position / duration) * 100) : 0;
+
+function WavePlayhead({ deckId, duration }) {
+  const progress = progressOf(useDeckPosition(deckId), duration);
+  return <span className="sd-wave-playhead" style={{ left: `${progress}%` }} />;
+}
+
+function StemPlayhead({ deckId, duration }) {
+  const progress = progressOf(useDeckPosition(deckId), duration);
+  return <span className="sd-vertical-playhead" style={{ top: `${progress}%` }} />;
+}
+
+function Waveform({ deck, getPosition, onSeek }) {
   return (
     <button
       type="button"
@@ -105,6 +145,7 @@ function Waveform({ deck, position, onSeek }) {
           onSeek(clamp((event.clientX - bounds.left) / bounds.width, 0, 1) * deck.duration);
       }}
       onKeyDown={(event) => {
+        const position = getPosition();
         const targets = {
           ArrowLeft: position - 5,
           ArrowRight: position + 5,
@@ -125,14 +166,12 @@ function Waveform({ deck, position, onSeek }) {
           <i key={index} style={{ height: `${height}%` }} />
         ))}
       </span>
-      <span className="sd-wave-playhead" style={{ left: `${progress}%` }} />
+      <WavePlayhead deckId={deck.id} duration={deck.duration} />
     </button>
   );
 }
 
-function StemWavefield({ deck, position, onSeek, onLoad, onChange, density = 8 }) {
-  const progress = deck.duration ? Math.min(100, (position / deck.duration) * 100) : 0;
-
+function StemWavefield({ deck, onSeek, onLoad, onChange, density = 8 }) {
   return (
     <div className="sd-stem-wavefield">
       {STEM_WAVE_DEFINITIONS.map(({ id, label, color, offset }) => {
@@ -173,7 +212,7 @@ function StemWavefield({ deck, position, onSeek, onLoad, onChange, density = 8 }
                   return <i key={index} style={{ width: `${width}%` }} />;
                 })}
               </span>
-              <span className="sd-vertical-playhead" style={{ top: `${progress}%` }} />
+              <StemPlayhead deckId={deck.id} duration={deck.duration} />
             </button>
             <div className="sd-stem-wave-controls">
               <Knob
@@ -214,7 +253,7 @@ function StemWavefield({ deck, position, onSeek, onLoad, onChange, density = 8 }
   );
 }
 
-function CueTools({ deck, position, onSetHotCue, onDeleteHotCue, onDeckChange }) {
+function CueTools({ deck, getPosition, onSetHotCue, onDeleteHotCue, onDeckChange }) {
   return (
     <div className="sd-tool-content sd-cue-tools">
       <details className="sd-beat-grid-editor">
@@ -246,7 +285,7 @@ function CueTools({ deck, position, onSetHotCue, onDeleteHotCue, onDeckChange })
             }
           />
         </label>
-        <button type="button" onClick={() => onDeckChange({ beatOffset: position })}>
+        <button type="button" onClick={() => onDeckChange({ beatOffset: getPosition() })}>
           First beat here
         </button>
         <button
@@ -285,7 +324,7 @@ function CueTools({ deck, position, onSetHotCue, onDeleteHotCue, onDeckChange })
             type="button"
             key={index}
             className={cue !== null ? 'is-set' : ''}
-            onClick={() => onSetHotCue(index, cue === null ? position : cue)}
+            onClick={() => onSetHotCue(index, cue === null ? getPosition() : cue)}
             onDoubleClick={() => onDeleteHotCue(index)}
             title={cue === null ? `Set hot cue ${index + 1}` : `Jump to hot cue ${index + 1}`}
           >
@@ -294,10 +333,10 @@ function CueTools({ deck, position, onSetHotCue, onDeleteHotCue, onDeckChange })
         ))}
       </div>
       <div className="sd-marker-row">
-        <button type="button" onClick={() => onDeckChange({ introEnd: position })}>
+        <button type="button" onClick={() => onDeckChange({ introEnd: getPosition() })}>
           Intro End
         </button>
-        <button type="button" onClick={() => onDeckChange({ outroStart: position })}>
+        <button type="button" onClick={() => onDeckChange({ outroStart: getPosition() })}>
           Outro Start
         </button>
       </div>
@@ -305,18 +344,18 @@ function CueTools({ deck, position, onSetHotCue, onDeleteHotCue, onDeckChange })
   );
 }
 
-function LoopTools({ deck, position, onDeckChange, onSetLoop, onBeatJump }) {
+function LoopTools({ deck, getPosition, onDeckChange, onSetLoop, onBeatJump }) {
   return (
     <div className="sd-tool-content sd-loop-tools">
       <div className="sd-loop-main-row">
-        <button type="button" onClick={() => onDeckChange({ loopStart: position })}>
+        <button type="button" onClick={() => onDeckChange({ loopStart: getPosition() })}>
           IN
         </button>
         <button
           type="button"
           onClick={() => {
             const start = deck.loopStart ?? 0;
-            const end = Math.max(start + 0.1, position);
+            const end = Math.max(start + 0.1, getPosition());
             onSetLoop(true, start, end);
           }}
         >
@@ -358,7 +397,10 @@ function LoopTools({ deck, position, onDeckChange, onSetLoop, onBeatJump }) {
           <button
             type="button"
             key={roll}
-            onClick={() => onSetLoop(true, position, position, roll)}
+            onClick={() => {
+              const position = getPosition();
+              onSetLoop(true, position, position, roll);
+            }}
           >
             {roll}
           </button>
@@ -499,10 +541,10 @@ function DeckToolbox(props) {
   );
 }
 
-export function StemDeckChannel({
+// Memoized: with stable handlers a channel re-renders only when its deck
+// changes. Playheads and the meter subscribe to the transport store.
+export const StemDeckChannel = memo(function StemDeckChannel({
   deck,
-  position,
-  meterLevel,
   onLoadLane,
   onLoadStemSet,
   onDeckChange,
@@ -518,6 +560,8 @@ export function StemDeckChannel({
   onExtractMidi,
   onExtractDrums,
 }) {
+  const transport = useTransport();
+  const getPosition = () => transport.getPosition(deck.id);
   const inputsRef = useRef({});
   const [waveDensity, setWaveDensity] = useState(8);
   const [bpmDraft, setBpmDraft] = useState(String(deck.bpm));
@@ -640,7 +684,7 @@ export function StemDeckChannel({
       </div>
 
       <div className="sd-deck-overview">
-        <Waveform deck={deck} position={position} onSeek={onSeek} />
+        <Waveform deck={deck} getPosition={getPosition} onSeek={onSeek} />
         <div className="sd-deck-density" aria-label="Waveform density">
           {[4, 8, 16].map((density) => (
             <button
@@ -663,7 +707,6 @@ export function StemDeckChannel({
       <StemWavefield
         deck={deck}
         density={waveDensity}
-        position={position}
         onSeek={onSeek}
         onLoad={requestLane}
         onChange={onLaneChange}
@@ -707,12 +750,12 @@ export function StemDeckChannel({
           onChange={(pitch) => onDeckChange({ pitch })}
           accent={deck.accent}
         />
-        <SegmentMeter level={meterLevel} accent={deck.accent} label={deck.id} compact />
+        <DeckMeter deckId={deck.id} accent={deck.accent} label={deck.id} compact />
       </div>
 
       <DeckToolbox
         deck={deck}
-        position={position}
+        getPosition={getPosition}
         onDeckChange={onDeckChange}
         onSetHotCue={onSetHotCue}
         onDeleteHotCue={onDeleteHotCue}
@@ -767,7 +810,7 @@ export function StemDeckChannel({
       />
     </article>
   );
-}
+});
 
 export function ArrangementWave({ peaks, accent }) {
   return (

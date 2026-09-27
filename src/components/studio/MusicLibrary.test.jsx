@@ -16,6 +16,9 @@ import {
   organizeLibrary,
   libraryOrganization,
 } from '../../utils/libraryOrganization';
+
+// Song rows carry several buttons each; header actions are found in their group.
+const libraryActions = () => within(screen.getByRole('group', { name: 'Library actions' }));
 vi.mock('../../utils/libraryOrganization', async (original) => ({
   ...(await original()),
   libraryOrganization: vi.fn(),
@@ -74,9 +77,9 @@ describe('independent music library', () => {
     expect(
       screen.queryByRole('button', { name: 'Collapse Preview player' })
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Up Next/ }));
+    fireEvent.click(libraryActions().getByRole('button', { name: /^Up Next/ }));
     expect(screen.getByRole('region', { name: 'Up next queue' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Up Next/ }));
+    fireEvent.click(libraryActions().getByRole('button', { name: /^Up Next/ }));
     expect(screen.queryByRole('region', { name: 'Up next queue' })).not.toBeInTheDocument();
     await screen.findByText('Bring your music collection');
   });
@@ -96,7 +99,7 @@ describe('independent music library', () => {
     expect(screen.getByRole('button', { name: 'Analyze', exact: true })).toBeInTheDocument();
     expect(screen.getByLabelText('Add First to playlist')).toBeInTheDocument();
     fireEvent.click(more);
-    expect(screen.getByRole('button', { name: 'Preview First' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Preview First', { selector: 'button' })).toBeInTheDocument();
   });
   it('drag-reorders a playlist without copying audio or changing decks', async () => {
     const saved = [track('First'), track('Second'), track('Third')];
@@ -141,25 +144,25 @@ describe('independent music library', () => {
     expect(screen.queryByText('Second')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Collection actions'));
     fireEvent.click(screen.getByRole('button', { name: 'Queue collection' }));
-    fireEvent.click(screen.getByRole('button', { name: /^Up Next/ }));
+    fireEvent.click(libraryActions().getByRole('button', { name: /^Up Next/ }));
     await waitFor(() =>
       expect(
         within(screen.getByRole('region', { name: 'Up next queue' })).getAllByRole('listitem')
       ).toHaveLength(1)
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Favorite First' }));
+    fireEvent.click(screen.getByLabelText('Favorite First', { selector: 'button' }));
     await waitFor(() => expect(saved[0].favorite).toBe(true));
     fireEvent.click(screen.getByRole('button', { name: 'Artists', exact: true }));
     fireEvent.click(screen.getByRole('button', { name: 'Open artist Two' }));
-    expect(screen.getByRole('button', { name: 'Preview Second' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Preview Second', { selector: 'button' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Favorites', exact: true }));
-    expect(screen.getByRole('button', { name: 'Preview First' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Preview First', { selector: 'button' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Preview Second' })).not.toBeInTheDocument();
     expect(onLoad).not.toHaveBeenCalled();
     unmount();
     mount();
-    await screen.findByRole('button', { name: 'Favorite First' });
-    expect(screen.getByRole('button', { name: 'Favorite First' })).toHaveAttribute(
+    await screen.findByLabelText('Favorite First', { selector: 'button' });
+    expect(screen.getByLabelText('Favorite First', { selector: 'button' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -194,7 +197,7 @@ describe('independent music library', () => {
     };
     fireEvent.dragStart(screen.getByText('First').closest('tr'), { dataTransfer });
     expect(data.get('application/x-sattari-library-track')).toBe(saved.id);
-    fireEvent.click(screen.getByRole('button', { name: /^Up Next/ }));
+    fireEvent.click(libraryActions().getByRole('button', { name: /^Up Next/ }));
     fireEvent.drop(screen.getByRole('region', { name: 'Up next queue' }), { dataTransfer });
     await waitFor(() =>
       expect(
@@ -275,11 +278,11 @@ describe('independent music library', () => {
     const onLoad = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('B');
     mount(onLoad);
     await screen.findByText('First');
-    fireEvent.click(screen.getByRole('button', { name: 'Queue First' }));
-    fireEvent.click(screen.getByRole('button', { name: /^Up Next/ }));
+    fireEvent.click(screen.getByLabelText('Queue First', { selector: 'button' }));
+    fireEvent.click(libraryActions().getByRole('button', { name: /^Up Next/ }));
     const queue = within(screen.getByRole('region', { name: 'Up next queue' }));
     await waitFor(() => expect(queue.getAllByRole('listitem')).toHaveLength(1));
-    fireEvent.click(screen.getByRole('button', { name: 'Queue Second' }));
+    fireEvent.click(screen.getByLabelText('Queue Second', { selector: 'button' }));
     await waitFor(() => expect(queue.getAllByRole('listitem')).toHaveLength(2));
     fireEvent.click(queue.getByRole('button', { name: 'Move queued song 2 up' }));
     await waitFor(() => expect(queue.getAllByRole('listitem')[0]).toHaveTextContent('Second'));
@@ -308,7 +311,7 @@ describe('independent music library', () => {
       />
     );
     await screen.findByText('First');
-    expect(screen.getByRole('button', { name: 'Load First into deck' })).toBeDisabled();
+    expect(screen.getByLabelText('Load First into deck', { selector: 'button' })).toBeDisabled();
     fireEvent.click(screen.getByLabelText('More actions for First'));
     fireEvent.click(screen.getByRole('button', { name: 'Add First to arrangement' }));
     await waitFor(() => expect(onArrange).toHaveBeenCalledWith(expect.any(File)));
@@ -324,7 +327,7 @@ describe('independent music library', () => {
     expect(importLibraryTrack).toHaveBeenCalledTimes(7);
     expect(onLoad).not.toHaveBeenCalled();
     expect(analyzeAudioFile).not.toHaveBeenCalled();
-    expect(screen.getAllByRole('button', { name: /^Load .* into deck$/ })).toHaveLength(7);
+    expect(screen.getAllByLabelText(/^Load .* into deck$/, { selector: 'button' })).toHaveLength(7);
   });
   it('supports folder selection, groups albums, and searches saved songs', async () => {
     listLibraryTracks.mockResolvedValue([track('First'), track('Second')]);
@@ -343,13 +346,13 @@ describe('independent music library', () => {
     listLibraryTracks.mockResolvedValue([saved]);
     const { onLoad } = mount();
     await screen.findByText('First');
-    fireEvent.click(screen.getByRole('button', { name: 'Preview First' }));
+    fireEvent.click(screen.getByLabelText('Preview First', { selector: 'button' }));
     await within(screen.getByRole('region', { name: 'Preview / cue player' })).findByText('First');
     expect(onLoad).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Close preview' }));
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
     fireEvent.change(screen.getByLabelText('Load into'), { target: { value: 'C' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Load First into deck' }));
+    fireEvent.click(screen.getByLabelText('Load First into deck', { selector: 'button' }));
     await waitFor(() => expect(onLoad).toHaveBeenCalledWith(saved, expect.any(File), 'C'));
     expect(screen.getByRole('option', { name: 'Deck A · occupied' })).toBeDisabled();
   });
@@ -387,13 +390,15 @@ describe('independent music library', () => {
       decks.map((deck) => ({ ...deck, duration: 30 }))
     );
     await screen.findByText('Song 0');
-    expect(screen.getAllByRole('button', { name: /^Load .* into deck$/ })).toHaveLength(50);
+    expect(screen.getAllByLabelText(/^Load .* into deck$/, { selector: 'button' })).toHaveLength(
+      50
+    );
     expect(
       screen
         .getAllByRole('button', { name: /^Load .* into deck$/ })
         .every((button) => button.disabled)
     ).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getAllByRole('button', { name: /^Load .* into deck$/ })).toHaveLength(3);
+    expect(screen.getAllByLabelText(/^Load .* into deck$/, { selector: 'button' })).toHaveLength(3);
   });
 });

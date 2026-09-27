@@ -3,15 +3,36 @@ import {
   audioClip,
   audioTrack,
   automationAt,
+  arrangementDuration,
+  arrangementRange,
   arrangementSchedule,
+  clipRows,
+  clipWaveform,
+  compRegion,
+  cropEnvelope,
   emptyArrangement,
   linearGain,
+  mapChanged,
   migrateArrangement,
+  moveClips,
+  repeatLinkedPattern,
+  resizeClip,
+  retimeMidi,
   rulerMarks,
   splitClip,
+  trimClipStart,
+  updatePatternClip,
   validateArrangement,
 } from './arrangementModel';
 import { gainFromPercent } from './studioAudioEngine';
+
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.values(value).forEach(deepFreeze);
+  }
+  return value;
+}
 
 function fixture() {
   const project = emptyArrangement(),
@@ -162,5 +183,127 @@ describe('non-destructive editing and migration', () => {
     if (kind === 'unknown-version') project.version = 99;
     if (kind === 'invalid-automation') clip.automation.volume = [{ time: Infinity, value: 100 }];
     expect(() => validateArrangement(project)).toThrow('invalid arrangement');
+  });
+});
+
+// Every clip shape the operations branch on: a trimmed audio clip whose trim
+// window has no fade curve yet, automation, fades, and linked beat patterns.
+function richProject() {
+  const vocal = audioTrack('Vocal');
+  vocal.effects = [];
+  vocal.automation = {
+    volume: [
+      { time: 0, value: 100 },
+      { time: 20, value: 150 },
+    ],
+  };
+  const take = {
+    ...audioClip('take', 'Take', 12, 2),
+    fadeIn: 1,
+    fadeOut: 2,
+    waveform: Array.from({ length: 64 }, (_, i) => i % 100),
+  };
+  take.automation.volume = [
+    { time: 0, value: 50 },
+    { time: 12, value: 250 },
+  ];
+  vocal.clips = [resizeClip(take, 10), audioClip('pad', 'Pad', 4, 14)];
+  const keys = { ...audioTrack('Keys'), kind: 'midi' };
+  keys.clips = [
+    {
+      ...audioClip('', 'Riff', 2),
+      kind: 'midi',
+      timebase: 'beats',
+      instrument: 'piano',
+      notes: [
+        { pitch: 'C4', time: 0, duration: 0.5, velocity: 0.8 },
+        { pitch: 'E4', time: 1, duration: 0.5, velocity: 0.6 },
+      ],
+    },
+  ];
+  const linked = repeatLinkedPattern(
+    { ...emptyArrangement(), tracks: [vocal, keys] },
+    keys.clips[0].id
+  );
+  linked.locators = [{ id: 'marker', name: 'Drop', time: 4 }];
+  linked.captures = [{ assetId: 'safety', name: 'Take', duration: 4, events: [] }];
+  return validateArrangement(linked);
+}
+
+describe('model operations are pure', () => {
+  it('never mutates deep-frozen inputs, including a trimmed clip whose trim window lacks a fade curve', () => {
+    const project = deepFreeze(richProject());
+    const snapshot = JSON.stringify(project);
+    const [vocal, keys] = project.tracks;
+    const [trimmed, pad] = vocal.clips;
+    const riff = keys.clips[0];
+    expect(trimmed.trimSource.fadeInCurve).toBeUndefined();
+    const results = [
+      repeatLinkedPattern(project, riff.id),
+      updatePatternClip(project, riff.id, { notes: [riff.notes[0]] }),
+      updatePatternClip(project, riff.id, { instrument: 'synth' }),
+      updatePatternClip(project, trimmed.id, { fadeIn: 0.5, fadeInCurve: undefined }),
+      updatePatternClip(project, trimmed.id, {
+        automation: { ...trimmed.automation, volume: [{ time: 1, value: 90 }] },
+      }),
+      updatePatternClip(project, riff.id, resizeClip(riff, 1)),
+      cropEnvelope(trimmed.automation.volume, 1, 3),
+      resizeClip(trimmed, 12),
+      resizeClip(riff, 1),
+      trimClipStart(trimmed, trimmed.start + 1),
+      trimClipStart(trimClipStart(trimmed, trimmed.start + 1), trimmed.start),
+      trimClipStart(riff, 0.5),
+      clipRows(vocal.clips),
+      moveClips(project, [trimmed.id, pad.id], 1, vocal.id, keys.id),
+      clipWaveform(trimmed),
+      retimeMidi(project, 120, 90),
+      automationAt(trimmed.automation.volume, 2),
+      splitClip(trimmed, trimmed.start + 3),
+      splitClip(riff, 1),
+      arrangementDuration(project),
+      arrangementRange(project, 1, 8),
+      arrangementSchedule(project, 3),
+      compRegion(project, vocal.id, 3, 6),
+      rulerMarks(40, 120, 40, { left: 0, width: 800 }),
+      migrateArrangement({ arranger: project }),
+      validateArrangement(project),
+    ];
+    expect(results.every((result) => result !== undefined)).toBe(true);
+    expect(JSON.stringify(project)).toBe(snapshot);
+  });
+
+  it('trims a previously trimmed start into a new window instead of editing the old one', () => {
+    const clip = deepFreeze(resizeClip({ ...audioClip('a', 'Song', 10), fadeIn: 1 }, 8));
+    const trimmed = trimClipStart(clip, 2);
+    expect(clip.trimSource.fadeInCurve).toBeUndefined();
+    expect(trimmed.trimSource).not.toBe(clip.trimSource);
+    expect(trimmed.trimSource.fadeInCurve).toEqual([
+      { time: 0, value: 0 },
+      { time: 1, value: 1 },
+    ]);
+    expect(trimmed).toMatchObject({ start: 2, offset: 2, duration: 6 });
+    expect(trimClipStart(trimmed, 0)).toMatchObject({ start: 0, offset: 0, duration: 8 });
+  });
+
+  it('shares every untouched track, clip and array with the input project', () => {
+    const project = deepFreeze(richProject());
+    const [vocal, keys] = project.tracks;
+    const pad = vocal.clips[1];
+    const edited = updatePatternClip(project, pad.id, { gain: 80 });
+    expect(edited.tracks[1]).toBe(keys);
+    expect(edited.tracks[0].clips[0]).toBe(vocal.clips[0]);
+    expect(edited.tracks[0].clips[1]).toMatchObject({ gain: 80 });
+    expect(updatePatternClip(project, 'missing', { gain: 80 })).toBe(project);
+    const moved = moveClips(project, [pad.id], 1, vocal.id, vocal.id);
+    expect(moved.tracks[1]).toBe(keys);
+    expect(moved.tracks[0].clips[0]).toBe(vocal.clips[0]);
+    const retimed = retimeMidi(project, 120, 60);
+    expect(retimed.tracks[0]).toBe(vocal);
+    expect(retimed.tracks[1]).not.toBe(keys);
+    const repeated = repeatLinkedPattern(project, keys.clips[0].id);
+    expect(repeated.tracks[0]).toBe(vocal);
+    const items = [1, 2, 3];
+    expect(mapChanged(items, (item) => item)).toBe(items);
+    expect(mapChanged(items, (item) => (item === 2 ? 20 : item))).toEqual([1, 20, 3]);
   });
 });

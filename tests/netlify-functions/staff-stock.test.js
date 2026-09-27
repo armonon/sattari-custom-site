@@ -1,7 +1,8 @@
 // @vitest-environment node
+import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const fake = { value: null, etag: null, writes: 0 };
+const fake = { value: null, etag: null, writes: 0, failWrites: false, alwaysConflict: false };
 
 vi.mock('@netlify/blobs', () => ({
   connectLambda: vi.fn(),
@@ -14,6 +15,8 @@ vi.mock('@netlify/blobs', () => ({
       return { data: JSON.parse(JSON.stringify(fake.value)), etag: fake.etag };
     },
     async setJSON(key, value, options = {}) {
+      if (fake.failWrites) throw new Error('socket hang up talking to blobs.internal:443');
+      if (fake.alwaysConflict) return { modified: false };
       fake.writes += 1;
       if (options.onlyIfNew && fake.value !== null) return { modified: false };
       if (options.onlyIfMatch && options.onlyIfMatch !== fake.etag) return { modified: false };
@@ -44,6 +47,8 @@ beforeEach(() => {
   fake.value = null;
   fake.etag = null;
   fake.writes = 0;
+  fake.failWrites = false;
+  fake.alwaysConflict = false;
   process.env.STAFF_PASSWORD_SALT = 'salt';
   process.env.STAFF_PASSWORD_HASH = hashPassword('pw', 'salt');
   process.env.STAFF_SESSION_SECRET = 'secret';
@@ -100,7 +105,11 @@ describe('staff-stock reads', () => {
 
 describe('staff-stock writes', () => {
   it('saves a quantity', async () => {
-    const response = await authed('POST', { updates: [{ key: stockKey(PLAIN), quantity: 7 }] }, token);
+    const response = await authed(
+      'POST',
+      { updates: [{ key: stockKey(PLAIN), quantity: 7 }] },
+      token
+    );
 
     expect(response.statusCode).toBe(200);
     expect(fake.value[stockKey(PLAIN)]).toBe(7);
@@ -118,7 +127,11 @@ describe('staff-stock writes', () => {
   });
 
   it('rejects keys that are not real catalog variants', async () => {
-    const response = await authed('POST', { updates: [{ key: 'made::up::key', quantity: 5 }] }, token);
+    const response = await authed(
+      'POST',
+      { updates: [{ key: 'made::up::key', quantity: 5 }] },
+      token
+    );
     const body = JSON.parse(response.body);
 
     expect(response.statusCode).toBe(400);
@@ -127,7 +140,11 @@ describe('staff-stock writes', () => {
   });
 
   it('rejects negative quantities', async () => {
-    const response = await authed('POST', { updates: [{ key: stockKey(PLAIN), quantity: -2 }] }, token);
+    const response = await authed(
+      'POST',
+      { updates: [{ key: stockKey(PLAIN), quantity: -2 }] },
+      token
+    );
     expect(response.statusCode).toBe(400);
     expect(fake.value).toBeNull();
   });
@@ -153,5 +170,72 @@ describe('staff-stock writes', () => {
   it('rejects an empty submission', async () => {
     const response = await authed('POST', { updates: [] }, token);
     expect(response.statusCode).toBe(400);
+  });
+
+  it('answers a storage failure without passing its details on', async () => {
+    fake.failWrites = true;
+
+    const response = await authed(
+      'POST',
+      { updates: [{ key: stockKey(PLAIN), quantity: 2 }] },
+      token
+    );
+
+    expect(response.statusCode).toBe(503);
+    expect(response.body).not.toContain('blobs.internal');
+  });
+
+  it('answers a save that keeps colliding with a plain conflict message', async () => {
+    fake.value = { [stockKey(PLAIN)]: 3 };
+    fake.etag = 'etag-0';
+    fake.alwaysConflict = true;
+
+    const response = await authed(
+      'POST',
+      { updates: [{ key: stockKey(PLAIN), quantity: 2 }] },
+      token
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(JSON.parse(response.body)).toEqual({
+      error: 'Stock was changing while you saved. Reload and try again.',
+    });
+    expect(fake.value[stockKey(PLAIN)]).toBe(3);
+  });
+});
+
+describe('staff-stock and checkout holds', () => {
+  function withHold(quantity) {
+    return {
+      [stockKey(PLAIN)]: 3,
+      __holds: {
+        checkout1: {
+          state: 'active',
+          lines: [{ key: stockKey(PLAIN), quantity }],
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 60_000,
+        },
+      },
+    };
+  }
+
+  it('shows how many units customers in checkout are holding', async () => {
+    fake.value = withHold(2);
+    fake.etag = 'etag-0';
+
+    const body = JSON.parse((await authed('GET', null, token)).body);
+    const row = body.items.find((item) => item.key === stockKey(PLAIN));
+
+    expect(row).toMatchObject({ tracked: true, quantity: 3, held: 2 });
+  });
+
+  it('keeps customers’ reservations through a staff recount', async () => {
+    fake.value = withHold(2);
+    fake.etag = 'etag-0';
+
+    await authed('POST', { updates: [{ key: stockKey(PLAIN), quantity: 7 }] }, token);
+
+    expect(fake.value[stockKey(PLAIN)]).toBe(7);
+    expect(fake.value.__holds.checkout1.state).toBe('active');
   });
 });

@@ -133,14 +133,6 @@
 .sd-master-modern .sd-master-stems > header {
   margin-bottom: 8px;
 }
-.sd-master-modern .sd-master-stems-heading {
-  gap: 8px;
-}
-.sd-master-modern .sd-master-stems-heading > svg {
-  width: 14px;
-  height: 14px;
-  color: var(--sd-muted, #9099a8);
-}
 .sd-master-modern .sd-master-stems > header strong {
   font-size: 11px;
   letter-spacing: 0.02em;

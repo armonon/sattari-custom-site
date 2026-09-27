@@ -62,8 +62,7 @@ export interface CheckoutSessionStatus {
   id: string;
   status?: string | null;
   payment_status?: string | null;
-  customer_email?: string | null;
-  customer_name?: string | null;
+  customer_email_masked?: string | null;
   amount_total?: number | null;
   currency?: string | null;
 }

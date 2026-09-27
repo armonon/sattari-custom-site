@@ -1,21 +1,22 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import crypto from 'node:crypto';
+import { blobState, resetBlobs } from './helpers/blobsFake.js';
 
-vi.mock('@netlify/blobs', () => ({
-  connectLambda: vi.fn(),
-  getStore: vi.fn(() => ({})),
-}));
+vi.mock('@netlify/blobs', async () => (await import('./helpers/blobsFake.js')).blobsModule);
 
 const {
   checkPassword,
   checkUsername,
   createSession,
+  currentSessionEpoch,
   getBearerToken,
   getClientIp,
   hashPassword,
   isConfigured,
   requireStaff,
+  revokeAllSessions,
+  revokeSession,
   signSession,
   verifySession,
 } = await import('../../server/staffAuth.js');
@@ -23,7 +24,12 @@ const {
 const PASSWORD = 'correct-horse-battery';
 const SALT = 'a1b2c3d4';
 
+function request(token) {
+  return { headers: { authorization: `Bearer ${token}` } };
+}
+
 beforeEach(() => {
+  resetBlobs();
   process.env.STAFF_USERNAME = 'sattaristudio';
   process.env.STAFF_PASSWORD_SALT = SALT;
   process.env.STAFF_PASSWORD_HASH = hashPassword(PASSWORD, SALT);
@@ -87,8 +93,9 @@ describe('session tokens', () => {
   it('rejects a tampered payload', () => {
     const token = createSession('Armon');
     const [, mac] = token.split('.');
-    const forged = Buffer.from(JSON.stringify({ staff: 'Attacker', exp: Date.now() + 10000 }))
-      .toString('base64url');
+    const forged = Buffer.from(
+      JSON.stringify({ staff: 'Attacker', exp: Date.now() + 10000 })
+    ).toString('base64url');
 
     expect(verifySession(`${forged}.${mac}`)).toBeNull();
   });
@@ -133,12 +140,10 @@ describe('request helpers', () => {
     expect(getBearerToken({})).toBe('');
   });
 
-  it('authenticates a request carrying a valid session', () => {
+  it('authenticates a request carrying a valid session', async () => {
     const token = createSession('Armon');
-    expect(requireStaff({ headers: { authorization: `Bearer ${token}` } })).toMatchObject({
-      staff: 'Armon',
-    });
-    expect(requireStaff({ headers: {} })).toBeNull();
+    await expect(requireStaff(request(token))).resolves.toMatchObject({ staff: 'Armon' });
+    await expect(requireStaff({ headers: {} })).resolves.toBeNull();
   });
 
   it('reads the client IP from the header Netlify sets at the edge', () => {
@@ -148,5 +153,60 @@ describe('request helpers', () => {
       '203.0.113.7'
     );
     expect(getClientIp({ headers: { 'x-forwarded-for': '1.2.3.4' } })).toBe('unknown');
+  });
+});
+
+describe('server-side sign-out', () => {
+  it('stops a revoked sign-in from working while others stay valid', async () => {
+    const counter = createSession('Armon');
+    const phone = createSession('Armon');
+
+    await revokeSession({}, verifySession(counter));
+
+    await expect(requireStaff(request(counter))).resolves.toBeNull();
+    await expect(requireStaff(request(phone))).resolves.toMatchObject({ staff: 'Armon' });
+  });
+
+  it('signs out every device at once, and new sign-ins carry the new epoch', async () => {
+    const before = createSession('Armon');
+    await revokeAllSessions({});
+
+    await expect(requireStaff(request(before))).resolves.toBeNull();
+    const epoch = await currentSessionEpoch({});
+    expect(epoch).toBe(1);
+    await expect(requireStaff(request(createSession('Armon', { epoch })))).resolves.toMatchObject({
+      staff: 'Armon',
+    });
+  });
+
+  it('drops expired revocations so the record stays small', async () => {
+    const old = verifySession(createSession('Armon'));
+    await revokeSession({}, old);
+    await revokeSession({}, verifySession(createSession('Armon')), old.exp + 1);
+
+    const state = [...blobState.stores.get('staff-auth').values()][0].value;
+    expect(Object.keys(state.revoked)).toHaveLength(1);
+    expect(state.revoked[old.sid]).toBeUndefined();
+  });
+
+  it('rejects correctly signed tokens from before revocation existed', async () => {
+    // No sid means it can never be revoked on its own, so it is not accepted.
+    const legacy = signSession({ staff: 'Armon', exp: Date.now() + 60_000 });
+    expect(verifySession(legacy)).toMatchObject({ staff: 'Armon' });
+    await expect(requireStaff(request(legacy))).resolves.toBeNull();
+  });
+
+  it('fails closed when the sign-out record cannot be read', async () => {
+    const token = createSession('Armon');
+    blobState.failReads = true;
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(requireStaff(request(token))).resolves.toBeNull();
+    spy.mockRestore();
+  });
+
+  it('refuses to revoke when the record cannot be written', async () => {
+    blobState.conflictWrites = true;
+    await expect(revokeAllSessions({})).rejects.toThrow();
   });
 });

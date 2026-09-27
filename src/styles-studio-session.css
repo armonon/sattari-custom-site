@@ -21,56 +21,6 @@
   width: clamp(90px, 18vw, 240px);
   accent-color: #a5dacb;
 }
-.sd-session-track-mixer {
-  grid-column: 1 / -1;
-  padding: 8px 0 20px;
-}
-.sd-session-track-mixer > header {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-  margin-bottom: 16px;
-}
-.sd-session-track-mixer > header span,
-.sd-session-track-strip > small {
-  font-size: 12px;
-  color: #a2acb9;
-}
-.sd-session-track-mixer > div {
-  display: flex;
-  overflow-x: auto;
-  gap: 1px;
-  background: #ffffff10;
-}
-.sd-session-track-strip {
-  flex: 0 0 150px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: #1b1f25;
-}
-.sd-session-track-strip > strong {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 14px;
-}
-.sd-session-track-strip > label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-}
-.sd-session-track-strip > div {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-}
-.sd-session-track-strip button[aria-pressed='true'] {
-  color: #c3f2e4;
-  background: #3c5750;
-}
 .sd-session-shell .sd-app-frame {
   position: relative;
   height: 100dvh;
@@ -366,7 +316,10 @@
   min-height: 240px;
   height: calc(100dvh - 330px);
 }
-.sd-session-shell .sd-view-arranger .sd-arrangement-editor:not(.ae-workspace-focused):has(.ae-piano-dock) .ae-scroll {
+.sd-session-shell
+  .sd-view-arranger
+  .sd-arrangement-editor:not(.ae-workspace-focused):has(.ae-piano-dock)
+  .ae-scroll {
   height: 40dvh;
   min-height: 220px;
 }
@@ -455,15 +408,21 @@
     max-height: 44px;
     gap: 8px;
   }
-  .sd-session-shell .sd-workspace-heading > div:first-child { flex: 0 0 auto; }
-  .sd-session-shell .sd-workspace-eyebrow { display: none; }
+  .sd-session-shell .sd-workspace-heading > div:first-child {
+    flex: 0 0 auto;
+  }
+  .sd-session-shell .sd-workspace-eyebrow {
+    display: none;
+  }
   .sd-session-shell .sd-workspace-quick-actions {
     flex-wrap: nowrap;
     min-width: 0;
     overflow-x: auto;
     justify-content: flex-start;
   }
-  .sd-session-shell .sd-workspace-quick-actions > * { flex: 0 0 auto; }
+  .sd-session-shell .sd-workspace-quick-actions > * {
+    flex: 0 0 auto;
+  }
   .sd-session-shell .sd-session-inspector {
     top: 122px;
     width: 100%;

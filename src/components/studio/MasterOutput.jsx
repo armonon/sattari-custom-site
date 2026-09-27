@@ -582,7 +582,11 @@ export default function MasterOutput({
                 Session-only snapshots of tone, trims, output gain and dynamics. Inserts, stems and
                 delivery targets stay unchanged. Not level-matched.
               </p>
-              <div className="sd-master-comparisons">
+              <div
+                className="sd-master-comparisons"
+                role="group"
+                aria-label="Tone and dynamics A/B"
+              >
                 {['A', 'B'].map((slot) => (
                   <div key={slot}>
                     <button

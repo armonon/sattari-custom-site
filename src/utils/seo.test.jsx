@@ -29,7 +29,7 @@ describe('search metadata', () => {
   it('emits one focused title, canonical and description with no generic drum suffix', () => {
     const head = headFor(<SEO {...PAGE_SEO.separator} />);
     expect(head.title.toString()).toContain(
-      'Stem Separator &amp; Vocal Remover Online | Sattari Music'
+      'Stem Separator, Vocal Remover &amp; BPM Finder | Sattari Music'
     );
     expect(head.title.toString()).not.toContain('Premium Drum');
     expect(head.link.toString()).toContain('href="https://sattarimusic.com/stem-separator"');

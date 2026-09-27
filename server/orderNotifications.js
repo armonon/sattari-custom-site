@@ -1,6 +1,9 @@
 import process from 'node:process';
 import { Resend } from 'resend';
-import { buildOrderNotificationText, formatOrderCurrency } from '../src/utils/orderProcessing.js';
+import {
+  buildOrderNotificationSubject,
+  buildOrderNotificationText,
+} from '../src/utils/orderProcessing.js';
 
 // Recipients are comma-separated so the shop can notify more than one inbox
 // (e.g. the owner and the shop address) without a code change.
@@ -34,7 +37,12 @@ function getNotificationConfig() {
   };
 }
 
-export async function sendOrderNotification(orderRecord) {
+// `idempotencyKey` makes a retry after an uncertain outcome (a crash between
+// Resend accepting the email and the order recording it) return the original
+// send instead of emailing the owner twice. Resend honours a key for 24 hours
+// and only for an identical payload, so the message must be built from order
+// fields that no longer change once the sale is recorded.
+export async function sendOrderNotification(orderRecord, { idempotencyKey } = {}) {
   const { apiKey, from, to } = getNotificationConfig();
 
   if (!apiKey || !from || !to.length) {
@@ -45,15 +53,16 @@ export async function sendOrderNotification(orderRecord) {
   }
 
   const resend = new Resend(apiKey);
-  const subject =
-    `New Sattari order ${formatOrderCurrency(orderRecord.amountTotal, orderRecord.currency) || ''}`.trim();
-
-  const response = await resend.emails.send({
+  const payload = {
     from,
     to,
-    subject,
+    subject: buildOrderNotificationSubject(orderRecord),
     text: buildOrderNotificationText(orderRecord),
-  });
+  };
+
+  const response = idempotencyKey
+    ? await resend.emails.send(payload, { idempotencyKey })
+    : await resend.emails.send(payload);
 
   // Resend reports per-request failures in the body rather than by throwing,
   // so a caller that only catches exceptions would record a silent success.

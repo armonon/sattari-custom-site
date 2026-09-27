@@ -1,22 +1,31 @@
 import { bookingConfig } from '../../server/studioBookingConfig.js';
 import { readBookings } from '../../server/studioBookingStore.js';
 import { holdsTime } from '../../src/utils/studioBooking.js';
-import { requestBooking, lookupBookingPayment } from '../../server/studioBookings.js';
+import {
+  bookingJson as json,
+  lookupBookingPayment,
+  requestBooking,
+} from '../../server/studioBookings.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 
-export function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-      'X-Robots-Tag': 'noindex',
-      'Referrer-Policy': 'no-referrer',
-    },
-    body: JSON.stringify(body),
-  };
+const MAX_BODY_CHARS = 10000;
+
+// Netlify applies a code-defined rate limit only to a v2 function with a path.
+// Both URLs are listed: a custom path replaces the default one otherwise. The
+// limit counts availability reads too, so it is sized for a person browsing
+// times; the per-sender and site-wide booking limits sit behind it.
+export const config = {
+  path: ['/api/studio-bookings', '/.netlify/functions/studio-bookings'],
+};
+
+export default async function studioBookings(request, context) {
+  if (Number(request.headers.get('content-length')) > MAX_BODY_CHARS) {
+    return webResponse(json(413, { error: 'Request is too large.' }));
+  }
+  return webResponse(await handle(await lambdaEvent(request, context)));
 }
 
-export async function handler(event) {
+async function handle(event) {
   try {
     if (event.httpMethod === 'GET') {
       if (event.queryStringParameters?.session_id)
@@ -32,7 +41,8 @@ export async function handler(event) {
       return json(200, { ...publicConfig, reserved });
     }
     if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed.' });
-    if ((event.body || '').length > 10000) return json(413, { error: 'Request is too large.' });
+    if ((event.body || '').length > MAX_BODY_CHARS)
+      return json(413, { error: 'Request is too large.' });
     let payload;
     try {
       payload = JSON.parse(event.body || '{}');
@@ -43,15 +53,16 @@ export async function handler(event) {
       return json(400, { error: 'Invalid request.' });
     return json(201, { booking: await requestBooking(event, payload) });
   } catch (error) {
-    if (!error.statusCode)
+    if (!error?.expose)
       console.error(
         JSON.stringify({
           type: 'studio-booking-error',
-          message: 'Booking request could not be processed.',
+          name: error?.name,
+          message: error?.message,
         })
       );
-    return json(error.statusCode || 503, {
-      error: error.statusCode
+    return json(error?.expose ? error.statusCode : 503, {
+      error: error?.expose
         ? error.message
         : 'Unable to process studio bookings right now. Please try again or call (424) 465-3020.',
     });

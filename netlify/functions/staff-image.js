@@ -53,7 +53,7 @@ function sniffType(buffer) {
 }
 
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
@@ -96,8 +96,13 @@ export async function handler(event) {
 
   const key = `${crypto.randomBytes(12).toString('hex')}.${ALLOWED[actualType]}`;
 
-  const store = openStore(event, IMAGE_STORE);
-  await store.set(key, buffer, { metadata: { contentType: actualType, staff: session.staff } });
+  try {
+    const store = openStore(event, IMAGE_STORE);
+    await store.set(key, buffer, { metadata: { contentType: actualType, staff: session.staff } });
+  } catch (error) {
+    console.error(JSON.stringify({ type: 'staff-image-upload-failed', message: error?.message }));
+    return json(503, { error: 'The photo could not be saved. Try again in a moment.' });
+  }
 
   console.log(
     JSON.stringify({

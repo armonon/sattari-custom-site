@@ -14,6 +14,17 @@ const SERVICE_OPTIONS = [
   { value: 'lessons', label: 'Teachers / classes' },
 ];
 
+// Off-screen rather than display:none, which some bots skip. Named to match the
+// netlify-honeypot field on the static form in index.html; the fallback
+// function ignores submissions that fill it too.
+const HONEYPOT_STYLE = {
+  position: 'absolute',
+  left: '-10000px',
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+};
+
 export default function ServiceInquiryForm({
   initialService = '',
   source = 'Website service form',
@@ -25,6 +36,7 @@ export default function ServiceInquiryForm({
     email: '',
     phone: '',
     details: '',
+    'bot-field': '',
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -219,6 +231,19 @@ export default function ServiceInquiryForm({
           required
         />
       </label>
+      <div aria-hidden="true" style={HONEYPOT_STYLE}>
+        <label>
+          Leave this field empty
+          <input
+            name="bot-field"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form['bot-field']}
+            onChange={handleChange}
+          />
+        </label>
+      </div>
       <button className="button button-solid button-full" type="submit" disabled={submitting}>
         {submitting ? 'Sending...' : 'Send service request'}
       </button>

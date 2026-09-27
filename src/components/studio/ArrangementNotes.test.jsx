@@ -3,6 +3,11 @@ import { useState } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import ArrangementNotes from './ArrangementNotes';
+
+// The roll has a key and an add-note row per pitch; label lookups and toolbar
+// scoping avoid checking the visibility of every button on each query.
+const labelled = (name) => screen.getByLabelText(name, { selector: 'button' });
+const tools = () => within(screen.getByRole('toolbar', { name: 'Piano roll tools' }));
 const audition = vi.fn();
 let saved;
 function Host() {
@@ -42,19 +47,19 @@ it('opens captured notes at their actual register and keeps compact editing tool
     />
   );
   expect(screen.getByLabelText('Piano octave')).toHaveValue('2');
-  expect(screen.getByRole('button', { name: 'Select C2 note 1' })).toBeInTheDocument();
+  expect(labelled('Select C2 note 1')).toBeInTheDocument();
   expect(screen.getByText('Selection, velocity & quantize').closest('details')).not.toHaveAttribute(
     'open'
   );
   fireEvent.click(screen.getByText('Selection, velocity & quantize'));
-  fireEvent.click(screen.getByRole('button', { name: 'Quantize notes' }));
+  fireEvent.click(labelled('Quantize notes'));
   expect(change).toHaveBeenCalledWith(notes);
 });
 
 it('keeps the grid visible while placing notes freely by default, with optional snap and bypass', () => {
   const { container } = render(<Host />);
-  const grid = screen.getByRole('button', { name: 'Add C4 note', exact: true });
-  const snap = screen.getByRole('button', { name: 'Snap note positions to grid' });
+  const grid = labelled('Add C4 note');
+  const snap = tools().getByRole('button', { name: 'Snap note positions to grid' });
   expect(snap).toHaveAttribute('aria-pressed', 'false');
   expect(container.querySelector('.ae-note-grid')).toBeInTheDocument();
   fireEvent.click(grid, { clientX: 31, detail: 1 });
@@ -68,16 +73,16 @@ it('keeps the grid visible while placing notes freely by default, with optional 
 
 it('moves freely, snaps the absolute onset when enabled, and bypasses snap with Alt', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }), {
+  fireEvent.click(labelled('Add C4 note'), {
     clientX: 31,
     detail: 1,
   });
-  const note = screen.getByRole('button', { name: 'Select C4 note 1' });
+  const note = labelled('Select C4 note 1');
   pointer(note, 'pointerdown', 100);
   pointer(note, 'pointermove', 111);
   pointer(note, 'pointerup', 111);
   expect(saved[0].time).toBeCloseTo(42 / 192);
-  fireEvent.click(screen.getByRole('button', { name: 'Snap note positions to grid' }));
+  fireEvent.click(tools().getByRole('button', { name: 'Snap note positions to grid' }));
   pointer(note, 'pointerdown', 100);
   pointer(note, 'pointermove', 111);
   pointer(note, 'pointerup', 111);
@@ -90,9 +95,9 @@ it('moves freely, snaps the absolute onset when enabled, and bypasses snap with 
 
 it('resizes note lengths continuously even when position snapping is enabled', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Snap note positions to grid' }));
-  const note = screen.getByRole('button', { name: 'Select C4 note 1' });
+  fireEvent.click(labelled('Add C4 note'));
+  fireEvent.click(tools().getByRole('button', { name: 'Snap note positions to grid' }));
+  const note = labelled('Select C4 note 1');
   pointer(note.querySelector('[data-resize]'), 'pointerdown', 100);
   pointer(note, 'pointermove', 107);
   pointer(note, 'pointerup', 107);
@@ -106,8 +111,8 @@ it('resizes note lengths continuously even when position snapping is enabled', (
 
 it('keeps free resizing inside the clip and cancels an unfinished gesture without saving it', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
-  const note = screen.getByRole('button', { name: 'Select C4 note 1' });
+  fireEvent.click(labelled('Add C4 note'));
+  const note = labelled('Select C4 note 1');
   pointer(note.querySelector('[data-resize]'), 'pointerdown', 100);
   pointer(note, 'pointermove', 107);
   pointer(note, 'pointercancel', 107);
@@ -119,14 +124,14 @@ it('keeps free resizing inside the clip and cancels an unfinished gesture withou
 });
 it('creates and edits notes over multiple bars and octaves with independent velocity and length', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
   expect(saved[0]).toMatchObject({ pitch: 'C4', time: 0, velocity: 0.7 });
   fireEvent.change(screen.getByLabelText('Note duration (s)'), { target: { value: '1' } });
   fireEvent.change(screen.getByLabelText('Note velocity'), { target: { value: '127' } });
   expect(saved[0]).toMatchObject({ duration: 1, velocity: 1 });
   fireEvent.change(screen.getByLabelText('Piano octave'), { target: { value: '2' } });
   fireEvent.click(screen.getByRole('button', { name: 'Later notes' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Add C2 note', exact: true }));
+  fireEvent.click(labelled('Add C2 note'));
   expect(saved[1]).toMatchObject({ pitch: 'C2', time: 2 });
   fireEvent.click(screen.getByRole('button', { name: 'Delete note' }));
   expect(saved).toHaveLength(1);
@@ -157,32 +162,32 @@ it('offers triplets, snaps pitches into scale, and auditions the full selected n
   fireEvent.change(screen.getByLabelText('Note grid'), { target: { value: '3' } });
   fireEvent.change(screen.getByLabelText('Scale root'), { target: { value: '0' } });
   fireEvent.click(screen.getByLabelText('Snap new/moved notes to scale'));
-  fireEvent.click(screen.getByRole('button', { name: 'Add C#4 note', exact: true }));
+  fireEvent.click(labelled('Add C#4 note'));
   expect(saved[0].pitch).toBe('C4');
   expect(saved[0].duration).toBeCloseTo(1 / 6);
   fireEvent.keyDown(screen.getByRole('region', { name: 'Piano roll' }), { key: 'ArrowUp' });
   expect(saved[0].pitch).toBe('D4');
-  fireEvent.click(screen.getByRole('button', { name: 'Select D4 note 1' }));
+  fireEvent.click(labelled('Select D4 note 1'));
   expect(audition).toHaveBeenLastCalledWith(saved[0]);
 });
 
 it('erases notes without auditioning and switches tools through scoped shortcuts', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
   audition.mockClear();
   const roll = screen.getByRole('region', { name: 'Piano roll', exact: true });
   fireEvent.keyDown(roll, { key: 'e' });
-  expect(screen.getByRole('button', { name: 'Erase notes' })).toHaveAttribute(
+  expect(tools().getByRole('button', { name: 'Erase notes' })).toHaveAttribute(
     'aria-pressed',
     'true'
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Select C4 note 1' }));
+  fireEvent.click(labelled('Select C4 note 1'));
   expect(saved).toEqual([]);
   expect(audition).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'Add E4 note', exact: true }));
+  fireEvent.click(labelled('Add E4 note'));
   expect(saved).toEqual([]);
   fireEvent.keyDown(roll, { key: 'b' });
-  fireEvent.click(screen.getByRole('button', { name: 'Add E4 note', exact: true }));
+  fireEvent.click(labelled('Add E4 note'));
   expect(saved).toHaveLength(1);
   fireEvent.keyDown(roll, { key: 'Escape' });
   expect(screen.getByRole('button', { name: 'Delete notes' })).toBeDisabled();
@@ -190,14 +195,14 @@ it('erases notes without auditioning and switches tools through scoped shortcuts
 
 it('can edit silently without disabling instrument playback or changing written notes', () => {
   render(<Host />);
-  fireEvent.click(screen.getByRole('button', { name: 'Audition notes', exact: true }));
+  fireEvent.click(tools().getByRole('button', { name: 'Audition notes', exact: true }));
   audition.mockClear();
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Audition C4', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
+  fireEvent.click(labelled('Audition C4'));
   expect(saved[0]).toMatchObject({ pitch: 'C4', velocity: 0.7 });
   expect(audition).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'Audition notes', exact: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Audition C4', exact: true }));
+  fireEvent.click(tools().getByRole('button', { name: 'Audition notes', exact: true }));
+  fireEvent.click(labelled('Audition C4'));
   expect(audition).toHaveBeenLastCalledWith(saved[0]);
 });
 
@@ -205,7 +210,7 @@ it('fits the whole pattern and shows a clip-relative playhead only inside its bo
   const { container, rerender } = render(
     <ArrangementNotes clip={{ duration: 8, notes: [] }} bpm={120} onChange={vi.fn()} playhead={2} />
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Fit pattern' }));
+  fireEvent.click(tools().getByRole('button', { name: 'Fit pattern' }));
   expect(Number(screen.getByRole('slider', { name: 'Note zoom' }).value)).toBe(56);
   expect(container.querySelector('.pr-playhead')).toHaveStyle({ left: '304px' });
   rerender(
@@ -218,7 +223,7 @@ it('keeps velocity editing attached to its note while virtualizing the full keyb
   const { container } = render(<Host />);
   expect(container.querySelectorAll('.pr-key-slot').length).toBeLessThan(40);
   expect(container.querySelectorAll('.pr-key-slot.is-black').length).toBeGreaterThan(0);
-  fireEvent.click(screen.getByRole('button', { name: 'Add C4 note', exact: true }));
+  fireEvent.click(labelled('Add C4 note'));
   fireEvent.change(screen.getByRole('slider', { name: 'Velocity note 1' }), {
     target: { value: '64' },
   });
@@ -234,7 +239,7 @@ it('keeps velocity editing attached to its note while virtualizing the full keyb
       seen.add(key.getAttribute('aria-label'));
   }
   expect(seen.size).toBe(108);
-  expect(screen.getByRole('button', { name: 'Add C0 note', exact: true })).toBeInTheDocument();
+  expect(labelled('Add C0 note')).toBeInTheDocument();
 });
 
 it('updates the playback cursor from the transport clock and stops animation when unmounted', () => {

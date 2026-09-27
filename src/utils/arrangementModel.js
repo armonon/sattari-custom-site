@@ -12,6 +12,18 @@ export function arrangementGridPixels(bpm, division, zoom) {
     (60 / bounded(bpm, 20, 300, 120) / bounded(division, 1, 32, 4)) * bounded(zoom, 0.1, 1000, 40);
   return step * 2 ** Math.max(0, Math.ceil(Math.log2(8 / step)));
 }
+// Structural sharing: unchanged elements keep their identity and an
+// untouched array is returned as-is, so edits allocate only along their path.
+export function mapChanged(items, change) {
+  let result = items;
+  items.forEach((item, index) => {
+    const next = change(item, index);
+    if (next === item) return;
+    if (result === items) result = items.slice();
+    result[index] = next;
+  });
+  return result;
+}
 export const emptyArrangement = () => ({ version: 1, tracks: [], captures: [] });
 export const audioTrack = (name = 'Audio track') => ({
   id: arrangementId(),
@@ -54,20 +66,21 @@ const patternFields = (clip) => ({
 
 // Definitions own musical content; materialized clips keep old project readers compatible.
 export function repeatLinkedPattern(project, clipId) {
-  const next = structuredClone(project);
-  const track = next.tracks.find((row) => row.clips.some((clip) => clip.id === clipId));
+  const track = project.tracks.find((row) => row.clips.some((clip) => clip.id === clipId));
   const source = track?.clips.find((clip) => clip.id === clipId);
   if (source?.kind !== 'midi') throw new Error('Select an instrument pattern first.');
   const id = source.patternId || arrangementId();
-  source.patternId = id;
-  next.patterns = { ...next.patterns, [id]: patternFields(source) };
-  const repeat = {
-    ...structuredClone(source),
-    id: arrangementId(),
-    start: source.start + source.duration,
+  const linked = source.patternId === id ? source : { ...source, patternId: id };
+  const repeat = { ...linked, id: arrangementId(), start: source.start + source.duration };
+  return {
+    ...project,
+    patterns: { ...project.patterns, [id]: patternFields(linked) },
+    tracks: project.tracks.map((row) =>
+      row === track
+        ? { ...row, clips: [...row.clips.map((clip) => (clip === source ? linked : clip)), repeat] }
+        : row
+    ),
   };
-  track.clips.push(repeat);
-  return next;
 }
 
 export function updatePatternClip(project, clipId, updates) {
@@ -87,26 +100,27 @@ export function updatePatternClip(project, clipId, updates) {
     );
   const patternId = selected.patternId;
   const content = shared && patternId ? patternFields({ ...selected, ...updates }) : null;
+  const change = (clip) => {
+    const own = clip.id === clipId;
+    const linked = content && clip.patternId === patternId;
+    return own || linked
+      ? {
+          ...clip,
+          ...(linked ? content : {}),
+          ...(own ? updates : {}),
+          ...(own && ('duration' in updates || 'timebase' in updates)
+            ? { patternId: undefined }
+            : {}),
+        }
+      : clip;
+  };
   return {
     ...project,
     ...(content ? { patterns: { ...project.patterns, [patternId]: content } } : {}),
-    tracks: project.tracks.map((track) => ({
-      ...track,
-      clips: track.clips.map((clip) => {
-        const own = clip.id === clipId;
-        const linked = content && clip.patternId === patternId;
-        return own || linked
-          ? {
-              ...clip,
-              ...(linked ? content : {}),
-              ...(own ? updates : {}),
-              ...(own && ('duration' in updates || 'timebase' in updates)
-                ? { patternId: undefined }
-                : {}),
-            }
-          : clip;
-      }),
-    })),
+    tracks: mapChanged(project.tracks, (track) => {
+      const clips = mapChanged(track.clips, change);
+      return clips === track.clips ? track : { ...track, clips };
+    }),
   };
 }
 
@@ -125,6 +139,7 @@ export function cropEnvelope(points, start, end, fallback = 1) {
 
 // Trimming changes a window onto musical content, not the content itself.
 // Visible notes/envelopes stay materialized for older readers and the editor.
+// The returned window may be the clip's own object: treat it as read-only.
 function trimSource(clip) {
   return (
     clip.trimSource || {
@@ -247,17 +262,21 @@ export function trimClipStart(clip, timelineTime) {
     clip.duration - 0.002
   );
   if (Math.abs(delta) < 0.001) return clip;
-  if (!source.fadeInCurve)
-    source.fadeInCurve = source.fadeIn
-      ? [
-          { time: 0, value: 0 },
-          { time: source.fadeIn, value: 1 },
-        ]
-      : [{ time: 0, value: 1 }];
+  const sourceWindow = source.fadeInCurve
+    ? source
+    : {
+        ...source,
+        fadeInCurve: source.fadeIn
+          ? [
+              { time: 0, value: 0 },
+              { time: source.fadeIn, value: 1 },
+            ]
+          : [{ time: 0, value: 1 }],
+      };
   return resizeClip(
     {
       ...clip,
-      trimSource: source,
+      trimSource: sourceWindow,
       trimOffset: from + delta,
       start: clip.start + delta,
       offset: clip.offset + delta * clip.rate,
@@ -296,12 +315,20 @@ export function moveClips(project, ids, delta, sourceTrackId, destinationTrackId
     -Math.min(...moved.map(({ clip }) => clip.start)),
     86400 - Math.max(...moved.map(({ clip }) => clip.start))
   );
-  const tracks = project.tracks.map((track) => ({
-    ...track,
-    clips: track.clips.filter((clip) => !wanted.has(clip.id)),
-  }));
+  const sources = new Set(moved.map(({ index }) => index)),
+    arrivals = new Map();
   for (const { clip, index } of moved)
-    tracks[index + shift].clips.push({ ...clip, start: clip.start + time });
+    arrivals.set(index + shift, [
+      ...(arrivals.get(index + shift) || []),
+      { ...clip, start: clip.start + time },
+    ]);
+  const tracks = mapChanged(project.tracks, (track, index) => {
+    if (!sources.has(index) && !arrivals.has(index)) return track;
+    const kept = sources.has(index)
+      ? track.clips.filter((clip) => !wanted.has(clip.id))
+      : track.clips;
+    return { ...track, clips: [...kept, ...(arrivals.get(index) || [])] };
+  });
   return { ...project, tracks };
 }
 
@@ -327,9 +354,8 @@ export function retimeMidi(project, oldBpm, newBpm) {
   const scale = (points) => points?.map((point) => ({ ...point, time: point.time * ratio }));
   const result = {
     ...project,
-    tracks: project.tracks.map((track) => ({
-      ...track,
-      clips: track.clips.map((clip) =>
+    tracks: mapChanged(project.tracks, (track) => {
+      const clips = mapChanged(track.clips, (clip) =>
         clip.kind !== 'midi' || clip.timebase !== 'beats'
           ? clip
           : {
@@ -375,8 +401,9 @@ export function retimeMidi(project, oldBpm, newBpm) {
                 Object.entries(clip.automation).map(([key, points]) => [key, scale(points)])
               ),
             }
-      ),
-    })),
+      );
+      return clips === track.clips ? track : { ...track, clips };
+    }),
   };
   if (result.patterns) {
     result.patterns = { ...result.patterns };
@@ -778,7 +805,12 @@ export function validateArrangement(project) {
       !['audio', 'midi'].includes(track.kind) ||
       !Array.isArray(track.clips) ||
       !finite(track.gain, 0, 300) ||
-      !finite(track.pan, -1, 1)
+      !finite(track.pan, -1, 1) ||
+      (track.sends != null &&
+        (typeof track.sends !== 'object' ||
+          Object.entries(track.sends).some(
+            ([bus, amount]) => !['a', 'b'].includes(bus) || !finite(amount, 0, 100)
+          )))
     )
       fail();
     ids.add(track.id);

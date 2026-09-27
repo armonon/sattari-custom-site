@@ -31,6 +31,7 @@ import { analyzeAudioFile, detectPitch } from '../utils/audioAnalysis';
 import { putAudioAsset } from '../utils/audioProjectStore';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
+import '../styles-audio-workspaces.css';
 
 const STARTER_ANALYSIS = {
   source: 'starter',

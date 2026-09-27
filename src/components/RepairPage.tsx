@@ -1,7 +1,27 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import { SEO, StructuredData } from '../utils/seo';
-import { BUSINESS, PAGE_SEO, businessSchema } from '../data/siteSeo';
+import { BUSINESS, PAGE_SEO, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import './LocalSeoPage.css';
+
+const repairFaqs = [
+  {
+    q: 'Where can I request instrument repair near Encino or Calabasas?',
+    a: `Sattari Music takes repair inquiries at our Woodland Hills location: ${BUSINESS.addressLine}. Call ${BUSINESS.phoneDisplay} or send a request before bringing your instrument. We do not have separate Encino or Calabasas branches.`,
+  },
+  {
+    q: 'Which instruments can I ask about?',
+    a: 'We take inquiries for guitars, bass, violins, drums, percussion and musician hardware. Describe the instrument and the issue so the team can confirm whether the work is within scope. Rare or specialist repairs require individual assessment.',
+  },
+  {
+    q: 'How much will an instrument repair cost?',
+    a: 'Cost depends on the instrument, work and any parts needed. An inquiry starts the assessment; it is not a fixed quote. The team will discuss the proposed work and price before you approve it.',
+  },
+  {
+    q: 'Can my instrument be ready before a gig or lesson?',
+    a: 'Include your deadline in the request. Turnaround depends on the assessment, parts and workload, so same-day service is not guaranteed. Confirm a completion estimate with the team before making plans.',
+  },
+];
 
 const repairServices = [
   'Violin, guitar, bass, and string-instrument troubleshooting',
@@ -24,10 +44,29 @@ export default function RepairPage() {
     <section className="section page-header-offset services-shell repair-shell">
       <SEO {...PAGE_SEO.repair} />
       <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Local services', path: '/services' },
+          { name: 'Instrument repair', path: '/services/instrument-repair-los-angeles' },
+        ])}
+      />
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: repairFaqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.q,
+            acceptedAnswer: { '@type': 'Answer', text: faq.a },
+          })),
+        }}
+      />
+      <StructuredData
         data={{
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: 'Sattari Music Instrument Repair',
+          description: PAGE_SEO.repair.description,
           provider: { '@id': businessSchema['@id'] },
           areaServed: BUSINESS.areas,
           serviceType: [
@@ -45,6 +84,26 @@ export default function RepairPage() {
           url: 'https://sattarimusic.com/services/instrument-repair-los-angeles',
         }}
       />
+
+      <nav className="container local-seo-breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          <li>
+            <Link to="/">Home</Link>
+            <span className="crumb-sep" aria-hidden="true">
+              /
+            </span>
+          </li>
+          <li>
+            <Link to="/services">Local services</Link>
+            <span className="crumb-sep" aria-hidden="true">
+              /
+            </span>
+          </li>
+          <li>
+            <span aria-current="page">Instrument repair</span>
+          </li>
+        </ol>
+      </nav>
 
       <div className="container repair-hero">
         <div className="repair-hero-copy">
@@ -136,6 +195,37 @@ export default function RepairPage() {
         </div>
         <ServiceInquiryForm initialService="repairs" source="Instrument repair landing page" />
       </div>
+
+      <div className="container local-seo-faq">
+        <div className="section-header narrow">
+          <h2>Instrument repair questions</h2>
+        </div>
+        <div className="faq-list">
+          {repairFaqs.map((faq) => (
+            <details className="faq-item" key={faq.q}>
+              <summary className="faq-question">{faq.q}</summary>
+              <p className="faq-answer">{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+      <section className="container category-local-help">
+        <h2>More about your instrument</h2>
+        <nav aria-label="Instrument-specific services">
+          <Link to="/services/violin-repair-los-angeles">Violin repair and setup</Link>
+          <Link to="/services/guitar-setup-los-angeles">Guitar and bass setup</Link>
+          <Link to="/woodland-hills-drum-shop">Woodland Hills drum gear</Link>
+        </nav>
+        <p>
+          {BUSINESS.name}: {BUSINESS.addressLine}. {BUSINESS.shopHoursNote}
+        </p>
+        <div className="local-contact-links">
+          <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
+          <a href={BUSINESS.directions} target="_blank" rel="noopener noreferrer">
+            Get directions
+          </a>
+        </div>
+      </section>
     </section>
   );
 }

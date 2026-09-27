@@ -21,6 +21,88 @@ import {
   rackTopology,
   rackTail,
 } from './arrangementEffects';
+import {
+  RETURN_BUSES,
+  createReturnBus,
+  normalizeReturns,
+  returnTail,
+  sendGain,
+} from './mixerReturns';
+import { LevelMeter, meterReading } from './mixerMeters';
+
+// Tempo-synced returns follow the session tempo passed with the master settings.
+const returnsTempo = (project, settings) => {
+  const bpm = Number(settings?.bpm || project?.masterBpm || project?.master?.bpm);
+  return bpm > 0 && Number.isFinite(bpm) ? bpm : 120;
+};
+
+// Buses a project actually sends to; empty for every project without sends,
+// which keeps those renders on exactly the graph they had before.
+export function usedReturnBuses(project, trackId = null) {
+  const used = new Set();
+  for (const track of project?.tracks || [])
+    if (!track.offline && (!trackId || track.id === trackId))
+      for (const bus of RETURN_BUSES) if (sendGain(track.sends?.[bus] ?? 0) > 0) used.add(bus);
+  return [...used];
+}
+
+export function returnsTail(project, settings, trackId = null) {
+  const returns = normalizeReturns(settings?.returns);
+  return Math.max(
+    0,
+    ...usedReturnBuses(project, trackId).map((bus) =>
+      returnTail(bus, returns[bus], returnsTempo(project, settings))
+    )
+  );
+}
+
+// Post-fader sends from a track bus. Created on demand, so a send raised during
+// playback taps the running bus rather than waiting for the next schedule.
+function syncTrackSends(raw, rack, track, returnInputs, now = null) {
+  if (!rack?.trackPan || !returnInputs) return;
+  rack.sends ||= {};
+  for (const bus of RETURN_BUSES) {
+    const level = track && !track.offline ? sendGain(track.sends?.[bus] ?? 0) : 0;
+    let send = rack.sends[bus];
+    if (!send) {
+      if (level === 0) continue;
+      const target = returnInputs(bus);
+      if (!target) continue;
+      send = raw.createGain();
+      send.gain.value = now == null ? level : 0;
+      rack.trackPan.connect(send);
+      Tone.connect(send, target);
+      rack.nodes.push(send);
+      rack.sends[bus] = send;
+      if (now == null) continue;
+    }
+    if (now == null) send.gain.value = level;
+    else send.gain.setTargetAtTime(level, now, 0.01);
+  }
+}
+
+// Offline return buses for one render, fed by the tracks' sends.
+function offlineReturns(context, project, settings, masterInput, trackId = null) {
+  const used = usedReturnBuses(project, trackId);
+  if (!used.length) return null;
+  const params = normalizeReturns(settings?.returns);
+  const buses = new Map(
+    used.map((bus) => [
+      bus,
+      createReturnBus(context.rawContext, bus, params[bus], {
+        bpm: returnsTempo(project, settings),
+        live: false,
+      }),
+    ])
+  );
+  for (const bus of buses.values()) Tone.connect(bus.output, masterInput);
+  return {
+    input: (bus) => buses.get(bus)?.input || null,
+    dispose() {
+      for (const bus of buses.values()) bus.dispose();
+    },
+  };
+}
 
 export function scheduleParameter(
   param,
@@ -122,10 +204,8 @@ function masterGraph(context, settings, output, preMaster = false) {
     context,
     width: processing.bypass ? 0.5 : processing.width / 200,
   });
-  const compressor = new Tone.Compressor({
-    context,
-    ...masterAssistProfile(settings.compression, settings.mode),
-  });
+  const compressorTargets = masterAssistProfile(settings.compression, settings.mode);
+  const compressor = new Tone.Compressor({ context, ...compressorTargets });
   const limiter = new Tone.Limiter({ context, threshold: processing.ceiling });
   const limited = new Tone.Gain({ context, gain: settings.limiter !== false ? 1 : 0 });
   const dry = new Tone.Gain({ context, gain: settings.limiter === false ? 1 : 0 });
@@ -171,7 +251,13 @@ function masterGraph(context, settings, output, preMaster = false) {
       for (const key of ['low', 'mid', 'high'])
         eq[key].rampTo(value.bypass ? 0 : value[key], 0.025);
       width.width.rampTo(value.bypass ? 0.5 : value.width / 200, 0.025);
-      for (const [key, value] of Object.entries(profile)) compressor[key].value = value;
+      // `.value =` stepped these k-rate params (a click) and cancelled any events
+      // already scheduled on them. Glide only on change; leave other events intact.
+      for (const [key, target] of Object.entries(profile)) {
+        if (compressorTargets[key] === target) continue;
+        compressorTargets[key] = target;
+        compressor[key].setTargetAtTime(target, compressor.now(), 0.012);
+      }
       limiter.threshold.rampTo(value.ceiling, 0.025);
       limited.gain.rampTo(next.limiter !== false ? 1 : 0, 0.025);
       dry.gain.rampTo(next.limiter === false ? 1 : 0, 0.025);
@@ -276,7 +362,10 @@ export function scheduleArrangement(
       const originalTrack = project.tracks.find((row) => row.id === track.id);
       let rack = buses.get(track.id);
       if (
-        (options.liveMix || track.effects?.length || Object.keys(track.automation || {}).length) &&
+        (options.liveMix ||
+          track.effects?.length ||
+          Object.keys(track.automation || {}).length ||
+          (options.returnInputs && usedReturnBuses({ tracks: [originalTrack] }).length)) &&
         !rack
       ) {
         rack = (options.liveMix ? createMutableEffectRack : createEffectRack)(raw, track.effects);
@@ -295,6 +384,7 @@ export function scheduleArrangement(
               : output)
         );
         buses.set(track.id, rack);
+        syncTrackSends(raw, rack, originalTrack, options.returnInputs);
       }
       if (rack && !automatedBuses.has(track.id)) {
         automateTrack(
@@ -504,6 +594,9 @@ export class ArrangementEngine {
     this.context = context;
     this.output = output;
     this.sharedMaster = sharedMaster;
+    this.returnInputs = sharedMaster?.returnInput ? (bus) => sharedMaster.returnInput(bus) : null;
+    this.trackMeters = new Map();
+    this.metering = false;
     this.buffers = new Map();
     this.generation = 0;
     this.cursor = 0;
@@ -543,68 +636,105 @@ export class ArrangementEngine {
           )
       );
     const ids = new Set(relevantClips.map((clip) => clip.assetId));
-    if (prune) for (const id of [...this.buffers.keys()]) if (!ids.has(id)) this.buffers.delete(id);
     this.bufferOffsets ||= new Map();
     this.windowedBuffers ||= new Set();
+    this.windowRanges ||= new Map();
     this.clipSourceKeys = new Map();
+    const plans = [...ids].map((id) => {
+      const clips = relevantClips.filter((clip) => clip.assetId === id);
+      const windowed = window && clips.every((clip) => clip.kind === 'audio');
+      return { id, clips, ranges: windowed ? sourceWindows(clips, window) : null };
+    });
+    const identity = (id, range) => (range ? `${id}:${range.start}:${range.end}` : `whole:${id}`);
+    const reusable = new Map();
     if (window) {
+      // Consecutive export sections overlap by their DSP pre-roll. Keep only what
+      // this window needs verbatim: a whole-file sampler decode, or a window with an
+      // identical asset and source range (a deterministic decode of the same
+      // request). Those buffers belong to this section's working set, which its
+      // render holds in full anyway; everything else is released before any decode,
+      // as before. Carrying a partial overlap would need two windows of one source
+      // (or a tail copy) alive at once, so the pre-roll of long clips is re-read.
+      const wanted = new Set(
+        plans.flatMap(({ id, ranges }) =>
+          ranges ? ranges.map((range) => identity(id, range)) : [identity(id)]
+        )
+      );
+      for (const [key, buffer] of this.buffers) {
+        const range = this.windowedBuffers.has(key) ? this.windowRanges.get(key) : null;
+        const previous = range ? identity(range.id, range) : identity(key);
+        if (wanted.has(previous))
+          reusable.set(previous, { buffer, offset: this.bufferOffsets.get(key) ?? 0 });
+      }
       this.buffers.clear();
       this.bufferOffsets.clear();
       this.windowedBuffers.clear();
-    }
+      this.windowRanges.clear();
+    } else if (prune)
+      for (const id of [...this.buffers.keys()]) if (!ids.has(id)) this.buffers.delete(id);
     const budget = window?.budget ?? 384 * 1024 * 1024;
     const used = () =>
       [...this.buffers.values()].reduce(
         (sum, buffer) => sum + (buffer.length || 0) * (buffer.numberOfChannels || 2) * 4,
         0
       );
-    for (const id of ids) {
-      if (window || this.windowedBuffers.has(id)) this.buffers.delete(id);
-      if (!this.buffers.has(id)) {
-        const asset = await getAudioAsset(id);
+    const place = (id, key, decoded, range) => {
+      this.buffers.set(key, decoded.buffer);
+      this.bufferOffsets.set(key, decoded.offset);
+      if (!range) return this.windowedBuffers.delete(key);
+      this.windowedBuffers.add(key);
+      this.windowRanges.set(key, { id, start: range.start, end: range.end });
+      for (const clipId of range.clips) this.clipSourceKeys.set(clipId, key);
+    };
+    const windowKey = (id, ranges, index) => (ranges.length === 1 ? id : `${id}:window:${index}`);
+    // Reused buffers stay counted against the budget while the others decode.
+    for (const { id, ranges } of plans)
+      for (const [index, range] of (ranges || [null]).entries()) {
+        const reused = reusable.get(identity(id, range));
+        if (reused) place(id, range ? windowKey(id, ranges, index) : id, reused, range);
+      }
+    for (const { id, clips, ranges } of plans) {
+      if (!window && this.windowedBuffers.has(id)) this.buffers.delete(id);
+      let asset;
+      const load = async () => {
+        asset ||= await getAudioAsset(id);
         if (!asset?.blob)
           throw new Error(
             `Arrangement audio is missing (${id}). Reimport the original project with embedded audio.`
           );
-        const clips = relevantClips.filter((clip) => clip.assetId === id);
-        if (window && clips.every((clip) => clip.kind === 'audio')) {
-          const ranges = sourceWindows(clips, window);
-          for (const [index, range] of ranges.entries()) {
-            const decoded = await decodeSourceWindow(
-              this.context.rawContext,
-              asset.blob,
-              range.start,
-              range.end,
-              budget - used(),
-              { signal: window.signal }
-            );
-            const key = ranges.length === 1 ? id : `${id}:window:${index}`;
-            this.buffers.set(key, decoded.buffer);
-            this.bufferOffsets.set(key, decoded.offset);
-            this.windowedBuffers.add(key);
-            for (const clipId of range.clips) this.clipSourceKeys.set(clipId, key);
-          }
-          continue;
+        return asset.blob;
+      };
+      if (ranges) {
+        for (const [index, range] of ranges.entries()) {
+          if (reusable.has(identity(id, range))) continue;
+          const decoded = await decodeSourceWindow(
+            this.context.rawContext,
+            await load(),
+            range.start,
+            range.end,
+            budget - used(),
+            { signal: window.signal }
+          );
+          place(id, windowKey(id, ranges, index), decoded, range);
         }
-        const estimated =
-          Math.max(...clips.map((clip) => clip.sourceDuration || 0)) *
-          (this.context.rawContext.sampleRate || 48000) *
-          8;
-        if (used() + estimated > budget)
-          throw new Error(
-            `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Use windowed arrangement playback/export or shorter sampler sources. Your project is unchanged.`
-          );
-        const buffer = await this.context.rawContext.decodeAudioData(
-          await asset.blob.arrayBuffer()
-        );
-        if (used() + buffer.length * buffer.numberOfChannels * 4 > budget)
-          throw new Error(
-            `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Use shorter source files.`
-          );
-        this.buffers.set(id, buffer);
-        this.bufferOffsets.set(id, 0);
-        this.windowedBuffers.delete(id);
+        continue;
       }
+      if (this.buffers.has(id)) continue;
+      const blob = await load();
+      const estimated =
+        Math.max(...clips.map((clip) => clip.sourceDuration || 0)) *
+        (this.context.rawContext.sampleRate || 48000) *
+        8;
+      if (used() + estimated > budget)
+        throw new Error(
+          `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Use windowed arrangement playback/export or shorter sampler sources. Your project is unchanged.`
+        );
+      const buffer = await this.context.rawContext.decodeAudioData(await blob.arrayBuffer());
+      if (used() + buffer.length * buffer.numberOfChannels * 4 > budget)
+        throw new Error(
+          `Decoded sources exceed the ${Math.round(budget / 1048576)} MiB audio budget. Use shorter source files.`
+        );
+      place(id, id, { buffer, offset: 0 }, null);
     }
   }
   position() {
@@ -677,7 +807,7 @@ export class ArrangementEngine {
     this.cursor = Math.max(0, cursor);
     const contentEnd = arrangementDuration(project);
     if (!contentEnd) return false;
-    this.end = contentEnd + rackTail(settings.processing?.effects);
+    this.end = contentEnd + rackTail(settings.processing?.effects) + returnsTail(project, settings);
     if (!loop && this.cursor >= this.end) return false;
     const master = this.playbackMaster(settings);
     // Constructing the master rack can be expensive on a cold start. Do not
@@ -723,6 +853,7 @@ export class ArrangementEngine {
         master.input,
         {
           liveMix: true,
+          returnInputs: this.returnInputs,
           referenceOutput: master.referenceOutput,
           masterStems: this.masterStems,
           realtimeMidi: true,
@@ -754,7 +885,9 @@ export class ArrangementEngine {
       loop && (cursor < loop.start || cursor >= loop.end) ? loop.start : Math.max(0, cursor);
     this.end = loop
       ? Infinity
-      : arrangementDuration(project) + rackTail(settings.processing?.effects);
+      : arrangementDuration(project) +
+        rackTail(settings.processing?.effects) +
+        returnsTail(project, settings);
     if (!arrangementDuration(project) || this.cursor >= this.end) return false;
     const master = this.playbackMaster(settings);
     this.graph = {
@@ -805,6 +938,7 @@ export class ArrangementEngine {
         master.input,
         {
           liveMix: true,
+          returnInputs: this.returnInputs,
           referenceOutput: master.referenceOutput,
           masterStems: this.masterStems,
           realtimeMidi: true,
@@ -951,6 +1085,7 @@ export class ArrangementEngine {
           this.graph.master.input,
           {
             liveMix: true,
+            returnInputs: this.returnInputs,
             editFade: true,
             referenceOutput: this.graph.master.referenceOutput,
             masterStems: this.masterStems,
@@ -1004,7 +1139,10 @@ export class ArrangementEngine {
     }
     if (this.loop) this.graph.controls = this.loopGraphs.flatMap((part) => part.controls);
     else
-      this.end = arrangementDuration(project) + rackTail(this.masterSettings?.processing?.effects);
+      this.end =
+        arrangementDuration(project) +
+        rackTail(this.masterSettings?.processing?.effects) +
+        returnsTail(project, this.masterSettings);
     this.updateMix(project);
     return true;
   }
@@ -1031,6 +1169,7 @@ export class ArrangementEngine {
         this.graph.master.input,
         {
           liveMix: true,
+          returnInputs: this.returnInputs,
           referenceOutput: this.graph.master.referenceOutput,
           masterStems: this.masterStems,
           realtimeMidi: true,
@@ -1164,8 +1303,45 @@ export class ArrangementEngine {
     this.graph?.master?.update(settings);
     this.voiceMaster?.update(settings);
     if (this.liveProject && !this.loop)
-      this.end = arrangementDuration(this.liveProject) + rackTail(settings.processing?.effects);
+      this.end =
+        arrangementDuration(this.liveProject) +
+        rackTail(settings.processing?.effects) +
+        returnsTail(this.liveProject, settings);
     if (this.liveProject) this.updateMix(this.liveProject);
+  }
+  setMetering(active) {
+    this.metering = !!active;
+    this.syncTrackMeters();
+  }
+  // Meters follow the live track buses; a bus that is gone takes its meter along.
+  syncTrackMeters() {
+    const buses = this.graph?.buses;
+    for (const [id, meter] of this.trackMeters)
+      if (!buses?.has(id)) {
+        meter.dispose();
+        this.trackMeters.delete(id);
+      }
+    if (!buses) return;
+    for (const [id, rack] of buses) {
+      if (!rack.trackPan) continue;
+      let meter = this.trackMeters.get(id);
+      if (!meter) {
+        meter = new LevelMeter(this.context.rawContext, {
+          connect: Tone.connect,
+          disconnect: Tone.disconnect,
+        });
+        this.trackMeters.set(id, meter);
+      }
+      meter.attach(rack.trackPan);
+      meter.setActive(this.metering);
+    }
+  }
+  readMeters(into) {
+    if (this.metering) this.syncTrackMeters();
+    for (const id in into) if (!this.trackMeters.has(id)) delete into[id];
+    if (!this.metering) return into;
+    for (const [id, meter] of this.trackMeters) meter.read((into[id] ||= meterReading()));
+    return into;
   }
   getReduction() {
     return this.graph?.master?.reduction?.() || 0;
@@ -1173,7 +1349,9 @@ export class ArrangementEngine {
   updateMix(project) {
     const end =
       this.playing && !this.loop
-        ? arrangementDuration(project) + rackTail(this.masterSettings?.processing?.effects)
+        ? arrangementDuration(project) +
+          rackTail(this.masterSettings?.processing?.effects) +
+          returnsTail(project, this.masterSettings)
         : this.end;
     const solo = project.tracks.some((track) => track.solo);
     const now = this.context.rawContext.currentTime;
@@ -1190,6 +1368,7 @@ export class ArrangementEngine {
         now,
         0.01
       );
+      syncTrackSends(this.context.rawContext, rack, track, this.returnInputs, now);
       if (track && this.playing && this.graph?.buses?.has(id)) {
         for (const bindings of Object.values(rack.automationBindings || {}))
           for (const { param } of bindings) param.cancelScheduledValues(now);
@@ -1244,7 +1423,9 @@ export class ArrangementEngine {
     settings = {},
     trackId = null,
     sampleRate = 48000,
-    duration = arrangementDuration(project) + (trackId ? 0 : rackTail(settings.processing?.effects))
+    duration = arrangementDuration(project) +
+      (trackId ? 0 : rackTail(settings.processing?.effects)) +
+      returnsTail(project, settings, trackId)
   ) {
     if (!duration || !arrangementDuration(project)) throw new Error('Add a clip before exporting.');
     // Offline rendering needs contiguous PCM. Fail clearly before allocating a
@@ -1275,7 +1456,8 @@ export class ArrangementEngine {
               rackTail(track.effects, track.automation) +
               (trackId ? 0 : rackTail(settings.processing?.effects)) +
               2
-          )
+          ),
+          returnsTail(project, settings, trackId) + 2
         )
       ) * sampleRate
     );
@@ -1313,10 +1495,11 @@ export class ArrangementEngine {
     if (!selection.tracks.some((track) => track.clips.length))
       return [new Float32Array(frameCount), new Float32Array(frameCount)];
     const offline = new Tone.OfflineContext(2, duration, sampleRate);
-    let graph;
+    let graph, returns;
     try {
       const master = masterGraph(offline, settings, offline.rawContext.destination, !!trackId);
       graph = { nodes: master.nodes, sources: [] };
+      returns = offlineReturns(offline, selection, settings, master.input, trackId);
       const scheduled = scheduleArrangement(
         offline,
         selection,
@@ -1328,6 +1511,7 @@ export class ArrangementEngine {
           referenceOutput: master.referenceOutput || offline.rawContext.destination,
           orderedMix: true,
           masterStems: trackId ? undefined : settings.processing?.stems,
+          returnInputs: returns?.input,
           windowDuration: duration,
           sourceOffsets: this.bufferOffsets,
           sourceKeys: this.clipSourceKeys,
@@ -1346,6 +1530,7 @@ export class ArrangementEngine {
       );
     } finally {
       releaseGraph(graph);
+      returns?.dispose();
       offline.dispose();
     }
   }
@@ -1374,7 +1559,9 @@ export class ArrangementEngine {
     if (!arrangementDuration(snapshot)) throw new Error('Add a clip before exporting.');
     const duration = range
       ? range.end - range.start
-      : arrangementDuration(snapshot) + (stems ? 0 : rackTail(settings?.processing?.effects));
+      : arrangementDuration(snapshot) +
+        (stems ? 0 : rackTail(settings?.processing?.effects)) +
+        returnsTail(snapshot, settings);
     if (!Number.isFinite(duration) || duration <= 0)
       throw new Error('Add a clip before exporting.');
     const rangeFirst = range ? Math.round(range.start * 48000) : 0;
@@ -1463,6 +1650,8 @@ export class ArrangementEngine {
     for (const rack of this.keyboardRacks?.values() || []) rack.dispose();
     this.keyboardRacks?.clear();
     this.voiceMaster = null;
+    for (const meter of this.trackMeters.values()) meter.dispose();
+    this.trackMeters.clear();
     this.buffers.clear();
   }
 }

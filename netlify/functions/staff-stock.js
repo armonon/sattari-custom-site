@@ -1,8 +1,14 @@
 import { products as baseProducts } from '../../src/data/catalog.js';
-import { listVariants, sanitizeStockMap, stockKey } from '../../src/utils/inventory.js';
+import {
+  listVariants,
+  reservedQuantities,
+  sanitizeStockMap,
+  stockKey,
+} from '../../src/utils/inventory.js';
 import { mergeCatalog } from '../../src/utils/catalogMerge.js';
-import { readStock, updateStock } from '../../server/stockStore.js';
+import { isStockContention, readInventory, updateStock } from '../../server/stockStore.js';
 import { readCatalogDoc } from '../../server/catalogStore.js';
+import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { requireStaff } from '../../server/staffAuth.js';
 
 // Stock rows come from the merged catalog, not the base file, so products an
@@ -25,8 +31,11 @@ function json(statusCode, body) {
 }
 
 // Every purchasable variant in the catalog, so the staff page can render a row
-// per item without duplicating the catalog shape in the browser.
-function buildVariantRows(stock, products) {
+// per item without duplicating the catalog shape in the browser. `quantity` is
+// the count on the shelf; `held` is how many of those are reserved by
+// customers who are in checkout right now.
+function buildVariantRows(stock, holds, products) {
+  const reserved = reservedQuantities(holds, Date.now());
   const rows = [];
 
   for (const product of products) {
@@ -43,6 +52,7 @@ function buildVariantRows(stock, products) {
         color: variant.color,
         tracked,
         quantity: tracked ? stock[key] : null,
+        held: tracked ? reserved[key] || 0 : 0,
       });
     }
   }
@@ -51,7 +61,7 @@ function buildVariantRows(stock, products) {
 }
 
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) {
     // Same response for a missing and an invalid token: no signal about which
     // part was wrong.
@@ -61,8 +71,8 @@ export async function handler(event) {
   const products = await getProducts(event);
 
   if (event.httpMethod === 'GET') {
-    const stock = await readStock(event);
-    return json(200, { staff: session.staff, items: buildVariantRows(stock, products) });
+    const { stock, holds } = await readInventory(event);
+    return json(200, { staff: session.staff, items: buildVariantRows(stock, holds, products) });
   }
 
   if (event.httpMethod !== 'POST') {
@@ -121,7 +131,7 @@ export async function handler(event) {
   }
 
   try {
-    const { stock } = await updateStock(event, (current) => {
+    const { stock, holds } = await updateStock(event, (current) => {
       const next = { ...current };
       for (const change of applied) {
         if (change.quantity === null) {
@@ -133,18 +143,24 @@ export async function handler(event) {
       return sanitizeStockMap(next);
     });
 
-    console.log(
-      JSON.stringify({
-        type: 'staff-stock-update',
-        staff: session.staff,
-        changed: applied.length,
-      })
-    );
+    logEvent({ type: 'staff-stock-update', staff: session.staff, changed: applied.length });
 
-    return json(200, { staff: session.staff, items: buildVariantRows(stock, products), rejected });
+    return json(200, {
+      staff: session.staff,
+      items: buildVariantRows(stock, holds, products),
+      rejected,
+    });
   } catch (error) {
-    // updateStock throws only after losing the conditional-write race
-    // repeatedly, which means someone else is editing at the same moment.
-    return json(409, { error: error?.message || 'Could not save. Try again.' });
+    // Losing the conditional-write race repeatedly means someone else — staff
+    // or a checkout — is changing stock at the same moment; anything else is
+    // a storage failure.
+    const conflict = isStockContention(error);
+    logError(conflict ? 'staff-stock-update-conflict' : 'staff-stock-update-error', {
+      staff: session.staff,
+      message: errorMessage(error),
+    });
+    return conflict
+      ? json(409, { error: 'Stock was changing while you saved. Reload and try again.' })
+      : json(503, { error: 'Could not save right now. Reload and try again.' });
   }
 }

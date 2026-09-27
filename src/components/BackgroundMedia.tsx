@@ -10,8 +10,10 @@ declare global {
   }
 }
 
-const DAY_VIDEO = '/sattari site/bg.mp4';
-const NIGHT_VIDEO = '/sattari site/INSTRA PATTERN.mp4';
+export const BACKGROUND_VIDEOS = {
+  day: '/sattari site/bg.mp4',
+  night: '/sattari site/INSTRA PATTERN.mp4',
+};
 
 export default function BackgroundMedia() {
   const { mode } = useTheme();
@@ -98,7 +100,7 @@ export default function BackgroundMedia() {
             opacity: isDay ? 0.9 : 0.42,
           }}
         >
-          <source src={isDay ? DAY_VIDEO : NIGHT_VIDEO} type="video/mp4" />
+          <source src={BACKGROUND_VIDEOS[mode]} type="video/mp4" />
         </video>
       ) : null}
       {/* Frosted "gaussian glass" over the video so content stays readable. */}

@@ -1,3 +1,5 @@
+import { describeVariant } from './inventory.js';
+
 function toDisplayValue(value) {
   return value ?? null;
 }
@@ -58,8 +60,38 @@ export function createOrderRecord(session, lineItems = [], options = {}) {
   };
 }
 
+function oversoldLines(orderRecord) {
+  return Array.isArray(orderRecord?.stock?.oversold) ? orderRecord.stock.oversold : [];
+}
+
+export function buildOrderNotificationSubject(orderRecord) {
+  const subject =
+    `New Sattari order ${formatOrderCurrency(orderRecord.amountTotal, orderRecord.currency) || ''}`.trim();
+  return oversoldLines(orderRecord).length
+    ? `ACTION NEEDED: not enough stock — ${subject}`
+    : subject;
+}
+
 export function buildOrderNotificationText(orderRecord) {
+  const oversold = oversoldLines(orderRecord);
+  const alert = oversold.length
+    ? [
+        '*** ACTION NEEDED: NOT ENOUGH STOCK FOR THIS ORDER ***',
+        'This order was paid, but stock ran out before it could be reserved. Contact the',
+        'customer before packing it (restock date, substitute, or refund).',
+        // Stripe line names already include the size and color.
+        ...oversold.map(
+          (entry) =>
+            `- ${entry.name || describeVariant({ ...entry, slug: entry.slug || entry.key })}: ordered ${
+              entry.requested
+            }, only ${entry.available} available`
+        ),
+        '',
+      ]
+    : [];
+
   const lines = [
+    ...alert,
     'New Sattari Music order received.',
     '',
     `Order ID: ${orderRecord.id}`,
@@ -95,6 +127,17 @@ export function buildOrderNotificationText(orderRecord) {
   }
 
   return lines.filter(Boolean).join('\n');
+}
+
+// "jane@gmail.com" -> "j•••@gmail.com". Enough for a customer to recognise
+// their own address on the confirmation page, not enough to be worth taking
+// from anyone who gets hold of the session id.
+export function maskEmail(email) {
+  if (typeof email !== 'string') return null;
+  const at = email.lastIndexOf('@');
+  if (at < 1 || at === email.length - 1) return null;
+  const local = email.slice(0, at);
+  return `${local.length > 1 ? local[0] : ''}•••${email.slice(at)}`;
 }
 
 export function summarizeOrderRecord(orderRecord) {

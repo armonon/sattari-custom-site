@@ -1,6 +1,15 @@
 import * as Tone from 'tone';
 import { GrainSchedule } from './grainSchedule';
 
+// Idle envelopes kept per player: above the ~26 grains a 1 s horizon holds at 2x.
+const IDLE_ENVELOPES = 64;
+
+// The same wrap each grain's page read applies (SourceWindowPool.acquire).
+const wrapInLoop = (offset, { loopStart, loopEnd }) =>
+  loopEnd > loopStart && offset >= loopEnd
+    ? loopStart + ((offset - loopStart) % (loopEnd - loopStart))
+    : offset;
+
 // Tone 15.1.22 compatibility adapter. The grain clock, envelopes, playback-rate
 // compensation and graph remain Tone's; only each grain's source is paged.
 // Guard with actual rendered-PCM comparisons when updating the pinned Tone version.
@@ -14,6 +23,9 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     this.lastPrefetch = -1;
     this.leases = new Map();
     if (!this.context.isOffline) {
+      // A Tone.Gain per grain (~190/s across 16 lanes) churned the GC; a pause
+      // over 50 ms trips the scheduler deadline stop in _tick. Reuse envelopes.
+      this.envelopes = [];
       this.grainSchedule = new GrainSchedule(this);
       // Keep Tone's state/tick timeline, but queue native sources independently
       // of its short UI-clock lookahead. Offline rendering retains the oracle.
@@ -46,11 +58,43 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     this.grainSchedule.invalidate(time ?? this.context.now());
     this.grainSchedule.pump();
   }
+  acquireEnvelope() {
+    const reused = this.envelopes?.pop();
+    if (reused) return reused;
+    const envelope = new Tone.Gain({ context: this.context, gain: 0 });
+    envelope.connect(this.output);
+    return envelope;
+  }
+  // Called from the grain's `ended` event. The pooled node stays connected to the
+  // output, and its finished automation is left alone: Chrome posts `ended` while
+  // it is still rendering the quantum the source stopped in, so editing that
+  // envelope's timeline here can race the last frames of its fade-out. Every later
+  // grain's automation starts after this one ended, so the history never matters.
+  // Only a grain cancelled before it started leaves future events; its source never
+  // sounded, so they can be dropped safely.
+  releaseEnvelope(envelope, cancelledFrom) {
+    if (this.disposed || !this.envelopes || this.envelopes.length >= IDLE_ENVELOPES) {
+      envelope.dispose();
+      return;
+    }
+    if (Number.isFinite(cancelledFrom)) envelope.gain.cancelScheduledValues(cancelledFrom);
+    this.envelopes.push(envelope);
+  }
   schedulePlaybackRate(rate, time, detune = this.detune) {
     if (!Number.isFinite(rate) || rate < 0.001) throw new Error('Invalid playback rate.');
     this._clock.frequency.setValueAtTime(rate / this._grainSize, time);
     this.pitchSchedule ||= [{ time: -Infinity, value: this.detune }];
     this.pitchSchedule.push({ time, value: detune });
+    this.pitchSchedule.sort((a, b) => a.time - b.time);
+    this.requeueGrains(time);
+  }
+  // Replay of a deck whose rate a re-derived sync controller keeps adjusting: the
+  // queued musical pitch holds from `time` and never touches the rate. With key
+  // lock off, each grain adds the transposition of its own playback rate.
+  schedulePitch(time, cents, { followRate = false } = {}) {
+    if (!Number.isFinite(cents)) throw new Error('Invalid pitch.');
+    this.pitchSchedule ||= [{ time: -Infinity, value: this.detune }];
+    this.pitchSchedule.push({ time, value: cents, followRate });
     this.pitchSchedule.sort((a, b) => a.time - b.time);
     this.requeueGrains(time);
   }
@@ -71,15 +115,30 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     this.requeueGrains(time);
   }
   sourceOffsetAt(time) {
-    const anchor = this.sourceStarts?.findLast((start) => start.time <= time + 1e-8);
-    if (!anchor) return this._clock.getTicksAtTime(time) * this._grainSize;
-    const frequency = this._clock.frequency;
+    const index = this.sourceStarts?.findLastIndex((start) => start.time <= time + 1e-8) ?? -1;
+    if (index < 0) return this._clock.getTicksAtTime(time) * this._grainSize;
+    return this.offsetFromAnchor(index, time);
+  }
+  offsetFromAnchor(index, time) {
+    const anchor = this.sourceStarts[index],
+      frequency = this._clock.frequency;
     return (
-      (anchor.ticks +
+      ((anchor.exit ? this.exitTicks(index) : anchor.ticks) +
         frequency.getTicksAtTime(Math.max(time, anchor.time)) -
         frequency.getTicksAtTime(anchor.time)) *
       this._grainSize
     );
+  }
+  // A loop-exit anchor continues from where the previous anchor had reached,
+  // wrapped into the loop it leaves. Resolved lazily: a later rate change
+  // before the exit still moves the position the exit starts from.
+  exitTicks(index) {
+    const { time, exit } = this.sourceStarts[index];
+    const reached =
+      index > 0
+        ? this.offsetFromAnchor(index - 1, time)
+        : this._clock.getTicksAtTime(time) * this._grainSize;
+    return wrapInLoop(reached, exit) / this._grainSize;
   }
   _stop(time) {
     // Source.stop cancels future starts. Their position anchors must be
@@ -163,8 +222,17 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
           loopEnd: this.loopEnd || this.duration,
         },
       ];
+    const previous = this.loopStateAt(time);
     this.loopSchedule.push({ ...region, time });
     this.loopSchedule.sort((a, b) => a.time - b.time);
+    // Leaving a loop continues from the current position inside it, as DJ players
+    // do; the unwrapped grain clock would jump ahead by the time spent looping.
+    // Grains keep their usual crossfades across the re-anchor, so it cannot click.
+    if (previous.loop && !region.loop && this.sourceStarts?.length) {
+      const { loopStart, loopEnd } = previous;
+      this.sourceStarts.push({ time, exit: { loopStart, loopEnd } });
+      this.sourceStarts.sort((a, b) => a.time - b.time);
+    }
     this.requeueGrains(time);
   }
   loopStateAt(time) {
@@ -195,8 +263,12 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     const played = Math.min(time, this.context.rawContext.currentTime);
     while (this.loopSchedule?.length > 1 && this.loopSchedule[1].time <= played)
       this.loopSchedule.shift();
-    while (this.sourceStarts?.length > 1 && this.sourceStarts[1].time <= played)
+    while (this.sourceStarts?.length > 1 && this.sourceStarts[1].time <= played) {
+      // Fix a played exit anchor before dropping the anchor it resolves from.
+      const [, next] = this.sourceStarts;
+      if (next.exit) this.sourceStarts[1] = { time: next.time, ticks: this.exitTicks(1) };
       this.sourceStarts.shift();
+    }
     while (this.pitchSchedule?.length > 1 && this.pitchSchedule[1].time <= played)
       this.pitchSchedule.shift();
     const offset = this.sourceOffsetAt(time);
@@ -209,10 +281,14 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
       this.lastPrefetch = offset;
       this.prefetchWindow(offset, region);
     }
-    const detune =
-      this.pitchSchedule?.findLast((entry) => entry.time <= time)?.value ?? this.detune;
-    const pitch = 2 ** (detune / 1200);
     const playbackRate = this._clock.frequency.getValueAtTime(time) * this._grainSize;
+    const entry = this.pitchSchedule?.findLast((item) => item.time <= time);
+    const detune = !entry
+      ? this.detune
+      : entry.followRate
+        ? entry.value + 1200 * Math.log2(Math.max(0.01, playbackRate))
+        : entry.value;
+    const pitch = 2 ** (detune / 1200);
     const span =
       (this._grainSize / playbackRate + this._overlap) * pitch + 2 / this.source.sampleRate;
     const page = this.pool.acquire(this.source, offset, span, region);
@@ -245,15 +321,18 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     this.lastGrainTime = time;
     const source = raw.createBufferSource();
     // Keep Tone's envelope timeline semantics (including interrupting an attack)
-    // while retiring the source itself on the native audio clock.
-    const envelope = new Tone.Gain({ context: this.context, gain: 0 });
+    // while retiring the source itself on the native audio clock. Offline renders
+    // keep one envelope per grain: their graph stays connected until completion.
+    const envelope = this.envelopes
+      ? this.acquireEnvelope()
+      : new Tone.Gain({ context: this.context, gain: 0 });
     source.buffer = page.buffer;
     source.loop = page.loop;
     source.loopStart = page.loopStart || 0;
     source.loopEnd = page.loopEnd || 0;
     source.playbackRate.setValueAtTime(pitch, 0);
     Tone.connect(source, envelope);
-    envelope.connect(this.output);
+    if (!this.envelopes) envelope.connect(this.output);
     const fadeIn = offset < this._overlap ? 0 : this._overlap;
     const stopAt = time + this._grainSize / playbackRate;
     envelope.gain.setValueAtTime(fadeIn ? 0 : 1, time);
@@ -286,7 +365,7 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
         disposed = true;
         source.onended = null;
         source.disconnect();
-        envelope.dispose();
+        this.releaseEnvelope(envelope, grain.canceled ? time : undefined);
       },
     };
     this._activeSources.push(grain);
@@ -312,6 +391,9 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
   dispose() {
     if (this.pumpGrains) this.context.off('tick', this.pumpGrains);
     for (const release of this.leases.values()) release();
-    return super.dispose();
+    // Tone disposes active grains here; with `disposed` set they release, not pool.
+    super.dispose();
+    for (const envelope of this.envelopes?.splice(0) || []) envelope.dispose();
+    return this;
   }
 }

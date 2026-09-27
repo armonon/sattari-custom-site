@@ -1,5 +1,12 @@
 import * as Tone from 'tone';
-import { StudioAudioEngine, masterAssistProfile } from './studioAudioEngine';
+import {
+  StudioAudioEngine,
+  exitLoopInPlace,
+  masterAssistProfile,
+  rampCompressor,
+  validPerformanceInput,
+} from './studioAudioEngine';
+import { SyncClock } from './syncClock';
 import { getAudioAsset } from './audioProjectStore';
 import { performanceAssetIds } from './performanceReplay';
 import {
@@ -25,6 +32,9 @@ export const REPLAY_METHODS = new Set([
   'setDeckEq',
   'setDeckFilter',
   'setDeckFx',
+  'setDeckSend',
+  'setDeckInserts',
+  'setReturn',
   'setLaneState',
   'setLaneFx',
   'removeLane',
@@ -51,11 +61,17 @@ const requestedTransport = new Set([
 const scheduledControls = new Set([
   'inputState',
   'setDeckFx',
+  'setDeckSend',
+  'setReturn',
   'setDeckEq',
   'setMasterLevel',
   'setLimiter',
   'setMasterAssist',
+  'setProjectTempo',
 ]);
+// Sync intent. The replay engine re-derives the rate corrections it implies,
+// exactly as the live controller did; corrections themselves are not journaled.
+const SYNC_INTENT = new Set(['setDeckSync', 'setTempoFollow']);
 
 export function replayScheduling(
   plan,
@@ -183,18 +199,37 @@ export function replayScheduling(
       : dispatched
     ).push(event);
   }
-  return { scheduled, dispatched };
+  const compiledPitchDecks = new Set([...pitchDecks].filter((id) => !unstableDecks.has(id)));
+  return { scheduled, dispatched, pitchDecks: compiledPitchDecks };
 }
 
+// A damaged journal row (NaN/Infinity from storage or an edit) is skipped, never
+// dispatched: the engine would ignore it anyway, and a skipped control must not
+// be mistaken for a failed transport change that stops the whole replay.
+const damagedArgs = (event) =>
+  event.type !== 'initialState' && !validPerformanceInput(event.type, event.args || []);
+const damagedEvent = (event) =>
+  !Number.isFinite(event.time) ||
+  (event.scheduledTime != null && !Number.isFinite(event.scheduledTime)) ||
+  damagedArgs(event);
+
 export function replayPlan(capture) {
-  const events = structuredClone(capture.events || [])
-    .filter((e) => !e.disabled)
-    .sort((a, b) => a.time - b.time);
+  const enabled = structuredClone(capture.events || []).filter((e) => !e.disabled);
+  const events = enabled.filter((e) => !damagedEvent(e)).sort((a, b) => a.time - b.time);
   const snapshot = events.find((e) => e.type === 'initialState');
   const initial = snapshot?.args[0];
   if (!initial?.decks || !(capture.duration > 0))
     throw new Error('Replay needs a source snapshot and a recording duration.');
   const warnings = [];
+  if (events.length < enabled.length) {
+    console.warn(
+      'Replay skipped damaged events.',
+      enabled.filter((e) => damagedEvent(e))
+    );
+    warnings.push(
+      `${enabled.length - events.length} damaged event(s) with invalid values were skipped.`
+    );
+  }
   if (initial.dspVersion !== 2)
     warnings.push('Legacy reverb used a different random impulse; keep the printed reference.');
   if (initial.decks.some((d) => d.playing))
@@ -210,6 +245,8 @@ export function replayPlan(capture) {
   const supported = new Set([
     ...REPLAY_METHODS,
     ...requestedTransport,
+    ...SYNC_INTENT,
+    'setProjectTempo',
     'initialState',
     'deckTransport',
     'triggerPad',
@@ -331,6 +368,7 @@ export class PerformancePlayer {
     engine.setLimiter(s.limiter !== false);
     engine.setCrossfaderCurve(s.crossfaderCurve);
     engine.setCrossfader(s.crossfader ?? 50);
+    for (const [bus, params] of Object.entries(s.returns || {})) engine.setReturn?.(bus, params);
     for (const d of s.decks) {
       engine.ensureDeck(d.id, d.cfSide || d.side || 'left');
       for (const [lane, values] of Object.entries(d.lanes || {}))
@@ -343,6 +381,9 @@ export class PerformancePlayer {
       engine.setDeckEq(d.id, d.eq || {});
       engine.setDeckFilter(d.id, d.filter ?? 50);
       engine.setDeckFx(d.id, d.fx || {});
+      if (d.inserts?.length) engine.setDeckInserts?.(d.id, d.inserts);
+      for (const [bus, amount] of Object.entries(d.sends || {}))
+        if (amount) engine.setDeckSend?.(d.id, bus, amount);
       for (const [lane, fx] of Object.entries(d.stemFx || {})) engine.setLaneFx(d.id, lane, fx);
       engine.setDeckPitch(d.id, d.pitch || 0);
       engine.setDeckKeyLock(d.id, d.keyLock !== false);
@@ -431,6 +472,18 @@ export class PerformancePlayer {
     this.engine.padPlayers.set(index, { player, gain, level, assetId });
     this.engine.setPadGain(index, level);
   }
+  // Musical pitch (without rate transposition) as rate-following automation: the
+  // player adds each grain's own rate when key lock is off. Derived rate
+  // corrections then keep pitch and rate together without rewriting either.
+  schedulePitchFollow(deck, when, state) {
+    for (const [laneId, lane] of deck.lanes)
+      lane.player.schedulePitch(
+        when,
+        ((state?.pitch ?? deck.pitch ?? 0) + ((state ? state.stems[laneId] : lane.pitch) || 0)) *
+          100,
+        { followRate: !(state?.keyLock ?? deck.keyLock) }
+      );
+  }
   transport(id, state, when, grainState) {
     const d = this.engine.decks.get(id);
     if (!d) return;
@@ -446,6 +499,7 @@ export class PerformancePlayer {
           when,
           grainState?.detunes[laneId] ?? ((d.pitch || 0) + (lane.pitch || 0) + transportPitch) * 100
         );
+      if (this.pitchFollowDecks?.has(id)) this.schedulePitchFollow(d, when, grainState);
     } else {
       d.playbackRate = rate;
       this.engine.applyPlaybackRates(d);
@@ -473,7 +527,12 @@ export class PerformancePlayer {
   dispatch(event, when) {
     const [a, b, c] = event.args,
       e = this.engine;
+    if (damagedArgs(event)) {
+      console.warn('Replay skipped a damaged event.', event);
+      return;
+    }
     if (event.type === 'deckTransport') return this.transport(a, b, when);
+    if (SYNC_INTENT.has(event.type)) return e[event.type](...event.args);
     if (event.type === 'setMasterProcessing' && event.mixScheduled)
       return e.setMasterProcessing(a, { applyStems: false });
     if (
@@ -496,10 +555,18 @@ export class PerformancePlayer {
     const [id, value] = event.args,
       e = this.engine,
       ramp = (param, v, d) => param.rampTo(v, d, when);
+    if (damagedArgs(event)) {
+      console.warn('Replay skipped a damaged event.', event);
+      return;
+    }
     if (event.grainState) {
       const deck = e.decks.get(id);
       if (!deck) return;
-      if (event.type !== 'deckTransport')
+      // A synced deck's rate belongs to the re-derived controller: queue only its
+      // pitch, never the compiled (journal-time) rate.
+      if (event.type !== 'deckTransport' && this.pitchFollowDecks?.has(id))
+        this.schedulePitchFollow(deck, when, event.grainState);
+      else if (event.type !== 'deckTransport')
         for (const [laneId, lane] of deck.lanes)
           lane.player.schedulePlaybackRate(
             event.grainState.rate,
@@ -540,6 +607,14 @@ export class PerformancePlayer {
       return;
     }
     if (event.type === 'inputState') return this.inputReplay?.schedule(id, when);
+    if (event.type === 'setProjectTempo') {
+      // Anchor the replay clock with the journaled beat: followers of the project
+      // clock then re-derive the same phase, not merely the same tempo.
+      const beat = Number.isFinite(value) ? value : (e.syncClock?.beatAt(when) ?? 0);
+      if (e.syncClock) e.syncClock.anchor(Number(id), when, beat);
+      else e.syncClock = new SyncClock(Number(id), when, beat);
+      return;
+    }
     if (event.mixRamps) {
       for (const step of event.mixRamps) {
         const deck = e.decks.get(step.deckId);
@@ -561,6 +636,15 @@ export class PerformancePlayer {
       if (!deck) return;
       ramp(deck.reverb.wet, Math.min(100, Math.max(0, value.reverb || 0)) / 100, 0.04);
       ramp(deck.delay.wet, Math.min(100, Math.max(0, value.echo || 0)) / 100, 0.04);
+    } else if (event.type === 'setDeckSend' || event.type === 'setReturn') {
+      // A first send is built silent; both ramps start at the journaled time.
+      const previous = e.performanceParameterTime;
+      e.performanceParameterTime = when;
+      try {
+        e[event.type]?.(...event.args);
+      } finally {
+        e.performanceParameterTime = previous;
+      }
     } else if (event.type === 'setDeckFilter') {
       const deck = e.decks.get(id);
       if (deck) ramp(deck.filter.frequency, performanceFilter(value).frequency, 0.035);
@@ -575,9 +659,7 @@ export class PerformancePlayer {
       ramp(e.limitedGain.gain, id ? 1 : 0, 0.04);
       ramp(e.dryGain.gain, id ? 0 : 1, 0.04);
     } else if (event.type === 'setMasterAssist') {
-      const profile = masterAssistProfile(id, value);
-      for (const key of ['threshold', 'ratio', 'attack', 'release'])
-        e.masterCompressor[key].setValueAtTime(profile[key], when);
+      rampCompressor(e.masterCompressor, masterAssistProfile(id, value), when);
     } else if (event.type === 'setMasterProcessing') {
       const settings = normalizeMasterProcessing(id);
       ramp(e.masterInputTrim.gain, trimGain(settings.inputTrim), 0.04);
@@ -623,6 +705,8 @@ export class PerformancePlayer {
     while (this.pendingLoopStates?.length && this.pendingLoopStates[0].when <= now) {
       const state = this.pendingLoopStates.shift();
       if (this.engine.decks.get(state.id) !== state.deck) continue;
+      // The players left the loop in place at this audio time (scheduleLoop).
+      if (!state.looping) exitLoopInPlace(state.deck, state.when);
       Object.assign(state.deck, {
         looping: state.looping,
         loopStart: state.start,
@@ -718,7 +802,25 @@ export class PerformancePlayer {
         )
       )
     );
+    // Decks whose rate the replay controller re-derives from journaled sync intent.
+    const derivedDecks = new Set(
+      this.plan.events
+        .filter(
+          (event) =>
+            (event.type === 'setDeckSync' && event.args[1]) ||
+            (event.type === 'setTempoFollow' && event.args[1]?.length > 1)
+        )
+        .map((event) => event.args[0])
+    );
     const schedule = replayScheduling(this.plan, { scheduledLoopDecks, scheduledPitchDecks });
+    this.pitchFollowDecks = new Set(
+      [...schedule.pitchDecks].filter(
+        (id) =>
+          derivedDecks.has(id) &&
+          [...this.engine.decks.get(id).lanes.values()].every((lane) => lane.player.schedulePitch)
+      )
+    );
+    for (const id of this.pitchFollowDecks) this.engine.decks.get(id).pitchScheduled = true;
     this.scheduled = schedule.scheduled;
     this.plan.events = schedule.dispatched;
     this.scheduledIndex = 0;

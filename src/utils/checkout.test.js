@@ -82,6 +82,76 @@ describe('checkout utilities', () => {
     ).rejects.toThrow('Stripe is temporarily unavailable.');
   });
 
+  it('keeps the HTTP status and error code so callers can react to a stale cart', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: vi
+          .fn()
+          .mockResolvedValue({ error: 'Cymbal Felts just sold out.', code: 'out_of_stock' }),
+      })
+    );
+
+    await expect(
+      createCheckoutSession([{ slug: 'cymbal-felts', quantity: 1 }])
+    ).rejects.toMatchObject({
+      message: 'Cymbal Felts just sold out.',
+      status: 409,
+      code: 'out_of_stock',
+    });
+  });
+
+  it.each([
+    [
+      409,
+      'Something in your cart just changed or sold out. Please review your cart and try again.',
+    ],
+    [503, 'Checkout is temporarily unavailable. Please try again in a few minutes.'],
+    [500, 'Unable to create checkout session.'],
+  ])('explains a %i response that has no JSON error', async (status, message) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status,
+        json: vi.fn().mockRejectedValue(new SyntaxError('Unexpected token <')),
+      })
+    );
+
+    await expect(createCheckoutSession([{ slug: 'cymbal-felts', quantity: 1 }])).rejects.toThrow(
+      message
+    );
+  });
+
+  it('explains a product that was hidden after it was added to the cart', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: vi.fn().mockResolvedValue({ error: 'Unknown product slug: violin-strings' }),
+      })
+    );
+
+    await expect(
+      createCheckoutSession([{ slug: 'violin-strings', quantity: 1 }])
+    ).rejects.toMatchObject({
+      message:
+        'An item in your cart is no longer available. Please review your cart and try again.',
+      status: 400,
+    });
+  });
+
+  it('turns a network failure into a message a customer can act on', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+    await expect(createCheckoutSession([{ slug: 'cymbal-felts', quantity: 1 }])).rejects.toThrow(
+      'We could not reach checkout. Check your connection and try again.'
+    );
+  });
+
   it('fetches verified checkout session status', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

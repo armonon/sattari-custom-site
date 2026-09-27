@@ -1,0 +1,25 @@
+/* StemDeck design tokens, shared with the native plugin's DesignTokens.h.
+   The one place the studio's colours, radii and control sizes are defined;
+   components read them with var(--sd-*). Strips set --sd-accent per deck. */
+.stemdeck-web.sd-studio-next {
+  --sd-bg: #111214;
+  --sd-surface: #17191c;
+  --sd-panel: #202226;
+  --sd-raised: #2c2f34;
+  --sd-hover: #393d44;
+  --sd-control: #24272d;
+  --sd-line: #464b54;
+  --sd-line-soft: #32363e;
+  --sd-text: #f5f5f7;
+  --sd-muted: #b6bdc8;
+  --sd-dim: #9da6b4;
+  --sd-primary: #aacaff;
+  --sd-primary-wash: #aacaff14;
+  --sd-primary-edge: #aacaff66;
+  --sd-signal: #00ff87;
+  --sd-selected: #55e5d0;
+  --sd-control-height: 36px;
+  --sd-panel-shadow: inset 0 1px 0 #ffffff04, 0 4px 16px #00000014;
+  --sd-radius: 14px;
+  --sd-control-radius: 8px;
+}

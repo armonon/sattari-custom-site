@@ -270,6 +270,38 @@
         color: var(--danger);
         border-color: var(--danger);
       }
+      .pill.oversold {
+        color: var(--panel);
+        background: var(--danger);
+        border-color: var(--danger);
+        margin-left: 0.4rem;
+      }
+      tr.is-oversold td:first-child {
+        box-shadow: inset 3px 0 0 var(--danger);
+      }
+      .oversold-detail {
+        color: var(--danger);
+        font-size: 0.82rem;
+        margin-top: 0.3rem;
+      }
+      .oversold-detail ul,
+      .restore-report ul {
+        margin: 0.2rem 0 0;
+        padding-left: 1.2rem;
+      }
+      .restore-report {
+        overflow-wrap: anywhere;
+      }
+      .restore-report strong {
+        color: var(--ok);
+      }
+      .restore-report p {
+        margin: 0.5rem 0 0;
+      }
+      .restore-report .warn {
+        color: var(--danger);
+        font-weight: 600;
+      }
       .order-items {
         color: var(--muted);
         font-size: 0.82rem;
@@ -335,6 +367,7 @@
           <div>
             <button class="secondary" id="reload-btn" type="button">Reload</button>
             <button class="secondary" id="signout-btn" type="button">Sign out</button>
+            <button class="secondary" id="signout-all-btn" type="button">Sign out everywhere</button>
           </div>
         </div>
 
@@ -343,8 +376,21 @@
           <button class="tab" id="tab-listings" type="button">Listings</button>
           <button class="tab" id="tab-orders" type="button">Orders</button>
           <button class="tab" id="tab-bookings" type="button">Studio bookings</button>
+          <button class="tab" id="tab-inquiries" type="button">Inquiries</button>
           <button class="tab" id="tab-insights" type="button">Site insights</button>
           <button class="tab" id="tab-backups" type="button">Backups</button>
+        </div>
+
+        <!-- Service inquiries -->
+        <div class="hidden" id="panel-inquiries">
+          <h2 style="font-size:1.2rem">Service inquiries</h2>
+          <p class="note">
+            Newest first. Anything marked <strong>Email not sent</strong> never reached the inbox,
+            so this list is the only place it shows up — reply to those customers directly.
+          </p>
+          <p class="state" id="inquiry-summary"></p>
+          <div id="inquiry-msg" role="status"></div>
+          <div id="inquiry-rows"></div>
         </div>
 
         <!-- Backups -->
@@ -479,6 +525,8 @@
           the site behaved before. Set a number and the shop starts showing stock — at zero the
           product shows <strong>Out of stock</strong> and cannot be bought. Online sales subtract
           themselves automatically; you only adjust for counter sales and restocks.
+          <strong>Held</strong> units are in a customer's checkout right now: still on the shelf,
+          but not for sale unless that checkout is abandoned.
         </p>
 
         <!-- Listings -->
@@ -548,6 +596,7 @@
         'use strict';
 
         var LOGIN_URL = '/api/staff/login';
+        var LOGOUT_URL = '/api/staff/logout';
         var STOCK_URL = '/api/staff/stock';
         // sessionStorage, not localStorage: on a shared counter machine the
         // session should end when the tab closes rather than linger.
@@ -718,17 +767,24 @@
           var cell = tr.querySelector('.status-cell');
           if (!cell) return;
           var value = currentValue(item);
+          // Reserved by customers who are in checkout right now.
+          var held = item.held || 0;
 
           if (value === null || value === undefined) {
             cell.className = 'status-cell state untracked';
             cell.textContent = 'Not tracked';
           } else if (value <= 0) {
             cell.className = 'status-cell state out';
-            cell.textContent = 'Out of stock';
+            cell.textContent = 'Out of stock' + (held ? ' · ' + held + ' held' : '');
+          } else if (held) {
+            var free = Math.max(0, value - held);
+            cell.className = 'status-cell state' + (free ? '' : ' out');
+            cell.textContent = value + ' on hand · ' + held + ' held · ' + free + ' available';
           } else {
             cell.className = 'status-cell state';
             cell.textContent = value + ' on hand';
           }
+          cell.title = held ? held + ' in customer checkouts right now' : '';
         }
 
         function updateDirty() {
@@ -815,6 +871,7 @@
           updateDirty();
           show('stock');
           if (location.hash === '#bookings') { showTab('bookings'); await loadBookings(); }
+          if (location.hash === '#inquiries') { showTab('inquiries'); await loadInquiries(); }
         }
 
         el('login-form').addEventListener('submit', async function (submitEvent) {
@@ -878,18 +935,57 @@
           // Refresh whatever is on screen, not just stock.
           if (!el('panel-orders').classList.contains('hidden')) return loadOrders();
           if (!el('panel-bookings').classList.contains('hidden')) return loadBookings();
+          if (!el('panel-inquiries').classList.contains('hidden')) return loadInquiries();
           if (!el('panel-listings').classList.contains('hidden')) return loadListings();
           loadStock().catch(function (error) {
             if (error.message !== 'unauthorized') message('stock-msg', error.message, 'error');
           });
         });
 
-        el('signout-btn').addEventListener('click', function () {
+        // Ends the session on the server as well, so a copy of the token (a
+        // shared machine, a screenshot of dev tools) stops working now rather
+        // than when it expires. The tab forgets the token either way.
+        async function signOut(everywhere) {
+          var current = token();
+          var confirmed = true;
+          if (current) {
+            try {
+              var response = await fetch(LOGOUT_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + current,
+                },
+                body: JSON.stringify({ everywhere: everywhere }),
+              });
+              // 401: the session had already ended, which is the goal.
+              confirmed = response.ok || response.status === 401;
+            } catch (e) {
+              confirmed = false;
+            }
+          }
           setToken('');
           items = [];
           edits = Object.create(null);
           show('login');
-          message('login-msg', 'Signed out.', 'ok');
+          if (confirmed) {
+            message('login-msg', everywhere ? 'Signed out on every device.' : 'Signed out.', 'ok');
+          } else {
+            message(
+              'login-msg',
+              'Signed out on this device, but the server did not confirm it. Sign in and sign out again once the connection is back.',
+              'error'
+            );
+          }
+        }
+
+        el('signout-btn').addEventListener('click', function () {
+          signOut(false);
+        });
+
+        el('signout-all-btn').addEventListener('click', function () {
+          if (!window.confirm('Sign out every device that is signed in to this page, including this one?')) return;
+          signOut(true);
         });
 
         el('filter').addEventListener('input', render);
@@ -913,9 +1009,10 @@
         var pendingImage = '';
 
         function showTab(which) {
-          ['stock', 'listings', 'orders', 'bookings', 'backups', 'insights'].forEach(function (name) {
+          ['stock', 'listings', 'orders', 'bookings', 'inquiries', 'backups', 'insights'].forEach(function (name) {
             el('tab-' + name).classList.toggle('is-active', which === name);
           });
+          el('panel-inquiries').classList.toggle('hidden', which !== 'inquiries');
           el('panel-stock').classList.toggle('hidden', which !== 'stock');
           el('stock-note').classList.toggle('hidden', which !== 'stock');
           el('panel-listings').classList.toggle('hidden', which !== 'listings');
@@ -947,6 +1044,103 @@
           showTab('bookings');
           loadBookings();
         });
+
+        el('tab-inquiries').addEventListener('click', function () {
+          showTab('inquiries');
+          loadInquiries();
+        });
+
+        /* ---------------------------------------------------------------
+           Inquiries. Customer text is only ever set with textContent.
+           --------------------------------------------------------------- */
+
+        var INQUIRIES_URL = '/api/staff/inquiries';
+        var EMAIL_PROBLEMS = {
+          'not-configured': 'Email is not set up, so this was never emailed.',
+          limit: 'Held back by the email safety limit (too many inquiries at once), so this was never emailed.',
+          provider: 'The email service rejected it, so this was never emailed.',
+        };
+
+        function renderInquiries(data) {
+          var list = data.inquiries || [];
+          var rows = el('inquiry-rows');
+          rows.replaceChildren();
+          var open = list.filter(function (item) { return !item.emailSent && !item.handledAt; }).length;
+          el('inquiry-summary').textContent = list.length
+            ? 'Showing ' + list.length + ' of ' + (data.total || list.length) +
+              (open ? ' · ' + open + ' not emailed and not yet handled' : '')
+            : '';
+          if (!list.length) {
+            rows.textContent = 'No inquiries stored yet.';
+            return;
+          }
+          list.forEach(function (item) {
+            var row = document.createElement('article');
+            row.style.cssText = 'border-bottom:1px solid var(--line);padding:1.2rem 0;overflow-wrap:anywhere';
+            if (item.handledAt) row.style.opacity = '0.6';
+
+            var title = document.createElement('h3');
+            title.style.cssText = 'font-size:1rem;margin:0 0 .35rem';
+            title.textContent = (item.serviceLabel || item.service || 'Inquiry') + ' · ' + fmtWhen(item.recordedAt);
+            row.appendChild(title);
+
+            if (!item.emailSent) {
+              var flag = document.createElement('span');
+              flag.className = 'pill unpaid';
+              flag.textContent = 'Email not sent';
+              row.appendChild(flag);
+              var why = document.createElement('p');
+              why.className = 'state out';
+              why.textContent = EMAIL_PROBLEMS[item.emailError] || 'This inquiry was not emailed. Reply to the customer directly.';
+              row.appendChild(why);
+            }
+
+            var contact = document.createElement('p');
+            contact.textContent = item.name + ' | ' + item.email + (item.phone ? ' | ' + item.phone : '');
+            row.appendChild(contact);
+
+            var details = document.createElement('p');
+            details.style.whiteSpace = 'pre-wrap';
+            details.textContent = item.details || '';
+            row.appendChild(details);
+
+            var meta = document.createElement('p');
+            meta.className = 'state';
+            meta.textContent = (item.source ? item.source + ' | ' : '') + item.id +
+              (item.handledAt ? ' | Handled by ' + (item.handledBy || 'staff') + ', ' + fmtWhen(item.handledAt) : '');
+            row.appendChild(meta);
+
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'secondary';
+            toggle.textContent = item.handledAt ? 'Mark not handled' : 'Mark handled';
+            toggle.addEventListener('click', async function () {
+              toggle.disabled = true;
+              message('inquiry-msg', '');
+              try {
+                await api(INQUIRIES_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ id: item.id, action: item.handledAt ? 'reopen' : 'handled' }),
+                });
+                await loadInquiries();
+              } catch (error) {
+                if (error.message !== 'unauthorized') message('inquiry-msg', error.message, 'error');
+                toggle.disabled = false;
+              }
+            });
+            row.appendChild(toggle);
+            rows.appendChild(row);
+          });
+        }
+
+        async function loadInquiries() {
+          message('inquiry-msg', '');
+          try {
+            renderInquiries(await api(INQUIRIES_URL, { method: 'GET' }));
+          } catch (error) {
+            if (error.message !== 'unauthorized') message('inquiry-msg', error.message, 'error');
+          }
+        }
 
         var insightsDays = [];
         function renderInsights() {
@@ -1010,7 +1204,7 @@
               row.appendChild(notes);
               var notice = document.createElement('p');
               notice.className = 'state';
-              notice.textContent = Object.entries(booking.notifications || {}).map(function (entry) { return entry[0] + ': ' + (entry[1].state === 'sent' ? 'accepted by provider' : entry[1].state); }).join(' | ');
+              notice.textContent = Object.entries(booking.notifications || {}).map(function (entry) { return entry[0] + ': ' + (entry[1].state === 'sent' ? 'accepted by provider' : entry[1].state) + (entry[1].reason ? ' (' + entry[1].reason + ')' : ''); }).join(' | ');
               row.appendChild(notice);
               var actions = document.createElement('div');
               actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:.5rem';
@@ -1392,6 +1586,30 @@
         var OPEN_STATUSES = ['new', 'packed'];
         var lastOrderData = null;
 
+        // A paid order that stock could not fully cover: the money came in for
+        // units that were not on the shelf. It has to be sorted out (found,
+        // or refunded in Stripe) before anyone packs it.
+        function oversoldDetail(lines) {
+          var box = document.createElement('div');
+          box.className = 'oversold-detail';
+          var lead = document.createElement('strong');
+          lead.textContent = 'Paid for more than was in stock. Check the shelf before packing:';
+          box.appendChild(lead);
+          var list = document.createElement('ul');
+          lines.forEach(function (line) {
+            var entry = document.createElement('li');
+            var label =
+              line.name ||
+              [line.slug, line.size, line.color].filter(Boolean).join(' · ') ||
+              line.key;
+            entry.textContent =
+              label + ': paid for ' + line.requested + ', only ' + line.available + ' available';
+            list.appendChild(entry);
+          });
+          box.appendChild(list);
+          return box;
+        }
+
         function renderOrders(data) {
           lastOrderData = data;
           var stats = data.stats || {};
@@ -1441,7 +1659,9 @@
 
           shown.forEach(function (order) {
             var f = order.fulfillment || { status: 'new' };
+            var oversold = Array.isArray(order.oversold) ? order.oversold : [];
             var tr = document.createElement('tr');
+            if (oversold.length) tr.className = 'is-oversold';
 
             var whenCell = document.createElement('td');
             whenCell.className = 'variant';
@@ -1451,6 +1671,12 @@
             var whoCell = document.createElement('td');
             var name = document.createElement('div');
             name.textContent = order.customerName || order.customerEmail || 'Unknown customer';
+            if (oversold.length) {
+              var badge = document.createElement('span');
+              badge.className = 'pill oversold';
+              badge.textContent = 'Oversold';
+              name.appendChild(badge);
+            }
             whoCell.appendChild(name);
             if (order.customerEmail) {
               var mail = document.createElement('div');
@@ -1472,6 +1698,7 @@
               place.textContent = [order.shippingCity, order.shippingState].filter(Boolean).join(', ');
               whoCell.appendChild(place);
             }
+            if (oversold.length) whoCell.appendChild(oversoldDetail(oversold));
             tr.appendChild(whoCell);
 
             var totalCell = document.createElement('td');
@@ -1721,15 +1948,142 @@
               body: JSON.stringify({ action: 'restore', key: snap.key, confirm: typed }),
             });
             await loadBackups();
-            message(
-              'backup-msg',
-              'Restored. The state from just before this restore was saved as a new snapshot, so you can undo it.',
-              'ok'
-            );
-            void result;
+            renderRestoreReport(snap, result.reconciliation || {});
           } catch (error) {
             if (error.message !== 'unauthorized') message('backup-msg', error.message, 'error');
           }
+        }
+
+        function plural(count, word) {
+          return count + ' ' + word + (count === 1 ? '' : 's');
+        }
+
+        function stockItemLabel(key) {
+          for (var i = 0; i < items.length; i += 1) {
+            if (items[i].key !== key) continue;
+            var option = [items[i].size, items[i].color].filter(Boolean).join(' · ');
+            return items[i].name + (option ? ' (' + option + ')' : '');
+          }
+          return key;
+        }
+
+        // A restore is not a plain copy of the backup: sales since the backup
+        // stay sold, open checkouts keep their units, and orders the backup
+        // does not cover keep their fulfilment. This says which of those
+        // happened, and what still needs a person to check.
+        function renderRestoreReport(snap, report) {
+          var box = el('backup-msg');
+          box.innerHTML = '';
+          var panel = document.createElement('div');
+          panel.className = 'msg restore-report';
+          panel.setAttribute('role', 'status');
+
+          var title = document.createElement('strong');
+          title.textContent =
+            'Restored the backup from ' +
+            fmtWhen(snap.createdAt) +
+            '. The state from just before this restore was saved as a new snapshot, so you can undo it.';
+          panel.appendChild(title);
+
+          function section(text, lines, warn) {
+            var p = document.createElement('p');
+            if (warn) p.className = 'warn';
+            p.textContent = text;
+            panel.appendChild(p);
+            if (!lines || !lines.length) return;
+            var list = document.createElement('ul');
+            lines.forEach(function (line) {
+              var entry = document.createElement('li');
+              entry.textContent = line;
+              list.appendChild(entry);
+            });
+            panel.appendChild(list);
+          }
+
+          var adjusted = report.adjusted || [];
+          var sales = report.salesSinceBackup || [];
+          if (adjusted.length) {
+            section(
+              'Stock: the backup’s counts, minus ' +
+                plural(sales.length, 'sale') +
+                ' made since it was taken, so sold units stay sold:',
+              adjusted.map(function (row) {
+                return (
+                  stockItemLabel(row.key) +
+                  ': ' +
+                  row.backup +
+                  ' in the backup, ' +
+                  row.soldSince +
+                  ' sold since, now ' +
+                  row.restored
+                );
+              })
+            );
+          } else {
+            section('Stock: the backup’s counts. Nothing it tracks has sold since.');
+          }
+
+          var held = report.held || [];
+          if (held.length) {
+            var anyShort = held.some(function (row) {
+              return row.short;
+            });
+            section(
+              anyShort
+                ? 'Customers in checkout right now still hold their units. Where they hold more than the restored count, those orders will be flagged oversold if paid:'
+                : 'Customers in checkout right now still hold their units:',
+              held.map(function (row) {
+                return (
+                  stockItemLabel(row.key) +
+                  ': ' +
+                  row.held +
+                  ' held of ' +
+                  row.restored +
+                  (row.short ? ' (more than restored)' : '')
+                );
+              }),
+              anyShort
+            );
+          }
+
+          var unmatched = report.unreconciledOrders || [];
+          if (unmatched.length) {
+            section(
+              'Check stock by hand: ' +
+                plural(unmatched.length, 'paid order') +
+                ' since the backup could not be matched to items, so ' +
+                (unmatched.length === 1 ? 'its sale was' : 'their sales were') +
+                ' not subtracted:',
+              unmatched.map(function (row) {
+                return row.orderId + ' (' + fmtWhen(row.recordedAt) + ')';
+              }),
+              true
+            );
+          }
+
+          var kept = report.fulfillmentKept || [];
+          if (kept.length) {
+            section(
+              'Fulfilment: from the backup, except ' +
+                plural(kept.length, 'order') +
+                ' it does not cover, which kept ' +
+                (kept.length === 1 ? 'its' : 'their') +
+                ' current status:',
+              kept.map(function (row) {
+                var status = FULFILMENT_LABELS[row.status] || row.status;
+                var why =
+                  row.reason === 'placed_after_backup'
+                    ? 'placed after the backup'
+                    : 'no status in the backup';
+                return row.orderId + ': ' + status + ' (' + why + ')';
+              })
+            );
+          } else {
+            section('Fulfilment: from the backup.');
+          }
+
+          box.appendChild(panel);
+          if (panel.scrollIntoView) panel.scrollIntoView({ block: 'nearest' });
         }
 
         // Tell staff the moment the connection drops, rather than letting the

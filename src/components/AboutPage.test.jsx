@@ -10,44 +10,39 @@ vi.mock('./InstagramFeed', () => ({ default: () => null }));
 vi.mock('./ThemeToggle', () => ({ default: () => null }));
 vi.mock('../context/CartContext', () => ({ useCart: () => ({ itemCount: 0 }) }));
 
-it.each(['/', '/about'])(
-  'preserves the original content at %s with About metadata',
-  async (path) => {
-    render(
-      <HelmetProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AboutPage />
-        </MemoryRouter>
-      </HelmetProvider>
-    );
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'About Sattari Music' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Founded by Mohammad Sattari' })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Shop instruments & gear' })).toHaveAttribute(
+it.each(['/about'])('preserves the original content at %s with About metadata', async (path) => {
+  render(
+    <HelmetProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <AboutPage />
+      </MemoryRouter>
+    </HelmetProvider>
+  );
+  expect(
+    screen.getByRole('heading', { level: 1, name: 'About Sattari Music' })
+  ).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Founded by Mohammad Sattari' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Shop instruments & gear' })).toHaveAttribute(
+    'href',
+    '/shop'
+  );
+  expect(screen.getByRole('heading', { name: 'Find your next instrument' })).toBeInTheDocument();
+  await waitFor(() =>
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
       'href',
-      '/shop'
-    );
-    expect(screen.getByRole('heading', { name: 'Find your next instrument' })).toBeInTheDocument();
-    await waitFor(() =>
-      expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
-        'href',
-        'https://sattarimusic.com/about'
-      )
-    );
-    expect(document.title).toBe('About Us | Woodland Hills Music Store | Sattari Music');
-    const schema = JSON.parse(
-      document.querySelector('script[type="application/ld+json"]').textContent
-    );
-    expect(schema['@graph']).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ '@type': 'AboutPage', url: 'https://sattarimusic.com/about' }),
-      ])
-    );
-  }
-);
+      'https://sattarimusic.com/about'
+    )
+  );
+  expect(document.title).toBe('About Us | Woodland Hills Music Store | Sattari Music');
+  const schema = JSON.parse(
+    document.querySelector('script[type="application/ld+json"]').textContent
+  );
+  expect(schema['@graph']).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ '@type': 'AboutPage', url: 'https://sattarimusic.com/about' }),
+    ])
+  );
+});
 
 it('links to About in navigation and footer and closes the mobile menu after navigation', async () => {
   render(
@@ -61,7 +56,7 @@ it('links to About in navigation and footer and closes the mobile menu after nav
     </MemoryRouter>
   );
   const nav = within(screen.getByRole('navigation', { name: 'Primary navigation' }));
-  expect(nav.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
   expect(nav.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
   expect(screen.getByRole('link', { name: 'About Sattari' })).toHaveAttribute('href', '/about');
   fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));

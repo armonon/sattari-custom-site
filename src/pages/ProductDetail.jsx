@@ -208,8 +208,11 @@ export default function ProductDetail() {
           {product.sizes ? (
             <>
               <div className="control-group">
-                <label className="control-label">Choose Size</label>
+                <label htmlFor="product-size" className="control-label">
+                  Choose Size
+                </label>
                 <select
+                  id="product-size"
                   className="control-input"
                   value={selectedSize}
                   onChange={(e) => setSelectedSize(e.target.value)}

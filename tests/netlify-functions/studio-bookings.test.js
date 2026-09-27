@@ -1,8 +1,17 @@
 // @vitest-environment node
-import { randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const memory = vi.hoisted(() => ({ value: null, version: 0, readsFail: false }));
+// `value` is the live calendar document; every other key (archived bookings,
+// the staff session record) lives in `other` with its own etags.
+const memory = vi.hoisted(() => ({
+  value: null,
+  version: 0,
+  readsFail: false,
+  other: new Map(),
+  otherVersion: 0,
+  afterOtherWrite: null,
+}));
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   retrieve: vi.fn(),
@@ -15,17 +24,34 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@netlify/blobs', () => ({
   connectLambda: vi.fn(),
   getStore: vi.fn(() => ({
-    async get() {
+    async get(key) {
       if (memory.readsFail) throw new Error('Storage unavailable');
+      if (key !== 'calendar-v1') return structuredClone(memory.other.get(key)?.value ?? null);
       return structuredClone(memory.value);
     },
-    async getWithMetadata() {
+    async getWithMetadata(key) {
       if (memory.readsFail) throw new Error('Storage unavailable');
+      if (key !== 'calendar-v1') {
+        const entry = memory.other.get(key);
+        return entry ? { data: structuredClone(entry.value), etag: entry.etag } : null;
+      }
       return memory.value
         ? { data: structuredClone(memory.value), etag: String(memory.version) }
         : null;
     },
-    async setJSON(key, value, options) {
+    async setJSON(key, value, options = {}) {
+      if (key !== 'calendar-v1') {
+        const entry = memory.other.get(key);
+        if (
+          (options.onlyIfNew && entry) ||
+          (options.onlyIfMatch && options.onlyIfMatch !== entry?.etag)
+        )
+          return { modified: false };
+        memory.otherVersion += 1;
+        memory.other.set(key, { value: structuredClone(value), etag: `o${memory.otherVersion}` });
+        memory.afterOtherWrite?.(key);
+        return { modified: true };
+      }
       if (
         (options.onlyIfNew && memory.value) ||
         (options.onlyIfMatch && options.onlyIfMatch !== String(memory.version))
@@ -58,22 +84,36 @@ vi.mock('resend', () => ({
   }),
 }));
 
-import { handler } from '../../netlify/functions/studio-bookings.js';
+import handler, { config } from '../../netlify/functions/studio-bookings.js';
 import { handler as staffHandler } from '../../netlify/functions/staff-bookings.js';
 import { handler as webhookHandler } from '../../netlify/functions/stripe-webhook.js';
+import { handler as maintenanceHandler } from '../../netlify/functions/studio-booking-maintenance.js';
 import { createSession } from '../../server/staffAuth.js';
 import {
   applyBookingPayment,
   approveBooking,
+  BOOKING_LIMITS,
   cancelUnpaidBooking,
   declineBooking,
   reconcileBooking,
   requestBooking,
   retryBookingNotifications,
 } from '../../server/studioBookings.js';
+import { ARCHIVE_AFTER_DAYS, archivePastBookings } from '../../server/studioBookingStore.js';
 import { bookingPrice, holdsTime, studioTimestamp } from '../../src/utils/studioBooking.js';
 
 const event = { headers: { 'x-nf-client-connection-ip': '127.0.0.1' } };
+const publicUrl = 'https://sattarimusic.com/api/studio-bookings';
+const getRequest = (query = '') => handler(new Request(`${publicUrl}${query}`), {});
+const postRequest = (payload, ip = '127.0.0.1') =>
+  handler(
+    new Request(publicUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+    { ip }
+  );
 const body = (override = {}) => ({
   requestId: randomUUID(),
   date: '2026-10-10',
@@ -94,6 +134,9 @@ beforeEach(() => {
   memory.value = null;
   memory.version = 0;
   memory.readsFail = false;
+  memory.other.clear();
+  memory.otherVersion = 0;
+  memory.afterOtherWrite = null;
   sessions = {};
   for (const [key, value] of Object.entries({
     STUDIO_BOOKING_ENABLED: 'true',
@@ -213,16 +256,19 @@ describe('studio booking requests', () => {
   });
   it('requires explicit schedule and both notification providers before opening', async () => {
     vi.stubEnv('TWILIO_AUTH_TOKEN', '');
-    const response = await handler({ httpMethod: 'GET' });
-    expect(JSON.parse(response.body)).toMatchObject({ enabled: false, reserved: [] });
+    const response = await getRequest();
+    expect(await response.json()).toMatchObject({ enabled: false, reserved: [] });
     await expect(requested()).rejects.toThrow('not available');
     expect(memory.value).toBeNull();
   });
   it('fails closed on unavailable storage', async () => {
     memory.readsFail = true;
-    const response = await handler({ httpMethod: 'POST', ...event, body: JSON.stringify(body()) });
-    expect(response.statusCode).toBe(503);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await postRequest(body());
+    expect(response.status).toBe(503);
     expect(mocks.send).not.toHaveBeenCalled();
+    // The storage error itself is logged, not returned.
+    expect(await response.text()).not.toContain('Storage unavailable');
   });
   it('persists provider failures, and retries only failed channels', async () => {
     mocks.send.mockResolvedValueOnce({ error: { message: 'Rejected' } });
@@ -243,12 +289,129 @@ describe('studio booking requests', () => {
   });
   it('never returns customer details with public availability', async () => {
     await approved();
-    const response = await handler({ httpMethod: 'GET' });
-    expect(JSON.parse(response.body).reserved).toEqual([
-      { date: '2026-10-10', startHour: 18, hours: 4 },
-    ]);
-    expect(response.body).not.toContain('musician@example.com');
-    expect(response.body).not.toContain('checkout.stripe');
+    const text = await (await getRequest()).text();
+    expect(JSON.parse(text).reserved).toEqual([{ date: '2026-10-10', startHour: 18, hours: 4 }]);
+    expect(text).not.toContain('musician@example.com');
+    expect(text).not.toContain('checkout.stripe');
+  });
+});
+
+describe('public booking endpoint', () => {
+  it('answers on both public URLs', () => {
+    expect(config.path).toEqual(['/api/studio-bookings', '/.netlify/functions/studio-bookings']);
+  });
+  it('creates a request over HTTP with the documented response shape', async () => {
+    const response = await postRequest(body());
+    expect(response.status).toBe(201);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect((await response.json()).booking).toMatchObject({
+      status: 'requested',
+      amountCents: 6000,
+    });
+  });
+  it('rejects malformed and oversized requests', async () => {
+    const bad = await handler(new Request(publicUrl, { method: 'POST', body: '{', headers: {} }), {
+      ip: '127.0.0.1',
+    });
+    expect(bad.status).toBe(400);
+    expect((await postRequest({ ...body(), notes: 'x'.repeat(12000) })).status).toBe(413);
+    expect((await handler(new Request(publicUrl, { method: 'PUT', body: '{}' }), {})).status).toBe(
+      405
+    );
+    expect(memory.value).toBeNull();
+  });
+  it('does not echo payment-provider errors to the public', async () => {
+    const b = await approved();
+    mocks.retrieve.mockRejectedValueOnce(
+      Object.assign(new Error('No such checkout.session: cs_test_secret'), { statusCode: 404 })
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const response = await getRequest(`?session_id=${b.checkoutSessionId}`);
+
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain('No such checkout');
+  });
+});
+
+describe('spam resistance', () => {
+  it.each(['website', 'bot-field'])(
+    'accepts and silently drops a request that fills the %s honeypot',
+    async (field) => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      const input = body({ [field]: 'https://spam.example' });
+      const response = await postRequest(input);
+
+      expect(response.status).toBe(201);
+      expect((await response.json()).booking).toEqual({
+        id: `studio_${input.requestId}`,
+        status: 'requested',
+        amountCents: 6000,
+      });
+      expect(memory.value).toBeNull();
+      expect(mocks.send).not.toHaveBeenCalled();
+      expect(mocks.fetch).not.toHaveBeenCalled();
+    }
+  );
+  it('caps requests for the whole site when addresses and emails rotate', async () => {
+    for (let i = 0; i < BOOKING_LIMITS.siteHourly; i += 1) {
+      const response = await postRequest(body({ email: `person${i}@example.com` }), `10.0.0.${i}`);
+      expect(response.status).toBe(201);
+    }
+    const response = await postRequest(body({ email: 'another@example.com' }), '10.0.1.1');
+
+    expect(response.status).toBe(429);
+    expect((await response.json()).error).toMatch(/call \(424\) 465-3020/);
+    expect(Object.keys(memory.value)).toHaveLength(BOOKING_LIMITS.siteHourly);
+  });
+  it('caps requests per day as well as per hour', async () => {
+    let made = 0;
+    for (let hour = 0; made < BOOKING_LIMITS.siteDaily; hour += 1) {
+      vi.setSystemTime(new Date(Date.UTC(2026, 9, 1, 12 + hour)));
+      for (let i = 0; i < BOOKING_LIMITS.siteHourly && made < BOOKING_LIMITS.siteDaily; i += 1) {
+        await requestBooking(
+          { headers: { 'x-nf-client-connection-ip': `10.${hour}.0.${i}` } },
+          body({ email: `p${made}@example.com` })
+        );
+        made += 1;
+      }
+    }
+    vi.setSystemTime(new Date(Date.UTC(2026, 9, 1, 12 + 5)));
+    await expect(
+      requestBooking(
+        { headers: { 'x-nf-client-connection-ip': '10.9.9.9' } },
+        body({ email: 'late@example.com' })
+      )
+    ).rejects.toMatchObject({ statusCode: 429 });
+  });
+  it('stops texting the owner past the alert budget but still emails', async () => {
+    const ids = [];
+    for (let i = 0; i < BOOKING_LIMITS.textHourly + 2; i += 1) {
+      const booking = await requestBooking(
+        { headers: { 'x-nf-client-connection-ip': `10.0.0.${i}` } },
+        body({ email: `person${i}@example.com` })
+      );
+      ids.push(booking.id);
+    }
+
+    expect(mocks.fetch).toHaveBeenCalledTimes(BOOKING_LIMITS.textHourly);
+    const late = memory.value[ids.at(-1)].notifications;
+    expect(late.ownerSms0).toMatchObject({ state: 'skipped', reason: expect.any(String) });
+    expect(late.ownerEmail.state).toBe('sent');
+    expect(mocks.send).toHaveBeenCalledTimes(BOOKING_LIMITS.textHourly + 2);
+  });
+  it('stores a keyed hash of the address, not a plain one', async () => {
+    const { id } = await requested();
+    const stored = memory.value[id].ipHash;
+
+    expect(stored).not.toBe(createHash('sha256').update('127.0.0.1').digest('hex'));
+    expect(stored).toBe(createHmac('sha256', 'secret').update('127.0.0.1').digest('hex'));
+
+    vi.stubEnv('IP_HASH_SECRET', 'separate-secret');
+    const second = await requestBooking(event, body({ startHour: 19, hours: 1 }));
+    expect(memory.value[second.id].ipHash).toBe(
+      createHmac('sha256', 'separate-secret').update('127.0.0.1').digest('hex')
+    );
   });
 });
 
@@ -379,6 +542,98 @@ describe('staff approval and payments', () => {
     expect(response.statusCode).toBe(200);
     expect(memory.value[b.id].status).toBe('paid');
     expect(mocks.webhook).toHaveBeenCalled();
+  });
+});
+
+describe('staff booking errors', () => {
+  it('shows staff messages written for them, but not raw provider errors', async () => {
+    const b = await requested();
+    const token = createSession('staff');
+    const act = (action) =>
+      staffHandler({
+        httpMethod: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: b.id, action }),
+      });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    mocks.create.mockRejectedValueOnce(
+      Object.assign(new Error('Invalid API Key provided: sk_live_****1234'), { statusCode: 401 })
+    );
+    const failed = await act('approve');
+    expect(failed.statusCode).toBe(503);
+    expect(failed.body).not.toContain('sk_live');
+
+    const refused = await act('cancel');
+    expect(refused.statusCode).toBe(409);
+    expect(JSON.parse(refused.body).error).toMatch(/Retry approval/);
+  });
+});
+
+describe('retention', () => {
+  async function seedCalendar() {
+    const requestedOnly = await requested();
+    const awaiting = await approved({ date: '2026-10-11' });
+    const declined = await requested({ date: '2026-10-12' });
+    await declineBooking(event, declined.id, 'staff');
+    const paid = await approved({ date: '2026-10-13' });
+    await applyBookingPayment(event, paidSession(paid));
+    const upcoming = await requested({ date: '2026-12-20' });
+    return { requestedOnly, awaiting, declined, paid, upcoming };
+  }
+
+  it('archives settled bookings once their date is past the retention window', async () => {
+    const seeded = await seedCalendar();
+    const snapshot = structuredClone(memory.value);
+    // 36 days after the oldest booking date.
+    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+
+    expect(ARCHIVE_AFTER_DAYS).toBe(30);
+    expect(await archivePastBookings(event)).toBe(3);
+
+    // Payment still in flight at Stripe, and future time, stay live.
+    expect(Object.keys(memory.value).sort()).toEqual(
+      [seeded.awaiting.id, seeded.upcoming.id].sort()
+    );
+    for (const booking of [seeded.requestedOnly, seeded.declined, seeded.paid]) {
+      const date = snapshot[booking.id].date;
+      expect(memory.other.get(`archive/${date.slice(0, 7)}/${booking.id}.json`).value).toEqual(
+        snapshot[booking.id]
+      );
+    }
+  });
+
+  it('keeps everything while it is inside the window', async () => {
+    await seedCalendar();
+    vi.setSystemTime(new Date('2026-10-20T12:00:00Z'));
+    expect(await archivePastBookings(event)).toBe(0);
+    expect(Object.keys(memory.value)).toHaveLength(5);
+  });
+
+  it('leaves a booking that changed after it was copied for the next run', async () => {
+    const { requestedOnly } = await seedCalendar();
+    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+    memory.afterOtherWrite = (key) => {
+      if (!key.includes(requestedOnly.id)) return;
+      memory.value[requestedOnly.id].notes = 'Edited meanwhile';
+      memory.version += 1;
+    };
+
+    expect(await archivePastBookings(event)).toBe(2);
+    expect(memory.value[requestedOnly.id].notes).toBe('Edited meanwhile');
+
+    memory.afterOtherWrite = null;
+    expect(await archivePastBookings(event)).toBe(1);
+    expect(memory.value[requestedOnly.id]).toBeUndefined();
+  });
+
+  it('runs from the scheduled maintenance job', async () => {
+    const seeded = await seedCalendar();
+    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+
+    expect((await maintenanceHandler(event)).statusCode).toBe(200);
+    expect(memory.value[seeded.paid.id]).toBeUndefined();
+    expect(memory.value[seeded.awaiting.id]).toBeDefined();
   });
 });
 

@@ -28,9 +28,20 @@ interface FormState {
   email: string;
   daw: string;
   notes: string;
+  'bot-field': string;
 }
 
-const EMPTY: FormState = { name: '', email: '', daw: '', notes: '' };
+const EMPTY: FormState = { name: '', email: '', daw: '', notes: '', 'bot-field': '' };
+
+// Honeypot: off-screen rather than display:none, which some bots skip. Named to
+// match the netlify-honeypot field of the service-inquiry form in index.html.
+const HONEYPOT_STYLE = {
+  position: 'absolute',
+  left: '-10000px',
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+} as const;
 
 export default function AudioAlphaSignup() {
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -68,6 +79,7 @@ export default function AudioAlphaSignup() {
       phone: '',
       details,
       source: 'Audio Suite alpha signup',
+      'bot-field': form['bot-field'],
     };
 
     try {
@@ -195,6 +207,20 @@ export default function AudioAlphaSignup() {
           placeholder="Vocals, mixing, sound design — and your Mac (Apple silicon or Intel)"
         />
       </label>
+
+      <div aria-hidden="true" style={HONEYPOT_STYLE}>
+        <label>
+          Leave this field empty
+          <input
+            name="bot-field"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form['bot-field']}
+            onChange={handleChange}
+          />
+        </label>
+      </div>
 
       <button className="button button-solid button-full" type="submit" disabled={submitting}>
         {submitting ? 'Sending…' : 'Request alpha access'}

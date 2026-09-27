@@ -1,4 +1,4 @@
-import { getOrderStoreKey, summarizeOrderRecord } from '../../src/utils/orderProcessing.js';
+import { summarizeOrderRecord } from '../../src/utils/orderProcessing.js';
 import { buildOrderStats } from '../../src/utils/orderStats.js';
 import {
   applyFulfillmentUpdate,
@@ -8,9 +8,8 @@ import {
 } from '../../src/utils/fulfillment.js';
 import { readFulfillmentDoc, updateFulfillmentDoc } from '../../server/fulfillmentStore.js';
 import { requireStaff } from '../../server/staffAuth.js';
-import { openStore } from '../../server/blobs.js';
-
-const ORDER_STORE = 'orders';
+import { listOrders, readOrder } from '../../server/orderStore.js';
+import { errorMessage, logError, logEvent } from '../../server/log.js';
 
 function json(statusCode, body) {
   return {
@@ -18,23 +17,6 @@ function json(statusCode, body) {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     body: JSON.stringify(body),
   };
-}
-
-async function loadOrders(event) {
-  const store = openStore(event, ORDER_STORE);
-  const { blobs } = await store.list({ prefix: 'orders/' });
-
-  const records = (
-    await Promise.all(blobs.map((blob) => store.get(blob.key, { type: 'json' }).catch(() => null)))
-  ).filter(Boolean);
-
-  records.sort(
-    (left, right) =>
-      new Date(right.recordedAt || right.submittedAt || 0).getTime() -
-      new Date(left.recordedAt || left.submittedAt || 0).getTime()
-  );
-
-  return records;
 }
 
 function decorate(records, fulfillmentDoc, limit) {
@@ -45,6 +27,9 @@ function decorate(records, fulfillmentDoc, limit) {
     shippingState: record.shipping?.address?.state || null,
     shippingName: record.shipping?.name || null,
     fulfillment: fulfillmentFor(fulfillmentDoc, record.id),
+    // Paid orders that stock could not cover. Must be dealt with before packing.
+    oversold: Array.isArray(record.stock?.oversold) ? record.stock.oversold : [],
+    notificationState: record.notification?.state || null,
   }));
 }
 
@@ -55,7 +40,7 @@ function decorate(records, fulfillmentDoc, limit) {
 // Distinct from admin-orders, which is gated by a static shared token meant for
 // scripted lookups. This one uses the staff session.
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
@@ -76,8 +61,7 @@ export async function handler(event) {
     // Only orders we actually hold can be marked. Without this, a typo would
     // write a fulfilment record for an order that does not exist and quietly
     // inflate the open count forever.
-    const store = openStore(event, ORDER_STORE);
-    const exists = await store.get(getOrderStoreKey(orderId), { type: 'json' });
+    const exists = await readOrder(event, orderId);
     if (!exists) return json(404, { error: 'That order does not exist.' });
 
     let failure = null;
@@ -92,14 +76,12 @@ export async function handler(event) {
 
     if (failure) return json(400, { error: failure });
 
-    console.log(
-      JSON.stringify({
-        type: 'staff-fulfillment-update',
-        staff: session.staff,
-        orderId,
-        status: body.status,
-      })
-    );
+    logEvent({
+      type: 'staff-fulfillment-update',
+      staff: session.staff,
+      orderId,
+      status: body.status,
+    });
 
     return json(200, { staff: session.staff, fulfillment: doc[orderId] });
   }
@@ -112,8 +94,7 @@ export async function handler(event) {
   const sessionId = event.queryStringParameters?.session_id;
 
   if (sessionId) {
-    const store = openStore(event, ORDER_STORE);
-    const record = await store.get(getOrderStoreKey(sessionId), { type: 'json' });
+    const record = await readOrder(event, sessionId);
     if (!record) return json(404, { error: 'Order not found.' });
 
     const doc = await readFulfillmentDoc(event).catch(() => ({}));
@@ -130,13 +111,11 @@ export async function handler(event) {
   let fulfillmentDoc = {};
   try {
     [records, fulfillmentDoc] = await Promise.all([
-      loadOrders(event),
+      listOrders(event),
       readFulfillmentDoc(event).catch(() => ({})),
     ]);
   } catch (error) {
-    console.error(
-      JSON.stringify({ type: 'staff-orders-list-error', message: error?.message || String(error) })
-    );
+    logError('staff-orders-list-error', { message: errorMessage(error) });
     return json(200, {
       staff: session.staff,
       orders: [],

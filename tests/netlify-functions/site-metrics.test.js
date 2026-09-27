@@ -13,7 +13,7 @@ const target = vi.hoisted(() => ({
   }),
 }));
 vi.mock('@netlify/blobs', () => ({ connectLambda: vi.fn(), getStore: () => target }));
-vi.mock('../../server/staffAuth.js', () => ({ requireStaff: vi.fn(() => null) }));
+vi.mock('../../server/staffAuth.js', () => ({ requireStaff: vi.fn(async () => null) }));
 import handler, { config } from '../../netlify/functions/site-event';
 import { handler as staffHandler } from '../../netlify/functions/staff-insights';
 import { incrementMetric, metricDay, readMetrics } from '../../server/siteMetricsStore';
@@ -29,7 +29,7 @@ const request = (body = metric, options = {}, host = 'sattarimusic.com') =>
 beforeEach(() => {
   memory.clear();
   vi.clearAllMocks();
-  requireStaff.mockReturnValue(null);
+  requireStaff.mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllEnvs());
 it('stores counts, not event records, IPs or headers', async () => {
@@ -84,9 +84,10 @@ it('reuses bounded day slots and excludes expired dates', async () => {
   expect((await readMetrics({}, old + 90 * 86400000))[0].total).toBe(1);
 });
 it('requires staff auth for reports', async () => {
+  // requireStaff resolves asynchronously; a pending Promise must not read as signed in.
   expect((await staffHandler({ httpMethod: 'GET' })).statusCode).toBe(401);
   expect(target.get).not.toHaveBeenCalled();
-  requireStaff.mockReturnValue({ staff: 'Owner' });
+  requireStaff.mockResolvedValue({ staff: 'Owner' });
   expect((await staffHandler({ httpMethod: 'POST' })).statusCode).toBe(405);
   expect(JSON.parse((await staffHandler({ httpMethod: 'GET' })).body)).toEqual({ days: [] });
 });

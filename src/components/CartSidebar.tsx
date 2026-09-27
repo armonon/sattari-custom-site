@@ -2,34 +2,27 @@ import { FC, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import type { CartContextValue, CartItem } from '@/types';
+import { FLAT_SHIPPING_CENTS } from '@data/shipping';
+import CartNotice from './CartNotice';
+import { useCheckout } from '../hooks/useCheckout';
 import '@/styles-cart-premium.css';
 
 interface CartSidebarProps {
-  onCheckout: () => Promise<void>;
   onNavigate?: () => void;
-  checkoutError?: string;
 }
 
-const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutError }) => {
+const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
   const { cartItems, itemCount, subtotal, updateQuantity, removeFromCart, clearCart } =
     useCart() as CartContextValue;
+  const { startCheckout, isCheckingOut, checkoutError } = useCheckout();
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const shipping = cartItems.length ? FLAT_SHIPPING_CENTS / 100 : 0;
 
   const handleRemove = async (key: string) => {
     setIsRemoving(key);
     await new Promise((resolve) => setTimeout(resolve, 280));
     removeFromCart(key);
     setIsRemoving(null);
-  };
-
-  const handleCheckout = async () => {
-    setIsCheckingOut(true);
-    try {
-      await onCheckout();
-    } finally {
-      setIsCheckingOut(false);
-    }
   };
 
   return (
@@ -39,6 +32,8 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
         <h2 className="cart-title">Shopping Bag</h2>
         <span className="cart-badge-premium">{itemCount}</span>
       </div>
+
+      <CartNotice />
 
       {/* Items List */}
       <div className="cart-items-container-premium">
@@ -144,10 +139,14 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
+          <div className="summary-row">
+            <span>Shipping</span>
+            <span>${shipping.toFixed(2)}</span>
+          </div>
           <div className="summary-divider"></div>
           <div className="summary-row total">
             <span>Total</span>
-            <span className="total-amount">${subtotal.toFixed(2)}</span>
+            <span className="total-amount">${(subtotal + shipping).toFixed(2)}</span>
           </div>
         </div>
       )}
@@ -163,11 +162,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ onCheckout, onNavigate, checkoutErr
               {checkoutError}
             </div>
           )}
-          <button
-            onClick={handleCheckout}
-            disabled={isCheckingOut}
-            className="checkout-btn-premium"
-          >
+          <button onClick={startCheckout} disabled={isCheckingOut} className="checkout-btn-premium">
             <span>{isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}</span>
             {!isCheckingOut && <span className="checkout-arrow">→</span>}
           </button>

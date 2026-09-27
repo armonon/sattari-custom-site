@@ -31,7 +31,8 @@ if (password.length < 10) {
   console.error(`
   WARNING: that password is ${password.length} characters.
   ${/^\d+$/.test(password) ? `It is also all digits — only ${10 ** password.length} possibilities.` : ''}
-  The per-IP throttle slows guessing from one address, not from many.
+  The sign-in throttle limits guesses per address and site-wide, but a short
+  password is still the weakest part of the lock.
   Consider something longer before the page is used on the live site.
 `);
 }
@@ -52,8 +53,8 @@ STAFF_SESSION_SECRET
 ${secret}
 
 Notes:
-  - Changing STAFF_SESSION_SECRET signs everyone out immediately. That is the
-    fastest revocation you have if the password ever gets out.
+  - "Sign out everywhere" on the staff page revokes every sign-in without a
+    redeploy. Changing STAFF_SESSION_SECRET does the same after a deploy.
   - To change the password later, run this again and update all four.
   - Do not commit these. They belong in Netlify's environment, not the repo.
 `);

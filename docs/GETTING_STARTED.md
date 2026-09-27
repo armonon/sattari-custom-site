@@ -88,7 +88,7 @@ cp .env.example .env
 # - Add your Stripe publishable and secret keys
 # - Add STRIPE_WEBHOOK_SECRET for verified order processing
 # - Add optional Resend notification settings if you want email alerts
-# - Add ORDER_LOOKUP_TOKEN if you want to query stored orders via the admin API
+# - Add the STAFF_* values (node scripts/hash-staff-password.mjs) to use the staff page
 # - Add Sentry DSN (optional)
 # - Set optional checkout/API URLs only if not using the default Netlify function route
 ```

@@ -38,17 +38,12 @@ declare module './App' {
   export default App;
 }
 
-declare module '@utils/stripe' {
-  import type { CartItem } from '@/types';
-
-  export function redirectToCheckout(input: { cartItems: CartItem[] }): Promise<void>;
-}
-
 declare module '@utils/checkout' {
   import type { CartItem, CheckoutSession, CheckoutSessionStatus } from '@/types';
 
   export function getCheckoutEndpoint(): string;
   export function getCheckoutStatusEndpoint(): string;
   export function createCheckoutSession(cartItems: CartItem[]): Promise<CheckoutSession>;
+  export function redirectToCheckoutUrl(url: string): void;
   export function fetchCheckoutSessionStatus(sessionId: string): Promise<CheckoutSessionStatus>;
 }

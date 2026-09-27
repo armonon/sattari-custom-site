@@ -5,9 +5,10 @@ import { categories, formatPriceRange, categoryTitle, getMinPrice } from '../dat
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
-import { CATEGORY_SEO, breadcrumbSchema } from '../data/siteSeo';
+import { CATEGORY_LOCAL_HELP, CATEGORY_SEO, breadcrumbSchema } from '../data/siteSeo';
 import NotFoundPage from '../components/NotFoundPage';
 import '../styles-products-premium.css';
+import '../components/LocalSeoPage.css';
 
 const SORT_OPTIONS = [
   { value: 'featured', label: 'Featured' },
@@ -74,7 +75,7 @@ export default function Category() {
     '@type': 'CollectionPage',
     name: `${category.title} | Sattari Music`,
     url: `https://sattarimusic.com/shop/${category.key}`,
-    description: category.description,
+    description: CATEGORY_SEO[category.key].description,
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: filtered.map((product, index) => ({
@@ -256,6 +257,17 @@ export default function Category() {
           );
         })}
       </div>
+      <section className="container category-local-help" aria-label="Local instrument support">
+        <h2>{CATEGORY_LOCAL_HELP[category.key].title}</h2>
+        <p>{CATEGORY_LOCAL_HELP[category.key].copy}</p>
+        <nav aria-label="Related local services">
+          {CATEGORY_LOCAL_HELP[category.key].links.map((link) => (
+            <Link key={link.to} to={link.to}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </section>
       <div className="container shop-back-link-row">
         <Link to="/shop" className="btn-details">
           Back to Shop

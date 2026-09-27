@@ -1,6 +1,6 @@
 # Performance-first session contract
 
-The shared browser UI is one musical session with Library, Perform, Arrange and Mix views. Switching views must not create or replace an audio engine, discard takes, reset monitoring or change routing. Export acts on the arrangement in this same session.
+The shared browser UI is one musical session with Library, Perform and Arrange views, plus a mixer dock that opens under any of them. Switching views or opening and closing the mixer must not create or replace an audio engine, discard takes, reset monitoring or change routing. Export acts on the arrangement in this same session.
 
 ## Workspace hierarchy
 
@@ -35,7 +35,7 @@ This restructure does not certify exact replay of every live effect. Existing re
 1. Open/close Input and Master while playing: routing and playback remain unchanged.
 2. Capture, finish, open in Arrange: events and aligned sources remain in the same session.
 3. Edit one take: no other take or original event history changes.
-4. Switch Library / Perform / Arrange / Mix: keep project state and recovery copies.
+4. Switch Library / Perform / Arrange and toggle the mixer dock (M): keep project state and recovery copies.
 5. Piano roll, sequencer, linked patterns, undo and export remain reachable.
 6. Recovery download remains visible after a storage failure.
 7. Check narrow screens, text enlargement and real output on physical hardware before release sign-off.

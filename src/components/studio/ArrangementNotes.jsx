@@ -15,6 +15,7 @@ import {
   Magnet,
 } from 'lucide-react';
 import './ArrangementNotes.css';
+import { cancelOnEscape } from '../../studio/arrangement/interactions';
 import {
   duplicateNotes,
   moveNotes,
@@ -87,7 +88,9 @@ export default function ArrangementNotes({
     playheadElement = useRef(null),
     drag = useRef(null),
     boxDrag = useRef(null),
-    suppressClick = useRef(false);
+    suppressClick = useRef(false),
+    stopEscape = useRef(null);
+  useEffect(() => () => stopEscape.current?.(), []);
   const unit = 60 / bpm / division,
     zoom = (pixels * bpm) / 60,
     rulerStep = pixels >= 32 ? 1 : Math.max(4, Math.ceil(48 / (pixels * 4)) * 4),
@@ -255,6 +258,13 @@ export default function ArrangementNotes({
     setSelection([clip.notes.length]);
     audition(created);
   };
+  // Escape during a note drag behaves like Escape in the roll, wherever focus is.
+  const cancelDrag = () => {
+    stopEscape.current?.();
+    stopEscape.current = null;
+    drag.current = null;
+    setPreview(null);
+  };
   const begin = (event, index) => {
     if (disabled || event.button !== 0 || tool === 'erase') return;
     suppressClick.current = false;
@@ -269,6 +279,11 @@ export default function ArrangementNotes({
       pointer: event.pointerId,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    stopEscape.current?.();
+    stopEscape.current = cancelOnEscape(() => {
+      setSelection([]);
+      cancelDrag();
+    });
   };
   const move = (event) => {
     const gesture = drag.current;
@@ -303,8 +318,7 @@ export default function ArrangementNotes({
   };
   const end = () => {
     const gesture = drag.current;
-    drag.current = null;
-    setPreview(null);
+    cancelDrag();
     if (gesture?.moved) {
       suppressClick.current = true;
       update(gesture.next);
@@ -830,10 +844,7 @@ export default function ArrangementNotes({
                     onPointerDown={(event) => begin(event, index)}
                     onPointerMove={move}
                     onPointerUp={end}
-                    onPointerCancel={() => {
-                      drag.current = null;
-                      setPreview(null);
-                    }}
+                    onPointerCancel={cancelDrag}
                   >
                     <span className="pr-note-name">
                       {(preview?.[index] || item).pitch.replace('#', '♯')}

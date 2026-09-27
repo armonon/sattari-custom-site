@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { StudioPanel } from './StudioPanel';
 import {
   EFFECTS,
@@ -34,7 +34,7 @@ function readInventory() {
     return [];
   }
 }
-export default function ArrangementRack({
+function ArrangementRack({
   tracks,
   selectedTrackId,
   busy,
@@ -509,3 +509,5 @@ export default function ArrangementRack({
     </StudioPanel>
   );
 }
+
+export default memo(ArrangementRack);

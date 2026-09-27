@@ -1,54 +1,76 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getProductBySlug, resolveSelectedOption, buildCartKey } from '../data/catalog';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { getProductBySlug } from '../data/catalog';
+import { useInventory } from './InventoryContext';
+import {
+  createEntryKeyResolver,
+  normalizeQuantity,
+  reconcileCartEntries,
+  resolveCartLines,
+} from '../utils/cartCatalog';
 
 const STORAGE_KEY = 'sattari-cart-v1';
 
 const CartContext = createContext(null);
 
-function normalizeQuantity(quantity) {
-  const value = Number(quantity);
-  if (Number.isNaN(value) || value < 1) return 1;
-  return Math.min(99, Math.floor(value));
+function readStoredCart() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter((entry) => entry && typeof entry.slug === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function describeRemoved(entries) {
+  const bySlug = new Map();
+  for (const entry of entries) {
+    if (!bySlug.has(entry.slug)) {
+      // A hidden base product still has its name in the base catalog; a removed
+      // staff-added product only has the name saved with the cart entry.
+      bySlug.set(entry.slug, entry.name || getProductBySlug(entry.slug)?.name || null);
+    }
+  }
+  return [...bySlug].map(([slug, name]) => ({ slug, name }));
 }
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  // The same merged catalog the shop renders and create-checkout-session
+  // charges from, so the cart cannot show a price Stripe will not charge.
+  const { products, status: catalogStatus, refresh } = useInventory();
+  const [cart, setCart] = useState(readStoredCart);
+  const [removedItems, setRemovedItems] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    } catch {
+      // Full or blocked storage (private browsing) only costs persistence.
+    }
   }, [cart]);
 
-  const cartItems = useMemo(() => {
-    return cart
-      .map((entry) => {
-        const product = getProductBySlug(entry.slug);
-        if (!product) return null;
+  // Until the catalog has loaded, only the base catalog is known. Pruning
+  // against it would throw away every staff-added product in the cart, so
+  // entries are only removed once the full catalog is in.
+  useEffect(() => {
+    if (catalogStatus !== 'ready') return;
+    const { entries, removed } = reconcileCartEntries(cart, products);
+    if (entries === cart) return;
+    setCart((prev) => (prev === cart ? entries : reconcileCartEntries(prev, products).entries));
+    if (!removed.length) return;
+    setRemovedItems((prev) => {
+      const additions = describeRemoved(removed).filter(
+        (item) => !prev.some((existing) => existing.slug === item.slug)
+      );
+      return additions.length ? [...prev, ...additions] : prev;
+    });
+  }, [catalogStatus, products, cart]);
 
-        const { size, unitPrice } = resolveSelectedOption(product, entry.size);
-        if (typeof unitPrice !== 'number') return null;
-
-        const color = entry.color || null;
-
-        return {
-          key: buildCartKey(entry.slug, size, color),
-          slug: entry.slug,
-          size,
-          color,
-          quantity: normalizeQuantity(entry.quantity),
-          product,
-          unitPrice,
-          lineTotal: unitPrice * normalizeQuantity(entry.quantity),
-        };
-      })
-      .filter(Boolean);
-  }, [cart]);
+  const { lines: cartItems, unresolved } = useMemo(
+    () => resolveCartLines(cart, products),
+    [cart, products]
+  );
 
   const subtotal = useMemo(
     () => cartItems.reduce((sum, line) => sum + line.lineTotal, 0),
@@ -60,63 +82,106 @@ export function CartProvider({ children }) {
     [cartItems]
   );
 
-  function addToCart({ slug, size = null, color = null, quantity = 1 }) {
-    const safeQty = normalizeQuantity(quantity);
-    const key = buildCartKey(slug, size, color);
+  const keyOf = useMemo(() => createEntryKeyResolver(products), [products]);
 
-    setCart((prev) => {
-      const existingIndex = prev.findIndex(
-        (entry) => buildCartKey(entry.slug, entry.size, entry.color) === key
-      );
-      if (existingIndex === -1) {
-        return [...prev, { slug, size, color, quantity: safeQty }];
+  const addToCart = useCallback(
+    ({ slug, size = null, color = null, quantity = 1 }) => {
+      const safeQty = normalizeQuantity(quantity);
+      const name = products.find((product) => product.slug === slug)?.name;
+      const entry = { slug, size, color, quantity: safeQty, ...(name ? { name } : {}) };
+      const key = keyOf(entry);
+
+      setCart((prev) => {
+        const existingIndex = prev.findIndex((candidate) => keyOf(candidate) === key);
+        if (existingIndex === -1) return [...prev, entry];
+
+        const next = [...prev];
+        const existing = next[existingIndex];
+        next[existingIndex] = {
+          ...existing,
+          quantity: normalizeQuantity(existing.quantity + safeQty),
+        };
+        return next;
+      });
+    },
+    [keyOf, products]
+  );
+
+  const removeFromCart = useCallback(
+    (key) => {
+      setCart((prev) => prev.filter((entry) => keyOf(entry) !== key));
+    },
+    [keyOf]
+  );
+
+  const updateQuantity = useCallback(
+    (key, quantity) => {
+      const safeQty = Number(quantity);
+      if (Number.isNaN(safeQty) || safeQty < 1) {
+        removeFromCart(key);
+        return;
       }
 
-      const next = [...prev];
-      const existing = next[existingIndex];
-      next[existingIndex] = {
-        ...existing,
-        quantity: normalizeQuantity(existing.quantity + safeQty),
-      };
-      return next;
-    });
-  }
+      setCart((prev) => {
+        let updated = false;
+        return prev.flatMap((entry) => {
+          if (keyOf(entry) !== key) return [entry];
+          // Two stored entries can resolve to one line; the line keeps one.
+          if (updated) return [];
+          updated = true;
+          return [{ ...entry, quantity: normalizeQuantity(safeQty) }];
+        });
+      });
+    },
+    [keyOf, removeFromCart]
+  );
 
-  function updateQuantity(key, quantity) {
-    const safeQty = Number(quantity);
-    if (Number.isNaN(safeQty) || safeQty < 1) {
-      removeFromCart(key);
-      return;
-    }
+  // Idempotent: clearing an empty cart keeps the same state, so callers that
+  // clear from an effect do not cause another render.
+  const clearCart = useCallback(() => {
+    setCart((prev) => (prev.length ? [] : prev));
+  }, []);
 
-    setCart((prev) =>
-      prev.map((entry) => {
-        const entryKey = buildCartKey(entry.slug, entry.size, entry.color);
-        if (entryKey !== key) return entry;
-        return { ...entry, quantity: normalizeQuantity(safeQty) };
-      })
-    );
-  }
+  const dismissRemovedItems = useCallback(() => {
+    setRemovedItems((prev) => (prev.length ? [] : prev));
+  }, []);
 
-  function removeFromCart(key) {
-    setCart((prev) =>
-      prev.filter((entry) => buildCartKey(entry.slug, entry.size, entry.color) !== key)
-    );
-  }
+  const refreshCatalog = useCallback(() => refresh(), [refresh]);
 
-  function clearCart() {
-    setCart([]);
-  }
+  // Entries that cannot be priced yet (loading) or right now (the catalog
+  // request failed). They stay saved, but are not shown or sent to checkout.
+  const unavailableCount = catalogStatus === 'ready' ? 0 : unresolved.length;
 
-  const value = {
-    cartItems,
-    itemCount,
-    subtotal,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-  };
+  const value = useMemo(
+    () => ({
+      cartItems,
+      itemCount,
+      subtotal,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      clearCart,
+      catalogStatus,
+      unavailableCount,
+      refreshCatalog,
+      removedItems,
+      dismissRemovedItems,
+    }),
+    [
+      cartItems,
+      itemCount,
+      subtotal,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      clearCart,
+      catalogStatus,
+      unavailableCount,
+      refreshCatalog,
+      removedItems,
+      dismissRemovedItems,
+    ]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

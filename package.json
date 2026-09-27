@@ -17,7 +17,6 @@
     "test:tempo-qualification": "node scripts/qualify-tempo.mjs",
     "test:studio-audio": "node scripts/run-studio-audio-qa.mjs",
     "test:studio-release": "node scripts/studio-release-gate.mjs",
-    "test:sattari-market-route": "vitest run src/components/SattariMarketPage.route.test.jsx",
     "test:ui": "vitest --ui"
   },
   "dependencies": {

@@ -89,14 +89,30 @@ try {
           .getByRole('navigation', { name: 'STEMDECK workspaces' })
           .getByRole('button', { name, exact: true })
           .click();
-      for (const view of ['Perform', 'Library', 'Mix', 'Arrange']) {
+      const overflows = () =>
+        page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+      const mixerToggle = page
+        .getByRole('navigation', { name: 'STEMDECK workspaces' })
+        .getByRole('button', { name: 'Mixer', exact: true });
+      for (const view of ['Perform', 'Library', 'Arrange']) {
         await navigate(view);
         await page.screenshot({ path: `${output}/${viewport.width}-${view}.png` });
+        assert.equal(await overflows(), false, `${view} overflows horizontally`);
+        if (view !== 'Perform') continue;
+        // The mixer docks under the workspace: every track gets a channel, and
+        // the dock scrolls inside itself rather than widening the page.
+        await mixerToggle.click();
+        const dock = page.getByRole('region', { name: 'Mixer', exact: true });
+        await dock.waitFor();
+        await page.screenshot({ path: `${output}/${viewport.width}-Mixer.png` });
+        assert.equal(await overflows(), false, 'Mixer dock overflows horizontally');
         assert.equal(
-          await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
-          false,
-          `${view} overflows horizontally`
+          await dock.getByRole('group', { name: 'Tracks', exact: true }).getByRole('group').count(),
+          6,
+          'one mixer channel per imported track'
         );
+        await mixerToggle.click();
+        await dock.waitFor({ state: 'detached' });
       }
       await page.getByRole('button', { name: 'Select clip QA melody', exact: true }).waitFor();
       const clipLabel = await page

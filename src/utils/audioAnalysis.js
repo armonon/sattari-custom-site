@@ -390,57 +390,55 @@ export function analyzeAudioFile(file, onProgress) {
 }
 
 async function analyzeFileWindows(file, onProgress) {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw new Error('Web Audio is not supported by this browser.');
+  const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineContextClass) throw new Error('Web Audio is not supported by this browser.');
 
   onProgress?.({ value: 12, label: 'Reading audio' });
-  const context = new AudioContextClass();
-
-  try {
-    const analyze = async (audioBuffer) =>
-      typeof Worker === 'undefined'
-        ? analyzeDecodedAudio(audioBuffer)
-        : await new Promise((resolve, reject) => {
-            const worker = new Worker(new URL('./audioAnalysis.worker.js', import.meta.url), {
-              type: 'module',
-            });
-            const timeout = setTimeout(() => {
-              worker.terminate();
-              reject(new Error('Track analysis timed out. Try a shorter source.'));
-            }, 120000);
-            const finish = () => {
-              clearTimeout(timeout);
-              worker.terminate();
-            };
-            worker.onmessage = ({ data }) => {
-              finish();
-              if (data.error) reject(new Error(data.error));
-              else resolve(data.result);
-            };
-            worker.onerror = () => {
-              finish();
-              reject(new Error('Track analysis worker failed. Your source is unchanged.'));
-            };
-            try {
-              const channels = Array.from({ length: audioBuffer.numberOfChannels }, (_, i) =>
-                audioBuffer.getChannelData(i).slice()
-              );
-              worker.postMessage(
-                { channels, rate: audioBuffer.sampleRate },
-                channels.map((c) => c.buffer)
-              );
-            } catch (error) {
-              finish();
-              reject(error);
-            }
+  // Window decoding only allocates AudioBuffers at each source's own sample rate
+  // (createBuffer), so an unstarted offline context suffices: no audio device is
+  // opened and there is nothing to close. Its own rate never touches the PCM.
+  const context = new OfflineContextClass(1, 1, 44100);
+  const analyze = async (audioBuffer) =>
+    typeof Worker === 'undefined'
+      ? analyzeDecodedAudio(audioBuffer)
+      : await new Promise((resolve, reject) => {
+          const worker = new Worker(new URL('./audioAnalysis.worker.js', import.meta.url), {
+            type: 'module',
           });
-    const { analyzeWindowedAudio } = await import('./windowedAudioAnalysis');
-    const analysis = await analyzeWindowedAudio(file, context, { analyze, onProgress });
-    onProgress?.({ value: 100, label: 'Analysis ready' });
-    return analysis;
-  } finally {
-    await context.close().catch(() => {});
-  }
+          const timeout = setTimeout(() => {
+            worker.terminate();
+            reject(new Error('Track analysis timed out. Try a shorter source.'));
+          }, 120000);
+          const finish = () => {
+            clearTimeout(timeout);
+            worker.terminate();
+          };
+          worker.onmessage = ({ data }) => {
+            finish();
+            if (data.error) reject(new Error(data.error));
+            else resolve(data.result);
+          };
+          worker.onerror = () => {
+            finish();
+            reject(new Error('Track analysis worker failed. Your source is unchanged.'));
+          };
+          try {
+            const channels = Array.from({ length: audioBuffer.numberOfChannels }, (_, i) =>
+              audioBuffer.getChannelData(i).slice()
+            );
+            worker.postMessage(
+              { channels, rate: audioBuffer.sampleRate },
+              channels.map((c) => c.buffer)
+            );
+          } catch (error) {
+            finish();
+            reject(error);
+          }
+        });
+  const { analyzeWindowedAudio } = await import('./windowedAudioAnalysis');
+  const analysis = await analyzeWindowedAudio(file, context, { analyze, onProgress });
+  onProgress?.({ value: 100, label: 'Analysis ready' });
+  return analysis;
 }
 
 export function detectPitch(samples, sampleRate) {

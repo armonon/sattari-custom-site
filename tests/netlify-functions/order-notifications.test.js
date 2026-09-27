@@ -1,4 +1,5 @@
 // @vitest-environment node
+import process from 'node:process';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sendMock = vi.fn();
@@ -106,5 +107,44 @@ describe('sendOrderNotification', () => {
     sendMock.mockResolvedValue({ data: null, error: { message: 'Domain not verified' } });
 
     await expect(sendOrderNotification(orderRecord)).rejects.toThrow('Domain not verified');
+  });
+
+  it('passes an idempotency key so a retried send is not a second email', async () => {
+    await sendOrderNotification(orderRecord, { idempotencyKey: 'sattari-order-cs_test_1' });
+
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: expect.any(Array) }), {
+      idempotencyKey: 'sattari-order-cs_test_1',
+    });
+  });
+
+  it('leads with an alert when stock could not cover the order', async () => {
+    await sendOrderNotification({
+      ...orderRecord,
+      stock: {
+        state: 'applied',
+        oversold: [
+          {
+            key: 'pirouz-series-cymbals::::',
+            name: 'Pirouz Series Cymbals',
+            requested: 2,
+            available: 1,
+          },
+        ],
+      },
+    });
+    const payload = sendMock.mock.calls[0][0];
+
+    expect(payload.subject).toMatch(/^ACTION NEEDED: not enough stock/);
+    expect(payload.subject).toContain('$125.00');
+    expect(payload.text.split('\n')[0]).toContain('NOT ENOUGH STOCK');
+    expect(payload.text).toContain('Pirouz Series Cymbals: ordered 2, only 1 available');
+  });
+
+  it('sends no alert for an order stock covered', async () => {
+    await sendOrderNotification({ ...orderRecord, stock: { state: 'applied', oversold: [] } });
+    const payload = sendMock.mock.calls[0][0];
+
+    expect(payload.subject).toBe('New Sattari order $125.00');
+    expect(payload.text).not.toContain('NOT ENOUGH STOCK');
   });
 });

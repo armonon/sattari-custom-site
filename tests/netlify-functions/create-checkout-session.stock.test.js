@@ -1,10 +1,10 @@
 // @vitest-environment node
+import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { stockKey } from '../../src/utils/inventory.js';
 
 const createSessionMock = vi.fn();
-const blobGetMock = vi.fn();
-const catalogGetMock = vi.fn();
+const blobs = vi.hoisted(() => ({ current: null }));
 
 vi.mock('stripe', () => ({
   default: vi.fn().mockImplementation(function () {
@@ -14,12 +14,11 @@ vi.mock('stripe', () => ({
   }),
 }));
 
-vi.mock('@netlify/blobs', () => ({
-  connectLambda: vi.fn(),
-  getStore: vi.fn((options) => ({
-    get: options?.name === 'catalog' ? catalogGetMock : blobGetMock,
-  })),
-}));
+vi.mock('@netlify/blobs', async () => {
+  const { createMemoryBlobs } = await import('./helpers/memoryBlobs.js');
+  blobs.current = createMemoryBlobs();
+  return blobs.current.module;
+});
 
 const { handler } = await import('../../netlify/functions/create-checkout-session.js');
 
@@ -31,6 +30,14 @@ function post(items) {
   });
 }
 
+function setStock(stock) {
+  blobs.current.write('inventory', 'stock', stock);
+}
+
+function setCatalog(doc) {
+  blobs.current.write('catalog', 'overrides', doc);
+}
+
 // A plain product (no sizes/colors) and a sized product from the real catalog.
 const PLAIN = 'pirouz-series-cymbals';
 const SIZED = 'sattari-effect-cymbal';
@@ -38,15 +45,14 @@ const SIZED = 'sattari-effect-cymbal';
 describe('create-checkout-session stock enforcement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    blobs.current.reset();
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     process.env.URL = 'https://sattarimusic.com';
     createSessionMock.mockResolvedValue({ id: 'cs_test_123', url: 'https://checkout.test/s' });
-    blobGetMock.mockResolvedValue({});
-    catalogGetMock.mockResolvedValue(null);
   });
 
   it('allows checkout when the variant is not tracked', async () => {
-    blobGetMock.mockResolvedValue({});
+    setStock({});
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
 
@@ -55,7 +61,7 @@ describe('create-checkout-session stock enforcement', () => {
   });
 
   it('allows checkout when tracked stock is sufficient', async () => {
-    blobGetMock.mockResolvedValue({ [stockKey(PLAIN)]: 5 });
+    setStock({ [stockKey(PLAIN)]: 5 });
 
     const response = await post([{ slug: PLAIN, quantity: 2 }]);
 
@@ -63,7 +69,7 @@ describe('create-checkout-session stock enforcement', () => {
   });
 
   it('blocks checkout for a sold-out variant', async () => {
-    blobGetMock.mockResolvedValue({ [stockKey(PLAIN)]: 0 });
+    setStock({ [stockKey(PLAIN)]: 0 });
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
     const body = JSON.parse(response.body);
@@ -74,7 +80,7 @@ describe('create-checkout-session stock enforcement', () => {
   });
 
   it('blocks when the cart asks for more than remains', async () => {
-    blobGetMock.mockResolvedValue({ [stockKey(PLAIN)]: 2 });
+    setStock({ [stockKey(PLAIN)]: 2 });
 
     const response = await post([{ slug: PLAIN, quantity: 3 }]);
     const body = JSON.parse(response.body);
@@ -86,7 +92,7 @@ describe('create-checkout-session stock enforcement', () => {
   it('aggregates duplicate cart lines for the same variant', async () => {
     // Two lines of 1 against a stock of 1: checking each line separately would
     // let this through and oversell by one.
-    blobGetMock.mockResolvedValue({ [stockKey(PLAIN)]: 1 });
+    setStock({ [stockKey(PLAIN)]: 1 });
 
     const response = await post([
       { slug: PLAIN, quantity: 1 },
@@ -99,20 +105,13 @@ describe('create-checkout-session stock enforcement', () => {
   });
 
   it('tracks sizes independently', async () => {
-    blobGetMock.mockResolvedValue({
+    setStock({
       [stockKey(SIZED, '15"')]: 0,
       [stockKey(SIZED, '16"')]: 4,
     });
 
     const soldOut = await post([{ slug: SIZED, size: '15"', quantity: 1 }]);
     expect(soldOut.statusCode).toBe(409);
-
-    vi.clearAllMocks();
-    blobGetMock.mockResolvedValue({
-      [stockKey(SIZED, '15"')]: 0,
-      [stockKey(SIZED, '16"')]: 4,
-    });
-    createSessionMock.mockResolvedValue({ id: 'cs_test_123', url: 'https://checkout.test/s' });
 
     const available = await post([{ slug: SIZED, size: '16"', quantity: 1 }]);
     expect(available.statusCode).toBe(200);
@@ -121,7 +120,7 @@ describe('create-checkout-session stock enforcement', () => {
   it('charges the price an employee edited, not the one in catalog.js', async () => {
     // The whole point of server-side pricing: if this read the base file, a
     // customer would see the new price and be charged the old one.
-    catalogGetMock.mockResolvedValue({ overrides: { [PLAIN]: { price: 42.5 } } });
+    setCatalog({ overrides: { [PLAIN]: { price: 42.5 } } });
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
     expect(response.statusCode).toBe(200);
@@ -131,18 +130,17 @@ describe('create-checkout-session stock enforcement', () => {
   });
 
   it('refuses to sell a product an employee removed', async () => {
-    catalogGetMock.mockResolvedValue({ hidden: [PLAIN] });
+    setCatalog({ hidden: [PLAIN] });
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
 
-    expect(response.statusCode).toBe(400);
+    expect(response.statusCode).toBe(409);
+    expect(JSON.parse(response.body)).toMatchObject({ code: 'product_unavailable', slug: PLAIN });
     expect(createSessionMock).not.toHaveBeenCalled();
   });
 
   it('sells a product an employee added', async () => {
-    catalogGetMock.mockResolvedValue({
-      added: [{ name: 'Shop Special', price: 30, category: 'essentials' }],
-    });
+    setCatalog({ added: [{ name: 'Shop Special', price: 30, category: 'essentials' }] });
 
     const response = await post([{ slug: 'shop-special', quantity: 1 }]);
     expect(response.statusCode).toBe(200);
@@ -151,17 +149,24 @@ describe('create-checkout-session stock enforcement', () => {
     expect(payload.line_items[0].price_data.unit_amount).toBe(3000);
   });
 
-  it('falls back to the base catalog when the catalog store is unreachable', async () => {
-    catalogGetMock.mockRejectedValue(new Error('blobs down'));
+  it('fails closed when the catalog store is unreachable', async () => {
+    // The base catalog alone still lists hidden and discontinued products at
+    // their original prices, so it is not a safe fallback for taking money.
+    setCatalog({ hidden: [PLAIN] });
+    blobs.current.state.fault = ({ store }) =>
+      store === 'catalog' ? new Error('blobs down') : null;
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
-    expect(response.statusCode).toBe(200);
-    expect(createSessionMock.mock.calls[0][0].line_items[0].price_data.unit_amount).toBe(8000);
+
+    expect(response.statusCode).toBe(503);
+    expect(JSON.parse(response.body).error).toMatch(/temporarily unavailable/);
+    expect(createSessionMock).not.toHaveBeenCalled();
   });
 
   it('fails open when the stock store is unreachable', async () => {
     // An outage in blob storage must not stop every sale on the site.
-    blobGetMock.mockRejectedValue(new Error('blobs unavailable'));
+    blobs.current.state.fault = ({ store }) =>
+      store === 'inventory' ? new Error('blobs unavailable') : null;
 
     const response = await post([{ slug: PLAIN, quantity: 1 }]);
 

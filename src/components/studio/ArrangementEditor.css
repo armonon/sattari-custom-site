@@ -16,10 +16,6 @@
 }
 
 /* Dense track headers leave the workspace to the actual timeline. */
-.sd-studio-next .sd-view-arranger .ae-track-head {
-  grid-template-columns: minmax(0, 1fr) auto;
-  padding: 5px 7px;
-}
 .sd-studio-next .sd-view-arranger .ae-track-head > input {
   grid-column: 1;
 }
@@ -63,7 +59,6 @@
 }
 .sd-studio-next .ae-editor-tabs {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
   padding: 6px 0;
   border-top: 1px solid var(--sd-line-soft, #ffffff18);
@@ -246,9 +241,6 @@
   flex-wrap: wrap;
   gap: 4px;
   margin: 8px 0;
-}
-.sd-studio-next .ae-mobile-tools-toggle {
-  display: none;
 }
 .sd-studio-next .sd-arrangement-editor > header > div:first-child {
   display: block;
@@ -491,9 +483,7 @@
 }
 .sd-studio-next .sd-view-arranger .ae-track-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
-  gap: 3px;
 }
 .sd-studio-next .sd-view-arranger .ae-track-head > div:not(:last-child) {
   grid-column: 1 / -1;
@@ -623,8 +613,6 @@
   bottom: 12px;
   left: 20px;
   right: 20px;
-  height: min(var(--editor-height), 72dvh);
-  overflow: auto;
   overscroll-behavior: contain;
   color: #e4e8f0;
   background: #171a21;
@@ -676,9 +664,6 @@
   color: #b0b8cc;
 }
 .ae-piano-dock .ae-note-scroll {
-  height: 240px;
-  resize: vertical;
-  min-height: 144px;
   max-height: 60vh;
 }
 .ae-dock-empty {
@@ -796,7 +781,6 @@
     right: 6px;
     bottom: 6px;
     padding: 0 10px 10px;
-    height: min(var(--editor-height), 65dvh);
   }
   .ae-dock-size {
     display: none !important;
@@ -941,15 +925,6 @@
   color: #b4c8de;
   padding: 8px 0;
 }
-.sd-studio-next .ae-note-row .ae-note-cell {
-  width: 36px;
-  flex: 0 0 36px;
-  padding: 0;
-  background: #1e2938;
-  border-color: #34445a;
-  border-radius: 0;
-  min-height: 30px;
-}
 .sd-studio-next .ae-note-row .ae-midi-note {
   position: absolute;
   height: 20px;
@@ -1003,11 +978,6 @@
   bottom: 0;
   pointer-events: none;
   z-index: 3;
-}
-.sd-studio-next .ae-empty {
-  padding: 40px;
-  max-width: 700px;
-  color: #bac8d9;
 }
 .sd-studio-next .ae-canvas-tail {
   display: flex;
@@ -1155,11 +1125,6 @@
   }
   .sd-studio-next .ae-more-sources > div {
     position: static;
-  }
-  .sd-studio-next .ae-mobile-tools-toggle {
-    display: block;
-    margin: 8px 0;
-    width: 100%;
   }
   .sd-studio-next :is(.ae-toolbar, .ae-export-settings)[data-mobile-open='false'] {
     display: none;

@@ -4,10 +4,14 @@ import { bookingSummary, money } from '../src/utils/studioBooking.js';
 import { bookingConfig } from './studioBookingConfig.js';
 import { patchBooking, readBookings } from './studioBookingStore.js';
 
-export function queueNotifications(booking, kind) {
+// `text: false` records the owner's SMS alerts as skipped rather than pending,
+// so a burst of requests cannot turn into a burst of paid text messages. The
+// owner email is still queued and staff still see the request.
+export function queueNotifications(booking, kind, { text = true } = {}) {
+  const smsKeys = kind === 'request' ? bookingConfig().smsTo.map((_, i) => `ownerSms${i}`) : [];
   const keys =
     kind === 'request'
-      ? ['ownerEmail', ...bookingConfig().smsTo.map((_, i) => `ownerSms${i}`)]
+      ? ['ownerEmail', ...smsKeys]
       : [
           kind === 'approved'
             ? 'customerApproved'
@@ -16,7 +20,12 @@ export function queueNotifications(booking, kind) {
               : 'customerDeclined',
         ];
   const notifications = { ...booking.notifications };
-  for (const key of keys) notifications[key] ||= { state: 'pending', attempts: 0 };
+  for (const key of keys) {
+    notifications[key] ||=
+      !text && smsKeys.includes(key)
+        ? { state: 'skipped', attempts: 0, reason: 'Text alert limit reached' }
+        : { state: 'pending', attempts: 0 };
+  }
   return notifications;
 }
 

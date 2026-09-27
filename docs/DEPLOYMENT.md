@@ -68,8 +68,12 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 RESEND_API_KEY=re_...
 ORDER_NOTIFICATION_EMAIL=orders@example.com
 ORDER_NOTIFICATION_FROM=orders@your-domain.com
-ORDER_LOOKUP_TOKEN=choose-a-long-random-secret
+IP_HASH_SECRET=choose-a-long-random-secret
 ```
+
+Staff sign-in (`STAFF_*`), studio bookings (`STUDIO_BOOKING_*`, `TWILIO_*`) and
+the Instagram feed have their own variables; `.env.example` lists every variable
+with what it does, and [INVENTORY.md](INVENTORY.md) covers staff setup.
 
 ## Step 4: Configure Checkout
 
@@ -93,12 +97,6 @@ ORDER_NOTIFICATION_EMAIL=orders@example.com
 ORDER_NOTIFICATION_FROM=orders@your-domain.com
 ```
 
-Optional admin lookup setting:
-
-```env
-ORDER_LOOKUP_TOKEN=choose-a-long-random-secret
-```
-
 Optional overrides:
 
 ```env
@@ -117,29 +115,50 @@ In the Stripe dashboard, add a webhook endpoint that points to:
 https://your-domain.com/api/stripe-webhook
 ```
 
-Subscribe at minimum to:
+Subscribe to all four of these — stock holds and bank-transfer-style payments
+depend on them:
 
 - `checkout.session.completed`
+- `checkout.session.expired` (releases the stock an unpaid checkout was holding)
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
 
 Then copy the Stripe signing secret into `STRIPE_WEBHOOK_SECRET` in Netlify.
+A restricted Stripe key needs write access to Checkout Sessions (checkout both
+creates and expires them).
 
 ### Order Persistence
 
-Completed orders are stored in a Netlify Blobs store named `orders` when the webhook receives a verified `checkout.session.completed` event. No extra site-level configuration is required on Netlify for this storage path.
+Orders are stored in a Netlify Blobs store named `orders`, one record per
+checkout, claimed when the webhook first sees the session. Stock and the owner
+email are tracked as steps on that record, so retried or duplicate Stripe
+deliveries complete only what is still pending. The scheduled
+`checkout-maintenance` function (every 10 minutes, production deploys only)
+releases lapsed stock holds and retries pending owner emails. No extra
+site-level configuration is required on Netlify for this storage.
 
-For local development with `npm run dev:api`, completed webhook events are also written to `.local-data/orders/` unless `LOCAL_ORDER_STORAGE_PATH` overrides that location.
+For local development, `npm run dev:api` runs the same functions and keeps Blobs
+on disk in `.local-data/blobs/` (override with `LOCAL_BLOBS_PATH`).
 
 ### Admin Order Lookup
 
-When `ORDER_LOOKUP_TOKEN` is configured, admins can inspect stored orders without opening Netlify internals:
+`/api/admin/orders` takes a staff session token (from signing in on the staff
+page, or `POST /api/staff/login`), so access expires and can be revoked:
 
 ```bash
-curl -H "Authorization: Bearer $ORDER_LOOKUP_TOKEN" \
+curl -H "Authorization: Bearer $STAFF_TOKEN" \
    https://your-domain.com/api/admin/orders
 
-curl -H "Authorization: Bearer $ORDER_LOOKUP_TOKEN" \
+curl -H "Authorization: Bearer $STAFF_TOKEN" \
    "https://your-domain.com/api/admin/orders?session_id=cs_test_123"
 ```
+
+### Rate limits
+
+Netlify allows 2 code-based rate-limit rules per project on Free/Starter/Personal
+plans (5 on Pro). They are used on `site-event` and `service-inquiry`; a test
+fails if more are added. Sign-in, bookings, the Instagram feed and admin lookups
+enforce their own limits in code.
 
 ## Step 5: Deploy Frontend
 

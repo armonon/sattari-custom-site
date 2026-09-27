@@ -1,18 +1,19 @@
-import { useMemo, useState, FC } from 'react';
+import { useState, FC } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import type { CartContextValue, CartItem } from '@/types';
-import { createCheckoutSession } from '@utils/checkout';
+import { FLAT_SHIPPING_CENTS } from '@data/shipping';
+import CartNotice from '@components/CartNotice';
+import { useCheckout } from '../hooks/useCheckout';
 import '@/styles-cart-page-premium.css';
 
 const CartPage: FC = () => {
   const { cartItems, subtotal, updateQuantity, removeFromCart, clearCart } =
     useCart() as CartContextValue;
-  const [checkoutError, setCheckoutError] = useState('');
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { startCheckout, isCheckingOut, checkoutError } = useCheckout();
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
-  const shipping = useMemo(() => (cartItems.length ? 7.95 : 0), [cartItems.length]);
+  const shipping = cartItems.length ? FLAT_SHIPPING_CENTS / 100 : 0;
   const orderTotal = subtotal + shipping;
   const orderHighlights = [
     'Secure Stripe payment',
@@ -30,31 +31,6 @@ const CartPage: FC = () => {
       return next;
     });
   };
-
-  async function handleCheckout() {
-    setCheckoutError('');
-
-    if (!cartItems.length) {
-      setCheckoutError('Your cart is empty. Add a product before checkout.');
-      return;
-    }
-
-    try {
-      setIsCheckingOut(true);
-      const payload = await createCheckoutSession(cartItems as CartItem[]);
-
-      if (!payload.url) {
-        throw new Error('Checkout session did not return a redirect URL.');
-      }
-
-      window.location.assign(payload.url);
-      return;
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Checkout failed.');
-    } finally {
-      setIsCheckingOut(false);
-    }
-  }
 
   return (
     <section className="section page-header-offset cart-shell-premium">
@@ -75,6 +51,7 @@ const CartPage: FC = () => {
       <div className="container cart-layout-premium">
         {/* Main Cart Items */}
         <div className="cart-items-section-premium">
+          <CartNotice />
           {!cartItems.length ? (
             <div className="empty-cart-premium anim-rise">
               <div className="empty-illustration">
@@ -227,7 +204,7 @@ const CartPage: FC = () => {
             )}
 
             {/* Checkout Button */}
-            <button onClick={handleCheckout} disabled={isCheckingOut} className="checkout-btn-full">
+            <button onClick={startCheckout} disabled={isCheckingOut} className="checkout-btn-full">
               <span>
                 {isCheckingOut ? 'Processing Secure Checkout...' : 'Proceed to Secure Checkout'}
               </span>

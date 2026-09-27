@@ -435,7 +435,7 @@ export default memo(function MusicLibrary({
             <p>{tracks.filter((track) => !track.trashedAt).length} songs · On this device</p>
           </div>
         </div>
-        <div className="sd-music-import-actions">
+        <div className="sd-music-import-actions" role="group" aria-label="Library actions">
           <button
             type="button"
             aria-expanded={queueVisible}

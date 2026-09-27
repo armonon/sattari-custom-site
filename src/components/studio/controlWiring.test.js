@@ -8,9 +8,12 @@ import { expect, it } from 'vitest';
 
 it('requires every studio button to have an action or an explicit disabled state', () => {
   const folder = resolve('src/components/studio');
-  const files = readdirSync(folder)
-    .filter((name) => name.endsWith('.jsx') && !name.includes('.test.'))
-    .map((name) => resolve(folder, name));
+  const components = (dir) =>
+    readdirSync(dir, { recursive: true })
+      .map(String)
+      .filter((name) => name.endsWith('.jsx') && !name.includes('.test.'))
+      .map((name) => resolve(dir, name));
+  const files = [...components(folder), ...components(resolve('src/studio'))];
   files.push(resolve('src/pages/SattariStudioPage.jsx'));
   const inert = [];
   for (const file of files) {

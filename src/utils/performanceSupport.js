@@ -57,6 +57,14 @@ export const PERFORMANCE_SUPPORT = Object.freeze([
     'Rate is represented, not a project tempo map. Key-locked and pitch-processed audio still needs the print.'
   ),
   row(
+    'sync',
+    'Beat sync / project tempo / tempo-map follow',
+    ['setDeckSync', 'setProjectTempo', 'setTempoFollow'],
+    'Re-derived clip playback rates',
+    [I, P, P, I, P],
+    'Sync intent is journaled, not each correction. Replay re-runs the live controller; Arrange approximates its slews as constant-rate regions within 0.1%.'
+  ),
+  row(
     'pitch',
     'Deck / stem pitch and key lock',
     ['setDeckPitch', 'setDeckKeyLock', 'setStemPitch'],
@@ -103,6 +111,14 @@ export const PERFORMANCE_SUPPORT = Object.freeze([
     'Replay event controls; printed effects in Arrange',
     [I, P, R, I, R],
     'Opening tails, legacy effects and DSP graph changes are not certified exact.'
+  ),
+  row(
+    'sends',
+    'Mixer sends / returns / channel inserts',
+    ['setDeckSend', 'setReturn', 'setDeckInserts'],
+    'Replay event controls; printed returns and inserts in Arrange',
+    [I, P, R, I, R],
+    'Headphone cue is monitoring only and is never recorded. Reconstructed sources use the current return settings.'
   ),
   row(
     'master',
@@ -210,6 +226,9 @@ export const RECONSTRUCTION_EVENTS = Object.freeze([
   'setLoop',
   'setLoopRegion',
   'setMasterStems',
+  'setDeckSync',
+  'setProjectTempo',
+  'setTempoFollow',
 ]);
 
 export function performanceSupportForTake(capture) {
@@ -226,7 +245,7 @@ export function performanceSupportForTake(capture) {
   if (initial?.decks?.length) {
     for (const item of selected) {
       if (item.stages.arrange === 'printed') printed.add(item.label);
-      else if (['transport', 'sources', 'loop', 'rate', 'mixer', 'stems'].includes(item.id))
+      else if (['transport', 'sources', 'loop', 'rate', 'sync', 'mixer', 'stems'].includes(item.id))
         editable.add(item.destination);
     }
   } else if (selected.length) printed.add('Performance actions without a source snapshot');
@@ -242,6 +261,8 @@ export function performanceSupportForTake(capture) {
       Object.values(deck.stemFx || {}).some((fx) => fx.send || fx.pitch || (fx.filter ?? 50) !== 50)
     )
       printed.add('Opening stem effects');
+    if (Object.values(deck.sends || {}).some(Boolean) || deck.inserts?.length)
+      printed.add('Opening deck sends and inserts');
   }
   if (
     events.some(

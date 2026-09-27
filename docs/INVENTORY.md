@@ -14,17 +14,22 @@ Blobs, which this repo already used for orders and service inquiries.
 **1. Generate the staff credentials:**
 
 ```bash
-node scripts/hash-staff-password.mjs "a-real-password-you-choose"
+node scripts/hash-staff-password.mjs "username" "a-real-password-you-choose"
 ```
 
-It prints three values. Set them in **Netlify → Site configuration →
+It prints four values. Set them in **Netlify → Site configuration →
 Environment variables**:
 
 | Variable | What it is |
 | --- | --- |
+| `STAFF_USERNAME` | The sign-in name |
 | `STAFF_PASSWORD_SALT` | Salt for the password hash |
 | `STAFF_PASSWORD_HASH` | scrypt hash — the password itself is never stored |
-| `STAFF_SESSION_SECRET` | Signs session tokens. Changing it signs everyone out immediately, which is your fastest revocation. |
+| `STAFF_SESSION_SECRET` | Signs session tokens. Changing it signs everyone out. |
+
+Sign-ins last 12 hours. **Sign out** on the staff page revokes that sign-in on
+the server; **Sign out everywhere** revokes every sign-in at once without a
+redeploy.
 
 **2. Deploy.** Functions read these at runtime, so they need a deploy after the
 variables are set.
@@ -39,11 +44,12 @@ Bookmark it. It is not linked from anywhere.
 
 ```
 Staff page  ──▶  /api/staff/*  ──▶  Netlify Blobs  ◀──  Storefront (/api/inventory)
-(password)       (auth'd)           inventory: stock
+(password)       (auth'd)           inventory: stock + checkout holds
                                     catalog:   employee edits
                       ▲             catalog-images: photos
-              Stripe webhook
-           (decrements on sale)
+                      │             orders:    one record per checkout
+   create-checkout-session (reserves)   Stripe webhook (hold → sale)
+   checkout-release (abandoned)         checkout-maintenance (every 10 min)
 ```
 
 `src/data/catalog.js` stays the base catalog. The blob holds only what employees
@@ -68,35 +74,52 @@ storing zero.
 1. **Stock is enforced in `create-checkout-session`, not in the UI.** The badge
    is a courtesy; anyone can POST to the endpoint directly.
 
-2. **Prices are read server-side from the merged catalog.** Never trust a price
-   in a request body.
+2. **Checkout reserves stock.** Creating a Checkout Session writes a *hold* into
+   the stock blob in the same conditional write that checks availability, and
+   the Stripe session expires after 31 minutes. Available = on hand − active
+   holds, everywhere (`/api/inventory` and checkout). A second shopper going for
+   the last unit gets a 409 while the first is paying. The hold becomes a sale
+   when Stripe reports payment, and is released by `checkout.session.expired`,
+   by the cancel link (`/api/checkout-release`), when the same browser starts a
+   new checkout, or by the 10-minute sweep 15 minutes after its session ends.
 
-3. **The webhook decrements inside the existing `if (!existingOrder)` guard.**
-   Stripe retries webhooks; a decrement outside it would subtract twice.
+3. **Prices are read server-side from the merged catalog.** Never trust a price
+   in a request body. If the catalog can't be read, checkout returns 503 rather
+   than selling from the base catalog.
 
-4. **Storefront reads fail open, login fails closed.** A blob outage costs stock
-   badges, not sales — but if the throttle can't be read, sign-in is refused,
-   because otherwise password guessing is unbounded.
+4. **The webhook is exactly-once per step.** The order record is claimed with a
+   create-only write before any side effect, and tracks two steps: stock
+   (hold → sale, leaving a "sold" marker) and the owner email. Stripe retries and
+   duplicate deliveries finish only the steps still pending, so a crash midway
+   is repaired by the next delivery or the sweep, and nothing happens twice.
+   Only `paid` / `no_payment_required` sessions become sales; async payments
+   complete on `async_payment_succeeded` and release on `async_payment_failed`.
 
-5. **The login throttle lives in a blob, not in memory.** A module-level `Map`
-   silently does nothing on Netlify: each invocation may get fresh memory. Its
-   expiry keys on the last failure, never on `until` — an unlocked record has
-   `until = 0`, so an `until`-based check clears the counter every attempt.
+5. **Storefront reads fail open, login fails closed.** A blob outage costs stock
+   badges, not sales — but if the throttle can't be read or written, sign-in is
+   refused, because otherwise password guessing is unbounded.
 
-6. **The staff path is never named in `robots.txt` or `sitemap.xml`.** Both are
+6. **The login throttle lives in blobs, not in memory,** and counts an attempt
+   *before* the password is checked, so parallel requests can't slip past it.
+   Each address has its own record (keyed by an HMAC of the IP), with a
+   site-wide ceiling on top; addresses that signed in recently are exempt from
+   the ceiling so an attacker can't lock the shop out.
+
+7. **The staff path is never named in `robots.txt` or `sitemap.xml`.** Both are
    public files. `netlify.toml` sets `X-Robots-Tag: noindex` on that path
    instead.
 
-7. **The staff page is a standalone file in `public/`, not a React route.**
+8. **The staff page is a standalone file in `public/`, not a React route.**
    Routes in `App.tsx` ship to every visitor in the JS bundle. This one doesn't
    appear in the bundle at all. The URL is still only friction — the password
    is the lock.
 
-8. **Removing a product sets a hidden flag.** Nothing is deleted, so a misclick
-   is one click from undone.
+9. **Removing a product sets a hidden flag.** Nothing is deleted, so a misclick
+   is one click from undone. A hidden product left in someone's cart is removed
+   with a notice; checkout answers `409 product_unavailable` for it.
 
-9. **Categories are a closed set.** A product in an invented category would
-   appear on no category page and would crash the detail page's copy lookup.
+10. **Categories are a closed set.** A product in an invented category would
+    appear on no category page and would crash the detail page's copy lookup.
 
 ---
 
@@ -121,6 +144,16 @@ sequence is always recoverable.
 
 Marking an *unpaid* order shipped or picked up asks for confirmation first.
 
+**Oversold orders are flagged, never silent.** Holds make this rare, but if a
+paid order still can't be covered (for example, stock was lowered by hand while
+the customer paid), the order records which items were short, the staff page
+shows a red **Oversold** badge ("paid for N, only M available"), and the owner
+email's subject starts with **ACTION NEEDED**. Stock is not driven below zero.
+
+The **Inquiries** tab lists service inquiries newest first, flags any whose
+notification email failed (they are always stored first), and lets staff mark
+them handled.
+
 Revenue counts only orders Stripe marked `paid`. Unpaid sessions are shown as a
 separate count rather than hidden — a started-but-unpaid order is something to
 chase.
@@ -139,7 +172,9 @@ the email and only logs it:
 
 Resend reports failures in the response body rather than throwing, so a
 body-level error is raised explicitly — otherwise a rejected email would log as
-a success.
+a success. A failed email stays *pending* on the order and is retried by the
+next Stripe delivery and by the 10-minute sweep until it goes out; a short lease
+plus a Resend idempotency key keep it from being sent twice.
 
 ## Backups
 
@@ -166,7 +201,13 @@ Two things worth understanding:
 
 2. **A restore takes a safety snapshot of the current state first**, so
    restoring the wrong backup is itself undoable. Restore also requires typing
-   `RESTORE`, because it overwrites live stock and prices for the whole shop.
+   `RESTORE`, because it overwrites live prices for the whole shop.
+
+3. **Restore reconciles instead of rewinding.** Stock is set to the backup's
+   count *minus every sale recorded after the backup*, open checkout holds are
+   kept, and fulfilment for orders placed after the backup is left as it is.
+   All writes are conditional, so a sale landing mid-restore is still counted.
+   The staff page shows the reconciliation report when the restore finishes.
 
 Scheduled functions run on published production deploys only — not on previews
 — and cannot be triggered over HTTP, which is why the staff-facing download and
@@ -193,11 +234,11 @@ guessing whether a save landed.
 
 ## Known limits
 
-- **The oversell race is open.** Stock is checked when the checkout session is
-  created and decremented when payment completes. Two customers can both pass
-  the check on the last item and both pay. Closing it needs stock reservations
-  with expiry — deliberately not built. At this volume it is rare; handle it by
-  emailing the customer.
+- **A hold can outlive an abandoned checkout.** A shopper who closes the Stripe
+  tab without using its cancel link keeps the units reserved until the session
+  expires (31 minutes) — unless they start a new checkout in the same browser,
+  which takes the hold over. In-store sales of a held item have to wait or be
+  entered after the hold clears.
 
 - **The counter depends on the internet.** Data lives in Netlify, so an outage
   at the shop means no stock lookups until it's back.
@@ -214,11 +255,6 @@ guessing whether a save landed.
   name, category, price, description, and photo. Products with per-size pricing
   show their base price only; changing size prices still means editing
   `catalog.js`.
-
-- **`node_modules` is committed to this repo** (it predates this work, which is
-  why `.gitignore` looks like it isn't working). Worth removing with
-  `git rm -r --cached node_modules` at some point — unrelated to inventory, but
-  it makes every diff noisy.
 
 ---
 

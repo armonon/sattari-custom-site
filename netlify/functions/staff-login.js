@@ -2,30 +2,46 @@ import {
   checkPassword,
   checkUsername,
   createSession,
+  currentSessionEpoch,
   getClientIp,
   isConfigured,
   SESSION_TTL_HOURS,
 } from '../../server/staffAuth.js';
-import { clearFailures, getLockRemaining, recordFailure } from '../../server/loginThrottle.js';
+import {
+  pruneLoginRecords,
+  recordLoginSuccess,
+  reserveLoginAttempt,
+} from '../../server/loginThrottle.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 
-function json(statusCode, body) {
+// The edge limit is a cheap outer bound on request volume per address; the
+// blob-backed throttle below is what bounds password guesses.
+export const config = {
+  path: ['/api/staff/login', '/.netlify/functions/staff-login'],
+};
+
+function json(statusCode, body, headers = {}) {
   return {
     statusCode,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers },
     body: JSON.stringify(body),
   };
 }
 
-export async function handler(event) {
+const UNAVAILABLE = 'Sign-in is temporarily unavailable. Try again shortly.';
+
+export default async function staffLogin(request, context) {
+  return webResponse(await login(await lambdaEvent(request, context), context));
+}
+
+async function login(event, context) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed.' });
   }
 
   if (!isConfigured()) {
-    return json(500, {
-      error:
-        'Staff access is not configured. Set STAFF_USERNAME, STAFF_PASSWORD_SALT, STAFF_PASSWORD_HASH, and STAFF_SESSION_SECRET.',
-    });
+    console.error(JSON.stringify({ type: 'staff-login-not-configured' }));
+    return json(503, { error: UNAVAILABLE });
   }
 
   const ip = getClientIp(event);
@@ -37,24 +53,27 @@ export async function handler(event) {
     return json(400, { error: 'Invalid request.' });
   }
 
-  const staff = String(body.staff || '').trim();
+  const staff = String(body?.staff || '').trim();
   if (!staff) {
     return json(400, { error: 'Enter the username.' });
   }
 
+  let reservation;
   try {
-    const wait = await getLockRemaining(event, ip);
-    if (wait > 0) {
-      return json(429, {
-        error: `Too many attempts. Try again in ${Math.ceil(wait / 1000)} seconds.`,
-      });
-    }
+    reservation = await reserveLoginAttempt(event, ip);
   } catch (error) {
-    // Fail CLOSED here, unlike the storefront's stock read. If the throttle
-    // cannot be consulted we cannot bound guessing, and refusing a login is a
-    // far smaller cost than leaving the password open to unlimited attempts.
-    console.error(JSON.stringify({ type: 'throttle-read-error', message: error?.message }));
-    return json(503, { error: 'Sign-in is temporarily unavailable. Try again shortly.' });
+    // Fail CLOSED. If an attempt cannot be counted, guessing is unbounded, and
+    // refusing a sign-in costs far less than that.
+    console.error(JSON.stringify({ type: 'throttle-unavailable', message: error?.message }));
+    return json(503, { error: UNAVAILABLE });
+  }
+  if (!reservation.allowed) {
+    const seconds = Math.max(1, Math.ceil(reservation.retryAfterMs / 1000));
+    return json(
+      429,
+      { error: `Too many attempts. Try again in ${seconds} seconds.` },
+      { 'Retry-After': String(seconds) }
+    );
   }
 
   // Username and password are checked together and reported together. Saying
@@ -64,25 +83,33 @@ export async function handler(event) {
   const passwordOk = checkPassword(body.password);
 
   if (!usernameOk || !passwordOk) {
-    try {
-      await recordFailure(event, ip);
-    } catch (error) {
-      console.error(JSON.stringify({ type: 'throttle-write-error', message: error?.message }));
-    }
     console.log(JSON.stringify({ type: 'staff-login-failed', staff: staff.slice(0, 40), ip }));
     return json(401, { error: 'That username or password is not right.' });
   }
 
+  let epoch;
   try {
-    await clearFailures(event, ip);
+    epoch = await currentSessionEpoch(event);
+  } catch (error) {
+    console.error(JSON.stringify({ type: 'staff-session-read-error', message: error?.message }));
+    return json(503, { error: UNAVAILABLE });
+  }
+
+  try {
+    await recordLoginSuccess(event, ip);
   } catch (error) {
     console.error(JSON.stringify({ type: 'throttle-clear-error', message: error?.message }));
   }
+  context?.waitUntil?.(
+    pruneLoginRecords(event).catch((error) =>
+      console.error(JSON.stringify({ type: 'throttle-prune-error', message: error?.message }))
+    )
+  );
 
   console.log(JSON.stringify({ type: 'staff-login', staff: staff.slice(0, 40), ip }));
 
   return json(200, {
-    token: createSession(staff),
+    token: createSession(staff, { epoch }),
     staff: staff.slice(0, 40),
     expiresInHours: SESSION_TTL_HOURS,
   });

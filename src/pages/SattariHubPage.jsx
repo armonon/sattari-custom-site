@@ -15,6 +15,7 @@ import {
 import HubListeningDesk from '../components/HubListeningDesk';
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
+import '../styles-hub.css';
 
 const workspaces = [
   {

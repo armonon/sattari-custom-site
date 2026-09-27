@@ -1,0 +1,905 @@
+/* Docked mixer (under every workspace) and the Perform tools moved from the Mix tab. */
+
+.sd-studio-next .sd-mixer-dock {
+  --mx-bg: #101216;
+  --mx-strip: #171a20;
+  --mx-raised: #1e2229;
+  --mx-line: #2b2f38;
+  --mx-text: #edf0f4;
+  --mx-muted: #8b919b;
+  --mx-meter-bg: #07080a;
+  /* Strip height follows the viewport; faders take what the controls leave. */
+  --mx-body: clamp(272px, 36vh, 300px);
+  --mx-fader: calc(var(--mx-body) - 208px);
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  border-top: 1px solid #ffffff14;
+  background: var(--mx-bg);
+  color: var(--mx-text);
+}
+
+.sd-studio-next .sd-mixer-dock-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 4px 4px 4px 2px;
+}
+
+.sd-studio-next .sd-mixer-dock-bar h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--mx-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sd-studio-next .sd-mixer-dock-bar h2:focus-visible {
+  outline: 2px solid #9bd8ca;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sd-studio-next .sd-mixer-dock-hint {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--mx-line);
+  border-radius: 4px;
+  color: var(--mx-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.sd-studio-next .sd-mixer-dock-size {
+  display: inline-flex;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid var(--mx-line);
+  border-radius: 7px;
+  background: #0b0c0f;
+}
+
+.sd-studio-next .sd-mixer-dock-size button,
+.sd-studio-next .sd-mixer-dock-close {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--mx-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-dock-size button[aria-pressed='true'] {
+  background: var(--mx-raised);
+  color: var(--mx-text);
+}
+
+.sd-studio-next .sd-mixer-dock-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  padding: 0;
+}
+
+.sd-studio-next .sd-mixer-dock-size button:hover,
+.sd-studio-next .sd-mixer-dock-close:hover {
+  color: var(--mx-text);
+}
+
+.sd-studio-next .sd-mixer-dock-body {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  min-width: 0;
+  padding: 0 0 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.sd-studio-next .sd-mixer-dock.is-full .sd-mixer-dock-body {
+  height: var(--mx-body);
+}
+
+.sd-studio-next .sd-mixer-group {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding-top: 15px;
+}
+
+.sd-studio-next .sd-mixer-group + .sd-mixer-group {
+  padding-left: 14px;
+  border-left: 1px solid #ffffff10;
+}
+
+.sd-studio-next .sd-mixer-group-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--mx-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* The master stays in view while decks and tracks scroll under it. */
+.sd-studio-next .sd-mixer-group.is-master {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  margin-left: auto;
+  background: var(--mx-bg);
+  box-shadow: -14px 0 14px -14px #000;
+}
+
+.sd-studio-next .sd-mixer-group + .sd-mixer-group .sd-mixer-group-label {
+  left: 14px;
+}
+
+/* Full strips */
+
+.sd-studio-next .sd-mixer-strip {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 92px;
+  min-height: 0;
+  padding: 7px 6px 6px;
+  border: 1px solid var(--mx-line);
+  border-top: 2px solid var(--sd-accent, var(--mx-line));
+  border-radius: 9px;
+  background: var(--mx-strip);
+}
+
+.sd-studio-next .sd-mixer-strip.is-track {
+  width: 100px;
+}
+
+.sd-studio-next .sd-mixer-strip.is-return {
+  width: 148px;
+}
+
+.sd-studio-next .sd-mixer-strip.is-master {
+  width: 120px;
+}
+
+.sd-studio-next .sd-mixer-strip-name {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sd-studio-next .sd-mixer-strip-name strong {
+  overflow: hidden;
+  color: var(--mx-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-strip-name span {
+  overflow: hidden;
+  color: var(--mx-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-insert {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 0 6px;
+  border: 1px dashed #3a404b;
+  border-radius: 5px;
+  background: #0d0f12;
+  color: var(--mx-muted);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-insert span {
+  color: var(--sd-accent);
+  font-weight: 700;
+}
+
+.sd-studio-next .sd-mixer-insert strong {
+  overflow: hidden;
+  color: var(--mx-text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-insert[aria-expanded='true'],
+.sd-studio-next .sd-mixer-insert:hover {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, transparent);
+}
+
+.sd-studio-next .sd-mixer-sends,
+.sd-studio-next .sd-mixer-return-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-items: center;
+  gap: 2px;
+}
+
+.sd-studio-next .sd-mixer-sends.is-track {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.sd-studio-next .sd-mixer-return-controls {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sd-studio-next .sd-mixer-dock .sd-knob {
+  grid-template-rows: 11px 28px 11px;
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-dock .sd-knob output {
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-level {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+}
+
+.sd-studio-next .sd-mixer-dock .sd-vfader {
+  grid-template-rows: 11px 1fr 11px;
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-dock .sd-vfader input {
+  width: var(--mx-fader);
+  margin: calc((var(--mx-fader) - 19px) / 2) calc((19px - var(--mx-fader)) / 2);
+}
+
+.sd-studio-next .sd-mixer-dock .sd-vfader output {
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-strip-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sd-studio-next .sd-mixer-strip-buttons button,
+.sd-studio-next .sd-mixer-master-controls button,
+.sd-studio-next .sd-mixer-return-controls button,
+.sd-studio-next .sd-mixer-tempo button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 22px;
+  padding: 0 5px;
+  border: 1px solid var(--mx-line);
+  border-radius: 5px;
+  background: var(--mx-raised);
+  color: #b9bfc8;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-strip-buttons button:hover,
+.sd-studio-next .sd-mixer-master-controls button:hover,
+.sd-studio-next .sd-mixer-return-controls button:hover,
+.sd-studio-next .sd-mixer-tempo button:hover {
+  color: var(--mx-text);
+}
+
+.sd-studio-next .sd-mixer-mute.is-active {
+  border-color: #e0a14e;
+  background: #4a3419;
+  color: #ffd79e;
+}
+
+.sd-studio-next .sd-mixer-solo.is-active {
+  border-color: #d6c34c;
+  background: #463f16;
+  color: #fff0a3;
+}
+
+.sd-studio-next .sd-mixer-cue.is-active,
+.sd-studio-next .sd-mixer-pingpong.is-active,
+.sd-studio-next .sd-mixer-keylock.is-active {
+  border-color: #62f5c8;
+  background: #123a31;
+  color: #b8ffe9;
+}
+
+.sd-studio-next .sd-mixer-limit.is-active,
+.sd-studio-next .sd-mixer-assist.is-active {
+  border-color: #aacaff;
+  background: #1f2d45;
+  color: #dce9ff;
+}
+
+.sd-studio-next .sd-mixer-division {
+  display: grid;
+  grid-column: span 2;
+  align-self: center;
+  gap: 3px;
+  width: 100%;
+  color: var(--mx-muted);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.sd-studio-next .sd-mixer-division select,
+.sd-studio-next .sd-mixer-master-controls select,
+.sd-studio-next .sd-mixer-output select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--mx-line);
+  border-radius: 5px;
+  background: #0d0f12;
+  color: var(--mx-text);
+  font-size: 10px;
+}
+
+.sd-studio-next .sd-mixer-return-controls {
+  align-items: end;
+}
+
+.sd-studio-next .sd-mixer-master-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.sd-studio-next .sd-mixer-master-controls select {
+  grid-column: 1 / -1;
+}
+
+.sd-studio-next .sd-mixer-tempo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.sd-studio-next .sd-mixer-tempo span {
+  display: grid;
+  line-height: 1.1;
+}
+
+.sd-studio-next .sd-mixer-tempo small {
+  color: var(--mx-muted);
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-tempo strong {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.sd-studio-next .sd-mixer-tempo .sd-mixer-keylock {
+  grid-column: 1 / -1;
+}
+
+.sd-studio-next .sd-gain-reduction {
+  color: #aacaff;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* Meters: bars span the whole scale and are revealed by clip-path, so the
+   green / amber / red zones stay at fixed levels (-60 dB floor). */
+
+.sd-studio-next .sd-channel-meter {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.sd-studio-next .sd-channel-meter.is-vertical {
+  flex-direction: column;
+  align-self: stretch;
+  padding-bottom: 11px;
+}
+
+.sd-studio-next .sd-clip-led {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid #3a2020;
+  border-radius: 50%;
+  background: #2a1414;
+}
+
+.sd-studio-next .sd-clip-led.is-clipped {
+  border-color: #ff8a8a;
+  background: #ff4d4d;
+  box-shadow: 0 0 6px #ff4d4d;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-channel-meter-bar {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--mx-meter-bg, #07080a);
+  box-shadow: inset 0 0 0 1px #ffffff0d;
+}
+
+.sd-studio-next .is-vertical > .sd-channel-meter-bar {
+  width: 9px;
+  min-height: 60px;
+}
+
+.sd-studio-next .is-horizontal > .sd-channel-meter-bar {
+  height: 7px;
+  min-width: 60px;
+}
+
+.sd-studio-next .sd-channel-meter-bar i {
+  position: absolute;
+  inset: 0;
+}
+
+.sd-studio-next .is-vertical .sd-meter-peak,
+.sd-studio-next .is-vertical .sd-meter-rms {
+  background: linear-gradient(to top, #37d68d 0%, #37d68d 70%, #f2cf4a 86%, #ff5a5a 99%);
+}
+
+.sd-studio-next .is-horizontal .sd-meter-peak,
+.sd-studio-next .is-horizontal .sd-meter-rms {
+  background: linear-gradient(to right, #37d68d 0%, #37d68d 70%, #f2cf4a 86%, #ff5a5a 99%);
+}
+
+.sd-studio-next .sd-meter-peak {
+  opacity: 0.38;
+}
+
+.sd-studio-next .is-vertical .sd-meter-peak {
+  clip-path: inset(calc((1 - var(--sd-meter-peak, 0)) * 100%) 0 0 0);
+}
+
+.sd-studio-next .is-vertical .sd-meter-rms {
+  clip-path: inset(calc((1 - var(--sd-meter-rms, 0)) * 100%) 0 0 0);
+}
+
+.sd-studio-next .is-horizontal .sd-meter-peak {
+  clip-path: inset(0 calc((1 - var(--sd-meter-peak, 0)) * 100%) 0 0);
+}
+
+.sd-studio-next .is-horizontal .sd-meter-rms {
+  clip-path: inset(0 calc((1 - var(--sd-meter-rms, 0)) * 100%) 0 0);
+}
+
+.sd-studio-next .sd-channel-meter-bar .sd-meter-hold {
+  background: #f4f6f8;
+  opacity: 0.9;
+}
+
+.sd-studio-next .is-vertical .sd-meter-hold {
+  top: auto;
+  bottom: calc(var(--sd-meter-peak, 0) * 100% - 1px);
+  height: 2px;
+}
+
+.sd-studio-next .is-horizontal .sd-meter-hold {
+  right: auto;
+  left: calc(var(--sd-meter-peak, 0) * 100% - 1px);
+  width: 2px;
+}
+
+/* Compact dock: meters only */
+
+.sd-studio-next .sd-mixer-dock.is-compact .sd-mixer-group {
+  gap: 4px;
+  padding-top: 13px;
+}
+
+.sd-studio-next .sd-mixer-chip {
+  display: grid;
+  gap: 4px;
+  width: clamp(84px, 9vw, 108px);
+  padding: 5px 7px 6px;
+  border: 1px solid var(--mx-line);
+  border-left: 2px solid var(--sd-accent, var(--mx-line));
+  border-radius: 6px;
+  background: var(--mx-strip);
+}
+
+.sd-studio-next .sd-mixer-chip header {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sd-studio-next .sd-mixer-chip strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-chip span {
+  overflow: hidden;
+  color: var(--mx-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-chip .sd-gain-reduction {
+  justify-self: end;
+}
+
+/* Headphones */
+
+.sd-studio-next .sd-mixer-headphones {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 176px;
+  padding: 7px 8px;
+  border: 1px solid var(--mx-line);
+  border-top: 2px solid #62f5c8;
+  border-radius: 9px;
+  background: var(--mx-strip);
+}
+
+.sd-studio-next .sd-mixer-headphones .sd-mixer-strip-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sd-studio-next .sd-mixer-cue-modes {
+  display: flex;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sd-studio-next .sd-mixer-cue-modes legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sd-studio-next .sd-mixer-cue-modes label {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  min-height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--mx-line);
+  border-radius: 5px;
+  background: var(--mx-raised);
+  color: #b9bfc8;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-cue-modes label.is-active {
+  border-color: #62f5c8;
+  background: #123a31;
+  color: #b8ffe9;
+}
+
+.sd-studio-next .sd-mixer-cue-modes input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-cue-modes input:disabled {
+  cursor: not-allowed;
+}
+
+.sd-studio-next .sd-mixer-cue-modes label:has(input:disabled) {
+  opacity: 0.45;
+}
+
+.sd-studio-next .sd-mixer-cue-modes label:has(input:focus-visible) {
+  outline: 2px solid #9bd8ca;
+  outline-offset: 1px;
+}
+
+.sd-studio-next .sd-mixer-help {
+  margin: 0;
+  color: var(--mx-muted);
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.sd-studio-next .sd-mixer-help.is-warning {
+  color: #f2cf4a;
+}
+
+.sd-studio-next .sd-mixer-output {
+  display: grid;
+  gap: 3px;
+  color: var(--mx-muted);
+  font-size: 9px;
+}
+
+.sd-studio-next .sd-mixer-output small {
+  font-size: 8px;
+}
+
+.sd-studio-next .sd-mixer-cue-knobs {
+  display: flex;
+  justify-content: space-around;
+}
+
+/* Deck insert chain: a panel above the dock. */
+
+.sd-studio-next .sd-mixer-inserts {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 12px;
+  z-index: 30;
+  width: min(560px, calc(100% - 24px));
+  max-height: min(420px, 60vh);
+  padding: 10px 12px 12px;
+  overflow: auto;
+  border: 1px solid #3a404b;
+  border-radius: 12px;
+  background: #14171c;
+  box-shadow: 0 18px 48px #000000a0;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-chain-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-chain-title strong {
+  font-size: 12px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-chain-title span {
+  margin-left: auto;
+  color: var(--mx-muted);
+  font-size: 10px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-chain-title button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--mx-line);
+  border-radius: 6px;
+  background: var(--mx-raised);
+  color: var(--mx-text);
+}
+
+.sd-studio-next .sd-mixer-inserts-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.sd-studio-next .sd-mixer-inserts-add button,
+.sd-studio-next .sd-mixer-inserts li button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--mx-line);
+  border-radius: 5px;
+  background: var(--mx-raised);
+  color: #cfd4db;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.sd-studio-next .sd-mixer-inserts-add button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sd-studio-next .sd-mixer-inserts ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sd-studio-next .sd-mixer-inserts li {
+  padding: 8px;
+  border: 1px solid var(--mx-line);
+  border-left: 2px solid var(--sd-accent);
+  border-radius: 8px;
+  background: #0f1115;
+}
+
+.sd-studio-next .sd-mixer-inserts li.is-bypassed {
+  opacity: 0.6;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-device-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-device-title {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-device-title span {
+  color: var(--mx-muted);
+  font-family: ui-monospace, monospace;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-parameters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-parameters label {
+  display: grid;
+  gap: 2px;
+  color: var(--mx-muted);
+  font-size: 10px;
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-parameters input {
+  width: 100%;
+  accent-color: var(--sd-accent);
+}
+
+.sd-studio-next .sd-mixer-inserts .ae-rack-empty p {
+  margin: 4px 0;
+  color: var(--mx-muted);
+  font-size: 11px;
+}
+
+/* Perform: pads and the XY effects pad, collapsible under the decks. */
+
+.sd-studio-next .sd-pads-fx {
+  margin-top: 12px;
+}
+
+.sd-studio-next .sd-pads-fx-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+  gap: 12px;
+}
+
+.sd-studio-next .sd-pads-fx[data-panel-collapsed='true'] .sd-pads-fx-body {
+  display: none;
+}
+
+.sd-studio-next .sd-pads-fx .sd-pad-strip {
+  min-width: 0;
+}
+
+.sd-studio-next .sd-performance-xf-options,
+.sd-studio-next .sd-performance-sync {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.sd-studio-next .sd-performance-xf-options select,
+.sd-studio-next .sd-performance-xf-options button,
+.sd-studio-next .sd-performance-sync button {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid #ffffff1a;
+  border-radius: 6px;
+  background: #1e2229;
+  color: #d9dee5;
+  font-size: 12px;
+}
+
+.sd-studio-next .sd-performance-xf-options button.is-active {
+  border-color: #9bd8ca;
+  color: #edf6f3;
+}
+
+@media (max-width: 900px) {
+  .sd-studio-next .sd-mixer-dock.is-full .sd-mixer-dock-body {
+    height: clamp(244px, 42vh, 292px);
+  }
+
+  .sd-studio-next .sd-mixer-dock-hint {
+    display: none;
+  }
+
+  .sd-studio-next .sd-pads-fx-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-studio-next .sd-clip-led.is-clipped {
+    box-shadow: none;
+  }
+}
+
+/* Command bar: the mixer toggle sits after the workspace tabs. */
+
+.sd-session-shell .sd-command-bar .sd-view-nav button.sd-view-nav-toggle {
+  position: relative;
+  margin-left: 4px;
+  padding-left: 20px;
+  border-bottom-color: transparent;
+}
+
+.sd-session-shell .sd-command-bar .sd-view-nav button.sd-view-nav-toggle::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 1px;
+  background: #ffffff1a;
+  content: '';
+}
+
+.sd-session-shell .sd-command-bar .sd-view-nav button.sd-view-nav-toggle.is-active {
+  border-bottom-color: transparent;
+  color: #b8ffe9;
+}
+
+.sd-session-shell .sd-command-bar .sd-view-nav button.sd-view-nav-toggle.is-active svg {
+  color: #62f5c8;
+}
+
+/* Keep the dock's bottom row above a visible status notice. */
+.sd-studio-next .sd-app-frame:has(> .sd-notice[data-visible='true']) > .sd-mixer-dock {
+  margin-bottom: 22px;
+}
+
+/* Content at the end of a workspace scrolls clear of a visible status notice. */
+.sd-studio-next .sd-app-frame:has(> .sd-notice[data-visible='true']) > .sd-workspace {
+  padding-bottom: 22px;
+}

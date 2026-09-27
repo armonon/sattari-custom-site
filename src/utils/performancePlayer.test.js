@@ -265,7 +265,7 @@ it('commits scheduled mixer metadata at audio time without issuing new gain ramp
   expect(rampTo).toHaveBeenCalledExactlyOnceWith(1, 0.025, 10);
 });
 it('master automation uses the same values and smoothing as the live graph at a future audio time', () => {
-  const param = () => ({ rampTo: vi.fn(), setValueAtTime: vi.fn() });
+  const param = () => ({ rampTo: vi.fn(), setValueAtTime: vi.fn(), linearRampTo: vi.fn() });
   const e = {
     masterInputTrim: { gain: param() },
     masterLimiterDrive: { gain: param() },
@@ -313,7 +313,11 @@ it('master automation uses the same values and smoothing as the live graph at a 
     { type: 'setMasterAssist', args: [false] },
     43
   );
-  expect(e.masterCompressor.ratio.setValueAtTime).toHaveBeenCalledWith(1, 43);
+  // The live compressor glides (k-rate threshold/ratio steps click); replay matches it.
+  expect(e.masterCompressor.ratio.linearRampTo).toHaveBeenCalledWith(1, 0.04, 43);
+  expect(e.masterCompressor.threshold.linearRampTo).toHaveBeenCalledWith(-1, 0.04, 43);
+  for (const key of ['threshold', 'ratio', 'attack', 'release'])
+    expect(e.masterCompressor[key].setValueAtTime).not.toHaveBeenCalled();
 });
 
 it('queues stable transport ahead but never applies future rate, pitch or source mutations early', () => {

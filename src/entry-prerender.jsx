@@ -13,6 +13,9 @@ import { mergeCatalog, EMPTY_CATALOG_DOC } from './utils/catalogMerge';
 import { musicGuides } from './data/musicGuides';
 import { toolDetails } from './data/toolDetails';
 
+const LOCAL_SEO_ENTRY = 'src/components/LocalSeoPage.tsx';
+const localPages = Object.values(localSeoPages);
+
 export function getPrerenderRoutes(inventory) {
   const routes = [
     ...[
@@ -32,10 +35,9 @@ export function getPrerenderRoutes(inventory) {
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
     ['/downloads', 'src/pages/DownloadsPage.tsx'],
-    ...Object.values(localSeoPages).map((page) => [
-      new URL(page.url).pathname,
-      'src/components/LocalSeoPage.tsx',
-    ]),
+    ...localPages
+      .filter((page) => !page.canonicalUrl)
+      .map((page) => [new URL(page.url).pathname, LOCAL_SEO_ENTRY]),
     ...[...categories.map((category) => category.key), 'all'].map((key) => [
       `/shop/${key}`,
       'src/pages/Category.jsx',
@@ -47,6 +49,15 @@ export function getPrerenderRoutes(inventory) {
   ].map(([path, entry]) => ({ path, entry, indexable: true }));
   return [
     ...routes,
+    // Public pages that canonicalize to another URL: prerendered, but left out
+    // of the sitemap, which lists canonical URLs only.
+    ...localPages
+      .filter((page) => page.canonicalUrl)
+      .map((page) => ({
+        path: new URL(page.url).pathname,
+        entry: LOCAL_SEO_ENTRY,
+        indexable: false,
+      })),
     ...[
       ['/cart', 'src/pages/CartPage.tsx'],
       ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],

@@ -1,6 +1,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { forgetCheckoutSession, releaseCheckoutSession } from '../hooks/useCheckout';
 import { fetchCheckoutSessionStatus } from '../utils/checkout';
 import '../styles-cart-page-premium.css';
 
@@ -13,6 +14,30 @@ export default function CheckoutStatus() {
   const [verificationState, setVerificationState] = useState(isSuccess ? 'loading' : 'canceled');
   const [checkoutSession, setCheckoutSession] = useState(null);
   const [verificationError, setVerificationError] = useState('');
+  const clearCartRef = useRef(clearCart);
+  // One status request per session id. When the effect runs again (StrictMode
+  // does this in development) it reuses the request instead of asking again.
+  const verificationRef = useRef(null);
+  // Likewise one release request per canceled session.
+  const releasedRef = useRef(null);
+
+  useEffect(() => {
+    clearCartRef.current = clearCart;
+  }, [clearCart]);
+
+  // Stripe only returns here once the session is complete, so there is
+  // nothing left for the next checkout to replace.
+  useEffect(() => {
+    if (isSuccess) forgetCheckoutSession(sessionId);
+  }, [isSuccess, sessionId]);
+
+  // The shopper left Stripe without paying: put the stock the session was
+  // holding back on sale now rather than when it times out.
+  useEffect(() => {
+    if (isSuccess || !sessionId || releasedRef.current === sessionId) return;
+    releasedRef.current = sessionId;
+    releaseCheckoutSession(sessionId);
+  }, [isSuccess, sessionId]);
 
   useEffect(() => {
     if (!isSuccess) {
@@ -25,45 +50,42 @@ export default function CheckoutStatus() {
       return;
     }
 
+    if (verificationRef.current?.sessionId !== sessionId) {
+      verificationRef.current = { sessionId, request: fetchCheckoutSessionStatus(sessionId) };
+      setVerificationState('loading');
+      setVerificationError('');
+    }
+
     let isActive = true;
 
-    async function verifySession() {
-      try {
-        setVerificationState('loading');
-        setVerificationError('');
-
-        const session = await fetchCheckoutSessionStatus(sessionId);
-        if (!isActive) {
-          return;
-        }
+    verificationRef.current.request.then(
+      (session) => {
+        if (!isActive) return;
 
         setCheckoutSession(session);
 
         if (session.payment_status === 'paid') {
-          clearCart();
+          clearCartRef.current();
           setVerificationState('verified');
           return;
         }
 
         setVerificationState('pending');
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
+      },
+      (error) => {
+        if (!isActive) return;
 
         setVerificationError(
           error instanceof Error ? error.message : 'Unable to verify checkout status.'
         );
         setVerificationState('error');
       }
-    }
-
-    verifySession();
+    );
 
     return () => {
       isActive = false;
     };
-  }, [clearCart, isSuccess, sessionId]);
+  }, [isSuccess, sessionId]);
 
   const statusContent = useMemo(() => {
     if (!isSuccess) {
@@ -169,9 +191,9 @@ export default function CheckoutStatus() {
             <p>
               <strong>Checkout session:</strong> {checkoutSession.id}
             </p>
-            {checkoutSession.customer_email && (
+            {checkoutSession.customer_email_masked && (
               <p>
-                <strong>Email:</strong> {checkoutSession.customer_email}
+                <strong>Email:</strong> {checkoutSession.customer_email_masked}
               </p>
             )}
             {formattedTotal && (

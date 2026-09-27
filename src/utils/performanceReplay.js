@@ -1,14 +1,202 @@
 import { audioClip, audioTrack, bounded, validateArrangement } from './arrangementModel';
-import { crossfaderGains, gainFromPercent } from './studioAudioEngine';
+import { crossfaderGains, gainFromPercent, validPerformanceInput } from './studioAudioEngine';
 import { masterStemGain, normalizeMasterStems } from './masterOutput';
 import { performanceAudioTime } from './performanceClock';
 import { RECONSTRUCTION_EVENTS, performanceSupportForTake } from './performanceSupport';
+import {
+  SyncClock,
+  beatSyncCorrection,
+  leaderTempo,
+  sourceBeat,
+  tempoFollowRate,
+} from './syncClock';
+
+const TRANSPORT_EVENTS = new Set([
+  'playDeck',
+  'pauseDeck',
+  'stopDeck',
+  'seekDeck',
+  'setPlaybackRate',
+  'deckTransport',
+]);
+// Live controller periods (beat sync 25 ms, tempo follow 100 ms) and the rate
+// change that starts a new clip piece.
+const SYNC_STEP = 0.025,
+  FOLLOW_STEPS = 4,
+  RATE_TOLERANCE = 0.001;
+
+const loopedPosition = ({ position, looping, loopStart, loopEnd }) =>
+  looping && loopEnd > loopStart && position >= loopEnd
+    ? loopStart + ((position - loopStart) % (loopEnd - loopStart))
+    : position;
+
+// Takes journal sync intent, not the controllers' continuous corrections. Re-run
+// the live controllers over the reconstructed transport so reopened clips keep
+// their tempo and phase lock. Steps within 0.1% merge into one constant-rate
+// piece at its time-weighted average rate, so every piece boundary is phase-exact.
+function syncRateSchedules(events, initial, start, duration) {
+  const schedules = new Map();
+  if (!events.some((event) => ['setDeckSync', 'setTempoFollow'].includes(event.type)))
+    return schedules;
+  const decks = new Map();
+  const deckState = (id) => {
+    if (!decks.has(id)) {
+      const deck = initial.decks.find((item) => item.id === id) || {};
+      decks.set(id, {
+        playing: !!deck.playing,
+        position: deck.position || 0,
+        rate: deck.playbackRate || 1,
+        at: start,
+        looping: !!deck.looping,
+        loopStart: deck.loopStart || 0,
+        loopEnd: deck.loopEnd || 0,
+        accurate: events.some((event) => event.type === 'deckTransport' && event.args[0] === id),
+        history: [{ time: start, rate: deck.playbackRate || 1, hard: true }],
+      });
+    }
+    return decks.get(id);
+  };
+  for (const deck of initial.decks) deckState(deck.id);
+  const followers = new Map(),
+    tempoFollowers = new Map(),
+    derived = new Set();
+  let clock = null;
+  const advance = (deck, time) => {
+    if (deck.playing && time > deck.at) {
+      deck.position += (time - deck.at) * deck.rate;
+      deck.position = loopedPosition(deck);
+    }
+    deck.at = time;
+  };
+  const setRate = (deck, rate, time, hard = false) => {
+    deck.rate = rate;
+    deck.history.push({ time, rate, hard });
+  };
+  const step = (time, index) => {
+    for (const deck of decks.values()) advance(deck, time);
+    for (const [id, { grid, reference }] of clock ? followers : []) {
+      const deck = decks.get(id);
+      if (!deck.playing) continue;
+      const master = reference && decks.get(reference.id);
+      const masterPosition = master?.playing ? loopedPosition(master) : 0;
+      const { rate } = beatSyncCorrection({
+        position: loopedPosition(deck),
+        grid,
+        target: master?.playing ? sourceBeat(masterPosition, reference) : clock.beatAt(time),
+        leaderBpm: master?.playing
+          ? leaderTempo(reference, masterPosition, master.rate)
+          : clock.bpmAt(time),
+      });
+      if (Number.isFinite(rate) && Math.abs(rate - deck.rate) > 0.00005) setRate(deck, rate, time);
+    }
+    if (index % FOLLOW_STEPS) return;
+    for (const [id, { beats, targetBpm }] of tempoFollowers) {
+      const deck = decks.get(id);
+      if (!deck.playing || followers.has(id)) continue;
+      const rate = tempoFollowRate(targetBpm, beats, loopedPosition(deck));
+      if (Number.isFinite(rate) && Math.abs(rate - deck.rate) > 0.001) setRate(deck, rate, time);
+    }
+  };
+  let index = Math.ceil(start / SYNC_STEP);
+  const run = (until) => {
+    for (; index * SYNC_STEP < until; index++) step(index * SYNC_STEP, index);
+  };
+  for (const event of events) {
+    if (event.type === 'initialState' || event.time > duration) continue;
+    const time = bounded(event.time, 0, duration),
+      [id, value, extra] = event.args;
+    run(time);
+    if (event.type === 'setProjectTempo') {
+      const beat = Number.isFinite(value) ? value : (clock?.beatAt(time) ?? 0);
+      if (Number(id) > 0) clock = new SyncClock(Number(id), time, beat);
+      continue;
+    }
+    if (event.type === 'setDeckSync') {
+      deckState(id);
+      if (value && extra?.bpm > 0) {
+        followers.set(id, { grid: extra, reference: event.args[3] });
+        derived.add(id);
+      } else followers.delete(id);
+      continue;
+    }
+    if (event.type === 'setTempoFollow') {
+      deckState(id);
+      if (value?.length > 1) {
+        tempoFollowers.set(id, { beats: value, targetBpm: extra });
+        derived.add(id);
+      } else tempoFollowers.delete(id);
+      continue;
+    }
+    const loop = ['setLoop', 'setLoopRegion'].includes(event.type);
+    if (typeof id !== 'string' || !(loop || TRANSPORT_EVENTS.has(event.type))) continue;
+    const deck = deckState(id);
+    if (loop) {
+      advance(deck, time);
+      deck.position = loopedPosition(deck);
+      deck.looping = !!value;
+      deck.loopStart = event.type === 'setLoop' ? 0 : Math.max(0, Number(extra) || 0);
+      deck.loopEnd =
+        event.type === 'setLoop'
+          ? Math.max(0.25, 240 / Math.max(1, Number(extra) || 120))
+          : Math.max(deck.loopStart + 0.05, Number(event.args[3]) || deck.loopStart + 1);
+      continue;
+    }
+    if (deck.accurate && event.type !== 'deckTransport') continue;
+    advance(deck, time);
+    let rate = deck.rate;
+    if (event.type === 'deckTransport') {
+      deck.position = value.position;
+      rate = bounded(value.rate, 0.25, 4, 1);
+      deck.playing = value.playing;
+    } else if (event.type === 'playDeck') {
+      deck.playing = true;
+      if (value != null) deck.position = value;
+    } else if (event.type === 'seekDeck') deck.position = Math.max(0, value);
+    else if (event.type === 'setPlaybackRate') rate = bounded(value, 0.25, 4, 1);
+    else {
+      deck.playing = false;
+      if (event.type === 'stopDeck' && value !== false) deck.position = 0;
+    }
+    setRate(deck, rate, time, true);
+  }
+  run(duration);
+  for (const id of derived) {
+    const { history } = decks.get(id);
+    const pieces = [];
+    for (let i = 0; i < history.length; ) {
+      let j = i + 1;
+      while (
+        j < history.length &&
+        !history[j].hard &&
+        Math.abs(history[j].rate - history[i].rate) <= RATE_TOLERANCE * history[i].rate
+      )
+        j++;
+      const end = j < history.length ? history[j].time : duration;
+      let travelled = 0;
+      for (let k = i; k < j; k++)
+        travelled += history[k].rate * ((k + 1 < j ? history[k + 1].time : end) - history[k].time);
+      pieces.push({
+        time: history[i].time,
+        rate: end > history[i].time ? travelled / (end - history[i].time) : history[i].rate,
+      });
+      i = j;
+    }
+    schedules.set(id, pieces);
+  }
+  return schedules;
+}
 
 // Reconstruct source edits, never apply processing again to a printed reference.
 // Unsupported DSP stays explicitly reported; the safety take remains untouched.
 export function reconstructPerformance(project, capture) {
-  const events = (capture.events || [])
-    .filter((event) => !event.disabled)
+  const enabled = (capture.events || []).filter((event) => !event.disabled);
+  // A damaged row (NaN/Infinity) is skipped exactly as replay skips it.
+  const valid = enabled.filter(
+    (event) =>
+      Number.isFinite(performanceAudioTime(event, event.sampleRate || 48000, 0)) &&
+      (event.type === 'initialState' || validPerformanceInput(event.type, event.args || []))
+  );
+  const events = valid
     .map((event, index) => ({
       ...event,
       index,
@@ -34,8 +222,18 @@ export function reconstructPerformance(project, capture) {
   const timeline = capture.timelineStart || 0,
     warnings = new Set(),
     tracks = [];
+  if (valid.length < enabled.length) {
+    console.warn(
+      'Reconstruction skipped damaged events.',
+      enabled.filter((e) => !valid.includes(e))
+    );
+    warnings.add(
+      `${enabled.length - valid.length} damaged event(s) with invalid values were skipped.`
+    );
+  }
   const supported = new Set(RECONSTRUCTION_EVENTS);
   for (const event of events) if (!supported.has(event.type)) warnings.add(event.type);
+  const rateSchedules = syncRateSchedules(events, initial, snapshot.time || 0, duration);
   const allDecks = structuredClone(initial.decks);
   for (const event of events) {
     if (
@@ -123,58 +321,72 @@ export function reconstructPerformance(project, capture) {
         points.push({ time: timeline + time + (time ? 0.025 : 0), value });
       }
     };
-    const append = (end) => {
-      if (playing && end > previous) {
-        for (const row of rows) {
-          if (!row.lane.assetId) continue;
-          const length = row.lane.duration || deck.duration || 0;
-          const loopStart = Math.max(0, deck.loopStart || 0);
-          const loopEnd = Math.min(length, deck.loopEnd || length);
-          const looping = deck.looping && loopEnd > loopStart;
-          let position = offset,
-            at = previous;
-          while (at < end - 0.000001) {
-            if (looping && position >= loopEnd)
-              position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
-            const available = Math.min(end - at, ((looping ? loopEnd : length) - position) / rate);
-            if (available < 0.000001) break;
-            if (available < 0.001) {
-              warnings.add(
-                'Sub-millisecond source fragments cannot be represented as arrangement clips; keep the printed reference.'
-              );
-              at += available;
-              position += available * rate;
-              continue;
-            }
-            if (row.track.clips.length >= 20000)
-              throw new Error(
-                'This performance expands beyond 20,000 loop regions. Shorten the take before reconstruction.'
-              );
-            row.track.clips.push({
-              ...audioClip(
-                row.lane.assetId,
-                row.lane.name || deck.title || `${deck.id} · ${row.id}`,
-                available,
-                timeline + at
-              ),
-              offset: position,
-              sourceDuration: length,
-              rate,
-              fadeIn: 0,
-              fadeOut: 0,
-              mixGain: 81,
-              ...(looping ? { performanceLoop: { start: loopStart, end: loopEnd } } : {}),
-            });
+    // Emit source intervals for [previous, end) at one constant rate.
+    const emit = (end, rate) => {
+      for (const row of rows) {
+        if (!row.lane.assetId) continue;
+        const length = row.lane.duration || deck.duration || 0;
+        const loopStart = Math.max(0, deck.loopStart || 0);
+        const loopEnd = Math.min(length, deck.loopEnd || length);
+        const looping = deck.looping && loopEnd > loopStart;
+        let position = offset,
+          at = previous;
+        while (at < end - 0.000001) {
+          if (looping && position >= loopEnd)
+            position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
+          const available = Math.min(end - at, ((looping ? loopEnd : length) - position) / rate);
+          if (available < 0.000001) break;
+          if (available < 0.001) {
+            warnings.add(
+              'Sub-millisecond source fragments cannot be represented as arrangement clips; keep the printed reference.'
+            );
             at += available;
             position += available * rate;
-            if (!looping) break;
+            continue;
           }
+          if (row.track.clips.length >= 20000)
+            throw new Error(
+              'This performance expands beyond 20,000 loop regions. Shorten the take before reconstruction.'
+            );
+          row.track.clips.push({
+            ...audioClip(
+              row.lane.assetId,
+              row.lane.name || deck.title || `${deck.id} · ${row.id}`,
+              available,
+              timeline + at
+            ),
+            offset: position,
+            sourceDuration: length,
+            rate,
+            fadeIn: 0,
+            fadeOut: 0,
+            mixGain: 81,
+            ...(looping ? { performanceLoop: { start: loopStart, end: loopEnd } } : {}),
+          });
+          at += available;
+          position += available * rate;
+          if (!looping) break;
         }
-        offset += (end - previous) * rate;
-        if (deck.looping && deck.loopEnd > (deck.loopStart || 0) && offset >= deck.loopEnd)
-          offset =
-            (deck.loopStart || 0) +
-            ((offset - (deck.loopStart || 0)) % (deck.loopEnd - (deck.loopStart || 0)));
+      }
+      offset += (end - previous) * rate;
+      if (deck.looping && deck.loopEnd > (deck.loopStart || 0) && offset >= deck.loopEnd)
+        offset =
+          (deck.loopStart || 0) +
+          ((offset - (deck.loopStart || 0)) % (deck.loopEnd - (deck.loopStart || 0)));
+      previous = end;
+    };
+    // Synced decks follow their re-derived rate pieces; others keep journaled rates.
+    const schedule = rateSchedules.get(original.id);
+    let piece = 0;
+    const append = (end) => {
+      while (playing && end > previous) {
+        if (!schedule) {
+          emit(end, rate);
+          break;
+        }
+        while (piece + 1 < schedule.length && schedule[piece + 1].time <= previous) piece++;
+        const boundary = schedule[piece + 1]?.time;
+        emit(boundary > previous && boundary < end ? boundary : end, schedule[piece].rate);
       }
       previous = end;
     };

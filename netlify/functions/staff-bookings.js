@@ -3,15 +3,15 @@ import { bookingConfig } from '../../server/studioBookingConfig.js';
 import { readBookings } from '../../server/studioBookingStore.js';
 import {
   approveBooking,
+  bookingJson as json,
   cancelUnpaidBooking,
   declineBooking,
   reconcileBooking,
   retryBookingNotifications,
 } from '../../server/studioBookings.js';
-import { json } from './studio-bookings.js';
 
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) return json(401, { error: 'Sign in to continue.' });
   try {
     if (event.httpMethod === 'GET') {
@@ -44,11 +44,18 @@ export async function handler(event) {
     await actions[payload.action](event, payload.id, session.staff);
     return json(200, { ok: true });
   } catch (error) {
+    // Only messages written for staff are shown; provider and storage errors
+    // (Stripe errors carry a statusCode too) are logged, never echoed.
+    const status = error?.expose ? error.statusCode : 503;
     console.error(
-      JSON.stringify({ type: 'staff-booking-action-failed', status: error.statusCode || 503 })
+      JSON.stringify({
+        type: 'staff-booking-action-failed',
+        status,
+        ...(error?.expose ? {} : { name: error?.name, message: error?.message }),
+      })
     );
-    return json(error.statusCode || 503, {
-      error: error.statusCode
+    return json(status, {
+      error: error?.expose
         ? error.message
         : 'Unable to finish this action. The request is saved; reload to check its status before retrying.',
     });

@@ -4,6 +4,7 @@ import {
   BACKUP_VERSION,
   buildSnapshot,
   describeSnapshot,
+  reconcileRestoredFulfillment,
   selectExpired,
   snapshotKey,
   validateSnapshot,
@@ -102,6 +103,42 @@ describe('selectExpired', () => {
 
   it('ignores keys that are not snapshots', () => {
     expect(selectExpired(['some-other-blob', ...keys.slice(0, 3)], 1)).toHaveLength(2);
+  });
+});
+
+describe('reconcileRestoredFulfillment', () => {
+  it('rolls back what the backup covers and keeps every live entry it does not', () => {
+    const { doc, kept } = reconcileRestoredFulfillment({
+      snapshot: buildSnapshot({
+        fulfillment: { cs_old: { status: 'packed' }, cs_skewed: { status: 'new' } },
+        at: AT,
+      }),
+      live: {
+        cs_old: { status: 'shipped' },
+        cs_untouched: { status: 'collected' },
+        cs_skewed: { status: 'shipped' },
+        cs_new: { status: 'packed' },
+      },
+      orders: [
+        { id: 'cs_old', recordedAt: '2026-08-12T09:00:00.000Z' },
+        { id: 'cs_untouched', recordedAt: '2026-08-12T10:00:00.000Z' },
+        // Recorded after the backup by its own clock, whatever the backup holds.
+        { id: 'cs_skewed', recordedAt: '2026-08-13T09:00:01.000Z' },
+        { id: 'cs_new', recordedAt: '2026-08-13T10:00:00.000Z' },
+      ],
+    });
+
+    expect(doc).toEqual({
+      cs_old: { status: 'packed' },
+      cs_untouched: { status: 'collected' },
+      cs_skewed: { status: 'shipped' },
+      cs_new: { status: 'packed' },
+    });
+    expect(kept).toEqual([
+      { orderId: 'cs_untouched', status: 'collected', reason: 'not_in_backup' },
+      { orderId: 'cs_skewed', status: 'shipped', reason: 'placed_after_backup' },
+      { orderId: 'cs_new', status: 'packed', reason: 'placed_after_backup' },
+    ]);
   });
 });
 

@@ -1,4 +1,4 @@
-import { STOCK_BLOB_KEY, STOCK_STORE, sanitizeStockMap } from '../../src/utils/inventory.js';
+import { availableStock } from '../../src/utils/inventory.js';
 import {
   CATALOG_BLOB_KEY,
   CATALOG_STORE,
@@ -6,6 +6,7 @@ import {
   sanitizeCatalogDoc,
 } from '../../src/utils/catalogMerge.js';
 import { isConsistencyDegraded, openStore } from '../../server/blobs.js';
+import { readInventory } from '../../server/stockStore.js';
 
 function json(statusCode, body) {
   return {
@@ -41,15 +42,16 @@ export async function handler(event) {
     // Strong consistency, not the eventual default: an employee who sets a
     // count expects to see it on the storefront immediately, and a stale read
     // right after a sale is what allows overselling.
-    const stockStore = openStore(event, STOCK_STORE);
     const catalogStore = openStore(event, CATALOG_STORE);
 
-    const [rawStock, rawCatalog] = await Promise.all([
-      stockStore.get(STOCK_BLOB_KEY, { type: 'json' }),
+    const [inventory, rawCatalog] = await Promise.all([
+      readInventory(event),
       catalogStore.get(CATALOG_BLOB_KEY, { type: 'json' }),
     ]);
 
-    stock = sanitizeStockMap(rawStock);
+    // Units in someone else's open checkout are not for sale, so the badge
+    // reads what checkout will actually accept.
+    stock = availableStock(inventory.stock, inventory.holds, Date.now());
     if (rawCatalog) catalog = sanitizeCatalogDoc(rawCatalog);
   } catch (error) {
     // Degrade rather than fail the storefront. An empty stock map means every

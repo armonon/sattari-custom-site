@@ -47,14 +47,14 @@ export const businessSchema = {
   image: absoluteUrl('/sattari site/sattari logo.png'),
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Musical instruments, cymbals, accessories, repairs, rentals and lessons in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
+    'Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
 };
 
 export const PAGE_SEO = {
   home: {
-    title: 'Instruments, Local Services & Online Music Tools',
+    title: 'Woodland Hills Music Store & Drum Shop',
     description:
-      'Find your sound at Sattari Music. Shop instruments, book repairs and rehearsal time in Woodland Hills, or create, learn and separate stems in Sattari Hub.',
+      'Shop cymbals, drumsticks, violins and guitars at Sattari Music in Woodland Hills. Instrument repairs, lessons and rehearsal space near Encino and Calabasas.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
   },
@@ -65,46 +65,46 @@ export const PAGE_SEO = {
     url: `${SITE_ORIGIN}/about`,
   },
   shop: {
-    title: 'Shop Musical Instruments & Accessories',
+    title: 'Musical Instruments for Sale | Woodland Hills',
     description:
-      'Shop Sattari cymbals, drumsticks, violins, guitars, bass and practice essentials online, with local instrument support in Woodland Hills, Los Angeles.',
+      'Browse cymbals, drumsticks, acoustic and electric violins, guitars and bass. Shop Sattari online or ask our Woodland Hills music store about your next instrument.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
-    title: 'Instrument Repair, Rentals & Lessons | Woodland Hills',
+    title: 'Repairs, Rentals & Music Lessons | Woodland Hills',
     description:
-      'Request instrument repair, rentals, music lessons or rehearsal space in Woodland Hills. Local support for musicians in Encino, Calabasas and Los Angeles.',
+      'Request guitar, violin or drum repair, instrument rentals, music lessons and rehearsal space in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
     url: `${SITE_ORIGIN}/services`,
   },
   repair: {
-    title: 'Instrument Repair | Woodland Hills & Los Angeles',
+    title: 'Los Angeles Instrument Repair Shop | Woodland Hills',
     description:
-      'Guitar, violin, drum and hardware repair in Woodland Hills. Ask Sattari Music about setups, tuning and repairs near Encino and Calabasas in Los Angeles.',
+      'Guitar, violin, drum and percussion repair support at Sattari Music in Woodland Hills. Describe the issue and request an assessment before bringing in your gear.',
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
   },
   hub: {
-    title: 'Sattari Hub | Online Music Tools',
+    title: 'Online Music Tools | Separate, Learn & Create',
     description:
       'Explore Sattari Stem Separator, Studio and Learn: separate vocals, drums and bass, create music in your browser, and analyze songs for practice.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
   },
   separator: {
-    title: 'Stem Separator & Vocal Remover Online',
+    title: 'Stem Separator, Vocal Remover & BPM Finder',
     description:
-      'Separate vocals, drums, bass and instruments from multiple songs in your browser. Choose your stems and download WAV files. Audio stays on your device.',
+      'Split songs into vocals, drums, bass and instruments. Batch-separate tracks, estimate key and BPM, and download WAV stems. Audio stays on your device.',
     url: `${SITE_ORIGIN}/stem-separator`,
     image: '/images/tools/separator.jpg',
   },
   studio: {
-    title: 'Sattari Studio | StemDeck Browser DAW',
+    title: 'StemDeck Online | Browser Music Studio',
     description:
       'Create and remix with StemDeck in Sattari Studio. A browser DAW with deck mixing, audio recording, MIDI instruments, an arranger and WAV export.',
     url: `${SITE_ORIGIN}/studio`,
     image: '/images/tools/studio.jpg',
   },
   learn: {
-    title: 'Sattari Learn | Song Key, Chords & Rhythm Practice',
+    title: 'Song Key, Chords & Rhythm Practice | Sattari Learn',
     description:
       'Explore song key, chord and tempo estimates with Sattari Learn. Build piano, guitar, bass and drum practice around your own audio in the browser.',
     url: `${SITE_ORIGIN}/learn`,
@@ -112,34 +112,87 @@ export const PAGE_SEO = {
   },
 };
 
-export const CATEGORY_SEO = {
+export const CATEGORY_LOCAL_HELP = {
   cymbals: {
-    title: 'Handcrafted Cymbals, Hi-Hats & Splashes',
-    description:
-      'Shop Sattari handcrafted cymbals, hi-hats and splashes. Explore cymbal options online with musician support from our Woodland Hills, Los Angeles shop.',
+    title: 'Choose cymbals with local support',
+    copy: 'A hi-hat, crash and splash have different jobs in a kit. Share your playing style and current setup with our Woodland Hills team before choosing your next cymbal.',
+    links: [
+      { label: 'Woodland Hills drum shop', to: '/woodland-hills-drum-shop' },
+      { label: 'Instrument repair and tuning', to: '/services/instrument-repair-los-angeles' },
+    ],
   },
   sticks: {
-    title: 'Drumsticks & Drumstick Bundles',
-    description:
-      'Shop Sattari hickory and maple drumsticks, specialty sticks and bundles for practice, rehearsals and gigs. Musician gear from Woodland Hills, California.',
+    title: 'Find your next pair of sticks',
+    copy: 'Compare wood, tip and size on each listing. Our Woodland Hills shop can help with questions about sticks for practice, rehearsals and your current kit.',
+    links: [
+      { label: 'Drum gear in Woodland Hills', to: '/woodland-hills-drum-shop' },
+      { label: 'Practice pads and accessories', to: '/shop/essentials' },
+    ],
   },
   essentials: {
-    title: 'Drum Accessories & Practice Essentials',
-    description:
-      'Find practice pads, cymbal felts, bags and instrument accessories from Sattari Music. Shop online or ask our Woodland Hills team about your setup.',
+    title: 'Complete your practice setup',
+    copy: 'Check pad dimensions, accessory compatibility and what is included before ordering. Need help with a part or setup issue? Send the instrument model and a description to our Woodland Hills team.',
+    links: [
+      { label: 'Local drum shop', to: '/woodland-hills-drum-shop' },
+      { label: 'Repair and setup inquiries', to: '/services/instrument-repair-los-angeles' },
+    ],
   },
   violins: {
-    title: 'Acoustic, Electric & Silent Violins',
-    description:
-      'Shop Sattari acoustic, electric and silent violins, fitted and tuned in California. Find your violin with local support in Woodland Hills, Los Angeles.',
+    title: 'Violin guidance near Encino',
+    copy: "Shopping for your first violin or comparing acoustic and electric models? Start with your teacher's size requirements, playing goals and budget. Our shop is in Woodland Hills and serves Encino musicians.",
+    links: [
+      { label: 'Choosing a violin near Encino', to: '/encino-violin-shop' },
+      { label: 'Violin repair and setup', to: '/services/violin-repair-los-angeles' },
+    ],
   },
   'guitar-bass': {
-    title: 'Guitars, Bass & Guitar Accessories',
-    description:
-      'Shop electric and acoustic guitars, bass and accessories from Sattari Music. Instruments set up in California, with local support in Woodland Hills.',
+    title: 'Guitar and bass support in Woodland Hills',
+    copy: "Compare each instrument's specifications, then ask about fit, feel or setup before arranging a visit. We also take string, tuning and playability inquiries for instruments you already own.",
+    links: [
+      { label: 'Guitar and bass setup', to: '/services/guitar-setup-los-angeles' },
+      { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
+    ],
   },
   all: {
-    title: 'All Instruments, Cymbals & Music Accessories',
+    title: 'Shop online or plan a local visit',
+    copy: 'Sattari Music is based at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Contact us to confirm hours and in-store availability before visiting.',
+    links: [
+      { label: 'Visit our Woodland Hills music store', to: '/woodland-hills-music-store' },
+      { label: 'Repairs, rentals and lessons', to: '/services' },
+    ],
+  },
+};
+
+export const CATEGORY_SEO = {
+  cymbals: {
+    title: 'Cymbals & Hi-Hats for Sale | Woodland Hills',
+    description:
+      'Compare Sattari Pirouz cymbals, hi-hats, splashes and effects. Shop online with drum gear and setup support from our Woodland Hills music store.',
+  },
+  sticks: {
+    title: 'Drumsticks & Bundles | Woodland Hills Drum Gear',
+    description:
+      'Shop hickory and maple drumsticks, 5A and 7A options, nylon tips and bundles. Practice and gig essentials from Sattari Music in Woodland Hills, Los Angeles.',
+  },
+  essentials: {
+    title: 'Practice Pads & Drum Accessories | Los Angeles',
+    description:
+      'Find drum practice pads, cymbal felts, stick bags and percussion accessories. Browse Sattari online or ask our Woodland Hills team what fits your setup.',
+  },
+  // The one violins page in search results: /shop/violins-los-angeles
+  // canonicalizes here.
+  violins: {
+    title: 'Violins for Sale | Woodland Hills, Los Angeles',
+    description:
+      'Compare acoustic, electric and silent violins, plus strings and rosin. Sattari Music in Woodland Hills offers violin setup and repair support near Encino.',
+  },
+  'guitar-bass': {
+    title: 'Guitars & Bass for Sale | Woodland Hills',
+    description:
+      'Shop electric, steel-string and nylon-string guitars, bass and accessories. Ask Sattari in Woodland Hills about setup and repair support near Calabasas.',
+  },
+  all: {
+    title: 'All Instruments & Accessories | Sattari Catalog',
     description:
       'Browse the complete Sattari Music catalog: cymbals, sticks, violins, guitars, bass and accessories. Shop online with support from Woodland Hills, California.',
   },

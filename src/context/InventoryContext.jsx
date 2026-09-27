@@ -29,7 +29,10 @@ export function InventoryProvider({ children, initialInventory = null }) {
       const payload = await response.json();
       setStock(sanitizeStockMap(payload?.stock));
       setCatalogDoc(payload?.catalog || EMPTY_CATALOG_DOC);
-      setStatus('ready');
+      // A degraded response is the server's read failing: it renders like the
+      // base catalog, but must not be mistaken for the complete one (the cart
+      // prunes against a ready catalog).
+      setStatus(payload?.degraded ? 'error' : 'ready');
     } catch (error) {
       if (error?.name === 'AbortError') return;
       // An empty map means "nothing is tracked", which reads as available

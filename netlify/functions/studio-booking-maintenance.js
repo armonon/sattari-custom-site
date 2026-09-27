@@ -1,9 +1,21 @@
-import { patchBooking, readBookings } from '../../server/studioBookingStore.js';
+import {
+  archivePastBookings,
+  patchBooking,
+  readBookings,
+} from '../../server/studioBookingStore.js';
 import { reconcileBooking } from '../../server/studioBookings.js';
 import { deliverBookingNotifications } from '../../server/studioBookingNotifications.js';
 
 export async function handler(event) {
-  const bookings = Object.values(await readBookings(event));
+  let bookings;
+  try {
+    bookings = Object.values(await readBookings(event));
+  } catch (error) {
+    console.error(
+      JSON.stringify({ type: 'studio-booking-maintenance-read-failed', message: error?.message })
+    );
+    return { statusCode: 503 };
+  }
   const candidates = bookings
     .filter(
       (booking) =>
@@ -27,6 +39,16 @@ export async function handler(event) {
     } catch {
       console.error(
         JSON.stringify({ type: 'studio-booking-maintenance-failed', bookingId: booking.id })
+      );
+    }
+  }
+  if (Date.now() < deadline) {
+    try {
+      const archived = await archivePastBookings(event);
+      if (archived) console.log(JSON.stringify({ type: 'studio-booking-archived', archived }));
+    } catch (error) {
+      console.error(
+        JSON.stringify({ type: 'studio-booking-archive-failed', message: error?.message })
       );
     }
   }

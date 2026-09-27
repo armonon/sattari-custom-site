@@ -1,4 +1,4 @@
-import { it, expect } from 'vitest';
+import { it, expect, vi } from 'vitest';
 import {
   reconstructPerformance,
   performanceAssetIds,
@@ -224,4 +224,136 @@ it('reports sub-millisecond loop fragments without creating an invalid project',
   const result = reconstructPerformance(emptyArrangement(), take);
   expect(result.tracks[0].clips).toHaveLength(3);
   expect(result.warnings.join(' ')).toContain('Sub-millisecond');
+});
+
+it('re-derives journaled sync intent into tempo- and phase-locked follower regions', () => {
+  // A leads at 120 BPM. B (100 BPM grid) opens 0.25 beat early and later lands a
+  // user seek 0.35 beat off; only intent and user transport are journaled.
+  const lane = (assetId) => ({ fullMix: { assetId, duration: 600 } });
+  const grid = (id, bpm) => ({ id, bpm, beatOffset: 0, syncQuantum: 1, followTempoMap: false });
+  const take = {
+    assetId: 'safety',
+    duration: 40,
+    timelineStart: 0,
+    events: [
+      {
+        time: 0,
+        type: 'initialState',
+        args: [
+          {
+            decks: [
+              { id: 'A', playing: true, position: 0, playbackRate: 1, lanes: lane('a') },
+              { id: 'B', playing: true, position: 0.15, playbackRate: 1.2, lanes: lane('b') },
+            ],
+          },
+        ],
+      },
+      { time: 0, scheduledTime: 0, type: 'setProjectTempo', args: [120, 0] },
+      {
+        time: 0,
+        scheduledTime: 0,
+        type: 'setDeckSync',
+        args: ['B', true, grid('B', 100), grid('A', 120)],
+      },
+      { time: 0, type: 'deckTransport', args: ['A', { position: 0, playing: true, rate: 1 }] },
+      {
+        time: 20,
+        type: 'deckTransport',
+        args: ['B', { action: 'seek', position: 60.21, playing: true, rate: 1.2034 }],
+      },
+    ],
+  };
+  const { tracks } = reconstructPerformance(emptyArrangement(), take);
+  const clips = tracks.find((track) => track.name.includes('Replay B')).clips;
+  const positionAt = (time) => {
+    const clip = clips.findLast((item) => item.start <= time);
+    return clip.offset + (time - clip.start) * clip.rate;
+  };
+  const phase = (time) => {
+    const error = ((time * 120) / 60 - (positionAt(time) * 100) / 60) % 1;
+    return Math.min(Math.abs(error), 1 - Math.abs(error));
+  };
+  expect(phase(0)).toBeCloseTo(0.25, 6); // as journaled
+  expect(phase(19)).toBeLessThan(0.005); // slewed into phase, not left 0.25 beat early
+  expect(phase(20)).toBeCloseTo(0.35, 6); // the user's seek is kept exactly
+  expect(phase(39.9)).toBeLessThan(0.005);
+  // Tempo lock is the leader's tempo on B's grid, not the instantaneous
+  // correction journaled with the seek, and slews stay within +/-2%.
+  expect(clips.at(-1).rate).toBeCloseTo(1.2, 4);
+  expect(
+    clips.every((clip) => clip.rate >= 1.2 * 0.98 - 1e-9 && clip.rate <= 1.2 * 1.02 + 1e-9)
+  ).toBe(true);
+  expect(clips.length).toBeLessThan(80);
+  // Contiguous regions: every piece starts where the previous one ended.
+  for (let i = 1; i < clips.length; i++)
+    if (clips[i].start !== 20)
+      expect(clips[i].offset).toBeCloseTo(
+        clips[i - 1].offset + clips[i - 1].duration * clips[i - 1].rate,
+        9
+      );
+  expect(() => validateArrangement({ ...emptyArrangement(), tracks })).not.toThrow();
+});
+
+it('reconstructs a tempo-following leader from its journaled tempo map, not per-step events', () => {
+  const beats = Array.from({ length: 200 }, (_, i) => ({
+    time: i * 0.6 + (i > 50 ? (i - 50) * 0.01 : 0),
+  }));
+  const take = {
+    assetId: 'safety',
+    duration: 30,
+    timelineStart: 0,
+    events: [
+      {
+        time: 0,
+        type: 'initialState',
+        args: [
+          {
+            decks: [
+              {
+                id: 'A',
+                playing: true,
+                position: 0,
+                playbackRate: 1.2,
+                lanes: { fullMix: { assetId: 'a', duration: 600 } },
+              },
+            ],
+          },
+        ],
+      },
+      { time: 0, type: 'deckTransport', args: ['A', { position: 0, playing: true, rate: 1.2 }] },
+      { time: 0, scheduledTime: 0, type: 'setTempoFollow', args: ['A', beats, 120] },
+    ],
+  };
+  const clips = reconstructPerformance(emptyArrangement(), take).tracks[0].clips;
+  // 100 BPM until beat 50 (30 s of source = 25 s), then gradually slower.
+  expect(clips[0].rate).toBeCloseTo(1.2, 3);
+  expect(clips.at(-1).rate).toBeGreaterThan(1.2);
+  expect(clips.length).toBeLessThan(40);
+});
+
+it('skips damaged journal rows when reopening a take, like replay does', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  try {
+    const clean = reconstructPerformance(emptyArrangement(), capture());
+    const damaged = capture();
+    damaged.events.push(
+      { time: 4, type: 'deckTransport', args: ['A', { position: NaN, playing: true, rate: 1 }] },
+      { time: 4.5, type: 'setDeckGain', args: ['A', Infinity] },
+      { time: NaN, type: 'setDeckGain', args: ['A', 20] }
+    );
+    const result = reconstructPerformance(emptyArrangement(), damaged);
+    expect(result.warnings).toContain('3 damaged event(s) with invalid values were skipped.');
+    expect(result.tracks.map((track) => [track.clips, track.automation])).toEqual(
+      clean.tracks
+        .map((track) => [track.clips, track.automation])
+        .map(([clips, automation]) => [
+          clips.map((clip) => ({ ...clip, id: expect.any(String) })),
+          automation,
+        ])
+    );
+    expect(() => validateArrangement(result.project)).not.toThrow();
+    expect(warn).toHaveBeenCalled();
+  } finally {
+    warn.mockRestore();
+  }
 });

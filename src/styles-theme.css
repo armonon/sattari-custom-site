@@ -149,7 +149,7 @@ body {
 }
 
 [data-theme='day'] {
-  /* Core tokens (styles.css / styles-enhanced.css) */
+  /* Core tokens (styles.css) */
   --bg: #f6f1e6;
   --panel: #fffdf8;
   --panel-2: #efe7d6;

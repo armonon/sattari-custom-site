@@ -1,133 +1,175 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { blobData, blobState, resetBlobs, seedBlob } from './helpers/blobsFake.js';
 
-// A tiny in-memory stand-in for a Netlify Blobs store, including the etag
-// behaviour that the conditional writes depend on.
-const fake = {
-  value: null,
-  etag: null,
-  writes: 0,
-};
+vi.mock('@netlify/blobs', async () => (await import('./helpers/blobsFake.js')).blobsModule);
 
-vi.mock('@netlify/blobs', () => ({
-  connectLambda: vi.fn(),
-  getStore: vi.fn(() => ({
-    async getWithMetadata() {
-      if (fake.value === null) return null;
-      return { data: JSON.parse(JSON.stringify(fake.value)), etag: fake.etag };
-    },
-    async setJSON(key, value, options = {}) {
-      fake.writes += 1;
-
-      if (options.onlyIfNew && fake.value !== null) {
-        return { modified: false };
-      }
-      if (options.onlyIfMatch && options.onlyIfMatch !== fake.etag) {
-        return { modified: false };
-      }
-
-      fake.value = JSON.parse(JSON.stringify(value));
-      fake.etag = `etag-${fake.writes}`;
-      return { modified: true, etag: fake.etag };
-    },
-  })),
-}));
-
-const { getLockRemaining, recordFailure, clearFailures, THROTTLE_SETTINGS } = await import(
-  '../../server/loginThrottle.js'
-);
+const {
+  pruneLoginRecords,
+  recordLoginSuccess,
+  reserveLoginAttempt,
+  ThrottleUnavailableError,
+  THROTTLE_SETTINGS,
+} = await import('../../server/loginThrottle.js');
 
 const IP = '203.0.113.9';
 const event = { headers: {} };
+const { LOCK_AFTER_ATTEMPTS, BASE_LOCK_MS, MAX_LOCK_MS, QUIET_PERIOD_MS, GLOBAL_LIMIT } =
+  THROTTLE_SETTINGS;
+
+async function attempts(count, ip = IP, now = 1_000_000) {
+  const results = [];
+  for (let i = 0; i < count; i += 1) results.push(await reserveLoginAttempt(event, ip, now));
+  return results;
+}
+
+function ipKeys() {
+  return [...blobData('staff-auth').keys()].filter((key) => key.startsWith('login-ip/'));
+}
 
 beforeEach(() => {
-  fake.value = null;
-  fake.etag = null;
-  fake.writes = 0;
+  resetBlobs();
+  process.env.STAFF_SESSION_SECRET = 'secret';
+  delete process.env.IP_HASH_SECRET;
 });
 
-describe('login throttle', () => {
-  it('does not lock before the threshold', async () => {
-    const now = 1_000_000;
-    for (let i = 0; i < THROTTLE_SETTINGS.LOCK_AFTER_ATTEMPTS - 1; i += 1) {
-      await recordFailure(event, IP, now + i);
-    }
-    expect(await getLockRemaining(event, IP, now + 10)).toBe(0);
+describe('per-address limit', () => {
+  it('allows attempts up to the threshold, then locks', async () => {
+    const results = await attempts(LOCK_AFTER_ATTEMPTS + 1);
+
+    expect(results.slice(0, LOCK_AFTER_ATTEMPTS).every((r) => r.allowed)).toBe(true);
+    expect(results.at(-1).allowed).toBe(false);
+    expect(results.at(-1).retryAfterMs).toBeGreaterThan(0);
+    expect(results.at(-1).retryAfterMs).toBeLessThanOrEqual(BASE_LOCK_MS);
   });
 
-  it('locks out after five failures', async () => {
-    const now = 1_000_000;
-    for (let i = 0; i < 5; i += 1) {
-      await recordFailure(event, IP, now + i);
-    }
-
-    const remaining = await getLockRemaining(event, IP, now + 10);
-    expect(remaining).toBeGreaterThan(0);
-    expect(remaining).toBeLessThanOrEqual(THROTTLE_SETTINGS.BASE_LOCK_MS);
-  });
-
-  it('actually engages rather than resetting every attempt', async () => {
-    // The original in-memory version compared Date.now() against `until`,
-    // which is 0 on an unlocked record, so the counter cleared on every call
-    // and the throttle never fired. This asserts the counter accumulates.
-    const now = 2_000_000;
-    for (let i = 0; i < 6; i += 1) {
-      await recordFailure(event, IP, now + i * 100);
-      // A read between failures must not clear the record.
-      await getLockRemaining(event, IP, now + i * 100 + 1);
-    }
-
-    expect(await getLockRemaining(event, IP, now + 700)).toBeGreaterThan(0);
-  });
-
-  it('escalates the lockout as failures continue', async () => {
+  it('escalates the lock as attempts continue after each lock ends', async () => {
     const now = 3_000_000;
-    for (let i = 0; i < 5; i += 1) await recordFailure(event, IP, now);
-    const first = await getLockRemaining(event, IP, now);
+    await attempts(LOCK_AFTER_ATTEMPTS, IP, now);
+    const first = (await reserveLoginAttempt(event, IP, now)).retryAfterMs;
 
-    await recordFailure(event, IP, now);
-    const second = await getLockRemaining(event, IP, now);
+    const afterLock = now + first + 1;
+    expect((await reserveLoginAttempt(event, IP, afterLock)).allowed).toBe(true);
+    const second = (await reserveLoginAttempt(event, IP, afterLock)).retryAfterMs;
 
     expect(second).toBeGreaterThan(first);
   });
 
-  it('caps the lockout', async () => {
-    const now = 4_000_000;
-    for (let i = 0; i < 20; i += 1) await recordFailure(event, IP, now);
-    expect(await getLockRemaining(event, IP, now)).toBeLessThanOrEqual(
-      THROTTLE_SETTINGS.MAX_LOCK_MS
-    );
+  it('caps the lock', async () => {
+    let now = 4_000_000;
+    for (let i = 0; i < 20; i += 1) {
+      const result = await reserveLoginAttempt(event, IP, now);
+      expect(result.retryAfterMs || 0).toBeLessThanOrEqual(MAX_LOCK_MS);
+      now += result.allowed ? 1 : result.retryAfterMs;
+    }
   });
 
-  it('forgets a record after a quiet stretch', async () => {
+  it('forgets an address after a quiet stretch', async () => {
     const now = 5_000_000;
-    for (let i = 0; i < 6; i += 1) await recordFailure(event, IP, now);
+    await attempts(LOCK_AFTER_ATTEMPTS, IP, now);
+    expect((await reserveLoginAttempt(event, IP, now)).allowed).toBe(false);
 
-    const later = now + THROTTLE_SETTINGS.QUIET_PERIOD_MS + 1;
-    expect(await getLockRemaining(event, IP, later)).toBe(0);
+    expect((await reserveLoginAttempt(event, IP, now + QUIET_PERIOD_MS + 1)).allowed).toBe(true);
   });
 
-  it('tracks addresses independently so one attacker cannot lock out the shop', async () => {
-    const now = 6_000_000;
-    for (let i = 0; i < 6; i += 1) await recordFailure(event, '198.51.100.1', now);
+  it('tracks addresses under separate keys so one cannot lock out another', async () => {
+    await attempts(LOCK_AFTER_ATTEMPTS + 1, '198.51.100.1');
 
-    expect(await getLockRemaining(event, '198.51.100.1', now)).toBeGreaterThan(0);
-    expect(await getLockRemaining(event, '198.51.100.2', now)).toBe(0);
+    expect((await reserveLoginAttempt(event, '198.51.100.1', 1_000_000)).allowed).toBe(false);
+    expect((await reserveLoginAttempt(event, '198.51.100.2', 1_000_000)).allowed).toBe(true);
+    expect(ipKeys()).toHaveLength(2);
   });
 
-  it('clears failures on a successful sign-in', async () => {
+  it('stores keyed hashes, never raw addresses', async () => {
+    await attempts(1);
+    const [key] = ipKeys();
+    expect(key).not.toContain(IP);
+    expect(JSON.stringify([...blobData('staff-auth').values()])).not.toContain(IP);
+  });
+
+  it('clears the count after a successful sign-in', async () => {
     const now = 7_000_000;
-    for (let i = 0; i < 6; i += 1) await recordFailure(event, IP, now);
-    await clearFailures(event, IP, now);
+    await attempts(LOCK_AFTER_ATTEMPTS - 1, IP, now);
+    await recordLoginSuccess(event, IP, now);
 
-    expect(await getLockRemaining(event, IP, now)).toBe(0);
+    const results = await attempts(LOCK_AFTER_ATTEMPTS, IP, now);
+    expect(results.every((r) => r.allowed)).toBe(true);
+  });
+});
+
+describe('racing attempts', () => {
+  it('lets at most the threshold through when attempts arrive in parallel', async () => {
+    const results = await Promise.allSettled(
+      Array.from({ length: 20 }, () => reserveLoginAttempt(event, IP, 1_000_000))
+    );
+    const allowed = results.filter((r) => r.status === 'fulfilled' && r.value.allowed);
+
+    expect(allowed.length).toBeGreaterThan(0);
+    expect(allowed.length).toBeLessThanOrEqual(LOCK_AFTER_ATTEMPTS);
+    // Everything else was refused or failed closed; nothing was let through.
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        expect(result.reason).toBeInstanceOf(ThrottleUnavailableError);
+      }
+    }
   });
 
-  it('prunes stale records instead of growing forever', async () => {
-    const now = 8_000_000;
-    await recordFailure(event, 'old.address', now);
-    await recordFailure(event, IP, now + THROTTLE_SETTINGS.QUIET_PERIOD_MS + 5000);
+  it('gives the last remaining attempt to exactly one of many racing requests', async () => {
+    await attempts(LOCK_AFTER_ATTEMPTS - 1);
+    const results = await Promise.allSettled(
+      Array.from({ length: 10 }, () => reserveLoginAttempt(event, IP, 1_000_000))
+    );
 
-    expect(Object.keys(fake.value)).toEqual([IP]);
+    expect(results.filter((r) => r.status === 'fulfilled' && r.value.allowed)).toHaveLength(1);
+  });
+
+  it('fails closed when every write loses its race', async () => {
+    blobState.conflictWrites = true;
+    await expect(reserveLoginAttempt(event, IP)).rejects.toBeInstanceOf(ThrottleUnavailableError);
+  });
+
+  it('fails closed when the store cannot be read or written', async () => {
+    blobState.failReads = true;
+    await expect(reserveLoginAttempt(event, IP)).rejects.toBeInstanceOf(ThrottleUnavailableError);
+    blobState.failReads = false;
+    blobState.failWrites = true;
+    await expect(reserveLoginAttempt(event, IP)).rejects.toBeInstanceOf(ThrottleUnavailableError);
+  });
+});
+
+describe('global ceiling', () => {
+  it('bounds attempts spread across many addresses', async () => {
+    const now = 9_000_000;
+    for (let i = 0; i < GLOBAL_LIMIT; i += 1) {
+      expect((await reserveLoginAttempt(event, `10.0.0.${i}`, now)).allowed).toBe(true);
+    }
+
+    const refused = await reserveLoginAttempt(event, '10.0.1.1', now);
+    expect(refused.allowed).toBe(false);
+    expect(refused.retryAfterMs).toBeGreaterThan(0);
+    // A refused address is not even given a record.
+    expect(ipKeys()).toHaveLength(GLOBAL_LIMIT);
+  });
+
+  it('still admits an address that signed in successfully recently', async () => {
+    const now = 9_000_000;
+    await recordLoginSuccess(event, IP, now - 1000);
+    for (let i = 0; i < GLOBAL_LIMIT; i += 1) await reserveLoginAttempt(event, `10.0.0.${i}`, now);
+
+    expect((await reserveLoginAttempt(event, '10.0.1.1', now)).allowed).toBe(false);
+    expect((await reserveLoginAttempt(event, IP, now)).allowed).toBe(true);
+  });
+});
+
+describe('cleanup', () => {
+  it('removes quiet records but keeps active and trusted ones', async () => {
+    const now = 20_000_000;
+    await reserveLoginAttempt(event, '192.0.2.1', now - QUIET_PERIOD_MS - 1);
+    await reserveLoginAttempt(event, '192.0.2.2', now);
+    await recordLoginSuccess(event, '192.0.2.3', now - QUIET_PERIOD_MS - 1);
+    seedBlob('staff-auth', 'login-ip/garbage', 'not a record');
+
+    expect(await pruneLoginRecords(event, now)).toBe(2);
+    expect(ipKeys()).toHaveLength(2);
   });
 });

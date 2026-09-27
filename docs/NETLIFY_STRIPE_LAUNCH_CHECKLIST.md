@@ -16,7 +16,8 @@ Set these in Netlify → Site configuration → Environment variables:
 - `RESEND_API_KEY` (optional; only needed for business order emails)
 - `ORDER_NOTIFICATION_EMAIL` (optional order-alert recipient)
 - `ORDER_NOTIFICATION_FROM` (optional verified sender address)
-- `ORDER_LOOKUP_TOKEN` (optional admin API token for stored-order lookup)
+- `IP_HASH_SECRET` (keys the hashes of visitor IPs used by sign-in and booking limits; falls back to `STAFF_SESSION_SECRET`)
+- `STAFF_USERNAME`, `STAFF_PASSWORD_SALT`, `STAFF_PASSWORD_HASH`, `STAFF_SESSION_SECRET` (staff page; see INVENTORY.md)
 
 ## 2. Stripe dashboard setup
 
@@ -25,17 +26,17 @@ Set these in Netlify → Site configuration → Environment variables:
 - Verify business details, payout account, and public support info
 - Review checkout branding so Stripe matches the Sattari storefront
 - Add a webhook endpoint in Stripe pointing to `/api/stripe-webhook`
-- Subscribe at minimum to `checkout.session.completed`
+- Subscribe to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded` and `checkout.session.async_payment_failed` (stock holds and delayed payments depend on all four)
 - Copy the Stripe signing secret into `STRIPE_WEBHOOK_SECRET` in Netlify
 - Verify the sending domain in Resend if you want order alert emails
 
 ## 3. Netlify function routing
 
 - Confirm [netlify.toml](netlify.toml) includes redirects for create-session, session-status, and Stripe webhook routes
-- Confirm [netlify.toml](netlify.toml) includes the admin order lookup route if you plan to use it
+- Confirm `/api/checkout-release` is routed (the cancel page uses it to free held stock)
 - Confirm the function directory is `netlify/functions`
 - Redeploy after changing any Stripe environment variable
-- Remember that completed orders are stored in a Netlify Blobs store named `orders`
+- Remember that orders are stored in a Netlify Blobs store named `orders`, and the scheduled `checkout-maintenance` function only runs on published production deploys
 
 ## 4. Production verification flow
 
@@ -43,11 +44,11 @@ Set these in Netlify → Site configuration → Environment variables:
 - Visit the shop, a category page, and at least one product page
 - Add a product to cart
 - Start checkout and confirm redirect to Stripe Checkout
-- Confirm success and cancel URLs return to the correct site routes
+- Confirm success and cancel URLs return to the correct site routes, and that canceling and checking out again with the last unit in stock works (the cancel page releases the hold)
 - Complete a test payment and confirm the success page shows a verified payment state
 - Confirm Stripe delivers `checkout.session.completed` successfully to the webhook endpoint
 - If notification env vars are configured, confirm the order alert email arrives
-- If `ORDER_LOOKUP_TOKEN` is configured, confirm `/api/admin/orders` returns recent order summaries with a valid bearer token
+- Sign in on the staff page and confirm the order appears in the Orders tab with its stock deducted
 
 ## 5. SEO verification
 

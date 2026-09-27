@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { cancelOnEscape } from '../../studio/arrangement/interactions';
 
 export default function AutomationCurve({
   points,
@@ -9,7 +10,16 @@ export default function AutomationCurve({
   disabled,
 }) {
   const [preview, setPreview] = useState(null);
-  const drag = useRef(null);
+  const drag = useRef(null),
+    stopEscape = useRef(null);
+  // A point drag changes nothing until release; cancelling just drops the preview.
+  const endDrag = () => {
+    drag.current = null;
+    setPreview(null);
+    stopEscape.current?.();
+    stopEscape.current = null;
+  };
+  useEffect(() => () => stopEscape.current?.(), []);
   const min = range?.min ?? (parameter === 'pan' ? -1 : parameter === 'filter' ? 20 : 0);
   const max = range?.max ?? (parameter === 'pan' ? 1 : parameter === 'filter' ? 20000 : 300);
   const normalized = (value) =>
@@ -49,7 +59,9 @@ export default function AutomationCurve({
         onPointerDown={(event) => {
           if (disabled || event.target.dataset.point == null) return;
           drag.current = Number(event.target.dataset.point);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          stopEscape.current?.();
+          stopEscape.current = cancelOnEscape(endDrag);
         }}
         onPointerMove={(event) => {
           if (drag.current == null) return;
@@ -58,13 +70,9 @@ export default function AutomationCurve({
         }}
         onPointerUp={() => {
           if (preview) commit(preview);
-          drag.current = null;
-          setPreview(null);
+          endDrag();
         }}
-        onPointerCancel={() => {
-          drag.current = null;
-          setPreview(null);
-        }}
+        onPointerCancel={endDrag}
       >
         {[0, 0.5, 1].map((value) => (
           <line key={value} x1="0" x2="800" y1={value * 140} y2={value * 140} stroke="#40536a" />

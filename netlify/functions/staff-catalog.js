@@ -62,19 +62,34 @@ function buildListingRows(doc) {
   return rows;
 }
 
+// The only failure staff can act on is a lost edit race; anything else is
+// logged and reported generically rather than echoing an internal message.
+const CONFLICT_MESSAGE = 'The catalog is being edited by someone else. Try again.';
+
+function failure(error) {
+  console.error(JSON.stringify({ type: 'staff-catalog-error', message: error?.message }));
+  return error?.message === CONFLICT_MESSAGE
+    ? json(409, { error: CONFLICT_MESSAGE })
+    : json(503, { error: 'Could not reach the catalog. Reload and check before trying again.' });
+}
+
 export async function handler(event) {
-  const session = requireStaff(event);
+  const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
 
   if (event.httpMethod === 'GET') {
-    const doc = await readCatalogDoc(event);
-    return json(200, {
-      staff: session.staff,
-      listings: buildListingRows(doc),
-      live: mergeCatalog(baseProducts, doc).length,
-    });
+    try {
+      const doc = await readCatalogDoc(event);
+      return json(200, {
+        staff: session.staff,
+        listings: buildListingRows(doc),
+        live: mergeCatalog(baseProducts, doc).length,
+      });
+    } catch (error) {
+      return failure(error);
+    }
   }
 
   if (event.httpMethod !== 'POST') {
@@ -139,7 +154,11 @@ export async function handler(event) {
       console.log(
         JSON.stringify({ type: 'staff-catalog-add', staff: session.staff, slug: product.slug })
       );
-      return json(200, { staff: session.staff, listings: buildListingRows(doc), slug: product.slug });
+      return json(200, {
+        staff: session.staff,
+        listings: buildListingRows(doc),
+        slug: product.slug,
+      });
     }
 
     if (action === 'hide' || action === 'show') {
@@ -155,14 +174,12 @@ export async function handler(event) {
         return { ...current, hidden: [...hidden] };
       });
 
-      console.log(
-        JSON.stringify({ type: `staff-catalog-${action}`, staff: session.staff, slug })
-      );
+      console.log(JSON.stringify({ type: `staff-catalog-${action}`, staff: session.staff, slug }));
       return json(200, { staff: session.staff, listings: buildListingRows(doc) });
     }
 
     return json(400, { error: 'Unknown action.' });
   } catch (error) {
-    return json(409, { error: error?.message || 'Could not save. Try again.' });
+    return failure(error);
   }
 }

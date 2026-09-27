@@ -23,6 +23,74 @@ export function sourceWindows(clips, window) {
   return groups;
 }
 
+// WAV PCM is little-endian. On little-endian hosts (every current browser
+// platform) typed-array views read it directly; each slice starts at offset 0 and
+// frames are a whole number of samples, so the views are aligned. The per-sample
+// arithmetic matches the DataView fallback exactly (power-of-two divisors).
+const LITTLE_ENDIAN = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
+
+function readPcm(bytes, pcm, format, bits, count) {
+  const channels = pcm.length,
+    samples = count * channels;
+  if (format === 3) {
+    const view = new Float32Array(bytes, 0, samples);
+    for (let c = 0; c < channels; c++) {
+      const out = pcm[c];
+      for (let i = 0, p = c; i < count; i++, p += channels) {
+        const value = view[p];
+        if (!Number.isFinite(value)) throw new Error('WAV source contains invalid samples.');
+        out[i] = value;
+      }
+    }
+    return;
+  }
+  if (bits === 24) {
+    const u = new Uint8Array(bytes, 0, samples * 3),
+      s = new Int8Array(bytes, 0, samples * 3);
+    for (let c = 0; c < channels; c++) {
+      const out = pcm[c];
+      for (let i = 0, p = c * 3; i < count; i++, p += channels * 3)
+        out[i] = (u[p] | (u[p + 1] << 8) | (s[p + 2] << 16)) / 8388608;
+    }
+    return;
+  }
+  const view =
+    bits === 8
+      ? new Uint8Array(bytes, 0, samples)
+      : bits === 16
+        ? new Int16Array(bytes, 0, samples)
+        : new Int32Array(bytes, 0, samples);
+  const bias = bits === 8 ? 128 : 0,
+    scale = bits === 8 ? 128 : bits === 16 ? 32768 : 2147483648;
+  for (let c = 0; c < channels; c++) {
+    const out = pcm[c];
+    for (let i = 0, p = c; i < count; i++, p += channels) out[i] = (view[p] - bias) / scale;
+  }
+}
+
+function readPcmPortable(bytes, pcm, format, bits, count) {
+  const view = new DataView(bytes),
+    stride = bits / 8,
+    align = pcm.length * stride;
+  pcm.forEach((out, channel) => {
+    for (let i = 0; i < count; i++) {
+      const p = i * align + channel * stride;
+      out[i] =
+        format === 3
+          ? view.getFloat32(p, true)
+          : bits === 8
+            ? (view.getUint8(p) - 128) / 128
+            : bits === 16
+              ? view.getInt16(p, true) / 32768
+              : bits === 32
+                ? view.getInt32(p, true) / 2147483648
+                : (view.getUint8(p) | (view.getUint8(p + 1) << 8) | (view.getInt8(p + 2) << 16)) /
+                  8388608;
+      if (!Number.isFinite(out[i])) throw new Error('WAV source contains invalid samples.');
+    }
+  });
+}
+
 export async function decodeSourceWindow(raw, blob, start, end, budget, options) {
   if (options?.signal?.aborted) throw new Error('Source decoding cancelled.');
   return (
@@ -65,31 +133,10 @@ export async function decodeWaveWindow(raw, blob, start, end, budget) {
         throw new Error('Requested audio is outside the WAV source. Relink the original file.');
       if (count * channels * 4 > budget)
         throw new Error('Source window exceeds the audio memory budget. Use a shorter range.');
-      const bytes = new DataView(
-        await blob.slice(at + 8 + first * align, at + 8 + last * align).arrayBuffer()
-      );
-      const buffer = raw.createBuffer(channels, count, rate),
-        stride = bits / 8;
-      for (let channel = 0; channel < channels; channel++) {
-        const pcm = buffer.getChannelData(channel);
-        for (let i = 0; i < count; i++) {
-          const p = i * align + channel * stride;
-          pcm[i] =
-            format === 3
-              ? bytes.getFloat32(p, true)
-              : bits === 8
-                ? (bytes.getUint8(p) - 128) / 128
-                : bits === 16
-                  ? bytes.getInt16(p, true) / 32768
-                  : bits === 32
-                    ? bytes.getInt32(p, true) / 2147483648
-                    : (bytes.getUint8(p) |
-                        (bytes.getUint8(p + 1) << 8) |
-                        (bytes.getInt8(p + 2) << 16)) /
-                      8388608;
-          if (!Number.isFinite(pcm[i])) throw new Error('WAV source contains invalid samples.');
-        }
-      }
+      const bytes = await blob.slice(at + 8 + first * align, at + 8 + last * align).arrayBuffer();
+      const buffer = raw.createBuffer(channels, count, rate);
+      const pcm = Array.from({ length: channels }, (_, channel) => buffer.getChannelData(channel));
+      (LITTLE_ENDIAN ? readPcm : readPcmPortable)(bytes, pcm, format, bits, count);
       return { buffer, offset: first / rate };
     }
     at += 8 + size + (size % 2);

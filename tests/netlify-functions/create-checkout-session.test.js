@@ -1,4 +1,5 @@
 // @vitest-environment node
+import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createSessionMock = vi.fn();
@@ -14,6 +15,11 @@ vi.mock('stripe', () => ({
     };
   }),
 }));
+
+vi.mock('@netlify/blobs', async () => {
+  const { createMemoryBlobs } = await import('./helpers/memoryBlobs.js');
+  return createMemoryBlobs().module;
+});
 
 const { handler } = await import('../../netlify/functions/create-checkout-session.js');
 
@@ -78,9 +84,12 @@ describe('create-checkout-session Netlify function', () => {
             }),
           }),
         ],
+        expires_at: expect.any(Number),
+        metadata: { kind: 'shop_order', holdId: expect.any(String) },
         success_url: 'https://sattarimusic.com/checkout/success?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'https://sattarimusic.com/checkout/cancel',
-      })
+        cancel_url: 'https://sattarimusic.com/checkout/cancel?session_id={CHECKOUT_SESSION_ID}',
+      }),
+      { idempotencyKey: expect.stringMatching(/^checkout-/) }
     );
 
     const checkoutPayload = createSessionMock.mock.calls[0][0];

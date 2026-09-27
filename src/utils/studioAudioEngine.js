@@ -6,13 +6,31 @@ import { LiveInput } from './liveInput';
 import { audioLatency } from './sessionTelemetry';
 import { performanceFilter } from './performanceFilter';
 import { alignedBeatPosition } from './beatGrid';
-import { SyncClock, phaseError, sourceBeat, sourceTime } from './syncClock';
+import {
+  SyncClock,
+  beatSyncCorrection,
+  leaderTempo,
+  phaseError,
+  sourceBeat,
+  sourceTime,
+  tempoFollowRate,
+} from './syncClock';
 import { connectLoudness } from './liveLoudness';
-import { tempoAt } from './tempoMap';
 import { SourceCapture } from './sourceCapture';
 import { PerformanceJournal } from './performanceJournal';
 import { performanceReverb } from './performanceReverb';
-import { createMutableEffectRack } from './arrangementEffects';
+import { createMutableEffectRack, validateEffects } from './arrangementEffects';
+import { CueRouter, glide, outputCapabilities, nativeAudioContext } from './cueRouting';
+import {
+  RETURN_BUSES,
+  createReturnBus,
+  normalizeReturnBus,
+  normalizeReturns,
+  sendGain,
+} from './mixerReturns';
+import { LevelMeter, meterReading } from './mixerMeters';
+
+export { normalizeReturns };
 import {
   masterGain,
   trimGain,
@@ -26,6 +44,215 @@ import {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+// Numbers, or numeric strings from form inputs; never NaN, Infinity or null.
+const finiteNumber = (value) =>
+  (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) &&
+  Number.isFinite(Number(value));
+const optionalFinite = (value) => value == null || finiteNumber(value);
+const finiteFields = (value, keys) => keys.every((key) => optionalFinite(value?.[key]));
+const noNonFinite = (value, depth = 0) =>
+  typeof value === 'number'
+    ? Number.isFinite(value)
+    : !value ||
+      typeof value !== 'object' ||
+      depth > 6 ||
+      Object.values(value).every((item) => noNonFinite(item, depth + 1));
+const positiveNumber = (value) => finiteNumber(value) && Number(value) > 0;
+const validEffects = (effects) => {
+  try {
+    return !!validateEffects(effects);
+  } catch {
+    return false;
+  }
+};
+
+// One rule set for live controls and replayed journal events: a damaged value is
+// ignored at the public boundary instead of being clamped into transport state.
+const INPUT_RULES = {
+  setMasterLevel: ([level]) => finiteNumber(level),
+  setMasterProcessing: ([value]) => noNonFinite(value),
+  setMasterStems: ([value]) => noNonFinite(value),
+  setCrossfader: ([value]) => finiteNumber(value),
+  setDeckGain: ([, level]) => finiteNumber(level),
+  setDeckFader: ([, level]) => finiteNumber(level),
+  setDeckEq: ([, bands]) => finiteFields(bands, ['low', 'mid', 'high']),
+  setDeckFilter: ([, value]) => finiteNumber(value),
+  setDeckFx: ([, fx]) => finiteFields(fx, ['reverb', 'echo']),
+  setLaneState: ([, , updates]) =>
+    finiteFields(updates, ['level', 'pitch', 'filter', 'send']) && noNonFinite(updates),
+  setLaneFx: ([, , updates]) =>
+    finiteFields(updates, ['filter', 'send', 'pitch']) && noNonFinite(updates),
+  setPlaybackRate: ([, rate]) => finiteNumber(rate),
+  setDeckPitch: ([, semitones]) => finiteNumber(semitones),
+  setStemPitch: ([, , semitones]) => finiteNumber(semitones),
+  setLoopRegion: ([, , start, end]) => optionalFinite(start) && optionalFinite(end),
+  setLoop: ([, , bpm]) => optionalFinite(bpm),
+  seekDeck: ([, seconds]) => finiteNumber(seconds),
+  playDeck: ([, offset, when]) => optionalFinite(offset) && optionalFinite(when),
+  setPadGain: ([, level]) => finiteNumber(level),
+  // Tone also accepts note names ('C4') as a synth frequency.
+  triggerPad: ([index, frequency]) => finiteNumber(index) && noNonFinite(frequency),
+  setInputSettings: ([patch]) => noNonFinite(patch),
+  setProjectTempo: ([bpm, beat]) => positiveNumber(bpm) && optionalFinite(beat),
+  setDeckSync: ([, enabled, grid, reference]) =>
+    !enabled ||
+    (finiteFields(grid, ['bpm', 'beatOffset']) && finiteFields(reference, ['bpm', 'beatOffset'])),
+  setTempoFollow: ([, beats, targetBpm]) => !(beats?.length > 1) || positiveNumber(targetBpm),
+  alignDeck: ([, grid, , tempo]) => positiveNumber(tempo) && positiveNumber(grid?.bpm),
+  setDeckSend: ([, bus, amount]) => RETURN_BUSES.includes(bus) && finiteNumber(amount),
+  setDeckInserts: ([, effects]) => Array.isArray(effects) && validEffects(effects),
+  setReturn: ([bus, params]) =>
+    RETURN_BUSES.includes(bus) && !!params && typeof params === 'object' && noNonFinite(params),
+  // Journal-only event types replayed without an engine method of that name.
+  deckTransport: ([, state]) => finiteFields(state, ['position', 'rate']) && noNonFinite(state),
+  padSource: ([, , level]) => optionalFinite(level),
+};
+
+export function validPerformanceInput(method, args = []) {
+  return INPUT_RULES[method]?.(args) ?? true;
+}
+
+function rejected(method, args) {
+  if (validPerformanceInput(method, args)) return false;
+  console.warn(`Studio engine ignored ${method}: non-finite input.`, args);
+  return true;
+}
+
+// Beat-sync and tempo-follow corrections are derived from journaled intent and
+// re-derived on replay. Journaling them would add ~80 events/s per synced deck.
+function applyDerivedRate(engine, id, rate) {
+  const previous = engine.derivingRate;
+  engine.derivingRate = true;
+  try {
+    engine.setPlaybackRate(id, rate);
+  } finally {
+    engine.derivingRate = previous;
+  }
+}
+
+// Source position of the running grain clock. Its ticks never wrap (players wrap
+// each grain), so a rate change inside a loop must not rebase onto the wrapped value.
+function transportPosition(deck, now = Tone.now()) {
+  return deck.offset + (deck.playing ? Math.max(0, now - deck.startedAt) * deck.playbackRate : 0);
+}
+
+// Re-base the modeled position at a rate or pitch change. A start scheduled in
+// the future keeps its anchor: its audio has not begun, so nothing has elapsed.
+function reanchor(deck) {
+  const now = Tone.now();
+  if (!deck.playing || now < deck.startedAt) return;
+  deck.offset = transportPosition(deck, now);
+  deck.startedAt = now;
+}
+
+// Grain players only wrap once they pass loopEnd; a position before loopStart
+// (a stored loop enabled after seeking earlier) plays through unchanged.
+function loopedPosition(position, { looping, loopStart, loopEnd }) {
+  if (!looping || !(loopEnd > loopStart) || position < loopEnd) return position;
+  const length = loopEnd - loopStart;
+  return loopStart + ((((position - loopStart) % length) + length) % length);
+}
+
+// A plain Tone.GrainPlayer (non-windowed source) reads ticks * grainSize and
+// wraps per grain. Re-anchor its tick clock (Tone 15, like the windowed adapter)
+// at the wrapped position so leaving the loop continues in place, crossfaded.
+function exitGrainLoopInPlace(player, when) {
+  const clock = player._clock,
+    { loopStart, loopEnd, grainSize } = player;
+  if (!clock?.setTicksAtTime || !(loopEnd > loopStart)) return;
+  const offset = clock.getTicksAtTime(when) * grainSize;
+  if (offset >= loopEnd)
+    clock.setTicksAtTime(
+      (loopStart + ((offset - loopStart) % (loopEnd - loopStart))) / grainSize,
+      when
+    );
+}
+
+// Leaving a loop continues from the current position inside it (the players
+// re-anchor the same way). Call with the loop region still set on the deck.
+export function exitLoopInPlace(deck, when) {
+  if (!deck.looping) return;
+  if (!deck.playing) deck.offset = loopedPosition(deck.offset, deck);
+  else if (when >= deck.startedAt) {
+    deck.offset = loopedPosition(transportPosition(deck, when), deck);
+    deck.startedAt = when;
+  }
+}
+
+// DynamicsCompressor parameters are k-rate: a stepped threshold or ratio changes
+// gain reduction within one render quantum and clicks. Glide from the held value.
+export function rampCompressor(compressor, profile, time, duration = 0.04) {
+  for (const key of ['threshold', 'ratio', 'attack', 'release'])
+    compressor[key].linearRampTo(profile[key], duration, time);
+}
+
+const tempoMapIntent = (beats) => beats?.map((beat) => ({ time: beat?.time ?? beat }));
+
+// The journaled sync grid carries only what the controller reads, not a UI deck.
+function syncGridIntent(grid) {
+  if (!grid) return null;
+  const beats = grid.followTempoMap && grid.analysis?.tempoMap?.beats;
+  return {
+    id: grid.id,
+    bpm: grid.bpm,
+    beatOffset: grid.beatOffset || 0,
+    syncQuantum: grid.syncQuantum === 4 ? 4 : 1,
+    followTempoMap: !!beats,
+    ...(beats ? { analysis: { tempoMap: { beats: tempoMapIntent(beats) } } } : {}),
+  };
+}
+
+const syncSignature = (grid) =>
+  grid
+    ? [
+        grid.id,
+        grid.bpm,
+        grid.beatOffset || 0,
+        grid.syncQuantum,
+        grid.followTempoMap && grid.analysis?.tempoMap?.beats,
+      ]
+    : [];
+const sameSignature = (a, b) => a?.length === b.length && a.every((value, i) => value === b[i]);
+
+// Journal sync intent (on/off, grid, leader, target tempo) only when it changes.
+// UI redraws repeat these calls with fresh objects; compare the fields used.
+function journalSyncIntent(engine, type, id, intent, force = false) {
+  engine.syncSignatures ||= new Map();
+  const key = `${type}:${id}`;
+  const signatureOf = (value) =>
+    type === 'setDeckSync'
+      ? [!!value, ...syncSignature(value?.grid), ...syncSignature(value?.reference)]
+      : [!!value, value?.beats, value?.targetBpm];
+  const signature = signatureOf(intent);
+  // A deck that never had this intent is already "off".
+  const previous = engine.syncSignatures.get(key) ?? signatureOf(undefined);
+  if (!force && sameSignature(previous, signature)) return;
+  engine.syncSignatures.set(key, signature);
+  if (engine.performanceStartedAt == null) return;
+  engine.capturePerformanceEvent(
+    type,
+    type === 'setDeckSync'
+      ? [id, !!intent, syncGridIntent(intent?.grid), syncGridIntent(intent?.reference)]
+      : [id, intent ? tempoMapIntent(intent.beats) : null, intent?.targetBpm ?? null],
+    Tone.now()
+  );
+}
+
+// A take opens with the sync state already in force; replay cannot infer the
+// project-clock phase or the sync leader from the UI snapshot alone.
+function captureSyncState(engine) {
+  if (engine.syncClock)
+    engine.capturePerformanceEvent(
+      'setProjectTempo',
+      [engine.syncClock.bpm, engine.syncClock.beatAt(engine.performanceStartedAt)],
+      engine.performanceStartedAt
+    );
+  for (const [id, intent] of engine.syncFollowers || [])
+    journalSyncIntent(engine, 'setDeckSync', id, intent, true);
+  for (const [id, intent] of engine.tempoFollowers || [])
+    journalSyncIntent(engine, 'setTempoFollow', id, intent, true);
 }
 
 function markTransport(deck, action, at) {
@@ -167,7 +394,31 @@ export class StudioAudioEngine {
     // Recorder and meters hear the program bus. Monitor audition controls only affect speakers.
     this.output.chain(this.monitorStereoGain, this.monitor);
     this.output.chain(this.monitorMono, this.monitorMonoGain, this.monitor);
-    if (monitor) this.monitor.toDestination();
+    const raw = this.master.context.rawContext;
+    // Headphone cue is monitoring only: it never feeds the program bus below.
+    this.cueBus = raw.createGain();
+    this.returnSettings = normalizeReturns();
+    this.returnBuses = new Map();
+    this.levelMeters = new Map();
+    this.metering = false;
+    this.meterReadings = null;
+    if (monitor) {
+      // Unity gain on the speaker path, so a cue mode can fade it out and in.
+      this.speaker = raw.createGain();
+      this.speakers = this.monitor.context.destination;
+      Tone.connect(this.monitor, this.speaker);
+      Tone.connect(this.speaker, this.speakers);
+    }
+    this.cueRouter = new CueRouter({
+      raw,
+      program: this.output,
+      monitor: this.monitor,
+      cue: this.cueBus,
+      speaker: this.speaker || null,
+      speakers: this.speakers || null,
+      connect: Tone.connect,
+      disconnect: Tone.disconnect,
+    });
     this.output.connect(this.masterAnalyser);
     this.output.connect(this.meter);
     if (this.recorder) this.output.connect(this.recorder);
@@ -194,6 +445,9 @@ export class StudioAudioEngine {
       'setDeckEq',
       'setDeckFilter',
       'setDeckFx',
+      'setDeckSend',
+      'setDeckInserts',
+      'setReturn',
       'setLaneState',
       'setLaneFx',
       'removeLane',
@@ -215,6 +469,7 @@ export class StudioAudioEngine {
     ]) {
       const original = this[name].bind(this);
       this[name] = (...args) => {
+        if (name === 'setPlaybackRate' && this.derivingRate) return original(...args);
         const captureStartedAt = this.performanceStartedAt;
         const previousTransition = this.decks.get(args[0])?.transportTransition;
         const previousTime = this.performanceParameterTime;
@@ -282,7 +537,8 @@ export class StudioAudioEngine {
     }
   }
 
-  capturePerformanceEvent(type, args = []) {
+  // `effectiveAt` (audio time) records when a non-parameter intent took effect.
+  capturePerformanceEvent(type, args = [], effectiveAt = undefined) {
     if (this.performanceStartedAt == null) return;
     const key = `${type}:${typeof args[0] === 'string' ? args[0] : ''}`,
       serialized = JSON.stringify(args);
@@ -301,13 +557,14 @@ export class StudioAudioEngine {
     event.sampleRate = this.getAudioContext().rawContext.sampleRate || 48000;
     event.frame = Math.round(event.time * event.sampleRate);
     event.sequence = this.performanceEvents.length;
-    if (TIMED_PARAMETERS.has(type)) {
+    if (TIMED_PARAMETERS.has(type) || Number.isFinite(effectiveAt)) {
       const loopTime = ['setLoop', 'setLoopRegion'].includes(type)
         ? this.decks.get(args[0])?.loopTransitionTime
         : undefined;
       event.scheduledTime = Math.max(
         0,
-        (loopTime ?? this.performanceParameterTime ?? Tone.now()) - this.performanceStartedAt
+        (effectiveAt ?? loopTime ?? this.performanceParameterTime ?? Tone.now()) -
+          this.performanceStartedAt
       );
       event.scheduledFrame = Math.round(event.scheduledTime * event.sampleRate);
     }
@@ -352,34 +609,46 @@ export class StudioAudioEngine {
   }
 
   setTempoFollow(id, beats, targetBpm) {
+    if (rejected('setTempoFollow', [id, beats, targetBpm])) return false;
     this.tempoFollowers ||= new Map();
-    if (beats?.length > 1) this.tempoFollowers.set(id, { beats, targetBpm });
+    if (beats?.length > 1) this.tempoFollowers.set(id, { beats, targetBpm: Number(targetBpm) });
     else this.tempoFollowers.delete(id);
+    journalSyncIntent(this, 'setTempoFollow', id, this.tempoFollowers.get(id));
     if (!this.tempoFollowers.size) {
       clearInterval(this.tempoTimer);
       this.tempoTimer = null;
     } else if (!this.tempoTimer)
       this.tempoTimer = setInterval(() => {
+        const now = Tone.now();
         for (const [id, { beats, targetBpm }] of this.tempoFollowers) {
           const deck = this.decks.get(id);
-          if (!deck?.playing) continue;
+          if (!deck?.playing || now < deck.startedAt) continue;
           if (this.syncFollowers?.has(id)) continue; // one owner of the playback rate
-          const rate = clamp(targetBpm / tempoAt(beats, this.getDeckPosition(id)), 0.5, 2);
-          if (Math.abs(rate - deck.playbackRate) > 0.001) this.setPlaybackRate(id, rate);
+          const rate = tempoFollowRate(targetBpm, beats, this.getDeckPosition(id));
+          if (Number.isFinite(rate) && Math.abs(rate - deck.playbackRate) > 0.001)
+            applyDerivedRate(this, id, rate);
         }
       }, 100);
   }
 
   setProjectTempo(bpm) {
-    const now = Tone.now();
-    this.syncClock ||= new SyncClock(bpm, now);
-    this.syncClock.setTempo(bpm, now);
+    if (rejected('setProjectTempo', [bpm])) return false;
+    const now = Tone.now(),
+      tempo = Number(bpm),
+      changed = this.syncClock?.bpm !== tempo;
+    this.syncClock ||= new SyncClock(tempo, now);
+    this.syncClock.setTempo(tempo, now);
+    for (const bus of this.returnBuses?.values() || []) bus.setTempo(tempo);
+    // The anchor beat lets replay continue the same phase, not just the tempo.
+    if (changed) this.capturePerformanceEvent('setProjectTempo', [tempo, this.syncClock.beat], now);
   }
 
   setDeckSync(id, enabled, grid, reference = null) {
+    if (rejected('setDeckSync', [id, enabled, grid, reference])) return false;
     this.syncFollowers ||= new Map();
     if (enabled && grid?.bpm > 0) this.syncFollowers.set(id, { grid, reference });
     else this.syncFollowers.delete(id);
+    journalSyncIntent(this, 'setDeckSync', id, this.syncFollowers.get(id));
     if (this.syncFollowers.size && this.syncTimer == null)
       this.syncTimer = Tone.getContext().setInterval(() => this.updateBeatSync(), 0.025);
     if (!this.syncFollowers.size && this.syncTimer != null) {
@@ -394,55 +663,60 @@ export class StudioAudioEngine {
     for (const [id, { grid, reference }] of this.syncFollowers || []) {
       const deck = this.decks.get(id);
       if (!deck?.playing || now < deck.startedAt) continue;
-      const position = this.getDeckPosition(id);
       const master = reference && this.decks.get(reference.id);
-      const target = master?.playing
-        ? sourceBeat(this.getDeckPosition(reference.id), reference)
-        : this.syncClock.beatAt(now);
-      const actual = sourceBeat(position, grid);
-      const error = phaseError(target, actual, grid.syncQuantum === 4 ? 4 : 1);
-      const localBpm =
-        grid.followTempoMap && grid.analysis?.tempoMap?.beats?.length > 1
-          ? tempoAt(grid.analysis.tempoMap.beats, position)
-          : grid.bpm;
       const masterPosition = master?.playing ? this.getDeckPosition(reference.id) : 0;
-      const leaderBpm = master?.playing
-        ? (reference.followTempoMap && reference.analysis?.tempoMap?.beats?.length > 1
-            ? tempoAt(reference.analysis.tempoMap.beats, masterPosition)
-            : reference.bpm) * master.playbackRate
-        : this.syncClock.bpm;
-      const base = leaderBpm / localBpm;
-      // No repeated seek/restart: bounded phase slew, max +/-2% pitch-preserved.
-      const rate = clamp(base * (1 + clamp(error * 0.5, -0.02, 0.02)), 0.5, 2);
+      const { error, rate } = beatSyncCorrection({
+        position: this.getDeckPosition(id),
+        grid,
+        target: master?.playing
+          ? sourceBeat(masterPosition, reference)
+          : this.syncClock.beatAt(now),
+        leaderBpm: master?.playing
+          ? leaderTempo(reference, masterPosition, master.playbackRate)
+          : this.syncClock.bpmAt(now),
+      });
       deck.syncErrorBeats = error;
       deck.syncLocked = Math.abs(error) < 0.02;
-      if (Math.abs(rate - deck.playbackRate) > 0.00005) this.setPlaybackRate(id, rate);
+      if (Number.isFinite(rate) && Math.abs(rate - deck.playbackRate) > 0.00005)
+        applyDerivedRate(this, id, rate);
     }
   }
 
   ensureDeck(deckId, side = 'left') {
     if (!this.decks.has(deckId)) {
+      const raw = this.master.context.rawContext;
       const output = new Tone.Gain(1).connect(this.master);
       const meter = new Tone.Meter({ normalRange: true, smoothing: 0.82 });
       const reverb = performanceReverb().connect(output);
       const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.24, wet: 0 }).connect(
         reverb.input
       );
-      const filter = new Tone.Filter({ frequency: 20000, type: 'lowpass', rolloff: -24 }).connect(
-        delay
-      );
+      // input -> EQ -> filter -> inserts -> echo -> reverb -> [cue] -> fader -> [sends]
+      const inserts = createMutableEffectRack(raw);
+      Tone.connect(inserts.output, delay);
+      const filter = new Tone.Filter({ frequency: 20000, type: 'lowpass', rolloff: -24 });
+      Tone.connect(filter, inserts.input);
       const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 }).connect(filter);
       const input = new Tone.Gain(1).connect(eq);
       output.connect(meter);
+      const cueSend = raw.createGain();
+      cueSend.gain.value = 0;
+      Tone.connect(reverb.output, cueSend);
+      cueSend.connect(this.cueBus);
+      if (this.metering) this.meterFor(`deck:${deckId}`, output);
       this.decks.set(deckId, {
         side,
         input,
         eq,
         filter,
+        inserts,
         delay,
         reverb,
         output,
         meter,
+        cueSend,
+        cue: false,
+        sends: new Map(),
         lanes: new Map(),
         gain: 82,
         fader: 82,
@@ -571,10 +845,12 @@ export class StudioAudioEngine {
   }
 
   setMasterLevel(level) {
+    if (rejected('setMasterLevel', [level])) return false;
     parameterRamp(this, this.master.gain, masterGain(level), 0.04);
   }
 
   setMasterProcessing(value, { applyStems = true } = {}) {
+    if (rejected('setMasterProcessing', [value])) return false;
     if (applyStems) this.setMasterStems?.(value?.stems);
     const settings = normalizeMasterProcessing(value);
     this.masterInserts?.update(settings.effects || []);
@@ -618,19 +894,15 @@ export class StudioAudioEngine {
   }
 
   setMasterAssist(enabled, mode = 'Streaming -14') {
-    const profile = masterAssistProfile(enabled, mode);
-    if (this.performanceParameterTime != null) {
-      for (const key of ['threshold', 'ratio', 'attack', 'release'])
-        this.masterCompressor[key].setValueAtTime(profile[key], this.performanceParameterTime);
-      return;
-    }
-    this.masterCompressor.threshold.value = profile.threshold;
-    this.masterCompressor.ratio.value = profile.ratio;
-    this.masterCompressor.attack.value = profile.attack;
-    this.masterCompressor.release.value = profile.release;
+    rampCompressor(
+      this.masterCompressor,
+      masterAssistProfile(enabled, mode),
+      this.performanceParameterTime ?? Tone.now()
+    );
   }
 
   setCrossfader(value) {
+    if (rejected('setCrossfader', [value])) return false;
     this.crossfader = value;
     this.decks.forEach((_, deckId) => this.updateDeckOutput(deckId));
   }
@@ -641,12 +913,14 @@ export class StudioAudioEngine {
   }
 
   setDeckGain(deckId, level) {
+    if (rejected('setDeckGain', [deckId, level])) return false;
     const deck = this.ensureDeck(deckId);
     deck.gain = level;
     this.updateDeckOutput(deckId);
   }
 
   setDeckFader(deckId, level) {
+    if (rejected('setDeckFader', [deckId, level])) return false;
     const deck = this.ensureDeck(deckId);
     deck.fader = level;
     this.updateDeckOutput(deckId);
@@ -671,7 +945,9 @@ export class StudioAudioEngine {
     );
   }
 
-  setDeckEq(deckId, { low = 50, mid = 50, high = 50 }) {
+  setDeckEq(deckId, bands) {
+    if (rejected('setDeckEq', [deckId, bands])) return false;
+    const { low = 50, mid = 50, high = 50 } = bands;
     const deck = this.ensureDeck(deckId);
     parameterRamp(this, deck.eq.low, ((clamp(low, 0, 100) - 50) / 50) * 12, 0.035);
     parameterRamp(this, deck.eq.mid, ((clamp(mid, 0, 100) - 50) / 50) * 12, 0.035);
@@ -679,19 +955,169 @@ export class StudioAudioEngine {
   }
 
   setDeckFilter(deckId, value) {
+    if (rejected('setDeckFilter', [deckId, value])) return false;
     const deck = this.ensureDeck(deckId);
     const settings = performanceFilter(value);
     deck.filter.type = settings.type;
     parameterRamp(this, deck.filter.frequency, settings.frequency, 0.035);
   }
 
-  setDeckFx(deckId, { reverb = 0, echo = 0 }) {
+  setDeckFx(deckId, fx) {
+    if (rejected('setDeckFx', [deckId, fx])) return false;
+    const { reverb = 0, echo = 0 } = fx;
     const deck = this.ensureDeck(deckId);
     parameterRamp(this, deck.reverb.wet, clamp(reverb, 0, 100) / 100, 0.04);
     parameterRamp(this, deck.delay.wet, clamp(echo, 0, 100) / 100, 0.04);
   }
 
+  // Return buses are built on first use, so a session that never sends keeps
+  // exactly the program path (and renders) it had before.
+  returnBus(bus) {
+    let node = this.returnBuses.get(bus);
+    if (!node) {
+      node = createReturnBus(this.master.context.rawContext, bus, this.returnSettings[bus], {
+        bpm: this.syncClock?.bpm || 120,
+        live: true,
+      });
+      Tone.connect(node.output, this.master);
+      this.returnBuses.set(bus, node);
+      if (this.metering) this.syncMeters();
+    }
+    return node;
+  }
+
+  returnInput(bus) {
+    return RETURN_BUSES.includes(bus) ? this.returnBus(bus).input : null;
+  }
+
+  setDeckSend(deckId, bus, amount) {
+    if (rejected('setDeckSend', [deckId, bus, amount])) return false;
+    const deck = this.ensureDeck(deckId);
+    const level = sendGain(amount);
+    let send = deck.sends.get(bus);
+    if (!send) {
+      if (level === 0) return true;
+      send = new Tone.Gain(0);
+      deck.output.connect(send);
+      Tone.connect(send, this.returnBus(bus).input);
+      deck.sends.set(bus, send);
+    }
+    parameterRamp(this, send.gain, level, 0.03);
+    return true;
+  }
+
+  setDeckCue(deckId, enabled) {
+    const deck = this.ensureDeck(deckId);
+    deck.cue = !!enabled;
+    glide(deck.cueSend.gain, deck.cue ? 1 : 0, this.master.context.rawContext.currentTime);
+    return true;
+  }
+
+  setDeckInserts(deckId, effects) {
+    if (rejected('setDeckInserts', [deckId, effects])) return false;
+    try {
+      this.ensureDeck(deckId).inserts.update(effects);
+      return true;
+    } catch (error) {
+      // A burst of rack rebuilds is bounded; the sounding rack stays in place.
+      console.warn('Studio engine kept the current deck inserts.', error);
+      return false;
+    }
+  }
+
+  setReturn(bus, params) {
+    if (rejected('setReturn', [bus, params])) return false;
+    const next = normalizeReturnBus(bus, params, this.returnSettings[bus]);
+    this.returnSettings = { ...this.returnSettings, [bus]: next };
+    this.returnBuses.get(bus)?.update(next, this.performanceParameterTime ?? undefined);
+    return true;
+  }
+
+  getReturns() {
+    return normalizeReturns(this.returnSettings);
+  }
+
+  setCue(value) {
+    return this.cueRouter.set(value);
+  }
+
+  getOutputCapabilities() {
+    return outputCapabilities(this.master.context.rawContext);
+  }
+
+  async setOutputDevice(deviceId) {
+    const native = nativeAudioContext(this.master.context.rawContext);
+    if (typeof native?.setSinkId !== 'function') return false;
+    this.cueRouter.duck();
+    try {
+      await native.setSinkId(typeof deviceId === 'string' ? deviceId : '');
+      return true;
+    } catch (error) {
+      console.warn('Studio engine could not switch the output device.', error);
+      return false;
+    } finally {
+      this.cueRouter.refresh();
+    }
+  }
+
+  meterFor(key, source) {
+    let meter = this.levelMeters.get(key);
+    if (!meter) {
+      meter = new LevelMeter(this.master.context.rawContext, {
+        connect: Tone.connect,
+        disconnect: Tone.disconnect,
+      });
+      this.levelMeters.set(key, meter);
+    }
+    meter.attach(source);
+    meter.setActive(this.metering);
+    return meter;
+  }
+
+  syncMeters() {
+    this.meterFor('master', this.output);
+    for (const [id, deck] of this.decks) this.meterFor(`deck:${id}`, deck.output);
+    for (const bus of RETURN_BUSES)
+      this.meterFor(`return:${bus}`, this.returnBuses.get(bus)?.output || null);
+  }
+
+  // Analysers exist and listen only while a mixer view is showing meters.
+  setMetering(enabled) {
+    this.metering = !!enabled;
+    if (this.metering) this.syncMeters();
+    else for (const meter of this.levelMeters.values()) meter.setActive(false);
+    this.arrangementMetering?.(this.metering);
+  }
+
+  // One reused object: reading meters at display rate allocates nothing.
+  getChannelMeters() {
+    const readings = (this.meterReadings ||= {
+      decks: {},
+      tracks: {},
+      returns: { a: meterReading(), b: meterReading() },
+      master: { ...meterReading(), reductionDb: 0 },
+    });
+    for (const id of this.decks.keys()) {
+      readings.decks[id] ||= meterReading();
+      const meter = this.levelMeters.get(`deck:${id}`);
+      if (meter) meter.read(readings.decks[id]);
+    }
+    for (const bus of RETURN_BUSES)
+      this.levelMeters.get(`return:${bus}`)?.read(readings.returns[bus]);
+    this.levelMeters.get('master')?.read(readings.master);
+    const reduction = Math.max(
+      0,
+      -(this.masterCompressor.reduction || 0),
+      -(this.limiter.reduction || 0),
+      this.arrangementReduction?.() || 0
+    );
+    readings.master.reductionDb = reduction > 0 ? -reduction : 0;
+    this.arrangementMeters?.(readings.tracks);
+    return readings;
+  }
+
   setLaneState(deckId, laneId, updates) {
+    if (rejected('setLaneState', [deckId, laneId, updates])) return false;
     const deck = this.decks.get(deckId);
     const lane = deck?.lanes.get(laneId);
     if (!deck || !lane) return;
@@ -702,6 +1128,7 @@ export class StudioAudioEngine {
   }
 
   setLaneFx(deckId, laneId, updates) {
+    if (rejected('setLaneFx', [deckId, laneId, updates])) return false;
     const lane = this.decks.get(deckId)?.lanes.get(laneId);
     if (!lane) return;
     Object.assign(lane, updates);
@@ -740,6 +1167,7 @@ export class StudioAudioEngine {
   }
 
   setMasterStems(value) {
+    if (rejected('setMasterStems', [value])) return false;
     this.masterStems = normalizeMasterStems(value);
     for (const id of this.decks.keys()) this.applyLaneMix(id);
     if (this.unseparated)
@@ -759,25 +1187,24 @@ export class StudioAudioEngine {
   }
 
   setPlaybackRate(deckId, rate) {
+    if (rejected('setPlaybackRate', [deckId, rate])) return false;
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    if (Math.abs(deck.playbackRate - clamp(rate, 0.5, 2)) < 0.000001) return;
-    if (deck.playing) {
-      deck.offset = this.getDeckPosition(deckId);
-      deck.startedAt = Tone.now();
-    }
-    deck.playbackRate = clamp(rate, 0.5, 2);
+    const next = clamp(Number(rate), 0.5, 2);
+    if (Math.abs(deck.playbackRate - next) < 0.000001) return;
+    reanchor(deck);
+    deck.playbackRate = next;
     this.applyPlaybackRates(deck);
-    markTransport(deck, 'rate', Tone.now());
+    // Derived corrections are not transport transitions: a pending user command
+    // must never confirm one of them as its own journaled outcome.
+    if (!this.derivingRate) markTransport(deck, 'rate', Tone.now());
   }
 
   setDeckPitch(deckId, semitones) {
+    if (rejected('setDeckPitch', [deckId, semitones])) return false;
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    if (deck.playing) {
-      deck.offset = this.getDeckPosition(deckId);
-      deck.startedAt = Tone.now();
-    }
+    reanchor(deck);
     deck.pitch = clamp(semitones, -12, 12);
     this.applyPlaybackRates(deck);
   }
@@ -790,6 +1217,7 @@ export class StudioAudioEngine {
   }
 
   setStemPitch(deckId, laneId, semitones) {
+    if (rejected('setStemPitch', [deckId, laneId, semitones])) return false;
     const deck = this.decks.get(deckId);
     const lane = deck?.lanes.get(laneId);
     if (!deck || !lane) return;
@@ -801,30 +1229,40 @@ export class StudioAudioEngine {
     const transportPitch = deck.keyLock ? 0 : 12 * Math.log2(Math.max(0.01, deck.playbackRate));
     deck.lanes.forEach((lane) => {
       lane.player.playbackRate = deck.playbackRate;
+      // Replay queues a synced deck's pitch as rate-following automation (see
+      // PerformancePlayer). A derived rate correction must not overwrite it: the
+      // setter would drop a queued pitch change the model has not committed yet.
+      if (this.derivingRate && deck.pitchScheduled) return;
       lane.player.detune = (deck.pitch + (lane.pitch || 0) + transportPitch) * 100;
     });
   }
 
   setLoop(deckId, enabled, bpm) {
+    if (rejected('setLoop', [deckId, enabled, bpm])) return false;
+    const end = Math.max(0.25, (60 / Math.max(1, bpm)) * 4);
+    // An omitted BPM keeps the region's own one-second default.
     return StudioAudioEngine.prototype.setLoopRegion.call(
       this,
       deckId,
       enabled,
       0,
-      Math.max(0.25, (60 / Math.max(1, bpm)) * 4)
+      Number.isFinite(end) ? end : undefined
     );
   }
 
   setLoopRegion(deckId, enabled, start, end) {
+    if (rejected('setLoopRegion', [deckId, enabled, start, end])) return false;
     const deck = this.decks.get(deckId);
     if (!deck) return;
     const loopStart = Math.max(0, Number(start) || 0);
     const loopEnd = Math.max(loopStart + 0.05, Number(end) || loopStart + 1);
     const apply = () => {
+      const when = Tone.now();
+      if (!enabled) exitLoopInPlace(deck, when);
       deck.looping = enabled;
       deck.loopStart = loopStart;
       deck.loopEnd = loopEnd;
-      this.applyLoop(deckId);
+      this.applyLoop(deckId, when);
       return true;
     };
     return preparedTransport(this, deck, this.getDeckPosition(deckId), apply, {
@@ -851,6 +1289,7 @@ export class StudioAudioEngine {
         );
         return;
       }
+      if (lane.player.loop && !deck.looping) exitGrainLoopInPlace(lane.player, when);
       lane.player.loop = deck.looping;
       if (deck.looping) {
         lane.player.loopStart = Math.min(Math.max(0, lane.duration - 0.001), deck.loopStart);
@@ -863,6 +1302,7 @@ export class StudioAudioEngine {
   }
 
   async playDeck(deckId, offset = null, when = undefined) {
+    if (rejected('playDeck', [deckId, offset, when])) return false;
     const initialDeck = this.decks?.get(deckId);
     const generation = initialDeck?.transportGeneration;
     await this.unlock();
@@ -896,6 +1336,7 @@ export class StudioAudioEngine {
   }
 
   async alignDeck(deckId, grid, reference, tempo, start = false) {
+    if (rejected('alignDeck', [deckId, grid, reference, tempo])) return false;
     const originalDeck = this.decks.get(deckId);
     const originalGeneration = originalDeck?.transportGeneration;
     await this.unlock();
@@ -990,9 +1431,10 @@ export class StudioAudioEngine {
   }
 
   seekDeck(deckId, seconds) {
+    if (rejected('seekDeck', [deckId, seconds])) return false;
     const deck = this.decks.get(deckId);
     if (!deck) return;
-    const position = Math.max(0, Number(seconds) || 0);
+    const position = Math.max(0, Number(seconds));
     return preparedTransport(
       this,
       deck,
@@ -1056,12 +1498,7 @@ export class StudioAudioEngine {
   getDeckPosition(deckId) {
     const deck = this.decks.get(deckId);
     if (!deck) return 0;
-    let position = deck.offset;
-    if (deck.playing) position += Math.max(0, Tone.now() - deck.startedAt) * deck.playbackRate;
-    if (deck.looping && deck.loopEnd > deck.loopStart) {
-      position = deck.loopStart + ((position - deck.loopStart) % (deck.loopEnd - deck.loopStart));
-    }
-    return Math.max(0, position);
+    return Math.max(0, loopedPosition(transportPosition(deck), deck));
   }
 
   isDeckPlaying(deckId) {
@@ -1148,6 +1585,7 @@ export class StudioAudioEngine {
     } catch (error) {
       this.recordingFault = `Event recovery unavailable: ${error.message}`;
     }
+    captureSyncState(this);
     this.longSession = longSession;
     if (!longSession) {
       try {
@@ -1222,6 +1660,7 @@ export class StudioAudioEngine {
   }
 
   async triggerPad(index, frequency) {
+    if (rejected('triggerPad', [index, frequency])) return false;
     await this.unlock();
     const loadedPad = this.padPlayers.get(index);
     if (loadedPad) {
@@ -1234,6 +1673,10 @@ export class StudioAudioEngine {
   }
 
   async loadPad(index, url, level = 82) {
+    if (!finiteNumber(level)) {
+      console.warn('Studio engine ignored a non-finite pad level; using the default.', level);
+      level = 82;
+    }
     this.pendingPadLoads ??= new Map();
     const token = Symbol('pad');
     this.pendingPadLoads.set(index, token);
@@ -1260,6 +1703,7 @@ export class StudioAudioEngine {
   }
 
   setPadGain(index, level) {
+    if (rejected('setPadGain', [index, level])) return false;
     const pad = this.padPlayers.get(index);
     if (!pad) return;
     pad.level = level;
@@ -1370,6 +1814,7 @@ export class StudioAudioEngine {
   }
 
   setInputSettings(patch) {
+    if (rejected('setInputSettings', [patch])) return false;
     this.ensureLiveInput().update(patch);
   }
 
@@ -1417,9 +1862,15 @@ export class StudioAudioEngine {
       deck.filter.dispose();
       deck.delay.dispose();
       deck.reverb.dispose();
+      deck.inserts.dispose();
+      deck.cueSend.disconnect();
+      deck.sends.forEach((send) => send.dispose());
       deck.meter.dispose();
       deck.output.dispose();
     });
+    this.cueRouter.dispose();
+    this.returnBuses.forEach((bus) => bus.dispose());
+    this.levelMeters.forEach((meter) => meter.dispose());
     this.closeMicrophone();
     this.liveInput?.dispose();
     this.padPlayers.forEach(({ player, gain }) => {

@@ -97,9 +97,14 @@ export function hasAnyTracking(stockMap, product) {
 // Untracked variants are skipped rather than created: a sale tells us one unit
 // left the building, not how many were there to begin with, and inventing a
 // count of -1 would show a product as sold out on the strength of a guess.
+//
+// A count cannot be stored below zero, so a decrement larger than the count is
+// clamped — and reported in `oversold`, because a clamp nobody hears about is
+// how a shop finds out it sold something it did not have.
 export function applyStockDeltas(stockMap, deltas = []) {
   const next = { ...(stockMap || {}) };
   const skipped = [];
+  const oversold = [];
 
   for (const delta of deltas) {
     const key = stockKey(delta.slug, delta.size, delta.color);
@@ -110,10 +115,12 @@ export function applyStockDeltas(stockMap, deltas = []) {
       continue;
     }
 
-    next[key] = Math.max(0, Math.trunc(current) + Math.trunc(delta.delta || 0));
+    const target = Math.trunc(current) + Math.trunc(delta.delta || 0);
+    if (target < 0) oversold.push({ key, requested: -Math.trunc(delta.delta), available: current });
+    next[key] = Math.max(0, target);
   }
 
-  return { stock: next, skipped };
+  return { stock: next, skipped, oversold };
 }
 
 // Reports every cart line that asks for more than is available.
@@ -177,4 +184,266 @@ export function sanitizeStockMap(raw) {
     }
   }
   return clean;
+}
+
+// --- Checkout holds ---------------------------------------------------------
+//
+// A hold reserves units for an open Stripe Checkout session, so two customers
+// can never both be sent to pay for the last one. Holds are stored inside the
+// stock blob, under a key that cannot collide with a `slug::size::color` key,
+// so a single conditional write covers counts and reservations together: a
+// reservation, a sale, and a staff recount can never interleave into a state
+// where two checkouts both own the same unit.
+//
+// sanitizeStockMap drops the field (its value is an object), so every reader
+// that only wants counts keeps seeing a plain map.
+//
+// Hold states:
+//   active  — reserved for an open checkout session
+//   pending — checkout finished with a delayed payment method; still reserved
+//   sold    — the sale came out of stock; kept as a tombstone so a redelivered
+//             webhook recognises it instead of decrementing twice
+// A released hold is simply deleted.
+
+export const HOLDS_FIELD = '__holds';
+
+// Stripe retries a webhook for up to three days; a week covers that and the
+// maintenance sweep's own retries with room to spare.
+export const SOLD_HOLD_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
+// An expired hold stops reserving immediately. It is only kept so the sweep
+// can ask Stripe whether that session was paid after all.
+export const EXPIRED_HOLD_RETENTION_MS = 24 * 60 * 60 * 1000;
+
+const HOLD_STATES = new Set(['active', 'pending', 'sold']);
+
+function cleanHoldLines(lines) {
+  if (!Array.isArray(lines)) return [];
+  const clean = [];
+  for (const line of lines) {
+    const quantity = Math.trunc(Number(line?.quantity));
+    if (typeof line?.key !== 'string' || !line.key) continue;
+    if (!Number.isFinite(quantity) || quantity < 0) continue;
+    clean.push({ key: line.key, quantity });
+  }
+  return clean;
+}
+
+export function sanitizeHolds(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+
+  const holds = {};
+  for (const [id, hold] of Object.entries(raw)) {
+    if (!hold || typeof hold !== 'object' || !HOLD_STATES.has(hold.state)) continue;
+    holds[id] = { ...hold, lines: cleanHoldLines(hold.lines) };
+  }
+  return holds;
+}
+
+export function readInventoryDoc(raw) {
+  return {
+    stock: sanitizeStockMap(raw),
+    holds: sanitizeHolds(raw && typeof raw === 'object' ? raw[HOLDS_FIELD] : null),
+  };
+}
+
+export function buildInventoryDoc({ stock, holds }) {
+  const doc = sanitizeStockMap(stock);
+  if (holds && Object.keys(holds).length) doc[HOLDS_FIELD] = holds;
+  return doc;
+}
+
+export function isHoldReserving(hold, now) {
+  return (hold?.state === 'active' || hold?.state === 'pending') && Number(hold.expiresAt) > now;
+}
+
+export function reservedQuantities(holds, now, excludeId = null) {
+  const reserved = {};
+  for (const [id, hold] of Object.entries(holds || {})) {
+    if (id === excludeId || !isHoldReserving(hold, now)) continue;
+    for (const line of hold.lines) {
+      reserved[line.key] = (reserved[line.key] || 0) + line.quantity;
+    }
+  }
+  return reserved;
+}
+
+// What a customer can buy right now: tracked counts minus the units open
+// checkouts are holding. Untracked variants stay absent, which reads as
+// unlimited everywhere else in this module.
+export function availableStock(stock, holds, now) {
+  const reserved = reservedQuantities(holds, now);
+  const available = {};
+  for (const [key, count] of Object.entries(stock || {})) {
+    available[key] = Math.max(0, count - (reserved[key] || 0));
+  }
+  return available;
+}
+
+// Collapses cart or order lines onto one entry per variant, carrying enough
+// detail to name the item in a customer message or an owner alert.
+export function aggregateStockLines(items = []) {
+  const lines = new Map();
+
+  for (const item of items) {
+    const quantity = Math.max(0, Math.trunc(Number(item?.quantity) || 0));
+    if (!item?.slug || !quantity) continue;
+
+    const key = stockKey(item.slug, item.size, item.color);
+    const line = lines.get(key) || {
+      key,
+      slug: item.slug,
+      size: normalizeVariantPart(item.size) || null,
+      color: normalizeVariantPart(item.color) || null,
+      name: item.name || item.slug,
+      quantity: 0,
+    };
+    line.quantity += quantity;
+    lines.set(key, line);
+  }
+
+  return [...lines.values()];
+}
+
+export function pruneHolds(holds, now) {
+  const next = {};
+  for (const [id, hold] of Object.entries(holds || {})) {
+    const keep =
+      hold.state === 'sold'
+        ? Number(hold.soldAt) > now - SOLD_HOLD_RETENTION_MS
+        : Number(hold.expiresAt) > now - EXPIRED_HOLD_RETENTION_MS;
+    if (keep) next[id] = hold;
+  }
+  return next;
+}
+
+function isTrackedKey(stock, key) {
+  return Object.prototype.hasOwnProperty.call(stock, key);
+}
+
+// Reserves `lines` for a new checkout. Returns the next document, or the
+// shortfalls that prevented the reservation. Untracked lines are never held.
+export function placeHold(doc, { holdId, lines, now, expiresAt, extra = {} }) {
+  const holds = { ...doc.holds };
+  const available = availableStock(doc.stock, holds, now);
+
+  const shortfalls = findStockShortfalls(available, lines).map((entry) => ({
+    ...entry,
+    onHand: doc.stock[stockKey(entry.slug, entry.size, entry.color)] ?? null,
+  }));
+  if (shortfalls.length) return { doc: null, shortfalls, held: false };
+
+  const tracked = lines.filter((line) => isTrackedKey(doc.stock, line.key));
+  if (!tracked.length) return { doc: null, shortfalls: [], held: false };
+
+  holds[holdId] = {
+    ...extra,
+    state: 'active',
+    lines: tracked.map(({ key, quantity }) => ({ key, quantity })),
+    createdAt: now,
+    expiresAt,
+  };
+  return { doc: { stock: doc.stock, holds }, shortfalls: [], held: true };
+}
+
+export function updateHold(doc, holdId, patch, { states = ['active', 'pending'] } = {}) {
+  const hold = doc.holds[holdId];
+  if (!hold || !states.includes(hold.state)) return null;
+  return { stock: doc.stock, holds: { ...doc.holds, [holdId]: { ...hold, ...patch } } };
+}
+
+// A sold hold is never released. Callers that only know the shopper walked
+// away pass `states: ['active']`, so a delayed payment's hold stays too.
+export function releaseHold(doc, holdId, { states = ['active', 'pending'] } = {}) {
+  const hold = doc.holds[holdId];
+  if (!hold || !states.includes(hold.state)) return null;
+  const holds = { ...doc.holds };
+  delete holds[holdId];
+  return { stock: doc.stock, holds };
+}
+
+// Keeps stock reserved while a delayed payment (a bank debit, say) settles. A
+// hold that already lapsed is placed again if the units are still free; if
+// they are not, the payment may still succeed and the sale path reports the
+// shortfall then.
+export function holdForPendingPayment(doc, { holdId, lines, now, expiresAt }) {
+  const hold = doc.holds[holdId];
+  if (hold?.state === 'sold') return null;
+
+  if (isHoldReserving(hold, now)) {
+    return updateHold(doc, holdId, {
+      state: 'pending',
+      expiresAt: Math.max(Number(hold.expiresAt), expiresAt),
+    });
+  }
+
+  const holds = { ...doc.holds };
+  delete holds[holdId];
+  const placed = placeHold({ stock: doc.stock, holds }, { holdId, lines, now, expiresAt });
+  if (!placed.doc) return null;
+  placed.doc.holds[holdId].state = 'pending';
+  return placed.doc;
+}
+
+// Takes a paid order's units out of stock, exactly once per hold. `lines` are
+// one entry per variant, as aggregateStockLines produces.
+//
+// Units reserved by OTHER open checkouts are not available to this sale: if
+// this order's own hold lapsed and someone else reserved the unit meanwhile,
+// this order is the one reported as oversold, and the other customer's
+// reservation stays intact. The count never goes below zero; any shortfall is
+// returned in `oversold` for the owner to act on.
+export function commitSale(doc, { holdId, lines, now, sessionId = null }) {
+  const existing = doc.holds[holdId];
+  if (existing?.state === 'sold') {
+    return {
+      doc: null,
+      sale: {
+        alreadyApplied: true,
+        appliedAt: Number(existing.soldAt) || now,
+        applied: existing.lines,
+        oversold: Array.isArray(existing.oversold) ? existing.oversold : [],
+        untracked: Array.isArray(existing.untracked) ? existing.untracked : [],
+      },
+    };
+  }
+
+  const holds = { ...doc.holds };
+  const reservedElsewhere = reservedQuantities(holds, now, holdId);
+  const stock = { ...doc.stock };
+  const applied = [];
+  const oversold = [];
+  const untracked = [];
+
+  for (const line of lines) {
+    if (!isTrackedKey(stock, line.key)) {
+      untracked.push(line.key);
+      continue;
+    }
+
+    const available = Math.max(0, stock[line.key] - (reservedElsewhere[line.key] || 0));
+    const take = Math.min(line.quantity, available);
+    stock[line.key] -= take;
+    if (take) applied.push({ key: line.key, quantity: take });
+    if (take < line.quantity) {
+      oversold.push({
+        key: line.key,
+        slug: line.slug,
+        size: line.size,
+        color: line.color,
+        name: line.name,
+        requested: line.quantity,
+        available,
+      });
+    }
+  }
+
+  const sale = { alreadyApplied: false, appliedAt: now, applied, oversold, untracked };
+
+  // Nothing held and nothing tracked: there is no count to protect, so there
+  // is nothing to write.
+  if (!existing && !applied.length && !oversold.length) return { doc: null, sale };
+
+  holds[holdId] = { state: 'sold', soldAt: now, sessionId, lines: applied, oversold, untracked };
+  return { doc: { stock, holds }, sale };
 }

@@ -1,6 +1,19 @@
 import crypto from 'node:crypto';
 import process from 'node:process';
 import { Resend } from 'resend';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
+import { claimInquiryEmail, saveInquiry } from '../../server/inquiryStore.js';
+
+// The public form posts to Netlify Forms first and only falls back to this
+// function, but the function is reachable directly, so it carries its own
+// limits: this per-address edge limit, a honeypot, and an email allowance
+// (see claimInquiryEmail) for floods spread across many addresses.
+export const config = {
+  path: ['/api/service-inquiry', '/.netlify/functions/service-inquiry'],
+  rateLimit: { windowLimit: 5, windowSize: 60, aggregateBy: ['ip', 'domain'] },
+};
+
+const MAX_BODY_CHARS = 20000;
 
 const SERVICE_LABELS = {
   'instrument-sales': 'Instruments / gear',
@@ -38,6 +51,11 @@ function makeInquiryId() {
   return `inq_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 }
 
+// `bot-field` is the honeypot Netlify Forms already watches for this form.
+function honeypotFilled(payload) {
+  return ['bot-field', 'website'].some((field) => String(payload?.[field] ?? '').trim() !== '');
+}
+
 function buildInquiryText({ service, name, email, phone, details, source }) {
   const serviceLabel = SERVICE_LABELS[service] || service || 'Not specified';
 
@@ -57,20 +75,66 @@ function buildInquiryText({ service, name, email, phone, details, source }) {
 
 async function storeInquiry(event, record) {
   try {
-    const { connectLambda, getStore } = await import('@netlify/blobs');
-    connectLambda(event);
-    const inquiryStore = getStore('service-inquiries');
-    await inquiryStore.setJSON(`inquiries/${record.id}.json`, record);
+    await saveInquiry(event, record);
     return true;
   } catch (error) {
-    console.error('Service inquiry storage failed:', error);
+    console.error(
+      JSON.stringify({
+        type: 'service-inquiry-store-failed',
+        inquiryId: record.id,
+        message: error?.message,
+      })
+    );
     return false;
   }
 }
 
-export async function handler(event) {
+// Resend reports API and network failures in `error` rather than throwing, so
+// a resolved call is not a sent email until it returns an id.
+async function sendInquiryEmail(record, { apiKey, from, to }) {
+  try {
+    const { data, error } = await new Resend(apiKey).emails.send({
+      from,
+      to,
+      replyTo: record.email,
+      subject: `New Sattari service inquiry: ${record.serviceLabel}`,
+      text: buildInquiryText(record),
+    });
+    if (!error && data?.id) return data.id;
+    console.error(
+      JSON.stringify({
+        type: 'service-inquiry-email-failed',
+        inquiryId: record.id,
+        reason: error?.name || 'no-email-id',
+        message: error?.message,
+      })
+    );
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        type: 'service-inquiry-email-failed',
+        inquiryId: record.id,
+        reason: error?.name || 'exception',
+        message: error?.message,
+      })
+    );
+  }
+  return null;
+}
+
+export default async function serviceInquiry(request, context) {
+  if (Number(request.headers.get('content-length')) > MAX_BODY_CHARS) {
+    return webResponse(json(413, { error: 'Request is too large.' }));
+  }
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed.' });
+  }
+  if ((event.body || '').length > MAX_BODY_CHARS) {
+    return json(413, { error: 'Request is too large.' });
   }
 
   let payload;
@@ -78,6 +142,17 @@ export async function handler(event) {
     payload = JSON.parse(event.body || '{}');
   } catch {
     return json(400, { error: 'Invalid request body.' });
+  }
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return json(400, { error: 'Invalid request body.' });
+  }
+
+  const id = makeInquiryId();
+
+  if (honeypotFilled(payload)) {
+    // Looks exactly like success; nothing is stored or emailed.
+    console.log(JSON.stringify({ type: 'service-inquiry-honeypot' }));
+    return json(200, { ok: true, id, inquiryId: id, emailSent: true, stored: true });
   }
 
   const service = clean(payload.service, 80);
@@ -99,7 +174,6 @@ export async function handler(event) {
   const from = process.env.SERVICE_INQUIRY_FROM || process.env.ORDER_NOTIFICATION_FROM;
   const to = process.env.SERVICE_INQUIRY_TO || process.env.ORDER_NOTIFICATION_EMAIL;
 
-  const id = makeInquiryId();
   const record = {
     id,
     service,
@@ -114,46 +188,52 @@ export async function handler(event) {
   };
 
   if (!apiKey || !from || !to) {
-    console.warn('Service inquiry email configuration missing; storing inquiry only.', {
-      hasApiKey: Boolean(apiKey),
-      hasFrom: Boolean(from),
-      hasTo: Boolean(to),
-    });
-    const stored = await storeInquiry(event, record);
-    if (!stored) {
-      return json(500, { error: 'Unable to save your inquiry right now. Please try again soon.' });
+    console.warn(
+      JSON.stringify({
+        type: 'service-inquiry-email-not-configured',
+        inquiryId: id,
+        hasApiKey: Boolean(apiKey),
+        hasFrom: Boolean(from),
+        hasTo: Boolean(to),
+      })
+    );
+    record.emailError = 'not-configured';
+  } else {
+    let allowed = false;
+    try {
+      allowed = await claimInquiryEmail(event);
+    } catch (error) {
+      console.error(
+        JSON.stringify({ type: 'service-inquiry-allowance-unavailable', message: error?.message })
+      );
     }
-    return json(200, { ok: true, id, emailSent: false, stored: true });
+    if (!allowed) {
+      console.warn(JSON.stringify({ type: 'service-inquiry-email-limited', inquiryId: id }));
+      record.emailError = 'limit';
+    } else {
+      const emailId = await sendInquiryEmail(record, { apiKey, from, to });
+      if (emailId) {
+        record.emailSent = true;
+        record.emailId = emailId;
+      } else {
+        record.emailError = 'provider';
+      }
+    }
   }
 
-  try {
-    const resend = new Resend(apiKey);
-    const serviceLabel = SERVICE_LABELS[service] || service;
-    const response = await resend.emails.send({
-      from,
-      to,
-      replyTo: email,
-      subject: `New Sattari service inquiry: ${serviceLabel}`,
-      text: buildInquiryText({ service, name, email, phone, details, source }),
-    });
+  const stored = await storeInquiry(event, record);
 
-    record.emailSent = true;
-    record.emailId = response.data?.id || null;
-    await storeInquiry(event, record);
-
-    return json(200, {
-      ok: true,
-      id: record.emailId || id,
-      inquiryId: id,
-      emailSent: true,
-      stored: true,
-    });
-  } catch (error) {
-    console.error('Service inquiry email failed; attempting storage fallback:', error);
-    const stored = await storeInquiry(event, record);
-    if (stored) {
-      return json(200, { ok: true, id, emailSent: false, stored: true });
-    }
+  // Only tell the customer it arrived if someone will actually see it: in the
+  // inbox, or in the staff page's inquiry list.
+  if (!record.emailSent && !stored) {
     return json(500, { error: 'Unable to send your inquiry right now. Please try again soon.' });
   }
+
+  return json(200, {
+    ok: true,
+    id: record.emailId || id,
+    inquiryId: id,
+    emailSent: record.emailSent,
+    stored,
+  });
 }
