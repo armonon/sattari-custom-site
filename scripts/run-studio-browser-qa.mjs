@@ -62,12 +62,16 @@ try {
     ready('http://127.0.0.1:4192/scripts/input-audio-qa.html', audio.child),
     ready('http://127.0.0.1:4193/studio', preview.child),
   ]);
-  const checks = await Promise.all([
-    run(['scripts/run-studio-audio-qa.mjs', 'http://127.0.0.1:4192'], {
-      STUDIO_QA_REPORT: resolve(output, 'audio.json'),
-    }).done,
-    run(['scripts/session-ui-qa.mjs', 'http://127.0.0.1:4193', resolve(output, 'ui')]).done,
-  ]);
+  // UI imports and offline renders must not compete with the live audio deadline tests.
+  const audioStatus = await run(['scripts/run-studio-audio-qa.mjs', 'http://127.0.0.1:4192'], {
+    STUDIO_QA_REPORT: resolve(output, 'audio.json'),
+  }).done;
+  const uiStatus = await run([
+    'scripts/session-ui-qa.mjs',
+    'http://127.0.0.1:4193',
+    resolve(output, 'ui'),
+  ]).done;
+  const checks = [audioStatus, uiStatus];
   if (checks.some((code) => code !== 0)) process.exitCode = 1;
 } finally {
   for (const child of children) child.kill('SIGTERM');

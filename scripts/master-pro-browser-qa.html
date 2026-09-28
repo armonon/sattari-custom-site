@@ -39,7 +39,7 @@ document.querySelector('#run').onclick=async event=>{
      for(const key of ['inputTrim','limiterDrive']){const changed=await render({[key]:-6});assert(Math.abs(20*Math.log10(rms(changed)/rms(clean))+6)<.01,`${key}: wrong gain`)}
    });
    await test('equal and opposite trims cancel with dynamics disabled',async()=>{
-     const changed=await render({inputTrim:-6,limiterDrive:6});assert(difference(clean,changed)<1e-5,'gain staging mismatch');
+     const changed=await render({inputTrim:-6,limiterDrive:6});const peakDifference=difference(clean,changed);assert(peakDifference<1e-5,`gain staging mismatch: max sample difference ${peakDifference}, RMS delta ${20*Math.log10(rms(changed)/rms(clean))} dB`);
    });
    await test('EQ crossover frequency changes the actual rendered sound',async()=>{
      const a=await render({low:-12,lowFrequency:100}),b=await render({low:-12,lowFrequency:800});assert(Math.abs(rms(a)-rms(b))>.005,'crossover disconnected');
