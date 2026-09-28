@@ -37,15 +37,6 @@ async function call(name, method, token) {
   const mod = await import(`../../netlify/functions/${name}.js`);
   const headers = token ? { authorization: `Bearer ${token}` } : {};
   const body = method === 'POST' ? '{}' : undefined;
-  if (typeof mod.handler === 'function') {
-    const response = await mod.handler({
-      httpMethod: method,
-      headers,
-      body: body || '',
-      queryStringParameters: {},
-    });
-    return response.statusCode;
-  }
   const response = await mod.default(
     new Request(`https://sattarimusic.com/.netlify/functions/${name}`, { method, headers, body }),
     { ip: '127.0.0.1' }

@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { importMidi } from '../../utils/arrangementMidi';
-import { analyzeAudioFile, createWaveformPeaks } from '../../utils/audioAnalysis';
+import { analyzeAudioFile } from '../../utils/audioAnalysis';
 import { getAudioAsset, putAudioAsset } from '../../utils/audioProjectStore';
-import { audioClip, audioTrack, updatePatternClip } from '../../utils/arrangementModel';
+import {
+  audioClip,
+  audioTrack,
+  repairArrangement,
+  updatePatternClip,
+} from '../../utils/arrangementModel';
 import { isLibraryAudio } from '../../utils/musicLibrary';
 import { PerformancePlayer } from '../../utils/performancePlayer';
 import { downloadExport } from './ExportRangePanel';
@@ -12,7 +17,10 @@ import {
   appendTracks,
   printedPerformanceTracks,
   relinkAsset,
+  withClipWaveform,
 } from './projectEdits';
+import { decodeSourceWindow } from '../../utils/arrangementSourceWindow';
+import { sourceDuration } from '../../utils/windowedSource';
 import { useStableActions } from './useStableCallback';
 
 /**
@@ -34,8 +42,11 @@ export function useArrangementOperations({
   exportSettings,
 }) {
   const { working, cancelled, mounted } = flags;
-  const { pause, position, engine, getArrangementEngine, setPlaying, settings } = playback;
+  const { pause, position, getArrangementEngine, settings } = playback;
   const player = useRef(null);
+  // Bumped whenever the project is replaced: a replay from the old project
+  // must not print its tracks into the new one.
+  const replayEpoch = useRef(0);
   const [activeReplay, setActiveReplay] = useState(null);
   useEffect(() => () => player.current?.dispose(), []);
   const start = (resetCancel = true) => {
@@ -80,7 +91,7 @@ export function useArrangementOperations({
           setMessage(`Importing ${file.name}…`);
           try {
             const analysis = await analyzeAudioFile(file),
-              asset = await putAudioAsset(file, { name: file.name, analysis });
+              asset = await putAudioAsset(file, { name: file.name, analysis, dedupe: true });
             if (
               !Number.isFinite(analysis.duration) ||
               analysis.duration < 0.001 ||
@@ -110,15 +121,15 @@ export function useArrangementOperations({
           const latest = history.project,
             originalIds = new Set(before.tracks.map((track) => track.id));
           history.commit(
-            {
+            repairArrangement({
               ...next,
               captures: latest.captures,
               tracks: [
                 ...next.tracks,
                 ...latest.tracks.filter((track) => !originalIds.has(track.id)),
               ],
-            },
-            { validate: false, sync: false }
+            }),
+            { sync: false }
           );
         }
         if (mounted.current)
@@ -138,21 +149,34 @@ export function useArrangementOperations({
         const asset = await getAudioAsset(recording.id);
         if (!asset?.blob)
           throw new Error('Recorded audio is missing. Restore its portable project backup.');
-        const decoded = await getEngine()
-          .getAudioContext()
-          .rawContext.decodeAudioData(await asset.blob.arrayBuffer());
+        // Length from the container and one decoded window, never a whole-take
+        // decode (an hour is about 1.4 GB of PCM); the waveform follows.
+        const raw = getEngine().getAudioContext().rawContext;
+        const cacheKey = `${recording.id}:${asset.blob.size}`;
+        const duration = await sourceDuration(raw, asset.blob, cacheKey);
+        await decodeSourceWindow(raw, asset.blob, 0, Math.min(duration, 1), 64 * 1024 * 1024, {
+          cacheKey,
+        });
         if (cancelled.current || !mounted.current) return;
         const track = audioTrack(recording.name);
         track.role = 'reference';
-        track.clips.push({
-          ...audioClip(recording.id, recording.name, decoded.duration, position.current),
-          waveform: createWaveformPeaks(decoded.getChannelData(0), 2048),
-        });
+        const clip = audioClip(recording.id, recording.name, duration, position.current);
+        track.clips.push(clip);
         working.current = false;
         edit((project) => addReferenceTake(project, track));
         setMessage(
           'Recorded take added as an editable audio lane. Its original audio is unchanged.'
         );
+        void import('../../utils/windowedAudioAnalysis')
+          .then(({ windowedWaveformPeaks }) =>
+            windowedWaveformPeaks(asset.blob, raw, { duration, cacheKey })
+          )
+          .then((waveform) => {
+            // Display only: no undo step of its own.
+            const next = withClipWaveform(history.project, clip.id, waveform);
+            if (mounted.current && next !== history.project) history.replace(next, false, false);
+          })
+          .catch(() => {});
       } catch (error) {
         if (mounted.current) setMessage(error.message);
       } finally {
@@ -206,7 +230,7 @@ export function useArrangementOperations({
           throw new Error(
             `Replacement must contain at least ${needed.toFixed(2)} seconds of audio.`
           );
-        const asset = await putAudioAsset(file, { name: file.name, analysis });
+        const asset = await putAudioAsset(file, { name: file.name, analysis, dedupe: true });
         if (!mounted.current) return;
         working.current = false;
         edit((project) =>
@@ -240,7 +264,7 @@ export function useArrangementOperations({
           throw new Error(
             'Choose a sample under 60 seconds. Import longer recordings as audio tracks.'
           );
-        const asset = await putAudioAsset(file, { name: file.name });
+        const asset = await putAudioAsset(file, { name: file.name, dedupe: true });
         getArrangementEngine().buffers.set(asset.id, decoded);
         working.current = false;
         if (mounted.current) {
@@ -259,15 +283,21 @@ export function useArrangementOperations({
         finish();
       }
     },
+    // A replay is exclusive like an import: New/Open project wait for it.
     async replay(capture, record = false, options = {}) {
-      if (busy) return;
-      engine.current?.pause();
-      setPlaying(false);
-      setBusy(true);
+      if (working.current || busy) return;
+      start();
+      const epoch = replayEpoch.current;
+      const live = () => replayEpoch.current === epoch && mounted.current;
       player.current?.dispose();
       const current = new PerformancePlayer(getEngine(), {
-        onStatus: setMessage,
+        onStatus: (text) => live() && setMessage(text),
         onFinish: ({ sources, error, lateEvents, maxLateness, offset }) => {
+          current.dispose();
+          if (player.current === current) player.current = null;
+          if (!live()) return;
+          setActiveReplay(null);
+          finish();
           if (!error && sources?.tracks?.length)
             edit((project) =>
               appendTracks(project, printedPerformanceTracks(sources, capture, offset))
@@ -276,25 +306,35 @@ export function useArrangementOperations({
             error?.message ||
               `${sources ? 'Edited performance printed, muted for comparison. ' : 'Replay finished. '}Late control events (>25 ms): ${lateEvents || 0}; worst ${(1000 * (maxLateness || 0)).toFixed(1)} ms. ${sources?.error || ''}`
           );
-          setBusy(false);
-          setActiveReplay(null);
-          current.dispose();
         },
       });
       player.current = current;
       try {
         await current.prepare(capture, history.project.tracks, options);
+        if (!live()) return;
         setActiveReplay(capture.id || capture.assetId);
         await current.play({ record });
       } catch (error) {
         current.dispose();
-        setBusy(false);
+        if (player.current === current) player.current = null;
+        if (!live()) return;
         setActiveReplay(null);
+        finish();
         setMessage(error.message);
       }
     },
     stopReplay() {
       void player.current?.stop();
+    },
+    // The project is being replaced: silence any replay without printing it.
+    cancelReplay() {
+      replayEpoch.current += 1;
+      const current = player.current;
+      player.current = null;
+      if (!current) return;
+      current.dispose();
+      setActiveReplay(null);
+      finish();
     },
   });
   return { ...actions, activeReplay };

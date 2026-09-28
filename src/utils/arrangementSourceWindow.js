@@ -1,5 +1,6 @@
 // PCM WAV (including captured float WAV chunks) can be read by sample range.
-// Other formats use packet/range decoding rather than a whole-file fallback.
+// Other formats use packet/range decoding (whole-song fallback only where the
+// browser lacks WebCodecs audio; see compressedAudioWindow).
 import { decodeCompressedWindow } from './compressedAudioWindow';
 import { decodeAiffWindow } from './aiffWindow';
 

@@ -1599,9 +1599,16 @@ export class StudioAudioEngine {
     }
     this.sourceCaptureResult = null;
     {
+      // Only the master safety lane is continuous. Silent chunks on the other
+      // lanes are skipped (later chunks keep absolute timestamps): an idle deck
+      // or pad would otherwise write 384 kB/s of zeros for the whole take.
       const inputs = (sources ? [...this.decks.entries()] : [])
         .filter(([, deck]) => deck.lanes.size)
-        .map(([id, deck]) => ({ name: `Deck ${id} · performed`, nodes: [deck.output] }));
+        .map(([id, deck]) => ({
+          name: `Deck ${id} · performed`,
+          omitSilence: true,
+          nodes: [deck.output],
+        }));
       // Reserve a stable lane even when the input connects or reconnects mid-take.
       inputs.push({
         name: 'Mic / input · armed dry',
@@ -1625,10 +1632,16 @@ export class StudioAudioEngine {
       inputs.push({
         name: 'Pad instruments',
         replayInput: 'pads',
+        omitSilence: true,
         nodes: [this.padSynth, this.padKick, this.padNoise, this.padHat],
       });
       for (const [id, pad] of this.padPlayers)
-        inputs.push({ name: `Pad ${id + 1}`, replayInput: `pad:${id}`, nodes: [pad.gain] });
+        inputs.push({
+          name: `Pad ${id + 1}`,
+          replayInput: `pad:${id}`,
+          omitSilence: true,
+          nodes: [pad.gain],
+        });
       inputs.unshift({ name: 'Master safety', role: 'reference', nodes: [this.output] });
       this.sourceCapture = new SourceCapture();
       try {
@@ -1653,7 +1666,9 @@ export class StudioAudioEngine {
           this.stopRecordingDiagnostics?.();
           this.performanceJournal?.dispose();
           this.longSession = false;
-          throw new Error(`Long-session capture could not start: ${error.message}`);
+          throw new Error(`Long-session capture could not start: ${error.message}`, {
+            cause: error,
+          });
         }
       }
     }

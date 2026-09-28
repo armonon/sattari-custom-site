@@ -2,7 +2,12 @@ import crypto from 'node:crypto';
 import process from 'node:process';
 import { products as baseProducts, resolveSelectedOption } from '../../src/data/catalog.js';
 import { FLAT_SHIPPING_CENTS } from '../../src/data/shipping.js';
-import { aggregateStockLines, describeVariant } from '../../src/utils/inventory.js';
+import {
+  aggregateStockLines,
+  describeVariant,
+  HOLD_BUDGET,
+  stockKey,
+} from '../../src/utils/inventory.js';
 import { mergeCatalog } from '../../src/utils/catalogMerge.js';
 import {
   isStockContention,
@@ -12,11 +17,24 @@ import {
 } from '../../server/stockStore.js';
 import { readCatalogDoc } from '../../server/catalogStore.js';
 import { retireCheckoutSession } from '../../server/checkoutOrders.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
+import { hashIp } from '../../server/ipHash.js';
 import { errorMessage, logError } from '../../server/log.js';
+import { getClientIp } from '../../server/staffAuth.js';
 import { getStripe } from '../../server/stripeClient.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/create-checkout-session', '/.netlify/functions/create-checkout-session'],
+};
 
 const SHIPPING_COUNTRIES = ['US', 'CA'];
 const SESSION_ID = /^cs_[A-Za-z0-9_]{8,250}$/;
+
+// Most of any one item a single online order may take. It bounds what one
+// checkout can hold back from other shoppers; larger orders go through the
+// shop. Reported to the cart as `quantity_limit` with this number.
+const MAX_UNITS_PER_VARIANT = 10;
 
 // Stripe's minimum session lifetime is 30 minutes. The extra minute keeps a
 // slightly slow clock on either side from making Stripe reject the session.
@@ -109,13 +127,25 @@ function describeShortfalls(shortfalls) {
 // many checkouts at once — exactly when an unreserved sale is likely to clash.
 async function reserveCart(event, { holdId, lines, checkoutExpiresAt, replaces }) {
   try {
-    const { held, shortfalls } = await reserveStock(event, {
+    const owner = holdOwner(event);
+    const { held, shortfalls, overBudget } = await reserveStock(event, {
       holdId,
       lines,
       expiresAt: checkoutExpiresAt + HOLD_GRACE_MS,
       extra: { checkoutExpiresAt },
       replaces,
+      owner,
+      budget: owner ? HOLD_BUDGET : null,
     });
+
+    if (overBudget) {
+      logError('checkout-hold-budget', { owner });
+      throw new CheckoutError(
+        'There are already several checkouts open from your connection. Please finish or close one of them, or try again in about 45 minutes.',
+        429,
+        { code: 'hold_limit' }
+      );
+    }
 
     if (shortfalls.length) {
       throw new CheckoutError(describeShortfalls(shortfalls), 409, {
@@ -139,6 +169,18 @@ async function reserveCart(event, { holdId, lines, checkoutExpiresAt, replaces }
     }
     logError('checkout-stock-read-error', { message: errorMessage(error) });
     return false;
+  }
+}
+
+// A keyed hash of the shopper's address, so the hold budget counts per
+// address without storing one. No budget without a known address or a key.
+function holdOwner(event) {
+  const ip = getClientIp(event);
+  if (!ip || ip === 'unknown') return null;
+  try {
+    return hashIp(ip).slice(0, 16);
+  } catch {
+    return null;
   }
 }
 
@@ -211,6 +253,7 @@ function resolveItems(payloadItems, products) {
   // no longer for sale. The stable code and slugs let the cart drop exactly
   // those items instead of showing an error it cannot act on.
   const unavailable = [];
+  const colorMissing = [];
   const resolved = [];
 
   for (const item of payloadItems) {
@@ -221,14 +264,19 @@ function resolveItems(payloadItems, products) {
       continue;
     }
 
-    // Only accept a color that the product actually offers.
+    // A product that comes in colors is stocked per color: without one of the
+    // colors it offers, the sale would land on a stock entry nobody tracks,
+    // and no hold, decrement or oversold alert would happen.
     const offeredColors = product.colors?.map((option) => option.name) ?? [];
-    const color = offeredColors.includes(item.color) ? item.color : null;
+    if (offeredColors.length && !offeredColors.includes(item.color)) {
+      if (!colorMissing.includes(item.slug)) colorMissing.push(item.slug);
+      continue;
+    }
 
     resolved.push({
       product,
       size,
-      color,
+      color: offeredColors.length ? item.color : null,
       unitPrice,
       quantity: normalizeQuantity(item.quantity),
     });
@@ -244,12 +292,48 @@ function resolveItems(payloadItems, products) {
     );
   }
 
+  if (colorMissing.length) {
+    throw new CheckoutError(
+      'Please choose a color for every item in your cart that comes in more than one.',
+      409,
+      { code: 'color_required', slug: colorMissing[0], slugs: colorMissing }
+    );
+  }
+
+  // Counted per variant across the whole cart, so splitting one item over
+  // several lines does not get around it.
+  const units = new Map();
+  for (const { product, size, color, quantity } of resolved) {
+    const key = stockKey(product.slug, size, color);
+    units.set(key, { slug: product.slug, quantity: (units.get(key)?.quantity || 0) + quantity });
+  }
+  const tooMany = [
+    ...new Set(
+      [...units.values()]
+        .filter((entry) => entry.quantity > MAX_UNITS_PER_VARIANT)
+        .map((entry) => entry.slug)
+    ),
+  ];
+  if (tooMany.length) {
+    throw new CheckoutError(
+      `Online orders can include up to ${MAX_UNITS_PER_VARIANT} of each item. Please lower the quantity, or call (424) 465-3020 for a larger order.`,
+      409,
+      { code: 'quantity_limit', slug: tooMany[0], slugs: tooMany, limit: MAX_UNITS_PER_VARIANT }
+    );
+  }
+
   return resolved;
 }
 
 function buildLineItems(resolvedItems, clientUrl) {
   return resolvedItems.map(({ product, size, color, unitPrice, quantity }) => {
     const variant = [size, color].filter(Boolean).join(', ');
+    // Stripe reads an empty string as an attempt to unset the field and
+    // rejects the whole session, and staff can add a product with no
+    // description, so a blank one is left out.
+    const description =
+      typeof product.description === 'string' ? product.description.trim().slice(0, 500) : '';
+    const images = buildPublicImageUrl(clientUrl, product.image);
 
     return {
       quantity,
@@ -258,8 +342,8 @@ function buildLineItems(resolvedItems, clientUrl) {
         unit_amount: Math.round(unitPrice * 100),
         product_data: {
           name: variant ? `${product.name} (${variant})` : product.name,
-          description: product.description?.slice(0, 500),
-          images: buildPublicImageUrl(clientUrl, product.image),
+          ...(description ? { description } : {}),
+          ...(images.length ? { images } : {}),
           metadata: {
             slug: product.slug,
             size: size || 'default',
@@ -271,7 +355,11 @@ function buildLineItems(resolvedItems, clientUrl) {
   });
 }
 
-export async function handler(event) {
+export default async function createCheckoutSession(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed.' });
   }

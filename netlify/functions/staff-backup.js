@@ -6,8 +6,15 @@ import {
   restoreSnapshot,
   writeSnapshot,
 } from '../../server/backupStore.js';
+import { requestSiteRebuild } from '../../server/buildHook.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { requireStaff } from '../../server/staffAuth.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/backup', '/.netlify/functions/staff-backup'],
+};
 
 function json(statusCode, body) {
   return {
@@ -17,12 +24,29 @@ function json(statusCode, body) {
   };
 }
 
-export async function handler(event) {
+const UNREADABLE =
+  'The shop data could not be read right now, so no backup was taken. Nothing was changed. Try again in a moment.';
+
+export default async function staffBackup(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
 
+  try {
+    return await act(event, session);
+  } catch (error) {
+    // Storage failures only; every refusal written for staff returns above.
+    logError('staff-backup-error', { staff: session.staff, message: errorMessage(error) });
+    return json(503, { error: UNREADABLE });
+  }
+}
+
+async function act(event, session) {
   // --- read --------------------------------------------------------------
   if (event.httpMethod === 'GET') {
     const action = event.queryStringParameters?.action || 'list';
@@ -34,7 +58,7 @@ export async function handler(event) {
       const key = event.queryStringParameters?.key;
       const snapshot = key
         ? await readSnapshot(event, key)
-        : await captureSnapshot(event, `manual by ${session.staff}`);
+        : await captureSnapshot(event, `manual by ${session.staff}`, Date.now(), 'manual');
 
       if (!snapshot) return json(404, { error: 'That backup no longer exists.' });
 
@@ -73,7 +97,12 @@ export async function handler(event) {
 
   // --- take a snapshot now ------------------------------------------------
   if (body.action === 'snapshot') {
-    const snapshot = await captureSnapshot(event, `manual by ${session.staff}`);
+    const snapshot = await captureSnapshot(
+      event,
+      `manual by ${session.staff}`,
+      Date.now(),
+      'manual'
+    );
     const key = await writeSnapshot(event, snapshot);
     logEvent({ type: 'staff-backup-snapshot', staff: session.staff, key });
     return json(200, { staff: session.staff, key, summary: describeSnapshot(snapshot) });
@@ -97,9 +126,28 @@ export async function handler(event) {
     if (!check.ok) return json(400, { error: check.error });
 
     // Snapshot the CURRENT state first, so restoring the wrong backup is
-    // itself undoable. A restore you cannot walk back is not a safety net.
-    const safety = await captureSnapshot(event, `before restore by ${session.staff}`);
-    const safetyKey = await writeSnapshot(event, safety);
+    // itself undoable. A restore you cannot walk back is not a safety net, so
+    // if the current state cannot be read in full, nothing is restored.
+    let safetyKey;
+    try {
+      const safety = await captureSnapshot(
+        event,
+        `before restore by ${session.staff}`,
+        Date.now(),
+        'restore'
+      );
+      safetyKey = await writeSnapshot(event, safety);
+    } catch (error) {
+      logError('staff-backup-safety-error', {
+        staff: session.staff,
+        restoring: key,
+        message: errorMessage(error),
+      });
+      return json(503, {
+        error:
+          'The current state could not be saved first, so nothing was restored. Try again in a moment.',
+      });
+    }
 
     let reconciliation;
     try {
@@ -115,6 +163,8 @@ export async function handler(event) {
         safetyKey,
       });
     }
+
+    await requestSiteRebuild(event, 'backup restored');
 
     logEvent({
       type: 'staff-backup-restore',

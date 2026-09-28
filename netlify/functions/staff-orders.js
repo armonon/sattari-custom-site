@@ -7,9 +7,20 @@ import {
   isValidStatus,
 } from '../../src/utils/fulfillment.js';
 import { readFulfillmentDoc, updateFulfillmentDoc } from '../../server/fulfillmentStore.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { requireStaff } from '../../server/staffAuth.js';
-import { listOrders, readOrder } from '../../server/orderStore.js';
+import {
+  dismissParkedOrder,
+  listOrders,
+  readOrder,
+  readParkedOrders,
+} from '../../server/orderStore.js';
 import { errorMessage, logError, logEvent } from '../../server/log.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/orders', '/.netlify/functions/staff-orders'],
+};
 
 function json(statusCode, body) {
   return {
@@ -29,22 +40,52 @@ function decorate(records, fulfillmentDoc, limit) {
     fulfillment: fulfillmentFor(fulfillmentDoc, record.id),
     // Paid orders that stock could not cover. Must be dealt with before packing.
     oversold: Array.isArray(record.stock?.oversold) ? record.stock.oversold : [],
+    // Paid, but stock was not deducted automatically: count it by hand.
+    stockState: record.stock?.state || null,
     notificationState: record.notification?.state || null,
   }));
+}
+
+// Paid checkouts the maintenance sweep parked after repeated failures,
+// longest parked first. They stay listed until they finish (a Stripe event or
+// a fix lets them) or staff dismiss them.
+async function stuckOrders(event) {
+  try {
+    const { orders, total } = await readParkedOrders(event);
+    return {
+      stuck: orders.map(({ orderId, parkedAt, lastError }) => ({ orderId, parkedAt, lastError })),
+      stuckTotal: total,
+    };
+  } catch {
+    return { stuck: [], stuckTotal: 0 };
+  }
 }
 
 // Reads the same 'orders' store the Stripe webhook writes to, and layers this
 // shop's own fulfilment state on top. The two are stored separately so that
 // re-reading an order from Stripe can never wipe the fact that it shipped.
 //
-// Distinct from admin-orders, which is gated by a static shared token meant for
-// scripted lookups. This one uses the staff session.
-export async function handler(event) {
+// Distinct from admin-orders, which is for scripted lookups. Both take the
+// staff session.
+export default async function staffOrders(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
   }
 
+  try {
+    return await act(event, session);
+  } catch (error) {
+    logError('staff-orders-error', { staff: session.staff, message: errorMessage(error) });
+    return json(503, { error: 'Orders could not be reached right now. Nothing was changed.' });
+  }
+}
+
+async function act(event, session) {
   // --- update fulfilment -------------------------------------------------
   if (event.httpMethod === 'POST') {
     let body;
@@ -56,6 +97,17 @@ export async function handler(event) {
 
     const orderId = String(body.orderId || '');
     if (!orderId) return json(400, { error: 'Which order?' });
+
+    // Stop retrying a checkout the sweep parked: one that can never finish,
+    // like a test-mode session left over after switching to live keys, or one
+    // staff have sorted out by hand. Only a parked order can be dismissed.
+    if (body.action === 'dismiss-stuck') {
+      if (!(await dismissParkedOrder(event, orderId))) {
+        return json(404, { error: 'That checkout is not waiting to be dismissed.' });
+      }
+      logEvent({ type: 'staff-dismiss-stuck-order', staff: session.staff, orderId });
+      return json(200, { staff: session.staff, dismissed: orderId });
+    }
     if (!isValidStatus(body.status)) return json(400, { error: 'Unknown fulfilment status.' });
 
     // Only orders we actually hold can be marked. Without this, a typo would
@@ -107,12 +159,14 @@ export async function handler(event) {
 
   const limit = Math.max(1, Math.min(200, Number(event.queryStringParameters?.limit) || 50));
 
-  let records = [];
-  let fulfillmentDoc = {};
+  let records;
+  let fulfillmentDoc;
+  let stuck;
   try {
-    [records, fulfillmentDoc] = await Promise.all([
+    [records, fulfillmentDoc, stuck] = await Promise.all([
       listOrders(event),
       readFulfillmentDoc(event).catch(() => ({})),
+      stuckOrders(event),
     ]);
   } catch (error) {
     logError('staff-orders-list-error', { message: errorMessage(error) });
@@ -133,5 +187,6 @@ export async function handler(event) {
     stats: buildOrderStats(records),
     openCount: countOpen(fulfillmentDoc, records),
     total: records.length,
+    ...stuck,
   });
 }

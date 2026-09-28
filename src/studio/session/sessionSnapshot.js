@@ -119,6 +119,7 @@ export function relinkManifestAssets(manifest, importedIds) {
     for (const capture of manifest.arranger.captures)
       if (importedIds.has(capture.assetId)) capture.assetId = importedIds.get(capture.assetId);
     relinkPerformanceAssets(manifest.arranger.captures, importedIds);
+    relinkPerformanceAssets(manifest.arranger.setAside || [], importedIds);
   }
   return manifest;
 }

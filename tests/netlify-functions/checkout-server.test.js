@@ -50,7 +50,7 @@ beforeAll(async () => {
 
   directory = await mkdtemp(path.join(os.tmpdir(), 'sattari-dev-api-'));
   blobs = await startLocalBlobs(directory);
-  const app = createDevApp({ lambdaBlobs: blobs.lambdaBlobs, clientUrl: 'http://localhost:5173' });
+  const app = createDevApp({ clientUrl: 'http://localhost:5173' });
 
   await new Promise((resolve) => {
     listener = app.listen(0, resolve);

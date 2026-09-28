@@ -4,13 +4,30 @@ import { useCart } from '@context/CartContext';
 import type { CartContextValue, CartItem } from '@/types';
 import { FLAT_SHIPPING_CENTS } from '@data/shipping';
 import CartNotice from '@components/CartNotice';
+import QuantityInput from '@components/QuantityInput';
+import { MAX_LINE_QUANTITY } from '@utils/cartCatalog';
 import { useCheckout } from '../hooks/useCheckout';
 import '@/styles-cart-page-premium.css';
 
+// A line whose product comes in colors but has none chosen (see cartCatalog.js).
+type CartLine = CartItem & { needsColor?: boolean };
+type CartState = Omit<CartContextValue, 'cartItems'> & {
+  cartItems: CartLine[];
+  /** False until the saved cart has been read, after the first render. */
+  cartReady: boolean;
+};
+interface CheckoutState {
+  startCheckout: () => Promise<void>;
+  isCheckingOut: boolean;
+  checkoutError: string;
+  checkoutProduct: { slug: string; name: string | null; label: string } | null;
+}
+
 const CartPage: FC = () => {
-  const { cartItems, subtotal, updateQuantity, removeFromCart, clearCart } =
-    useCart() as CartContextValue;
-  const { startCheckout, isCheckingOut, checkoutError } = useCheckout();
+  const { cartItems, subtotal, updateQuantity, removeFromCart, clearCart, cartReady } =
+    useCart() as CartState;
+  const { startCheckout, isCheckingOut, checkoutError, checkoutProduct } =
+    useCheckout() as CheckoutState;
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
   const shipping = cartItems.length ? FLAT_SHIPPING_CENTS / 100 : 0;
@@ -52,7 +69,13 @@ const CartPage: FC = () => {
         {/* Main Cart Items */}
         <div className="cart-items-section-premium">
           <CartNotice />
-          {!cartItems.length ? (
+          {!cartReady ? (
+            // The prerendered page cannot know what is in this browser's cart;
+            // "Your bag is empty" here would flash before the saved cart loads.
+            <p className="cart-loading-note" role="status">
+              Loading your bag…
+            </p>
+          ) : !cartItems.length ? (
             <div className="empty-cart-premium anim-rise">
               <div className="empty-illustration">
                 <div className="drum-icon">🥁</div>
@@ -65,7 +88,7 @@ const CartPage: FC = () => {
             </div>
           ) : (
             <div className="cart-items-list-premium">
-              {cartItems.map((item: CartItem, index: number) => (
+              {cartItems.map((item: CartLine, index: number) => (
                 <div
                   key={item.key}
                   className={`cart-line-item-premium anim-item ${removingItems.has(item.key) ? 'removing' : ''}`}
@@ -108,6 +131,17 @@ const CartPage: FC = () => {
                         Color: <strong>{item.color}</strong>
                       </p>
                     )}
+                    {item.needsColor && (
+                      <p className="cart-item-product-size cart-item-needs-color">
+                        Color:{' '}
+                        <Link
+                          to={`/product/${item.product.slug}`}
+                          aria-label={`Choose a color for ${item.product.name}`}
+                        >
+                          Choose a color
+                        </Link>
+                      </p>
+                    )}
                     <p className="cart-item-unit-price">${item.unitPrice.toFixed(2)} each</p>
                   </div>
 
@@ -121,23 +155,27 @@ const CartPage: FC = () => {
                       >
                         −
                       </button>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
+                      <QuantityInput
                         className="qty-input"
                         value={item.quantity}
-                        onChange={(e) => updateQuantity(item.key, e.target.value)}
+                        onCommit={(quantity: number) => updateQuantity(item.key, quantity)}
                         aria-label={`Quantity for ${item.product.name}`}
                       />
                       <button
                         onClick={() => updateQuantity(item.key, item.quantity + 1)}
                         className="qty-adjust-btn"
                         aria-label="Increase quantity"
+                        disabled={item.quantity >= MAX_LINE_QUANTITY}
                       >
                         +
                       </button>
                     </div>
+                    {/* Checkout refuses more (409 quantity_limit). */}
+                    {item.quantity >= MAX_LINE_QUANTITY && (
+                      <p className="cart-quantity-limit">
+                        Limit {MAX_LINE_QUANTITY} per online order
+                      </p>
+                    )}
                   </div>
 
                   {/* Line Total */}
@@ -199,7 +237,25 @@ const CartPage: FC = () => {
             {checkoutError && (
               <div className="error-message-premium anim-rise-sm" role="alert">
                 <span className="error-icon">⚠</span>
-                <p>{checkoutError}</p>
+                <p>
+                  {checkoutError}
+                  {checkoutProduct && (
+                    <>
+                      {' '}
+                      <Link
+                        to={`/product/${checkoutProduct.slug}`}
+                        className="checkout-error-link"
+                        aria-label={
+                          checkoutProduct.name
+                            ? `${checkoutProduct.label} for ${checkoutProduct.name}`
+                            : undefined
+                        }
+                      >
+                        {checkoutProduct.label}
+                      </Link>
+                    </>
+                  )}
+                </p>
               </div>
             )}
 

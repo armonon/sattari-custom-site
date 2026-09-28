@@ -91,3 +91,91 @@ describe('bounded export packaging', () => {
     expect(removeEntry).toHaveBeenCalledWith(expect.stringMatching(/^export-.*\.wav$/));
   });
 });
+
+describe('Safari before 26 (no createWritable)', () => {
+  // OPFS without main-thread writable streams; writes go through a worker.
+  function safariStorage(files) {
+    const removeEntry = vi.fn(async (name) => files.delete(name));
+    vi.stubGlobal('navigator', {
+      storage: {
+        estimate: async () => ({ quota: 1e9, usage: 0 }),
+        getDirectory: async () => ({
+          getDirectoryHandle: async () => ({
+            removeEntry,
+            getFileHandle: async (name) => {
+              files.set(name, []);
+              return { getFile: async () => new Blob(files.get(name)) };
+            },
+          }),
+        }),
+      },
+    });
+    return removeEntry;
+  }
+  function fakeWorker(files, { failOpen = false } = {}) {
+    const worker = {
+      terminate: vi.fn(),
+      postMessage({ id, type, name, bytes }) {
+        if (type === 'open') worker.file = name;
+        if (type === 'write') files.get(worker.file).push(bytes.slice());
+        const ok = !(failOpen && type === 'open');
+        setTimeout(() => worker.onmessage({ data: { id, ok, message: 'no access handle' } }));
+      },
+    };
+    return worker;
+  }
+
+  it('streams the export to disk through the worker, in order', async () => {
+    const files = new Map();
+    safariStorage(files);
+    vi.stubGlobal('Worker', function Worker() {});
+    let worker;
+    const sink = await createExportSink(8, 'wav', {
+      createWorker: () => (worker = fakeWorker(files)),
+    });
+    await sink.write(new Uint8Array([1, 2, 3]));
+    await sink.write(new Uint8Array([4, 5, 6, 7, 8]));
+    const file = await sink.finish();
+    expect([...new Uint8Array(await file.arrayBuffer())]).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(worker.terminate).toHaveBeenCalledOnce();
+  });
+
+  it('builds short exports in memory when the worker cannot open the file', async () => {
+    const files = new Map();
+    const removeEntry = safariStorage(files);
+    vi.stubGlobal('Worker', function Worker() {});
+    const sink = await createExportSink(4, 'wav', {
+      createWorker: () => fakeWorker(files, { failOpen: true }),
+    });
+    expect(removeEntry).toHaveBeenCalledOnce();
+    await sink.write(new Uint8Array([9, 9, 9, 9]));
+    expect((await sink.finish()).size).toBe(4);
+  });
+
+  it('refuses long exports it cannot write to disk, before rendering', async () => {
+    const files = new Map();
+    safariStorage(files);
+    vi.stubGlobal('Worker', function Worker() {});
+    await expect(
+      createExportSink(512 * 1024 * 1024, 'wav', {
+        createWorker: () => fakeWorker(files, { failOpen: true }),
+      })
+    ).rejects.toThrow(/refused temporary disk space/);
+    expect(files.size).toBe(0);
+  });
+
+  it('falls back to memory for short exports when disk access is refused', async () => {
+    vi.stubGlobal('navigator', {
+      storage: {
+        estimate: async () => ({ quota: 1e9, usage: 0 }),
+        getDirectory: async () => {
+          throw Object.assign(new Error('transient'), { name: 'UnknownError' });
+        },
+      },
+    });
+    const sink = await createExportSink(3, 'wav');
+    await sink.write(new Uint8Array([1, 2, 3]));
+    expect((await sink.finish()).size).toBe(3);
+    await expect(createExportSink(512 * 1024 * 1024)).rejects.toThrow(/private windows/);
+  });
+});

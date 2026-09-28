@@ -2,6 +2,12 @@
 
 **Completed:** April 23, 2026
 
+> **Status (September 2026):** a historical record. Since then `src/styles-enhanced.css`
+> was removed (design tokens now live in `src/styles-theme.css`, Studio tokens in
+> `src/styles-studio-tokens.css`), production runs on Node 22 (see `netlify.toml`),
+> deploys come only from GitHub Actions (docs/DEPLOYMENT.md), and linting moved from
+> `.eslintrc.json` to an ESLint 10 flat config (`eslint.config.js`).
+
 ## Overview
 
 Comprehensive modernization of Sattari Music e-commerce platform transforming it from a basic setup to a production-ready, cutting-edge application with industry best practices.

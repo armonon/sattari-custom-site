@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import { captureException } from '../utils/monitoring';
 import { useState, type FormEvent, type ChangeEvent } from 'react';
 
 /**
@@ -104,7 +104,7 @@ export default function AudioAlphaSignup() {
             fallbackResult.error || 'Unable to submit your request right now.'
           ) as Error & { sentryCaptured?: boolean };
 
-          Sentry.captureException(responseError, {
+          captureException(responseError, {
             tags: {
               feature: 'audio-alpha-signup',
               netlifyFormsStatus: String(response.status),
@@ -120,7 +120,7 @@ export default function AudioAlphaSignup() {
     } catch (submitError) {
       const err = submitError as Error & { sentryCaptured?: boolean };
       if (!err.sentryCaptured) {
-        Sentry.captureException(err, { tags: { feature: 'audio-alpha-signup' } });
+        captureException(err, { tags: { feature: 'audio-alpha-signup' } });
       }
       setError(err.message || 'Unable to submit your request right now.');
     } finally {

@@ -4,6 +4,8 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Strips the Sentry SDK's debug logging from production bundles.
+  define: { __SENTRY_DEBUG__: false },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

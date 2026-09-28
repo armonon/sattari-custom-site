@@ -19,9 +19,16 @@ export function getOrderStoreKey(sessionId) {
   return `orders/${sessionId}.json`;
 }
 
+// Stripe API version 2025-03-31.basil moved the address Checkout collected
+// from `shipping_details` to `collected_information.shipping_details`, and a
+// webhook payload follows the API version of its endpoint, so both occur.
+export function sessionShippingDetails(session) {
+  return session?.collected_information?.shipping_details || session?.shipping_details || {};
+}
+
 export function createOrderRecord(session, lineItems = [], options = {}) {
   const customerDetails = session.customer_details || {};
-  const shippingDetails = session.shipping_details || {};
+  const shippingDetails = sessionShippingDetails(session);
 
   return {
     id: session.id,
@@ -64,16 +71,29 @@ function oversoldLines(orderRecord) {
   return Array.isArray(orderRecord?.stock?.oversold) ? orderRecord.stock.oversold : [];
 }
 
+function stockNeedsReview(orderRecord) {
+  return orderRecord?.stock?.state === 'needs_review';
+}
+
 export function buildOrderNotificationSubject(orderRecord) {
   const subject =
     `New Sattari order ${formatOrderCurrency(orderRecord.amountTotal, orderRecord.currency) || ''}`.trim();
-  return oversoldLines(orderRecord).length
-    ? `ACTION NEEDED: not enough stock — ${subject}`
-    : subject;
+  if (oversoldLines(orderRecord).length) return `ACTION NEEDED: not enough stock — ${subject}`;
+  if (stockNeedsReview(orderRecord)) return `ACTION NEEDED: check stock by hand — ${subject}`;
+  return subject;
 }
 
 export function buildOrderNotificationText(orderRecord) {
   const oversold = oversoldLines(orderRecord);
+  const review = stockNeedsReview(orderRecord)
+    ? [
+        '*** ACTION NEEDED: STOCK WAS NOT UPDATED FOR THIS ORDER ***',
+        'The sale could not be taken out of stock automatically in time, so the',
+        'counts were left alone rather than risk taking it out twice. Count these',
+        'items and correct the Stock tab on the staff page.',
+        '',
+      ]
+    : [];
   const alert = oversold.length
     ? [
         '*** ACTION NEEDED: NOT ENOUGH STOCK FOR THIS ORDER ***',
@@ -92,6 +112,7 @@ export function buildOrderNotificationText(orderRecord) {
 
   const lines = [
     ...alert,
+    ...review,
     'New Sattari Music order received.',
     '',
     `Order ID: ${orderRecord.id}`,

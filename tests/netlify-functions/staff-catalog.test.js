@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
 // `failCatalogReads` and `conflict` simulate a storage outage on the catalog
 // document and a write race that never resolves.
@@ -29,7 +30,7 @@ vi.mock('@netlify/blobs', () => ({
 }));
 
 const { hashPassword, createSession } = await import('../../server/staffAuth.js');
-const { handler } = await import('../../netlify/functions/staff-catalog.js');
+const handler = callWith((await import('../../netlify/functions/staff-catalog.js')).default);
 
 const EXISTING = 'pirouz-series-cymbals';
 let token;

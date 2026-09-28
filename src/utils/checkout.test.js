@@ -4,6 +4,7 @@ import {
   fetchCheckoutSessionStatus,
   getCheckoutEndpoint,
   getCheckoutStatusEndpoint,
+  productToFix,
 } from './checkout';
 
 afterEach(() => {
@@ -142,6 +143,87 @@ describe('checkout utilities', () => {
         'An item in your cart is no longer available. Please review your cart and try again.',
       status: 400,
     });
+  });
+
+  it('keeps the products a color_required refusal names, with a message when none is sent', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: vi.fn().mockResolvedValue({
+          code: 'color_required',
+          slug: 'miami-electric-violin',
+          slugs: ['miami-electric-violin', 'sattari-practice-pad-8'],
+        }),
+      })
+    );
+
+    const error = await createCheckoutSession([
+      { slug: 'miami-electric-violin', quantity: 1 },
+    ]).catch((failure) => failure);
+
+    expect(error).toMatchObject({
+      message: 'Choose a color for an item in your cart before checking out.',
+      status: 409,
+      code: 'color_required',
+      slug: 'miami-electric-violin',
+      slugs: ['miami-electric-violin', 'sattari-practice-pad-8'],
+    });
+    expect(productToFix(error)).toEqual({ slug: 'miami-electric-violin', code: 'color_required' });
+  });
+
+  it('keeps the per-item limit of a quantity_limit refusal and does not link to a product', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: vi.fn().mockResolvedValue({
+          error: 'Online orders can include up to 10 of each item.',
+          code: 'quantity_limit',
+          limit: 10,
+        }),
+      })
+    );
+
+    const error = await createCheckoutSession([{ slug: 'cymbal-felts', quantity: 12 }]).catch(
+      (failure) => failure
+    );
+
+    expect(error).toMatchObject({ code: 'quantity_limit', limit: 10, slug: null, slugs: [] });
+    // Lowered in the cart itself, not on the product page.
+    expect(productToFix({ ...error, slug: 'cymbal-felts' })).toBeNull();
+  });
+
+  it('explains a hold_limit refusal (429) even without a message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        json: vi.fn().mockResolvedValue({ code: 'hold_limit' }),
+      })
+    );
+
+    await expect(
+      createCheckoutSession([{ slug: 'cymbal-felts', quantity: 1 }])
+    ).rejects.toMatchObject({
+      status: 429,
+      code: 'hold_limit',
+      message: expect.stringContaining('several checkouts open'),
+    });
+  });
+
+  it('does not link to a product that is gone', () => {
+    const gone = Object.assign(new Error('No longer available.'), {
+      status: 409,
+      code: 'product_unavailable',
+      slug: 'violin-strings',
+    });
+
+    expect(productToFix(gone)).toBeNull();
+    expect(productToFix(new Error('Stripe is down.'))).toBeNull();
   });
 
   it('turns a network failure into a message a customer can act on', async () => {

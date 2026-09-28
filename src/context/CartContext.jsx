@@ -1,8 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getProductBySlug } from '../data/catalog';
+import {
+  createContext,
+  startTransition,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { getProductBySlug, resolveSelectedOption } from '../data/catalog';
 import { useInventory } from './InventoryContext';
 import {
   createEntryKeyResolver,
+  needsColorChoice,
   normalizeQuantity,
   reconcileCartEntries,
   resolveCartLines,
@@ -39,16 +48,33 @@ export function CartProvider({ children }) {
   // The same merged catalog the shop renders and create-checkout-session
   // charges from, so the cart cannot show a price Stripe will not charge.
   const { products, status: catalogStatus, refresh } = useInventory();
-  const [cart, setCart] = useState(readStoredCart);
+  // Starts empty and is read from storage after mount: prerendered pages were
+  // rendered with an empty cart, and hydration needs the same first render.
+  const [cart, setCart] = useState([]);
+  const [cartReady, setCartReady] = useState(false);
   const [removedItems, setRemovedItems] = useState([]);
 
   useEffect(() => {
+    const stored = readStoredCart();
+    // A transition, so the page can finish hydrating first (see ThemeContext).
+    // An item added meanwhile is replayed on top of the stored cart; a non-empty
+    // cart here means this already ran (StrictMode runs mount effects twice in
+    // development) and must not be added again.
+    startTransition(() => {
+      setCart((current) => (current.length ? current : stored));
+      setCartReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    // Writing the initial empty cart would erase the saved one.
+    if (!cartReady) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     } catch {
       // Full or blocked storage (private browsing) only costs persistence.
     }
-  }, [cart]);
+  }, [cart, cartReady]);
 
   // Until the catalog has loaded, only the base catalog is known. Pruning
   // against it would throw away every staff-added product in the cart, so
@@ -87,19 +113,43 @@ export function CartProvider({ children }) {
   const addToCart = useCallback(
     ({ slug, size = null, color = null, quantity = 1 }) => {
       const safeQty = normalizeQuantity(quantity);
-      const name = products.find((product) => product.slug === slug)?.name;
+      const product = products.find((candidate) => candidate.slug === slug);
+      const name = product?.name;
       const entry = { slug, size, color, quantity: safeQty, ...(name ? { name } : {}) };
       const key = keyOf(entry);
+      // Adding a product with its color chosen settles a line of the same
+      // product and size that was flagged for a color (the cart links here to
+      // choose one): that line is replaced instead of left to block checkout,
+      // and its quantity carries over.
+      const settlesColor = product && !needsColorChoice(product, entry);
+      const sizeOf = (candidate) => resolveSelectedOption(product, candidate.size ?? null).size;
 
       setCart((prev) => {
-        const existingIndex = prev.findIndex((candidate) => keyOf(candidate) === key);
-        if (existingIndex === -1) return [...prev, entry];
+        let carried = 0;
+        const remaining = settlesColor
+          ? prev.filter((candidate) => {
+              const flagged =
+                candidate.slug === slug &&
+                needsColorChoice(product, candidate) &&
+                sizeOf(candidate) === sizeOf(entry);
+              if (flagged) carried = Math.max(carried, normalizeQuantity(candidate.quantity));
+              return !flagged;
+            })
+          : prev;
 
-        const next = [...prev];
+        const existingIndex = remaining.findIndex((candidate) => keyOf(candidate) === key);
+        if (existingIndex === -1) {
+          return [
+            ...remaining,
+            { ...entry, quantity: normalizeQuantity(Math.max(safeQty, carried)) },
+          ];
+        }
+
+        const next = [...remaining];
         const existing = next[existingIndex];
         next[existingIndex] = {
           ...existing,
-          quantity: normalizeQuantity(existing.quantity + safeQty),
+          quantity: normalizeQuantity(existing.quantity + Math.max(safeQty, carried)),
         };
         return next;
       });
@@ -116,8 +166,11 @@ export function CartProvider({ children }) {
 
   const updateQuantity = useCallback(
     (key, quantity) => {
+      // A cleared or half-typed box is not a request to remove the line.
+      if (quantity === '' || quantity === null || quantity === undefined) return;
       const safeQty = Number(quantity);
-      if (Number.isNaN(safeQty) || safeQty < 1) {
+      if (Number.isNaN(safeQty)) return;
+      if (safeQty < 1) {
         removeFromCart(key);
         return;
       }
@@ -157,6 +210,7 @@ export function CartProvider({ children }) {
       cartItems,
       itemCount,
       subtotal,
+      cartReady,
       addToCart,
       updateQuantity,
       removeFromCart,
@@ -171,6 +225,7 @@ export function CartProvider({ children }) {
       cartItems,
       itemCount,
       subtotal,
+      cartReady,
       addToCart,
       updateQuantity,
       removeFromCart,

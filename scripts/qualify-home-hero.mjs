@@ -51,8 +51,10 @@ try {
           copyFits: copy.right <= innerWidth && copy.bottom <= rect.bottom,
           copyOffset: (copy.top + copy.bottom - rect.top - rect.bottom) / 2,
           motionOverlapsActions:
-            motion.left < actions.right && motion.right > actions.left &&
-            motion.top < actions.bottom && motion.bottom > actions.top,
+            motion.left < actions.right &&
+            motion.right > actions.left &&
+            motion.top < actions.bottom &&
+            motion.bottom > actions.top,
           frame: video.currentTime,
         };
       });
@@ -60,11 +62,14 @@ try {
       assert.ok(state.pixelRange > 3, 'The video frame must contain visible detail');
       assert.equal(state.muted, true);
       assert.equal(state.loop, true);
-      assert.ok(state.source.endsWith(theme === 'day' ? '/bg.mp4' : '/INSTRA PATTERN.mp4'));
+      const expectedSource =
+        theme === 'day' ? '/bg.mp4' : width <= 760 ? '/night-loop-720.mp4' : '/INSTRA PATTERN.mp4';
+      assert.ok(state.source.endsWith(expectedSource));
       assert.equal(state.overflow, false);
       assert.equal(state.nextSectionVisible, true);
       assert.equal(state.copyFits, true);
-      if (width > 760) assert.ok(state.copyOffset >= 55, 'Desktop hero copy should sit below center');
+      if (width > 760)
+        assert.ok(state.copyOffset >= 55, 'Desktop hero copy should sit below center');
       assert.equal(state.motionOverlapsActions, false, 'Video control must not cover hero actions');
       await page.waitForFunction(
         (frame) => document.querySelector('.home-hero-video').currentTime !== frame,
@@ -84,13 +89,21 @@ try {
     viewport: { width: 390, height: 844 },
     reducedMotion: 'reduce',
   });
+  await page.addInitScript(() => localStorage.setItem('sattari-theme-pref-v1', 'day'));
   page.on('pageerror', (error) => errors.push(error.message));
   const videosRequested = [];
   page.on('request', (request) => {
     if (request.url().endsWith('.mp4')) videosRequested.push(request.url());
   });
   await page.goto(base, { waitUntil: 'networkidle' });
-  await page.locator('.home-hero-poster').evaluate((image) => image.decode());
+  // The still is the hero's CSS background, chosen by [data-theme]: wait until it has loaded.
+  await page.locator('.home-hero-background').evaluate(async (hero) => {
+    const url = getComputedStyle(hero).backgroundImage.match(/url\("?(.*?)"?\)/)?.[1];
+    if (!url) throw new Error('The hero has no still background.');
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+  });
   assert.equal(await page.locator('.home-hero-video').count(), 0);
   assert.deepEqual(videosRequested, []);
   await page.screenshot({ path: `${output}/reduced-motion-390.png` });
@@ -111,13 +124,13 @@ try {
   );
   await page.waitForFunction((previous) => {
     const video = document.querySelector('.home-hero-video');
-    const expected = previous === 'day' ? '/INSTRA PATTERN.mp4' : '/bg.mp4';
+    const expected = previous === 'day' ? '/night-loop-720.mp4' : '/bg.mp4';
     return video?.currentTime > 0 && decodeURI(video.currentSrc).endsWith(expected);
   }, previousTheme);
   const themeMatches = await page.evaluate(() => {
     const isDay = document.documentElement.dataset.theme === 'day';
     return decodeURI(document.querySelector('.home-hero-video').currentSrc).endsWith(
-      isDay ? '/bg.mp4' : '/INSTRA PATTERN.mp4'
+      isDay ? '/bg.mp4' : '/night-loop-720.mp4'
     );
   });
   assert.equal(themeMatches, true);

@@ -8,6 +8,7 @@ import {
   localDate,
   overlaps,
   studioTimestamp,
+  validBookingEmail,
   validDate,
 } from '../src/utils/studioBooking.js';
 import { bookingConfig } from './studioBookingConfig.js';
@@ -15,6 +16,7 @@ import { patchBooking, readBookings, updateBookings } from './studioBookingStore
 import { deliverBookingNotifications, queueNotifications } from './studioBookingNotifications.js';
 import { getClientIp } from './staffAuth.js';
 import { hashIp } from './ipHash.js';
+import { logError } from './log.js';
 
 // `expose` marks a message written for the person reading it. Anything else
 // (Stripe errors also carry a statusCode) is logged and replaced with a
@@ -97,7 +99,7 @@ export async function requestBooking(event, payload) {
   const purpose = ['Rehearsal', 'Recording', 'Teaching', 'Other'].includes(payload.purpose)
     ? payload.purpose
     : 'Rehearsal';
-  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!name || !validBookingEmail(email))
     throw bookingError('Enter your name and a valid email address.');
   if (payload.accepted !== true)
     throw bookingError('Please acknowledge that approval and payment are required.');
@@ -167,13 +169,38 @@ export async function requestBooking(event, payload) {
   return { id, status: result[id].status, amountCents: result[id].amountCents };
 }
 
+// Each approval gets its own Stripe idempotency key: retrying the same
+// approval must reuse it, but after Stripe refused one (see approveBooking) a
+// fresh approval must not be answered with that stored refusal. The first
+// attempt keeps the original key format, so approvals in flight across a
+// deploy still recover their session.
+function approvalKey(booking) {
+  const attempt = Number(booking.approvalAttempt) || 1;
+  return attempt > 1 ? `studio-booking-${booking.id}-${attempt}` : `studio-booking-${booking.id}`;
+}
+
+// Stripe answered and said no, so no payment link exists. Not a 409 (the
+// same request still being processed) or an idempotency error (an earlier
+// request with this key did something), and not a timeout or 5xx, where the
+// link may well have been created.
+function stripeRefused(error) {
+  const status = Number(error?.statusCode);
+  return (
+    status >= 400 &&
+    status < 500 &&
+    status !== 409 &&
+    error?.type !== 'StripeIdempotencyError' &&
+    error?.rawType !== 'idempotency_error'
+  );
+}
+
 export async function approveBooking(event, id, staff) {
   const { origin } = requireReady();
   const now = Date.now();
   const doc = await updateBookings(event, (records) => {
     const b = records[id];
     if (!b) throw bookingError('Booking not found.', 404);
-    if (['paid', 'awaiting_payment', 'approving'].includes(b.status)) return null;
+    if (['paid', 'awaiting_payment', 'approving', 'needs_review'].includes(b.status)) return null;
     if (b.status !== 'requested')
       throw bookingError('This request can no longer be approved.', 409);
     if (b.startsAt < now + 3600000)
@@ -194,13 +221,14 @@ export async function approveBooking(event, id, staff) {
         status: 'approving',
         approvedBy: staff,
         approvedAt: new Date(now).toISOString(),
+        approvalAttempt: (Number(b.approvalAttempt) || 0) + 1,
         checkoutExpiresAt:
           Math.floor(Math.min(now + 23 * 3600000, b.startsAt - 60000) / 1000) * 1000,
       },
     };
   });
   let b = doc[id];
-  if (b.status === 'paid') return b;
+  if (b.status === 'paid' || b.status === 'needs_review') return b;
   if (b.status === 'approving') {
     if (b.checkoutExpiresAt < Date.now() + 31 * 60000)
       throw bookingError(
@@ -209,33 +237,40 @@ export async function approveBooking(event, id, staff) {
       );
     // Retries use identical Stripe parameters and idempotency key, including
     // the saved deadline. An uncertain network response cannot create two links.
-    const session = await stripeClient().checkout.sessions.create(
-      {
-        mode: 'payment',
-        payment_method_types: ['card'],
-        customer_email: b.email,
-        client_reference_id: b.id,
-        metadata: { kind: 'studio_booking', bookingId: b.id },
-        payment_intent_data: { metadata: { kind: 'studio_booking', bookingId: b.id } },
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: 'usd',
-              unit_amount: b.amountCents,
-              product_data: {
-                name: 'Sattari studio / rehearsal time',
-                description: bookingSummary(b),
+    let session;
+    try {
+      session = await createPaymentLink(b, origin);
+    } catch (error) {
+      if (!stripeRefused(error)) throw error;
+      // Stripe refused, so no link exists: put the request back rather than
+      // leave it stuck in 'approving', which decline and cancel both refuse.
+      logError('studio-booking-approval-refused', {
+        bookingId: id,
+        type: error?.type,
+        code: error?.code,
+        statusCode: error?.statusCode,
+        message: error?.message,
+      });
+      // The attempt is recorded even for an approval started before attempts
+      // were counted, so the next one moves to a fresh idempotency key rather
+      // than having Stripe replay this refusal for 24 hours.
+      await patchBooking(event, id, (current) =>
+        current.status === 'approving' && current.approvalAttempt === b.approvalAttempt
+          ? {
+              status: 'requested',
+              approvalAttempt: Number(b.approvalAttempt) || 1,
+              approvalError: {
+                at: new Date().toISOString(),
+                code: error?.code || error?.rawType || String(error?.statusCode),
               },
-            },
-          },
-        ],
-        expires_at: b.checkoutExpiresAt / 1000,
-        success_url: `${origin}/studio-booking?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/studio-booking?cancelled=1`,
-      },
-      { idempotencyKey: `studio-booking-${id}` }
-    );
+            }
+          : {}
+      );
+      throw bookingError(
+        'Stripe refused to create the payment link, so nothing was sent or charged. The request is back to awaiting approval. Check the booking details and the Stripe settings, then approve again.',
+        502
+      );
+    }
     b = await patchBooking(event, id, (current) => {
       if (current.status !== 'approving') return {};
       const approved = {
@@ -252,19 +287,89 @@ export async function approveBooking(event, id, staff) {
   return (await readBookings(event))[id];
 }
 
-export async function applyBookingPayment(event, session) {
+function createPaymentLink(b, origin) {
+  return stripeClient().checkout.sessions.create(
+    {
+      mode: 'payment',
+      payment_method_types: ['card'],
+      customer_email: b.email,
+      client_reference_id: b.id,
+      metadata: { kind: 'studio_booking', bookingId: b.id },
+      payment_intent_data: { metadata: { kind: 'studio_booking', bookingId: b.id } },
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: b.amountCents,
+            product_data: {
+              name: 'Sattari studio / rehearsal time',
+              description: bookingSummary(b),
+            },
+          },
+        },
+      ],
+      expires_at: b.checkoutExpiresAt / 1000,
+      success_url: `${origin}/studio-booking?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/studio-booking?cancelled=1`,
+    },
+    { idempotencyKey: approvalKey(b) }
+  );
+}
+
+// Why a Stripe session cannot simply be applied to its booking, or null.
+function paymentMismatch(current, session, paid) {
+  if (current.checkoutSessionId !== session.id)
+    return 'This payment was made on a payment link that is not the booking’s current one.';
+  if (session.currency !== 'usd' || session.amount_total !== current.amountCents)
+    return 'The amount paid does not match the booking price.';
+  if (paid && !['awaiting_payment', 'paid', 'needs_review'].includes(current.status))
+    return `The payment arrived after the booking was marked ${current.status}.`;
+  return null;
+}
+
+// Money arrived that the booking cannot account for. No retry of the webhook
+// can change that, so it is flagged for staff, and the time stays held while
+// they check Stripe. A booking that is already paid keeps its status and gets
+// the note alone.
+function flagPaymentForReview(current, session, reason) {
+  if (current.paymentReview?.sessionId === session.id) return {};
+  logError('studio-booking-payment-review', {
+    bookingId: current.id,
+    sessionId: session.id,
+    reason,
+  });
+  return {
+    ...(current.status === 'paid' ? {} : { status: 'needs_review' }),
+    paymentReview: {
+      reason,
+      sessionId: session.id,
+      paymentIntentId:
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id || null,
+      amountTotal: session.amount_total,
+      currency: session.currency,
+      previousStatus: current.status,
+      at: new Date().toISOString(),
+    },
+  };
+}
+
+// `delivery` ({ deadline, timeoutMs }) is handed to the confirmation email, so
+// the scheduled job's time limit holds on this path too.
+export async function applyBookingPayment(event, session, delivery = {}) {
   const id = session.metadata?.bookingId;
   if (session.metadata?.kind !== 'studio_booking' || !id) return null;
+  const paid = session.payment_status === 'paid' && session.status === 'complete';
   let booking = await patchBooking(event, id, (current) => {
-    if (current.checkoutSessionId !== session.id)
-      throw bookingError('Booking payment session does not match.', 409);
-    if (session.currency !== 'usd' || session.amount_total !== current.amountCents)
-      throw bookingError('Booking payment amount does not match.', 409);
-    if (current.status === 'paid') return {};
-    if (session.payment_status === 'paid' && session.status === 'complete') {
-      if (current.status !== 'awaiting_payment')
-        throw bookingError('Payment needs staff review.', 409);
-      const paid = {
+    const mismatch = paymentMismatch(current, session, paid);
+    // Without money moving there is nothing to review: an expiry or an
+    // unpaid session that does not match is simply ignored.
+    if (mismatch) return paid ? flagPaymentForReview(current, session, mismatch) : {};
+    if (current.status === 'paid' || current.status === 'needs_review') return {};
+    if (paid) {
+      const settled = {
         ...current,
         status: 'paid',
         paidAt: new Date().toISOString(),
@@ -273,28 +378,36 @@ export async function applyBookingPayment(event, session) {
             ? session.payment_intent
             : session.payment_intent?.id,
       };
-      return { ...paid, notifications: queueNotifications(paid, 'paid') };
+      return { ...settled, notifications: queueNotifications(settled, 'paid') };
     }
     if (session.status === 'expired' && current.status === 'awaiting_payment')
       return { status: 'expired' };
     return {};
   });
   if (booking.status === 'paid')
-    booking = (await deliverBookingNotifications(event, id)) || booking;
+    booking = (await deliverBookingNotifications(event, id, delivery)) || booking;
   return booking;
 }
 
-export async function reconcileBooking(event, id) {
+// `stripe`, `deadline` and `timeoutMs` let the scheduled job use short
+// timeouts and stop before Netlify's limit, including for the confirmation
+// email a payment found here sends; it resumes where it stopped next run.
+export async function reconcileBooking(
+  event,
+  id,
+  _staff,
+  { stripe = stripeClient(), deadline = Infinity, timeoutMs } = {}
+) {
   let booking = (await readBookings(event))[id];
   if (!booking) throw bookingError('Booking not found.', 404);
   if (booking.status === 'approving') {
     // Recover a Stripe success followed by a failed local write. Do not create
     // a fresh session after its original idempotency window or unlock a slot
     // while an unrecorded session could still take payment.
-    const stripe = stripeClient();
     let after;
     let found;
     for (let page = 0; page < 20; page += 1) {
+      if (Date.now() > deadline) return booking;
       const sessions = await stripe.checkout.sessions.list({
         created: { gte: Math.floor(Date.parse(booking.approvedAt) / 1000) - 60 },
         limit: 100,
@@ -331,11 +444,66 @@ export async function reconcileBooking(event, id) {
       return { ...recovered, notifications: queueNotifications(recovered, 'approved') };
     });
   }
-  if (!booking.checkoutSessionId) return booking;
+  if (!booking.checkoutSessionId || Date.now() > deadline) return booking;
   return applyBookingPayment(
     event,
-    await stripeClient().checkout.sessions.retrieve(booking.checkoutSessionId)
+    await stripe.checkout.sessions.retrieve(booking.checkoutSessionId),
+    { deadline, ...(timeoutMs ? { timeoutMs } : {}) }
   );
+}
+
+// Staff checked a flagged payment in Stripe and are keeping the booking.
+export async function confirmReviewedBooking(event, id, staff) {
+  const doc = await updateBookings(event, (records) => {
+    const current = records[id];
+    if (!current) throw bookingError('Booking not found.', 404);
+    if (current.status !== 'needs_review')
+      throw bookingError('Only a booking whose payment needs review can be confirmed here.', 409);
+    if (
+      Object.values(records).some(
+        (other) => other.id !== id && holdsTime(other) && overlaps(current, other)
+      )
+    )
+      throw bookingError(
+        'Another booking holds this time now. Refund this payment in Stripe and release it, or sort out the other booking first.',
+        409
+      );
+    const paid = {
+      ...current,
+      status: 'paid',
+      paidAt: current.paidAt || new Date().toISOString(),
+      paymentIntentId: current.paymentIntentId || current.paymentReview?.paymentIntentId || null,
+      paymentReview: {
+        ...current.paymentReview,
+        resolution: 'kept',
+        resolvedBy: staff,
+        resolvedAt: new Date().toISOString(),
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    return { ...records, [id]: { ...paid, notifications: queueNotifications(paid, 'paid') } };
+  });
+  await deliverBookingNotifications(event, id).catch(() => {});
+  return doc[id];
+}
+
+// Staff refunded a flagged payment in Stripe and are freeing the time. No
+// email goes out: the refund conversation is theirs to have.
+export async function releaseReviewedBooking(event, id, staff) {
+  return patchBooking(event, id, (current) => {
+    if (current.status !== 'needs_review')
+      throw bookingError('Only a booking whose payment needs review can be released here.', 409);
+    return {
+      status: 'cancelled',
+      reviewedBy: staff,
+      paymentReview: {
+        ...current.paymentReview,
+        resolution: 'released',
+        resolvedBy: staff,
+        resolvedAt: new Date().toISOString(),
+      },
+    };
+  });
 }
 
 export async function declineBooking(event, id, staff) {
@@ -388,6 +556,8 @@ export async function cancelUnpaidBooking(event, id, staff) {
     throw bookingError('Stripe has not released this payment session. Try again.', 409);
   b = await patchBooking(event, id, (current) => {
     if (current.status === 'paid') throw bookingError('This booking has been paid.', 409);
+    if (current.status === 'needs_review')
+      throw bookingError('A payment for this booking needs review. Reload and check it.', 409);
     const cancelled = { ...current, status: 'cancelled', reviewedBy: staff };
     return { ...cancelled, notifications: queueNotifications(cancelled, 'declined') };
   });
@@ -419,6 +589,10 @@ export function publicBooking(booking) {
   };
 }
 
+// The payment page's status check. The URL is public, and a payment that is
+// already settled (or waiting on staff) cannot change by asking Stripe again,
+// so only a payment still outstanding costs a Stripe call; that call writes
+// nothing unless the booking actually changes.
 export async function lookupBookingPayment(event, sessionId) {
   if (!/^cs_(?:test_|live_)?[a-zA-Z0-9_]{10,250}$/.test(sessionId || ''))
     throw bookingError('Invalid payment reference.');
@@ -426,5 +600,6 @@ export async function lookupBookingPayment(event, sessionId) {
     (item) => item.checkoutSessionId === sessionId
   );
   if (!b) throw bookingError('Booking payment not found.', 404);
+  if (b.status !== 'awaiting_payment') return publicBooking(b);
   return publicBooking(await reconcileBooking(event, b.id));
 }

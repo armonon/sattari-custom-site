@@ -18,7 +18,7 @@ import checkoutMaintenance from '../netlify/functions/checkout-maintenance.js';
 import { errorMessage, logError, logEvent } from './log.js';
 
 // `npm run dev:api`: the production Netlify functions, mounted on the same
-// /api paths netlify.toml routes to them, with Netlify Blobs served from disk.
+// /api paths their `config.path` declares, with Netlify Blobs served from disk.
 // Nothing here reimplements checkout — prices, stock holds, shipping, order
 // recording and notifications all run the code that ships.
 
@@ -50,8 +50,9 @@ class LocalBlobsServer extends BlobsServer {
   }
 }
 
-// Points @netlify/blobs at a local server the way the Netlify runtime does in
-// production, including the uncached URL that strong consistency needs.
+// Points @netlify/blobs at a local server the way the Netlify runtime does for
+// v2 functions in production, including the uncached URL that strong
+// consistency needs.
 export async function startLocalBlobs(directory) {
   const token = crypto.randomUUID();
   const server = new LocalBlobsServer({ directory, token });
@@ -62,28 +63,7 @@ export async function startLocalBlobs(directory) {
     JSON.stringify({ siteID: 'local', token, edgeURL: url, uncachedEdgeURL: url })
   ).toString('base64');
 
-  return {
-    server,
-    // What connectLambda() expects to find on a Lambda-style event.
-    lambdaBlobs: Buffer.from(JSON.stringify({ url, token })).toString('base64'),
-  };
-}
-
-function toLambdaEvent(req, lambdaBlobs) {
-  const query = {};
-  for (const [name, value] of Object.entries(req.query)) {
-    query[name] = Array.isArray(value) ? String(value.at(-1)) : String(value);
-  }
-
-  return {
-    httpMethod: req.method,
-    path: req.path,
-    headers: { ...req.headers, 'x-nf-site-id': 'local', 'x-nf-deploy-id': 'local' },
-    queryStringParameters: query,
-    body: Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '',
-    isBase64Encoded: false,
-    blobs: lambdaBlobs,
-  };
+  return { server };
 }
 
 function toRequest(req) {
@@ -97,19 +77,9 @@ function toRequest(req) {
   });
 }
 
-// Runs a function module the way Netlify would: `handler(event)` for a Lambda
-// style (v1) function, `default(request, context)` for a v2 one.
-async function invoke(module, req, lambdaBlobs) {
-  if (typeof module.handler === 'function') {
-    const result = await module.handler(toLambdaEvent(req, lambdaBlobs));
-    const body = result?.body ?? '';
-    return {
-      status: result?.statusCode || 200,
-      headers: Object.entries(result?.headers || {}),
-      body: result?.isBase64Encoded ? Buffer.from(body, 'base64') : body,
-    };
-  }
-
+// Runs a function module the way Netlify runs every function here: a v2
+// function, `default(request, context)`.
+async function invoke(module, req) {
   const response = await module.default(toRequest(req), { ip: req.ip });
   return {
     status: response.status,
@@ -118,7 +88,7 @@ async function invoke(module, req, lambdaBlobs) {
   };
 }
 
-export function createDevApp({ lambdaBlobs, clientUrl }) {
+export function createDevApp({ clientUrl }) {
   const app = express();
   app.use(cors({ origin: clientUrl }));
 
@@ -133,7 +103,7 @@ export function createDevApp({ lambdaBlobs, clientUrl }) {
   for (const [route, module] of Object.entries(ROUTES)) {
     app.all(route, rawBody, async (req, res) => {
       try {
-        const { status, headers, body } = await invoke(module, req, lambdaBlobs);
+        const { status, headers, body } = await invoke(module, req);
         res.status(status);
         for (const [name, value] of headers) res.set(name, value);
         res.send(body);
@@ -160,9 +130,9 @@ async function main() {
   }
 
   const directory = process.env.LOCAL_BLOBS_PATH || path.resolve('.local-data/blobs');
-  const { lambdaBlobs } = await startLocalBlobs(directory);
+  await startLocalBlobs(directory);
 
-  createDevApp({ lambdaBlobs, clientUrl }).listen(port, () => {
+  createDevApp({ clientUrl }).listen(port, () => {
     logEvent({ type: 'dev-api-ready', url: `http://localhost:${port}`, blobs: directory });
   });
 

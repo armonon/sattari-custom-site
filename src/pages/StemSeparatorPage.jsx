@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
+import { separatorGuides } from '../data/stemSeparatorContent';
 import useStemSeparator from '../hooks/useStemSeparator';
 import ToolReferenceLink from '../components/ToolReferenceLink';
 import StemAnalysisSummary from '../components/StemAnalysisSummary';
@@ -556,6 +557,31 @@ export default function StemSeparatorPage() {
               </p>
             </div>
           </div>
+          <nav className="separator-guides" aria-labelledby="separator-guides-heading">
+            <h2 id="separator-guides-heading">Practice & remix guides</h2>
+            <div>
+              {separatorGuides.map((guide) => (
+                <a
+                  key={guide.slug}
+                  href={`/guides/${guide.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${guide.linkLabel} (opens in a new tab)`}
+                >
+                  {guide.linkLabel}
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </a>
+              ))}
+              <a
+                href="/tools/stem-separator#questions"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Stem Separator questions (opens in a new tab)"
+              >
+                Common questions <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          </nav>
         </div>
       </section>
     </>

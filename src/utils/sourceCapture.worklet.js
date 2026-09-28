@@ -1,4 +1,3 @@
-/* global currentFrame, sampleRate */
 class StemDeckCapture extends AudioWorkletProcessor {
   constructor(options) {
     super();

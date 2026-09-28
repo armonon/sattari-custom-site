@@ -5,12 +5,14 @@ import {
   dataUrlToBlob,
   putAudioAsset,
   importAudioAssets,
+  listAudioAssets,
   exportAudioAssets,
   loadStudioSession,
   saveStudioSession,
   SESSION_KEY,
   validateStudioProject,
 } from './audioProjectStore';
+import { stubMemoryIndexedDB } from '../test/memoryIndexedDB';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -139,14 +141,19 @@ describe('portable audio assets', () => {
     expect(store.put).not.toHaveBeenCalled();
   });
 
-  it('imports audio with new identities in one committed transaction', async () => {
-    const { store, transaction } = fakeDatabase();
-    const importing = importAudioAssets([{ id: 'existing', data: 'data:audio/wav;base64,AQ==' }]);
-    await vi.waitFor(() => expect(transaction.oncomplete).toBeTypeOf('function'));
-    expect(store.put.mock.calls[0][0].id).not.toBe('existing');
-    transaction.oncomplete();
-    const mapping = await importing;
-    expect(mapping.get('existing')).toBe(store.put.mock.calls[0][0].id);
+  it('imports audio with new identities, writing nothing if any record is invalid', async () => {
+    stubMemoryIndexedDB(vi);
+    const mapping = await importAudioAssets([
+      { id: 'existing', data: 'data:audio/wav;base64,AQ==' },
+    ]);
+    const stored = await listAudioAssets();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].id).not.toBe('existing');
+    expect(mapping.get('existing')).toBe(stored[0].id);
+    await expect(
+      importAudioAssets([{ id: 'next', data: 'data:audio/wav;base64,Ag==' }, { id: 'broken' }])
+    ).rejects.toThrow('invalid or duplicate audio asset');
+    expect(await listAudioAssets()).toHaveLength(1);
   });
 
   it('does not silently omit missing audio from a portable backup', async () => {

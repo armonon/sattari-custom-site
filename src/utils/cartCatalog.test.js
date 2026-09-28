@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { products as baseProducts } from '../data/catalog';
 import { mergeCatalog } from './catalogMerge';
-import { createEntryKeyResolver, reconcileCartEntries, resolveCartLines } from './cartCatalog';
+import {
+  createEntryKeyResolver,
+  needsColorChoice,
+  reconcileCartEntries,
+  resolveCartLines,
+} from './cartCatalog';
 
 const staffCatalog = {
   overrides: { 'cymbal-felts': { price: 9.5 } },
@@ -118,4 +123,31 @@ it('matches a quick-added sized product to the key its line is shown under', () 
   );
 
   expect(keyOf({ slug: 'sattari-effect-cymbal', size: null, color: null })).toBe(lines[0].key);
+});
+
+describe('color choice', () => {
+  it('keeps a line whose color was removed, flagged so the shopper can choose one', () => {
+    // Staff removed "Purple"; the line stays, without a color.
+    const { entries } = reconcileCartEntries(
+      [{ slug: 'sattari-practice-pad-8', size: null, color: 'Purple', quantity: 2 }],
+      baseProducts
+    );
+    const { lines } = resolveCartLines(entries, baseProducts);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ color: null, needsColor: true, quantity: 2 });
+    expect(needsColorChoice(lines[0].product, entries[0])).toBe(true);
+  });
+
+  it('does not flag lines with an offered color or products without colors', () => {
+    const { lines } = resolveCartLines(
+      [
+        { slug: 'sattari-practice-pad-8', size: null, color: 'Green', quantity: 1 },
+        { slug: 'cymbal-felts', size: null, color: null, quantity: 1 },
+      ],
+      baseProducts
+    );
+
+    expect(lines.map((line) => line.needsColor)).toEqual([false, false]);
+  });
 });

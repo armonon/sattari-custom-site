@@ -21,7 +21,8 @@ export function useExportSettings() {
     let active = true;
     savedExportFiles()
       .then((saved) => {
-        if (active)
+        // Nothing saved from an earlier visit: no state change, no re-render.
+        if (active && saved.length)
           setFiles((currentFiles) => [
             ...currentFiles,
             ...saved

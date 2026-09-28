@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Render and handle probes. The wrapped components delegate to the real ones,
@@ -119,6 +119,14 @@ vi.mock('../utils/arrangementEngine', () => ({
   },
 }));
 
+// A take's length comes from its container, which fake recordings lack.
+vi.mock('../utils/windowedSource', async (original) => ({
+  ...(await original()),
+  sourceDuration: vi.fn(async () => {
+    throw new Error('No decoder in tests.');
+  }),
+}));
+
 vi.mock('../utils/audioProjectStore', () => ({
   clearStudioSession: vi.fn(),
   exportAudioAssets: vi.fn(async () => []),
@@ -209,6 +217,7 @@ vi.mock('../components/studio/MusicLibrary', async (importOriginal) => {
 
 import SattariStudioPage from './SattariStudioPage';
 import { saveStudioSession, putAudioAsset } from '../utils/audioProjectStore';
+import { audioClip, audioTrack, emptyArrangement } from '../utils/arrangementModel';
 import { COMPACT_ICONS_KEY } from '../utils/studioDisplay';
 import { MIXER_DOCK_KEY } from '../studio/mixer/useMixerDock';
 import { HEADPHONES_KEY } from '../studio/mixer/useHeadphones';
@@ -303,6 +312,7 @@ describe('SattariStudioPage', () => {
         </MemoryRouter>
       </HelmetProvider>
     );
+    await screen.findByText('Local session');
     const studio = container.querySelector('.sd-studio-next');
     expect(studio).toHaveAttribute('data-compact-icons', 'true');
     expect(sessionActions().getByRole('button', { name: 'Record live set' })).toHaveAttribute(
@@ -396,6 +406,39 @@ describe('SattariStudioPage', () => {
     expect(saveStudioSession).not.toHaveBeenCalled();
   });
 
+  it('opens a saved project with a damaged clip, setting only that clip aside', async () => {
+    const good = { ...audioClip('verse-audio', 'Verse', 8), id: 'clip-verse' };
+    const bad = { ...audioClip('chorus-audio', 'Chorus', 8), id: 'clip-chorus', gain: -5 };
+    storeMethods.loadStudioSession.mockReturnValue({
+      decks: [],
+      arranger: {
+        ...emptyArrangement(),
+        tracks: [{ ...audioTrack('Vocals'), clips: [good, bad] }],
+      },
+    });
+    render(
+      <HelmetProvider>
+        <MemoryRouter>
+          <SattariStudioPage />
+        </MemoryRouter>
+      </HelmetProvider>
+    );
+    expect(
+      await screen.findByText(/1 damaged arrangement part was set aside so the project could open/)
+    ).toBeInTheDocument();
+    await waitFor(() => expect(saveStudioSession).toHaveBeenCalled());
+    const saved = saveStudioSession.mock.lastCall[0].arranger;
+    expect(saved.tracks[0].clips.map((clip) => clip.id)).toEqual(['clip-verse']);
+    expect(saved.setAside).toEqual([{ kind: 'clip', name: 'Chorus', track: 'Vocals', part: bad }]);
+    fireEvent.click(sessionActions().getByRole('button', { name: /^tools$/i }));
+    fireEvent.click(
+      within(document.querySelector('.sd-advanced-strip')).getByRole('button', { name: /files/i })
+    );
+    const panel = scoped('region', 'Damaged arrangement parts');
+    expect(panel.getByText(/Chorus \(Vocals\)/)).toBeInTheDocument();
+    expect(panel.getByRole('button', { name: 'Download as file' })).toBeInTheDocument();
+  });
+
   it('assigns stable deck identities when an older save has duplicate or foreign IDs', async () => {
     storeMethods.loadStudioSession.mockReturnValue({
       decks: [
@@ -459,6 +502,46 @@ describe('SattariStudioPage', () => {
     }
   });
 
+  it('keeps the Studio open during a take when Back or a site link is used', async () => {
+    let pathname;
+    function Where() {
+      pathname = useLocation().pathname;
+      return null;
+    }
+    render(
+      <HelmetProvider>
+        <MemoryRouter initialEntries={['/studio']}>
+          <SattariStudioPage />
+          <Where />
+        </MemoryRouter>
+      </HelmetProvider>
+    );
+    const record = sessionActions().getByRole('button', { name: 'Record live set' });
+    await waitFor(() => expect(record).toBeEnabled());
+    fireEvent.click(record);
+    await waitFor(() =>
+      expect(
+        sessionActions().getByRole('button', { name: 'Stop recording live set' })
+      ).toBeInTheDocument()
+    );
+    expect(window.history.state?.stemdeckCaptureGuard).toBe(true);
+    // Back pops the guard entry; the Studio puts it back and explains.
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(window.history.state?.stemdeckCaptureGuard).toBe(true);
+    expect(
+      await screen.findByText('Recording in progress. Finish the take before leaving the Studio.')
+    ).toBeInTheDocument();
+    // A link to another page of the site is held as well.
+    fireEvent.click(screen.getAllByRole('link', { name: 'Music guides' })[0]);
+    expect(pathname).toBe('/studio');
+    fireEvent.click(sessionActions().getByRole('button', { name: 'Stop recording live set' }));
+    await waitFor(() =>
+      expect(sessionActions().getByRole('button', { name: 'Record live set' })).toBeInTheDocument()
+    );
+  });
+
   it('serializes rapid record clicks and warns before closing an active take', async () => {
     let started;
     engineMethods.startRecording.mockImplementationOnce(
@@ -507,7 +590,7 @@ describe('SattariStudioPage', () => {
     ];
     engineMethods.capturedPerformance.mockReturnValueOnce(events);
     engineMethods.capturedSources.mockReturnValueOnce({ tracks: [] }).mockReturnValueOnce({
-      tracks: [{ id: 'source-lane', name: 'Dry input', clips: [], gain: 100, pan: 0 }],
+      tracks: [{ ...audioTrack('Dry input'), id: 'source-lane' }],
     });
     engineMethods.stopRecording.mockResolvedValueOnce(new Blob(['take'], { type: 'audio/mp4' }));
     putAudioAsset.mockResolvedValueOnce({ id: 'saved-master', createdAt: 1, size: 4 });
@@ -548,16 +631,7 @@ describe('SattariStudioPage', () => {
   it('keeps long-session WAV lanes and events without requiring a compressed master blob', async () => {
     engineMethods.capturedSources.mockReturnValueOnce(null).mockReturnValueOnce({
       id: 'chunks',
-      tracks: [
-        {
-          id: 'master-chunks',
-          name: 'Master safety',
-          role: 'reference',
-          clips: [],
-          gain: 100,
-          pan: 0,
-        },
-      ],
+      tracks: [{ ...audioTrack('Master safety'), id: 'master-chunks', role: 'reference' }],
     });
     engineMethods.stopRecording.mockResolvedValueOnce(null);
     engineMethods.capturedPerformance.mockReturnValueOnce([
@@ -892,6 +966,8 @@ describe('SattariStudioPage', () => {
       key: 'ArrowRight',
     });
     expect(engineMethods.seekDeck).toHaveBeenLastCalledWith('A', 5);
+    // The seek settles asynchronously and reports the deck ready.
+    await screen.findAllByText('Deck A ready.');
     fireEvent.click(workspaces().getByRole('button', { name: 'Arrange', exact: true }));
     fireEvent.click(screen.getByRole('button', { name: 'Snap 1/16' }));
     expect(screen.getByRole('button', { name: 'Snap 1/16' })).toHaveAttribute(
@@ -1323,6 +1399,8 @@ describe('SattariStudioPage', () => {
         expect(engineMethods.playAll).toHaveBeenCalledOnce();
         expect(keydown(added)).toHaveLength(1);
         expect(keydown(removed)).toHaveLength(0);
+        // The editor's toggle settles asynchronously; let it finish inside act().
+        await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
       } finally {
         added.mockRestore();
         removed.mockRestore();

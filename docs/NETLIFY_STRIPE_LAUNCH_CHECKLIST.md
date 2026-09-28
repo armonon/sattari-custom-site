@@ -18,6 +18,7 @@ Set these in Netlify → Site configuration → Environment variables:
 - `ORDER_NOTIFICATION_FROM` (optional verified sender address)
 - `IP_HASH_SECRET` (keys the hashes of visitor IPs used by sign-in and booking limits; falls back to `STAFF_SESSION_SECRET`)
 - `STAFF_USERNAME`, `STAFF_PASSWORD_SALT`, `STAFF_PASSWORD_HASH`, `STAFF_SESSION_SECRET` (staff page; see INVENTORY.md)
+- `BUILD_HOOK_URL` (optional; a Netlify build hook that rebuilds product pages and the sitemap after catalog and stock changes, at most once an hour)
 
 ## 2. Stripe dashboard setup
 
@@ -28,15 +29,17 @@ Set these in Netlify → Site configuration → Environment variables:
 - Add a webhook endpoint in Stripe pointing to `/api/stripe-webhook`
 - Subscribe to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded` and `checkout.session.async_payment_failed` (stock holds and delayed payments depend on all four)
 - Copy the Stripe signing secret into `STRIPE_WEBHOOK_SECRET` in Netlify
+- Any webhook API version works: shipping addresses are read from both the pre-2025-03-31.basil `shipping_details` and the newer `collected_information.shipping_details`
 - Verify the sending domain in Resend if you want order alert emails
 
 ## 3. Netlify function routing
 
-- Confirm [netlify.toml](netlify.toml) includes redirects for create-session, session-status, and Stripe webhook routes
-- Confirm `/api/checkout-release` is routed (the cancel page uses it to free held stock)
+- Every function is a v2 function: its URLs are in its own `config.path` (both `/api/...` and `/.netlify/functions/...`), and `netlify.toml` has no `/api` redirects on purpose
+- After deploying, open `/api/inventory` and confirm it answers with `"consistency": "strong"`; `"eventual"` means functions are not getting strongly consistent storage reads
+- In the Netlify UI (Logs > Functions) confirm the three scheduled functions are listed with their schedules: `checkout-maintenance` (every 10 minutes), `studio-booking-maintenance` (every 5 minutes), `nightly-backup` (09:00 UTC)
 - Confirm the function directory is `netlify/functions`
 - Redeploy after changing any Stripe environment variable
-- Remember that orders are stored in a Netlify Blobs store named `orders`, and the scheduled `checkout-maintenance` function only runs on published production deploys
+- Remember that orders are stored in a Netlify Blobs store named `orders`, and the scheduled functions only run on published production deploys
 
 ## 4. Production verification flow
 

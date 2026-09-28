@@ -1,14 +1,22 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowRight, Download, MapPin, Phone } from 'lucide-react';
 import { SEO, StructuredData } from '../utils/seo';
-import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import {
+  BUSINESS,
+  absoluteUrl,
+  breadcrumbSchema,
+  businessSchema,
+  websiteSchema,
+} from '../data/siteSeo';
 import { musicGuides } from '../data/musicGuides';
+import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails } from '../data/toolDetails';
 import NotFoundPage from '../components/NotFoundPage';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
 import './MusicResources.css';
 
 const guidePath = (guide) => `/guides/${guide.slug}`;
+const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => `/tools${item.path}` === path);
@@ -16,14 +24,28 @@ function labelFor(path) {
     guide?.title || (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
 }
-function Page({ title, description, children, image, category = 'Sattari Music' }) {
+function Page({
+  title,
+  description,
+  children,
+  image,
+  category = 'Sattari Music',
+  type = 'website',
+}) {
   const { pathname } = useLocation();
   return (
     <section className="resource-page">
-      <SEO title={title} description={description} url={absoluteUrl(pathname)} image={image} />
+      <SEO
+        title={title}
+        description={description}
+        url={absoluteUrl(pathname)}
+        image={image}
+        type={type}
+      />
       <StructuredData
         data={breadcrumbSchema([
           { name: 'Sattari Music', path: '/' },
+          ...(type === 'article' ? [{ name: 'Music Guides', path: '/guides' }] : []),
           { name: title, path: pathname },
         ])}
       />
@@ -60,7 +82,7 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Practical Sattari guides to stem separation, bass practice, local instrument repairs and choosing cymbals. Start with a real question and a useful next step."
+      description="Make karaoke and drumless tracks, practice bass, find song key and BPM, or plan an instrument repair. Practical music guides from Sattari Music."
     >
       <p className="resource-lead">Good questions. More music.</p>
       <div className="guide-list">
@@ -107,30 +129,49 @@ export function GuideArticle() {
       description={guide.description}
       image={guide.image}
       category={guide.category}
+      type="article"
     >
       <StructuredData
         data={{
           '@context': 'https://schema.org',
           '@type': 'Article',
+          '@id': `${absoluteUrl(guidePath(guide))}#article`,
+          url: absoluteUrl(guidePath(guide)),
           headline: guide.title,
           description: guide.description,
+          inLanguage: 'en-US',
+          articleSection: guide.category,
           image: absoluteUrl(guide.image),
           mainEntityOfPage: absoluteUrl(guidePath(guide)),
-          author: { '@id': businessSchema['@id'] },
+          isPartOf: { '@id': websiteSchema['@id'] },
+          author: { '@id': businessSchema['@id'], name: BUSINESS.name, url: absoluteUrl('/about') },
           publisher: { '@id': businessSchema['@id'] },
         }}
       />
+      <p className="resource-byline">
+        Published by <Link to="/about">{BUSINESS.name}</Link>
+      </p>
       <p className="resource-lead">{guide.answer}</p>
       <Link className="resource-action" to={guide.action.path}>
         {guide.action.label}
         <ArrowRight size={18} />
       </Link>
+      <nav className="resource-contents" aria-label="In this guide">
+        <h2>In this guide</h2>
+        <ol>
+          {guide.sections.map((section, index) => (
+            <li key={section.title}>
+              <a href={`#${sectionId(index)}`}>{section.title}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
       <figure className="resource-figure">
         <img src={guide.image} alt={guide.imageAlt} width="1280" height="800" loading="lazy" />
       </figure>
       <div className="resource-article">
-        {guide.sections.map((section) => (
-          <section key={section.title} className="resource-section">
+        {guide.sections.map((section, index) => (
+          <section key={section.title} className="resource-section" id={sectionId(index)}>
             <h2>{section.title}</h2>
             {section.paragraphs?.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
@@ -246,6 +287,21 @@ export function ToolDetailsPage() {
                 Download {stem} result
               </a>
             </div>
+          ))}
+        </section>
+      )}
+      {key === 'stem-separator' && (
+        <section
+          className="resource-section resource-questions"
+          id="questions"
+          aria-labelledby="separator-questions"
+        >
+          <h2 id="separator-questions">Stem Separator questions</h2>
+          {separatorQuestions.map(({ question, answer }) => (
+            <details key={question}>
+              <summary>{question}</summary>
+              <p>{answer}</p>
+            </details>
           ))}
         </section>
       )}

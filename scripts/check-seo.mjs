@@ -75,11 +75,33 @@ for (const url of urls) {
   );
   assert.ok(!descriptions.has(description), `${path}: duplicate description`);
   descriptions.add(description);
+  const entities = [];
   for (const node of doc.querySelectorAll('script[type="application/ld+json"]')) {
     const data = JSON.parse(node.textContent);
     assert.equal(data['@context'], 'https://schema.org');
+    entities.push(...(data['@graph'] || [data]));
     if (data['@type'] === 'MusicStore')
       assert.equal(data.address.addressLocality, 'Woodland Hills');
+  }
+  const businesses = entities.filter((item) => item['@id'] === `${origin}/#business`);
+  const websites = entities.filter((item) => item['@id'] === `${origin}/#website`);
+  assert.equal(businesses.length, 1, `${path}: expected one shared business identity`);
+  assert.equal(websites.length, 1, `${path}: expected one shared website identity`);
+  assert.equal(websites[0].publisher['@id'], businesses[0]['@id']);
+  assert.equal(websites[0].name, businesses[0].name);
+  if (path.startsWith('/guides/')) {
+    const article = entities.find((item) => item['@type'] === 'Article');
+    assert.equal(article?.mainEntityOfPage, url, `${path}: article canonical`);
+    assert.equal(article?.isPartOf?.['@id'], websites[0]['@id']);
+    assert.ok(doc.querySelector('.resource-byline')?.textContent.includes(article.author.name));
+    const sections = [...doc.querySelectorAll('.resource-contents a')];
+    assert.ok(sections.length >= 3, `${path}: missing section navigation`);
+    for (const link of sections) {
+      assert.equal(
+        doc.getElementById(link.hash.slice(1))?.querySelector('h2')?.textContent,
+        link.textContent
+      );
+    }
   }
   if (
     path.startsWith('/guides') ||

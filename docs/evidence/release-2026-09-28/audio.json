@@ -1,0 +1,85 @@
+{
+  "at": "2026-09-28T18:52:39.258Z",
+  "physicalHardwareMeasured": false,
+  "pass": true,
+  "results": [
+    {
+      "name": "compressed-window",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"results\": [\n    {\n      \"extension\": \"mp3\",\n      \"difference\": 0,\n      \"nativeDifference\": 0,\n      \"frames\": 48001,\n      \"bytesRead\": 360620,\n      \"encodedBytes\": 360620,\n      \"arrangementError\": 1.4901161193847656e-8\n    },\n    {\n      \"extension\": \"m4a\",\n      \"difference\": 0,\n      \"nativeDifference\": 0,\n      \"frames\": 48001,\n      \"bytesRead\": 372582,\n      \"encodedBytes\": 372582,\n      \"arrangementError\": 1.4901161193847656e-8\n    }\n  ],\n  \"physicalHardwareMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "windowed-replay",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"checks\": [\n    {\n      \"sampleRate\": 44100,\n      \"offset\": 3.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 44100,\n      \"offset\": 3.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"maxError\": 0\n    },\n    {\n      \"sampleRate\": 44100,\n      \"offset\": 17,\n      \"rate\": 1.5,\n      \"detune\": 700,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 44100,\n      \"offset\": 17,\n      \"rate\": 1.5,\n      \"detune\": 700,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"sampleRate\": 44100,\n      \"offset\": 20.4,\n      \"rate\": 0.75,\n      \"detune\": -500,\n      \"loop\": true,\n      \"loopStart\": 19.5,\n      \"loopEnd\": 20.5,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 44100,\n      \"offset\": 20.4,\n      \"rate\": 0.75,\n      \"detune\": -500,\n      \"loop\": true,\n      \"loopStart\": 19.5,\n      \"loopEnd\": 20.5,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"sampleRate\": 44100,\n      \"offset\": 19.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"loop\": true,\n      \"loopStart\": 2,\n      \"loopEnd\": 20,\n      \"maxError\": 2.9802322387695312e-8\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 44100,\n      \"offset\": 19.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"loop\": true,\n      \"loopStart\": 2,\n      \"loopEnd\": 20,\n      \"maxError\": 2.9802322387695312e-8\n    },\n    {\n      \"sampleRate\": 48000,\n      \"offset\": 3.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 48000,\n      \"offset\": 3.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"sampleRate\": 48000,\n      \"offset\": 17,\n      \"rate\": 1.5,\n      \"detune\": 700,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 48000,\n      \"offset\": 17,\n      \"rate\": 1.5,\n      \"detune\": 700,\n      \"maxError\": 0\n    },\n    {\n      \"sampleRate\": 48000,\n      \"offset\": 20.4,\n      \"rate\": 0.75,\n      \"detune\": -500,\n      \"loop\": true,\n      \"loopStart\": 19.5,\n      \"loopEnd\": 20.5,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 48000,\n      \"offset\": 20.4,\n      \"rate\": 0.75,\n      \"detune\": -500,\n      \"loop\": true,\n      \"loopStart\": 19.5,\n      \"loopEnd\": 20.5,\n      \"maxError\": 7.450580596923828e-9\n    },\n    {\n      \"sampleRate\": 48000,\n      \"offset\": 19.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"loop\": true,\n      \"loopStart\": 2,\n      \"loopEnd\": 20,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueParity\": true,\n      \"sampleRate\": 48000,\n      \"offset\": 19.9,\n      \"rate\": 1,\n      \"detune\": 0,\n      \"loop\": true,\n      \"loopStart\": 2,\n      \"loopEnd\": 20,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"scheduledLoopAndRateDeliveryParity\": true,\n      \"sampleRate\": 44100,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueLoopAndRateParity\": true,\n      \"sampleRate\": 44100,\n      \"maxError\": 0\n    },\n    {\n      \"scheduledLoopAndRateDeliveryParity\": true,\n      \"sampleRate\": 48000,\n      \"maxError\": 0\n    },\n    {\n      \"nativeQueueLoopAndRateParity\": true,\n      \"sampleRate\": 48000,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"compiledPitchKeyLockStemRateParity\": true,\n      \"sampleRate\": 44100,\n      \"lateDelivery\": false,\n      \"maxError\": 1.1641532182693481e-10\n    },\n    {\n      \"compiledPitchKeyLockStemRateParity\": true,\n      \"sampleRate\": 44100,\n      \"lateDelivery\": true,\n      \"maxError\": 1.4901161193847656e-8\n    },\n    {\n      \"compiledPitchKeyLockStemRateParity\": true,\n      \"sampleRate\": 48000,\n      \"lateDelivery\": false,\n      \"maxError\": 0\n    },\n    {\n      \"compiledPitchKeyLockStemRateParity\": true,\n      \"sampleRate\": 48000,\n      \"lateDelivery\": true,\n      \"maxError\": 0\n    },\n    {\n      \"fourStereoStems\": true,\n      \"sourceSeconds\": 180,\n      \"playedSeconds\": 14,\n      \"seeks\": 2,\n      \"prepareMs\": 1507.0999999940395,\n      \"retainedPcmBytes\": 122774864,\n      \"peakAdmittedBytes\": 132946296,\n      \"budgetBytes\": 134217728,\n      \"underruns\": 0,\n      \"peak\": 0.06912209265793712,\n      \"lateEvents\": 0,\n      \"maxLateness\": 0\n    }\n  ],\n  \"physicalHardwareMeasured\": false,\n  \"realMusicMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "grain-stall",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"checks\": [\n    {\n      \"stallBlocks\": 203,\n      \"minRms\": 0.12720576065731612,\n      \"afterStopBlocks\": 122,\n      \"afterStopMaxRms\": 0,\n      \"pins\": 0\n    },\n    {\n      \"uiStallMs\": 650.1587301587301,\n      \"measuredAudioBlocks\": 203,\n      \"minimumRms\": 0.12720576065731612,\n      \"scheduledStopSilent\": true,\n      \"pageLeasesAfterStop\": 0\n    },\n    {\n      \"midiUiStallMs\": 650.1587301587301,\n      \"measuredMidiBlocks\": 203,\n      \"minimumMidiRms\": 0.13995632005499137,\n      \"midiVoicesAfterStop\": 0\n    }\n  ],\n  \"physicalHardwareMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "live-window",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"checks\": [\n    {\n      \"fullTrackAnalysisSeconds\": 180,\n      \"analysisMs\": 1314.5,\n      \"coverage\": {\n        \"seconds\": 180,\n        \"blockSeconds\": 124,\n        \"overlapSeconds\": 4,\n        \"maxWindowPcmBytes\": 16777216,\n        \"wholeSourceDecoded\": false\n      }\n    },\n    {\n      \"statuses\": [\n        {\n          \"id\": \"A\",\n          \"status\": {\n            \"playing\": true,\n            \"preparing\": false,\n            \"error\": null\n          },\n          \"lanes\": [\n            {\n              \"id\": \"vocals\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"drums\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"bass\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"other\",\n              \"clockState\": \"started\"\n            }\n          ]\n        },\n        {\n          \"id\": \"B\",\n          \"status\": {\n            \"playing\": true,\n            \"preparing\": false,\n            \"error\": null\n          },\n          \"lanes\": [\n            {\n              \"id\": \"vocals\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"drums\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"bass\",\n              \"clockState\": \"started\"\n            },\n            {\n              \"id\": \"other\",\n              \"clockState\": \"started\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"decks\": 2,\n      \"stereoSources\": 8,\n      \"coldSeekMs\": 4567,\n      \"peakLevel\": 0.052401084811524216,\n      \"peakAdmittedBytes\": 132946296,\n      \"budgetBytes\": 134217728,\n      \"sourceUnderruns\": 0\n    }\n  ],\n  \"physicalHardwareMeasured\": false,\n  \"realMusicMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "input-audio",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"checks\": {\n    \"lateConnectRecorded\": true,\n    \"monitorOffSilent\": true,\n    \"monitorOnAudible\": true,\n    \"disconnectedSilence\": true,\n    \"reconnectSameBus\": true,\n    \"reconnectRecorded\": true,\n    \"reconnectMonitorOff\": true,\n    \"lowLatencyAudible\": true,\n    \"disarmedSilence\": true,\n    \"disarmKeepsMonitor\": true,\n    \"syntheticDelayMeasured\": true\n  },\n  \"syntheticLoopbackMs\": 10,\n  \"physicalHardwareMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "input-recording",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"dryPeak\": 0.19999991357326508,\n  \"monitorOffPeak\": 0,\n  \"recovered\": true,\n  \"tracks\": 4,\n  \"physicalHardwareMeasured\": false\n}",
+      "errors": []
+    },
+    {
+      "name": "sync-audio",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"reports\": [\n    {\n      \"keyLock\": false,\n      \"transientsA\": 31,\n      \"transientsB\": 31,\n      \"maxPairMs\": 0.020833333334024928,\n      \"pass\": true\n    },\n    {\n      \"keyLock\": true,\n      \"transientsA\": 31,\n      \"transientsB\": 31,\n      \"maxPairMs\": 15.833333333333366,\n      \"pass\": true\n    }\n  ]\n}",
+      "errors": []
+    },
+    {
+      "name": "master-pro-browser",
+      "pass": true,
+      "output": "PASS input trim and pre-limiter trim each change rendered amplitude by exactly -6 dB\nPASS equal and opposite trims cancel with dynamics disabled\nPASS EQ crossover frequency changes the actual rendered sound\nPASS live and exported master processing agree after smoothing settles\nPASS speaker mute/mono/dim do not alter program output\nPASS raw stem export excludes new master trims and EQ\nPASS delivery references do not change exported audio\n\n7 passed, 0 failed",
+      "errors": []
+    },
+    {
+      "name": "rack-browser",
+      "pass": true,
+      "output": "PASS replay input monitor-off is exact silence in every processing branch\nPASS replay input future gain edits retain sample-clock onset and earlier automation\nPASS replay input chooses direct, highpass and compression branches on the audio clock\nPASS replay input interruption and disconnect gates are exact and scheduled recovery survives\nPASS eq: audible DSP, bypass and finite samples\nPASS comp: audible DSP, bypass and finite samples\nPASS echo: audible DSP, bypass and finite samples\nPASS space: audible DSP, bypass and finite samples\nPASS heat: audible DSP, bypass and finite samples\nPASS imager: audible DSP, bypass and finite samples\nPASS tail-only range is sample-exact and matches the corresponding full render\nPASS comp preserves processed audio and stem assignment after project reopen\nPASS track/device automation survives seeked export and WAV source windowing\nPASS dense session edits, reopens, relinks and renders under bounded source memory\nPASS arrangement playback and live sources share one master insert bus\nPASS master inserts process mixdowns but not pre-master stem exports\nPASS master delay tails survive encoded mixdown\nPASS master effects remain continuous across export section joins\nPASS master rack topology can change without restarting the source\nPASS rapid live track insert swaps preserve sample continuity and gain automation\nPASS effects match whole render across a long-export boundary\nPASS overlapping clips share one rack and mute silences tails\nPASS mixdown encoding includes track effects and their tail\n\n23 passed; 0 failed.",
+      "errors": []
+    },
+    {
+      "name": "arrangement-browser",
+      "pass": true,
+      "output": "Running…\nPASS ordered offline EQ retains the original crossover response at 44.1 and 48 kHz\nPASS real offline audio has the correct silent gap, duration, gain and stop\nPASS splitting a fade preserves rendered PCM\nPASS seek into silence retains future clips and uses audio-clock position\nPASS piano notes render actual non-silent polyphonic audio\nPASS master gain affects mixdown and produces a valid 24-bit WAV\nPASS more than four independent tracks render and export aligned stems\nPASS printed references bypass repeated processing but follow master level\nPASS range exports rebase source offsets and preserve requested length\nPASS live mute and gain changes do not restart arrangement transport\nPASS loop playback schedules repeated regions and preserves live mixer control\nPASS source capture produces aligned durable chunks and recoverable float WAV audio\nPASS recording captures playable audio and timestamped performance controls\n\nCOMPLETE: 13 passed, 0 failed",
+      "errors": []
+    },
+    {
+      "name": "reference-lifecycle",
+      "pass": true,
+      "output": "{\n  \"pass\": true,\n  \"scope\": \"synthetic reconstruction/reopen/export subset\",\n  \"physicalHardwareMeasured\": false,\n  \"fullReferenceProjectQualified\": false,\n  \"checks\": [\n    \"Reconstruction, split, MIDI, automation and action status survive document reload\",\n    \"Reopened render matches pre-close PCM SHA-256\",\n    \"Further MIDI edits persist after reopen\",\n    \"24-bit master export matches arrangement render within 2e-6\",\n    \"10 aligned track stems exported (pre-master)\"\n  ],\n  \"errors\": [],\n  \"reopenMaxError\": 0,\n  \"worstReopenFrame\": 0,\n  \"bitExactReopen\": true,\n  \"masterPcmMaxError\": 6.332993507385254e-8\n}",
+      "errors": []
+    },
+    {
+      "name": "loudness-tempo",
+      "pass": true,
+      "output": "PASS audio-thread meter: {\"momentary\":-19.995622406092775,\"shortTerm\":-19.99722553908574,\"integrated\":-19.99719426088331,\"maxMomentary\":-19.99557191051542,\"maxShortTerm\":-19.997224832410065,\"loudnessRange\":0,\"rangeStable\":false,\"measuring\":true,\"measurementSeconds\":4.20281179138322,\"truePeak\":-19.992017635114692,\"samplePeak\":-19.99999987057016,\"seconds\":4.20281179138322,\"invalidSamples\":0,\"available\":true}\nPASS analysis worker: 103.2 → 121.3 BPM; 183ms, 18 UI heartbeats\nCOMPLETE: 2 passed",
+      "errors": []
+    },
+    {
+      "name": "performance-recovery",
+      "pass": true,
+      "output": "PASS disabled source changes do not load missing assets during actual replay preparation\nPASS committed in-progress events survive closing and reopening the journal\nReplay timing: 0 events >25ms late; worst 10.1ms\nPASS edited deck, stem, pitch, loop and master events replay through the live engine and print durable audio\nSoak 10s: 195 events saved, audio 5.0s, pending 0.00MiB; running, visible, 10.0s wall, 396900 frames\nSoak 20s: 395 events saved, audio 15.0s, pending 0.00MiB; running, visible, 20.0s wall, 837900 frames\nSoak 30s: 595 events saved, audio 25.0s, pending 0.00MiB; running, visible, 30.0s wall, 1278900 frames\nSoak 40s: 800 events saved, audio 35.0s, pending 0.00MiB; running, visible, 40.0s wall, 1719900 frames\nSoak 49s: 1000 events saved, audio 45.0s, pending 0.00MiB; running, visible, 50.0s wall, 2160900 frames\nSoak 59s: 1195 events saved, audio 55.0s, pending 0.00MiB; running, visible, 60.0s wall, 2601900 frames\nPASS 60-second real audio-clock recording remains aligned, incremental and recoverable under control/UI load\nCOMPLETE: 4 passed, 0 failed",
+      "errors": []
+    }
+  ]
+}

@@ -75,6 +75,68 @@ export const journalStore = {
       db.close();
     }
   },
+  // What recovery still holds: take and source-capture ids, the audio they
+  // reference, and how many events each take stores. Reads no event payloads.
+  async inventory() {
+    const db = await database();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(['takes', 'events', 'source-takes', 'source-clips'], 'readonly');
+        const takes = tx.objectStore('takes').getAll(),
+          sourceTakes = tx.objectStore('source-takes').getAllKeys(),
+          clips = tx.objectStore('source-clips').getAll(),
+          eventKeys = tx.objectStore('events').getAllKeys();
+        tx.oncomplete = () => {
+          const eventCounts = new Map();
+          for (const [takeId] of eventKeys.result)
+            eventCounts.set(takeId, (eventCounts.get(takeId) || 0) + 1);
+          const captureAssets = new Map(sourceTakes.result.map((id) => [id, []]));
+          for (const row of clips.result) {
+            if (!captureAssets.has(row.captureId)) captureAssets.set(row.captureId, []);
+            if (row.clip?.assetId) captureAssets.get(row.captureId).push(row.clip.assetId);
+          }
+          resolve({
+            takes: takes.result.map((take) => ({
+              id: take.id,
+              assetId: take.assetId || '',
+              sourceCaptureId: take.sourceCaptureId || '',
+              events: eventCounts.get(take.id) || 0,
+            })),
+            captures: [...captureAssets].map(([id, assetIds]) => ({ id, assetIds })),
+          });
+        };
+        tx.onerror = tx.onabort = () => reject(tx.error);
+      });
+    } finally {
+      db.close();
+    }
+  },
+  // Removes recovery copies of takes that are already saved in the project.
+  async discard({ takeIds = [], captureIds = [] }) {
+    const takes = new Set(takeIds.filter(Boolean)),
+      captures = new Set(captureIds.filter(Boolean));
+    if (!takes.size && !captures.size) return;
+    const db = await database();
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(['takes', 'events', 'source-takes', 'source-clips'], 'readwrite');
+        // [id] sorts before every [id, \u2026] key, and [id, []] after all of them
+        // (arrays sort above every other key type).
+        for (const id of takes) {
+          tx.objectStore('takes').delete(id);
+          tx.objectStore('events').delete(IDBKeyRange.bound([id], [id, []]));
+        }
+        for (const id of captures) {
+          tx.objectStore('source-takes').delete(id);
+          tx.objectStore('source-clips').delete(IDBKeyRange.bound([id], [id, []]));
+        }
+        tx.oncomplete = resolve;
+        tx.onerror = tx.onabort = () => reject(tx.error);
+      });
+    } finally {
+      db.close();
+    }
+  },
   async recoverSources() {
     const db = await database();
     try {

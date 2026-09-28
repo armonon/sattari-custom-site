@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Manual re-run of the qualified deploy (for example after catalog edits).
+  workflow_dispatch:
 
 env:
   # Opt into the June 2026 GitHub JavaScript-action runtime early so
@@ -17,9 +19,9 @@ jobs:
 
     strategy:
       matrix:
-        # Keep both supported app runtimes explicit: 20.19.0 is the current
-        # production-compatible floor; 22.x is the forward-looking CI lane.
-        node-version: [20.19.0, 22.x]
+        # 22.x is production (netlify.toml NODE_VERSION); 24.x is the
+        # forward-looking lane. Node 20 reached end of life on 2026-04-30.
+        node-version: [22.x, 24.x]
 
     steps:
       - uses: actions/checkout@v6
@@ -62,7 +64,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
       - uses: actions/checkout@v6
@@ -70,7 +72,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20.19.0'
+          node-version: '22.x'
           cache: 'npm'
 
       - name: Install dependencies
@@ -80,7 +82,7 @@ jobs:
       - name: Download validated production build
         uses: actions/download-artifact@v4
         with:
-          name: dist-20.19.0
+          name: dist-22.x
           path: dist/
 
       - name: Verify the exact qualified artifact before deployment

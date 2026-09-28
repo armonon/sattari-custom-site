@@ -1,5 +1,53 @@
-import { Circle, FolderOpen, ListMusic, Plus, Save } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Circle, FolderOpen, HardDrive, ListMusic, Plus, Save } from 'lucide-react';
 import { StudioPanel } from '../../components/studio/StudioPanel';
+import { formatBytes } from '../session/storageCleanup';
+
+/** Browser storage used by this site, and the cleanup that frees unused audio. */
+function StorageSummary({ onCleanUp }) {
+  const [estimate, setEstimate] = useState(null);
+  const [working, setWorking] = useState(false);
+  const refresh = useCallback(async () => {
+    try {
+      setEstimate((await globalThis.navigator?.storage?.estimate?.()) || null);
+    } catch {
+      setEstimate(null);
+    }
+  }, []);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+  const nearlyFull = estimate?.quota > 0 && estimate.usage / estimate.quota > 0.8;
+  return (
+    <section className="sd-files-storage" aria-label="Browser storage">
+      <header>
+        <HardDrive size={16} aria-hidden="true" />
+        <span>Browser storage</span>
+        <span role="status">
+          {estimate?.quota
+            ? `${formatBytes(estimate.usage || 0)} used of ${formatBytes(estimate.quota)}`
+            : 'Usage unavailable in this browser'}
+        </span>
+      </header>
+      {nearlyFull ? <p>Storage is nearly full. Autosave and exports need free space.</p> : null}
+      <button
+        type="button"
+        disabled={working}
+        onClick={async () => {
+          setWorking(true);
+          try {
+            await onCleanUp();
+          } finally {
+            setWorking(false);
+            void refresh();
+          }
+        }}
+      >
+        {working ? 'Checking…' : 'Clean up unused audio'}
+      </button>
+    </section>
+  );
+}
 
 export default function FilesView({
   sessionName,
@@ -10,6 +58,13 @@ export default function FilesView({
   onSave,
   onNewProject,
   onDownloadRecording,
+  onCleanUpStorage,
+  backup,
+  onDownloadBackup,
+  onClearBackup,
+  setAside = [],
+  onDownloadSetAside,
+  onDiscardSetAside,
 }) {
   return (
     <StudioPanel panelId="project-files" label="Project files" as="div" className="sd-files-view">
@@ -61,6 +116,52 @@ export default function FilesView({
           <p>No master recordings yet.</p>
         )}
       </section>
+      {backup ? (
+        <section className="sd-files-list" aria-label="Last project backup">
+          <header>
+            <span>Last project backup</span>
+            <span>{formatBytes(backup.file.size)}</span>
+          </header>
+          <p>
+            {backup.name} stays available here until you save a new backup or clear it. Clear it
+            only after the download has finished.
+          </p>
+          <div className="sd-files-backup-actions">
+            <button type="button" onClick={onDownloadBackup}>
+              Download again
+            </button>
+            <button type="button" onClick={onClearBackup}>
+              Clear temporary copy
+            </button>
+          </div>
+        </section>
+      ) : null}
+      {setAside.length ? (
+        <section className="sd-files-list" aria-label="Damaged arrangement parts">
+          <header>
+            <span>Damaged arrangement parts set aside</span>
+            <span>{setAside.length}</span>
+          </header>
+          <p>
+            These could not be opened, so they were kept aside instead of blocking the project:{' '}
+            {setAside
+              .slice(0, 4)
+              .map((item) => (item.track ? `${item.name} (${item.track})` : item.name))
+              .join(', ')}
+            {setAside.length > 4 ? ` and ${setAside.length - 4} more` : ''}. Their audio stays
+            stored until you discard them.
+          </p>
+          <div className="sd-files-backup-actions">
+            <button type="button" onClick={onDownloadSetAside}>
+              Download as file
+            </button>
+            <button type="button" onClick={onDiscardSetAside}>
+              Discard
+            </button>
+          </div>
+        </section>
+      ) : null}
+      {onCleanUpStorage ? <StorageSummary onCleanUp={onCleanUpStorage} /> : null}
     </StudioPanel>
   );
 }

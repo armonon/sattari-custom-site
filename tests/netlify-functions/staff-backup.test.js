@@ -1,13 +1,17 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
-// In-memory stand-ins for each blob store.
+// In-memory stand-ins for each blob store. Stores named in `unreadable`
+// fail every read, as during a storage outage.
 const data = {};
+const unreadable = new Set();
 
 function store(name) {
   data[name] = data[name] || {};
   return {
     async get(key) {
+      if (unreadable.has(name)) throw new Error(`${name} unavailable`);
       const v = data[name][key];
       return v === undefined ? null : JSON.parse(JSON.stringify(v));
     },
@@ -25,6 +29,7 @@ function store(name) {
       return { modified: true, etag: 'etag' };
     },
     async list() {
+      if (unreadable.has(name)) throw new Error(`${name} unavailable`);
       return { blobs: Object.keys(data[name]).map((key) => ({ key })) };
     },
     async delete(key) {
@@ -39,8 +44,11 @@ vi.mock('@netlify/blobs', () => ({
 }));
 
 const { hashPassword, createSession } = await import('../../server/staffAuth.js');
-const { handler } = await import('../../netlify/functions/staff-backup.js');
-const { BACKUP_PREFIX } = await import('../../src/utils/backup.js');
+const handler = callWith((await import('../../netlify/functions/staff-backup.js')).default);
+const { BACKUP_PREFIX, KEEP_SNAPSHOTS, KEEP_STAFF_SNAPSHOTS, selectExpired, snapshotKey } =
+  await import('../../src/utils/backup.js');
+const { default: nightlyBackup, config: nightlyConfig } =
+  await import('../../netlify/functions/nightly-backup.js');
 
 let token;
 
@@ -54,6 +62,9 @@ function call(method, opts = {}) {
 }
 
 beforeEach(() => {
+  unreadable.clear();
+  vi.spyOn(console, 'log').mockImplementation(() => {});
+  vi.spyOn(console, 'error').mockImplementation(() => {});
   for (const key of Object.keys(data)) delete data[key];
   data.inventory = { stock: { 'cymbal::::': 5 } };
   data.catalog = { overrides: { overrides: { a: { price: 10 } }, added: [], hidden: [] } };
@@ -97,7 +108,7 @@ describe('downloading', () => {
     const response = await call('GET', { query: { action: 'download' } });
 
     expect(response.statusCode).toBe(200);
-    expect(response.headers['Content-Disposition']).toMatch(/attachment; filename=/);
+    expect(response.headers['content-disposition']).toMatch(/attachment; filename=/);
     const parsed = JSON.parse(response.body);
     expect(parsed.stock).toEqual({ 'cymbal::::': 5 });
   });
@@ -184,5 +195,111 @@ describe('listing', () => {
 
     expect(body.snapshots).toHaveLength(1);
     expect(body.snapshots[0]).toMatchObject({ trackedVariants: 1, fulfilledOrders: 1 });
+  });
+});
+
+describe('when shop data cannot be read', () => {
+  it.each(['inventory', 'catalog', 'fulfillment', 'catalog-images'])(
+    'takes no snapshot while %s is unreadable, rather than an empty one',
+    async (name) => {
+      unreadable.add(name);
+
+      const response = await call('POST', { body: { action: 'snapshot' } });
+
+      expect(response.statusCode).toBe(503);
+      expect(JSON.parse(response.body).error).toMatch(/no backup was taken/);
+      expect(response.body).not.toContain('unavailable');
+      expect(Object.keys(data.backups)).toHaveLength(0);
+    }
+  );
+
+  it('restores nothing when the current state cannot be saved first', async () => {
+    await call('POST', { body: { action: 'snapshot' } });
+    const [key] = Object.keys(data.backups);
+    data.inventory.stock = { 'cymbal::::': 0 };
+    unreadable.add('fulfillment');
+
+    const response = await call('POST', { body: { action: 'restore', key, confirm: 'RESTORE' } });
+
+    expect(response.statusCode).toBe(503);
+    expect(JSON.parse(response.body).error).toMatch(/nothing was restored/);
+    expect(data.inventory.stock).toEqual({ 'cymbal::::': 0 });
+    expect(Object.keys(data.backups)).toEqual([key]);
+  });
+});
+
+describe('the nightly backup', () => {
+  it('runs as a v2 scheduled function and writes a nightly snapshot', async () => {
+    expect(nightlyConfig).toEqual({ schedule: '0 9 * * *' });
+
+    await nightlyBackup(new Request('https://sattarimusic.com/'), {});
+
+    const keys = Object.keys(data.backups);
+    expect(keys).toEqual([expect.stringMatching(/^snapshot\/[\d-]+T[\d-]+\.json$/)]);
+    expect(data.backups[keys[0]]).toMatchObject({
+      kind: 'scheduled',
+      stock: { 'cymbal::::': 5 },
+      imageKeys: ['abc.jpg'],
+    });
+  });
+
+  it('fails loudly and writes nothing when a store cannot be read', async () => {
+    unreadable.add('catalog');
+
+    await expect(nightlyBackup(new Request('https://sattarimusic.com/'), {})).rejects.toThrow();
+    expect(Object.keys(data.backups)).toHaveLength(0);
+  });
+
+  it('prunes year-old service inquiries, even on a night the backup fails', async () => {
+    const old = 'inq_1600000000000_aaaaaaaa';
+    const recent = `inq_${Date.now()}_bbbbbbbb`;
+    data['service-inquiries'] = {
+      [`inquiries/${old}.json`]: { id: old },
+      [`unsent/${old}`]: { id: old },
+      [`inquiries/${recent}.json`]: { id: recent },
+    };
+    unreadable.add('catalog');
+
+    await expect(nightlyBackup(new Request('https://sattarimusic.com/'), {})).rejects.toThrow();
+
+    expect(Object.keys(data['service-inquiries'])).toEqual([`inquiries/${recent}.json`]);
+  });
+
+  it('keeps its own history however many snapshots staff take', async () => {
+    const day = (n) => `2026-07-${String(n).padStart(2, '0')}T09:00:00.000Z`;
+    for (let n = 1; n <= 31; n += 1) data.backups[snapshotKey(day(n))] = { version: 1 };
+    for (let n = 1; n <= 25; n += 1) {
+      data.backups[snapshotKey(`2026-08-01T10:${String(n).padStart(2, '0')}:00.000Z`, 'manual')] = {
+        version: 1,
+      };
+    }
+    data.backups[snapshotKey('2026-07-15T12:00:00.000Z', 'restore')] = { version: 1 };
+
+    await nightlyBackup(new Request('https://sattarimusic.com/'), {});
+
+    const keys = Object.keys(data.backups);
+    const nightly = keys.filter((key) => /\d\.json$/.test(key));
+    expect(nightly).toHaveLength(KEEP_SNAPSHOTS);
+    expect(nightly).not.toContain(snapshotKey(day(1)));
+    expect(nightly).not.toContain(snapshotKey(day(2)));
+    expect(keys.filter((key) => !/\d\.json$/.test(key))).toHaveLength(KEEP_STAFF_SNAPSHOTS);
+  });
+});
+
+describe('snapshot retention', () => {
+  it('counts staff snapshots separately from nightly ones', () => {
+    const nightly = Array.from({ length: 3 }, (_, i) =>
+      snapshotKey(`2026-07-0${i + 1}T09:00:00.000Z`)
+    );
+    const manual = Array.from({ length: 3 }, (_, i) =>
+      snapshotKey(`2026-07-0${i + 1}T11:00:00.000Z`, 'manual')
+    );
+    const restore = snapshotKey('2026-07-04T11:00:00.000Z', 'restore');
+
+    expect(selectExpired([...nightly, ...manual, restore], 2, 3).sort()).toEqual(
+      [nightly[0], manual[0]].sort()
+    );
+    expect(snapshotKey('2026-07-01T09:00:00.000Z')).toBe('snapshot/2026-07-01T09-00-00-000.json');
+    expect(restore).toBe('snapshot/2026-07-04T11-00-00-000.restore.json');
   });
 });

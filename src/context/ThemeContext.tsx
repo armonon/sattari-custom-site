@@ -1,5 +1,6 @@
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -11,6 +12,7 @@ import {
 import {
   applyTheme,
   getStoredPreference,
+  INITIAL_RENDER_THEME,
   msUntilNextThemeBoundary,
   PREFERS_DARK_QUERY,
   resolveTheme,
@@ -24,6 +26,13 @@ interface ThemeContextValue {
   preference: ThemePreference;
   /** The concrete look currently applied. */
   mode: ThemeMode;
+  /**
+   * False until the visitor's theme has been read, after mount. Until then
+   * `mode` is the placeholder the prerendered HTML was rendered with (the page
+   * itself already shows the right theme through CSS), so anything that would
+   * load theme-specific media from `mode` should wait for this.
+   */
+  ready: boolean;
   setPreference: (preference: ThemePreference) => void;
   /** Cycle auto → day → night → auto, for a single toggle control. */
   cyclePreference: () => void;
@@ -32,9 +41,28 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(() => getStoredPreference());
-  const [mode, setMode] = useState<ThemeMode>(() => resolveTheme(getStoredPreference()));
+  // The first render must match the prerendered HTML, which cannot know this
+  // visitor's choice, OS setting or clock. index.html's inline script has
+  // already painted the right palette through <html data-theme>, and the CSS
+  // keys off that attribute, so reading the real preference after mount
+  // changes nothing on screen. `null` means "not read yet".
+  const [storedPreference, setPreferenceState] = useState<ThemePreference | null>(null);
+  const [mode, setMode] = useState<ThemeMode>(INITIAL_RENDER_THEME);
   const timerRef = useRef<number>();
+  const preference = storedPreference ?? 'auto';
+  const ready = storedPreference !== null;
+
+  useEffect(() => {
+    const stored = getStoredPreference();
+    // A transition, like every update the providers make right after mount:
+    // React hydrates the page inside its Suspense boundary after the rest, and
+    // an urgent context change arriving first can make it throw the server
+    // HTML away and render the page again. A transition waits for hydration.
+    startTransition(() => {
+      setPreferenceState(stored);
+      setMode(resolveTheme(stored));
+    });
+  }, []);
 
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next);
@@ -46,13 +74,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // (follows the system); the first tap flips to the opposite of what's shown
     // and from then on it stays a manual day ⇄ night choice.
     setPreferenceState((current) => {
-      const next: ThemePreference = resolveTheme(current) === 'day' ? 'night' : 'day';
+      const next: ThemePreference = resolveTheme(current ?? 'auto') === 'day' ? 'night' : 'day';
       storePreference(next);
       return next;
     });
   }, []);
 
   useEffect(() => {
+    // Until the stored choice is read, leave the pre-paint theme alone: syncing
+    // 'auto' here would briefly override a visitor's explicit day/night choice.
+    if (storedPreference === null) return;
+
     const clearTimer = () => {
       if (timerRef.current !== undefined) {
         window.clearTimeout(timerRef.current);
@@ -107,11 +139,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', handleVisibility);
       darkQuery.removeEventListener('change', handleOsChange);
     };
-  }, [preference]);
+  }, [preference, storedPreference]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ preference, mode, setPreference, cyclePreference }),
-    [preference, mode, setPreference, cyclePreference]
+    () => ({ preference, mode, ready, setPreference, cyclePreference }),
+    [preference, mode, ready, setPreference, cyclePreference]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

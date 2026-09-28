@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import process from 'node:process';
@@ -58,12 +59,27 @@ async function loadInventory() {
 
 const inventory = await loadInventory();
 
-// A route module is normally keyed by its source path. When a lazily loaded
-// helper also imports from it (the Studio page), Rollup keys it by chunk name
-// instead ("_SattariStudioPage-<hash>.js"), and the route would lose its
-// stylesheet and preload.
+function realPath(path) {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
+// A route module is normally keyed by its source path. Vite records the real
+// path, so when src/ is reached through a symlink (a build from another root)
+// the key is a long relative path instead; compare resolved paths. When a
+// lazily loaded helper also imports from the route (the Studio page), Rollup
+// keys it by chunk name instead ("_SattariStudioPage-<hash>.js"), and the
+// route would lose its stylesheet and preload.
 function manifestChunk(entry) {
   if (manifest[entry]) return manifest[entry];
+  const target = realPath(resolve(root, entry));
+  const bySource = Object.values(manifest).find(
+    (chunk) => chunk.src && realPath(resolve(root, chunk.src)) === target
+  );
+  if (bySource) return bySource;
   const name = entry
     .split('/')
     .pop()
@@ -72,6 +88,17 @@ function manifestChunk(entry) {
     (chunk) => chunk.isDynamicEntry && !chunk.src && chunk.name === name
   );
   return matches.length === 1 ? matches[0] : null;
+}
+
+// The route chunk and the chunks it imports, minus the app entry itself.
+function routeModules(entry, seen = new Set()) {
+  if (seen.has(entry)) return [];
+  seen.add(entry);
+  const chunk = manifestChunk(entry);
+  if (!chunk || chunk.isEntry) return [];
+  return [
+    ...new Set([chunk.file, ...(chunk.imports || []).flatMap((key) => routeModules(key, seen))]),
+  ];
 }
 
 function routeCss(entry, seen = new Set()) {
@@ -104,6 +131,12 @@ try {
   );
   const { getPrerenderRoutes, renderPage } = await server.ssrLoadModule('/src/entry-prerender.jsx');
   const routes = getPrerenderRoutes(inventory);
+  // The inventory each page was rendered with. The browser starts from it
+  // (main.tsx), so hydration sees the same prices and stock as the HTML
+  // instead of the built-in catalog. Escaped so it cannot close the script.
+  const inventorySnapshot = `<script type="application/json" id="inventory-snapshot">${JSON.stringify(
+    { stock: inventory.stock, catalog: inventory.catalog }
+  ).replace(/</g, '\\u003c')}</script>`;
   if (new Set(routes.map(({ path }) => path)).size !== routes.length)
     throw new Error('Duplicate prerender route.');
   for (const route of routes) {
@@ -115,14 +148,26 @@ try {
       .filter((file) => !globalCss.has(file))
       .map((file) => `<link rel="stylesheet" href="/${file}">`)
       .join('\n');
-    const chunk = manifestChunk(route.entry);
-    const preload = chunk ? `<link rel="modulepreload" href="/${chunk.file}">` : '';
+    // The browser hydrates once this code is in (main.tsx), so fetch all of it
+    // alongside the app bundle rather than one import at a time.
+    const preload = routeModules(route.entry)
+      .filter((file) => !template.includes(`/${file}"`))
+      .map((file) => `<link rel="modulepreload" href="/${file}">`)
+      .join('\n');
     // Route styles must follow the shell styles, just as they do after a
-    // normal lazy navigation. Preload the route to avoid a slow second fetch.
+    // normal lazy navigation. The root records which path this HTML is for:
+    // Netlify also serves 404.html for every unknown URL, and main.tsx only
+    // hydrates HTML rendered for the URL in the address bar.
     const page = template
       .replace('<!--app-head-->', () => `${head}\n${preload}`)
       .replace('</head>', () => `${css}\n</head>`)
-      .replace('<!--app-html-->', () => html);
+      .replace(
+        '<div id="root"><!--app-html-->',
+        () => `<div id="root" data-prerendered-path="${route.path}">${html}`
+      )
+      .replace('</body>', () => `${inventorySnapshot}\n</body>`);
+    if (!page.includes(`data-prerendered-path="${route.path}"`))
+      throw new Error('index.html must contain <div id="root"><!--app-html--></div>.');
     const output = resolve(
       root,
       'dist',

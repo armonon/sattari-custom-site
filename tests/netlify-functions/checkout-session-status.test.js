@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
 const retrieve = vi.hoisted(() => vi.fn());
 
@@ -9,7 +10,9 @@ vi.mock('stripe', () => ({
   }),
 }));
 
-const { handler } = await import('../../netlify/functions/checkout-session-status.js');
+const handler = callWith(
+  (await import('../../netlify/functions/checkout-session-status.js')).default
+);
 const { maskEmail } = await import('../../src/utils/orderProcessing.js');
 
 const SESSION_ID = 'cs_test_a1B2c3D4e5F6g7H8';

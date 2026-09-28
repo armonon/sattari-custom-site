@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import StemSeparatorPage from './StemSeparatorPage';
+import { separatorGuides } from '../data/stemSeparatorContent';
 
 vi.mock('../utils/seo', () => ({ SEO: () => null, StructuredData: () => null }));
 beforeEach(() => {
@@ -30,6 +31,20 @@ it('offers four selected stems and disables separation until tracks exist', () =
   expect(screen.getByLabelText('All stems')).toBeChecked();
   expect(screen.getByRole('button', { name: 'Separate tracks' })).toBeDisabled();
   expect(screen.getAllByRole('checkbox')).toHaveLength(5);
+});
+
+it('links to practical guides in new tabs without replacing the audio session', () => {
+  renderPage();
+  for (const guide of separatorGuides) {
+    const link = screen.getByRole('link', { name: `${guide.linkLabel} (opens in a new tab)` });
+    expect(link).toHaveAttribute('href', `/guides/${guide.slug}`);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  }
+  expect(
+    screen.getByRole('link', { name: 'Stem Separator questions (opens in a new tab)' })
+  ).toHaveAttribute('href', '/tools/stem-separator#questions');
+  expect(screen.getByLabelText('Add audio tracks')).toBeInTheDocument();
 });
 
 it('queues multiple files and requires a nonempty selection', () => {

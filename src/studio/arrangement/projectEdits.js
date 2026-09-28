@@ -205,6 +205,20 @@ export function recoverSourceTake(project, take) {
   return { ...project, tracks };
 }
 
+/** The project with one clip's waveform set; unchanged if the clip is gone. */
+export function withClipWaveform(project, clipId, waveform) {
+  let found = false;
+  const tracks = project.tracks.map((track) => {
+    if (!track.clips.some((clip) => clip.id === clipId)) return track;
+    found = true;
+    return {
+      ...track,
+      clips: track.clips.map((clip) => (clip.id === clipId ? { ...clip, waveform } : clip)),
+    };
+  });
+  return found ? { ...project, tracks } : project;
+}
+
 /** New reference lane for a recorded take; earlier references are muted. */
 export const addReferenceTake = (project, track) => ({
   ...project,

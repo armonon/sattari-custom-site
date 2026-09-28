@@ -1164,6 +1164,55 @@
   color: var(--sd-muted);
   font-size: 14px;
 }
+.sd-studio-next .sd-files-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sd-studio-next .sd-files-backup-actions button,
+.sd-studio-next .sd-files-storage button {
+  min-height: var(--sd-control-height);
+  padding: 0 16px;
+  border: 1px solid var(--sd-line-soft);
+  border-radius: var(--sd-control-radius);
+  background: var(--sd-surface);
+  font-size: 13px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-files-backup-actions button:hover,
+.sd-studio-next .sd-files-storage button:hover:not(:disabled) {
+  background: var(--sd-raised);
+  border-color: var(--sd-line);
+}
+.sd-studio-next .sd-files-storage {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sd-line-soft);
+}
+.sd-studio-next .sd-files-storage > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sd-studio-next .sd-files-storage > header svg {
+  color: var(--sd-primary);
+}
+.sd-studio-next .sd-files-storage > header [role='status'] {
+  color: var(--sd-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.sd-studio-next .sd-files-storage p {
+  color: #ffadb6;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .sd-studio-next .sd-settings-popover {
   position: fixed;
   inset: 108px 24px auto auto;

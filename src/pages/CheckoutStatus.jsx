@@ -1,13 +1,16 @@
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { forgetCheckoutSession, releaseCheckoutSession } from '../hooks/useCheckout';
 import { fetchCheckoutSessionStatus } from '../utils/checkout';
+import { useHydratedSearchParams, useHydrating } from './useHydratedSearchParams';
 import '../styles-cart-page-premium.css';
 
 export default function CheckoutStatus() {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  // The prerendered page has no session id; it is read once hydration is done.
+  const searchParams = useHydratedSearchParams();
+  const hydrating = useHydrating();
   const isSuccess = location.pathname.includes('/checkout/success');
   const { clearCart } = useCart();
   const sessionId = searchParams.get('session_id');
@@ -44,6 +47,9 @@ export default function CheckoutStatus() {
       setVerificationState('canceled');
       return;
     }
+
+    // The session id is not known yet, which is not the same as missing.
+    if (hydrating) return;
 
     if (!sessionId) {
       setVerificationState('unverified');
@@ -85,7 +91,7 @@ export default function CheckoutStatus() {
     return () => {
       isActive = false;
     };
-  }, [isSuccess, sessionId]);
+  }, [isSuccess, sessionId, hydrating]);
 
   const statusContent = useMemo(() => {
     if (!isSuccess) {

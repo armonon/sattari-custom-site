@@ -76,15 +76,15 @@ export function persistentSession({
         savedParts = value.parts;
         const session = value.head.session;
         if (!session) return null; // Persisted reset; don't resurrect a legacy save.
+        // A missing part becomes a named stub: restore sets it aside (see
+        // repairArrangement) instead of refusing to open the whole project.
         if (session.arranger)
           for (const field of ['tracks', 'captures'])
-            session.arranger[field] = session.arranger[field].map((key) => {
-              if (!savedParts.has(key))
-                throw new Error(
-                  'Saved project is missing a part. Its stored copy has been preserved.'
-                );
-              return savedParts.get(key);
-            });
+            session.arranger[field] = session.arranger[field].map((key) =>
+              savedParts.has(key)
+                ? savedParts.get(key)
+                : { name: 'Missing saved part', missingPart: key }
+            );
         return session;
       } finally {
         db.close();

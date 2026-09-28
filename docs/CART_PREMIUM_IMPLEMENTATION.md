@@ -1,5 +1,11 @@
 # Premium Cart Screen Implementation
 
+> **Status (September 2026):** a historical record. `src/styles-cart-sidebar-premium.css`
+> no longer exists: the cart drawer's styles now live in `src/styles-cart-premium.css`
+> (with shared tokens in `src/styles-theme.css`), and the cart page in
+> `src/styles-cart-page-premium.css`.
+
+
 ## Overview
 Your cart experience has been completely transformed into a **luxury, high-end shopping interface** with cutting-edge animations, modern design patterns, and premium user experience.
 

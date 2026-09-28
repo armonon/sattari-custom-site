@@ -1,4 +1,5 @@
 import { getAudioAsset, validateStudioProject } from './audioProjectStore';
+import { repairArrangement } from './arrangementModel';
 import { createExportSink } from './arrangementStreamExport';
 import { hashLibraryAudio } from './libraryFiles';
 
@@ -27,10 +28,18 @@ export async function writeProjectArchive(manifest, ids, progress = () => {}) {
   const prefix = new Uint8Array(12);
   prefix.set(encoder.encode(MAGIC));
   new DataView(prefix.buffer).setUint32(8, header.length, true);
-  const sink = await createExportSink(
-    12 + header.length + assets.reduce((sum, a) => sum + a.size, 0),
-    'sattari'
-  );
+  let sink;
+  try {
+    sink = await createExportSink(
+      12 + header.length + assets.reduce((sum, a) => sum + a.size, 0),
+      'sattari'
+    );
+  } catch {
+    // No temporary disk space (storage full, or a private window): hand the
+    // browser the stored audio itself. Nothing is copied, so a backup still
+    // works exactly when storage has run out.
+    return composeProjectArchive(prefix, header, assets, progress);
+  }
   try {
     await sink.write(prefix);
     await sink.write(header);
@@ -51,6 +60,18 @@ export async function writeProjectArchive(manifest, ids, progress = () => {}) {
   }
 }
 
+async function composeProjectArchive(prefix, header, assets, progress) {
+  const parts = [prefix, header];
+  for (const [index, metadata] of assets.entries()) {
+    progress(`Saving audio ${index + 1} / ${assets.length}`);
+    const asset = await getAudioAsset(metadata.id);
+    if (!asset?.blob || asset.blob.size !== metadata.size)
+      throw new Error('Project audio changed during backup. Please retry.');
+    parts.push(asset.blob);
+  }
+  return new Blob(parts, { type: 'application/octet-stream' });
+}
+
 export async function readProjectArchive(file) {
   const prefix = await file.slice(0, 12).arrayBuffer();
   if (prefix.byteLength < 12 || decoder.decode(new Uint8Array(prefix, 0, 8)) !== MAGIC) {
@@ -66,6 +87,9 @@ export async function readProjectArchive(file) {
   const manifest = JSON.parse(await file.slice(12, 12 + length).text());
   if (manifest.schema !== 'SattariStudio.project.v6' || !Array.isArray(manifest.assets))
     throw new Error('Unsupported project archive.');
+  // Damaged arrangement parts are set aside (kept in the arrangement) rather
+  // than making the whole project unopenable.
+  if (manifest.arranger) manifest.arranger = repairArrangement(manifest.arranger);
   validateStudioProject(manifest);
   let offset = 12 + length;
   const ids = new Set();

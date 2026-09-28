@@ -37,12 +37,21 @@ function getNotificationConfig() {
   };
 }
 
+// The send gives up after this long, so a slow provider cannot hold the
+// webhook or the scheduled sweep past its time limit. A send that timed out
+// may still have gone through; the retry reuses the idempotency key, so the
+// owner does not get it twice.
+export const EMAIL_TIMEOUT_MS = 7000;
+
 // `idempotencyKey` makes a retry after an uncertain outcome (a crash between
 // Resend accepting the email and the order recording it) return the original
 // send instead of emailing the owner twice. Resend honours a key for 24 hours
 // and only for an identical payload, so the message must be built from order
 // fields that no longer change once the sale is recorded.
-export async function sendOrderNotification(orderRecord, { idempotencyKey } = {}) {
+export async function sendOrderNotification(
+  orderRecord,
+  { idempotencyKey, timeoutMs = EMAIL_TIMEOUT_MS } = {}
+) {
   const { apiKey, from, to } = getNotificationConfig();
 
   if (!apiKey || !from || !to.length) {
@@ -60,9 +69,10 @@ export async function sendOrderNotification(orderRecord, { idempotencyKey } = {}
     text: buildOrderNotificationText(orderRecord),
   };
 
-  const response = idempotencyKey
-    ? await resend.emails.send(payload, { idempotencyKey })
-    : await resend.emails.send(payload);
+  const response = await resend.emails.send(payload, {
+    ...(idempotencyKey ? { idempotencyKey } : {}),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
 
   // Resend reports per-request failures in the body rather than by throwing,
   // so a caller that only catches exceptions would record a silent success.

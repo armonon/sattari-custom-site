@@ -1,7 +1,6 @@
 // One-line JSON records for the Netlify function log, so they can be searched
 // by `type`. Errors go through console.error directly.
 export function logEvent(record) {
-  // eslint-disable-next-line no-console
   console.log(JSON.stringify(record));
 }
 

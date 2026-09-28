@@ -1,0 +1,27 @@
+{
+  "at": "2026-09-28T19:08:11.335Z",
+  "includedInDeployment": false,
+  "files": [
+    ".env.example",
+    "docs/DEPLOYMENT.md",
+    "index.html",
+    "scripts/prerender.mjs",
+    "src/App.tsx",
+    "src/components/CartSidebar.tsx",
+    "src/components/HomeHeroBackground.jsx",
+    "src/components/HomeHeroBackground.test.jsx",
+    "src/components/LearnArranger.jsx",
+    "src/components/LearnArranger.test.jsx",
+    "src/components/OptimizedProductImage.jsx",
+    "src/context/InventoryContext.jsx",
+    "src/main.tsx",
+    "src/pages/CartPage.tsx",
+    "src/pages/HomePage.css",
+    "src/pages/ProductDetail.jsx",
+    "src/styles-cart-premium.css",
+    "src/styles-products-premium.css",
+    "src/utils/cartCatalog.js",
+    "src/utils/lazyComponents.tsx",
+    "src/utils/seo.tsx"
+  ]
+}

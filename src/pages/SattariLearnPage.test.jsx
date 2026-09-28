@@ -26,17 +26,25 @@ const analyzedSong = {
   confidence: { tempo: 0.82, key: 0.74, chords: 0.7 },
 };
 
-vi.mock('../utils/audioAnalysis', () => ({
-  analyzeAudioFile: vi.fn(async (_file, onProgress) => {
-    onProgress?.({ value: 100, label: 'Lesson ready' });
-    return analyzedSong;
-  }),
-  detectPitch: vi.fn(),
-}));
+// Mock factories run when a module is first imported, which shows whether the
+// page loaded the audio code up front or on first use.
+const loaded = vi.hoisted(() => ({ analysis: false, store: false }));
 
-vi.mock('../utils/audioProjectStore', () => ({
-  putAudioAsset: vi.fn(async () => ({ id: 'audio-1' })),
-}));
+vi.mock('../utils/audioAnalysis', () => {
+  loaded.analysis = true;
+  return {
+    analyzeAudioFile: vi.fn(async (_file, onProgress) => {
+      onProgress?.({ value: 100, label: 'Lesson ready' });
+      return analyzedSong;
+    }),
+    detectPitch: vi.fn(),
+  };
+});
+
+vi.mock('../utils/audioProjectStore', () => {
+  loaded.store = true;
+  return { putAudioAsset: vi.fn(async () => ({ id: 'audio-1' })) };
+});
 
 vi.mock('../components/LearnArranger', () => ({
   default: () => <div>Practice arranger</div>,
@@ -64,10 +72,16 @@ describe('SattariLearnPage', () => {
     const file = new File(['audio'], 'lesson.wav', { type: 'audio/wav' });
     const input = container.querySelector('input[type="file"]');
 
+    // The analysis and project-store code (and the Tone.js chunk they share
+    // with the Studio) stay out of the page's first load.
+    expect(loaded).toEqual({ analysis: false, store: false });
+
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.click(screen.getByRole('button', { name: /analyze & teach/i }));
 
     await waitFor(() => expect(screen.getByText('D minor')).toBeInTheDocument());
+    expect(loaded.analysis).toBe(true);
+    expect(loaded.store).toBe(false);
     expect(screen.getAllByText(/108/).length).toBeGreaterThan(0);
     expect(screen.getByText('Local analysis')).toBeInTheDocument();
     expect(screen.queryByText('Demo analysis')).not.toBeInTheDocument();

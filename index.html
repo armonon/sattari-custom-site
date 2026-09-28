@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <meta name="author" content="Sattari Music" />
+    <!-- The browser bar color follows the theme: the script below sets it before
+         first paint and src/utils/theme.ts when the theme changes. -->
+    <meta name="theme-color" content="#0a0a0b" />
     <!--app-head-->
 
     <!-- Links -->
@@ -32,6 +35,17 @@
           document.documentElement.dataset.theme = mode;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', mode === 'day' ? '#f6f1e6' : '#0a0a0b');
+          // The homepage hero ships a still for each theme and CSS shows one
+          // (HomeHeroBackground). Only this script knows which, so it starts
+          // that download now instead of when the page is laid out.
+          if (location.pathname === '/') {
+            var still = document.createElement('link');
+            still.rel = 'preload';
+            still.as = 'image';
+            still.href = '/images/home/video-' + mode + '-poster.jpg';
+            still.setAttribute('fetchpriority', 'high');
+            document.head.appendChild(still);
+          }
         } catch (e) {
           document.documentElement.dataset.theme = 'night';
         }

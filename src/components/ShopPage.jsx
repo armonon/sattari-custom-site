@@ -1,12 +1,15 @@
 import React from 'react';
 import {
   ArrowUpRight,
+  Check,
   Disc3,
   Drumstick,
   Guitar,
   LayoutGrid,
   Music2,
   PackageOpen,
+  ShoppingBag,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
@@ -16,14 +19,6 @@ import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
-
-const productSellingPoints = {
-  cymbals: 'Hand-forged response with expressive attack and warm sustain.',
-  sticks: 'Balanced feel, durable wood selection, and reliable rebound.',
-  essentials: 'Built for daily practice, setup protection, and grab-and-go sessions.',
-  violins: 'Hand-carved tonewoods, workshop-fitted and tuned for expressive, reliable play.',
-  'guitar-bass': 'Set up and ready to play, shipped from California.',
-};
 
 const trustPoints = [
   { label: 'Instruments & accessories', to: '/shop/instruments-los-angeles' },
@@ -39,6 +34,8 @@ const categoryIcons = {
   'guitar-bass': Guitar,
 };
 
+const featuredCategoryOrder = ['cymbals', 'violins', 'guitar-bass', 'sticks', 'essentials'];
+
 // Some products carry their image only on a size variant (e.g. the practice
 // pad). Fall back to the first size image so every card shows a photo.
 const resolveProductImage = (product) =>
@@ -47,61 +44,79 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-function ProductCard({ product, kicker, sellingPoint, recentlyAddedSlug, onQuickAdd, soldOut }) {
+function ProductCard({ product, kicker, recentlyAddedSlug, onQuickAdd, soldOut }) {
   const path = buildProductPath(product);
   const image = resolveProductImage(product);
   const priceLabel = formatPriceRange(product);
+  const needsOptions = Boolean(product.colors?.length);
+  const added = recentlyAddedSlug === product.slug;
+  const actionLabel = soldOut ? 'Out of stock' : added ? 'Added to cart' : 'Add to cart';
 
   return (
-    <article className={`product-card-enhanced${soldOut ? ' is-sold-out' : ''}`}>
-      <div className="product-image-container">
-        <Link to={path} className="product-media-link" aria-label={`View ${product.name}`}>
-          {image ? (
-            <OptimizedProductImage
-              src={image}
-              alt={product.name}
-              className="product-image"
-              loading="lazy"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-          ) : (
-            <div className="product-image-placeholder" />
-          )}
-          {soldOut ? <span className="product-stock-badge">Out of stock</span> : null}
-        </Link>
-        <div className="product-info-overlay">
-          <Link
-            to={path}
-            className="product-copy-link"
-            aria-label={`View details for ${product.name}`}
-          >
-            <p className="product-kicker">{kicker}</p>
-            <p className="product-name-enhanced">{product.name}</p>
-            <p className="product-card-copy">{sellingPoint}</p>
-            <p className="product-price-enhanced">
-              <span className="product-price-accent">{priceLabel}</span>
-            </p>
+    <article className={`shop-featured-product${soldOut ? ' is-sold-out' : ''}`}>
+      <Link to={path} className="shop-featured-photo" aria-label={`View ${product.name}`}>
+        {image ? (
+          <OptimizedProductImage
+            src={image}
+            alt={product.name}
+            loading="lazy"
+            sizes="(max-width: 380px) 100vw, (max-width: 700px) 50vw, (max-width: 980px) 33vw, 280px"
+          />
+        ) : (
+          <span className="shop-featured-placeholder">
+            <Music2 size={38} strokeWidth={1} aria-hidden="true" />
+            <span>Image coming soon</span>
+          </span>
+        )}
+        <span className="shop-featured-open" aria-hidden="true">
+          <ArrowUpRight size={18} />
+        </span>
+        {soldOut && <span className="shop-featured-stock">Out of stock</span>}
+      </Link>
+      <div className="shop-featured-info">
+        <p className="shop-featured-category">{kicker}</p>
+        <h3>
+          <Link to={path} aria-label={`View details for ${product.name}`}>
+            {product.name}
           </Link>
-          <div className="product-actions">
-            <Link to={path} className="btn-details">
-              More Details
+        </h3>
+        <div className="shop-featured-purchase">
+          <p className="shop-featured-price">{priceLabel}</p>
+          {needsOptions && !soldOut ? (
+            <Link
+              to={path}
+              className="shop-featured-action"
+              aria-label={`Choose a color for ${product.name}`}
+            >
+              <SlidersHorizontal size={18} aria-hidden="true" />
+              <span className="shop-featured-tooltip" aria-hidden="true">
+                Choose color
+              </span>
             </Link>
+          ) : (
             <button
-              className={`btn-add-cart${recentlyAddedSlug === product.slug ? ' is-added' : ''}`}
+              type="button"
+              className={`shop-featured-action${added ? ' is-added' : ''}`}
               onClick={() => onQuickAdd(product)}
               disabled={soldOut}
               aria-label={
                 soldOut ? `${product.name} is out of stock` : `Add ${product.name} to cart`
               }
             >
-              {soldOut
-                ? 'Out of Stock'
-                : recentlyAddedSlug === product.slug
-                  ? 'Added ✓'
-                  : 'Add to Cart'}
+              {added ? (
+                <Check size={19} aria-hidden="true" />
+              ) : (
+                <ShoppingBag size={18} aria-hidden="true" />
+              )}
+              <span className="shop-featured-tooltip" aria-hidden="true">
+                {actionLabel}
+              </span>
             </button>
-          </div>
+          )}
         </div>
+        <span className="shop-featured-announcement" role="status">
+          {added ? `${product.name} added to cart.` : ''}
+        </span>
       </div>
     </article>
   );
@@ -111,12 +126,16 @@ export default function ShopPage() {
   const { addToCart } = useCart();
   const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
-  const featuredProducts = categories.flatMap((category) =>
-    products.filter((product) => product.category === category.key).slice(0, 2)
+  const featuredGroups = featuredCategoryOrder.map((category) =>
+    products.filter((product) => product.category === category).slice(0, 2)
+  );
+  const featuredProducts = [0, 1].flatMap((position) =>
+    featuredGroups.map((group) => group[position]).filter(Boolean)
   );
 
   const handleQuickAdd = (product) => {
-    if (isSoldOut(product)) return;
+    // Colored products link to their page instead (see ProductCard).
+    if (isSoldOut(product) || product.colors?.length) return;
     addToCart({ slug: product.slug, quantity: 1 });
     setRecentlyAddedSlug(product.slug);
     window.setTimeout(() => setRecentlyAddedSlug(null), 1800);
@@ -131,7 +150,7 @@ export default function ShopPage() {
       'Instruments, music accessories, handcrafted cymbals, drumsticks, practice pads, and musician essentials from Sattari Music.',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: products.slice(0, 10).map((product, index) => ({
+      itemListElement: featuredProducts.map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         url: `https://sattarimusic.com${buildProductPath(product)}`,
@@ -227,33 +246,40 @@ export default function ShopPage() {
         </nav>
       </div>
 
-      <section className="container shop-featured-catalog">
-        <div className="shop-catalog-header">
-          <div>
-            <p className="card-kicker">Featured catalog</p>
-            <h2>Ready to play</h2>
+      <section
+        id="featured-catalog"
+        className="shop-featured-catalog"
+        aria-labelledby="featured-catalog-title"
+      >
+        <div className="container">
+          <div className="shop-catalog-header">
+            <div>
+              <p className="card-kicker">Featured catalog</p>
+              <h2 id="featured-catalog-title">
+                Ready to play<span aria-hidden="true">.</span>
+              </h2>
+            </div>
+            <Link to="/shop/all" className="shop-catalog-all-link">
+              View all {products.length} products
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </Link>
           </div>
-          <Link to="/shop/all" className="shop-catalog-all-link">
-            View all {products.length} products
-            <ArrowUpRight size={17} aria-hidden="true" />
-          </Link>
-        </div>
-        <div className="product-grid shop-featured-grid">
-          {featuredProducts.map((product) => {
-            const category = categories.find((item) => item.key === product.category);
+          <div className="product-grid shop-featured-grid">
+            {featuredProducts.map((product) => {
+              const category = categories.find((item) => item.key === product.category);
 
-            return (
-              <ProductCard
-                key={product.slug}
-                product={product}
-                kicker={category?.title || 'Sattari'}
-                sellingPoint={productSellingPoints[product.category]}
-                recentlyAddedSlug={recentlyAddedSlug}
-                onQuickAdd={handleQuickAdd}
-                soldOut={isSoldOut(product)}
-              />
-            );
-          })}
+              return (
+                <ProductCard
+                  key={product.slug}
+                  product={product}
+                  kicker={category?.title || 'Sattari'}
+                  recentlyAddedSlug={recentlyAddedSlug}
+                  onQuickAdd={handleQuickAdd}
+                  soldOut={isSoldOut(product)}
+                />
+              );
+            })}
+          </div>
         </div>
       </section>
     </section>

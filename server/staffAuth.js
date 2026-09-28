@@ -1,6 +1,6 @@
 import process from 'node:process';
 import crypto from 'node:crypto';
-import { openStore } from './blobs.js';
+import { openStore, writeIfUnchanged } from './blobs.js';
 import { blobsEvent } from './functionAdapter.js';
 
 // Staff authentication for the inventory page.
@@ -154,15 +154,9 @@ async function updateSessionState(event, change, attempts = 6) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await store.getWithMetadata(SESSION_STATE_KEY, { type: 'json' });
     const next = change(parseSessionState(current?.data));
-    const result = await store.setJSON(
-      SESSION_STATE_KEY,
-      next,
-      current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }
-    );
-    if (result?.modified === true) return next;
-    if (result?.modified !== false) {
-      throw new Error('Session storage does not support conditional writes.');
-    }
+    // A sign-out that silently failed to save would tell staff every device
+    // was signed out when none was, so the write must be confirmed.
+    if (await writeIfUnchanged(store, SESSION_STATE_KEY, next, current)) return next;
   }
   throw new Error('Session record is busy.');
 }
@@ -221,3 +215,47 @@ export function getClientIp(event) {
 }
 
 export const SESSION_TTL_HOURS = SESSION_HOURS;
+
+// A device that has signed in successfully gets a long-lived device token,
+// kept by the staff page in localStorage. It grants nothing on its own; it
+// only lets that browser sign in on its own attempt limit instead of the
+// site-wide one for unknown addresses, so a few addresses guessing passwords
+// cannot lock the owner out (see loginThrottle.js). Signed with the session
+// secret under a different prefix, so it can never pass as a session token.
+// It carries the session epoch it was issued under, so "Sign out everywhere"
+// (after a lost laptop, say) ends every device's exemption as well.
+export const DEVICE_TOKEN_DAYS = 180;
+const DEVICE_PREFIX = 'dev1.';
+
+function deviceMac(body) {
+  return crypto
+    .createHmac('sha256', getAuthConfig().secret)
+    .update(`device:${body}`)
+    .digest('base64url');
+}
+
+export function createDeviceToken(
+  deviceId = crypto.randomBytes(16).toString('base64url'),
+  { epoch = 0, now = Date.now() } = {}
+) {
+  const body = Buffer.from(
+    JSON.stringify({ d: deviceId, e: epoch, iat: now, exp: now + DEVICE_TOKEN_DAYS * 86400000 })
+  ).toString('base64url');
+  return `${DEVICE_PREFIX}${body}.${deviceMac(body)}`;
+}
+
+// Returns the device id, or null for anything that is not a live token issued
+// under the current session `epoch`.
+export function verifyDeviceToken(token, { epoch = 0, now = Date.now() } = {}) {
+  const { secret } = getAuthConfig();
+  if (!secret || typeof token !== 'string' || !token.startsWith(DEVICE_PREFIX)) return null;
+  const [body, mac] = token.slice(DEVICE_PREFIX.length).split('.');
+  if (!body || !mac || !safeEqual(mac, deviceMac(body))) return null;
+  try {
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString());
+    if (typeof data.d !== 'string' || !data.d || !(data.exp > now)) return null;
+    return data.e === epoch ? data.d : null;
+  } catch {
+    return null;
+  }
+}

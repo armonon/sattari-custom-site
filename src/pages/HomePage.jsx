@@ -16,9 +16,10 @@ import {
 } from 'lucide-react';
 import OptimizedProductImage from '../components/OptimizedProductImage';
 import HomeHeroBackground from '../components/HomeHeroBackground';
-import { BUSINESS, PAGE_SEO, SITE_ORIGIN } from '../data/siteSeo';
+import HomeLocalGallery from '../components/HomeLocalGallery';
+import { BUSINESS, PAGE_SEO } from '../data/siteSeo';
 import { bookingPrice, money } from '../utils/studioBooking';
-import { SEO, StructuredData } from '../utils/seo';
+import { SEO } from '../utils/seo';
 import './HomePage.css';
 
 const categories = [
@@ -84,6 +85,7 @@ const services = [
     icon: Headphones,
   },
 ];
+const HERO_ART_WIDTHS = [640, 960, 1280, 1536];
 const tools = [
   {
     name: 'Studio',
@@ -124,28 +126,32 @@ export default function HomePage() {
   return (
     <>
       <SEO {...PAGE_SEO.home} />
-      <StructuredData
-        data={{
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          '@id': `${SITE_ORIGIN}/#website`,
-          name: BUSINESS.name,
-          url: `${SITE_ORIGIN}/`,
-          publisher: { '@id': `${SITE_ORIGIN}/#business` },
-        }}
-      />
       <div className="home-page">
         <section className="home-hero" aria-labelledby="home-title">
           <HomeHeroBackground />
-          <img
-            className="home-hero-art"
-            src="/images/home/sattari-instruments-cutout.png"
-            alt="An editorial arrangement of Sattari cymbals, guitar, violin and piano keys"
-            width="1536"
-            height="1024"
-            loading="eager"
-            decoding="async"
-          />
+          {/* The largest paint on the page. WebP keeps the transparency at a
+              fraction of the 1.9 MB PNG, which stays as the fallback. */}
+          <picture>
+            <source
+              type="image/webp"
+              srcSet={HERO_ART_WIDTHS.map(
+                (width) => `/images/home/sattari-instruments-cutout-${width}.webp ${width}w`
+              ).join(', ')}
+              sizes="100vw"
+            />
+            <img
+              className="home-hero-art"
+              src="/images/home/sattari-instruments-cutout.png"
+              alt="An editorial arrangement of Sattari cymbals, guitar, violin and piano keys"
+              width="1536"
+              height="1024"
+              loading="eager"
+              // React 18 warns about fetchPriority; the lowercase attribute renders as is.
+              // eslint-disable-next-line react/no-unknown-property
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
           <div className="home-width home-hero-inner">
             <div className="home-hero-copy">
               <p className="home-eyebrow">
@@ -273,25 +279,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="home-local-grid">
-              <Link to="/about" className="home-founder" aria-label="Meet Mohammad Sattari">
-                <img
-                  src="/sattari site/MO.avif"
-                  alt="Mohammad Sattari performing on drums"
-                  width="480"
-                  height="480"
-                  loading="lazy"
-                />
-                <span>
-                  <strong>
-                    Musician-owned.
-                    <br />
-                    Music-minded.
-                  </strong>
-                  <span>
-                    Meet Mohammad Sattari <ArrowUpRight size={16} />
-                  </span>
-                </span>
-              </Link>
+              <HomeLocalGallery />
               <div className="home-service-list">
                 {services.map(({ name, detail, path, icon: Icon }) => (
                   <Link to={path} key={path} className="home-service">

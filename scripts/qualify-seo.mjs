@@ -71,15 +71,19 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
   page.setDefaultTimeout(60000);
+  await page.addInitScript(() => localStorage.setItem('sattari-theme-pref-v1', 'day'));
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     for (const path of ['/', '/about', '/services', '/encino-music-store', '/stem-separator']) {
       await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForFunction(
-        () => !document.getElementById('root').innerHTML.includes('<!--$-->')
-      );
+      // Hydration can retain React's server markers. Exercise a real control
+      // instead of treating those markers as evidence that hydration failed.
+      await page.getByRole('button', { name: 'Switch to night mode' }).click();
+      await page.waitForFunction(() => document.documentElement.dataset.theme === 'night');
+      await page.getByRole('button', { name: 'Switch to day mode' }).click();
+      await page.waitForFunction(() => document.documentElement.dataset.theme === 'day');
       await page.locator('h1').waitFor();
       await page.evaluate(() => document.fonts.ready);
       for (const img of await page.locator('img:visible').all()) {

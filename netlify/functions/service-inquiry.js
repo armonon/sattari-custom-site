@@ -2,12 +2,19 @@ import crypto from 'node:crypto';
 import process from 'node:process';
 import { Resend } from 'resend';
 import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
-import { claimInquiryEmail, saveInquiry } from '../../server/inquiryStore.js';
+import {
+  claimInquiryEmail,
+  INQUIRY_EMAIL_LIMITS,
+  saveInquiry,
+  storageLimitReached,
+} from '../../server/inquiryStore.js';
+import { hashIp } from '../../server/ipHash.js';
+import { getClientIp } from '../../server/staffAuth.js';
 
 // The public form posts to Netlify Forms first and only falls back to this
 // function, but the function is reachable directly, so it carries its own
-// limits: this per-address edge limit, a honeypot, and an email allowance
-// (see claimInquiryEmail) for floods spread across many addresses.
+// limits: this per-address edge limit, a honeypot, and email and storage
+// allowances (see inquiryStore.js) for floods spread across many addresses.
 export const config = {
   path: ['/api/service-inquiry', '/.netlify/functions/service-inquiry'],
   rateLimit: { windowLimit: 5, windowSize: 60, aggregateBy: ['ip', 'domain'] },
@@ -73,19 +80,34 @@ function buildInquiryText({ service, name, email, phone, details, source }) {
   ].join('\n');
 }
 
-async function storeInquiry(event, record) {
+// A keyed hash of the sender's address, for the per-sender allowances. None
+// without a known address or a key, and those allowances are then skipped.
+function senderKey(event) {
+  const ip = getClientIp(event);
+  if (!ip || ip === 'unknown') return null;
   try {
-    await saveInquiry(event, record);
-    return true;
+    return hashIp(ip).slice(0, 16);
+  } catch {
+    return null;
+  }
+}
+
+// Resolves { stored, limited }: `limited` when today's storage allowance was
+// used up rather than storage failing.
+async function storeInquiry(event, record, sender) {
+  try {
+    await saveInquiry(event, record, { sender });
+    return { stored: true, limited: false };
   } catch (error) {
+    const limited = storageLimitReached(error);
     console.error(
       JSON.stringify({
-        type: 'service-inquiry-store-failed',
+        type: limited ? 'service-inquiry-store-limited' : 'service-inquiry-store-failed',
         inquiryId: record.id,
         message: error?.message,
       })
     );
-    return false;
+    return { stored: false, limited };
   }
 }
 
@@ -170,6 +192,7 @@ async function handle(event) {
     return json(400, { error: 'Please enter a valid email address.' });
   }
 
+  const sender = senderKey(event);
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.SERVICE_INQUIRY_FROM || process.env.ORDER_NOTIFICATION_FROM;
   const to = process.env.SERVICE_INQUIRY_TO || process.env.ORDER_NOTIFICATION_EMAIL;
@@ -201,7 +224,7 @@ async function handle(event) {
   } else {
     let allowed = false;
     try {
-      allowed = await claimInquiryEmail(event);
+      allowed = await claimInquiryEmail(event, Date.now(), INQUIRY_EMAIL_LIMITS, sender);
     } catch (error) {
       console.error(
         JSON.stringify({ type: 'service-inquiry-allowance-unavailable', message: error?.message })
@@ -221,12 +244,17 @@ async function handle(event) {
     }
   }
 
-  const stored = await storeInquiry(event, record);
+  const { stored, limited } = await storeInquiry(event, record, sender);
 
   // Only tell the customer it arrived if someone will actually see it: in the
   // inbox, or in the staff page's inquiry list.
   if (!record.emailSent && !stored) {
-    return json(500, { error: 'Unable to send your inquiry right now. Please try again soon.' });
+    return limited
+      ? json(429, {
+          error:
+            'We are receiving an unusual number of messages right now. Please call (424) 465-3020 or try again later.',
+        })
+      : json(500, { error: 'Unable to send your inquiry right now. Please try again soon.' });
   }
 
   return json(200, {

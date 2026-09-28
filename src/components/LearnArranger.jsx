@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import * as Tone from 'tone';
 import {
   AudioLines,
   Drum,
@@ -17,6 +16,24 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
+
+// Tone.js (~70 KB gzipped, with the audio code it shares a chunk with) is only
+// needed once something plays, so it is fetched when the page is idle or first
+// touched, instead of with the Learn page.
+const loadTone = () => import('tone');
+
+// iOS starts audio only for an AudioContext resumed inside the tap that asks for
+// it, and a tap on play can come before Tone.js has downloaded: awaiting the
+// import first left the context locked and the first play silent. So the tap
+// itself creates and resumes a plain AudioContext, synchronously, and the
+// arranger's Tone objects are built on it once Tone has loaded.
+function unlockAudioContext(ref) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  ref.current ??= new AudioContextClass();
+  if (ref.current.state !== 'running') ref.current.resume().catch(() => {});
+  return ref.current;
+}
 
 const CHROMATIC_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -156,19 +173,28 @@ function gainFromLevel(level, muted) {
   return Math.pow(level / 100, 1.35);
 }
 
-function createAudioEngine() {
-  const master = new Tone.Gain(0.72).toDestination();
-  const chordGain = new Tone.Gain(0.68).connect(master);
-  const bassGain = new Tone.Gain(0.72).connect(master);
-  const drumGain = new Tone.Gain(0.76).connect(master);
+// Everything the arranger plays runs on its own Tone context, wrapping the
+// AudioContext the first tap unlocked. Tone's global context is left alone: it
+// is the one the Studio runs on, and this one is closed when the arranger goes.
+function createAudioEngine(Tone, rawContext) {
+  const context = rawContext ? new Tone.Context(rawContext) : Tone.getContext();
+  const master = new Tone.Gain({ context, gain: 0.72 }).toDestination();
+  const chordGain = new Tone.Gain({ context, gain: 0.68 }).connect(master);
+  const bassGain = new Tone.Gain({ context, gain: 0.72 }).connect(master);
+  const drumGain = new Tone.Gain({ context, gain: 0.76 }).connect(master);
 
-  const chords = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: 'triangle8' },
-    envelope: { attack: 0.018, decay: 0.24, sustain: 0.32, release: 0.9 },
+  const chords = new Tone.PolySynth({
+    context,
+    voice: Tone.Synth,
+    options: {
+      oscillator: { type: 'triangle8' },
+      envelope: { attack: 0.018, decay: 0.24, sustain: 0.32, release: 0.9 },
+    },
   }).connect(chordGain);
   chords.volume.value = -8;
 
   const bass = new Tone.MonoSynth({
+    context,
     oscillator: { type: 'square4' },
     filter: { type: 'lowpass', frequency: 520, rolloff: -24, Q: 1.4 },
     envelope: { attack: 0.012, decay: 0.18, sustain: 0.4, release: 0.22 },
@@ -184,6 +210,7 @@ function createAudioEngine() {
   bass.volume.value = -7;
 
   const kick = new Tone.MembraneSynth({
+    context,
     pitchDecay: 0.035,
     octaves: 5,
     oscillator: { type: 'sine' },
@@ -192,12 +219,14 @@ function createAudioEngine() {
   kick.volume.value = -3;
 
   const snare = new Tone.NoiseSynth({
+    context,
     noise: { type: 'pink' },
     envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.07 },
   }).connect(drumGain);
   snare.volume.value = -8;
 
   const hat = new Tone.MetalSynth({
+    context,
     frequency: 260,
     envelope: { attack: 0.001, decay: 0.045, release: 0.015 },
     harmonicity: 4.8,
@@ -208,12 +237,16 @@ function createAudioEngine() {
   hat.volume.value = -16;
 
   const clap = new Tone.NoiseSynth({
+    context,
     noise: { type: 'white' },
     envelope: { attack: 0.001, decay: 0.18, sustain: 0, release: 0.08 },
   }).connect(drumGain);
   clap.volume.value = -11;
 
   return {
+    context,
+    transport: context.transport,
+    draw: context.draw,
     master,
     gains: { chords: chordGain, bass: bassGain, drums: drumGain },
     chords,
@@ -233,6 +266,8 @@ function createAudioEngine() {
       bassGain.dispose();
       drumGain.dispose();
       master.dispose();
+      // Only a context this engine made; never Tone's global one.
+      if (rawContext) context.dispose();
     },
   };
 }
@@ -256,6 +291,8 @@ export default function LearnArranger({
   const [activeInstrument, setActiveInstrument] = useState('chords');
   const [hitPad, setHitPad] = useState('');
 
+  const toneRef = useRef(null);
+  const audioContextRef = useRef(null);
   const engineRef = useRef(null);
   const scheduleRef = useRef({ sequences: [], endEventId: null });
   const arrangementRef = useRef({
@@ -299,37 +336,68 @@ export default function LearnArranger({
     tempo,
   ]);
 
+  // Fetch Tone once the page is idle (or on the first touch, see the root's
+  // onPointerDown), off the critical path, so it is usually in by the first play.
   useEffect(() => {
-    if (engineRef.current) Tone.getTransport().bpm.rampTo(tempo, 0.05);
+    let cancelled = false;
+    const warm = () =>
+      loadTone().then(
+        (Tone) => {
+          if (!cancelled) toneRef.current ??= Tone;
+        },
+        () => {}
+      );
+    if (window.requestIdleCallback) {
+      const id = window.requestIdleCallback(warm, { timeout: 5000 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(id);
+      };
+    }
+    const id = window.setTimeout(warm, 2500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    engineRef.current?.transport.bpm.rampTo(tempo, 0.05);
   }, [tempo]);
 
   useEffect(
     () => () => {
-      const transport = Tone.getTransport();
-      transport.stop();
-      transport.cancel(0);
+      // Nothing to stop if nothing ever played.
+      const engine = engineRef.current;
+      if (engine) {
+        engine.transport.stop();
+        engine.transport.cancel(0);
+      }
       scheduleRef.current.sequences.forEach((sequence) => sequence.dispose());
-      engineRef.current?.dispose();
+      engine?.dispose();
+      audioContextRef.current?.close().catch(() => {});
       if (hitTimerRef.current) window.clearTimeout(hitTimerRef.current);
     },
     []
   );
 
+  // Call straight from the tap handler: the unlock must happen before any await.
   const ensureEngine = async () => {
-    await Tone.start();
+    const rawContext = unlockAudioContext(audioContextRef);
+    toneRef.current ??= await loadTone();
     if (!engineRef.current) {
-      engineRef.current = createAudioEngine();
+      engineRef.current = createAudioEngine(toneRef.current, rawContext);
       const current = arrangementRef.current;
       Object.entries(engineRef.current.gains).forEach(([track, gain]) => {
         gain.gain.value = gainFromLevel(current.levels[track], current.mutes[track]);
       });
     }
+    await engineRef.current.context.resume();
     setAudioReady(true);
     return engineRef.current;
   };
 
-  const clearSchedule = () => {
-    const transport = Tone.getTransport();
+  const clearSchedule = (transport) => {
     scheduleRef.current.sequences.forEach((sequence) => sequence.dispose());
     if (scheduleRef.current.endEventId !== null) {
       transport.clear(scheduleRef.current.endEventId);
@@ -338,40 +406,46 @@ export default function LearnArranger({
   };
 
   const stopTransport = () => {
-    const transport = Tone.getTransport();
-    transport.stop();
-    transport.position = '0:0:0';
-    clearSchedule();
+    const transport = engineRef.current?.transport;
+    if (transport) {
+      transport.stop();
+      transport.position = '0:0:0';
+      clearSchedule(transport);
+    }
     setIsPlaying(false);
     setActiveBar(0);
     setActiveStep(-1);
   };
 
+  // Only called after ensureEngine, so Tone is loaded.
   const scheduleArrangement = (engine) => {
-    const transport = Tone.getTransport();
+    const Tone = toneRef.current;
+    const { context, transport, draw } = engine;
     transport.cancel(0);
     transport.bpm.value = tempo;
     transport.loop = loopEnabled;
     transport.loopStart = '0:0:0';
     transport.loopEnd = '4m';
 
-    const chordSequence = new Tone.Sequence(
-      (time, bar) => {
+    const chordSequence = new Tone.Sequence({
+      context,
+      callback: (time, bar) => {
         const current = arrangementRef.current;
         const chord = chordFor(current.progression[bar]);
         engine.chords.triggerAttackRelease(chord.notes, '1m', time, 0.62);
-        Tone.getDraw().schedule(() => setActiveBar(bar), time);
+        draw.schedule(() => setActiveBar(bar), time);
       },
-      [0, 1, 2, 3],
-      '1m'
-    ).start(0);
+      events: [0, 1, 2, 3],
+      subdivision: '1m',
+    }).start(0);
 
     const bassEvents = Array.from({ length: 16 }, (_, index) => ({
       bar: Math.floor(index / 4),
       beat: index % 4,
     }));
-    const bassSequence = new Tone.Sequence(
-      (time, event) => {
+    const bassSequence = new Tone.Sequence({
+      context,
+      callback: (time, event) => {
         const current = arrangementRef.current;
         const nextBar = (event.bar + 1) % current.progression.length;
         const note = bassNoteFor(
@@ -382,22 +456,23 @@ export default function LearnArranger({
         );
         engine.bass.triggerAttackRelease(note, '8n', time, 0.72);
       },
-      bassEvents,
-      '4n'
-    ).start(0);
+      events: bassEvents,
+      subdivision: '4n',
+    }).start(0);
 
     const drumEvents = Array.from({ length: 64 }, (_, index) => index % 16);
-    const drumSequence = new Tone.Sequence(
-      (time, step) => {
+    const drumSequence = new Tone.Sequence({
+      context,
+      callback: (time, step) => {
         const pattern = arrangementRef.current.drumPattern;
         if (pattern.kick[step]) engine.kick.triggerAttackRelease('C1', '8n', time, 0.9);
         if (pattern.snare[step]) engine.snare.triggerAttackRelease('16n', time, 0.62);
         if (pattern.hat[step]) engine.hat.triggerAttackRelease('32n', time, 0.34);
-        Tone.getDraw().schedule(() => setActiveStep(step), time);
+        draw.schedule(() => setActiveStep(step), time);
       },
-      drumEvents,
-      '16n'
-    ).start(0);
+      events: drumEvents,
+      subdivision: '16n',
+    }).start(0);
 
     chordSequence.loop = loopEnabled;
     bassSequence.loop = loopEnabled;
@@ -407,7 +482,7 @@ export default function LearnArranger({
     if (!loopEnabled) {
       endEventId = transport.scheduleOnce((time) => {
         transport.stop(time);
-        Tone.getDraw().schedule(() => {
+        draw.schedule(() => {
           setIsPlaying(false);
           setActiveBar(0);
           setActiveStep(-1);
@@ -423,7 +498,7 @@ export default function LearnArranger({
 
   const toggleTransport = async () => {
     const engine = await ensureEngine();
-    const transport = Tone.getTransport();
+    const { transport } = engine;
 
     if (transport.state === 'started') {
       transport.pause();
@@ -493,7 +568,7 @@ export default function LearnArranger({
   };
 
   return (
-    <div className="learn-arranger">
+    <div className="learn-arranger" onPointerDown={() => loadTone().catch(() => {})}>
       <header className="learn-arranger-toolbar">
         <div className="learn-arranger-title">
           <span>

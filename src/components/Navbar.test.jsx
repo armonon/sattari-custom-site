@@ -44,3 +44,29 @@ it.each([
     'false'
   );
 });
+
+it('takes the collapsed phone menu out of the tab order and away from screen readers', () => {
+  window.matchMedia.mockImplementation((query) => ({
+    matches: query === '(max-width: 760px)',
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+  try {
+    render(
+      <MemoryRouter>
+        <Navbar onCartClick={vi.fn()} />
+      </MemoryRouter>
+    );
+    const nav = screen.getByRole('navigation', { name: 'Primary navigation', hidden: true });
+    expect(nav).toHaveAttribute('inert');
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(nav).not.toHaveAttribute('inert');
+  } finally {
+    window.matchMedia.mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+  }
+});

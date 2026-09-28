@@ -1,6 +1,7 @@
 // @vitest-environment node
 import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
 // Two stores: 'orders' (written by the Stripe webhook) and 'fulfillment'.
 const stores = { orders: {}, fulfillment: { value: null, etag: null, writes: 0 } };
@@ -47,7 +48,7 @@ vi.mock('@netlify/blobs', () => ({
 }));
 
 const { hashPassword, createSession } = await import('../../server/staffAuth.js');
-const { handler } = await import('../../netlify/functions/staff-orders.js');
+const handler = callWith((await import('../../netlify/functions/staff-orders.js')).default);
 
 let token;
 

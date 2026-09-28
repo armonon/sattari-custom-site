@@ -1,4 +1,4 @@
-// Test-only deferred promise, including the supported Node 20 CI lane.
+// Test-only deferred promise (a small stand-in for Promise.withResolvers).
 export function deferred() {
   let resolve, reject;
   const promise = new Promise((accept, fail) => {

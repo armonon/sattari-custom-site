@@ -60,6 +60,7 @@ export function getPrerenderRoutes(inventory) {
       })),
     ...[
       ['/cart', 'src/pages/CartPage.tsx'],
+      ['/loop', 'src/pages/LoopPracticePage.jsx'],
       ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],
       ['/checkout/success', 'src/pages/CheckoutStatus.jsx'],
       ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],

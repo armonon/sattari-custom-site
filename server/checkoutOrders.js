@@ -1,15 +1,16 @@
 import crypto from 'node:crypto';
-import { aggregateStockLines } from '../src/utils/inventory.js';
+import { aggregateStockLines, SOLD_HOLD_RETENTION_MS } from '../src/utils/inventory.js';
 import { createOrderRecord } from '../src/utils/orderProcessing.js';
+import { requestSiteRebuild } from './buildHook.js';
 import { errorMessage, logError, logEvent } from './log.js';
 import { sendOrderNotification } from './orderNotifications.js';
 import {
   clearOrderWork,
   createOrder,
-  listOrderWork,
+  listOrderIds,
   markOrderWork,
   readOrder,
-  readOrderWork,
+  readOrderWorkQueue,
   updateOrder,
 } from './orderStore.js';
 import {
@@ -29,6 +30,8 @@ import {
 //
 //   stock.state         awaiting_payment -> pending -> applied
 //                       (or -> released, if a delayed payment failed)
+//                       (or -> needs_review, if it could no longer be applied
+//                       safely; see applyOrderStock)
 //   notification.state  awaiting_payment -> pending -> sending -> sent | skipped
 //                       (failed returns to sending on the next attempt)
 //
@@ -57,9 +60,38 @@ const NOTIFICATION_LEASE_MS = 5 * 60 * 1000;
 const MAX_NOTIFICATION_BACKOFF_MS = 60 * 60 * 1000;
 // Stripe finalises a session shortly after its expires_at.
 const SESSION_SETTLE_MS = 2 * 60 * 1000;
+// A sale's "sold" marker is what makes a repeated stock decrement a no-op, and
+// it is pruned SOLD_HOLD_RETENTION_MS after the sale. Past this age a paid
+// order's stock is no longer applied automatically (see applyOrderStock).
+const SAFE_APPLY_WINDOW_MS = SOLD_HOLD_RETENTION_MS - 24 * 60 * 60 * 1000;
+// How far back the sweep asks Stripe for completed checkouts nobody recorded:
+// Stripe stops retrying a webhook after three days.
+const RECOVERY_WINDOW_MS = 72 * 60 * 60 * 1000;
+const RECOVERY_PAGES = 5;
+// After this many consecutive failures an order is parked: retried daily and
+// listed for staff, so it cannot crowd out orders that can finish.
+const MAX_WORK_FAILURES = 6;
+const PARKED_RECHECK_MS = 24 * 60 * 60 * 1000;
 
 export function isSettled(paymentStatus) {
   return SETTLED.has(paymentStatus);
+}
+
+// A scheduled run passes a `deadline`: no outside call (Stripe, the owner
+// email) starts after it, so the run ends before Netlify stops it. Every step
+// is safe to resume, and the next run picks up where this one stopped.
+function outOfTime(deadline) {
+  return Date.now() > deadline;
+}
+
+function stopIfOutOfTime(deadline) {
+  if (outOfTime(deadline)) {
+    throw Object.assign(new Error('Out of time for this run.'), { code: 'OUT_OF_TIME' });
+  }
+}
+
+function isOutOfTime(error) {
+  return error?.code === 'OUT_OF_TIME';
 }
 
 // Sessions created before holds existed carry no holdId; their session id
@@ -140,8 +172,9 @@ function newOrderRecord(session, lineItems, outcome) {
   return withPaymentOutcome(record, session, outcome) || record;
 }
 
-async function ensureOrder(event, session, outcome, stripe) {
+async function ensureOrder(event, session, outcome, stripe, deadline) {
   if (!(await readOrder(event, session.id))) {
+    stopIfOutOfTime(deadline);
     const { data: lineItems } = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
       expand: ['data.price.product'],
@@ -159,7 +192,36 @@ async function ensureOrder(event, session, outcome, stripe) {
   if (changed) await markOrderWork(event, session.id);
 }
 
+export function stockSettled(stock) {
+  return stock?.state === 'applied' || stock?.state === 'needs_review';
+}
+
+// Staff are told to count by hand instead. Any earlier decrement for this sale
+// happened after the order was paid, so its sold marker lives until at least
+// paidAt + SOLD_HOLD_RETENTION_MS; past that, a retry can no longer tell a sale
+// already applied from one that never was, and must not guess.
+async function flagStockForReview(event, order) {
+  logError('stock-apply-too-late', { sessionId: order.id, paidAt: order.paidAt });
+  const { record } = await updateOrder(event, order.id, (current) =>
+    current?.stock?.state === 'pending' && isSettled(current.paymentStatus)
+      ? {
+          ...current,
+          stock: {
+            ...current.stock,
+            state: 'needs_review',
+            reviewReason:
+              'Stock was not confirmed as deducted within six days of payment. Count this order by hand.',
+          },
+        }
+      : null
+  );
+  return record;
+}
+
 async function applyOrderStock(event, order) {
+  const paidAt = Date.parse(order.paidAt || order.recordedAt);
+  if (!(Date.now() - paidAt < SAFE_APPLY_WINDOW_MS)) return flagStockForReview(event, order);
+
   const sale = await commitStockSale(event, {
     holdId: order.stock.holdId,
     lines: order.stock.lines,
@@ -174,6 +236,10 @@ async function applyOrderStock(event, order) {
   }
   if (!sale.alreadyApplied && sale.oversold.length) {
     logError('stock-oversold', { sessionId: order.id, oversold: sale.oversold });
+  }
+  // A variant that just sold out reads "in stock" on its published page.
+  if (!sale.alreadyApplied && sale.soldOut?.length) {
+    await requestSiteRebuild(event, 'a product sold out');
   }
 
   const { record } = await updateOrder(event, order.id, (current) =>
@@ -238,12 +304,15 @@ function notificationDue(notification, now, force) {
   }
 }
 
-async function deliverOwnerNotification(event, order, { force }) {
+async function deliverOwnerNotification(event, order, { force, deadline }) {
+  // Checked before the lease is claimed, so a skipped send leaves nothing to
+  // wait out.
+  if (outOfTime(deadline)) return order;
   const lease = crypto.randomUUID();
   const now = Date.now();
 
   const claim = await updateOrder(event, order.id, (current) => {
-    if (current?.stock?.state !== 'applied') return null;
+    if (!stockSettled(current?.stock)) return null;
     if (!notificationDue(current.notification, now, force)) return null;
     return {
       ...current,
@@ -295,9 +364,7 @@ export function isOrderFinished(order) {
   // Records written before this pipeline existed were fully handled then.
   if (!order?.stock) return true;
   if (isSettled(order.paymentStatus)) {
-    return (
-      order.stock.state === 'applied' && ['sent', 'skipped'].includes(order.notification?.state)
-    );
+    return stockSettled(order.stock) && ['sent', 'skipped'].includes(order.notification?.state);
   }
   if (order.paymentStatus === 'failed') return order.stock.state === 'released';
   return false;
@@ -305,14 +372,14 @@ export function isOrderFinished(order) {
 
 // Finishes whatever the order's checklist says is left. Safe to call any
 // number of times, concurrently, from anywhere.
-export async function driveOrder(event, orderId, { force = false } = {}) {
+export async function driveOrder(event, orderId, { force = false, deadline = Infinity } = {}) {
   let order = await readOrder(event, orderId);
   if (!order?.stock) return order;
 
   if (isSettled(order.paymentStatus)) {
-    if (order.stock.state !== 'applied') order = await applyOrderStock(event, order);
-    if (order.stock.state === 'applied') {
-      order = await deliverOwnerNotification(event, order, { force });
+    if (!stockSettled(order.stock)) order = await applyOrderStock(event, order);
+    if (stockSettled(order.stock)) {
+      order = await deliverOwnerNotification(event, order, { force, deadline });
     }
   } else if (order.paymentStatus === 'failed') {
     if (order.stock.state !== 'released') order = await releaseOrderHold(event, order);
@@ -324,16 +391,22 @@ export async function driveOrder(event, orderId, { force = false } = {}) {
   return order;
 }
 
-export async function recordCheckout(event, session, { stripe, eventType, force = false }) {
-  await ensureOrder(event, session, paymentOutcome(session, eventType), stripe);
-  return driveOrder(event, session.id, { force });
+export async function recordCheckout(
+  event,
+  session,
+  { stripe, eventType, force = false, deadline = Infinity }
+) {
+  await ensureOrder(event, session, paymentOutcome(session, eventType), stripe, deadline);
+  return driveOrder(event, session.id, { force, deadline });
 }
 
-// Answering non-2xx makes Stripe redeliver, which retries a failed step sooner
-// than the sweep would.
+// Answering non-2xx makes Stripe redeliver. That is only worth it while the
+// sale is not safely recorded: once the order and its stock are saved, a
+// failed owner email is retried by the sweep, and a redelivery would only add
+// failed deliveries to the endpoint's record at Stripe.
 function needsRetry(order) {
   if (!order?.stock || !isSettled(order.paymentStatus)) return false;
-  return order.stock.state !== 'applied' || order.notification?.state === 'failed';
+  return !stockSettled(order.stock);
 }
 
 export async function handleCheckoutEvent(event, stripeEvent, { stripe }) {
@@ -398,49 +471,139 @@ function paymentResultEvent(session) {
   return null;
 }
 
-async function sweepOrder(event, orderId, stripe) {
+async function sweepOrder(event, orderId, stripe, marker, deadline) {
   const order = await readOrder(event, orderId);
 
   // The marker was written but the order never was: the invocation that
   // claimed it died in between. Stripe knows what actually happened.
   if (!order) {
+    stopIfOutOfTime(deadline);
     const session = await stripe.checkout.sessions.retrieve(orderId);
     if (session.status === 'complete') {
-      return recordCheckout(event, session, { stripe, eventType: 'checkout.session.completed' });
+      return recordCheckout(event, session, {
+        stripe,
+        eventType: 'checkout.session.completed',
+        deadline,
+      });
     }
     if (session.status === 'expired') await clearOrderWork(event, orderId);
+    // Still open: look again after the others.
+    else await markOrderWork(event, orderId, workTimes(marker, Date.now()));
     return null;
   }
 
   // Waiting on a delayed payment. Stripe redelivers the result events, but a
   // lost one must not keep stock reserved for a week, so ask now and then.
   if (order.stock && order.paymentStatus === 'unpaid') {
-    const work = await readOrderWork(event, orderId);
-    if (!(Number(work?.nextCheckAt) > Date.now())) {
+    if (!(Number(marker?.nextCheckAt) > Date.now())) {
+      stopIfOutOfTime(deadline);
       const session = await stripe.checkout.sessions.retrieve(orderId, {
         expand: ['payment_intent'],
       });
       const eventType = paymentResultEvent(session);
-      if (eventType) return recordCheckout(event, session, { stripe, eventType });
+      if (eventType) return recordCheckout(event, session, { stripe, eventType, deadline });
       await markOrderWork(event, orderId, { nextCheckAt: Date.now() + PENDING_RECHECK_MS });
     }
   }
 
-  return driveOrder(event, orderId);
+  return driveOrder(event, orderId, { deadline });
+}
+
+// The marker keeps when the work first appeared, so its age stays visible.
+function workTimes(marker, nextCheckAt) {
+  return { markedAt: Number(marker?.markedAt) || Date.now(), nextCheckAt };
+}
+
+// When an unfinished order is next worth looking at: when its email backoff
+// or send lease ends, and in any case after every order that has waited
+// longer, since the queue is taken oldest first. A delayed payment keeps the
+// hourly check sweepOrder gave it.
+async function rescheduleWork(event, marker, order) {
+  if (!order || order.paymentStatus === 'unpaid') return;
+  const nextCheckAt = Math.max(
+    Date.now(),
+    Number(order.notification?.nextAttemptAt) || 0,
+    Number(order.notification?.leaseUntil) || 0
+  );
+  await markOrderWork(event, marker.orderId, workTimes(marker, nextCheckAt));
+}
+
+// Backs a failing order off, and parks it after MAX_WORK_FAILURES in a row.
+async function recordWorkFailure(event, marker, error) {
+  const failures = (Number(marker.failures) || 0) + 1;
+  const parked = failures >= MAX_WORK_FAILURES;
+  const now = Date.now();
+  const backoff = parked
+    ? PARKED_RECHECK_MS
+    : Math.min(6 * 60 * 60 * 1000, 10 * 60 * 1000 * 2 ** (failures - 1));
+  await markOrderWork(event, marker.orderId, {
+    ...workTimes(marker, now + backoff),
+    failures,
+    lastError: errorMessage(error).slice(0, 200),
+    ...(parked ? { parked: true, parkedAt: marker.parkedAt || new Date(now).toISOString() } : {}),
+  });
+  return parked;
+}
+
+// Completed shop checkouts from the last three days that have no order record.
+// Holds only cover tracked stock, so a cart of untracked items leaves nothing
+// for the hold check to find if every webhook for it failed.
+async function recoverUnrecordedSessions(event, { stripe, deadline, summary }) {
+  const recorded = new Set(await listOrderIds(event));
+  const since = Math.floor((Date.now() - RECOVERY_WINDOW_MS) / 1000);
+  let startingAfter;
+
+  for (let page = 0; page < RECOVERY_PAGES && !outOfTime(deadline); page += 1) {
+    const sessions = await stripe.checkout.sessions.list({
+      status: 'complete',
+      created: { gte: since },
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+    for (const session of sessions.data || []) {
+      if (session.metadata?.kind !== 'shop_order' || recorded.has(session.id)) continue;
+      if (outOfTime(deadline)) return;
+      try {
+        await recordCheckout(event, session, {
+          stripe,
+          eventType: 'checkout.session.completed',
+          deadline,
+        });
+        recorded.add(session.id);
+        summary.sessionsRecovered += 1;
+        logEvent({ type: 'checkout-session-recovered', sessionId: session.id });
+      } catch (error) {
+        if (isOutOfTime(error)) return;
+        summary.errors += 1;
+        logError('checkout-sweep-recover-error', {
+          sessionId: session.id,
+          message: errorMessage(error),
+        });
+      }
+    }
+    if (!sessions.has_more || !sessions.data?.length) return;
+    startingAfter = sessions.data.at(-1).id;
+  }
 }
 
 // Scheduled backstop for everything a lost or failed webhook would leave
-// behind: holds whose checkout ended without an event, and orders whose stock
-// or owner email never finished.
-export async function sweepCheckouts(event, { stripe, budgetMs = 20000, maxOrders = 25 } = {}) {
-  const startedAt = Date.now();
-  const overBudget = () => Date.now() - startedAt > budgetMs;
+// behind: holds whose checkout ended without an event, completed checkouts
+// nobody recorded, and orders whose stock or owner email never finished.
+//
+// `deadline` is when to stop starting outside calls; the scheduled function
+// sets it from its own start, so time spent before the sweep counts too.
+export async function sweepCheckouts(
+  event,
+  { stripe, budgetMs = 20000, deadline = Date.now() + budgetMs, maxOrders = 25 } = {}
+) {
+  const overBudget = () => outOfTime(deadline);
   const summary = {
     holdsChecked: 0,
     holdsReleased: 0,
     sessionsRecovered: 0,
     ordersChecked: 0,
     ordersFinished: 0,
+    ordersParked: 0,
     errors: 0,
   };
 
@@ -461,27 +624,57 @@ export async function sweepCheckouts(event, { stripe, budgetMs = 20000, maxOrder
         : null;
 
       if (session?.status === 'complete') {
-        await recordCheckout(event, session, { stripe, eventType: 'checkout.session.completed' });
+        await recordCheckout(event, session, {
+          stripe,
+          eventType: 'checkout.session.completed',
+          deadline,
+        });
         summary.sessionsRecovered += 1;
       } else if (!session || session.status === 'expired') {
         if (await releaseStockHold(event, holdId)) summary.holdsReleased += 1;
       }
     } catch (error) {
+      if (isOutOfTime(error)) break;
       summary.errors += 1;
       logError('checkout-sweep-hold-error', { holdId, message: errorMessage(error) });
     }
   }
 
-  const orderIds = await listOrderWork(event);
-  for (const orderId of orderIds.slice(0, maxOrders)) {
+  if (!overBudget()) {
+    try {
+      await recoverUnrecordedSessions(event, { stripe, deadline, summary });
+    } catch (error) {
+      summary.errors += 1;
+      logError('checkout-sweep-recover-error', { message: errorMessage(error) });
+    }
+  }
+
+  // Oldest due first, and anything looked at goes to the back, so a few
+  // orders that keep failing cannot take every turn.
+  const now = Date.now();
+  const { markers } = await readOrderWorkQueue(event);
+  const due = markers.filter((marker) => !(Number(marker.nextCheckAt) > now));
+  for (const marker of due.slice(0, maxOrders)) {
     if (overBudget()) break;
 
     summary.ordersChecked += 1;
     try {
-      if (isOrderFinished(await sweepOrder(event, orderId, stripe))) summary.ordersFinished += 1;
+      // null: no order yet, and the marker was cleared or moved back.
+      const order = await sweepOrder(event, marker.orderId, stripe, marker, deadline);
+      if (!order) continue;
+      if (isOrderFinished(order)) summary.ordersFinished += 1;
+      else await rescheduleWork(event, marker, order);
     } catch (error) {
+      // Stopped for time, not failed: it stays first in line for next run.
+      if (isOutOfTime(error)) break;
       summary.errors += 1;
-      logError('checkout-sweep-order-error', { sessionId: orderId, message: errorMessage(error) });
+      const parked = await recordWorkFailure(event, marker, error).catch(() => false);
+      if (parked) summary.ordersParked += 1;
+      logError(parked ? 'checkout-order-parked' : 'checkout-sweep-order-error', {
+        sessionId: marker.orderId,
+        failures: (Number(marker.failures) || 0) + 1,
+        message: errorMessage(error),
+      });
     }
   }
 

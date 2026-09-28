@@ -50,7 +50,7 @@ export function usePads({ engine, session, activity, setNotice }) {
       const { gain } = pads.current[index];
       let candidateUrl;
       try {
-        const asset = await putAudioAsset(file, { name: file.name });
+        const asset = await putAudioAsset(file, { name: file.name, dedupe: true });
         const oldUrl = objectUrlsRef.current.get(key);
         const url = (candidateUrl = URL.createObjectURL(file));
         await getEngine().loadPad(index, url, gain);

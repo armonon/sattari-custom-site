@@ -1,0 +1,3243 @@
+{
+  "createdAt": "2026-09-28T18:52:11.457Z",
+  "source": "/Users/lillypad/Downloads/sattari-custom-site/site",
+  "commit": "f0d26b64a6aa3bf1294f9544b5ae0eedd6435242",
+  "entries": [
+    {
+      "path": ".nvmrc",
+      "sha256": "f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56"
+    },
+    {
+      "path": "eslint.config.js",
+      "sha256": "caba511455c34ee2e6ff7170ac4a71f1a4a03d68d0432f42a6327efda1194f9f"
+    },
+    {
+      "path": "public/images/home/night-loop-720.mp4",
+      "sha256": "a845f2926d1417d040a51eb5819f40d98cc84eabb9d0b1369863cc65fbda5a92"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-cutout-1280.webp",
+      "sha256": "e0baede92c0278e0126db9dec09926dedba143be9056928257285aabb06ed5cf"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-cutout-1536.webp",
+      "sha256": "4b805b2c453eda46441e2b94efcf644bf18049bf0a2b2c60e5028e96da0d9e4e"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-cutout-640.webp",
+      "sha256": "8bed71ab54f6fd7d7e5495f9d38fb78e032175b83e5daba62c7e7c03885c8d73"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-cutout-960.webp",
+      "sha256": "916f6d55b2941a0927eaaff2c80788fa6c4ae7b51b4f3cf64eed9e2c736aa6db"
+    },
+    {
+      "path": "public/images/sattari-share.jpg",
+      "sha256": "d82e0c51e198a8b68739b13c853778458f8533fb56fd23ba174369bc40a567f9"
+    },
+    {
+      "path": "scripts/qualify-cart.mjs",
+      "sha256": "0a97bb6e16965036ac85756102eaf6d5fbced80e9ba19dbf37622e916a03f088"
+    },
+    {
+      "path": "server/buildHook.js",
+      "sha256": "fca2daf80e46e0b79879be82e6a992bd4ec29ca76fd6ad1b3d9a155d56b5c2db"
+    },
+    {
+      "path": "server/studioBookingMaintenance.js",
+      "sha256": "d1ce8ef9e541cb86b293e718cc835ff9563c7ce4375202fc715734812da094d4"
+    },
+    {
+      "path": "src/App.test.tsx",
+      "sha256": "2049a0d8456027d38a5fb2baecc97c1b1c1a66106f9af4b7923c980814b8aa96"
+    },
+    {
+      "path": "src/components/QuantityInput.jsx",
+      "sha256": "e4bb7c912cd3852b8898b22dd37537b475f829ed27ab8fe1e1234a1c9455a197"
+    },
+    {
+      "path": "src/components/QuantityInput.test.jsx",
+      "sha256": "85e0e0571bd3ea44419110b94a1443e99930b2aaeed054b7d30e4e77a96762b4"
+    },
+    {
+      "path": "src/components/RouteErrorBoundary.tsx",
+      "sha256": "35063673b430b76c648fcb857ccb145a8a39a9a92a1419d1ada31084e6f30221"
+    },
+    {
+      "path": "src/components/ScrollManager.jsx",
+      "sha256": "9e692999790291767329bcad6fc54726b0d98f2502e3798bf42986c446919c68"
+    },
+    {
+      "path": "src/components/ScrollManager.test.jsx",
+      "sha256": "116fdc9291686af2e64f4f69bac148bd531bea17c98b73ad2c120566b6ecde7a"
+    },
+    {
+      "path": "src/components/ShopPage.test.jsx",
+      "sha256": "e77bc3b6f2ab28803f9d06a69dd794c4e0afe450414e6a7ee20569472c93ef7c"
+    },
+    {
+      "path": "src/context/InventoryContext.test.jsx",
+      "sha256": "ca0e19ef5fac370954b7b61a0988d8e7de7920da300c51be624e52746db21849"
+    },
+    {
+      "path": "src/pages/ProductDetail.test.jsx",
+      "sha256": "e00f1afa800e9d0a2902265d02992c8b18a323a70c6b0efdbbd275225c2bf15a"
+    },
+    {
+      "path": "src/pages/StudioBookingStatus.test.jsx",
+      "sha256": "a383958944ccca8f4931b7e9ef5ab805f1af8e9a172e9aabc64e87c0f89e9ffe"
+    },
+    {
+      "path": "src/pages/useHydratedSearchParams.js",
+      "sha256": "4ffdeac4f0d6305caf2ad7f142944e9f0c96c84acdb5fd810fb7000be7db15db"
+    },
+    {
+      "path": "src/studio/arrangement/useArrangementOperations.replay.test.js",
+      "sha256": "3e1ad15eb9aac82754d1ef78b4f5a8691bdec7f5580638173a8bd5d643498e87"
+    },
+    {
+      "path": "src/studio/session/sessionModel.test.js",
+      "sha256": "40b9e4b6a8f00dbc554747124ff743f6018bc17159a4835f843ce61fece52359"
+    },
+    {
+      "path": "src/studio/session/storageCleanup.js",
+      "sha256": "2273f75e6fc8d4c9cbfccff7feb7ec188d1172f70a04a17007b3ccd97498b985"
+    },
+    {
+      "path": "src/studio/session/storageCleanup.test.js",
+      "sha256": "837d31aea40375a12bfbb2ff38a3cfadde70f3eb01f3aa2906e2586242183406"
+    },
+    {
+      "path": "src/studio/views/FilesView.test.jsx",
+      "sha256": "ca05417e6a42cc21867febe71ce9f2e7438ba7efd39684e471eeb335a71c8fa3"
+    },
+    {
+      "path": "src/test/memoryIndexedDB.js",
+      "sha256": "69dce783f5364d529f8e4e0714eb0e3e0542ec829005aec48018800278dd579d"
+    },
+    {
+      "path": "src/utils/arrangementRepair.test.js",
+      "sha256": "6b17e46f9302e532415a3b9256ea8d2425a7e36bf687ae2634051d2fae963399"
+    },
+    {
+      "path": "src/utils/audioProjectStore.storage.test.js",
+      "sha256": "cee893cc8d5acc7439e2aabeaa1ad5ce60e5ea8c46602c204e6f3db76621daf9"
+    },
+    {
+      "path": "src/utils/exportSink.worker.js",
+      "sha256": "ac9fc5a06720db856c97d56e7775d3a844dde1fe84bc86c8ea9bd6c01001202e"
+    },
+    {
+      "path": "src/utils/lazyComponents.test.tsx",
+      "sha256": "aebf0872736fa1c733658c0a9f501c716500a112859c57a76d0811a21b9e921b"
+    },
+    {
+      "path": "src/utils/monitoring.test.ts",
+      "sha256": "cc72031e0c74be9fc30bcca8284d4912fc395d9da55acb9339c19c1e5730b26a"
+    },
+    {
+      "path": "src/utils/monitoring.ts",
+      "sha256": "52f39e53756d72ec363d630aaf11ef620b3ee5a95a55fae3b562fa82a53f74f6"
+    },
+    {
+      "path": "src/utils/performanceJournal.store.test.js",
+      "sha256": "afe4700ee9b09505577b8f80648f9cf18fbeb085f7c698913d46cb2f9b292a76"
+    },
+    {
+      "path": "src/utils/sentryClient.ts",
+      "sha256": "86090529f2c0eb1b95de86056300d9320d24089b4bc447b52d9fd729a732c20b"
+    },
+    {
+      "path": "src/utils/windowedWaveform.test.js",
+      "sha256": "749d8a66eba335549819c3708036dbf223722b68b906650f5036b3a8748925f3"
+    },
+    {
+      "path": "tests/netlify-functions/blobs-consistency.test.js",
+      "sha256": "10714d5face57ed819d87fc7e3397284e5f1a6a78bc5a0f39db2f3fc550e1a47"
+    },
+    {
+      "path": "tests/netlify-functions/build-hook.test.js",
+      "sha256": "c9d87aaf077fbcc3667878a52d52bb7040fade171856b8196cadfd03538edfbf"
+    },
+    {
+      "path": "tests/netlify-functions/hash-staff-password.test.js",
+      "sha256": "2c174cdc43b54d8bdb4dd59df432addbb958446d426ba23322115b446c342ef4"
+    },
+    {
+      "path": "tests/netlify-functions/helpers/invoke.js",
+      "sha256": "904ce7942e5606414d10c3c57284c55f62ff2f396a21312cfdd7241ee4e2f0f4"
+    },
+    {
+      "path": "tests/netlify-functions/order-records.test.js",
+      "sha256": "ef7a3fb908c490ee3c0e6215367b1ca54315cd18baecd8fa11aed0d66ffac74c"
+    },
+    {
+      "path": "tests/netlify-functions/staff-page.test.js",
+      "sha256": "d79c8df0e7741a7f4968c564a3cd97f050373640334fb80dceb484eaa37e5750"
+    },
+    {
+      "path": "tests/security-headers.test.js",
+      "sha256": "50945893d7b7e345b5fcf8ec7dc487e83d19e58571a70e5669ee36c9683d2152"
+    },
+    {
+      "path": ".env.example",
+      "sha256": "a8a5b343319c8e849ecf079fbfcacb80d7090ac7b4bc25b6705ea5de53830050"
+    },
+    {
+      "path": ".gitattributes",
+      "sha256": "1a1dbe176bc233b499d35a57db7513f2941c99ab9759f177830c9149be99005b"
+    },
+    {
+      "path": ".github/workflows/build-deploy.yml",
+      "sha256": "34f8e7e65baea681ef2bd6b011c129e499251b7d7d33f126638875f2502afdd6"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "f4b94dcd337928b51c7c70fd77612e389ddcb23f91aa8e2b8b7bae118149e391"
+    },
+    {
+      "path": ".prettierrc",
+      "sha256": "46999c5fc5e3e0c664a4797ad4d74130034d7f532be636b69595a3f11aa86ef5"
+    },
+    {
+      "path": "README.md",
+      "sha256": "9313006b75a65efa0af41bd35bc093d3591457addea0cece89970a6d15334a69"
+    },
+    {
+      "path": "docs/AGENT_HANDOFF_2026-09-26.md",
+      "sha256": "9d62db3bf3c32f85608aad80d1028207212f18e03ac5e5976b6b24f358bba0c4"
+    },
+    {
+      "path": "docs/CART_DESIGN_SYSTEM.md",
+      "sha256": "a9f81642e1881b52026f737547a4379c2c064032ea7ffaeb5879ac1461ccdab6"
+    },
+    {
+      "path": "docs/CART_PREMIUM_IMPLEMENTATION.md",
+      "sha256": "b368bd10bcff7583c3c356cf315d1f5fdfdd62d8b1c86ec96d5ff68afcd6d84d"
+    },
+    {
+      "path": "docs/CART_QUICK_START.md",
+      "sha256": "9c6fa0f4ecf8d3fa877b1be3836d2b540f54afcce9e7a9ad2a982e827498fbca"
+    },
+    {
+      "path": "docs/CART_VISUAL_GUIDE.md",
+      "sha256": "40ff47cdab9ea585051056dd262194cc34ebd774a39fff56d484931d461c108a"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "sha256": "51e5f216e2e9e27232f702f88fc3926dcf8066e6cb6221da4da18a23cbcf545e"
+    },
+    {
+      "path": "docs/GETTING_STARTED.md",
+      "sha256": "fa24701414125319b1358e581d79ba623e9f53a7d4caebdd0ce47639b14d8775"
+    },
+    {
+      "path": "docs/HOMEPAGE_BEFORE_AFTER.md",
+      "sha256": "f9d14351f01b8618a6ab23c78aa59797d375b0806f146b3cfdd14b7b73bfbcec"
+    },
+    {
+      "path": "docs/HOMEPAGE_RESTRUCTURE.md",
+      "sha256": "3e5b7bd12e37183c6af2a3bc893c9702fdfab5773f6f246eb9a8a0e145fe84d7"
+    },
+    {
+      "path": "docs/HOME_HERO_ASSETS.md",
+      "sha256": "ac7ca7bfe122317f0dad7ca951fb3f4aa99f743e407f711580bf38e7a6f9904e"
+    },
+    {
+      "path": "docs/INVENTORY.md",
+      "sha256": "a1fc3e70196b75a3fc10df1f59887a8c7d9b1f3677c233a83fcccfae99a022f4"
+    },
+    {
+      "path": "docs/LIVE_SOURCE_QUALIFICATION_2026-09-24.md",
+      "sha256": "24be5a5e932415a2467e63d26a60480985e31eba68c5837f4e5fd4ec6f1b2307"
+    },
+    {
+      "path": "docs/MODERNIZATION.md",
+      "sha256": "acc7100b3c3705c52f6e040ab5e295ea16e9d06a427ab201173a8fb117d6049f"
+    },
+    {
+      "path": "docs/NATIVE_AUDIO_QUEUE_2026-09-25.md",
+      "sha256": "d0eed1f3ad48e608d78c2465b7cb63a7d5036554839ffc960120cde5b2d2c0ee"
+    },
+    {
+      "path": "docs/NETLIFY_STRIPE_LAUNCH_CHECKLIST.md",
+      "sha256": "8761794249e1343bb3019b07f94da4fd9a09f95322ed63d9260e2d538919f5e6"
+    },
+    {
+      "path": "docs/PERFORMANCE_FIRST_SESSION.md",
+      "sha256": "9c1bb0f4dffc5c2058856946c011bfb4b99d0f1152b7fc44b6f3bfb6ac4650f1"
+    },
+    {
+      "path": "docs/PRODUCT_PAGES_REFRESH.md",
+      "sha256": "c3116c2051524e5c10dceb6606588557c13eff7629c9a0b9a53aabd90bc93b01"
+    },
+    {
+      "path": "docs/PROFESSIONAL_ACCEPTANCE.md",
+      "sha256": "683b3dcfa869e57b22a160d9467564895632b62f4fadeef434932eadb3ec0bde"
+    },
+    {
+      "path": "docs/RELEASE_CANDIDATE_2026-09-25.md",
+      "sha256": "4ad9dd2ce55a2172e7c59d53e866dddeabdfe58efd35ecdac895ddf87d9a0335"
+    },
+    {
+      "path": "docs/RELEASE_FOLLOWTHROUGH_2026-09-25.md",
+      "sha256": "304567fc461079e45da85bec5dfce5f0f0ecd0ff51d85ca3a968b48c866aebcb"
+    },
+    {
+      "path": "docs/REVIEW_REPAIRS_2026-09-25.md",
+      "sha256": "191f25da1179ba1cdd0befd5e3c3a94451a33047343a1bd2215bbec5e725a614"
+    },
+    {
+      "path": "docs/SATTARI_PRODUCT_DIRECTION.md",
+      "sha256": "e03120e0a6cd2809cf204a04224340bd41d5841612b7344aa4878bb34c8f4a11"
+    },
+    {
+      "path": "docs/SEARCH_GROWTH.md",
+      "sha256": "30c7a5d1bb9ddcf17b7456804f958341d4bdea9bf8e5e249d43689a03cac09aa"
+    },
+    {
+      "path": "docs/SEO_NOTES.md",
+      "sha256": "7e117b296126fe4e050421c4e60e0ba287de17d8fd2249aa2c860adb3e5c6ae9"
+    },
+    {
+      "path": "docs/SESSION_INTEGRITY_1_0.md",
+      "sha256": "2f3da6c29acf5d7e3948182157d19454d64445067c40f2cfa835a89e887a0805"
+    },
+    {
+      "path": "docs/SESSION_INTEGRITY_2026-09-24.md",
+      "sha256": "ea18815ec60e73e9cc3d1f59ff7dbf0c5a583c84d846540e5a4b6a076d5667be"
+    },
+    {
+      "path": "docs/SESSION_VALIDATION_2026-09-24.md",
+      "sha256": "dbf6e7bf2ae4fa15b1e2ee5f02ecccfa42fea68f611b712e4548c78c6a99dc23"
+    },
+    {
+      "path": "docs/STABLE_CANDIDATE_PROTOCOL.md",
+      "sha256": "c629c3cc9775cd61005311116e2da0e802021be7fb50e758c83583c187039ab5"
+    },
+    {
+      "path": "docs/STEM_SEPARATOR.md",
+      "sha256": "f9c997186013263d6b73cc0fb4a79420e746c9e6e7918463599436e35c7ec1cf"
+    },
+    {
+      "path": "docs/STUDIO_BOOKINGS.md",
+      "sha256": "8935124e5fbcac22520c4d2e851ca0645fcf140df5eb1a94e7ca83dce0ccb3e9"
+    },
+    {
+      "path": "docs/STUDIO_REDESIGN.md",
+      "sha256": "7aa9707a8008c777633740d438014d63e86f4b8128d6f8ef170caf0ee0a23027"
+    },
+    {
+      "path": "docs/WINDOWED_REPLAY_2026-09-24.md",
+      "sha256": "48063e4058e102c565e03490d7f55747adaab8717509f2dcf374e2f08585623e"
+    },
+    {
+      "path": "docs/evidence/NORTH_STAR_2026-09-25.md",
+      "sha256": "39cc2ae1ffd88e75636a33b79c5d741e7050fd9b103f2c2b1cded8ba2ba21d9c"
+    },
+    {
+      "path": "docs/evidence/release-candidate-2026-09-25.json",
+      "sha256": "717a4987024b328f7887a31919376dc1c717d0677531c8aad1e1feb1b793fc3b"
+    },
+    {
+      "path": "docs/notes/ARRANGEMENT_RACK_2026-09-21.md",
+      "sha256": "6348b41b4ebe894a4d6c5285fe509457d1180a0d87763aaa37043618a1c61625"
+    },
+    {
+      "path": "docs/notes/ARRANGEMENT_RELIABILITY_2026-09-21.md",
+      "sha256": "e86b3a8c2e8dee5381e9d761f43a8d883062d3089f540e291b9a551441419611"
+    },
+    {
+      "path": "docs/notes/ARRANGER_COMPLETION_CHECKPOINT_2026-09-21.md",
+      "sha256": "4bc14f6f27b4b08a960c80c7eb7549556b132e5dd99d1f6264b69edf5376d499"
+    },
+    {
+      "path": "docs/notes/ARRANGER_UPGRADE_2026-09-21.md",
+      "sha256": "a15c477e63f2c58dc4968d89877f35834e18dfa1968854e1565c72e5633e93a9"
+    },
+    {
+      "path": "docs/notes/ARRANGER_WORKSPACE_2026-09-21.md",
+      "sha256": "8fffe4f3fc20d3fab06de7a0aa6563a52edba9ff0a2f8cbcc723b9c933b74f13"
+    },
+    {
+      "path": "docs/notes/BEAT_SYNC_2026-09-23.md",
+      "sha256": "b70e680ecdbc33263273788dd86aac6710aa6e25c4f531b92fcfadde71a58fad"
+    },
+    {
+      "path": "docs/notes/BOUNCE_LIBRARY_INTEGRATION_2026-09-23.md",
+      "sha256": "f8f64427b0cb5014d854438c5e360094aff3edc2fea4271f1ee1205d2550800a"
+    },
+    {
+      "path": "docs/notes/CAPABILITIES_PASS_2026-09-23.md",
+      "sha256": "a1f0f9ff4c9e400c72437c8a94d4c9d87bcca12fa6a3640ceea4fcc2980678cc"
+    },
+    {
+      "path": "docs/notes/INPUT_SYSTEM_2026-09-23.md",
+      "sha256": "929d1f0b646c509d0ebb054b6dc27e98a9f88d6de7ecc8d34bfd6f1ef0b486a0"
+    },
+    {
+      "path": "docs/notes/INSTRUMENT_WORKSPACE_2026-09-21.md",
+      "sha256": "93897cf150e3a585b364fae742af81b4024eb3b8e04a6eba33fe92a5084be728"
+    },
+    {
+      "path": "docs/notes/LIBRARY_SIMPLIFICATION_2026-09-24.md",
+      "sha256": "aa95771ad7ad4fb764044935eaa4bb4aa3a1325ff4bf5ece1b62ea4032ecab1a"
+    },
+    {
+      "path": "docs/notes/LONG_EXPORTS_2026-09-21.md",
+      "sha256": "2b749973e1f17264109e73e3042f1433548ff02d567985f9a7f3534ace4b9d34"
+    },
+    {
+      "path": "docs/notes/MASTER_INSERTS_2026-09-21.md",
+      "sha256": "a60b1eac9fd51328092123cb14caa23d7870659202fe18078398012c6bd549ec"
+    },
+    {
+      "path": "docs/notes/MASTER_PRO_CONTROLS_2026-09-23.md",
+      "sha256": "3f659c8efcdf56883672666211d2f978590db706573d7c647dfd92a21a1c0b40"
+    },
+    {
+      "path": "docs/notes/MASTER_STEMS_2026-09-21.md",
+      "sha256": "6fa67384658125e742ac405e2d6875d13ea7ecdef392f1311a8afd2b2fd87ab2"
+    },
+    {
+      "path": "docs/notes/PERFORMANCE_REPLAY_RECOVERY_2026-09-22.md",
+      "sha256": "84851fa87e2bf619aca56c1d334c46c18d6dbf257b006abbc097bab9fe66309d"
+    },
+    {
+      "path": "docs/notes/PIANO_ROLL_OVERHAUL_2026-09-24.md",
+      "sha256": "890ced9fcda12662a09283926042c6e820fe250e1f0376338af3233679a58c6f"
+    },
+    {
+      "path": "docs/notes/RELEASE_GATES_2026-09-23.md",
+      "sha256": "a841c1680dfed38e73a8c52ddb096e712c9a84a2aa92ab8984b1e1d0bafe1cf3"
+    },
+    {
+      "path": "docs/notes/RELEASE_HARDENING_2026-09-23.md",
+      "sha256": "c9ae14de0c1c7e631b631767b3dcd3493d93e2b4cc5965121034a48d7ec15576"
+    },
+    {
+      "path": "docs/notes/RELIABILITY_FOLLOWUP_2026-09-23.md",
+      "sha256": "a203b8e4b1d0f411db659abaf6307a034880f52b496b35d20e550b29f1974cb1"
+    },
+    {
+      "path": "docs/notes/RELIABILITY_PASS_2026-09-23.md",
+      "sha256": "ab3a0dd172074d57e89d6837c60313da085e052697a6647a9d3347c389222bd7"
+    },
+    {
+      "path": "docs/notes/STUDIO_COLLAPSIBLE_PANELS_2026-09-24.md",
+      "sha256": "06d8ea676451166d1c920b125816392ed81ff6259092563332731373a5ef3478"
+    },
+    {
+      "path": "docs/notes/STUDIO_CONTROL_AUDIT_2026-09-21.md",
+      "sha256": "e4fa4074f40c075b3b072cd0ba206494e3fde717321b6b12aa51ff019d788110"
+    },
+    {
+      "path": "docs/notes/STUDIO_MODERN_UI_2026-09-20.md",
+      "sha256": "caf1fd99cca3373fb1ecc26341de749d2ae913192527f4f2db86eb1c8287ea03"
+    },
+    {
+      "path": "docs/notes/STUDIO_PREMIUM_UI_2026-09-24.md",
+      "sha256": "9a6634f789a258d19aae55ce08193b5b001c95cbfa28929bb81c9a8778623706"
+    },
+    {
+      "path": "docs/notes/STUDIO_REFINED_UI_2026-09-20.md",
+      "sha256": "062cea0d9887408a55c15aab984a0f5a3766c6813e567d3f474718aac062c3d0"
+    },
+    {
+      "path": "docs/notes/STUDIO_WORKSPACE_REFINEMENT_2026-09-24.md",
+      "sha256": "209a5ec7be4e3680dc25b2e53db2a0a76b54dc23cfc886fb9da4b7b4fc8bfaac"
+    },
+    {
+      "path": "index.html",
+      "sha256": "19092a93ad1f644f4ceb69dd81b7fff261dc18ce09238cb3e75586a9ffd13828"
+    },
+    {
+      "path": "netlify.toml",
+      "sha256": "8750251c759153c451d8a8b10491dd8a6f70bedc729565e2bc5d6e8510415af3"
+    },
+    {
+      "path": "netlify/edge-functions/product-not-found.js",
+      "sha256": "a8290acc4304ae510bd69a6e0feda03da885a6fcfa518d0d9ace5056ae7b50ef"
+    },
+    {
+      "path": "netlify/functions/admin-orders.js",
+      "sha256": "23d11b069ee7b6e9ee951f3037bf7b1f4c3c83179b2c810ccaa39b8c0851ec77"
+    },
+    {
+      "path": "netlify/functions/checkout-maintenance.js",
+      "sha256": "64b1799aa72b79296b2b7271c756eacc53db2a8cbc42ac253f62c0e7a3a81f2e"
+    },
+    {
+      "path": "netlify/functions/checkout-release.js",
+      "sha256": "dcafd4330e671b03f061134a6957325a48384f157b8d5dc7380655cb2af77c24"
+    },
+    {
+      "path": "netlify/functions/checkout-session-status.js",
+      "sha256": "3330c7f2acc8d6d01693a37677fd0c1760aeb049ba6d09a3d1c8a73d4281732f"
+    },
+    {
+      "path": "netlify/functions/create-checkout-session.js",
+      "sha256": "0259768d8c62266d31e5fcab92ef23cc0e738b0d9a784c32d10305a7150bb110"
+    },
+    {
+      "path": "netlify/functions/instagram-feed.js",
+      "sha256": "23f6ffd6a4e75f4107bcfadaebf6a91ad503e6da4b572305201270355d83ffdb"
+    },
+    {
+      "path": "netlify/functions/inventory.js",
+      "sha256": "14e4fcb8127f4636eb2ba48a502508c7260083d1d2083095531e8e1d038b7f4a"
+    },
+    {
+      "path": "netlify/functions/nightly-backup.js",
+      "sha256": "f7745e73a2bf42c7915fae1199c302585017dfaaa32ff11893298e7d0581baae"
+    },
+    {
+      "path": "netlify/functions/product-image.js",
+      "sha256": "f4f82f6f304192b93725fec8885d0465b8ddaf9b3b6043ee396c94de1ee62c95"
+    },
+    {
+      "path": "netlify/functions/service-inquiry.js",
+      "sha256": "a48f13983e88276c0bd5fda140fb4944146d0c70f8484052192e918ba0ac5271"
+    },
+    {
+      "path": "netlify/functions/site-event.js",
+      "sha256": "82cada51e41c95310fc01b16addc1596670ad139107ce704a39406a2ac76d121"
+    },
+    {
+      "path": "netlify/functions/staff-backup.js",
+      "sha256": "d970b85304177677614c4339ebc7886b3b8c03071e214f991b92493101d647fa"
+    },
+    {
+      "path": "netlify/functions/staff-bookings.js",
+      "sha256": "79978448939b59588fb44c09c7dad6d4a9982064bde5d5abc2c543352ef1512f"
+    },
+    {
+      "path": "netlify/functions/staff-catalog.js",
+      "sha256": "cbcfb4a46f32a5c3d9000a3b10bab0c1bc6f2d1231504e29958ba230b72c2d7d"
+    },
+    {
+      "path": "netlify/functions/staff-image.js",
+      "sha256": "63323193b405fdc6e0fcf25783526e840951215ce72a482b6a1a2255a79b4f43"
+    },
+    {
+      "path": "netlify/functions/staff-inquiries.js",
+      "sha256": "14a2a40e7f333aa7dbd6c1886086bae54c0a5be65535993c68222a9a53a518ad"
+    },
+    {
+      "path": "netlify/functions/staff-insights.js",
+      "sha256": "e030c775fb2cbca9d62c8112146fffa42e6a14e9b8692828f2a9914237554919"
+    },
+    {
+      "path": "netlify/functions/staff-login.js",
+      "sha256": "db0eefe92841192b57b00fdec4e62bde301f66ebf436948b9095491e4fd17bdf"
+    },
+    {
+      "path": "netlify/functions/staff-logout.js",
+      "sha256": "6e5f49b2fdbb3928d33cc3ddae7dfc5803323d56e41835d1ef387be43ae69814"
+    },
+    {
+      "path": "netlify/functions/staff-orders.js",
+      "sha256": "f1bef32306e5fc0cab48a0a080d0c35160e586f49e27083a738e38730a94360b"
+    },
+    {
+      "path": "netlify/functions/staff-stock.js",
+      "sha256": "35593f0d1ac69358c76eb67ab5aa21c382cd29a37f04d97ce1468677da0853ed"
+    },
+    {
+      "path": "netlify/functions/stripe-webhook.js",
+      "sha256": "d7464862e537872073c0119e990557baab1b132def9066043851b7b0ab73c933"
+    },
+    {
+      "path": "netlify/functions/studio-booking-maintenance.js",
+      "sha256": "6a3bafa089012c5b26667561492d045f23d6ee7a782a446b8a34c7e69c07d53b"
+    },
+    {
+      "path": "netlify/functions/studio-bookings.js",
+      "sha256": "a354ee8fb9ebc494cfa2812ae1e7f2c3eb0725601f4d87d379f642fa78c6d8ca"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "35c30fb30761c93b5227820da3b162dca22787f83b1d231babf794040781c840"
+    },
+    {
+      "path": "package.json",
+      "sha256": "ef4b8d23aa9ac3b58e79f3c29a1e50b3bd31f9c55b643cbcb518ae9adeaad4b8"
+    },
+    {
+      "path": "public/audio-codec-credits.txt",
+      "sha256": "b503e84916885849087d64feded5b36ca8bf3224453d123cdfbf73ae6dc3e685"
+    },
+    {
+      "path": "public/audio/sattari-demo-bass.wav",
+      "sha256": "9b84a88e5e33ea80d29ccef88dc2f696b9699c337f91ae7d3686c6586e36be43"
+    },
+    {
+      "path": "public/audio/sattari-demo-drums.wav",
+      "sha256": "6f7eb46500b0e41996315cb9714707747e5232a491c6e541b1f276ef5a532f6a"
+    },
+    {
+      "path": "public/audio/sattari-practice-demo.wav",
+      "sha256": "b99c3f3d526b755401268afd1405795069d2e6176fec505d415540b4c9f8ed4d"
+    },
+    {
+      "path": "public/downloads/auto-pitch-realtime-alpha-v0.2.0.tar.gz",
+      "sha256": "5a91f53c5ac31cdb30cb8b4dc3fa38053cca9221888b746c7a7171e9ddf0eaa1"
+    },
+    {
+      "path": "public/downloads/sattari-audio-plugin-suite-alpha-v0.1.0-mac-installer.pkg",
+      "sha256": "a5fb20742934d68cc45d542e0587c860be3a8c47bcb454c4fb0975b9ee9ab195"
+    },
+    {
+      "path": "public/downloads/sattari-audio-plugin-suite-alpha-v0.1.0-mac-installer.pkg.sha256",
+      "sha256": "452ffaf5ef168bea629f394b9d2734ae1f9de7fc9510f8d952625b90c9dbfc07"
+    },
+    {
+      "path": "public/downloads/sattari-audio-plugin-suite-alpha-v0.1.0.sha256",
+      "sha256": "a18cf78748bbf350823857db27c461dc2575c6913cb749d10aeeef82b8282814"
+    },
+    {
+      "path": "public/downloads/sattari-audio-plugin-suite-alpha-v0.1.0.tar.gz",
+      "sha256": "914063e32b8a1233ad320fb6f5bc1fed928de865a7ac1a7729cfd672b7bc5f08"
+    },
+    {
+      "path": "public/downloads/sattari-auto-pitch-autokey-tester-v0.6.zip",
+      "sha256": "25775ff2bde22e5ebfe0e806f86eec1e96aed718e0a0148da2839fe7cf5da70a"
+    },
+    {
+      "path": "public/downloads/sattari-auto-pitch-autokey-tester-v0.6.zip.sha256",
+      "sha256": "5f948694e1ee6b847c86fadbc45f015e1b32dde5b27e8b1c582b34b801c7edf7"
+    },
+    {
+      "path": "public/downloads/sattari-auto-pitch-realtime-alpha-v0.2.0-mac-installer.pkg",
+      "sha256": "74b6cab68dfaea0a1dcf6f3b27051fde54bfb1ca249cc43a4de34a1d29eb32c6"
+    },
+    {
+      "path": "public/downloads/sattari-auto-pitch-realtime-alpha-v0.2.0.sha256",
+      "sha256": "f7f5c321ada83fd9c1c4efb05c07cb669a5123b5becc282820ad228bc5743015"
+    },
+    {
+      "path": "public/fonts/inter.woff2",
+      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+    },
+    {
+      "path": "public/fonts/sora.woff2",
+      "sha256": "811e11966d29f3a01fcb19b087b61ac067d380665a55aebb7fcdf2cda95e4a93"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-cutout.png",
+      "sha256": "d70eca9666ca5674ac1cb538b1818de0c0d791a31ca5047e3765756cf68b71c1"
+    },
+    {
+      "path": "public/images/home/sattari-instruments-hero.jpg",
+      "sha256": "8e9061926c85e532bdbd34c1b9f095cc6b43358e3e12c8985346be8421ccd2e8"
+    },
+    {
+      "path": "public/images/home/video-day-poster.jpg",
+      "sha256": "7f7e14e10b25c8532636fa53e2ce24cb2aa47d1a64942d4bcd1ccc4436656f6e"
+    },
+    {
+      "path": "public/images/home/video-night-poster.jpg",
+      "sha256": "db7284cfe8898d289f3c8222dafdfb7e5a649647c2fd01c0a1e821a897ccb0c4"
+    },
+    {
+      "path": "public/images/tools/learn.jpg",
+      "sha256": "c13cba319710e2d7bdf83c3f6a3807ee28649c16bef3beed8aec3985c7526af1"
+    },
+    {
+      "path": "public/images/tools/separator.jpg",
+      "sha256": "a76460820e96a986ac9fbd9b1c375e2eae4933165978af43440fb8d0c0c79aae"
+    },
+    {
+      "path": "public/images/tools/studio.jpg",
+      "sha256": "be358c5e97dac64d311a6885312ad1acaefb1f0e2e1beebac1af8602e32565e9"
+    },
+    {
+      "path": "public/robots.txt",
+      "sha256": "a1fa23034b816d71731d0a417bbebf53472358348445c51c70e7437d4c487081"
+    },
+    {
+      "path": "public/sattari site/7a.avif",
+      "sha256": "6bc866cd565da7c2029c45df289270d35e1293214481fdadf42530ef470b3313"
+    },
+    {
+      "path": "public/sattari site/7a.png",
+      "sha256": "e962fb378925c36b99e864ab8f079940a2963a8b3b53a82bbd91cd337aaa143a"
+    },
+    {
+      "path": "public/sattari site/INSTRA PATTERN.mp4",
+      "sha256": "6c131233000fd4e2480e515a9aac9d118a3701628b42a02fae66526a708c47f7"
+    },
+    {
+      "path": "public/sattari site/MO.avif",
+      "sha256": "4eef69d13b066312807c523150805eaa469b6ffb1987f6683ef766f66d540526"
+    },
+    {
+      "path": "public/sattari site/MO.png",
+      "sha256": "25db2b52cadbc3a55074c73b219786fc35d8a593759d6d79b8160d318d419616"
+    },
+    {
+      "path": "public/sattari site/accessories/drum-stick-bag-2.jpg",
+      "sha256": "da5ca51c809debae94105868c3dddf3dce18ae28f4b99103527f6ff867cfe5e8"
+    },
+    {
+      "path": "public/sattari site/accessories/drum-stick-bag.jpg",
+      "sha256": "a22298a4e0840fa8d56197d80e78fd62fccc999102c380ece5dece5cf250a62b"
+    },
+    {
+      "path": "public/sattari site/accessories/wireless-transmitter-2.jpg",
+      "sha256": "05a0c4a250e8c5b562d403f297300df1148f3ba1c3bfb8c86130681e2a0d05e4"
+    },
+    {
+      "path": "public/sattari site/accessories/wireless-transmitter-3.jpg",
+      "sha256": "336a44a30e39e297938c36e073536bd1380ee5010e8f79aeb8ae71f1e5b95914"
+    },
+    {
+      "path": "public/sattari site/accessories/wireless-transmitter-4.jpg",
+      "sha256": "ab8d3b85bda33990bff95c209216c726370783420dae7d354aeba226d10a0f10"
+    },
+    {
+      "path": "public/sattari site/accessories/wireless-transmitter-5.jpg",
+      "sha256": "ab2a9bacc02e995804c733ef1c1dfa9a1040cc8aded3af97f0f6bd5b8ebc9de9"
+    },
+    {
+      "path": "public/sattari site/accessories/wireless-transmitter.jpg",
+      "sha256": "9eadbb0f5185ce19eb7f2c30f2e9cf9d4c0604f477dfb3ee5d3be922a96fca14"
+    },
+    {
+      "path": "public/sattari site/audio-suite/auto-pitch.avif",
+      "sha256": "dd9a84a53ef5ae71cc083c5d712ed3c6e5b43ec334a4bbcc014e2e2d51458e30"
+    },
+    {
+      "path": "public/sattari site/audio-suite/auto-pitch.png",
+      "sha256": "41024d68c5470d5f7d94063c2fd23c6b452fe98fa8ec05a9fe81de6018518ec7"
+    },
+    {
+      "path": "public/sattari site/audio-suite/brain.avif",
+      "sha256": "1d661ad9e9520195428113c795d850785f57f8f84d9fe0592ca9ee0808d79f06"
+    },
+    {
+      "path": "public/sattari site/audio-suite/brain.png",
+      "sha256": "ff52d197d96508b4771cbabe8a4404db28a37183e1e277d7695de58c32de2be0"
+    },
+    {
+      "path": "public/sattari site/audio-suite/create.avif",
+      "sha256": "d8cf9af2bd5bc4c35e32892859db046794c9a9845ea4e20e7cc048e0d2038389"
+    },
+    {
+      "path": "public/sattari site/audio-suite/create.png",
+      "sha256": "22f109a0d128d65c5eb1920add970ec85e5012054a5481e75fde784a24b54a22"
+    },
+    {
+      "path": "public/sattari site/audio-suite/meter.avif",
+      "sha256": "1ab56ecf9cb83e115ae4685a0efad1143dc6b8ac590c6e77bee39681d8295c47"
+    },
+    {
+      "path": "public/sattari site/audio-suite/meter.png",
+      "sha256": "a114ceebdfcb036546ed62e0fd8cb42cc108e40e6070471d82cb7796ad2ad864"
+    },
+    {
+      "path": "public/sattari site/audio-suite/mix.avif",
+      "sha256": "70e651feceb55310c453de89bc6070632304f395c70dbd104ea2ae267e837a4e"
+    },
+    {
+      "path": "public/sattari site/audio-suite/mix.png",
+      "sha256": "63cbac739a2280465242bac0fd8dd4f46ad7ab3819744a2664bd63e2202150f5"
+    },
+    {
+      "path": "public/sattari site/audio-suite/scope.avif",
+      "sha256": "27d6743d1bf2b4303860265b866aa95b849e7573817accbc9f4a6ecb4bf7b968"
+    },
+    {
+      "path": "public/sattari site/audio-suite/scope.png",
+      "sha256": "24013ece7870d8f610bc115e4cedfbfa56ddc6a4bbbe1da6760a52651d33c272"
+    },
+    {
+      "path": "public/sattari site/audio-suite/song-key.avif",
+      "sha256": "a5a521e2bdca5543802d09a1d88e5f060c66ec19c25eb8a7598812843b0bdd2b"
+    },
+    {
+      "path": "public/sattari site/audio-suite/song-key.png",
+      "sha256": "e2e1a9df5d33cfc87be4ea1b2c0df0f29b5053d2b1ca18649a8135edc4b6f509"
+    },
+    {
+      "path": "public/sattari site/audio-suite/stack.avif",
+      "sha256": "7baa2fbee1751f56daa86148020d426763b8f2b3b8be4737ff089be31036169c"
+    },
+    {
+      "path": "public/sattari site/audio-suite/stack.png",
+      "sha256": "8a6e958117e3324673e3a7a066394f2e18a3ea0ebf86ae85b1398a1f8615dedb"
+    },
+    {
+      "path": "public/sattari site/audio-suite/tuner.avif",
+      "sha256": "0009b6e2b3d7ef01acc472ea6561afa865ce6ec0aa682b7fbeb9e1b645f18132"
+    },
+    {
+      "path": "public/sattari site/audio-suite/tuner.png",
+      "sha256": "94e8a38c4b98a03dbfb9550298198b9df876a897f77bf9e9865f6725c9623bfd"
+    },
+    {
+      "path": "public/sattari site/audio-suite/vocal.avif",
+      "sha256": "0ff910fd2334370f95875d148ce0f65ff5ace2bec0a26c1283da2e3ba3b5216f"
+    },
+    {
+      "path": "public/sattari site/audio-suite/vocal.png",
+      "sha256": "3719e82aca48d9201daafb6b9a20d8efa786d9c74ef1bb72d9e5375be58e7f88"
+    },
+    {
+      "path": "public/sattari site/bg.mp4",
+      "sha256": "b301b3b095625041fa8bab5f48eca9c62e3c26e202deaaaee59a80e85b1254dc"
+    },
+    {
+      "path": "public/sattari site/crash.avif",
+      "sha256": "bf2f079c1a5053740411c25adae1dda2b29040ea4710e01de6a6f8ae3d22fe65"
+    },
+    {
+      "path": "public/sattari site/crash.png",
+      "sha256": "10954d61b0576b2f31a0c5efecbffb4394c3c79e0141abbf8ccbae6900b97673"
+    },
+    {
+      "path": "public/sattari site/cymbal.avif",
+      "sha256": "cf5ab6184ec5575d3014edafcff19ca621c2537e2a09c0b60667f1329cc572d6"
+    },
+    {
+      "path": "public/sattari site/cymbal.png",
+      "sha256": "a99e71d9a5fb3ae87711126041a6ec7454d82116daaa57af7dcb568d4afda80e"
+    },
+    {
+      "path": "public/sattari site/drumpad.avif",
+      "sha256": "07d9485bc5150dcaad83d91bc69a16a3caadbea491a7b0424dc058b9b6ef74d4"
+    },
+    {
+      "path": "public/sattari site/drumpad.png",
+      "sha256": "427c67685b516512530459766deae845b614acc16bcbd5916c3f62e73d7c6887"
+    },
+    {
+      "path": "public/sattari site/drums/cymbal-felts-2.jpg",
+      "sha256": "fbab2eb098db5fb00772bf10b8b8de87c53697b2173e81cb14dfdea174837728"
+    },
+    {
+      "path": "public/sattari site/drums/cymbal-felts-3.jpg",
+      "sha256": "ae845791de876de4729df5aa7d6fedfdc03e022bdb7897374dc9fe367cdfb1bb"
+    },
+    {
+      "path": "public/sattari site/drums/cymbal-felts.jpg",
+      "sha256": "b7f18a597c1f7cb717465ab3e166df65fe526adfebf5fbcc378212109608df76"
+    },
+    {
+      "path": "public/sattari site/drums/darbuka-2.jpg",
+      "sha256": "b1cc521d2da05c319f6452bd54a01424fdaba29783e03503c618c078860ae153"
+    },
+    {
+      "path": "public/sattari site/drums/darbuka-3.jpg",
+      "sha256": "02d3667e79084ffce57f17040a182a84701fdcc16d583b1654f37f1e27dc1a69"
+    },
+    {
+      "path": "public/sattari site/drums/darbuka.jpg",
+      "sha256": "90260f121b391b533ac7becec59be57aa924cdecd552296904ef21215c0e2a80"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12-2.jpg",
+      "sha256": "a115a6122c6a9352cb765500ab5006f38a9799e9432f89c692a55d392cd322f4"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12-3.jpg",
+      "sha256": "4d4cbff72c8b66a0503412a7183d7e6971c596754b8ca0402e5b1308207e06d2"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12-4.jpg",
+      "sha256": "6b8e322fa50a09a7470e2c59c076b273845cb5445071c7e5a92a6793c4849650"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12-5.jpg",
+      "sha256": "c1df5a64469e2f266a0bb3d50a9b90aca35c785a02eca9a7dd0c16dae2a3e55e"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12-6.jpg",
+      "sha256": "d10b91d8f19e30fe8c9d8045cb0f492ad254ad500d7952a50eaae8822771120a"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-12.jpg",
+      "sha256": "53eb321a5f020b0a2d708f21c89410a91f160738255a323d877efbba4e0ce80b"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-2.jpg",
+      "sha256": "d8e9b82eb478678d52bb208920e3a0ab350c4a8ba96b8b4949e4bf5a427b80f5"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-3.jpg",
+      "sha256": "bbb0a4c459931671f11abfecea825b15e358265eab0f818a6e74b0c7f15d552d"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-4.jpg",
+      "sha256": "7a47144bdd95cd44d92661c7709693bb002df8a2e2dab7f22ea64f9a6cef961e"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-5.jpg",
+      "sha256": "b7c66e5ee966abab2853e929d44986b46b056596c230f67a48a9a3146c2e70fa"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-6.jpg",
+      "sha256": "9bc8f324c209ec2420943fd0679aa336911cb3ec86eb9e817a8c87c2ea9cfec7"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8-7.jpg",
+      "sha256": "cd4cdc509118d47b97edf7795f6f887fe5a91482983d651c646244ebc8399042"
+    },
+    {
+      "path": "public/sattari site/drums/practice-pad-8.jpg",
+      "sha256": "c77c97b1ec2ad2f02053ff644bfdafce65900925fe36977a2ffdd53999d95b85"
+    },
+    {
+      "path": "public/sattari site/efx.avif",
+      "sha256": "787e595428f3f287f142f0879806ca33d44f238012ae7fb1d131994849741932"
+    },
+    {
+      "path": "public/sattari site/efx.png",
+      "sha256": "af66736c0c9ce1f6be3d3f733ef0d1440ac318dc814b4c5233f07b8c4d1143aa"
+    },
+    {
+      "path": "public/sattari site/favicon.png",
+      "sha256": "67a7ffa23e945b2c6ea5fe28c0142b0f0ac41200d777724c03252ee02767be15"
+    },
+    {
+      "path": "public/sattari site/guitars/bass-guitar-2.jpg",
+      "sha256": "502f6d6255c30e6f4ad26dfa3abaf5b42d1ffb9129ffb4e8634ca4a71543c972"
+    },
+    {
+      "path": "public/sattari site/guitars/bass-guitar-3.jpg",
+      "sha256": "e7ef86ce3f1996bd93d3deef9132577501cc14025dd7037fcdfa2922eb1dab0e"
+    },
+    {
+      "path": "public/sattari site/guitars/bass-guitar.jpg",
+      "sha256": "8628b2481d5b9bc6d5c933ebc1e7ebb9e102e7eb2f95be06258e96e134517726"
+    },
+    {
+      "path": "public/sattari site/guitars/flame-stratocaster.jpg",
+      "sha256": "26ebdae97823975237d2ece041968103d9c2b2fc0b463b7eb667a0de483535d9"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-2.jpg",
+      "sha256": "a19ff3c660e3748c93bc26a2aab2b03df614a46fcb2051535aa06a5b2c07f0aa"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-3.jpg",
+      "sha256": "f6270ca45ead20fceb2babf12d8a1796520de0557d6344b51f91c798bf42470a"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-4.jpg",
+      "sha256": "52cb6f4ce7532b3284340ecc0daa80e63b81afc0e3dfa767583609c7e325c135"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-5.jpg",
+      "sha256": "cea0d0e08d3c576a8faf2c8b470640c3cda930dd1cbc92800e761099f0d3173c"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-6.jpg",
+      "sha256": "841523ab82f5f1eb1440a5a0953139a1d9e028ef67f26f5a4676a98320c92c0c"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar-7.jpg",
+      "sha256": "d13befb27956cc5fa649ef0957200ba48e0468d301d8137d76d701e96889283c"
+    },
+    {
+      "path": "public/sattari site/guitars/nylon-guitar.jpg",
+      "sha256": "305e0aa41411561ca08fef43042a547e01b88aeaec23ccea278563dcaa766a18"
+    },
+    {
+      "path": "public/sattari site/guitars/steel-acoustic-2.jpg",
+      "sha256": "9ab576d64ef6f6a3f298a381563c3f8fd12febd7bc02638e8b93e05489eb42ca"
+    },
+    {
+      "path": "public/sattari site/guitars/steel-acoustic-3.jpg",
+      "sha256": "9b69288dfabffe0cbadf7539841f1460765dd516ff290d21db23a2904e32cbc2"
+    },
+    {
+      "path": "public/sattari site/guitars/steel-acoustic-4.jpg",
+      "sha256": "c6869e7f95129ccb4a8fea9dcdf8207dea3d2b8c18d9f05bddda9db8f6c0aff4"
+    },
+    {
+      "path": "public/sattari site/guitars/steel-acoustic.jpg",
+      "sha256": "83633c38006f62e884c75168668a860a107035601f9db42e833d1aad42f360ad"
+    },
+    {
+      "path": "public/sattari site/hihat.avif",
+      "sha256": "0f650f6d29a904a3d353621d7acde46fec3ee61e743450a85a4827ed97b46c89"
+    },
+    {
+      "path": "public/sattari site/hihat.png",
+      "sha256": "1e0e3269bb70e551cd0146a3bc7943b1463c719cecde2f21cbd4ce7955004031"
+    },
+    {
+      "path": "public/sattari site/sattari logo.avif",
+      "sha256": "910c32eb79d2cfd148df37de99d3ec1d5a6c7a99c67ed55965cdf869c60e0f79"
+    },
+    {
+      "path": "public/sattari site/sattari logo.png",
+      "sha256": "df90cbf6247e1ed51bdfa70f2c46846ef8396356c7294a03745b87ceb64291fa"
+    },
+    {
+      "path": "public/sattari site/sticks.avif",
+      "sha256": "2d2fc91ee4ca061101fe33c1dd9bb63619693ab3f94b2370ea877e55f1a8928a"
+    },
+    {
+      "path": "public/sattari site/sticks.png",
+      "sha256": "3af4a80cf11ba67201e4f20d3a8c50f39e72a118d622ac3cd0f94489a7cd39d8"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-10.jpg",
+      "sha256": "6e317aadd0479d11175e05b73ffc9232c7674f2675ba7ffa882232784159bd46"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-2.jpg",
+      "sha256": "64aa3604cd176ba53589b9a637cf2bb4a2a85fb46fbb068fbc8897f62d738f3a"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-3.jpg",
+      "sha256": "228924a3954604855b096c7f631c539dd1ce7cac115fce833dc2a7886fe7c31a"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-4.jpg",
+      "sha256": "a8e12365c9ddfa9d3e8a5739ee41048b0ef8bb5fc70652cf869891a4e52a35fc"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-5.jpg",
+      "sha256": "52774792e73fec1aef30de671699bf21e706e5344953d9f551c472ead87facad"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-6.jpg",
+      "sha256": "d7f55d81748b4439ae806106b691ddd46595432de319369e402dfb8a76a82a14"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-7.jpg",
+      "sha256": "b7f46d27a5c9354db5ce31828a6c3d32b06d55bf3798a08f2061d0f990980f32"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-8.jpg",
+      "sha256": "17e8d9e489bada14836b9e27ca8df2550a98e6fc3ba9b80eedcb549ca10c2ab7"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic-9.jpg",
+      "sha256": "8f180a84339d706e44a3e33f028d1f3e0eff676ac272bcc2eb2bc57691e59994"
+    },
+    {
+      "path": "public/sattari site/violins/brescia-acoustic.jpg",
+      "sha256": "99625049314eb22a456709cc6a5f810ce735997c647e1dc02d6ba810cd7044ee"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-2.jpg",
+      "sha256": "cd36b9caa21c0a7f88becdf792f0bef7affaef7bb6714445e5ae54a33931314c"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-3.jpg",
+      "sha256": "04d43aa225465b0a1d96081213c75c6954a4b9021407027810bca9481e5b88f7"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-4.jpg",
+      "sha256": "4140a18a7d7cfb4df8a11d7a6bfb2ad37c8abab70611bebfa81bb55afbe3ffaa"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-5.jpg",
+      "sha256": "71c873fed7c03be9fa564cc1ab2f4959974cc0f969312901e5f6bea7f49408d8"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-6.jpg",
+      "sha256": "c459c2f60efa9cf2f873d4a56adc85317063d9f0f1cef476a80b88b58593478d"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-7.jpg",
+      "sha256": "faaebd8425536ec772aba44f0ec0f76955e9621bf4d78875b54cf33719159267"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-8.jpg",
+      "sha256": "5176fa60ef0455a911a7fd49997680a7d21ba144945d21e42748d6bc8a740132"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric-9.jpg",
+      "sha256": "15d02f62a57afe217ba2cd360e71cba314410d9bd745d41daa5312eee6665944"
+    },
+    {
+      "path": "public/sattari site/violins/chiara-electric.jpg",
+      "sha256": "e6f58f52cefb1439f390b73d951a44de93b35340bcddc712556853ac3564424b"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-2.jpg",
+      "sha256": "2a8c7001e4b738de7111bfc85c850e2b8b069569e2d56f5b6b8a3edd5eb53ff5"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-3.jpg",
+      "sha256": "5da117f643f310a845b18b200b322cf45a2a6828fad2448881f095fcc76b25d0"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-4.jpg",
+      "sha256": "005bb0fef8932d5bc4f8a9140e397c36691a881fae1748feb5a881d401d31836"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-5.jpg",
+      "sha256": "5bab59c2a530b70196143cf7c5d5774735b74dc4c9cf1929ade1d06b648bdc02"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-6.jpg",
+      "sha256": "1c995906f188d39678dfefe174fe64261063034b2f3fc9f07afa4561f4b6a476"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic-7.jpg",
+      "sha256": "29dae6e23a7228252e17623ab919d0babe27fec52748f0328819d4b288a895bd"
+    },
+    {
+      "path": "public/sattari site/violins/cremona-acoustic.jpg",
+      "sha256": "b30f114d9c72fab97bb174acd60283b2fd4988f8ef30c9ae55b225b108b83b22"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric-2.jpg",
+      "sha256": "83917eb43c3cb6e896fbe3880c08f6fdb866dd758b08696a509644d04add7d45"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric-3.jpg",
+      "sha256": "95a74f4d5ba30f0065746fa8b5f2c54c2f010d7165a08dc3b6ed14c1ba272ad0"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric-4.jpg",
+      "sha256": "9c5fa55cb0bf818ce5d8eb069ef9e2638ccd76a7fad15d4be053e16b631acd1a"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric-5.jpg",
+      "sha256": "e1a00865a0ef87a2647612520b8ccd53db083fb6872485dc35cf880490f52e49"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric-6.jpg",
+      "sha256": "de80a4646beb524ca138cd3716719dbd96cf767d3bfbffbaadbc8e64043cc2ca"
+    },
+    {
+      "path": "public/sattari site/violins/matilde-electric.jpg",
+      "sha256": "3a599db9a10b5ba7a7f4d30818477a5ebc4a1176c2a3f97a24900bc5db991bee"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-10.jpg",
+      "sha256": "f9ce1804def06115454d3f371114f0575934073e22a7c596483f25fef284075b"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-2.jpg",
+      "sha256": "2d725f1a99d3955a1e7fe0cd1aa9ad50c972708a9c1a0ad673bdc8a3aacef3a3"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-3.jpg",
+      "sha256": "ce12a7cd9de252da3709f5ed031f3481e6ab9358fca7ac503337eedea3967415"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-4.jpg",
+      "sha256": "e658d562dd8564128102385bc3157d2a673a2db24e9add1a3bf0e99e9fd1d572"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-5.jpg",
+      "sha256": "55b1f8a762b0ae5a82d5ba737a4e03999574bf18a66dba05031de312522084be"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-6.jpg",
+      "sha256": "f1193c05a542197a92a03e009733af4c39be8dfecace986f052954a4a38cb58f"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-7.jpg",
+      "sha256": "090e694bc267c116a57ea4fec7e5288992403d92d2e1a524c99f87351c2d08d4"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-8.jpg",
+      "sha256": "cc87773f9d3d9b56760adbce6392915f1e8b1403593ba79a98d2742a2fd41586"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric-9.jpg",
+      "sha256": "15d02f62a57afe217ba2cd360e71cba314410d9bd745d41daa5312eee6665944"
+    },
+    {
+      "path": "public/sattari site/violins/miami-electric.jpg",
+      "sha256": "4308d9eab02a63f50e191c272af7ac3fff05a0d2296d9262bd3f0b85789a2415"
+    },
+    {
+      "path": "public/sattari site/violins/rosin-2.jpg",
+      "sha256": "1e34c662e3d06c57cc67565d4f7daa75b6ae1d9c6e97afd9f599562ae8a7a7c3"
+    },
+    {
+      "path": "public/sattari site/violins/rosin-3.jpg",
+      "sha256": "5ca2446f8fca04760d8c574aa240f29a66bc132c4a7ce76b794f8ba503ed4815"
+    },
+    {
+      "path": "public/sattari site/violins/rosin-4.jpg",
+      "sha256": "2dba5f05d657dfa2ea52edc16b5bf179e1850df7c0b47e2d4e2b2500f2adfd0e"
+    },
+    {
+      "path": "public/sattari site/violins/rosin.jpg",
+      "sha256": "75e918b51e0d02f389693e2608a95f906b801a5fb7be1d79520a7cb24cd25aae"
+    },
+    {
+      "path": "public/sattari site/violins/violin-pickup-2.jpg",
+      "sha256": "81ccd0adee99486b4c0b7ea897039bc17f2f48d0bbd007ec976bb3e186a8065f"
+    },
+    {
+      "path": "public/sattari site/violins/violin-pickup-3.jpg",
+      "sha256": "f7b17fe3761afe2183882bce103637f208e88af024ace31677afa45430c1f269"
+    },
+    {
+      "path": "public/sattari site/violins/violin-pickup-4.jpg",
+      "sha256": "bb6d9c62581d02142333c52d91228ef94f605e2714c4305aefc8ea43e99ff241"
+    },
+    {
+      "path": "public/sattari site/violins/violin-pickup.jpg",
+      "sha256": "00de99644350d50b23d24d9ecf642da78b8616f82b4c31376d6c585c6e9bce64"
+    },
+    {
+      "path": "public/sattari site/violins/violin-strings-2.jpg",
+      "sha256": "d5586aebf0bb40d7180a8359e0ffd15e2059922e269a4ecfaa59d03953fe8bdc"
+    },
+    {
+      "path": "public/sattari site/violins/violin-strings-3.jpg",
+      "sha256": "d164de3a9f1176c207192471c42e912f666e1ee44aab65a8d9d1e31c3ee4cae3"
+    },
+    {
+      "path": "public/sattari site/violins/violin-strings.jpg",
+      "sha256": "c458f1cde985614e24225c09b1d51b551d56042d7cdccc4fff6a9eee0ceae1cc"
+    },
+    {
+      "path": "public/staff-cc6436694e.html",
+      "sha256": "4149aa1324488cc4d51bc191b8237d2a3208f4974b1bf7bb9fec26553ec8ea60"
+    },
+    {
+      "path": "public/stem-separator-credits.txt",
+      "sha256": "3fd5ea2ea674daf062d8b8a3525a7871e30ace4b812cdc353d8fd03ec27910c2"
+    },
+    {
+      "path": "scripts/arrangement-browser-qa.html",
+      "sha256": "26c3310a1a93e0fde13389acd18d4a9ef268c2878a7d4d8e08e87f139727b6cf"
+    },
+    {
+      "path": "scripts/bounce-library-qa.html",
+      "sha256": "74e508ede8838e565bde943d067966904aeaacb377077633225c17b8c779bbaa"
+    },
+    {
+      "path": "scripts/capture-separator-demo.mjs",
+      "sha256": "e2998848891810692f533a0456bc5937fcabf01f188e5269336804029c95528e"
+    },
+    {
+      "path": "scripts/capture-tool-reference.mjs",
+      "sha256": "9e6af4359ef490d26462c8894be4734ca3050aa1d052ea5af1ac84e03d35ba1f"
+    },
+    {
+      "path": "scripts/check-arrangement-core.mjs",
+      "sha256": "6946af476d56a830c913688e78bd38df1c3454ec89adada2fa3fb2f969f84504"
+    },
+    {
+      "path": "scripts/check-seo.mjs",
+      "sha256": "52b13e3388bf36037b2afe8da3f718b2a878138281c287e21a9c3353611ab4c0"
+    },
+    {
+      "path": "scripts/compressed-window-qa.html",
+      "sha256": "2ca5097b0aaa039e90be449ce0c3bcb780b62f55de727f6cea570c124df4ba62"
+    },
+    {
+      "path": "scripts/create-studio-release-fixtures.mjs",
+      "sha256": "0a48adb7510b312b93e7e14ebeb01397900ad3a2ef6c22d22d23e8a331c04970"
+    },
+    {
+      "path": "scripts/create-tool-demo.mjs",
+      "sha256": "cfc3a89e64cc6dd8396736ab0273334637a916f8dabc1f604b85dbfac0170cf1"
+    },
+    {
+      "path": "scripts/fixtures/three-minute-source.m4a",
+      "sha256": "e631e6461544d6f38ef04df88fba39f152879b124ec6899463bae0689bad1c58"
+    },
+    {
+      "path": "scripts/fixtures/window-source.m4a",
+      "sha256": "760c6d7bd65772aa68a1783cd5608616912811c75442d55271262ac5a6647dbd"
+    },
+    {
+      "path": "scripts/fixtures/window-source.mp3",
+      "sha256": "44b301f9390949ec836d6aadc381c9776348f86f3c3f120965c0f869fe6e34c7"
+    },
+    {
+      "path": "scripts/grain-stall-qa.html",
+      "sha256": "513ad1d8247182c3c78d95589f9903cf3252981f643593e7e46bfc44ec5c62e8"
+    },
+    {
+      "path": "scripts/hardware-session-qa.html",
+      "sha256": "5d50926a0f1392830770cae4b9b5df94a0c70a0c53c37ac3e38700a00016cc37"
+    },
+    {
+      "path": "scripts/hash-staff-password.mjs",
+      "sha256": "32aad8ed77d9f4c56f044fba9cc98d9dde09271f3e07884acb4ef78ec7d00658"
+    },
+    {
+      "path": "scripts/input-audio-qa.html",
+      "sha256": "bc70b45dae6e235716c8e57b601d02d6322799351d51e1e35e64fa710feac04b"
+    },
+    {
+      "path": "scripts/input-loopback-qa.html",
+      "sha256": "6dd668d8cef1b76eff3134b0c3b3072d59af292af5fc8b4678317b9c8adf307c"
+    },
+    {
+      "path": "scripts/input-recording-qa.html",
+      "sha256": "f22718dd2b363db50824a62a5ba1b5ce69f880f2d9d99266d3b5b15a993df8ee"
+    },
+    {
+      "path": "scripts/instrument-browser-qa.html",
+      "sha256": "f188d38ba21f0748635a5f2586693c712365495145c17c98f7103a70e4ad2827"
+    },
+    {
+      "path": "scripts/live-window-qa.html",
+      "sha256": "4535587a5f877f739d48f2378c340b82b8158a84a27fbdbda8dd9db419f221f7"
+    },
+    {
+      "path": "scripts/long-export-browser-qa.html",
+      "sha256": "e36422efa072e11b36424729e91baee24299c6ea5b47543a724eec467fd9e17a"
+    },
+    {
+      "path": "scripts/loopback.worklet.js",
+      "sha256": "708867680187b5f840afa4d45a8eb32b4f96e501fc22aba483f3285e62ba7276"
+    },
+    {
+      "path": "scripts/loudness-tempo-qa.html",
+      "sha256": "f7e40bce96dc6e172361beb96e66b31703f2b6f714bb58f99368ea4eedb1ef56"
+    },
+    {
+      "path": "scripts/master-pro-browser-qa.html",
+      "sha256": "3998af0ed84087990cee1cfa9ffbbff1b646036e8b76e7a4fda7c550f9e00601"
+    },
+    {
+      "path": "scripts/performance-recovery-qa.html",
+      "sha256": "af7286428257136286961d97a77b8b1c31ad1fa0a67ed3509c8226594909335c"
+    },
+    {
+      "path": "scripts/prerender.mjs",
+      "sha256": "43a90e5ca75c831f0c706d21ab4244d08504f5e3fd45c16a0f4838f662ed78e7"
+    },
+    {
+      "path": "scripts/qualify-home-hero.mjs",
+      "sha256": "abe0ce0253f300a6e4a584957dd5bc9f9302bc6fcb65bb67fb2f4f39701ea5ba"
+    },
+    {
+      "path": "scripts/qualify-hub.mjs",
+      "sha256": "edaf837772315fa7dedf6011eef6190124f88db4a8e5d8ebebe77289f0b03207"
+    },
+    {
+      "path": "scripts/qualify-local-seo.mjs",
+      "sha256": "1ef754779c49bda075df13c19794af74e90d75f3816b77a0551e72131126f3c3"
+    },
+    {
+      "path": "scripts/qualify-loudness.mjs",
+      "sha256": "5be78a044fc44cd805045fa8b98c57cded90322f321d43de0dfd821045b0e7bc"
+    },
+    {
+      "path": "scripts/qualify-music-resources.mjs",
+      "sha256": "98d37d009f6c3d7f2d17234d592a3b177e27c9652dd8ff40ebf04154c1caf6ac"
+    },
+    {
+      "path": "scripts/qualify-navbar.mjs",
+      "sha256": "f9be58530f8c6ff0be6748bf2335a9419bbc805afef1d09980237ffdeca44cfa"
+    },
+    {
+      "path": "scripts/qualify-seo.mjs",
+      "sha256": "212561eec62d13599b1fd7670ec855027dba396f6e112ba6f3367ad3f5ccf3d7"
+    },
+    {
+      "path": "scripts/qualify-separator-analysis.mjs",
+      "sha256": "58adc542545f054896e8e4982a504c7a2302e60ac4bcce863bf712db0589d080"
+    },
+    {
+      "path": "scripts/qualify-stem-separator.mjs",
+      "sha256": "6954e606f5c8e237a31eaa6a800451f56beb72281087d2f7b735c47b1961fc15"
+    },
+    {
+      "path": "scripts/qualify-studio-bookings.mjs",
+      "sha256": "f603d3a04deaba6d47ed9d36fc1c6dbd26b418edf19ba0f99073d463405518e5"
+    },
+    {
+      "path": "scripts/qualify-tempo.mjs",
+      "sha256": "1b926649f008bfd6c0eada68bc0aa172ed4c171b9eb94c75ac8ce3c46ab95726"
+    },
+    {
+      "path": "scripts/rack-browser-qa.html",
+      "sha256": "926bcde9fffd369f2b6b4a6af5229986bf05b9517f0a1a3cffe20dbafe7bee7c"
+    },
+    {
+      "path": "scripts/recording-preflight.mjs",
+      "sha256": "7a219eff91beb5170edc29fd6ccffe82d3a229ea71dcfea25a19fcb7b927ebb7"
+    },
+    {
+      "path": "scripts/reference-lifecycle-qa.html",
+      "sha256": "8d7232982b483635338f7539da961070b1bc556625ff9e8963c2d702296afbe5"
+    },
+    {
+      "path": "scripts/release-artifact.mjs",
+      "sha256": "90e4d65bc8deccb059edb071b4e30483aa052eced4fd934b7f05865b5b3931fa"
+    },
+    {
+      "path": "scripts/report-performance-support.mjs",
+      "sha256": "2f9434df8825ae5f8005f1685fb99322e8bc8594a1167bae5ab0e027a70995db"
+    },
+    {
+      "path": "scripts/run-studio-audio-qa.mjs",
+      "sha256": "85d3c1372e682d353a4f442aea263aca64c3a1d54138dca6fd0f6161b006f753"
+    },
+    {
+      "path": "scripts/run-studio-browser-qa.mjs",
+      "sha256": "658038fdca8dd1f0cc7a5efa7affc4607394c52ff25afce8acb7e25b04cfb973"
+    },
+    {
+      "path": "scripts/run-windowed-soak.mjs",
+      "sha256": "da2028eb15298c48a0ed74c7d321f515615d8ba2669df42539d60925e203ff83"
+    },
+    {
+      "path": "scripts/session-ui-qa.mjs",
+      "sha256": "e129de0976032f28e00d9587fc77f495bfccc0ac3774cf4257ce00507bd4d680"
+    },
+    {
+      "path": "scripts/setup.sh",
+      "sha256": "ee9b99573cea3fcba4edd9eb9506e9ba18ede7a1b5066ff15ff54a651b2c2cac"
+    },
+    {
+      "path": "scripts/streaming-storage-qa.html",
+      "sha256": "979d438e9582d90cafdf5b007d8085974e0838bff302f3444276597946d72562"
+    },
+    {
+      "path": "scripts/studio-release-gate.mjs",
+      "sha256": "2d38a1237774efedc4ccecf960a04f0a861a95f9d159260402a3b8fb77fe5bb7"
+    },
+    {
+      "path": "scripts/studio-ui-fixture.mjs",
+      "sha256": "f9c5066d10660d612405d63a79eff42308dcee607b9b188a69c59991153d0872"
+    },
+    {
+      "path": "scripts/sync-audio-qa.html",
+      "sha256": "5a2a0c1032a1bef6494387ed46fe10d9aa63b7a4bb7e6ce9eb58414bda49d4b5"
+    },
+    {
+      "path": "scripts/verify-studio-recording.mjs",
+      "sha256": "fe526da34d05a3663fdaa76918ff55b28177f8a3a9bd24ff2b2d2883695ada03"
+    },
+    {
+      "path": "scripts/windowed-replay-qa.html",
+      "sha256": "98624af77088ceed05140b8a31c732d2f2935cfcd2333b052398ff596cb3a40a"
+    },
+    {
+      "path": "server/backupStore.js",
+      "sha256": "908ca222332715bdfa90c3d65dddc9cf362a8a15cbe0c148d72291da797d1613"
+    },
+    {
+      "path": "server/blobs.js",
+      "sha256": "8ad9e11e5f4c61c487e544c2a82e48ad852e515f822074515aeac208bfbe92b4"
+    },
+    {
+      "path": "server/catalogStore.js",
+      "sha256": "ce3631e2ee468abb2b3a896d29c17fe4dad0dfaf55bf8cd1a7d5bbf77846cf6e"
+    },
+    {
+      "path": "server/checkout-server.js",
+      "sha256": "d4a47694aca949fdabb8949e3bbc261d8320574da9f06b3e22b2217f74dd3d8b"
+    },
+    {
+      "path": "server/checkoutOrders.js",
+      "sha256": "820dbf3d0a2bfebd71b1c2ed61c605b480c42b4f10a167718d667b3c083fa920"
+    },
+    {
+      "path": "server/fulfillmentStore.js",
+      "sha256": "d40e4bc0b46703ca7aafa9e3e23d43a2877bd28e09dbdc346a691e1136b67544"
+    },
+    {
+      "path": "server/functionAdapter.js",
+      "sha256": "fd11d3187c831f7100f372f66ffb3cc603b1d9c848013015b8f5eb2044648e10"
+    },
+    {
+      "path": "server/imageStore.js",
+      "sha256": "19dc51aece16fb10078558f28c742fcd27106014297c6bc7f477ea929840b43b"
+    },
+    {
+      "path": "server/inquiryStore.js",
+      "sha256": "872d6f78803c74a3f12a00b33463034c5192248d49295ed7e58ff517934c233a"
+    },
+    {
+      "path": "server/ipHash.js",
+      "sha256": "83cc14662f05ad604221ceca8244ab7db28886b968f27975fe332ab4f09b82cf"
+    },
+    {
+      "path": "server/log.js",
+      "sha256": "5d84c95ec1913fbcc44c743f7c9b6b5eecaa7c84184438bf5e6260a333a2c587"
+    },
+    {
+      "path": "server/loginThrottle.js",
+      "sha256": "7a6eb93fb5fb66ec10e4d69d1f4b99b57404234386853ae2812f1ca3a3b5d846"
+    },
+    {
+      "path": "server/orderNotifications.js",
+      "sha256": "a840725b86685f66967417813bcd02ab2690b577cc98bc8b976e68473b84458e"
+    },
+    {
+      "path": "server/orderStore.js",
+      "sha256": "7670c430f8159154e4aa180e11a645832f81e171ed3b916b90153d8cb2c689be"
+    },
+    {
+      "path": "server/siteMetricsStore.js",
+      "sha256": "f6092751cc78e510885cde30897505444db967d3eddac8e34794e7f5d1cfb53b"
+    },
+    {
+      "path": "server/staffAuth.js",
+      "sha256": "6826c1571b890cbaa135153138ce8f51c3619c976f175817fbd6a5fb072eedad"
+    },
+    {
+      "path": "server/stockStore.js",
+      "sha256": "396af57c3e9cb27a9980832e1cd8f1a30da1c58221525b5799a32d0736cc4966"
+    },
+    {
+      "path": "server/stripeClient.js",
+      "sha256": "c5723463b9725d9b5ff776d0957430113f3842453afa0ee42b4a8af3e1e7ff03"
+    },
+    {
+      "path": "server/studioBookingConfig.js",
+      "sha256": "0b86c2d2310f8d3358ca697b626436552c353ce4c44db113a49e191469fe4924"
+    },
+    {
+      "path": "server/studioBookingNotifications.js",
+      "sha256": "fc54300b830562f47a68aef8ce3b62a4fa187f34751abd7d6c304de061d6ba46"
+    },
+    {
+      "path": "server/studioBookingStore.js",
+      "sha256": "e4d101594f9ec412b442c64cc8162cc918cf6eb5bf3461330eb6acd48d91bdd2"
+    },
+    {
+      "path": "server/studioBookings.js",
+      "sha256": "4f12515477f1f774be2e65cb0435aaba7f1cc84c20ca8b2f07f5675c497b09d5"
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "eec646856804c0cff26352f6e4cc88afab05c355ce43f992470804274581ef9c"
+    },
+    {
+      "path": "src/components/AboutPage.jsx",
+      "sha256": "4a3345cdbb2cb0346fc8ef7adcab6041ef3454a997a2394cb66a28cae9224104"
+    },
+    {
+      "path": "src/components/AboutPage.test.jsx",
+      "sha256": "8f17a5d18b4a63918ecaa713a78076ff45865a4bb6335a5c86ef2b94b077539f"
+    },
+    {
+      "path": "src/components/AboutSection.jsx",
+      "sha256": "b7433c3b453020fd5489000a9686b0553f15f38b741e7ac943ad5df8e7910100"
+    },
+    {
+      "path": "src/components/AudioAlphaSignup.tsx",
+      "sha256": "cd48445d71543f53b50805cf8981ea1a3579c50101b9ab615f8dfb935db5054c"
+    },
+    {
+      "path": "src/components/BackgroundMedia.tsx",
+      "sha256": "49986e257aea29855434a45b1395942a6c52db01ebcf879ffd8c8d2e5515ebf8"
+    },
+    {
+      "path": "src/components/CartNotice.jsx",
+      "sha256": "6b256e337789621a0d58c9dfa26799750e1164098593d4321c733aa50b6337ce"
+    },
+    {
+      "path": "src/components/CartSidebar.test.jsx",
+      "sha256": "a895417775cc8e752f9bab18b83d83e0bfcc07660600286a384be54ae60529cb"
+    },
+    {
+      "path": "src/components/CartSidebar.tsx",
+      "sha256": "704e3dcaa2b39b8de4ea1aa430f60a55c4a483c2e31bbdbc5f7c2afbd9cce54d"
+    },
+    {
+      "path": "src/components/ErrorBoundary.tsx",
+      "sha256": "688f3e6296b4ac4f778a37ca7065d6cb75f7a85879d779e14265a4ee3903202f"
+    },
+    {
+      "path": "src/components/Footer.jsx",
+      "sha256": "2f91bbe9808899c6cdd1494bdccb14cc69b9bfaf8a0cdff0440bd6bf74f2a9d9"
+    },
+    {
+      "path": "src/components/HomeHeroBackground.jsx",
+      "sha256": "b4945c710c9600854a4be1029a1bed1623231d25d1fe47e7dd8e56c98099def6"
+    },
+    {
+      "path": "src/components/HomeHeroBackground.test.jsx",
+      "sha256": "202d9a573bda47b32a5f2c1fa2552de78fa2e35bed104d2d34347fd3c9263a6c"
+    },
+    {
+      "path": "src/components/HubListeningDesk.jsx",
+      "sha256": "7d5afb94a365b57123b87739e9582d5339b63f649c62a3069c1f59aa5c59dbf5"
+    },
+    {
+      "path": "src/components/HubListeningDesk.test.jsx",
+      "sha256": "910a85fd7e6736dc82b4f31351ef92cd4e9ba9b8111755fc2699b4d591fecaf2"
+    },
+    {
+      "path": "src/components/InstagramFeed.jsx",
+      "sha256": "37ec3274757c7e422c1c129ac47e31474b00fd36e55a063f58c7473413bef193"
+    },
+    {
+      "path": "src/components/LearnArranger.jsx",
+      "sha256": "12677287138d3955645cb5ec13dce9633252e9327132569860b58a0443bb6985"
+    },
+    {
+      "path": "src/components/LearnArranger.test.jsx",
+      "sha256": "64c499de61540657e7df797f30615641b74d9939e5c0dae1a3a6b78890ae007b"
+    },
+    {
+      "path": "src/components/LocalSeoPage.css",
+      "sha256": "04100d9b9509f9c51a0ffb74a4d9b235321df5ae6fc68b36eac49e5860132cac"
+    },
+    {
+      "path": "src/components/LocalSeoPage.test.jsx",
+      "sha256": "564b6d1bfd92a93a406b6f5e46172d0ad38d24955c6fa44c6768b421ce738c20"
+    },
+    {
+      "path": "src/components/LocalSeoPage.tsx",
+      "sha256": "e02659c05cda8eebf346eab678400298c9f93890a4a6b52b6368f0bbb67aafbb"
+    },
+    {
+      "path": "src/components/Navbar.jsx",
+      "sha256": "b865894d5fa01abfbf6b6af4e27fe86759feeaa975aebfd5ea22aa6c196b8133"
+    },
+    {
+      "path": "src/components/Navbar.test.jsx",
+      "sha256": "1c944f1e4092f5c147d1bf1932299080877385a224cdfa44dda460ddc2a42980"
+    },
+    {
+      "path": "src/components/NotFoundPage.tsx",
+      "sha256": "8f699c618644537c32c565e352254e9bc5d038126a44d2abf14df3cb2eb9e396"
+    },
+    {
+      "path": "src/components/OptimizedProductImage.jsx",
+      "sha256": "37619a4b76c6903d6dae23f83cfebd9f32a695df11f67dbaec6e721afeada12d"
+    },
+    {
+      "path": "src/components/RepairPage.tsx",
+      "sha256": "2eda1b3d6d29c26b9125b525c5e8e76997f34b4981f1609c60024271ea5ff1db"
+    },
+    {
+      "path": "src/components/SattariPortrait.jsx",
+      "sha256": "15f050dcfd987b540100ea4241cd934ff35616062dfa6055f4493c89f368a528"
+    },
+    {
+      "path": "src/components/ServiceInquiryForm.jsx",
+      "sha256": "54c5c392118c20e1e2741f7c0c26d3a1258827f0b6cdeeaa401b1582ed7cbab2"
+    },
+    {
+      "path": "src/components/ServicesPage.jsx",
+      "sha256": "f770e385794143b468344ef47ea0f743a360a45a387d7950beebd48fc81eb8fa"
+    },
+    {
+      "path": "src/components/ServicesPage.test.jsx",
+      "sha256": "b717b5efcaf8240da0990adc79d1fb0c740bb1231ef6ba256c159e131dde558c"
+    },
+    {
+      "path": "src/components/ShopAssistant.tsx",
+      "sha256": "d685054534dcf7f17adb63832e7f63b27141f8126dc8deca0d5336c00afb386d"
+    },
+    {
+      "path": "src/components/ShopPage.jsx",
+      "sha256": "d596ae53f54a726801b83a23acee565d91d5dc6d98ccdcae31c46761bf6e0991"
+    },
+    {
+      "path": "src/components/SiteMeasurement.jsx",
+      "sha256": "7cf32b24d214aeb093b9fce31687a985f504dd21f41957f4def8dca4ccf37d29"
+    },
+    {
+      "path": "src/components/StemAnalysisSummary.jsx",
+      "sha256": "9575a5c0f8058158b304cf9cc129b76fdf09a1d2dfeddc0ba0e7610b65c7f3a6"
+    },
+    {
+      "path": "src/components/StemAnalysisSummary.test.jsx",
+      "sha256": "4b50dc2aa37c104a0b961512564480e9c9732e029c965629fffc33e49acf6cd9"
+    },
+    {
+      "path": "src/components/StudioBookingForm.css",
+      "sha256": "62d9366400fe23d35c02e73526b6c9ae162db93103b3a70a5dfacce97554d645"
+    },
+    {
+      "path": "src/components/StudioBookingForm.jsx",
+      "sha256": "06e2fbd3b72b5adb6c855a23a6cd2ff1e3609075ba8ffbc32936ac8c7571a252"
+    },
+    {
+      "path": "src/components/StudioBookingForm.test.jsx",
+      "sha256": "808dae299270793ad4c8b2e1684f8518a2d725dc92fc05bf7dc8b6179d80fe0e"
+    },
+    {
+      "path": "src/components/ThemeToggle.jsx",
+      "sha256": "84c9a441c01180518663ef92a640d7e08004d019518feb25d9cefaecf4a574fa"
+    },
+    {
+      "path": "src/components/ToolReferenceLink.jsx",
+      "sha256": "589b9136d42a8b5b23c9a7b7fbe7196016c0cd81819c94966e8b5bdd80995764"
+    },
+    {
+      "path": "src/components/sattari-custom-site.code-workspace",
+      "sha256": "349a61ea685756e6dd1867f157c0e065465b30924db7b6534025cebde44a461f"
+    },
+    {
+      "path": "src/components/studio/ArrangementEditor.css",
+      "sha256": "45cc60c62efeb663577e03fae02c34503ade9d139632a60eca56b315c0dd26d2"
+    },
+    {
+      "path": "src/components/studio/ArrangementEditor.history.test.jsx",
+      "sha256": "a2d6a0a0acdba2c551e975e2f5b4a0d02e9730671240a4eb125e69db61619227"
+    },
+    {
+      "path": "src/components/studio/ArrangementEditor.jsx",
+      "sha256": "3dd3f4204241562b518f684a65586d4c0dd7b799e4c650f4304660630ed38126"
+    },
+    {
+      "path": "src/components/studio/ArrangementEditor.test.jsx",
+      "sha256": "f9d824beab2837abdc32bc3e3db5b20b298d2afe0f8c7df41b6710ecb3334474"
+    },
+    {
+      "path": "src/components/studio/ArrangementNotes.css",
+      "sha256": "16f87c5d5ecb075d7f4ee109828cae372bb3f62f8c8fecc7d509a24b52ba41a5"
+    },
+    {
+      "path": "src/components/studio/ArrangementNotes.jsx",
+      "sha256": "289676add7c86f52e968bcb90ce52237de0f1f8d8b81d57118c825f23f80defd"
+    },
+    {
+      "path": "src/components/studio/ArrangementNotes.test.jsx",
+      "sha256": "37a898e86211fcd28d55d6913f7e357dd110dc26f5ad1a14822047519704361e"
+    },
+    {
+      "path": "src/components/studio/ArrangementRack.css",
+      "sha256": "6704e714da5643e7e3d89c87429656f4c7a4f0754a91424b40cb57f4d3e9e92d"
+    },
+    {
+      "path": "src/components/studio/ArrangementRack.jsx",
+      "sha256": "27574d91b18a1c7e029bfb69906a40b57bf3a0c435bfdd189c06322aa0fbd21c"
+    },
+    {
+      "path": "src/components/studio/ArrangementRack.test.jsx",
+      "sha256": "c70ca2e5cfff016efc8ad9f1e3f919595c483832857fda746c03e0f7767e6f81"
+    },
+    {
+      "path": "src/components/studio/ArrangementSequencer.css",
+      "sha256": "4f21bb84891158bde85a1c9e89c9576bcb348d0a1485bf2712a866f95ea74994"
+    },
+    {
+      "path": "src/components/studio/ArrangementSequencer.jsx",
+      "sha256": "8621919915302d734ddb1f663d6ae4a1b59b52021a86069604138a1c1b8b1748"
+    },
+    {
+      "path": "src/components/studio/ArrangementSequencer.test.jsx",
+      "sha256": "b23234bda83c88a11d772d4bf9859b6b8ef2854857e00e642c6d8b180d285213"
+    },
+    {
+      "path": "src/components/studio/ArrangementWorkspace.css",
+      "sha256": "71d9356a70c220cad53123351dab26c33e8471bb2b0ca6286c9116e5f979a727"
+    },
+    {
+      "path": "src/components/studio/AutomationCurve.jsx",
+      "sha256": "db0fd5e3732c9bd2268f38b700f808891f129423c4354e76716cb733848021d9"
+    },
+    {
+      "path": "src/components/studio/AutomationCurve.test.jsx",
+      "sha256": "57cff2e80b562c92afc76a095a8bf70da5005bba342495ca5b46fd9e786ff678"
+    },
+    {
+      "path": "src/components/studio/BounceLibrary.css",
+      "sha256": "d5f6c2fc1f760b4f239fea7218668386ce63f897e2d81994d68755d840217713"
+    },
+    {
+      "path": "src/components/studio/InputStrip.css",
+      "sha256": "1de6d99172d83f997717d206cda0e2a496c7889ee39c6461fb5940ed966cbc51"
+    },
+    {
+      "path": "src/components/studio/InputStrip.jsx",
+      "sha256": "1b4216012267ca11c21b145f67abb18f1f0a0e1db7bc0233eb31cedfd368b0e5"
+    },
+    {
+      "path": "src/components/studio/InputStrip.test.jsx",
+      "sha256": "5dbcb93412dbe3e2e75fd1e41e15f7f879f7ac039eaa8996f152f0be0a7c47d1"
+    },
+    {
+      "path": "src/components/studio/LibraryBrowse.jsx",
+      "sha256": "7f6d80902f8db7a9af346c067fc33b242ee66ae1f125d7af0f65689b5c2a2c36"
+    },
+    {
+      "path": "src/components/studio/LibraryPreview.css",
+      "sha256": "4d30096e7464496aae1ade3c0d2d1adbf972ea14bbad8dabd43c90fdb581936d"
+    },
+    {
+      "path": "src/components/studio/LibraryPreview.jsx",
+      "sha256": "ef0b3b8ade14a5ec83e80a000230877a26786d849f3f144cfeb63a931445199e"
+    },
+    {
+      "path": "src/components/studio/LibraryPreview.test.jsx",
+      "sha256": "5bdbbd58db41826ef268681314948e5779ca4c2d7047da9e850066a204292d1f"
+    },
+    {
+      "path": "src/components/studio/MasterOutput.css",
+      "sha256": "931b95b28735c6adbd0040bf076a82f669bd68feb356195bc74286c57d16fca7"
+    },
+    {
+      "path": "src/components/studio/MasterOutput.jsx",
+      "sha256": "4801402e60f3ac4a7fbc1801b49341d22104c3da04a260e21ccf938127dd83b3"
+    },
+    {
+      "path": "src/components/studio/MasterOutput.test.jsx",
+      "sha256": "ff774cafd1cbd50a9880326755c82212d4fb8e4384cb9fcc5f31505322d0ee53"
+    },
+    {
+      "path": "src/components/studio/MasterOutputModern.css",
+      "sha256": "36b4f58be8f9c5d6a62c7abe08fece52a3e17b2d91566accb205b586e7d8fec5"
+    },
+    {
+      "path": "src/components/studio/MidiInputRecorder.jsx",
+      "sha256": "fef6a515c3a642c847900996007ce1b02a99d02206520cc1e1d3ff0f6518f436"
+    },
+    {
+      "path": "src/components/studio/MidiInputRecorder.test.jsx",
+      "sha256": "76aae7196aca64b37b7a9e0f85ab4fe845c1df10d65114c7eadc1d2cf43ec5cf"
+    },
+    {
+      "path": "src/components/studio/MusicLibrary.css",
+      "sha256": "b234fbc0d3fc995e6999003e0d5ad834f5bc93a484dfeb5c1987aed0ea4ce6e1"
+    },
+    {
+      "path": "src/components/studio/MusicLibrary.jsx",
+      "sha256": "ad5dd91ce4069eb0508a354e74a46dc5ed63af49ab47fee579b8a4deaa197b17"
+    },
+    {
+      "path": "src/components/studio/MusicLibrary.test.jsx",
+      "sha256": "ab9de72d68d7382615668d5604651482d3f94b13d6d1b1a696c6f6d1fc9d98b1"
+    },
+    {
+      "path": "src/components/studio/PerformanceEvents.jsx",
+      "sha256": "7667bd158ebbe47f55634b2ce4688ec6165f15c5391d646c35d4af8b488ec4a7"
+    },
+    {
+      "path": "src/components/studio/PerformanceEvents.test.jsx",
+      "sha256": "455c401968a26f48369f84a7a3e246502fa6d215df4d16269056e46a6fea3aa5"
+    },
+    {
+      "path": "src/components/studio/SessionOutputStatus.jsx",
+      "sha256": "b8605012d74ca36a74b56d035c5a82a2740bb4012136e0cef770ba1cd0bcd0f4"
+    },
+    {
+      "path": "src/components/studio/SourceChooser.jsx",
+      "sha256": "f671670d5508cb707c48a269f9a995ead69e288bbbca6b9d0c3e564053b9b1c0"
+    },
+    {
+      "path": "src/components/studio/SourceChooser.test.jsx",
+      "sha256": "e80f4e1a0c255eddd5ee2f83436400d32151e03cdc3cee481c9ea9eb73b0be5b"
+    },
+    {
+      "path": "src/components/studio/StemDeckChannel.jsx",
+      "sha256": "7a384cc5a9b3f207e6d806978bcc68b73e0c62134fb34e441aa44b557ef58d8b"
+    },
+    {
+      "path": "src/components/studio/StemDeckChannel.test.jsx",
+      "sha256": "2485eea08ff8cc06303fdffc8b1c0b7c1141c230f1e5166ee4346e23cee14522"
+    },
+    {
+      "path": "src/components/studio/StudioAction.jsx",
+      "sha256": "5e7dbfd96333dfe6afb2377cf417980b534ebfffbd7289ffa5c3ec7d0f4de037"
+    },
+    {
+      "path": "src/components/studio/StudioAction.test.jsx",
+      "sha256": "71d387c48ec17cfecf60ba4961e5111d73b8b01dae2972a7a9a86ac6f191465c"
+    },
+    {
+      "path": "src/components/studio/StudioPanel.css",
+      "sha256": "be779805a3a8b39e0658c40451343a3379c6a004106c45605ccb5763253b490c"
+    },
+    {
+      "path": "src/components/studio/StudioPanel.jsx",
+      "sha256": "64f82deb31cac08d52c050406c6091a02bd852ae0c37a2e8c4ab10d66e383bbd"
+    },
+    {
+      "path": "src/components/studio/StudioPanel.test.jsx",
+      "sha256": "c690183c20e7af5cc6db13b1434ea6032a146cc6e6f2f9a3ffe172a6789c4e35"
+    },
+    {
+      "path": "src/components/studio/TrackAutomation.jsx",
+      "sha256": "01ac68ea6106b86d94c20b300be1fbf7bf1079a51897c2e62b16ce5884430620"
+    },
+    {
+      "path": "src/components/studio/TrackAutomation.test.jsx",
+      "sha256": "8013df3f71b59baf9213442a8b56c9fc4afaf67768938f5e14c78cee25242dcb"
+    },
+    {
+      "path": "src/components/studio/controlWiring.test.js",
+      "sha256": "ec5d5ad3d0dc03339f625afc246499452fee1df50ccaad6bd13aa5dc6d67c3a4"
+    },
+    {
+      "path": "src/context/CartContext.jsx",
+      "sha256": "31a0ed5684d3fdd9cac33a6ce5bcbadfb43c0dd97c7f5ec165372ccfab0aa925"
+    },
+    {
+      "path": "src/context/CartContext.test.jsx",
+      "sha256": "d1b50710993c6c3f261dc01f653b4ac72c6b35829f1173862d8fccd5e2a91245"
+    },
+    {
+      "path": "src/context/InventoryContext.jsx",
+      "sha256": "6dea726baaa054eabda5aac1dbe564a550a3f564903c2b1fd5d82b9c06641b93"
+    },
+    {
+      "path": "src/context/ThemeContext.tsx",
+      "sha256": "65c5c8eae076687a25cf52680254368f995d4460977c40d9601c7f3a6c88d058"
+    },
+    {
+      "path": "src/data/catalog.js",
+      "sha256": "3b29cfe27f0b2c3521103986cdfe3b277b79fb9d9091e14232b6f1009c6b611a"
+    },
+    {
+      "path": "src/data/catalog.test.js",
+      "sha256": "e64ce0f01786a1759f0956f8f32d4ae6efc40b4e637545a1e2998d5ad11ca8b4"
+    },
+    {
+      "path": "src/data/hubAudio.js",
+      "sha256": "63b54cfac01a6bc77c9c06d30b35061c397349bb6382f9a302e127c014e84010"
+    },
+    {
+      "path": "src/data/musicGuides.js",
+      "sha256": "a0b94a8a19d4a5952d4bc1cafec5f0b8e20bb4bbdc15a771d872f8c7836177a3"
+    },
+    {
+      "path": "src/data/sattariSuiteCatalog.json",
+      "sha256": "8e4f93f72bbab7d8009ba9cc39f2c21e55d3810a57c39f4a4bb67046d328a488"
+    },
+    {
+      "path": "src/data/shipping.js",
+      "sha256": "30e28e2ebe61614cc55bc6ba9c45a370948893840d6c04d89f9bb26e0b366205"
+    },
+    {
+      "path": "src/data/siteSeo.js",
+      "sha256": "b75614413f9cc18b1600726cba4b64fa9ea46347a083e40c8dab5350b51d5410"
+    },
+    {
+      "path": "src/data/toolDetails.js",
+      "sha256": "35414097e5252e1aadc5f50c0b9a09b906172f0d13708ead3883d389610e3cc3"
+    },
+    {
+      "path": "src/entry-prerender.jsx",
+      "sha256": "52b8af28aceb959513855d925d340526ee2020502ef713c9f8c2fae57fed8bb7"
+    },
+    {
+      "path": "src/fonts.css",
+      "sha256": "ea3054f98ab02935d24af0b77ee841fa953eb5d0fdad51e85a81d137545313bb"
+    },
+    {
+      "path": "src/hooks/useCheckout.js",
+      "sha256": "05381f9a05e8ad06e386977338237587dd32ee1240d9f2c4a6f64cd83854e4a7"
+    },
+    {
+      "path": "src/hooks/useCheckout.test.jsx",
+      "sha256": "ac24257510ae1c9f66bdb8060315e1e9b37dfa95989dfa446d64153c2b16d7ad"
+    },
+    {
+      "path": "src/hooks/useStemSeparator.js",
+      "sha256": "61d28397f5785b6ac8527526e015c8d3c97d4c44d79b1ebeb72a1009b9292642"
+    },
+    {
+      "path": "src/hooks/useStemSeparator.test.jsx",
+      "sha256": "9525136f19229c4903be32b5e2a82d09f1b1952981c18e2db313e96ffd1469ac"
+    },
+    {
+      "path": "src/main.tsx",
+      "sha256": "04a1a08ac0e7f896c70ae11f68de697408a952e2962f4b4fea84e80e5350df96"
+    },
+    {
+      "path": "src/pages/CartPage.test.jsx",
+      "sha256": "1eabd169606d51a985faff2b13464f2e99e09291864fed8846b96291c1b11c78"
+    },
+    {
+      "path": "src/pages/CartPage.tsx",
+      "sha256": "5e36036acdc4e7033a70172469971051ebb78d52d0a2b5bca1926d5170126220"
+    },
+    {
+      "path": "src/pages/Category.jsx",
+      "sha256": "80603773aa26aed12ab147ae991ed8e5176dcd00347f295cb58aa0e86b2e2e89"
+    },
+    {
+      "path": "src/pages/CheckoutStatus.jsx",
+      "sha256": "ca362a33b4de8bb5c52dc84a2d86387536888182f3b43fa25b4dc0367c831902"
+    },
+    {
+      "path": "src/pages/CheckoutStatus.test.jsx",
+      "sha256": "5b0b6ae8ac1e98b09dc772dbdb79e8a20f7751471588e680f193bc7d6f7f0376"
+    },
+    {
+      "path": "src/pages/DownloadsPage.tsx",
+      "sha256": "b101a9b461cfb76ab5a351307c373036b0fde88f236c7fd319bb5096607f2329"
+    },
+    {
+      "path": "src/pages/HomePage.css",
+      "sha256": "9467ef0ce19fb25b2df941b6af5ac515dc207a5e0a0887863ebeeeb62dba73a9"
+    },
+    {
+      "path": "src/pages/HomePage.jsx",
+      "sha256": "24d4b3404b7a1c0f2ba45ee6f8762b768380d1a652174161784bd18e4105c57e"
+    },
+    {
+      "path": "src/pages/HomePage.test.jsx",
+      "sha256": "7971e72d353e38d03d7991bb9ec7b8f3a24c745571bcdc06955550c55a06bb7b"
+    },
+    {
+      "path": "src/pages/InstagramCallback.jsx",
+      "sha256": "85ca28dc897017dacd3cb4bb621a6fa9ec0dcba9b37f51145cee6cf62104dba7"
+    },
+    {
+      "path": "src/pages/MusicResources.css",
+      "sha256": "a758794031c263a3a04d9745104398eb4b51341975562ca42fc7514173e637c9"
+    },
+    {
+      "path": "src/pages/MusicResources.jsx",
+      "sha256": "c5db2378333b4e1c32b2212dc596e464efbe25c0264f3552f4f1f59b9aa7d139"
+    },
+    {
+      "path": "src/pages/ProductDetail.jsx",
+      "sha256": "e682fed9aa211c9eff69234d54d8780e8e1f9ef78f424f65d3ad7559037e220c"
+    },
+    {
+      "path": "src/pages/SattariHubPage.jsx",
+      "sha256": "f5b11bc74c10232fa0b8b79d672e28b6abd8f87a46601421642e83993abc6f62"
+    },
+    {
+      "path": "src/pages/SattariHubPage.test.jsx",
+      "sha256": "f0b4465aeb118148072f3aae35bdb3628afdc40bdf800a43b87ca997c2f60cce"
+    },
+    {
+      "path": "src/pages/SattariLearnPage.jsx",
+      "sha256": "c02c2b6b6902627047a083f07b7473a1148fea252201a9a7fed3935df43af6c8"
+    },
+    {
+      "path": "src/pages/SattariLearnPage.test.jsx",
+      "sha256": "99469bf10669193e93d63bd2c73cc5c5979b7257b03d82900192fa3db1c3028e"
+    },
+    {
+      "path": "src/pages/SattariStudioPage.jsx",
+      "sha256": "babd228af317c9627f06bdcc2f4c24695a21090a1329a72a068a1c115f2c45f0"
+    },
+    {
+      "path": "src/pages/SattariStudioPage.test.jsx",
+      "sha256": "d92129b1dde1d2a116df740f6bc18e7af2473314fece9a1d281fbd98e9aef477"
+    },
+    {
+      "path": "src/pages/StemSeparatorPage.css",
+      "sha256": "beefde051c8e95ca13b39a23c5bb4e4224520ef77e6d7233e34ed2dc51234243"
+    },
+    {
+      "path": "src/pages/StemSeparatorPage.jsx",
+      "sha256": "6aab9d32825ec65ed2f8db15ee9cc1021591ccbf9c33e2887f8bab91be099d0b"
+    },
+    {
+      "path": "src/pages/StemSeparatorPage.test.jsx",
+      "sha256": "dd9cbc29fb69884f89c5c87dd93d6ad6e39ee1b66fc0d1814703d02cbb69e8cf"
+    },
+    {
+      "path": "src/pages/StudioBookingStatus.jsx",
+      "sha256": "a45afb2398484db3cd02d217b9993228d4fed7a92d4898fcdce7ad6f64a07c84"
+    },
+    {
+      "path": "src/studio/arrangement/ArrangementToolbar.jsx",
+      "sha256": "3271770c027a69d93231cb42bd0f1434489c188d0ad1c7a24c05cd87f2156c0b"
+    },
+    {
+      "path": "src/studio/arrangement/ClipInspector.jsx",
+      "sha256": "9d6cfeee63a047c7843e17c984217b6bc65814f2474aaa89582919bc89324c81"
+    },
+    {
+      "path": "src/studio/arrangement/EditExportPanel.jsx",
+      "sha256": "ea451981745b73aa78409d3383e23dc0d2dc55f6e1d286c49a9259d5ce017d71"
+    },
+    {
+      "path": "src/studio/arrangement/EditorTabs.jsx",
+      "sha256": "80802404c956599417688ab6bc56a68b442c32a6e8ae23b58fc258b102d4c325"
+    },
+    {
+      "path": "src/studio/arrangement/ExportRangePanel.jsx",
+      "sha256": "b9cdfc576d5c6a39ecd22d4efefb39c825658992d2a777b784dedc0acb83d874"
+    },
+    {
+      "path": "src/studio/arrangement/InstrumentDock.jsx",
+      "sha256": "07f2dfc503c0bccc32cf89b5dffc8f0ccb7ee137a65f099d6857c39d6cff31f6"
+    },
+    {
+      "path": "src/studio/arrangement/LoopPanel.jsx",
+      "sha256": "7e03fcbf37313e7cccc6dad2d5094be13967811171f384aaeefe3a6f9c37edc3"
+    },
+    {
+      "path": "src/studio/arrangement/LowerEditor.jsx",
+      "sha256": "c1948c7e08ec1d3884c82362afd48d4ad414b2a75441c9ae2cd53229b247a8c0"
+    },
+    {
+      "path": "src/studio/arrangement/PerformancePanel.jsx",
+      "sha256": "5a958e226b5d8c86202520c55edda79bddd04072881edba8c582c77bd1df6ab0"
+    },
+    {
+      "path": "src/studio/arrangement/SequencerPanel.jsx",
+      "sha256": "4b904b7c4e2d6937326a92a502afca2dcc8aa910867a52696817a5a4345d3e01"
+    },
+    {
+      "path": "src/studio/arrangement/Sources.jsx",
+      "sha256": "ef072a011beada733bdcc6c0e8c3ac4ecb46e8a19be3c7bb91d7400bf9ed7ea0"
+    },
+    {
+      "path": "src/studio/arrangement/Timeline.jsx",
+      "sha256": "7a9fc6698087e920869588b8c7dd57878c10404ab74962d9d187fe98f4eb8a48"
+    },
+    {
+      "path": "src/studio/arrangement/TimelineClip.jsx",
+      "sha256": "3e0ce56de7811d8d2d637b1b74ebaf4a7b1178aa371cd9bee5c99dbe9bdbe963"
+    },
+    {
+      "path": "src/studio/arrangement/TimelineTrack.jsx",
+      "sha256": "71ba00664a0ef67ba78fec0bb8ed756bacb69b449f29972d2726b38badac3fe3"
+    },
+    {
+      "path": "src/studio/arrangement/TrackHeader.jsx",
+      "sha256": "e4daaf73d0e09501433807b6b9fb554e36ced9ee4257f9cfc6524b3752a3d195"
+    },
+    {
+      "path": "src/studio/arrangement/interactions.js",
+      "sha256": "8cc67f81ba804d95dd673923b08d9cef7535a4f48cba740379d86d43a00a7cc8"
+    },
+    {
+      "path": "src/studio/arrangement/projectEdits.js",
+      "sha256": "6f76e21e1071c4faada77ad6e042965fd32b9cae1250adaa9bd47ad4a3083d05"
+    },
+    {
+      "path": "src/studio/arrangement/projectEdits.test.js",
+      "sha256": "2896ce268e8cae1c8f2f9128ea3fab7aaa3f6aa08a6bb83cf1634dc281a29ce0"
+    },
+    {
+      "path": "src/studio/arrangement/useArrangementHistory.js",
+      "sha256": "d43b52c79e27d2087ea7f9a951a63c7b917f183fac553e7a05c1d23b99aebec6"
+    },
+    {
+      "path": "src/studio/arrangement/useArrangementHistory.test.js",
+      "sha256": "f5259bf3cd1408b703b98a9c7da026bbc64f4d9e32d2c886519820a563cfbf40"
+    },
+    {
+      "path": "src/studio/arrangement/useArrangementOperations.js",
+      "sha256": "1bb7f3ed30bbf91ebb4f49545be7cc773a300e8461d2c3ae19780ebc0a50707a"
+    },
+    {
+      "path": "src/studio/arrangement/useArrangementPlayback.js",
+      "sha256": "5d04134737d19040b192a803f75e75bc7071d1c5f93f309c429548df46df70d5"
+    },
+    {
+      "path": "src/studio/arrangement/useLowerEditor.js",
+      "sha256": "3b3d7603fd6548c2ae62cfbf7f5b6dc2290213bd983033f245bb6f34355c493d"
+    },
+    {
+      "path": "src/studio/arrangement/useStableCallback.js",
+      "sha256": "e1be872de157e6b22773add0a55108eea202beb604553818f82b99080c931e59"
+    },
+    {
+      "path": "src/studio/arrangement/useTimelineZoom.js",
+      "sha256": "552afe9c4836f407d5dd60c51be92ba3382743084bb9b047d029558a4874b474"
+    },
+    {
+      "path": "src/studio/downloads.js",
+      "sha256": "b3a19e6a4a4c54341a153c4f24b193e999145b43057c66e2dae52e77e17b4d93"
+    },
+    {
+      "path": "src/studio/hooks/deckLoading.js",
+      "sha256": "582a1c1a2429acbd6058db49ddabdd380e917708b1eab35cd8d1e0dfe3697f32"
+    },
+    {
+      "path": "src/studio/hooks/useArrangerBridge.js",
+      "sha256": "9d96df1aa34ee64f36b7ed5bd1901c1932be3654caf988ac6833c60d993e2419"
+    },
+    {
+      "path": "src/studio/hooks/useCapture.js",
+      "sha256": "8a2d7f4b88b0e2055fb06b50041693a69751946dfefca6e8df7089e76d78dfc7"
+    },
+    {
+      "path": "src/studio/hooks/useDeckOperations.js",
+      "sha256": "30d1beae7ff93279d52426f055d39f0b9cfb764704301a1b7b329655fa178abe"
+    },
+    {
+      "path": "src/studio/hooks/useLatest.js",
+      "sha256": "f5d1659263ce5516d916586a58ec803cea75290c09cca074efcc3f648e332285"
+    },
+    {
+      "path": "src/studio/hooks/useLiveEdit.js",
+      "sha256": "8ef32bc18ca16e838d40c93e233ecba761f18516c3be107a0b364f0e10a6fff9"
+    },
+    {
+      "path": "src/studio/hooks/useMasterControls.js",
+      "sha256": "916865354283839c0e10e1c0f209cdd541e073933d2b79204579a59b8697fc0a"
+    },
+    {
+      "path": "src/studio/hooks/useMidi.js",
+      "sha256": "6f42c7386cbd978ecc036c79cdd08dc566bd6f87a7fe97e4e726aa3b6469e505"
+    },
+    {
+      "path": "src/studio/hooks/usePads.js",
+      "sha256": "eff26a326b883b6d4b0bc0e2b5d518e36eea34be6180cf15df37c78dc0fb9e1c"
+    },
+    {
+      "path": "src/studio/hooks/useShellPanels.js",
+      "sha256": "a3bfcb1a592851256c1498afc3a245d5289976b45a6981857aff3ffdac5a7877"
+    },
+    {
+      "path": "src/studio/hooks/useStudioEngine.js",
+      "sha256": "160ab2ae24913c053040d0ec5588a4e884bb470401273e21741867ff0b4efd71"
+    },
+    {
+      "path": "src/studio/hooks/useStudioKeyboard.js",
+      "sha256": "e30330ffb8f9725f85895f900e217ed0fa78e18e9460f2e24437847708ae8d8f"
+    },
+    {
+      "path": "src/studio/mixer/meterStore.js",
+      "sha256": "7c883995d8d09b9ca95766a259c85e4bef62c86cd1254f203fa01e1e4ddacd26"
+    },
+    {
+      "path": "src/studio/mixer/mixerModel.js",
+      "sha256": "b6a938a81d0117d9c68408f36ff1aac968045f88813a272babf8ab2760adb278"
+    },
+    {
+      "path": "src/studio/mixer/mixerReturns.js",
+      "sha256": "7dfb5285e648e0f743db85b46f9bda51ad4fa2747162440668924872f64ae2ef"
+    },
+    {
+      "path": "src/studio/mixer/useHeadphones.js",
+      "sha256": "1525487875979cf03365c2191b349eeb78f5386e898b55e0bd689ea8240e3120"
+    },
+    {
+      "path": "src/studio/mixer/useMeterLoop.js",
+      "sha256": "b732a84f6920df07c00805d656a6f34d2cdc34ea1abfbd32a92249b1ce733f37"
+    },
+    {
+      "path": "src/studio/mixer/useMixerDock.js",
+      "sha256": "859db249dd3903e31fe89e189f2fa9916f16d384b7f194105180f92e92fbe299"
+    },
+    {
+      "path": "src/studio/session/sessionModel.js",
+      "sha256": "bbda81aef29c01881932b1310284d71830aa21bb080374b4498ac75b2a4102bd"
+    },
+    {
+      "path": "src/studio/session/sessionSnapshot.js",
+      "sha256": "4762dcd23155ae4d8a43dbc765ff52d502e1fe54ef730db85eacda05c3a181af"
+    },
+    {
+      "path": "src/studio/session/sessionState.js",
+      "sha256": "938704436ed947b76461e21ac751b661a6e54c572cf61d0ef630561f608c516c"
+    },
+    {
+      "path": "src/studio/session/sessionState.test.js",
+      "sha256": "40a39f320b91bd8e19081e24ca82bab466404531437a3bad78654cf33b270a6a"
+    },
+    {
+      "path": "src/studio/session/studioActivity.js",
+      "sha256": "0efe14aae24e38e8e0f6f8adef11f66ae25fec7c76bab33dd6a8d7371331ccb1"
+    },
+    {
+      "path": "src/studio/session/useStudioSession.js",
+      "sha256": "2495bf3e478154bf6bfc5ad590ed03a8a69a85861e493a3ab609178ebb9612ac"
+    },
+    {
+      "path": "src/studio/transport/transportStore.js",
+      "sha256": "576f156c68cd33663346912bc608af336a74218ff476ae047738a688bccb2806"
+    },
+    {
+      "path": "src/studio/transport/useTransportLoop.js",
+      "sha256": "0e9c65799353eb44d80902c791222ca0a3997a2d90a96e0e3e0289700b6d1b75"
+    },
+    {
+      "path": "src/studio/views/ChannelMeter.jsx",
+      "sha256": "a55184a6a610e13005bc4aa85d8b6f27a11585ae9f5e48ed18ee66e558c1dc89"
+    },
+    {
+      "path": "src/studio/views/CommandBar.jsx",
+      "sha256": "f0344e28a8851b265183cfc52cbe6e8f30e705a9f6c74768617508b9b5405d70"
+    },
+    {
+      "path": "src/studio/views/DeckInsertRack.jsx",
+      "sha256": "0d078de20f70172ddea7d3ff91e8d8e48225942ed6100bff72b8d5220f604b3d"
+    },
+    {
+      "path": "src/studio/views/DecksView.jsx",
+      "sha256": "0b31f0059465f7ee98398a993fd0a7b8095a1150d2a9ebe3ac5289cfe4aeada9"
+    },
+    {
+      "path": "src/studio/views/FilesView.jsx",
+      "sha256": "af67ea3273793e7d48a6e4bb1a8cb6602f17bd3ff909462f19ea4ed7087a2f63"
+    },
+    {
+      "path": "src/studio/views/HeadphonesPanel.jsx",
+      "sha256": "0d273a1c354d3444091ec72d8f57b7b04fa9a4fd72aa66741de3eab44f321ce6"
+    },
+    {
+      "path": "src/studio/views/LibraryView.jsx",
+      "sha256": "e9c454096e4cd6f5a6654f3167ec99632e5ebb35951aeb6cfc78ad4dbc1e290b"
+    },
+    {
+      "path": "src/studio/views/MixerDock.css",
+      "sha256": "9f1a58635e95977775cb04a5d6043f6ebfc14544b4b8f86a00a80e1f0944e3ca"
+    },
+    {
+      "path": "src/studio/views/MixerDock.jsx",
+      "sha256": "ddfbd553b1474f6d962ed21f53818467dfe6deb2487b5eaa579ca2df127845d9"
+    },
+    {
+      "path": "src/studio/views/MixerStrips.jsx",
+      "sha256": "32477d10b3420a3a70de445e105e9b372c035b9592d301532f9eaebd7f68b427"
+    },
+    {
+      "path": "src/studio/views/PerformTools.jsx",
+      "sha256": "4d3914c9ed1dd6a1935d1b011d7f67ff02661ad28d23b4407bab8c5882b47556"
+    },
+    {
+      "path": "src/studio/views/SessionChrome.jsx",
+      "sha256": "749988c9040d571c86e89cd92008990151632cfc5e6a166656d796004c7413f8"
+    },
+    {
+      "path": "src/studio/views/SessionInspector.jsx",
+      "sha256": "62db0c1ac7c8f63afa735ff10328bd61139f10228ad2f056a6b17bee66e9be08"
+    },
+    {
+      "path": "src/styles-audio-workspaces.css",
+      "sha256": "f2e469b2acc317a0ae9617c760b0b880af9e2e98f9f7de60e28901903f597a5f"
+    },
+    {
+      "path": "src/styles-cart-page-premium.css",
+      "sha256": "d2a5bbe2e79bf68c315cc2cc5205f66e0f53397bfd71fc801d2d923db3531f16"
+    },
+    {
+      "path": "src/styles-cart-premium.css",
+      "sha256": "744f843e14ffd14f72a5690b5d2bbe851bef088238191be2f11b99baf09b37b5"
+    },
+    {
+      "path": "src/styles-hub.css",
+      "sha256": "cd2a8a9f8d1034f68c8318c3f24ab21962f94181bce64368519e2f162055d934"
+    },
+    {
+      "path": "src/styles-nav-hub.css",
+      "sha256": "fd61ec408c47592156f8d9b129ba39492d251c275de0ab787d267b5919d1682b"
+    },
+    {
+      "path": "src/styles-products-premium.css",
+      "sha256": "f39f08f70ebe8f14e11b5ceb30a92820cb593a5444f56ccaa611ff3abb65a221"
+    },
+    {
+      "path": "src/styles-refresh.css",
+      "sha256": "bcd436e126332fd37bb7cbf61bb152a614012464345d336043c101951e968762"
+    },
+    {
+      "path": "src/styles-stemdeck-native.css",
+      "sha256": "95e01d0206dae81fcd627c314204b2fd0b7240236045e07daff97beef79af219"
+    },
+    {
+      "path": "src/styles-stemdeck-web.css",
+      "sha256": "2dea73f144af0272d34c9a3e2c829002133d26cbc17f5dad09be2aa8fba67627"
+    },
+    {
+      "path": "src/styles-studio-console.css",
+      "sha256": "abcc3bd826b6036221b0e9c44c36f30e315761450f9d35683965a8b37115d869"
+    },
+    {
+      "path": "src/styles-studio-session.css",
+      "sha256": "7137ef9b08fe39fb2b59c8c37dace649859aa1c24d00203270aa671e73edb4b5"
+    },
+    {
+      "path": "src/styles-studio-tokens.css",
+      "sha256": "538378a56e5c52ac4a519cdd331886dd221a24d5c933c8067938ff0c5122f4c5"
+    },
+    {
+      "path": "src/styles-theme.css",
+      "sha256": "4859b2781b863e8138aed3bb8fc5a13a52c294d27b8b4ad6d17ea255cbf4a8a6"
+    },
+    {
+      "path": "src/styles.css",
+      "sha256": "25cd4388076d19782914ef077634e3f6763df2d53685a521b86a0a79a47997db"
+    },
+    {
+      "path": "src/test/deferred.js",
+      "sha256": "944648ca736f0dc58544b193803a4d98fd8c63502735ea898dc1eaab9b74ed6f"
+    },
+    {
+      "path": "src/test/setup.ts",
+      "sha256": "6605bae72bf48905b46dd9af45c3eefb428648faec7aee31d5f0e54c48eef021"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "2efbfe7fa707768336454aaa4e57968301c851ee3b988248f96c1c73df763ed2"
+    },
+    {
+      "path": "src/types/js-modules.d.ts",
+      "sha256": "a576a13e0aa970a9ea6de86fdba3647806f59d55f694476c9802de1391aff64c"
+    },
+    {
+      "path": "src/utils/aiffWindow.js",
+      "sha256": "425d74f46ed0a34d05a8c90648684f2b948c4b6205fc820510990c0642aea7c3"
+    },
+    {
+      "path": "src/utils/aiffWindow.test.js",
+      "sha256": "dcd6a22c90187a2c7ec2846a0a132a055db465cc38da97baaeeaffcf3522776c"
+    },
+    {
+      "path": "src/utils/arrangementEditing.test.js",
+      "sha256": "11f21bc4e771d17f6d866fdd731a21370105cc742a489c21cd62beb174a17fa2"
+    },
+    {
+      "path": "src/utils/arrangementEffects.js",
+      "sha256": "f173a725436089804c18296e4c06cf312253fcff608e3816446cd35127bb481e"
+    },
+    {
+      "path": "src/utils/arrangementEffects.test.js",
+      "sha256": "3f53ae8021429009c6ca3d09a70df222f38c750baeaa3ea425c8bc8800998dd1"
+    },
+    {
+      "path": "src/utils/arrangementEngine.js",
+      "sha256": "3429bdb080dd418c40a7b2663150c21c451bfb399d56ed340454c27fcb8c8aa0"
+    },
+    {
+      "path": "src/utils/arrangementEngine.master.test.js",
+      "sha256": "2f59b67123a9b5f017142f45e8474b227a35e4064022622db909dcb8ae46d8dd"
+    },
+    {
+      "path": "src/utils/arrangementEngine.prepare.test.js",
+      "sha256": "844beafdbabfff22c17ddcd0c5c04ccb15fdd652642ece657b4f37f95bbfb0a8"
+    },
+    {
+      "path": "src/utils/arrangementEngine.returns.test.js",
+      "sha256": "1345c7534b37ba10b8f5e3fbbeb387691a178b1b4be59a11f22d7e35464c295d"
+    },
+    {
+      "path": "src/utils/arrangementEngine.test.js",
+      "sha256": "f99a2ead8d1f96c9b0db9ce6c3e7bfaff98877c37e953a2c3d133d61f3806c76"
+    },
+    {
+      "path": "src/utils/arrangementExport.js",
+      "sha256": "da0a3e3453db58dd6c8bf6355998911736b9f2250aaac3dc2fff1000bfb7e887"
+    },
+    {
+      "path": "src/utils/arrangementExport.test.js",
+      "sha256": "2fee960ebdf38fb57c8004c3e09d36ef3b89e07c0cd87e0e50167f3f3ba5b66b"
+    },
+    {
+      "path": "src/utils/arrangementExport.worker.js",
+      "sha256": "97f38b40b7e31de7884a4048ed1d607b459627e7610e51316510de0e8bd5cc3a"
+    },
+    {
+      "path": "src/utils/arrangementInstruments.js",
+      "sha256": "b652e404683e3bed34b988e25cdafd5afc88e45980b8619b87e8a9c6bbb85567"
+    },
+    {
+      "path": "src/utils/arrangementInstruments.test.js",
+      "sha256": "861b22d9edbd8ecc63dadbee560130d36522d5c873a7310d7d2a8e207903fad7"
+    },
+    {
+      "path": "src/utils/arrangementLongExport.test.js",
+      "sha256": "de66123315bd9d341104e18371fa131e3d4bf24420a4cbca2ee5d85e5e947d7b"
+    },
+    {
+      "path": "src/utils/arrangementMidi.js",
+      "sha256": "647495b180249db7219996f6ca16054445e509f4a2f2719898ba636548654e89"
+    },
+    {
+      "path": "src/utils/arrangementMidi.test.js",
+      "sha256": "9b4206a7a25c04e463a11b05cb9efd00b5ffcb5832ae78d8e5d46753ff345975"
+    },
+    {
+      "path": "src/utils/arrangementModel.js",
+      "sha256": "82def8a812b8715206387e446de3e68032d0240fe07c0485752a8d574ac5a5e8"
+    },
+    {
+      "path": "src/utils/arrangementModel.test.js",
+      "sha256": "a18cd4a65d630e545b35f12c2d40e870fab38f8e55eec2494b74f79108409af3"
+    },
+    {
+      "path": "src/utils/arrangementNotes.js",
+      "sha256": "15ae370ba008722bffb5d9b30ad1fbaabc8b789c6f3de4900d781b26c97e37d9"
+    },
+    {
+      "path": "src/utils/arrangementNotes.test.js",
+      "sha256": "d3112df9938f44edfa3e4b8f7d1cea71da69e87d0cd5892cd2d27d95ab285fd0"
+    },
+    {
+      "path": "src/utils/arrangementPackaging.js",
+      "sha256": "35bc2cb862c6938485206a9197355a7fb93cba8e3cb04dad340215e027f77f4f"
+    },
+    {
+      "path": "src/utils/arrangementPatterns.test.js",
+      "sha256": "475a13b7e195838d9e38015e687cfaa566254f4f1aff2510a5be9da02cd9c2e2"
+    },
+    {
+      "path": "src/utils/arrangementSourceWindow.js",
+      "sha256": "3f58f45734cf6c492c3eeeed15a7049ab726d2e92463baa8f5e5942b8313232e"
+    },
+    {
+      "path": "src/utils/arrangementSourceWindow.test.js",
+      "sha256": "d2a37d337c9d00b819a2189e53282babebeefaec671a68d53b9181db691c09aa"
+    },
+    {
+      "path": "src/utils/arrangementStreamExport.js",
+      "sha256": "e31cc9cbb89ac4aed6faf7ab2ab0f62fc342f09558f966b6c95e8bfcce6c9a24"
+    },
+    {
+      "path": "src/utils/arrangementStreamExport.test.js",
+      "sha256": "645ea19c5c3719e6883d2db32779d68ebd7f31b7f1c4e64a0d1103f0688775a7"
+    },
+    {
+      "path": "src/utils/arrangementStreaming.js",
+      "sha256": "4aab4df5546ac02a955da31823f0f258b4dedae59930229dd8c8fe17564f67e8"
+    },
+    {
+      "path": "src/utils/arrangementStreaming.test.js",
+      "sha256": "9e48342d44f2120ae701bc32f1cacde6aaafedc30b1880779cc5ebe7c9572b1d"
+    },
+    {
+      "path": "src/utils/audioAnalysis.decode.test.js",
+      "sha256": "cc6b11f0e5f3b20d4388f030ec38505f16f3885fcfcffce41595101aadd44391"
+    },
+    {
+      "path": "src/utils/audioAnalysis.js",
+      "sha256": "2679223e39f4efc3a8958f0397aa1a19d2bf443bc2408d1a71da722da06419b6"
+    },
+    {
+      "path": "src/utils/audioAnalysis.test.js",
+      "sha256": "50656862a9e8172bd82a641c76101dbcafbfb78b29edd0267e01a8c033da7152"
+    },
+    {
+      "path": "src/utils/audioAnalysis.worker.js",
+      "sha256": "f6190e33ac60eb7e0402ec3dca6e35a70348c28a1b41b93b9faa4dac06f2364a"
+    },
+    {
+      "path": "src/utils/audioProjectStore.js",
+      "sha256": "fd2bf9aec185e733fba3c70f3d503ce3c4834a0071e71deb6579192169ef4aa8"
+    },
+    {
+      "path": "src/utils/audioProjectStore.test.js",
+      "sha256": "bb40b35bde8eeead95e1b63f63cf72c6e7866f91c2ff183f0250ec0f1f23072a"
+    },
+    {
+      "path": "src/utils/backup.js",
+      "sha256": "95903ae8892b55e47818a80169bf4e302a769e0357e996964aa1a296f5f773d3"
+    },
+    {
+      "path": "src/utils/backup.test.js",
+      "sha256": "c03201fecf774455eabed2f4b8382d1c95fc9d31f6750281d1d1b07ecbe1cc15"
+    },
+    {
+      "path": "src/utils/beatGrid.js",
+      "sha256": "d52eaa1e50ca0747a10aab87ad23a3fd5b62cc86334d4751113d5108a7880da4"
+    },
+    {
+      "path": "src/utils/beatGrid.test.js",
+      "sha256": "c5904e03aa351b8bca59099caa7624f58284cabb99166db327892961ebbbc693"
+    },
+    {
+      "path": "src/utils/beatQualification.js",
+      "sha256": "7dd7a9aad55b5e68e8336b5d9040b46879bd520bf975d9f257cb2d4ec4692b6d"
+    },
+    {
+      "path": "src/utils/beatQualification.test.js",
+      "sha256": "43dae745336f19101c86861c2b90731ee0d4859f41cfebc6d5fac8554d581883"
+    },
+    {
+      "path": "src/utils/cartCatalog.js",
+      "sha256": "5dd4cbb42b55a86d3b154a55d2655999c01e3092973efffa6e6a87b9abc02d7c"
+    },
+    {
+      "path": "src/utils/cartCatalog.test.js",
+      "sha256": "e4ca3b2455ab3df7d0da1d8ac7a2be647ee0aa2f345a2e7bbb380d70c167cd6d"
+    },
+    {
+      "path": "src/utils/catalogMerge.js",
+      "sha256": "eb390651e8aa763c1728b1ab14e2c305f67df3d588b54f9551cb9ab51cf247c2"
+    },
+    {
+      "path": "src/utils/catalogMerge.test.js",
+      "sha256": "b448464be14898ec89765b1ad958a645ec496ff1f02194da361b2a42aa06c746"
+    },
+    {
+      "path": "src/utils/checkout.js",
+      "sha256": "effd7dfc0270be8a438588f4b08108fca1dcbd5094d20b489ee1b97a64b9b0bb"
+    },
+    {
+      "path": "src/utils/checkout.test.js",
+      "sha256": "208630655a785e6d6c7f294d0451b25a207b28a4cc0f04990c585d885fe4daaa"
+    },
+    {
+      "path": "src/utils/compressedAudioWindow.js",
+      "sha256": "33b9e744457f72a65ad0d24d037ecd7032616f8a0d3e360dcd45c42913dc599c"
+    },
+    {
+      "path": "src/utils/compressedAudioWindow.test.js",
+      "sha256": "f3d37fa38089af06f54bc035588091d0ef6b1da1fba4122ed85e27879213a56a"
+    },
+    {
+      "path": "src/utils/cueRouting.js",
+      "sha256": "d1b5fb1baa96151ca1812425c2d7bcf1fc735bf47f907fe934f9166529572cad"
+    },
+    {
+      "path": "src/utils/cueRouting.test.js",
+      "sha256": "23a5692252b00689a591a5509427552284b269ca493889e53405a86ad2c58305"
+    },
+    {
+      "path": "src/utils/deferredSessionSave.js",
+      "sha256": "0be0597d6caaf8c58de753f51243318835ba98f49ad06de8d795c2c9705684c0"
+    },
+    {
+      "path": "src/utils/deferredSessionSave.test.js",
+      "sha256": "ef0938ccf6bb7fc93c82a305bc49c1cb3d3aa295d58e1441c6bf2bd80d639994"
+    },
+    {
+      "path": "src/utils/fulfillment.js",
+      "sha256": "5428df1e87306943ac641c8ad4464fa1071743621c464f4005b76fd8194519b5"
+    },
+    {
+      "path": "src/utils/fulfillment.test.js",
+      "sha256": "400e8f1439d1634eb12c08f46525695bb18a674fb11acc0e0df901377fb4b1a2"
+    },
+    {
+      "path": "src/utils/grainSchedule.js",
+      "sha256": "dade5b43f7e0ec4f0970aab0311ac27e046555070fcaa9bfa86ca3adb6a702e5"
+    },
+    {
+      "path": "src/utils/grainSchedule.test.js",
+      "sha256": "6a66c6ea81781d6c827d50a67903a49d5fc84afaf22693cf3939cfa3c120a95e"
+    },
+    {
+      "path": "src/utils/hardwareSessionReport.js",
+      "sha256": "439d610ceba7a64c28b354140b6859e48f3803f7f2296f6b647d7bfd7219ce7b"
+    },
+    {
+      "path": "src/utils/hardwareSessionReport.test.js",
+      "sha256": "ece00c26a68a1f1aa81ec0392b0664537ae547702d36013a09b00ed5e499de50"
+    },
+    {
+      "path": "src/utils/inventory.js",
+      "sha256": "67be90c7ba5f5f6ad47df350e61f96bcea26498e7c7450a84c7b8a19677724e8"
+    },
+    {
+      "path": "src/utils/inventory.test.js",
+      "sha256": "cf5798c8f20f30757a7048ea5bbca226fac6883b179625fb2a723bb15adc76a2"
+    },
+    {
+      "path": "src/utils/latencyProbe.js",
+      "sha256": "b4aa19a168e5ea792984473e40e5baf5524f3a0aafea4ad5e5743d3b7fdb3bf9"
+    },
+    {
+      "path": "src/utils/latencyProbe.test.js",
+      "sha256": "6ab6bc0635916ebcd4698a8b4ceca5e6b239d1e0b67cc9078939193ed1e2b57f"
+    },
+    {
+      "path": "src/utils/lazyComponents.tsx",
+      "sha256": "520369de000676de137a73685ef703ea4c05473943db35a1add5d343f483799d"
+    },
+    {
+      "path": "src/utils/libraryBackup.js",
+      "sha256": "0beb076bace117ac409ed875a3bd7da6f911455649aea138340567447cf67e6c"
+    },
+    {
+      "path": "src/utils/libraryBackup.test.js",
+      "sha256": "d8790b28562afa553a95f6481eae2bad9368361f21d2f59be8709f5bd273597e"
+    },
+    {
+      "path": "src/utils/libraryBrowse.js",
+      "sha256": "8f7b439223e1152888366dde9e15dcfd2b7c63b36997a9410e71d66168f11533"
+    },
+    {
+      "path": "src/utils/libraryBrowse.test.js",
+      "sha256": "6268dbd5572bf2b007d488da413edbc7ba2de260426ef3d4b884c59609718fbe"
+    },
+    {
+      "path": "src/utils/libraryFiles.js",
+      "sha256": "4aff3d4e3bc5c9ead761abfca72ae11a3817d021a354f2d75aee73eee6d5d9d7"
+    },
+    {
+      "path": "src/utils/libraryOrganization.js",
+      "sha256": "a249eb30b21c1a2e3e17bb363fb20d475d15d193158a1cd6f3e02e026c8e971e"
+    },
+    {
+      "path": "src/utils/libraryOrganization.test.js",
+      "sha256": "6e14205f209c9dc0cddd2dfc6f8e094cb7e2700351e7d09e3c5d7c84535e955b"
+    },
+    {
+      "path": "src/utils/libraryTags.js",
+      "sha256": "29e2e26a948e8b50ac965c23fc7febb5e08ac8b89a2bce1884a60fdbdd4524ac"
+    },
+    {
+      "path": "src/utils/libraryTags.test.js",
+      "sha256": "7a80ad9a3de868888646b16f66332f68bd30a19bbca951cd3b33b2fa7875bfab"
+    },
+    {
+      "path": "src/utils/liveInput.js",
+      "sha256": "b412bd2ad4dd0991e80fd87ec79a88235bb19f9d460d7f7ee14708a48bf8af3a"
+    },
+    {
+      "path": "src/utils/liveLoudness.js",
+      "sha256": "1b3e6bdf22768f8e4fe80c44a86716c0261c9a4a866f053d083ec8e45ae98495"
+    },
+    {
+      "path": "src/utils/loudness.worklet.js",
+      "sha256": "be16bfee4c91f000ac539f0eb8d28fa51b017b63e5a718db16632240522e40f5"
+    },
+    {
+      "path": "src/utils/loudnessDSP.js",
+      "sha256": "2e88dd2a9a1c34a69cbc75150b7cc2f3dd8ea8b76c5ef42cff2d09b91f45fe0f"
+    },
+    {
+      "path": "src/utils/loudnessDSP.test.js",
+      "sha256": "b075f7b411b514f52c7007333fbc7d74e19c6198d1bc07ccfaef4419645e53fa"
+    },
+    {
+      "path": "src/utils/masterOutput.js",
+      "sha256": "9e5cfc860f61c7f70f9a76ea6f36da5621d1fb3b5444a7161343fced31f381c9"
+    },
+    {
+      "path": "src/utils/masterOutput.test.js",
+      "sha256": "71f8353acfcd467e898daa5c2a01443f1bf9d79cb6278d7d01bd360e2f7f876d"
+    },
+    {
+      "path": "src/utils/mixerMeters.js",
+      "sha256": "aea4d6b0be49008f1f9adaea560221c48e25e2bf53489c11dc32337f0da3974d"
+    },
+    {
+      "path": "src/utils/mixerMeters.test.js",
+      "sha256": "6691bdc8b1ff0f2d7f987172c5db65b7e11be2d9d1470f155529189c1de0fdd8"
+    },
+    {
+      "path": "src/utils/mixerReturns.js",
+      "sha256": "5b54b252f4e8d17b0bf09f4e9ef8255a0787a7b3ffb022c491d7249536584983"
+    },
+    {
+      "path": "src/utils/mixerReturns.test.js",
+      "sha256": "51962424b036c4b24c265179842a15fce1118161fbc7956227a257c400945871"
+    },
+    {
+      "path": "src/utils/mp3Gapless.js",
+      "sha256": "85df1d4fcc15716ba69bdcfb63e40fbdafb9f896041f7b27e88d057ef651dc4f"
+    },
+    {
+      "path": "src/utils/mp3Gapless.test.js",
+      "sha256": "c27f4701178c895446c4ad897666da0a1085a9e417a085bc06f503765c572bc9"
+    },
+    {
+      "path": "src/utils/musicLibrary.js",
+      "sha256": "4e3e19c09cff478905d9b56d7adcd3e05d40e74f982d836b4f7a5b55961aea9f"
+    },
+    {
+      "path": "src/utils/musicLibrary.test.js",
+      "sha256": "93ee1149f84d923c049d28d3b71ece42b6da7c103a2d33f239deabb91f4f3140"
+    },
+    {
+      "path": "src/utils/orderProcessing.js",
+      "sha256": "4b643dbadb3d8ac4700a2734cc9ffe5acff1af804bbde9f94a3251e4bd479fea"
+    },
+    {
+      "path": "src/utils/orderProcessing.test.js",
+      "sha256": "fc43ef48b827aa703d72ab6b82b43957de4d18ed0cb9bd8856c582b43c769254"
+    },
+    {
+      "path": "src/utils/orderStats.js",
+      "sha256": "f82d9337c4fb9ecfcf4de97970ea11f6d4b1695b502f3b45b6940b6965aa2b8a"
+    },
+    {
+      "path": "src/utils/orderStats.test.js",
+      "sha256": "2a2c1a6ddd9101928a77ac4d1ba6bdb9039555ed67531a776c4bd944e730589d"
+    },
+    {
+      "path": "src/utils/performanceClock.js",
+      "sha256": "ceb22f3fc61f4ccd0ac90d9fa75cd51eda0f6823e151cda9aa5f7bd138fd8792"
+    },
+    {
+      "path": "src/utils/performanceClock.test.js",
+      "sha256": "f726449bfb749ffba544d659c08a915412819867eb79fd3fe16e3cfc913ceffd"
+    },
+    {
+      "path": "src/utils/performanceControls.js",
+      "sha256": "16e3545dabecead8157b2c7dfde87aebb6b81256cf7e321db7ac20fca15b4800"
+    },
+    {
+      "path": "src/utils/performanceControls.test.js",
+      "sha256": "348f8a26ac64e0d8c6e32810acf5c02442dc28efac22435aa39026ebae60145a"
+    },
+    {
+      "path": "src/utils/performanceFilter.js",
+      "sha256": "ad79f773061517db3e887d85ec88180756b39b5f868eab00867dd3c30d5df118"
+    },
+    {
+      "path": "src/utils/performanceJournal.js",
+      "sha256": "8e41514b9da5283797a97221b4ce55e6d37e983c591f231d77058bc1c67646ce"
+    },
+    {
+      "path": "src/utils/performanceJournal.test.js",
+      "sha256": "558eb650ded2ca4510ace896c2983ab3eb3a9729618d49bff34f54804dbc5f29"
+    },
+    {
+      "path": "src/utils/performancePlayer.js",
+      "sha256": "7b4ff0d1673446b47fc074b740b170213b2f18d4797f79aacda08ae6faf87f6c"
+    },
+    {
+      "path": "src/utils/performancePlayer.mixer.test.js",
+      "sha256": "6e799a74f66ca81863e10f981cfe16a48e31da6bad11df099aa164fca5b1800a"
+    },
+    {
+      "path": "src/utils/performancePlayer.sync.test.js",
+      "sha256": "84de004ac00aa06910399b28f40188a9794749feb27a799a3fa2be293864a357"
+    },
+    {
+      "path": "src/utils/performancePlayer.test.js",
+      "sha256": "608f26c8c77c108d072b436ae0cec222ab5ed6f89755f58806348a4038c51553"
+    },
+    {
+      "path": "src/utils/performanceReplay.js",
+      "sha256": "dd1b6096922e19d67af5d6eb95cccc3e0f04e9b5c39bc855070c3de1339f6ee2"
+    },
+    {
+      "path": "src/utils/performanceReplay.test.js",
+      "sha256": "5774c17114b7c2814731804322e17235c2e2e9118cdc7acce8cc962a4a182cc3"
+    },
+    {
+      "path": "src/utils/performanceReverb.js",
+      "sha256": "1bb41d238dd5181280bf6ef6b26c488e4b0a0a6d72578f768986e1ee2b8aecdc"
+    },
+    {
+      "path": "src/utils/performanceSupport.js",
+      "sha256": "eed9fd1afdbad5c5c775587b2bb34eb54b96b6bffe8ec7e11a21a2876bf8d1c4"
+    },
+    {
+      "path": "src/utils/performanceSupport.test.js",
+      "sha256": "6cceef62b112055139f77556838ea178a60734df2fd9244253c8d31d38a8eda3"
+    },
+    {
+      "path": "src/utils/preparedTransport.js",
+      "sha256": "b4bd2f66ab585d4c4c4b47e8392885cd7a874c8e897574f3c3efba31a4f1e705"
+    },
+    {
+      "path": "src/utils/preparedTransport.test.js",
+      "sha256": "d29f8d6204905bcd30e68a89cb1978feec149dae9f389c0a937f92fe2d36b063"
+    },
+    {
+      "path": "src/utils/projectArchive.js",
+      "sha256": "7b01151a1dc3517fa9584bb1d7f6d03d31876e44c8a2a584b339331e12e1bedb"
+    },
+    {
+      "path": "src/utils/projectArchive.test.js",
+      "sha256": "457063abd768f6ee2528270f00ad309a2c9ad6feb05380387f370a10e47243e3"
+    },
+    {
+      "path": "src/utils/recordingPreflight.test.js",
+      "sha256": "3a624b06322840be726e9b459c8330a3906ca52479e222a14db172ff9ae26bb5"
+    },
+    {
+      "path": "src/utils/releaseArtifact.test.js",
+      "sha256": "bcf44a3e00bc14f25f3741a993069a12e6d44e018a758eebc116e4a55b476ffe"
+    },
+    {
+      "path": "src/utils/replayInput.js",
+      "sha256": "1d82bc128596177754af116e9a424225fb520177ed2375fe60ac09cd51a28247"
+    },
+    {
+      "path": "src/utils/replayInput.test.js",
+      "sha256": "b68ca61f4981c52234cfb5329d50bae1491ba0ba1d71c4957823cc69944db1ed"
+    },
+    {
+      "path": "src/utils/replayMix.js",
+      "sha256": "b3523995c8b7d98a9d7ee7c53b1dcd52f9c4626313b4e4872940e2bb6c3e30a1"
+    },
+    {
+      "path": "src/utils/replayMix.test.js",
+      "sha256": "07d39f2e7ebef81c983f48fb3cc0f3a09462f0f4f57a71dfe6c88d83695bf703"
+    },
+    {
+      "path": "src/utils/replayPitch.js",
+      "sha256": "fbcfb3217605220b5149bdda663e2690a8992c06f85b43d8cb5462d3c9d744f8"
+    },
+    {
+      "path": "src/utils/replayPitch.test.js",
+      "sha256": "10f282b26e182b3b160babccbaa32329d42e9d245bc87c5012ec83b7f41909f9"
+    },
+    {
+      "path": "src/utils/replaySources.js",
+      "sha256": "5c108e38ddc9db064e21ee856b687b3f73876a36aaf5930891ff2e50e05208b6"
+    },
+    {
+      "path": "src/utils/replaySources.test.js",
+      "sha256": "c7434111e5d36512803a2b6043d134dba1b647a4f1b2e1412f52697d5d89301d"
+    },
+    {
+      "path": "src/utils/seo.test.jsx",
+      "sha256": "3d375ac0ede7676e1ad4bb91207a6e2e085eb346f3bab147759e681cb8969bff"
+    },
+    {
+      "path": "src/utils/seo.tsx",
+      "sha256": "ef76d56ff3a1b7d991c3e94607f962a7407bcfd73742dc03f2326769c9ac2486"
+    },
+    {
+      "path": "src/utils/sessionPersistence.js",
+      "sha256": "1784bdf1e0bb3a065e4799dd9e0f9fbe7153a13ccef89275b61ff2353aa10b83"
+    },
+    {
+      "path": "src/utils/sessionTelemetry.js",
+      "sha256": "51a513981100dff8ff1c6bb9acf2bfb67180e7765c3d428bd59da4ed04334c1e"
+    },
+    {
+      "path": "src/utils/sessionTelemetry.test.js",
+      "sha256": "5cce83000ca7b58e4704ade1a8b57c4be818f4d2e589cdc8b8260884c7c6e436"
+    },
+    {
+      "path": "src/utils/siteMeasurement.js",
+      "sha256": "8d86cbf107aa73f3e6720aa0442ebb7a3a4a3a60dd3774a5003a665dec8f2042"
+    },
+    {
+      "path": "src/utils/siteMeasurement.test.js",
+      "sha256": "ea10e1356d85e0f5a6aa2aaceec9ac0261dafff06b88b742e66766c80a06d5b1"
+    },
+    {
+      "path": "src/utils/siteMetrics.js",
+      "sha256": "139c98efe86210b1b3d10e5c98371c7f82046e035c16ed6d01c49bf6ff7eeaa5"
+    },
+    {
+      "path": "src/utils/siteMetrics.test.js",
+      "sha256": "f5ffa2bc30a87b211289cb8605d7345aa3e65002e13e911499aec2e805718096"
+    },
+    {
+      "path": "src/utils/sourceCapture.js",
+      "sha256": "7e7bb04c5718d9a42879521c2c24e48f009c01b48eb0e99d40a9b57bded538d4"
+    },
+    {
+      "path": "src/utils/sourceCapture.soak.test.js",
+      "sha256": "1f1d6206cd9e1a9185ce53c7e900b47e266ceacfb2b81b97d701de7763be132b"
+    },
+    {
+      "path": "src/utils/sourceCapture.test.js",
+      "sha256": "8740510d18773c2ee8fc5ec94dbb687342a7d6401ab77886160fb116cd148413"
+    },
+    {
+      "path": "src/utils/sourceCapture.worklet.js",
+      "sha256": "f84e6e55df384a7949021755ae9f5ae194976f7998dc8545ece4c4259454b107"
+    },
+    {
+      "path": "src/utils/stemAnalysisReport.js",
+      "sha256": "bda46a8a0cd83e2ff40cbcde4c84f1d368ed77787449108d2dce7612302ec659"
+    },
+    {
+      "path": "src/utils/stemMusicalAnalysis.js",
+      "sha256": "f852afda448778b9aceccd21c09d0b9d24893cb06c1f66e850bbf3c0577f8c7c"
+    },
+    {
+      "path": "src/utils/stemMusicalAnalysis.test.js",
+      "sha256": "e44224e527f686e53945e854f6d81f4aec6878725e445f1778fe0af07a5dfef0"
+    },
+    {
+      "path": "src/utils/stemSeparator.js",
+      "sha256": "0fffb8977c44dd2a855320c3d2dad2edf535f19e998103f173bfe9653299a2e0"
+    },
+    {
+      "path": "src/utils/stemSeparator.test.js",
+      "sha256": "789809203e48a96bcadf3a71632a4120af6ab79c516dd79446bf3dfa66435df2"
+    },
+    {
+      "path": "src/utils/stemSeparator.worker.js",
+      "sha256": "edd44c835ea70293918f4fadc810c9e4eff3da09485ce9df09ecf0093916a11e"
+    },
+    {
+      "path": "src/utils/stemSeparatorArchive.worker.js",
+      "sha256": "62720150a07b8dc8982106db3a555b0de7765bf04997a01b89f9cabf635d0720"
+    },
+    {
+      "path": "src/utils/stemSeparatorClient.js",
+      "sha256": "a0297c8a8e8eac04597d697ff6dd8662ca620b9e24a981eacb12dfb089ce8242"
+    },
+    {
+      "path": "src/utils/stemSeparatorClient.test.js",
+      "sha256": "da0154024953741a76c0e2faf988fceffefee01477b67270fda48f5767665d2f"
+    },
+    {
+      "path": "src/utils/stemSeparatorDownload.js",
+      "sha256": "b6295c625e47d16d48a99b77237f69c53da5c80bb3238600ba719fd92a26e84f"
+    },
+    {
+      "path": "src/utils/stemSeparatorDownload.test.js",
+      "sha256": "e4378384bc06185092f72c798acaae085ac30368eef5add4a33327af49965f3b"
+    },
+    {
+      "path": "src/utils/stemSeparatorModel.js",
+      "sha256": "91204324f690ed42a03950b1672aa673b103332f44aff4eb00a1229c502614e2"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.input.test.js",
+      "sha256": "5d1dfc330c8bd11ac0f8456eb7c027e114cfa392d5f2f4f2a7fb9a57e920c62d"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.js",
+      "sha256": "bae7a677ea760db52e0ff397655ce0d1f81a6407d56d2817d61a75b5e16d8196"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.mixer.test.js",
+      "sha256": "cbd5963bd0ca71ec8f6378ba87c15b0ba5ffeb887aa6516ed3d0e3170f19de23"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.restore.test.js",
+      "sha256": "b956247c27645ae9908444650bdf36f98664eca19ff2879c12b81804ace1cad7"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.sync.test.js",
+      "sha256": "017db9dea2e7ed5ebbc543301a6d4e1f4088ca9036cd6a2d6ba202ccc1269325"
+    },
+    {
+      "path": "src/utils/studioAudioEngine.test.js",
+      "sha256": "d484c3f62996d63b73db858a119cd8590cf916c818a8f5ca74df1ab451d38721"
+    },
+    {
+      "path": "src/utils/studioBooking.js",
+      "sha256": "dd10ad1d290e40d57b90cd63f4ccddfb68f50e768333b16365e4196fffc6826a"
+    },
+    {
+      "path": "src/utils/studioDisplay.js",
+      "sha256": "b309190243f35b5f919811f522732bace7cf6e0e48f1634d83399d73cca839bb"
+    },
+    {
+      "path": "src/utils/studioDisplay.test.jsx",
+      "sha256": "76a292aabaf90dae19be29e2afc502905d0f724deacb387b7a6eb10bf58d4009"
+    },
+    {
+      "path": "src/utils/studioSessionConflict.test.js",
+      "sha256": "2b9a0bfa35d9d547ef34de269564ccfaa14f536228244ce96716e220533cace3"
+    },
+    {
+      "path": "src/utils/studioTransportCapture.test.js",
+      "sha256": "30c84318a81b20fe123b781e6fbf2cdaedf947a2188a32b4830aabf365bcf124"
+    },
+    {
+      "path": "src/utils/syncClock.js",
+      "sha256": "812765a19182a8fa9f850c66239f0f3b42de1d6eb2b6c28e37487e705efe48b8"
+    },
+    {
+      "path": "src/utils/syncClock.test.js",
+      "sha256": "e7f0d31a703c48554bf68180b5faeabfad2e869792205caab2f04b17d7cb14f6"
+    },
+    {
+      "path": "src/utils/takeCapabilities.js",
+      "sha256": "da1a65ba4b2afe1a091e454ca6c64a3e0720b2297acbc5c0db5611eed5002021"
+    },
+    {
+      "path": "src/utils/takeCapabilities.test.js",
+      "sha256": "465e671fb1c6bd700515839392e262505d2b55d83d5681fec98da4696f4e6610"
+    },
+    {
+      "path": "src/utils/tempoFollow.test.js",
+      "sha256": "9c78d436b5197ce42ba54b60bbcc06300049fa43e5fd5a5f2e00050097ec2072"
+    },
+    {
+      "path": "src/utils/tempoMap.js",
+      "sha256": "05e7358b11af8b1a9a04fb869c40ad25074e614ba664692516bf087f61315685"
+    },
+    {
+      "path": "src/utils/tempoMap.test.js",
+      "sha256": "e151dd8528533c208ac0ef1f524d5e3c409394033ce47ebdd6501d92219f2650"
+    },
+    {
+      "path": "src/utils/theme.ts",
+      "sha256": "d45e8ee554c0a337fa2ed2dd2452940a23c7d2d43f50c82123a277099de5fcfd"
+    },
+    {
+      "path": "src/utils/windowedAudioAnalysis.js",
+      "sha256": "7e6530e4d20e1b0a80e974a23f4807ccfd746c2c41f8ed399900ed85dc63c899"
+    },
+    {
+      "path": "src/utils/windowedAudioAnalysis.test.js",
+      "sha256": "8b8e9cdcd4a76a24af2908345495936a717c307cab70e1712e39752988949c26"
+    },
+    {
+      "path": "src/utils/windowedGrainPlayer.js",
+      "sha256": "4170dc50176c32725b72c38810a48ced2899a2616a867bf3ba2620898c077ed5"
+    },
+    {
+      "path": "src/utils/windowedGrainPlayer.pool.test.js",
+      "sha256": "a66ac6efefb920108e40ae1ff6749315f72c5bf90818336e4d7625ee4f029074"
+    },
+    {
+      "path": "src/utils/windowedGrainPlayer.test.js",
+      "sha256": "b04e21507a4e3f9785c1e9377878b8e7071dc2043bb862e3412c8ac58955297c"
+    },
+    {
+      "path": "src/utils/windowedGrainPlayer.transport.test.js",
+      "sha256": "af511eb6c25be4c4b334ca9b9a5ae819e073d06c721fdb579275153ef7134b51"
+    },
+    {
+      "path": "src/utils/windowedSource.js",
+      "sha256": "c7aef3a8670a9b4f3779e6e24d091b8d9eb38fadbee85c0de7809305724f908b"
+    },
+    {
+      "path": "src/utils/windowedSource.test.js",
+      "sha256": "8fab5032e633b97073de96a5f7bf329edffd6c4e370396eed71f68498c307f7a"
+    },
+    {
+      "path": "src/utils/windowedSourceMetadata.test.js",
+      "sha256": "e5ef934dd3f8d48aa77e58b6ca6c00bf4d9435e003df15500e19c32dab1b2488"
+    },
+    {
+      "path": "src/vite-env.d.ts",
+      "sha256": "52a4c6c87b1ef66753cdc86b951295070e755295016d4fde9b5eb006734af2ee"
+    },
+    {
+      "path": "tests/components/form-honeypots.test.jsx",
+      "sha256": "981775cffc708c8ab74adf6ff8d69312751c76d2dd20d294ad5ee81c364cb8ad"
+    },
+    {
+      "path": "tests/edge-functions/product-not-found.test.js",
+      "sha256": "f812ac1a57a5ec69d9d8d3031c80bbd7619e722c30b14ecbd44b57d574c69449"
+    },
+    {
+      "path": "tests/netlify-functions/admin-orders.test.js",
+      "sha256": "daf394248d0a8cafd59903ce02d1baf44b3d12a7f074603ec2cd805f50d18757"
+    },
+    {
+      "path": "tests/netlify-functions/booking-blobs-sdk.test.js",
+      "sha256": "5fd3357e4c789d86e5bca5da6506657cd698339a64bb5ff70ae093669d6c903b"
+    },
+    {
+      "path": "tests/netlify-functions/checkout-maintenance.test.js",
+      "sha256": "24364ccd6462bac65fecefa41ba1e8a3ea68e9fcad42851f091b831659ac2bc7"
+    },
+    {
+      "path": "tests/netlify-functions/checkout-release.test.js",
+      "sha256": "1e14a966546a540b9a572db85ba9915674b224fa6bc8e811105992ae649a8c71"
+    },
+    {
+      "path": "tests/netlify-functions/checkout-server.test.js",
+      "sha256": "9f8cc8ae79d8ee3c7c34d457ca9204b5329c269968da07de6d96d758256fb700"
+    },
+    {
+      "path": "tests/netlify-functions/checkout-session-status.test.js",
+      "sha256": "896a7c6f3f9e13cc6fe4c8e26f7c16a9d028dcdfc0036b08d31a14c79d08d3a8"
+    },
+    {
+      "path": "tests/netlify-functions/create-checkout-session.holds.test.js",
+      "sha256": "47ec88cf8675106b7aebe3ba5f84d4c637c3da10cc231d046af284d9b6995fdd"
+    },
+    {
+      "path": "tests/netlify-functions/create-checkout-session.replace.test.js",
+      "sha256": "05a3f79634b51195ec0142f58b1fa545624e066adb67c9de4082c64e4b529f1c"
+    },
+    {
+      "path": "tests/netlify-functions/create-checkout-session.stock.test.js",
+      "sha256": "4f419e88eb11fc52e3f8cddf70f78be29f18d684954795a0941af6871026da70"
+    },
+    {
+      "path": "tests/netlify-functions/create-checkout-session.test.js",
+      "sha256": "556c5af92670becebbf4deea3bf715df209d91022b5893acd12f2dee3e285f84"
+    },
+    {
+      "path": "tests/netlify-functions/function-routes.test.js",
+      "sha256": "1d0dd9cb11fcce9ec6eb2fbc48e63b77c540f3941ae723ef770a6572763ff188"
+    },
+    {
+      "path": "tests/netlify-functions/helpers/blobsFake.js",
+      "sha256": "5516e7ae6519c38e7b23b005dc790f2b6574b5bab360db687655b3eb42d4cea7"
+    },
+    {
+      "path": "tests/netlify-functions/helpers/checkoutFixtures.js",
+      "sha256": "638bee3afdc47d31702bb0096a81366b76d723463a71b2aeae751d136a94cb0e"
+    },
+    {
+      "path": "tests/netlify-functions/helpers/memoryBlobs.js",
+      "sha256": "9880ed4c5b2471e06eb11b5ce80242522c8c13aca5a4d41569b2c5f5149ed641"
+    },
+    {
+      "path": "tests/netlify-functions/instagram-feed.test.js",
+      "sha256": "a65c53c205ffda59975e4fe46af9ebe7a1e697b370150b41a36eed7463755dde"
+    },
+    {
+      "path": "tests/netlify-functions/login-throttle.test.js",
+      "sha256": "dac3ff6981a6d95ea99e5b957a983d579c040377f1228ba8468ebeb597b0e6a4"
+    },
+    {
+      "path": "tests/netlify-functions/order-notifications.test.js",
+      "sha256": "03b3d5de68602ca62a7aaaf161ffb3857f0210949325be3fc659cc09aba71033"
+    },
+    {
+      "path": "tests/netlify-functions/service-inquiry.test.js",
+      "sha256": "49a297455797bf6458c0065a0716f2717cb383984a0a00e50f8d708ea298be92"
+    },
+    {
+      "path": "tests/netlify-functions/site-metrics.test.js",
+      "sha256": "b04755d193830552d1b4e98a608e7a5c781eaf5c9fb0a15d2d44b5dd5b05c3a3"
+    },
+    {
+      "path": "tests/netlify-functions/staff-auth.test.js",
+      "sha256": "42a238cdfecdf8facea92fde17d03effa452ec028f55e7e7b65822303c4cf6ad"
+    },
+    {
+      "path": "tests/netlify-functions/staff-backup.reconcile.test.js",
+      "sha256": "1834b68f012d75225ab6ca5105eb445b43e1dfe1369eaf55ce588e0169aadf13"
+    },
+    {
+      "path": "tests/netlify-functions/staff-backup.test.js",
+      "sha256": "d94691033161490d104ad75cb5350c459294b53e71a84e463059e5bb2dea35db"
+    },
+    {
+      "path": "tests/netlify-functions/staff-catalog.test.js",
+      "sha256": "f90d32ccd34360e122c4502c09ac48c230b21b4f61780f80dc51df7458ee628b"
+    },
+    {
+      "path": "tests/netlify-functions/staff-endpoints-auth.test.js",
+      "sha256": "856a0f76bd05f606004c92aa9ff922c2eb280659000e2b92dc5d68a0a443f1df"
+    },
+    {
+      "path": "tests/netlify-functions/staff-inquiries.test.js",
+      "sha256": "6fac6b2f36d1e29402b6a8e69a53a492fef1f6ec8064b73b94317c321961fa61"
+    },
+    {
+      "path": "tests/netlify-functions/staff-login.test.js",
+      "sha256": "3fdf25934e875575b08162d7064b449c5e553627799b4dd10d9beed0b2951ac7"
+    },
+    {
+      "path": "tests/netlify-functions/staff-orders.test.js",
+      "sha256": "b52c86f786fde4aec73e3ad8c5535044b6994db20f41e5c5c3c5e04d5012ae17"
+    },
+    {
+      "path": "tests/netlify-functions/staff-stock.test.js",
+      "sha256": "0275dab2aeca38f1bdea192ceeb739049310d8797fdad32d118ebe8ca7d9ab18"
+    },
+    {
+      "path": "tests/netlify-functions/stripe-webhook.orders.test.js",
+      "sha256": "8302f1f94cdadeb62a54e41444c5a7fd556286dadb66d5946a32143506fab082"
+    },
+    {
+      "path": "tests/netlify-functions/stripe-webhook.stock.test.js",
+      "sha256": "4ab49f6f27653a64355b5923e7977534e7800d32a5e0f9cfbf7a0a8316d73b8e"
+    },
+    {
+      "path": "tests/netlify-functions/studio-bookings.test.js",
+      "sha256": "55dadf2821461f5114374da62855f5243a74b4f0eca398b03477b147e75d9649"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "eb56ed41ef0bff1f64b162e00620c79afdb5dbe491d99cf97a879fc7cec0b6d9"
+    },
+    {
+      "path": "tsconfig.node.json",
+      "sha256": "909bd34968b1272c7b1d49eface806b4a40d7f7d75557a8b74bfadf31574e8bc"
+    },
+    {
+      "path": "vite.config.js",
+      "sha256": "80d3b332e6a83ec1e174925fe05363575a8913234d5b92eabebb2da9174e11cb"
+    },
+    {
+      "path": "vite.qa.config.mjs",
+      "sha256": "21be34faca2acff42fa3ead5f3e90a5e217c77197396cabea778722335018e25"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "f9a64d7fe0bb3a879d9d7ffe38193cb662333cc7e8f20d21ee5f8e641d0eda3f"
+    },
+    {
+      "path": "vitest.export.config.mjs",
+      "sha256": "1cd15f380f41208e46dbf5e35f357101568494ea193f57069a8e5e4046591dc8"
+    }
+  ],
+  "verifiedAt": "2026-09-28T18:59:42.183Z",
+  "artifact": {
+    "algorithm": "sha256-path-size-content-v1",
+    "sha256": "ab897a60aac54f03577ae8f99ae6e235429be76a97383beb830ba20a63dd66b0",
+    "files": 321,
+    "bytes": 175623547
+  },
+  "postFreezeTestedDelta": {
+    "at": "2026-09-28T19:08:11.252Z",
+    "files": [
+      "server/buildHook.js",
+      "tests/netlify-functions/build-hook.test.js"
+    ],
+    "focusedTestCount": 26,
+    "lintPassed": true
+  }
+}

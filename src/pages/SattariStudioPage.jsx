@@ -368,6 +368,13 @@ export default function SattariStudioPage() {
                     onSave={session.exportSession}
                     onNewProject={session.newSession}
                     onDownloadRecording={session.downloadRecording}
+                    onCleanUpStorage={session.cleanUpStorage}
+                    backup={session.backup}
+                    onDownloadBackup={session.downloadBackup}
+                    onClearBackup={session.clearBackup}
+                    setAside={state.arranger.setAside}
+                    onDownloadSetAside={session.downloadSetAside}
+                    onDiscardSetAside={session.discardSetAside}
                   />
                 ) : null}
               </main>

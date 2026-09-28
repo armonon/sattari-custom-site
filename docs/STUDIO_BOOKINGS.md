@@ -27,6 +27,9 @@ channels have passed a real, owner-approved delivery test.
 - Payment link lifetime: up to 23 hours, ending before the session starts.
 - Only card payments are enabled to avoid delayed-settlement reservation races.
 - Payment amount is computed server-side, never trusted from the customer.
+- The email address is checked the way Stripe checks a checkout's customer
+  email (plain ASCII, a real dotted domain), so an address Stripe would refuse
+  is caught on the form instead of failing the approval later.
 - Confirmation email follows verified payment. An email or SMS provider accepting
   a message does not prove inbox or handset delivery.
 
@@ -75,6 +78,12 @@ The scheduled function reconciles pending payment sessions even if an expiry
 webhook was not delivered. No reservation is released just because a local
 timer expired; Stripe must report it expired/unpaid first.
 
+The webhook answers 200 for anything a redelivery could not change. A payment
+that does not match its booking (a different payment link, a different amount,
+or money arriving after the booking was cancelled or expired) is flagged
+**Payment needs review** instead of being retried for three days; the time stays
+held while staff check Stripe.
+
 ## Staff workflow
 
 Open the existing unlisted staff page and use **Studio bookings**. Owner alerts
@@ -83,18 +92,38 @@ happens automatically when an email scanner follows a link.
 
 - **Approve & email payment link**: checks for overlaps, reserves the room,
   creates an idempotent Stripe session and queues the customer approval email.
+  If Stripe refuses the payment link outright (a 4xx answer, so no link
+  exists), the request goes back to *Awaiting approval* with the reason shown,
+  and the next approval uses a fresh idempotency key. If Stripe does not
+  answer (timeout, 5xx), the time stays held as *Preparing payment link*,
+  because a link may exist: use **Retry approval** or **Check Stripe**.
 - **Decline**: for unapproved requests only; emails the customer.
 - **Check payment / Check Stripe**: reconciles status with Stripe, including a
   session created before a failed local write.
 - **Cancel unpaid reservation**: expires the Stripe session before freeing time.
   If payment already succeeded, cancellation is refused. Refund review stays in Stripe.
 - **Retry notifications**: retries failed channels, not messages already accepted.
+- **Keep booking (payment checked)** / **Release time (after refund)**: only for
+  a booking flagged *Payment needs review*. Check the payment named on the
+  booking in Stripe first. Keeping it marks the booking paid and sends the
+  confirmation (refused if another booking now holds the time); releasing it
+  frees the time and sends nothing, so refund in Stripe and contact the
+  customer yourself.
 
-`studio-booking-maintenance` runs every five minutes on production. It retries
-failed delivery with backoff up to eight attempts and checks unfinished payment
-sessions. Failed channels remain visible in the staff panel. SMS retries can
-duplicate an alert if the provider accepted a request but its response was lost;
-booking requests and Stripe payments themselves are deduplicated.
+`studio-booking-maintenance` runs every five minutes on production
+(`config.schedule` in the function, not `netlify.toml`). It retries failed
+delivery with backoff up to eight attempts and checks unfinished payment
+sessions. Netlify stops a scheduled function at 30 seconds, so it starts no new
+work after 20 and gives each Stripe, Resend or Twilio call 6 seconds; whatever
+is left runs five minutes later. Failed channels remain visible in the staff
+panel. SMS retries can duplicate an alert if the provider accepted a request
+but its response was lost (or it timed out); emails are retried under the same
+idempotency key, and booking requests and Stripe payments themselves are
+deduplicated.
+
+The customer's payment-status page asks Stripe only while a payment is still
+outstanding, and saves nothing unless the booking actually changed; a paid,
+expired or cancelled booking is answered from storage.
 
 ### Abuse limits
 
@@ -117,6 +146,11 @@ archived.
 Booking data is in the `studio-bookings` Netlify Blobs store, key `calendar-v1`.
 Strong consistency and actual conditional writes are required; the SDK was
 upgraded to 10.7.13 because 8.2.0 silently ignored conditional-write options.
+Strong reads are only available to v2 functions, which is why every function
+that touches this store (`studio-bookings`, `staff-bookings`, `stripe-webhook`,
+`studio-booking-maintenance`) is one; as Lambda-style functions the last three
+could not read the store at all. A change that alters nothing is not written,
+and a lost write race is retried after a short random pause.
 Existing inventory, auth and order tests must pass after this dependency update.
 This booking store is not part of the legacy stock/catalog backup-restore flow:
 restoring an old reservation snapshot could contradict payments already made.

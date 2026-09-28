@@ -14,8 +14,13 @@ const scope = createContext({
   crypto: globalThis.crypto,
   structuredClone,
 });
-const effects = new SourceTextModule(await readFile(new URL('arrangementEffects.js', root), 'utf8'), { context: scope });
-await effects.link(() => { throw new Error('Unexpected effects dependency'); });
+const effects = new SourceTextModule(
+  await readFile(new URL('arrangementEffects.js', root), 'utf8'),
+  { context: scope }
+);
+await effects.link(() => {
+  throw new Error('Unexpected effects dependency');
+});
 await effects.evaluate();
 const model = new SourceTextModule(await readFile(new URL('arrangementModel.js', root), 'utf8'), {
   context: scope,

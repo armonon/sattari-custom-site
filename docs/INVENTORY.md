@@ -14,10 +14,12 @@ Blobs, which this repo already used for orders and service inquiries.
 **1. Generate the staff credentials:**
 
 ```bash
-node scripts/hash-staff-password.mjs "username" "a-real-password-you-choose"
+node scripts/hash-staff-password.mjs "username"
 ```
 
-It prints four values. Set them in **Netlify → Site configuration →
+It asks for the password twice at a hidden prompt (never type the password as
+part of the command: it would stay in the shell history), then prints four
+values. Set them in **Netlify → Site configuration →
 Environment variables**:
 
 | Variable | What it is |
@@ -29,7 +31,8 @@ Environment variables**:
 
 Sign-ins last 12 hours. **Sign out** on the staff page revokes that sign-in on
 the server; **Sign out everywhere** revokes every sign-in at once without a
-redeploy.
+redeploy. If the page's own sign-in had already ended, Sign out everywhere says
+the other devices were *not* signed out — sign in and press it again.
 
 **2. Deploy.** Functions read these at runtime, so they need a deploy after the
 variables are set.
@@ -39,6 +42,15 @@ variables are set.
 Bookmark it. It is not linked from anywhere.
 
 ---
+
+Every function in `netlify/functions` is a Netlify **v2** function (`export
+default` plus `export const config`): routes live in each function's
+`config.path` and schedules in `config.schedule`, not in `netlify.toml`. v2 is
+what gives a function strongly consistent Blobs reads — the Lambda-style
+`handler` format only ever got cached reads, so stock could read stale and the
+booking store could not be read at all. `/api/inventory` reports
+`"consistency": "strong"`; `"eventual"` there in production means something is
+wrong.
 
 ## How it fits together
 
@@ -83,6 +95,14 @@ storing zero.
    by the cancel link (`/api/checkout-release`), when the same browser starts a
    new checkout, or by the 10-minute sweep 15 minutes after its session ends.
 
+   Because opening a checkout needs no sign-in, it is bounded: at most **10 of
+   any one item** per order (`409`, code `quantity_limit`, with `limit`), and
+   one address can hold at most **3 open checkouts / 30 units** at a time
+   (`429`, code `hold_limit`; counted by a keyed hash of the address, see
+   `HOLD_BUDGET` in `src/utils/inventory.js`). A product that comes in colors
+   must be bought in one of its colors (`409`, code `color_required`): stock is
+   counted per color, and a sale without one would reach no stock count.
+
 3. **Prices are read server-side from the merged catalog.** Never trust a price
    in a request body. If the catalog can't be read, checkout returns 503 rather
    than selling from the base catalog.
@@ -94,6 +114,18 @@ storing zero.
    is repaired by the next delivery or the sweep, and nothing happens twice.
    Only `paid` / `no_payment_required` sessions become sales; async payments
    complete on `async_payment_succeeded` and release on `async_payment_failed`.
+   The webhook answers 200 as soon as the order and its stock are saved — a
+   failed owner email is retried by the sweep, not by making Stripe redeliver.
+
+   The "sold" marker is kept for 7 days. A sale whose stock step is still not
+   confirmed 6 days after payment is **not** applied automatically any more
+   (it could no longer be told apart from one already applied): the order is
+   marked *stock needs review*, the staff page and the owner email say to count
+   it by hand.
+
+   Every conditional write is confirmed. The Blobs SDK reports some storage
+   errors as a successful write with no etag; those are read back, and a write
+   that did not land fails loudly instead of passing as saved.
 
 5. **Storefront reads fail open, login fails closed.** A blob outage costs stock
    badges, not sales — but if the throttle can't be read or written, sign-in is
@@ -102,8 +134,17 @@ storing zero.
 6. **The login throttle lives in blobs, not in memory,** and counts an attempt
    *before* the password is checked, so parallel requests can't slip past it.
    Each address has its own record (keyed by an HMAC of the IP), with a
-   site-wide ceiling on top; addresses that signed in recently are exempt from
-   the ceiling so an attacker can't lock the shop out.
+   site-wide ceiling on top (30 attempts per 15 minutes; tripping it is logged
+   as `staff-login-global-limit`). Addresses that signed in recently are exempt
+   from the ceiling, and so is any browser that has signed in before: a
+   successful sign-in gives it a signed **device token** (kept in
+   localStorage, valid 180 days, renewed at each sign-in). With it, that
+   browser is counted on its own record instead — the same 5-attempt lock as an
+   address — so guesses from elsewhere cannot lock the owner out, and a copied
+   device token buys no more guesses than one address has. **Sign out
+   everywhere** also ends every device token, so after losing a laptop, use it. The sign-in log
+   records a keyed hash of the address and whether the username matched, never
+   the address or what was typed.
 
 7. **The staff path is never named in `robots.txt` or `sitemap.xml`.** Both are
    public files. `netlify.toml` sets `X-Robots-Tag: noindex` on that path
@@ -150,9 +191,18 @@ the customer paid), the order records which items were short, the staff page
 shows a red **Oversold** badge ("paid for N, only M available"), and the owner
 email's subject starts with **ACTION NEEDED**. Stock is not driven below zero.
 
-The **Inquiries** tab lists service inquiries newest first, flags any whose
-notification email failed (they are always stored first), and lets staff mark
-them handled.
+The **Inquiries** tab lists service inquiries newest first, 50 at a time
+(**Show older inquiries** loads more), flags any whose notification email
+failed, and lets staff mark them handled. **Needs a reply here** shows only
+the inquiries that were never emailed and are not yet handled — the ones that
+exist nowhere but this list.
+
+Because the form is public, inquiries are bounded: at most 3 emailed and 20
+stored per address per day, 10 emails an hour / 40 a day and 200 stored a day
+overall (past that, the sender is asked to call), at most 2,000 kept, and
+anything older than a year is deleted by the nightly job. The first time the
+list is opened after this change, older inquiries are checked for the
+needs-a-reply list a hundred per load; the page says so until it is done.
 
 Revenue counts only orders Stripe marked `paid`. Unpaid sessions are shown as a
 separate count rather than hidden — a started-but-unpaid order is something to
@@ -173,14 +223,39 @@ the email and only logs it:
 Resend reports failures in the response body rather than throwing, so a
 body-level error is raised explicitly — otherwise a rejected email would log as
 a success. A failed email stays *pending* on the order and is retried by the
-next Stripe delivery and by the 10-minute sweep until it goes out; a short lease
-plus a Resend idempotency key keep it from being sent twice.
+10-minute sweep (and by any delivery Stripe repeats) until it goes out; a short
+lease plus a Resend idempotency key keep it from being sent twice.
+
+### The maintenance sweep
+
+`checkout-maintenance` (every 10 minutes) releases holds whose checkout ended
+without an event, asks Stripe for **completed shop checkouts from the last 72
+hours** and records any that have no order (so a cart of untracked items is
+recovered even if every webhook failed), and works through orders with
+unfinished steps — oldest first, each one moved to the back after its turn. An
+order that fails 6 times in a row is *parked*: retried once a day and listed on
+the Orders tab as "could not be finished automatically", so it cannot hold up
+the others. **Stop retrying** there removes one for good (a test-mode checkout
+left over after switching to live keys, or one sorted out by hand in Stripe);
+the log records who did it.
+
+Netlify stops a scheduled function at 30 seconds, so the run keeps time from
+its first line: no outside call (the build hook, Stripe, the owner email)
+starts after 20 seconds, and each gives up within 7 (the hook within 5).
+Whatever is left is picked up ten minutes later.
 
 ## Backups
 
-A snapshot runs nightly (`netlify.toml` → `[functions."nightly-backup"]`, 09:00
-UTC) and keeps the last 30. **Backups tab** in the staff page lists them, takes
-one on demand, downloads one, and restores one.
+A snapshot runs nightly (`netlify/functions/nightly-backup.js`,
+`config.schedule`, 09:00 UTC) and keeps the last 30 nightly snapshots. Snapshots
+staff take by hand and the automatic one before each restore are kept on their
+own count (the last 20), so they can never push the nightly history out.
+**Backups tab** in the staff page lists them, takes one on demand, downloads
+one, and restores one.
+
+A snapshot is all or nothing: if any store cannot be read, no snapshot is
+written (the nightly run fails loudly in the function log), and a restore
+whose safety snapshot cannot be taken changes nothing.
 
 What is snapshotted: stock counts, catalog edits, fulfilment state, and the list
 of photo keys.
@@ -250,6 +325,14 @@ guessing whether a save landed.
 - **Fulfilment state lives in one blob.** Fine at a shop's order volume — one
   read for the whole dashboard, atomic conditional writes. If orders ever reach
   the tens of thousands, split it by key.
+
+- **Published product pages lag behind edits.** Product titles, descriptions,
+  JSON-LD prices and stock, and the sitemap are rendered at build time. Set
+  `BUILD_HOOK_URL` (see `.env.example`) and a catalog edit, a stock change that
+  sells something out or brings it back, a restore, or a sale of the last unit
+  triggers one rebuild once changes have been quiet for 5 minutes (at most one
+  an hour; each build uses deploy credits). The storefront itself always reads
+  live prices and stock.
 
 - **Sizes and colors can't be edited from the staff page yet.** You can edit
   name, category, price, description, and photo. Products with per-size pricing

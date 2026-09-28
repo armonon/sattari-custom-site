@@ -9,7 +9,30 @@ export const BOOKING_STATUSES = {
   declined: 'Declined',
   cancelled: 'Cancelled',
   expired: 'Payment link expired',
+  needs_review: 'Payment needs staff review',
 };
+
+// The address is handed to Stripe as the checkout's customer_email, and Stripe
+// refuses the whole payment link over one it does not accept, so check it the
+// same way up front: plain ASCII, a dotted domain of letters, digits and
+// hyphens, and a letters-only top-level domain.
+const EMAIL_LOCAL = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+const EMAIL_LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+export function validBookingEmail(value) {
+  if (typeof value !== 'string' || value.length > 254) return false;
+  const at = value.lastIndexOf('@');
+  if (at < 1) return false;
+  const local = value.slice(0, at);
+  const labels = value.slice(at + 1).split('.');
+  return (
+    local.length <= 64 &&
+    EMAIL_LOCAL.test(local) &&
+    labels.length >= 2 &&
+    labels.every((label) => EMAIL_LABEL.test(label)) &&
+    /^[A-Za-z]{2,63}$/.test(labels.at(-1))
+  );
+}
 
 export function bookingPrice(hours) {
   if (!Number.isInteger(hours) || hours < 1 || hours > 12)
@@ -103,7 +126,8 @@ export function overlaps(a, b) {
 export function holdsTime(booking) {
   // Never release merely because our clock passed the checkout expiry. Stripe
   // must first confirm expired/unpaid; a paid webhook may still be in flight.
-  return ['approving', 'awaiting_payment', 'paid'].includes(booking.status);
+  // A payment waiting on staff review may be money already taken for it.
+  return ['approving', 'awaiting_payment', 'paid', 'needs_review'].includes(booking.status);
 }
 
 export function availableHours(date, hours, config, reserved = [], now = Date.now()) {
@@ -111,7 +135,10 @@ export function availableHours(date, hours, config, reserved = [], now = Date.no
     return [];
   const starts = [];
   for (let startHour = config.openHour; startHour + hours <= config.closeHour; startHour += 1) {
-    if (studioTimestamp(date, startHour) < now + 3600000) continue;
+    // Written so that NaN, which studioTimestamp returns for an hour the
+    // daylight-saving change skips, is refused rather than slipping past a
+    // `<` comparison.
+    if (!(studioTimestamp(date, startHour) >= now + 3600000)) continue;
     if (reserved.some((slot) => overlaps({ date, startHour, hours }, slot))) continue;
     starts.push(startHour);
   }

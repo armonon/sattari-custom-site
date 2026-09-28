@@ -27,6 +27,7 @@ export const METRIC_SOURCES = [
 ];
 export const METRIC_PAGES = [
   'home',
+  'about',
   'shop',
   'product',
   'services',
@@ -41,6 +42,10 @@ export const METRIC_PAGES = [
   'guide-bass',
   'guide-repair',
   'guide-cymbals',
+  'guide-karaoke',
+  'guide-drumless',
+  'guide-key-bpm',
+  'guide-batch',
   'tool-details',
   'privacy',
   'downloads',
@@ -51,13 +56,21 @@ export function metricPage(path) {
   if (path.startsWith('/shop')) return 'shop';
   if (path.startsWith('/product/')) return 'product';
   if (path.startsWith('/services')) return 'services';
-  if (path.endsWith('-music-store')) return 'local';
+  if (
+    path.endsWith('-music-store') ||
+    ['/woodland-hills-drum-shop', '/encino-violin-shop'].includes(path)
+  )
+    return 'local';
   if (path.startsWith('/tools/')) return 'tool-details';
   const guides = {
     '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
     '/guides/practice-bass-with-isolated-stems': 'guide-bass',
     '/guides/instrument-repairs-near-encino': 'guide-repair',
     '/guides/choose-your-first-cymbals': 'guide-cymbals',
+    '/guides/remove-vocals-for-karaoke': 'guide-karaoke',
+    '/guides/make-drumless-practice-tracks': 'guide-drumless',
+    '/guides/find-song-key-and-bpm': 'guide-key-bpm',
+    '/guides/batch-separate-audio-stems': 'guide-batch',
   };
   return guides[path] || (METRIC_PAGES.includes(path.slice(1)) ? path.slice(1) : null);
 }
@@ -68,9 +81,13 @@ export function referralSource(referrer = '', search = '', origin = 'https://sat
     chatgpt: 'chatgpt',
     'chatgpt.com': 'chatgpt',
     perplexity: 'perplexity',
+    'perplexity.ai': 'perplexity',
     claude: 'claude',
+    'claude.ai': 'claude',
     copilot: 'copilot',
+    'copilot.microsoft.com': 'copilot',
     gemini: 'gemini',
+    'gemini.google.com': 'gemini',
   };
   if (Object.hasOwn(campaigns, campaign)) return campaigns[campaign];
   if (!referrer) return 'direct';

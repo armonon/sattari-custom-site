@@ -21,17 +21,26 @@ import { updateInventory } from './stockStore.js';
 // snapshot captures exactly what is stored — including anything a future
 // version writes that this code does not yet understand. The one exception is
 // open checkout holds, which only mean something while their session is live.
-export async function captureSnapshot(event, reason = 'scheduled', at = Date.now()) {
+//
+// Any read failure fails the whole snapshot. A key that does not exist reads as
+// null and is captured as empty, but a store that could not be read must not:
+// an "empty" snapshot restored later would wipe the stock counts and catalog.
+export async function captureSnapshot(
+  event,
+  reason = 'scheduled',
+  at = Date.now(),
+  kind = 'scheduled'
+) {
   const stockStore = openStore(event, STOCK_STORE);
   const catalogStore = openStore(event, CATALOG_STORE);
   const fulfillmentStore = openStore(event, FULFILLMENT_STORE);
   const imageStore = openStore(event, IMAGE_STORE);
 
   const [rawStock, catalog, fulfillment, images] = await Promise.all([
-    stockStore.get(STOCK_BLOB_KEY, { type: 'json' }).catch(() => null),
-    catalogStore.get(CATALOG_BLOB_KEY, { type: 'json' }).catch(() => null),
-    fulfillmentStore.get(FULFILLMENT_BLOB_KEY, { type: 'json' }).catch(() => null),
-    imageStore.list().catch(() => ({ blobs: [] })),
+    stockStore.get(STOCK_BLOB_KEY, { type: 'json' }),
+    catalogStore.get(CATALOG_BLOB_KEY, { type: 'json' }),
+    fulfillmentStore.get(FULFILLMENT_BLOB_KEY, { type: 'json' }),
+    imageStore.list(),
   ]);
 
   const { stock, stockSales } = splitStockForSnapshot(rawStock);
@@ -44,12 +53,13 @@ export async function captureSnapshot(event, reason = 'scheduled', at = Date.now
     imageKeys: (images?.blobs || []).map((blob) => blob.key),
     reason,
     at,
+    kind,
   });
 }
 
 export async function writeSnapshot(event, snapshot) {
   const store = openStore(event, BACKUP_STORE);
-  const key = snapshotKey(snapshot.createdAt);
+  const key = snapshotKey(snapshot.createdAt, snapshot.kind);
   await store.setJSON(key, snapshot);
   return key;
 }
@@ -69,12 +79,14 @@ export async function readSnapshot(event, key) {
   return store.get(key, { type: 'json' });
 }
 
-export async function pruneSnapshots(event, keep) {
+// Nightly and staff-taken snapshots are counted separately (see selectExpired).
+export async function pruneSnapshots(event, keep, keepStaff) {
   const store = openStore(event, BACKUP_STORE);
   const { blobs } = await store.list({ prefix: BACKUP_PREFIX });
   const expired = selectExpired(
     blobs.map((blob) => blob.key),
-    keep
+    keep,
+    keepStaff
   );
 
   for (const key of expired) {
@@ -95,8 +107,9 @@ export async function pruneSnapshots(event, keep) {
 // is never overwritten. Open checkout holds are kept as they are. Fulfilment
 // is written the same way, so an order marked shipped mid-restore is kept.
 export async function restoreSnapshot(event, snapshot) {
-  // Read before any write: if the orders cannot be read, nothing is restored.
-  const orders = await listOrders(event);
+  // Read before any write: if the orders cannot all be read, nothing is
+  // restored. A sale in an unreadable order would go back on the shelf.
+  const orders = await listOrders(event, { strict: true });
 
   let report = null;
   await updateInventory(event, (live) => {

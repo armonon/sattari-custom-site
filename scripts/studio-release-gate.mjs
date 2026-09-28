@@ -30,7 +30,7 @@ async function fingerprint() {
     .split('\0')
     .filter(Boolean)
     .filter((file) =>
-      /^(src\/|public\/|scripts\/|tests\/|server\/|netlify\/|package.*json$|vite.*|tsconfig.*|index.html$|netlify.toml$|\.eslintrc.*|\.prettierrc.*|\.github\/)/.test(
+      /^(src\/|public\/|scripts\/|tests\/|server\/|netlify\/|package.*json$|vite.*|tsconfig.*|index.html$|netlify.toml$|eslint\.config\.js$|\.prettierrc.*|\.github\/)/.test(
         file
       )
     );
@@ -95,13 +95,14 @@ const preflight = { cleanTree: initialStatus === '', initialStatus, disk };
 await writeFile(resolve(output, 'preflight.json'), JSON.stringify(preflight, null, 2));
 const steps = [
   ['matrix', ['scripts/report-performance-support.mjs', '--json']],
-  ['lint', ['node_modules/eslint/bin/eslint.js', 'src', '--ext', '.js,.jsx,.ts,.tsx']],
+  ['lint', ['node_modules/eslint/bin/eslint.js', '.']],
   ['unit', ['node_modules/vitest/vitest.mjs', 'run', '--maxWorkers=1']],
   ['types', ['node_modules/typescript/bin/tsc', '--noEmit']],
   ['meter', ['scripts/qualify-loudness.mjs']],
   ['tempo', ['scripts/qualify-tempo.mjs']],
   ['build', ['node_modules/vite/bin/vite.js', 'build']],
   ['prerender', ['scripts/prerender.mjs']],
+  ['seo', ['scripts/check-seo.mjs']],
   ['browser', ['scripts/run-studio-browser-qa.mjs']],
   ['soak', ['scripts/run-windowed-soak.mjs']],
 ];

@@ -10,10 +10,11 @@ import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 
 const MAX_BODY_CHARS = 10000;
 
-// Netlify applies a code-defined rate limit only to a v2 function with a path.
-// Both URLs are listed: a custom path replaces the default one otherwise. The
-// limit counts availability reads too, so it is sized for a person browsing
-// times; the per-sender and site-wide booking limits sit behind it.
+// Both URLs are listed: a custom path replaces the default one otherwise.
+// There is no edge rate limit here (the plan's two rules are spent on
+// site-event and service-inquiry). Requests are bounded by the per-sender and
+// site-wide limits in requestBooking, and a payment-status lookup only calls
+// Stripe while that payment is still outstanding (see lookupBookingPayment).
 export const config = {
   path: ['/api/studio-bookings', '/.netlify/functions/studio-bookings'],
 };

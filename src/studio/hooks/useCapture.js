@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createWaveformPeaks } from '../../utils/audioAnalysis';
 import { putAudioAsset } from '../../utils/audioProjectStore';
+import { decodeSourceWindow } from '../../utils/arrangementSourceWindow';
+import { sourceDuration } from '../../utils/windowedSource';
+import { withClipWaveform } from '../arrangement/projectEdits';
 import { audioClip, audioTrack } from '../../utils/arrangementModel';
 import { downloadBlob } from '../downloads';
 import { useLatest } from './useLatest';
@@ -52,9 +54,9 @@ export function useCapture({
   activeView,
   setNotice,
 }) {
-  const { getEngine, engineRef } = engine;
+  const { getEngine, engineRef, onBeforeDispose } = engine;
   const { setRecordings } = session.actions;
-  const { applyEdit } = arranger;
+  const { applyEdit, amendDisplay } = arranger;
   const [captureSeparateSources, setCaptureSeparateSources] = useState(true);
   const [longSession, setLongSession] = useState(false);
   const [recordingHealth, setRecordingHealth] = useState(null);
@@ -101,6 +103,65 @@ export function useCapture({
     window.addEventListener('beforeunload', protectCapture);
     return () => window.removeEventListener('beforeunload', protectCapture);
   }, [activity, captureActive]);
+
+  // In-site navigation (Back, a trackpad swipe, a site link) would unmount the
+  // Studio and dispose the engine mid-take; beforeunload never fires for it.
+  // While recording, a guard entry absorbs Back and site links are held.
+  useEffect(() => {
+    if (!captureActive) return undefined;
+    const hold = () =>
+      setNotice('Recording in progress. Finish the take before leaving the Studio.');
+    const guard = { ...window.history.state, stemdeckCaptureGuard: true };
+    window.history.pushState(guard, '', window.location.href);
+    const onPopState = () => {
+      if (!activity.captureActive) return;
+      window.history.pushState(guard, '', window.location.href);
+      hold();
+    };
+    const onClick = (event) => {
+      const link = event.target?.closest?.('a[href]');
+      if (
+        !link ||
+        event.defaultPrevented ||
+        link.target === '_blank' ||
+        link.hasAttribute('download')
+      )
+        return;
+      const url = new URL(link.href, window.location.href);
+      // Another site unloads this page, which beforeunload already protects.
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname) return;
+      event.preventDefault();
+      event.stopPropagation();
+      hold();
+    };
+    window.addEventListener('popstate', onPopState);
+    document.addEventListener('click', onClick, true);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      document.removeEventListener('click', onClick, true);
+      if (window.history.state?.stemdeckCaptureGuard) window.history.back();
+    };
+  }, [activity, captureActive, setNotice]);
+
+  // Last resort when the page unmounts during a take anyway: stop the
+  // recorders so the source lanes and events are durable, keep the master, and
+  // link it to the take so "Find recoverable source takes" can restore it.
+  useEffect(
+    () =>
+      onBeforeDispose?.(async (audio) => {
+        if (audio.performanceStartedAt == null) return;
+        const journal = audio.performanceJournal;
+        const blob = await audio.stopRecording();
+        if (!blob) return;
+        const name = `${context.current.session.sessionName} recovered take`;
+        const asset = await putAudioAsset(blob, { name, type: blob.type });
+        await journal
+          ?.attach({ assetId: asset.id, name, duration: audio.lastRecordingDuration || 0 })
+          .catch(() => {});
+      }),
+    [context, onBeforeDispose]
+  );
 
   const startCapture = async () => {
     const { session: current, activeView: view, ...options } = context.current;
@@ -224,23 +285,31 @@ export function useCapture({
       );
       return;
     }
+    // The take is saved before any long decode: a whole-hour master is about
+    // 1.4 GB of PCM, and running out of memory must not cost the take. The
+    // editable lane needs only the recording's length and one decodable window;
+    // its waveform is drawn afterwards, window by window.
+    const raw = getEngine().getAudioContext().rawContext;
     let reference = null;
     try {
-      const buffer = await getEngine()
-        .getAudioContext()
-        .rawContext.decodeAudioData(await blob.arrayBuffer());
+      const cacheKey = `${asset.id}:${blob.size}`;
+      const duration = await sourceDuration(raw, blob, cacheKey).catch(
+        () => getEngine().lastRecordingDuration
+      );
+      if (!(duration > 0)) throw new Error('Recording length is unknown.');
+      await decodeSourceWindow(raw, blob, 0, Math.min(duration, 1), 64 * 1024 * 1024, {
+        cacheKey,
+      });
       const track = audioTrack(name);
       track.role = 'reference';
-      track.clips.push({
-        ...audioClip(asset.id, name, buffer.duration, timelineStart.current),
-        waveform: createWaveformPeaks(buffer.getChannelData(0), 2048),
-      });
-      reference = { track, duration: buffer.duration };
+      track.clips.push(audioClip(asset.id, name, duration, timelineStart.current));
+      reference = { track, duration };
     } catch {
       // The take and its events are still added below; only the editable lane is missing.
     }
     // One undoable step for the whole take, whether or not it decoded.
     applyEdit((project) => withCapturedTake(project, { blob, sourceTracks, capture, reference }));
+    if (reference) void drawTakeWaveform(raw, blob, reference);
     setNotice(
       !reference
         ? `${name} saved. This browser could not decode the take for editing; download it from Recordings.`
@@ -248,6 +317,20 @@ export function useCapture({
           ? `${name} saved with ${sourceTracks.length} aligned source lanes (offline and muted) and a master safety reference. Enable chosen lanes in Track options, then unmute or comp them; avoid doubling the reference. Deck FX are printed. ${sourceCapture.error || ''}`
           : `${name} saved as an editable printed reference. ${sourceCapture?.error || 'This lane bypasses repeated master processing.'}`
     );
+  };
+
+  const drawTakeWaveform = async (raw, blob, reference) => {
+    const clipId = reference.track.clips[0].id;
+    try {
+      const { windowedWaveformPeaks } = await import('../../utils/windowedAudioAnalysis');
+      const waveform = await windowedWaveformPeaks(blob, raw, {
+        duration: reference.duration,
+        cacheKey: `${reference.track.clips[0].assetId}:${blob.size}`,
+      });
+      amendDisplay((project) => withClipWaveform(project, clipId, waveform));
+    } catch {
+      // The lane plays and edits without a drawn waveform.
+    }
   };
 
   const toggleCapture = async () => {

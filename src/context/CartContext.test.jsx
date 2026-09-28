@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { CartProvider, useCart } from './CartContext';
 import { InventoryProvider } from './InventoryContext';
@@ -114,7 +115,9 @@ it('keeps the whole cart when the catalog cannot be loaded, and catches up on re
 
   expect(await screen.findByText('Frame Drum $120.00 x1')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(storedSlugs()).toEqual(['cymbal-felts', 'frame-drum']);
+  // Catalog updates render as transitions (so they never interrupt hydration),
+  // and the cart is saved in an effect after that render.
+  await waitFor(() => expect(storedSlugs()).toEqual(['cymbal-felts', 'frame-drum']));
 });
 
 it('clearing an already empty cart does not change state', async () => {
@@ -170,4 +173,73 @@ it('treats a degraded inventory response as not loaded and keeps staff-added ite
     await screen.findByText(/We couldn.t load 1 item in your cart right now/)
   ).toBeInTheDocument();
   expect(storedSlugs()).toEqual(['cymbal-felts', 'frame-drum', 'violin-strings']);
+});
+
+it('renders empty first, like the prerendered page, then shows the saved cart once, even in StrictMode', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => new Promise(() => {}))
+  );
+  const setItem = vi.spyOn(Storage.prototype, 'setItem');
+  const firstRender = [];
+  function FirstRender() {
+    const { cartItems, cartReady } = useCart();
+    if (!firstRender.length) firstRender.push({ lines: cartItems.length, cartReady });
+    return null;
+  }
+
+  render(
+    <StrictMode>
+      <InventoryProvider>
+        <CartProvider>
+          <FirstRender />
+          <CartLines />
+        </CartProvider>
+      </InventoryProvider>
+    </StrictMode>
+  );
+
+  expect(firstRender).toEqual([{ lines: 0, cartReady: false }]);
+  // Read once, not twice (StrictMode runs mount effects twice in development).
+  expect(screen.getByText('Cymbal Felts $6.99 x1')).toBeInTheDocument();
+  expect(screen.getByText('Violin Strings $10.00 x2')).toBeInTheDocument();
+  // The empty first render never overwrote what was saved.
+  expect(setItem).not.toHaveBeenCalledWith(STORAGE_KEY, '[]');
+  expect(storedSlugs()).toEqual(['cymbal-felts', 'frame-drum', 'violin-strings']);
+  setItem.mockRestore();
+});
+
+it('replaces a line waiting for a color when that product is added with one', async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify([{ slug: 'miami-electric-violin', size: null, color: 'Gold', quantity: 2 }])
+  );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () =>
+      jsonResponse({ stock: {}, catalog: { overrides: {}, added: [], hidden: [] } })
+    )
+  );
+  let cart;
+  function Probe() {
+    cart = useCart();
+    return null;
+  }
+  render(
+    <InventoryProvider>
+      <CartProvider>
+        <Probe />
+      </CartProvider>
+    </InventoryProvider>
+  );
+  await act(async () => {});
+  expect(cart.cartItems).toEqual([
+    expect.objectContaining({ slug: 'miami-electric-violin', color: null, needsColor: true }),
+  ]);
+
+  act(() => cart.addToCart({ slug: 'miami-electric-violin', color: 'Red', quantity: 1 }));
+
+  expect(cart.cartItems).toEqual([
+    expect.objectContaining({ color: 'Red', needsColor: false, quantity: 2 }),
+  ]);
 });

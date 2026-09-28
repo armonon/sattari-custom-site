@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 import {
   PLAIN,
   checkoutSession,
@@ -45,10 +46,11 @@ vi.mock('resend', () => ({
   }),
 }));
 
-const { handler: webhook } = await import('../../netlify/functions/stripe-webhook.js');
-const { handler: createCheckout } =
-  await import('../../netlify/functions/create-checkout-session.js');
-const { handler: inventory } = await import('../../netlify/functions/inventory.js');
+const webhook = callWith((await import('../../netlify/functions/stripe-webhook.js')).default);
+const createCheckout = callWith(
+  (await import('../../netlify/functions/create-checkout-session.js')).default
+);
+const inventory = callWith((await import('../../netlify/functions/inventory.js')).default);
 const { HOLDS_FIELD, stockKey } = await import('../../src/utils/inventory.js');
 
 const KEY = stockKey(PLAIN);
@@ -239,6 +241,35 @@ describe('recording a paid checkout', () => {
     expect(order().notification.state).toBe('sent');
   });
 
+  it('flags the order instead of decrementing again once the sale marker may be gone', async () => {
+    setStock(3);
+    const { holdId } = await startCheckout();
+    const event = stripeEvent('checkout.session.completed', checkoutSession({ holdId }));
+
+    // The decrement lands; the function dies before the order records it.
+    blobs.current.state.fault = ({ store, method, value }) =>
+      store === 'orders' && method === 'setJSON' && value?.stock?.state === 'applied'
+        ? new Error('function timed out')
+        : null;
+    expect((await webhook(webhookCall(event))).statusCode).toBe(500);
+    blobs.current.state.fault = null;
+    expect(stockDoc()[KEY]).toBe(2);
+
+    // Eight days later a stock write has pruned the sale's "sold" marker, the
+    // one thing that would have made another decrement a no-op.
+    vi.setSystemTime(NOW + 8 * 24 * 60 * MINUTE);
+    await startCheckout();
+    expect(stockDoc()[HOLDS_FIELD][holdId]).toBeUndefined();
+
+    const late = await webhook(webhookCall(event));
+
+    expect(late.statusCode).toBe(200);
+    expect(stockDoc()[KEY]).toBe(2);
+    expect(order().stock.state).toBe('needs_review');
+    expect(mail.box.delivered.at(-1).subject).toMatch(/^ACTION NEEDED: check stock by hand/);
+    expect(outbox()).toEqual([]);
+  });
+
   it('leaves orders recorded by the previous webhook alone', async () => {
     setStock(3);
     blobs.current.write('orders', 'orders/cs_test_legacy.json', {
@@ -394,18 +425,22 @@ describe('overselling', () => {
 });
 
 describe('owner notification reliability', () => {
-  it('retries a rejected email on the next delivery and sends it exactly once', async () => {
+  it('answers 200 once the sale is saved even if the email failed, and sends it exactly once', async () => {
     setStock(3);
     const { holdId } = await startCheckout();
     const event = stripeEvent('checkout.session.completed', checkoutSession({ holdId }));
     mail.box.failNext(1);
 
+    // A redelivery cannot fix the email provider, and a run of failed
+    // deliveries gets the endpoint disabled at Stripe. The work marker keeps
+    // the email for the maintenance sweep.
     const first = await webhook(webhookCall(event));
-    expect(first.statusCode).toBe(500);
+    expect(first.statusCode).toBe(200);
     expect(order().notification).toMatchObject({ state: 'failed', attempts: 1 });
     expect(order().stock.state).toBe('applied');
     expect(outbox()).toEqual(['outbox/cs_test_order_one']);
 
+    // A delivery Stripe repeats anyway still finishes it.
     expect((await webhook(webhookCall(event))).statusCode).toBe(200);
     expect(order().notification).toMatchObject({ state: 'sent', attempts: 2 });
 

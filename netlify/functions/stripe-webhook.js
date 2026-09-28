@@ -1,9 +1,17 @@
 import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { handleCheckoutEvent } from '../../server/checkoutOrders.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { getStripe } from '../../server/stripeClient.js';
 import { applyBookingPayment } from '../../server/studioBookings.js';
+
+// v2, like everything that touches the booking store: strong reads, which it
+// requires, are only available to v2 functions. A custom path replaces the
+// default URL, so both are listed.
+export const config = {
+  path: ['/api/stripe-webhook', '/.netlify/functions/stripe-webhook'],
+};
 
 function getHeader(headers, name) {
   return headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || null;
@@ -29,7 +37,19 @@ function json(statusCode, body) {
   };
 }
 
-export async function handler(event) {
+const BOOKING_EVENTS = [
+  'checkout.session.completed',
+  'checkout.session.async_payment_succeeded',
+  'checkout.session.expired',
+];
+
+// The signature is checked over the body exactly as Stripe sent it, which
+// request.text() returns unaltered.
+export default async function stripeWebhook(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed.' });
   }
@@ -61,14 +81,20 @@ export async function handler(event) {
 
   try {
     if (stripeEvent.data.object?.metadata?.kind === 'studio_booking') {
-      if (
-        [
-          'checkout.session.completed',
-          'checkout.session.async_payment_succeeded',
-          'checkout.session.expired',
-        ].includes(stripeEvent.type)
-      ) {
-        await applyBookingPayment(event, stripeEvent.data.object);
+      if (BOOKING_EVENTS.includes(stripeEvent.type)) {
+        try {
+          // A payment that does not match its booking is flagged for staff
+          // inside, rather than thrown: no redelivery can fix it.
+          await applyBookingPayment(event, stripeEvent.data.object);
+        } catch (error) {
+          // Neither can a booking that no longer exists. Storage failures and
+          // write contention can be fixed by a retry, so they still throw.
+          if (error?.statusCode !== 404) throw error;
+          logError('stripe-webhook-booking-missing', {
+            eventId: stripeEvent.id,
+            sessionId: stripeEvent.data.object?.id,
+          });
+        }
       }
       return json(200, { received: true });
     }
@@ -90,8 +116,9 @@ export async function handler(event) {
       });
     }
 
-    // Recorded, but a step failed: a non-2xx makes Stripe redeliver, and the
-    // redelivery finishes only what is still outstanding.
+    // Recorded, but the stock step did not finish: a non-2xx makes Stripe
+    // redeliver, and the redelivery finishes only what is still outstanding.
+    // A failed owner email alone is left to the maintenance sweep.
     if (retry) return json(500, { error: 'Webhook processing incomplete; will retry.' });
 
     return json(200, { received: true });

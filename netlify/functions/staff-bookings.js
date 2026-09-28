@@ -5,12 +5,26 @@ import {
   approveBooking,
   bookingJson as json,
   cancelUnpaidBooking,
+  confirmReviewedBooking,
   declineBooking,
   reconcileBooking,
+  releaseReviewedBooking,
   retryBookingNotifications,
 } from '../../server/studioBookings.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 
-export async function handler(event) {
+// v2, like everything that touches the booking store: strong reads, which the
+// store requires, are only available to v2 functions. A custom path replaces
+// the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/bookings', '/.netlify/functions/staff-bookings'],
+};
+
+export default async function staffBookings(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) return json(401, { error: 'Sign in to continue.' });
   try {
@@ -33,6 +47,8 @@ export async function handler(event) {
       cancel: cancelUnpaidBooking,
       sync: reconcileBooking,
       retry: retryBookingNotifications,
+      confirm: confirmReviewedBooking,
+      release: releaseReviewedBooking,
     };
     if (
       !payload ||

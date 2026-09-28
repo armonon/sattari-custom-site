@@ -6,7 +6,13 @@ import {
   sanitizeCatalogDoc,
 } from '../../src/utils/catalogMerge.js';
 import { isConsistencyDegraded, openStore } from '../../server/blobs.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { readInventory } from '../../server/stockStore.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/inventory', '/.netlify/functions/inventory'],
+};
 
 function json(statusCode, body) {
   return {
@@ -22,6 +28,10 @@ function json(statusCode, body) {
   };
 }
 
+export default async function inventory(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
 // Public and unauthenticated. Returns stock counts and the employee-edited
 // catalog layer — both of which are already visible on the storefront. No
 // costs, suppliers, or customer data pass through here.
@@ -29,7 +39,7 @@ function json(statusCode, body) {
 // Stock and catalog are served together in one response so the storefront makes
 // a single request and cannot end up rendering a product from one snapshot with
 // stock from another.
-export async function handler(event) {
+async function handle(event) {
   if (event.httpMethod !== 'GET') {
     return json(405, { error: 'Method not allowed.' });
   }
@@ -44,14 +54,14 @@ export async function handler(event) {
     // right after a sale is what allows overselling.
     const catalogStore = openStore(event, CATALOG_STORE);
 
-    const [inventory, rawCatalog] = await Promise.all([
+    const [inventoryDoc, rawCatalog] = await Promise.all([
       readInventory(event),
       catalogStore.get(CATALOG_BLOB_KEY, { type: 'json' }),
     ]);
 
     // Units in someone else's open checkout are not for sale, so the badge
     // reads what checkout will actually accept.
-    stock = availableStock(inventory.stock, inventory.holds, Date.now());
+    stock = availableStock(inventoryDoc.stock, inventoryDoc.holds, Date.now());
     if (rawCatalog) catalog = sanitizeCatalogDoc(rawCatalog);
   } catch (error) {
     // Degrade rather than fail the storefront. An empty stock map means every
@@ -64,12 +74,14 @@ export async function handler(event) {
     );
   }
 
+  // Whether reads here were strongly consistent. A stale stock number is how
+  // an out-of-stock item gets sold, so a fallback must not be invisible.
+  const eventual = isConsistencyDegraded();
   return json(200, {
     stock,
     catalog,
     degraded,
-    // True when reads fell back to eventual consistency. A stale stock number
-    // is how an out-of-stock item gets sold, so this must not be invisible.
-    eventualConsistency: isConsistencyDegraded(),
+    consistency: eventual ? 'eventual' : 'strong',
+    eventualConsistency: eventual,
   });
 }

@@ -1,11 +1,26 @@
 import { Helmet } from 'react-helmet-async';
 import { FC, ReactNode } from 'react';
-import { absoluteUrl, businessSchema, canonicalUrl } from '../data/siteSeo';
+import { absoluteUrl, businessSchema, canonicalUrl, websiteSchema } from '../data/siteSeo';
+
+// The share card for pages without an image of their own: 1200×630 is what
+// Facebook, LinkedIn and X's large card expect (the old default, the 529×143
+// logo, was below their minimum sizes, so links showed no preview image).
+export const DEFAULT_SHARE_IMAGE = {
+  src: '/images/sattari-share.jpg',
+  width: 1200,
+  height: 630,
+};
+
+// Images some pages show that are too small to preview; the card stands in.
+const TOO_SMALL_TO_SHARE = new Set(['/sattari site/sattari logo.png']);
 
 interface SEOProps {
   title: string;
   description: string;
   image?: string;
+  /** Pixel size of `image`, when known; lets crawlers lay out the preview without fetching it. */
+  imageWidth?: number;
+  imageHeight?: number;
   url?: string;
   type?: string;
   children?: ReactNode;
@@ -23,7 +38,9 @@ interface SEOProps {
 export const SEO: FC<SEOProps> = ({
   title,
   description,
-  image = '/sattari site/sattari logo.png',
+  image: pageImage,
+  imageWidth,
+  imageHeight,
   url = 'https://sattarimusic.com',
   type = 'website',
   price,
@@ -42,7 +59,11 @@ export const SEO: FC<SEOProps> = ({
   // contain a literal space ("/sattari site/..."), which browsers auto-encode
   // when resolving a DOM src/href but which would stay a raw, invalid space
   // in this literal meta-tag string — so encode explicitly.
-  const absoluteImage = absoluteUrl(image);
+  const image = pageImage && !TOO_SMALL_TO_SHARE.has(pageImage) ? pageImage : undefined;
+  const absoluteImage = absoluteUrl(image || DEFAULT_SHARE_IMAGE.src);
+  const width = image ? imageWidth : DEFAULT_SHARE_IMAGE.width;
+  const height = image ? imageHeight : DEFAULT_SHARE_IMAGE.height;
+  const hasImageSize = Boolean(width && height);
 
   return (
     <Helmet>
@@ -59,6 +80,8 @@ export const SEO: FC<SEOProps> = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={absoluteImage} />
+      {hasImageSize && <meta property="og:image:width" content={String(width)} />}
+      {hasImageSize && <meta property="og:image:height" content={String(height)} />}
       <meta property="og:url" content={canonical} />
       <meta property="og:site_name" content="Sattari Music" />
       <meta property="og:locale" content="en_US" />
@@ -79,8 +102,8 @@ export const SEO: FC<SEOProps> = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />
 
-      {/* Additional */}
-      <meta name="theme-color" content="#0a0a0b" />
+      {/* Additional. No theme-color here: it follows the day/night theme (see
+          index.html), and Helmet would reset it on every page. */}
       <link rel="canonical" href={canonical} />
       {children}
     </Helmet>
@@ -99,7 +122,12 @@ export const StructuredData: FC<StructuredDataProps> = ({ data }) => (
 );
 
 // Organization Schema
-export const OrganizationSchema = () => <StructuredData data={businessSchema} />;
+export const OrganizationSchema = () => (
+  <>
+    <StructuredData data={businessSchema} />
+    <StructuredData data={websiteSchema} />
+  </>
+);
 
 // Product Schema
 interface ProductSchemaProps {

@@ -50,6 +50,16 @@ export const businessSchema = {
     'Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
 };
 
+export const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${SITE_ORIGIN}/#website`,
+  url: `${SITE_ORIGIN}/`,
+  name: BUSINESS.name,
+  inLanguage: 'en-US',
+  publisher: { '@id': businessSchema['@id'] },
+};
+
 export const PAGE_SEO = {
   home: {
     title: 'Woodland Hills Music Store & Drum Shop',
@@ -57,6 +67,8 @@ export const PAGE_SEO = {
       'Shop cymbals, drumsticks, violins and guitars at Sattari Music in Woodland Hills. Instrument repairs, lessons and rehearsal space near Encino and Calabasas.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
+    imageWidth: 1536,
+    imageHeight: 1024,
   },
   about: {
     title: 'About Us | Woodland Hills Music Store',
@@ -88,13 +100,17 @@ export const PAGE_SEO = {
       'Explore Sattari Stem Separator, Studio and Learn: separate vocals, drums and bass, create music in your browser, and analyze songs for practice.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
+    imageWidth: 1920,
+    imageHeight: 1080,
   },
   separator: {
-    title: 'Stem Separator, Vocal Remover & BPM Finder',
+    title: 'Free AI Stem Separator & Vocal Remover',
     description:
-      'Split songs into vocals, drums, bass and instruments. Batch-separate tracks, estimate key and BPM, and download WAV stems. Audio stays on your device.',
+      'Separate vocals, drums, bass and instruments in your browser. Free batch stem separation, song key and BPM estimates, WAV downloads. No sign-in.',
     url: `${SITE_ORIGIN}/stem-separator`,
     image: '/images/tools/separator.jpg',
+    imageWidth: 1440,
+    imageHeight: 1131,
   },
   studio: {
     title: 'StemDeck Online | Browser Music Studio',
@@ -102,6 +118,8 @@ export const PAGE_SEO = {
       'Create and remix with StemDeck in Sattari Studio. A browser DAW with deck mixing, audio recording, MIDI instruments, an arranger and WAV export.',
     url: `${SITE_ORIGIN}/studio`,
     image: '/images/tools/studio.jpg',
+    imageWidth: 1920,
+    imageHeight: 1080,
   },
   learn: {
     title: 'Song Key, Chords & Rhythm Practice | Sattari Learn',
@@ -109,6 +127,8 @@ export const PAGE_SEO = {
       'Explore song key, chord and tempo estimates with Sattari Learn. Build piano, guitar, bass and drum practice around your own audio in the browser.',
     url: `${SITE_ORIGIN}/learn`,
     image: '/images/tools/learn.jpg',
+    imageWidth: 1240,
+    imageHeight: 523,
   },
 };
 
@@ -211,28 +231,37 @@ export function breadcrumbSchema(items) {
   };
 }
 
+// Describes a browser tool's page. It is deliberately a WebPage about the tool,
+// not a SoftwareApplication/WebApplication: Google only accepts app markup with
+// a price offer plus ratings or reviews, which a free tool page does not have
+// (and ratings must never be made up), so the app markup was flagged invalid.
 export function musicToolSchema(key, features) {
   const page = PAGE_SEO[key];
+  const name =
+    key === 'separator'
+      ? 'Sattari Stem Separator'
+      : `Sattari ${key === 'studio' ? 'Studio' : 'Learn'}`;
   return {
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    '@id': `${page.url}#application`,
-    name:
-      key === 'separator'
-        ? 'Sattari Stem Separator'
-        : `Sattari ${key === 'studio' ? 'Studio' : 'Learn'}`,
+    '@type': 'WebPage',
+    '@id': `${page.url}#webpage`,
     url: page.url,
+    name,
     description: page.description,
-    applicationCategory: key === 'learn' ? 'EducationalApplication' : 'MultimediaApplication',
-    operatingSystem: 'Web browser',
-    browserRequirements: 'JavaScript and Web Audio support required.',
     isAccessibleForFree: true,
-    screenshot: absoluteUrl(`/images/tools/${key}.jpg`),
-    softwareHelp: {
-      '@type': 'WebPage',
-      url: absoluteUrl(`/tools/${key === 'separator' ? 'stem-separator' : key}`),
+    inLanguage: 'en-US',
+    isPartOf: { '@id': websiteSchema['@id'] },
+    keywords: features.join(', '),
+    primaryImageOfPage: {
+      '@type': 'ImageObject',
+      url: absoluteUrl(`/images/tools/${key}.jpg`),
     },
-    featureList: features,
+    about: {
+      '@type': 'Thing',
+      name,
+      description: 'Runs in the web browser. JavaScript and Web Audio support required.',
+    },
+    significantLink: absoluteUrl(`/tools/${key === 'separator' ? 'stem-separator' : key}`),
     publisher: { '@id': businessSchema['@id'] },
   };
 }

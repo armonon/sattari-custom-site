@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { audioClip, audioTrack, emptyArrangement } from '../../utils/arrangementModel';
 import * as edits from './projectEdits';
 
@@ -96,4 +96,16 @@ it('pastes relative to the earliest copied clip and recreates a deleted source t
   expect(pasted.tracks.at(-1)).toMatchObject({ id: 'gone', name: 'Pasted clips' });
   expect(pasted.tracks.at(-1).clips[0]).toMatchObject({ name: 'Verse', start: 16 });
   expect(pasted.tracks.at(-1).clips[0].id).not.toBe(song.clips[1].id);
+});
+
+describe('withClipWaveform', () => {
+  it('sets one clip waveform and leaves the project untouched when the clip is gone', () => {
+    const track = { ...audioTrack('Take'), clips: [audioClip('a', 'Take', 60)] };
+    const other = audioTrack('Other');
+    const project = { ...emptyArrangement(), tracks: [track, other] };
+    const drawn = edits.withClipWaveform(project, track.clips[0].id, [8, 50, 100]);
+    expect(drawn.tracks[0].clips[0].waveform).toEqual([8, 50, 100]);
+    expect(drawn.tracks[1]).toBe(other);
+    expect(edits.withClipWaveform(project, 'deleted', [8])).toBe(project);
+  });
 });

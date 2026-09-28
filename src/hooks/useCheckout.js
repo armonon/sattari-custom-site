@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { createCheckoutSession, redirectToCheckoutUrl } from '../utils/checkout';
+import {
+  COLOR_REQUIRED,
+  QUANTITY_LIMIT,
+  createCheckoutSession,
+  productToFix,
+  redirectToCheckoutUrl,
+} from '../utils/checkout';
 
 // The Stripe session this browser last sent the shopper to. Coming back without
 // paying (Back, the cancel link, or retrying from another tab) leaves that
@@ -53,14 +59,45 @@ export function releaseCheckoutSession(sessionId) {
   }).catch(() => null);
 }
 
+// The product page a checkout error sends the shopper to, as { slug, name, label }.
+function describeProductToFix(fix, cartItems) {
+  if (!fix) return null;
+  const line = cartItems.find((item) => item.slug === fix.slug);
+  return {
+    slug: fix.slug,
+    name: line?.product.name || null,
+    label: fix.code === COLOR_REQUIRED ? 'Choose a color' : 'View product',
+  };
+}
+
+// The server's message, plus which lines it means when it refuses a quantity
+// (its text is general: "up to 10 of each item").
+function describeCheckoutError(error, cartItems) {
+  if (!(error instanceof Error)) return 'Checkout failed.';
+  if (error.code !== QUANTITY_LIMIT) return error.message;
+  const names = [
+    ...new Set(
+      cartItems
+        .filter((item) =>
+          error.slugs?.length ? error.slugs.includes(item.slug) : item.quantity > error.limit
+        )
+        .map((item) => item.product.name)
+    ),
+  ];
+  return names.length ? `${error.message} Too many: ${names.join(', ')}.` : error.message;
+}
+
 // The one way to start a Stripe checkout, shared by the cart drawer and the
 // cart page. Each call to startCheckout creates a Stripe session, so a second
 // click while one is being created must not start another.
+
 export function useCheckout() {
   const { cartItems, catalogStatus, unavailableCount, refreshCatalog } = useCart();
   const inFlight = useRef(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  // Set with checkoutError when one product needs the shopper's attention.
+  const [checkoutProduct, setCheckoutProduct] = useState(null);
 
   // Pressing Back on Stripe's page can restore this page from the back/forward
   // cache mid-"processing"; reset so the customer can check out again.
@@ -77,6 +114,7 @@ export function useCheckout() {
   const startCheckout = useCallback(async () => {
     if (inFlight.current) return;
     setCheckoutError('');
+    setCheckoutProduct(null);
 
     // Checking out now would silently leave these entries out of the order.
     if (unavailableCount > 0) {
@@ -90,6 +128,16 @@ export function useCheckout() {
 
     if (!cartItems.length) {
       setCheckoutError('Your cart is empty. Add a product before checkout.');
+      return;
+    }
+
+    // The server would refuse it (409 color_required); say so before asking.
+    const colorless = cartItems.find((item) => item.needsColor);
+    if (colorless) {
+      setCheckoutError(`Choose a color for ${colorless.product.name} before checking out.`);
+      setCheckoutProduct(
+        describeProductToFix({ slug: colorless.slug, code: COLOR_REQUIRED }, cartItems)
+      );
       return;
     }
 
@@ -110,13 +158,16 @@ export function useCheckout() {
     } catch (error) {
       inFlight.current = false;
       setIsCheckingOut(false);
-      setCheckoutError(error instanceof Error ? error.message : 'Checkout failed.');
-      // The server rejected the cart as it stands (a product was hidden, or
-      // stock changed). Reload the catalog so the cart catches up and says what
-      // changed.
+      setCheckoutError(describeCheckoutError(error, cartItems));
+      // A color to choose links to that product's page.
+      setCheckoutProduct(describeProductToFix(productToFix(error), cartItems));
+      // The server rejected the cart as it stands (a product was hidden, a
+      // color removed, or stock changed). Reload the catalog so the cart
+      // catches up and says what changed. (429 hold_limit is about open
+      // checkouts, not the cart.)
       if (error?.status === 400 || error?.status === 409) refreshCatalog();
     }
   }, [cartItems, catalogStatus, unavailableCount, refreshCatalog]);
 
-  return { startCheckout, isCheckingOut, checkoutError };
+  return { startCheckout, isCheckingOut, checkoutError, checkoutProduct };
 }

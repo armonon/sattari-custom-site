@@ -1,6 +1,7 @@
 // @vitest-environment node
 import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
 const fake = { value: null, etag: null, writes: 0, failWrites: false, alwaysConflict: false };
 
@@ -29,7 +30,7 @@ vi.mock('@netlify/blobs', () => ({
 
 const { hashPassword, createSession } = await import('../../server/staffAuth.js');
 const { stockKey } = await import('../../src/utils/inventory.js');
-const { handler } = await import('../../netlify/functions/staff-stock.js');
+const handler = callWith((await import('../../netlify/functions/staff-stock.js')).default);
 
 const PLAIN = 'pirouz-series-cymbals';
 

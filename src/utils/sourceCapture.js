@@ -146,6 +146,12 @@ export class SourceCapture {
     return this.startTime;
   }
   async storeChunk({ channels, start, length }) {
+    // A final partial block under a millisecond is inaudible, and a clip that
+    // short is not valid arrangement data.
+    if (length / this.context.sampleRate < 0.001) {
+      this.committedFrames = start + length;
+      return;
+    }
     for (let index = 0; index < channels.length; index++) {
       const pair = channels[index],
         name = `${this.sources[index].name} ${(start / this.context.sampleRate).toFixed(1)}s`;

@@ -471,6 +471,16 @@
   line-height: 1.4;
 }
 
+/* Shown until the saved cart has been read (it is not in the prerendered HTML).
+   Tall enough that the footer starts below the fold, so it does not jump when
+   the cart appears. */
+.cart-loading-note {
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem 0;
+  color: var(--muted);
+}
+
 /* Checkout Button */
 .checkout-btn-full {
   display: flex;
@@ -844,9 +854,9 @@
   }
 
   .order-summary-premium {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
+    position: relative;
+    bottom: auto;
+    z-index: auto;
     margin-inline: -0.625rem;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     border-radius: 22px 22px 0 0;

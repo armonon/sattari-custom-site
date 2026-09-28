@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -15,12 +15,27 @@ export default function Navbar({ onCartClick }) {
   const { itemCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navRef = useRef(null);
 
   // Every navigation gets a new key, including tapping the link for the page
   // already open, which leaves the pathname unchanged.
   useEffect(() => {
     setMenuOpen(false);
   }, [location.key]);
+
+  // On phones the links collapse into the menu. Closed, they are hidden from
+  // the keyboard and screen readers: CSS hides the list, and `inert` also covers
+  // the links, whose own transitions keep them visible for a moment after it.
+  useEffect(() => {
+    const nav = navRef.current;
+    const compact = window.matchMedia('(max-width: 760px)');
+    const sync = () => {
+      nav.toggleAttribute('inert', compact.matches && !menuOpen);
+    };
+    sync();
+    compact.addEventListener('change', sync);
+    return () => compact.removeEventListener('change', sync);
+  }, [menuOpen]);
 
   const handleCartClick = () => {
     setMenuOpen(false);
@@ -33,14 +48,17 @@ export default function Navbar({ onCartClick }) {
         <NavLink to="/" className="brand-mark">
           <span className="nav-logo-frame">
             <picture>
-              <source srcSet="/sattari site/sattari logo.avif" type="image/avif" />
+              {/* Encoded: a literal space would split the srcset candidate. */}
+              <source srcSet="/sattari%20site/sattari%20logo.avif" type="image/avif" />
               <img
                 src="/sattari site/sattari logo.png"
                 alt="Sattari Music Logo"
                 width="529"
                 height="143"
                 loading="eager"
-                fetchPriority="high"
+                // React 18 warns about fetchPriority; the lowercase attribute renders as is.
+                // eslint-disable-next-line react/no-unknown-property
+                fetchpriority="high"
                 decoding="async"
                 className="brand-logo"
               />
@@ -67,6 +85,7 @@ export default function Navbar({ onCartClick }) {
           </button>
         </div>
         <nav
+          ref={navRef}
           id="primary-navigation"
           className={`nav-links${menuOpen ? ' nav-links-open' : ''}`}
           aria-label="Primary navigation"

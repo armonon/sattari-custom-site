@@ -46,7 +46,7 @@ npm run build
 ### Configure Build Settings
 - **Build command:** `npm run build`
 - **Publish directory:** `dist`
-- **Node version:** 20.x (in netlify.toml or site settings)
+- **Node version:** 22.x (pinned in `netlify.toml`; Node 20 reached end of life on 2026-04-30)
 
 ## Step 3: Set Environment Variables
 
@@ -71,6 +71,17 @@ ORDER_NOTIFICATION_FROM=orders@your-domain.com
 IP_HASH_SECRET=choose-a-long-random-secret
 ```
 
+Optional automatic rebuilds: product pages and the sitemap are rendered at build
+time, so catalog edits, stock changes that sell an item out or bring it back,
+restores, and sales of the last unit request a rebuild. One rebuild runs once
+changes have been quiet for 5 minutes, at most once an hour. Set
+`BUILD_HOOK_URL` to the Build & Deploy workflow's dispatch endpoint
+(`https://api.github.com/repos/<owner>/<repo>/actions/workflows/build-deploy.yml/dispatches`)
+and `BUILD_HOOK_TOKEN` to a fine-grained GitHub token for this repository with
+"Actions: Read and write", so the rebuild goes through the release gate like
+any deploy. (A Netlify build hook works only if you deploy from Netlify builds,
+see Step 5.) Each rebuild uses CI minutes and a deploy.
+
 Staff sign-in (`STAFF_*`), studio bookings (`STUDIO_BOOKING_*`, `TWILIO_*`) and
 the Instagram feed have their own variables; `.env.example` lists every variable
 with what it does, and [INVENTORY.md](INVENTORY.md) covers staff setup.
@@ -79,7 +90,7 @@ with what it does, and [INVENTORY.md](INVENTORY.md) covers staff setup.
 
 ### Default: Netlify Function
 
-The project already includes [netlify/functions/create-checkout-session.js](netlify/functions/create-checkout-session.js) and a redirect in [netlify.toml](netlify.toml) so `/api/create-checkout-session` works on the deployed site.
+Every function in [netlify/functions](../netlify/functions) is a Netlify v2 function that declares its own URLs in `config.path` (and schedules in `config.schedule`), so `/api/create-checkout-session` works on the deployed site without configuration. `netlify.toml` has no `/api` redirects on purpose.
 
 Required for this flow:
 
@@ -137,6 +148,12 @@ deliveries complete only what is still pending. The scheduled
 releases lapsed stock holds and retries pending owner emails. No extra
 site-level configuration is required on Netlify for this storage.
 
+The webhook answers 200 once an order and its stock are saved; failed owner
+emails are retried by `checkout-maintenance`. That sweep also records completed
+checkouts from the last 72 hours that have no order (in case webhooks were
+down), and parks orders that fail 6 times in a row: they are retried daily and
+shown on the staff page's Orders tab.
+
 For local development, `npm run dev:api` runs the same functions and keeps Blobs
 on disk in `.local-data/blobs/` (override with `LOCAL_BLOBS_PATH`).
 
@@ -160,24 +177,37 @@ plans (5 on Pro). They are used on `site-event` and `service-inquiry`; a test
 fails if more are added. Sign-in, bookings, the Instagram feed and admin lookups
 enforce their own limits in code.
 
-## Step 5: Deploy Frontend
+## Step 5: Deploy
+
+Production has exactly one deploy path: **GitHub Actions** (Step 9). On a push to
+`main` it runs the full release gate, then uploads that exact qualified build
+with `netlify deploy --prod --no-build`. The **Run workflow** button on the
+workflow page repeats this on demand.
+
+Netlify's own production builds are switched off in code: the `ignore` command
+in `netlify.toml` skips a Netlify build in the production context, so a Git push
+cannot race the qualified deploy with an unqualified build. Deploy previews and
+branch deploys still build on Netlify.
+
+To deploy from Netlify builds instead, set `NETLIFY_PRODUCTION_BUILDS=on` in the
+Netlify site's environment variables **and** remove the `deploy` job (or the
+`NETLIFY_AUTH_TOKEN` secret) from GitHub, so only one path remains.
 
 ```bash
-# Push code to main branch (or configured branch)
-git push origin main
-
-# Netlify automatically builds and deploys
-# Monitor build in Netlify dashboard
+git push origin main   # GitHub Actions tests, qualifies and deploys
 ```
 
 Monitor deployment:
-- Check **Deployments** tab for build progress
-- View build logs for any errors
-- Check deployment preview URL
+- **GitHub → Actions → Build & Deploy** for the gate and the deploy job
+- **Netlify → Deploys** shows the published deploy ("Deploy from GitHub Actions")
+- Netlify shows production Git builds as skipped by the ignore command; that is expected
 
 ## Step 6: Post-Deployment
 
 ### Verify Production
+1. Open `/api/inventory` and confirm it reports `"consistency": "strong"`; in
+   **Logs → Functions**, confirm the three scheduled functions appear
+   (`checkout-maintenance`, `nightly-backup`, `studio-booking-maintenance`)
 1. Visit https://sattarimusic.com (or your domain)
 2. Test navigation
 3. Test adding items to cart
@@ -186,6 +216,24 @@ Monitor deployment:
 6. Confirm Stripe webhook deliveries succeed
 7. If notifications are configured, confirm the business email arrives
 8. Verify meta tags and SEO
+
+### Security headers
+
+`netlify.toml` sets `nosniff`, a Permissions-Policy (microphone and MIDI only on
+this site, for the Studio), and blocks other sites from framing any page. The
+staff page gets a strict, enforced Content-Security-Policy.
+
+The site-wide Content-Security-Policy starts in **report-only** mode: browsers
+log what it would block without blocking anything. After deploying, open the
+home page, shop, a product page, the cart, a checkout, `/services` (map),
+`/learn`, `/studio` (load a track, record, export) and `/stem-separator` in
+Chrome or Firefox (Safari ignores a report-only policy that has no reporting
+endpoint), and check the DevTools console for `Content-Security-Policy-Report-Only`
+violations. When there are none, rename the header in `netlify.toml` from
+`Content-Security-Policy-Report-Only` to `Content-Security-Policy` to enforce it.
+If you change the inline theme script in `index.html` or the staff page's
+script, `tests/security-headers.test.js` prints the new hash to put in
+`netlify.toml`.
 
 ### Test Stripe
 - Use test card: `4242 4242 4242 4242`
@@ -196,8 +244,13 @@ Monitor deployment:
 ### Monitor Errors
 1. Setup Sentry at [sentry.io](https://sentry.io)
 2. Create React project
-3. Add DSN to environment variables
+3. Add DSN to environment variables (`VITE_SENTRY_DSN`, then redeploy)
 4. Verify error tracking is working
+
+The Sentry SDK (v11) loads once the page is idle, so it never delays a page's
+first render; errors raised before then are queued and sent when it loads.
+Without `VITE_SENTRY_DSN` it is never downloaded. Reports are grouped by route
+(`/product/:slug`), not by every URL (`src/utils/monitoring.ts`).
 
 ### Setup Analytics
 - Add Google Analytics tag (optional)
@@ -227,7 +280,8 @@ For automatic deployments:
    - `NETLIFY_AUTH_TOKEN`
    - `NETLIFY_SITE_ID`
 
-Pushes to `main` branch will automatically deploy.
+Pushes to `main` deploy automatically after the release gate passes; this is the
+only production deploy path (see Step 5).
 
 ## Troubleshooting
 
@@ -305,5 +359,5 @@ For deployment issues:
 
 ---
 
-**Last Updated:** April 23, 2026  
+**Last Updated:** September 28, 2026  
 **Production URL:** https://sattarimusic.com

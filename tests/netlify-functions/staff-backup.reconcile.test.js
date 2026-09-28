@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 import {
   PLAIN,
   checkoutSession,
@@ -27,12 +28,13 @@ vi.mock('stripe', () => ({
 }));
 
 const { hashPassword, createSession } = await import('../../server/staffAuth.js');
-const { handler: staffBackup } = await import('../../netlify/functions/staff-backup.js');
-const { handler: staffStock } = await import('../../netlify/functions/staff-stock.js');
-const { handler: staffOrders } = await import('../../netlify/functions/staff-orders.js');
-const { handler: createCheckout } =
-  await import('../../netlify/functions/create-checkout-session.js');
-const { handler: webhook } = await import('../../netlify/functions/stripe-webhook.js');
+const staffBackup = callWith((await import('../../netlify/functions/staff-backup.js')).default);
+const staffStock = callWith((await import('../../netlify/functions/staff-stock.js')).default);
+const staffOrders = callWith((await import('../../netlify/functions/staff-orders.js')).default);
+const createCheckout = callWith(
+  (await import('../../netlify/functions/create-checkout-session.js')).default
+);
+const webhook = callWith((await import('../../netlify/functions/stripe-webhook.js')).default);
 const { HOLDS_FIELD, stockKey } = await import('../../src/utils/inventory.js');
 
 const KEY = stockKey(PLAIN);

@@ -173,3 +173,54 @@ describe('cleanup', () => {
     expect(ipKeys()).toHaveLength(2);
   });
 });
+
+describe('trusted devices', () => {
+  const DEVICE = 'device-id-from-a-signed-token';
+
+  async function exhaustGlobal(now) {
+    for (let i = 0; i < GLOBAL_LIMIT; i += 1) {
+      await reserveLoginAttempt(event, `10.1.0.${i}`, now);
+    }
+    expect((await reserveLoginAttempt(event, '10.1.1.1', now)).allowed).toBe(false);
+  }
+
+  it('lets a known device sign in from a new address while the site-wide limit is spent', async () => {
+    const now = 30_000_000;
+    await exhaustGlobal(now);
+
+    expect((await reserveLoginAttempt(event, '192.0.2.77', now, { device: DEVICE })).allowed).toBe(
+      true
+    );
+  });
+
+  it('gives a device its own attempt limit, which a stolen token cannot escape', async () => {
+    const now = 31_000_000;
+    for (let i = 0; i < LOCK_AFTER_ATTEMPTS; i += 1) {
+      // A different address every time: the limit follows the device.
+      const result = await reserveLoginAttempt(event, `10.2.0.${i}`, now, { device: DEVICE });
+      expect(result.allowed).toBe(true);
+    }
+    const locked = await reserveLoginAttempt(event, '10.2.1.1', now, { device: DEVICE });
+    expect(locked.allowed).toBe(false);
+    expect(locked.retryAfterMs).toBeGreaterThan(0);
+
+    await recordLoginSuccess(event, '10.2.1.1', now + locked.retryAfterMs, { device: DEVICE });
+    expect(
+      (await reserveLoginAttempt(event, '10.2.1.2', now + locked.retryAfterMs, { device: DEVICE }))
+        .allowed
+    ).toBe(true);
+    const keys = [...blobData('staff-auth').keys()].filter((key) => key.startsWith('login-dev/'));
+    expect(keys).toHaveLength(1);
+    expect(keys[0]).not.toContain(DEVICE);
+  });
+
+  it('logs once when the site-wide limit trips', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await exhaustGlobal(32_000_000);
+    await reserveLoginAttempt(event, '10.1.1.2', 32_000_000);
+
+    const trips = spy.mock.calls.filter(([line]) => line.includes('staff-login-global-limit'));
+    expect(trips).toHaveLength(1);
+    spy.mockRestore();
+  });
+});

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 import {
   PLAIN,
   fakeCheckoutSessions,
@@ -31,10 +32,11 @@ vi.mock('stripe', () => ({
   }),
 }));
 
-const { handler: createCheckout } =
-  await import('../../netlify/functions/create-checkout-session.js');
-const { handler: webhook } = await import('../../netlify/functions/stripe-webhook.js');
-const { handler: inventory } = await import('../../netlify/functions/inventory.js');
+const createCheckout = callWith(
+  (await import('../../netlify/functions/create-checkout-session.js')).default
+);
+const webhook = callWith((await import('../../netlify/functions/stripe-webhook.js')).default);
+const inventory = callWith((await import('../../netlify/functions/inventory.js')).default);
 const { HOLDS_FIELD, stockKey } = await import('../../src/utils/inventory.js');
 
 // A second tracked product: the 16" effect cymbal.

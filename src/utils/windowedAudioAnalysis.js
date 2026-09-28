@@ -192,3 +192,52 @@ export async function analyzeWindowedAudio(
     },
   };
 }
+
+/**
+ * createWaveformPeaks for a whole recording, read in windows: an hour-long take
+ * never needs a full decode (about 1.4 GB of PCM) just to draw its lane.
+ */
+export async function windowedWaveformPeaks(
+  file,
+  raw,
+  {
+    duration,
+    binCount = 2048,
+    windowSeconds = 30,
+    decode = decodeSourceWindow,
+    signal,
+    cacheKey,
+  } = {}
+) {
+  if (!(duration > 0)) throw new Error('Recording length is unknown.');
+  const bins = Math.max(8, binCount);
+  const peaks = new Float64Array(bins),
+    energy = new Float64Array(bins),
+    counts = new Float64Array(bins);
+  for (let start = 0; start < duration; start += windowSeconds) {
+    if (signal?.aborted) throw new Error('Waveform cancelled.');
+    const { buffer, offset } = await decode(
+      raw,
+      file,
+      start,
+      Math.min(duration, start + windowSeconds),
+      64 * 1024 * 1024,
+      { signal, cacheKey }
+    );
+    const samples = buffer.getChannelData(0),
+      rate = buffer.sampleRate,
+      first = Math.round(offset * rate),
+      total = duration * rate;
+    for (let index = 0; index < samples.length; index += 1) {
+      const bin = Math.min(bins - 1, Math.floor(((first + index) / total) * bins));
+      const absolute = Math.abs(samples[index]);
+      if (absolute > peaks[bin]) peaks[bin] = absolute;
+      energy[bin] += absolute * absolute;
+      counts[bin] += 1;
+    }
+  }
+  return Array.from(peaks, (peak, bin) => {
+    const rms = Math.sqrt(energy[bin] / Math.max(1, counts[bin]));
+    return Math.round(Math.min(100, Math.max(8, (peak * 0.62 + rms * 1.8) * 100)));
+  });
+}

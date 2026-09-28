@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { blobData, blobState, readBlob, resetBlobs } from './helpers/blobsFake.js';
 
 const sendMock = vi.fn();
@@ -17,9 +17,10 @@ vi.mock('resend', () => ({
 }));
 
 const { default: handler, config } = await import('../../netlify/functions/service-inquiry.js');
-const { INQUIRY_EMAIL_LIMITS } = await import('../../server/inquiryStore.js');
+const { INQUIRY_EMAIL_LIMITS, INQUIRY_STORAGE_LIMITS } =
+  await import('../../server/inquiryStore.js');
 
-function post(body, init = {}) {
+function post(body, init = {}, ip = '203.0.113.7') {
   return handler(
     new Request('https://sattarimusic.com/api/service-inquiry', {
       method: 'POST',
@@ -27,9 +28,18 @@ function post(body, init = {}) {
       body: typeof body === 'string' ? body : JSON.stringify(body),
       ...init,
     }),
-    { ip: '203.0.113.7' }
+    { ip }
   );
 }
+
+// The per-sender allowances key a hash of the address, which needs a secret.
+beforeEach(() => {
+  process.env.IP_HASH_SECRET = 'inquiry-test-secret';
+});
+
+afterEach(() => {
+  delete process.env.IP_HASH_SECRET;
+});
 
 const valid = {
   service: 'repairs',
@@ -183,8 +193,10 @@ describe('service-inquiry Netlify function', () => {
       expect.objectContaining({ ok: true, emailSent: false, stored: true })
     );
     expect(sendMock).not.toHaveBeenCalled();
-    const [key] = [...blobData('service-inquiries').keys()];
-    expect(key).toMatch(/^inquiries\/inq_\d{13}_[a-f0-9]{8}\.json$/);
+    const keys = [...blobData('service-inquiries').keys()].filter((key) =>
+      key.startsWith('inquiries/')
+    );
+    expect(keys).toEqual([expect.stringMatching(/^inquiries\/inq_\d{13}_[a-f0-9]{8}\.json$/)]);
     expect(storedInquiries()).toEqual([
       expect.objectContaining({
         name: 'Alex',
@@ -288,7 +300,7 @@ describe('abuse resistance', () => {
 
   it('stops emailing past the hourly allowance but keeps the inquiries for staff', async () => {
     for (let i = 0; i < INQUIRY_EMAIL_LIMITS.perHour + 3; i += 1) {
-      expect((await post(valid)).status).toBe(200);
+      expect((await post(valid, {}, `198.51.100.${i}`)).status).toBe(200);
     }
 
     expect(sendMock).toHaveBeenCalledTimes(INQUIRY_EMAIL_LIMITS.perHour);
@@ -308,5 +320,31 @@ describe('abuse resistance', () => {
     expect(await response.json()).toMatchObject({ emailSent: false, stored: true });
     expect(storedInquiries()).toEqual([expect.objectContaining({ emailError: 'limit' })]);
     spy.mockRestore();
+  });
+
+  it('lets one address use only its share of the email allowance', async () => {
+    for (let i = 0; i < INQUIRY_EMAIL_LIMITS.perSenderPerDay + 2; i += 1) {
+      expect((await post(valid)).status).toBe(200);
+    }
+    expect((await post(valid, {}, '198.51.100.99')).status).toBe(200);
+
+    // The flooding address used its share; someone else still got through.
+    expect(sendMock).toHaveBeenCalledTimes(INQUIRY_EMAIL_LIMITS.perSenderPerDay + 1);
+    expect(storedInquiries().filter((item) => item.emailError === 'limit')).toHaveLength(2);
+  });
+
+  it('caps what one address can store in a day, and says so when nothing was kept', async () => {
+    delete process.env.RESEND_API_KEY;
+    for (let i = 0; i < INQUIRY_STORAGE_LIMITS.perSenderPerDay; i += 1) {
+      expect((await post(valid)).status).toBe(200);
+    }
+
+    const refused = await post(valid);
+
+    expect(refused.status).toBe(429);
+    expect((await refused.json()).error).toMatch(/call \(424\) 465-3020/);
+    expect(storedInquiries()).toHaveLength(INQUIRY_STORAGE_LIMITS.perSenderPerDay);
+    // Another address is unaffected.
+    expect((await post(valid, {}, '198.51.100.7')).status).toBe(200);
   });
 });

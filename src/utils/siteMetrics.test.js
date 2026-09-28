@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { metricPage, referralSource, validMetric } from './siteMetrics';
+import { musicGuides } from '../data/musicGuides';
 
 describe('privacy-bounded metrics', () => {
   it.each([
@@ -10,6 +11,11 @@ describe('privacy-bounded metrics', () => {
     ['https://gemini.google.com/', '', 'gemini'],
     ['https://google.com/search?q=private', '', 'google'],
     ['', '?utm_source=chatgpt.com', 'chatgpt'],
+    ['', '?utm_source=perplexity.ai', 'perplexity'],
+    ['', '?utm_source=CLAUDE.AI', 'claude'],
+    ['', '?utm_source=copilot.microsoft.com', 'copilot'],
+    ['', '?utm_source=gemini.google.com', 'gemini'],
+    ['', '?utm_source=chatgpt.com.attacker.test', 'direct'],
     ['https://chatgpt.com.attacker.test/', '', 'other_referral'],
     ['https://sattarimusic.com/learn', '', 'direct'],
     ['', '?email=private@example.com', 'direct'],
@@ -21,6 +27,18 @@ describe('privacy-bounded metrics', () => {
     expect(metricPage('/checkout/success')).toBeNull();
     expect(metricPage('/private-song.wav')).toBeNull();
     expect(metricPage('/product/a-specific-product')).toBe('product');
+  });
+  it('recognizes every published guide using only coarse allowlisted page groups', () => {
+    const groups = musicGuides.map((guide) => metricPage(`/guides/${guide.slug}`));
+    expect(new Set(groups).size).toBe(musicGuides.length);
+    for (const page of groups) {
+      expect(page).toMatch(/^guide-/);
+      expect(validMetric({ source: 'chatgpt', page, event: 'page_view' })).toBe(true);
+    }
+    expect(metricPage('/guides/private-filename.wav')).toBeNull();
+    expect(metricPage('/about')).toBe('about');
+    expect(metricPage('/woodland-hills-drum-shop')).toBe('local');
+    expect(metricPage('/encino-violin-shop')).toBe('local');
   });
   it('rejects extra fields and unknown values', () => {
     const metric = { source: 'chatgpt', page: 'learn', event: 'learn_completed' };

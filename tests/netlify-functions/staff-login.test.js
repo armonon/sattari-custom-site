@@ -10,7 +10,7 @@ vi.mock('../../server/staffAuth.js', async (importOriginal) => {
 });
 
 const { default: login, config } = await import('../../netlify/functions/staff-login.js');
-const { checkPassword, hashPassword, requireStaff, revokeAllSessions } =
+const { checkPassword, hashPassword, requireStaff, revokeAllSessions, verifyDeviceToken } =
   await import('../../server/staffAuth.js');
 const { THROTTLE_SETTINGS } = await import('../../server/loginThrottle.js');
 
@@ -28,8 +28,8 @@ function attempt(body, ip = '203.0.113.5', init = {}) {
   );
 }
 
-const wrong = (ip) => attempt({ staff: 'sattaristudio', password: 'guess' }, ip);
-const right = (ip) => attempt({ staff: 'SattariStudio', password: PASSWORD }, ip);
+const wrong = (ip, device) => attempt({ staff: 'sattaristudio', password: 'guess', device }, ip);
+const right = (ip, device) => attempt({ staff: 'SattariStudio', password: PASSWORD, device }, ip);
 
 beforeEach(() => {
   resetBlobs();
@@ -137,5 +137,59 @@ describe('guess limiting', () => {
     for (let i = 0; i < THROTTLE_SETTINGS.LOCK_AFTER_ATTEMPTS; i += 1) {
       expect((await wrong()).status).toBe(401);
     }
+  });
+});
+
+describe('device tokens', () => {
+  it('issues one on sign-in that only verifies as a device token', async () => {
+    const body = await (await right()).json();
+
+    expect(verifyDeviceToken(body.deviceToken)).toEqual(expect.any(String));
+    expect(verifyDeviceToken(body.deviceToken, { epoch: 1 })).toBeNull();
+    // Signed differently from a session: it grants no access on its own.
+    await expect(
+      requireStaff({ headers: { authorization: `Bearer ${body.deviceToken}` } })
+    ).resolves.toBeNull();
+    expect(verifyDeviceToken(body.token)).toBeNull();
+  });
+
+  it('keeps the owner signing in while guesses from other addresses spend the site-wide limit', async () => {
+    const { deviceToken } = await (await right('198.51.100.1')).json();
+    for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.0.${i}`);
+    expect((await right('192.0.2.10')).status).toBe(429);
+
+    // A new network, but the browser that signed in before.
+    const response = await right('192.0.2.11', deviceToken);
+    expect(response.status).toBe(200);
+    const renewed = (await response.json()).deviceToken;
+    expect(verifyDeviceToken(renewed)).toBe(verifyDeviceToken(deviceToken));
+  });
+
+  it('stops exempting every device after "sign out everywhere"', async () => {
+    const { deviceToken } = await (await right('198.51.100.1')).json();
+    await revokeAllSessions({});
+    for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.2.${i}`);
+
+    expect((await right('192.0.2.13', deviceToken)).status).toBe(429);
+  });
+
+  it('ignores a forged or tampered device token', async () => {
+    for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.1.${i}`);
+    expect((await right('192.0.2.12', 'dev1.e30.forged')).status).toBe(429);
+  });
+});
+
+describe('sign-in logs', () => {
+  it('record neither the typed username nor the raw address', async () => {
+    await attempt({ staff: 'my-actual-password', password: 'x' }, '203.0.113.99');
+    await right('203.0.113.98');
+
+    const lines = console.log.mock.calls.map(([line]) => line).join('\n');
+    expect(lines).toContain('staff-login-failed');
+    expect(lines).toContain('"usernameMatched":false');
+    expect(lines).toContain('"ipHash"');
+    expect(lines).not.toContain('my-actual-password');
+    expect(lines).not.toContain('SattariStudio');
+    expect(lines).not.toContain('203.0.113.9');
   });
 });

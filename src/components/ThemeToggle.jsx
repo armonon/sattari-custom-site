@@ -23,18 +23,29 @@ const MoonIcon = () => (
 );
 
 export default function ThemeToggle() {
-  const { mode, cyclePreference } = useTheme();
-  const next = mode === 'day' ? 'night' : 'day';
+  const { mode, ready, cyclePreference } = useTheme();
+  // `mode` is known only after mount (see ThemeContext). Until then the label
+  // names both, exactly as the prerendered HTML does.
+  const label = ready
+    ? `Switch to ${mode === 'day' ? 'night' : 'day'} mode`
+    : 'Switch between day and night mode';
 
+  // Both icons are rendered and CSS shows the one matching <html data-theme>,
+  // which is right before the app loads.
   return (
     <button
       type="button"
-      className={`theme-toggle theme-toggle-${mode}`}
+      className="theme-toggle"
       onClick={cyclePreference}
-      aria-label={`Switch to ${next} mode`}
-      title={`Switch to ${next} mode`}
+      aria-label={label}
+      title={label}
     >
-      <span className="theme-toggle-icon">{mode === 'day' ? <SunIcon /> : <MoonIcon />}</span>
+      <span className="theme-toggle-icon theme-toggle-icon-day">
+        <SunIcon />
+      </span>
+      <span className="theme-toggle-icon theme-toggle-icon-night">
+        <MoonIcon />
+      </span>
     </button>
   );
 }

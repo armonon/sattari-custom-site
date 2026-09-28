@@ -1,6 +1,7 @@
-import { openStore } from './blobs.js';
+import { openStore, writeIfUnchanged } from './blobs.js';
 import { blobsEvent } from './functionAdapter.js';
 import { hashIp } from './ipHash.js';
+import { logError } from './log.js';
 
 // Staff sign-in throttle.
 //
@@ -17,10 +18,15 @@ import { hashIp } from './ipHash.js';
 // Each address has its own record, so one noisy address neither contends with
 // nor locks out anyone else. A global ceiling bounds guesses spread across many
 // addresses; addresses that recently signed in successfully are exempt from
-// it, so an attacker spraying from elsewhere cannot lock the shop out.
+// it. So is a browser holding a device token (see createDeviceToken), which
+// is counted on its own record instead: staff on a new network or a phone
+// whose address keeps changing can still sign in while someone elsewhere is
+// spraying guesses, and a stolen device token buys no more guesses than one
+// address gets.
 
 const STORE = 'staff-auth';
 const IP_PREFIX = 'login-ip/';
+const DEVICE_PREFIX = 'login-dev/';
 const GLOBAL_KEY = 'login-global';
 
 const QUIET_PERIOD_MS = 15 * 60 * 1000;
@@ -42,6 +48,16 @@ function ipKey(ip) {
   return `${IP_PREFIX}${hashIp(ip).slice(0, 32)}`;
 }
 
+function deviceKey(device) {
+  return `${DEVICE_PREFIX}${hashIp(`device:${device}`).slice(0, 32)}`;
+}
+
+// The record an attempt is counted on: the device's when it has a token,
+// otherwise the address's.
+function attemptKey(ip, device) {
+  return device ? deviceKey(device) : ipKey(ip);
+}
+
 function pause(attempt) {
   // Jittered, so racing requests stop colliding in lockstep.
   return new Promise((resolve) => setTimeout(resolve, 5 + Math.random() * 20 * (attempt + 1)));
@@ -61,20 +77,15 @@ async function claim(blob, key, decide) {
     const { write, ...result } = decide(current?.data ?? null);
     if (!write) return result;
 
-    let outcome;
+    // An attempt that was not durably counted must not be let through, so a
+    // write the store did not confirm fails closed like any other failure.
+    let landed;
     try {
-      outcome = await blob.setJSON(
-        key,
-        write,
-        current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }
-      );
+      landed = await writeIfUnchanged(blob, key, write, current);
     } catch (error) {
       throw new ThrottleUnavailableError(error?.message || 'Throttle write failed.');
     }
-    if (outcome?.modified === true) return result;
-    if (outcome?.modified !== false) {
-      throw new ThrottleUnavailableError('Throttle storage ignored a conditional write.');
-    }
+    if (landed) return result;
     await pause(attempt);
   }
   throw new ThrottleUnavailableError('Throttle record stayed contended.');
@@ -105,10 +116,10 @@ function globalRecord(raw, now) {
 // Resolves to { allowed: true } when this attempt may verify a password, or
 // { allowed: false, retryAfterMs } when it must be refused. Throws
 // ThrottleUnavailableError when the attempt could not be counted; callers must
-// refuse the sign-in then.
-export async function reserveLoginAttempt(event, ip, now = Date.now()) {
+// refuse the sign-in then. `device` is the id from a verified device token.
+export async function reserveLoginAttempt(event, ip, now = Date.now(), { device = null } = {}) {
   const blob = store(event);
-  const key = ipKey(ip);
+  const key = attemptKey(ip, device);
 
   let peek;
   try {
@@ -118,7 +129,7 @@ export async function reserveLoginAttempt(event, ip, now = Date.now()) {
   }
   if (peek.until > now) return { allowed: false, retryAfterMs: peek.until - now };
 
-  if (!(peek.trustedUntil > now)) {
+  if (!device && !(peek.trustedUntil > now)) {
     const global = await claim(blob, GLOBAL_KEY, (raw) => {
       const record = globalRecord(raw, now);
       if (record.count >= GLOBAL_LIMIT) {
@@ -127,8 +138,22 @@ export async function reserveLoginAttempt(event, ip, now = Date.now()) {
           retryAfterMs: (record.window + 1) * GLOBAL_WINDOW_MS - now,
         };
       }
-      return { allowed: true, write: { ...record, count: record.count + 1 } };
+      return {
+        allowed: true,
+        tripped: record.count + 1 === GLOBAL_LIMIT,
+        write: { ...record, count: record.count + 1 },
+      };
     });
+    // Logged once per window, when the last allowed attempt is taken: from
+    // here until the window ends, only trusted addresses and devices get in.
+    if (global.tripped) {
+      logError('staff-login-global-limit', {
+        limit: GLOBAL_LIMIT,
+        windowEndsAt: new Date(
+          (Math.floor(now / GLOBAL_WINDOW_MS) + 1) * GLOBAL_WINDOW_MS
+        ).toISOString(),
+      });
+    }
     if (!global.allowed) return global;
   }
 
@@ -145,19 +170,25 @@ export async function reserveLoginAttempt(event, ip, now = Date.now()) {
   });
 }
 
-// Clears the address's count after a correct password and trusts it for the
-// global ceiling.
-export async function recordLoginSuccess(event, ip, now = Date.now()) {
-  await claim(store(event), ipKey(ip), () => ({
+// Clears the count after a correct password and trusts the address for the
+// global ceiling. With a device token, the device's count is cleared too.
+export async function recordLoginSuccess(event, ip, now = Date.now(), { device = null } = {}) {
+  const blob = store(event);
+  const trusted = () => ({
     write: { n: 0, until: 0, last: now, trustedUntil: now + TRUSTED_FOR_MS },
-  }));
+  });
+  await claim(blob, ipKey(ip), trusted);
+  if (device) await claim(blob, deviceKey(device), trusted);
 }
 
-// Best-effort cleanup of per-address records that no longer matter, so keys do
-// not pile up as addresses come and go. Bounded per call.
+// Best-effort cleanup of per-address and per-device records that no longer
+// matter, so keys do not pile up as addresses come and go. Bounded per call.
 export async function pruneLoginRecords(event, now = Date.now(), limit = 200) {
   const blob = store(event);
-  const { blobs = [] } = await blob.list({ prefix: IP_PREFIX });
+  const listed = await Promise.all(
+    [IP_PREFIX, DEVICE_PREFIX].map((prefix) => blob.list({ prefix }))
+  );
+  const blobs = listed.flatMap((page) => page.blobs || []);
   let removed = 0;
   for (const { key } of blobs.slice(0, limit)) {
     const record = await blob.get(key, { type: 'json' });

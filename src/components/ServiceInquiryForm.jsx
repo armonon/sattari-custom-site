@@ -1,5 +1,5 @@
 // ServiceInquiryForm.jsx
-import * as Sentry from '@sentry/react';
+import { captureException } from '../utils/monitoring';
 import { useEffect, useState } from 'react';
 import StudioBookingForm from './StudioBookingForm';
 import { trackSiteEvent } from '../utils/siteMeasurement';
@@ -88,7 +88,7 @@ export default function ServiceInquiryForm({
             fallbackResult.error || 'Unable to send your inquiry right now.'
           );
 
-          Sentry.captureException(responseError, {
+          captureException(responseError, {
             tags: {
               feature: 'service-inquiry',
               netlifyFormsStatus: String(response.status),
@@ -106,7 +106,7 @@ export default function ServiceInquiryForm({
       trackSiteEvent('inquiry_sent');
     } catch (submitError) {
       if (!submitError.sentryCaptured) {
-        Sentry.captureException(submitError, {
+        captureException(submitError, {
           tags: { feature: 'service-inquiry' },
           extra: { source, service: form.service },
         });

@@ -94,6 +94,87 @@ body {
   display: inline-flex;
 }
 
+/* The toggle renders both icons; the attribute set before first paint picks
+   one, so the prerendered page shows the right icon before the app loads. */
+.theme-toggle-icon-day,
+[data-theme='day'] .theme-toggle-icon-night {
+  display: none;
+}
+
+[data-theme='day'] .theme-toggle-icon-day {
+  display: inline-flex;
+}
+
+/* ---- Page backdrop (BackgroundMedia) ----
+   Keyed on data-theme, not chosen in React, so prerendered pages paint the
+   visitor's palette immediately. */
+.background-media {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  transition: background 400ms ease;
+  background: radial-gradient(circle at top, rgba(21, 21, 25, 0.95), rgba(8, 8, 9, 0.98) 48%), #000;
+}
+
+[data-theme='day'] .background-media {
+  background:
+    radial-gradient(circle at top, rgba(255, 252, 245, 0.98), rgba(240, 233, 219, 0.98) 55%),
+    #f6f1e6;
+}
+
+.background-media-watermark {
+  position: absolute;
+  inset: 10% 10% auto;
+  height: 60vh;
+  background-image: url('/sattari site/sattari logo.avif');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: min(40vw, 480px);
+  opacity: 0.05;
+  filter: blur(2px);
+}
+
+/* Night only; in day the video is the backdrop. */
+[data-theme='day'] .background-media-watermark {
+  display: none;
+}
+
+.background-media-video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  display: block;
+  /* bg.mp4 is pre-cropped to remove its baked-in black bars, so only a small
+     overscan is needed to hide the blur's soft (transparent) edge. */
+  transform: scale(1.1);
+  transform-origin: center;
+  background: #000;
+  filter: blur(8px);
+  opacity: 0.42;
+}
+
+[data-theme='day'] .background-media-video {
+  background: #f6f1e6;
+  filter: blur(14px) saturate(1.05);
+  opacity: 0.9;
+}
+
+/* Frosted "gaussian glass" over the video so content stays readable. */
+.background-media-glass {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.45));
+}
+
+[data-theme='day'] .background-media-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(246, 241, 230, 0.62));
+}
+
 .theme-toggle-icon svg {
   width: 20px;
   height: 20px;

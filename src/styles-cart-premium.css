@@ -507,6 +507,28 @@
   line-height: 1.4;
 }
 
+/* Shown on a line at the per-item limit checkout accepts (see cartCatalog.js).
+   Shared by the drawer and the cart page. */
+.cart-quantity-limit {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Links that send the shopper to fix one item (choose a color, adjust it).
+   Shared by the drawer and the cart page; inherits the message color. */
+.checkout-error-link,
+.cart-item-needs-color a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cart-item-needs-color a {
+  color: var(--accent);
+}
+
 .cart-actions-premium {
   display: flex;
   flex-direction: column;

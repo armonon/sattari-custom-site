@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import CartPage from './CartPage';
@@ -165,4 +165,88 @@ it('drops a product hidden after it was added once checkout reports it, and says
   ).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Violin Strings' })).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Pirouz Series Cymbals' })).toBeInTheDocument();
+});
+
+it('lets a quantity be cleared and retyped without removing the line', async () => {
+  stubFetch(jsonResponse({}));
+
+  renderCartPage();
+  const input = await screen.findByRole('spinbutton', {
+    name: 'Quantity for Pirouz Series Cymbals',
+  });
+
+  fireEvent.change(input, { target: { value: '' } });
+  expect(screen.getByRole('link', { name: 'Pirouz Series Cymbals' })).toBeInTheDocument();
+  expect(JSON.parse(localStorage.getItem(STORAGE_KEY))[0].quantity).toBe(2);
+
+  fireEvent.change(input, { target: { value: '5' } });
+  expect(screen.getByText('$425.00', { selector: '.total-price' })).toBeInTheDocument();
+  expect(JSON.parse(localStorage.getItem(STORAGE_KEY))[0].quantity).toBe(5);
+
+  fireEvent.change(input, { target: { value: '' } });
+  fireEvent.blur(input);
+  expect(input).toHaveValue(5);
+});
+
+it('asks for a color, with a link to the product, when the server refuses a colorless item', async () => {
+  const fetchMock = stubFetch(
+    jsonResponse({ code: 'color_required', slug: 'pirouz-series-cymbals' }, 409)
+  );
+
+  renderCartPage();
+  await screen.findByText('$85.00 each');
+  fireEvent.click(screen.getByRole('button', { name: /Proceed to Secure Checkout/ }));
+
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent('Choose a color for an item in your cart before checking out.');
+  expect(
+    within(alert).getByRole('link', { name: 'Choose a color for Pirouz Series Cymbals' })
+  ).toHaveAttribute('href', '/product/pirouz-series-cymbals');
+  // Like any refused cart, the catalog reloads so the cart catches up.
+  expect(inventoryRequests(fetchMock)).toHaveLength(2);
+});
+
+it('flags a line whose color was removed and does not send it to checkout', async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify([{ slug: 'miami-electric-violin', size: null, color: 'Gold', quantity: 1 }])
+  );
+  const fetchMock = stubFetch(jsonResponse({ id: 'cs_1', url: 'https://checkout.stripe.com/c/1' }));
+
+  renderCartPage();
+  const lineLink = await screen.findByRole('link', {
+    name: 'Choose a color for MIAMI - Electric Violin',
+  });
+  expect(lineLink).toHaveAttribute('href', '/product/miami-electric-violin');
+
+  fireEvent.click(screen.getByRole('button', { name: /Proceed to Secure Checkout/ }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Choose a color for MIAMI - Electric Violin before checking out.'
+  );
+  expect(
+    fetchMock.mock.calls.filter(([url]) => url === '/api/create-checkout-session')
+  ).toHaveLength(0);
+});
+
+it('stops at the 10 checkout accepts for one item, and says so on that line', async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    // Saved before the limit existed.
+    JSON.stringify([{ slug: 'pirouz-series-cymbals', size: null, color: null, quantity: 25 }])
+  );
+  stubFetch(jsonResponse({}));
+
+  renderCartPage();
+
+  const input = await screen.findByRole('spinbutton', {
+    name: 'Quantity for Pirouz Series Cymbals',
+  });
+  expect(input).toHaveValue(10);
+  expect(screen.getByRole('button', { name: 'Increase quantity' })).toBeDisabled();
+  expect(screen.getByText('Limit 10 per online order')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Decrease quantity' }));
+  expect(input).toHaveValue(9);
+  expect(screen.queryByText('Limit 10 per online order')).toBeNull();
 });

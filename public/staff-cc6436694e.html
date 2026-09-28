@@ -388,9 +388,18 @@
             Newest first. Anything marked <strong>Email not sent</strong> never reached the inbox,
             so this list is the only place it shows up — reply to those customers directly.
           </p>
-          <p class="state" id="inquiry-summary"></p>
+          <div class="bar" style="margin-bottom: 0.5rem">
+            <p class="state" id="inquiry-summary" style="margin: 0"></p>
+            <select id="inquiry-filter" class="select" style="width: auto" aria-label="Which inquiries">
+              <option value="all">All inquiries</option>
+              <option value="unsent">Needs a reply here (not emailed)</option>
+            </select>
+          </div>
           <div id="inquiry-msg" role="status"></div>
           <div id="inquiry-rows"></div>
+          <button class="secondary hidden" id="inquiry-more" type="button" style="margin-top: 1rem">
+            Show older inquiries
+          </button>
         </div>
 
         <!-- Backups -->
@@ -453,6 +462,7 @@
 
         <!-- Orders -->
         <div class="hidden" id="panel-orders">
+          <div id="order-stuck" role="status"></div>
           <div class="stat-grid" id="order-stats"></div>
           <div class="card" style="margin-top: 1rem">
             <div class="bar" style="margin-bottom: 0.5rem">
@@ -622,6 +632,28 @@
             else sessionStorage.removeItem(TOKEN_KEY);
           } catch (e) {
             /* private mode — session simply will not persist */
+          }
+        }
+
+        // localStorage, unlike the session: this token grants nothing by
+        // itself. It only lets this browser keep signing in on its own
+        // attempt limit while someone elsewhere is guessing passwords, so it
+        // has to outlive the tab. Signing out leaves it in place.
+        var DEVICE_KEY = 'sattari_staff_device';
+
+        function deviceToken() {
+          try {
+            return localStorage.getItem(DEVICE_KEY) || '';
+          } catch (e) {
+            return '';
+          }
+        }
+
+        function setDeviceToken(value) {
+          try {
+            if (value) localStorage.setItem(DEVICE_KEY, value);
+          } catch (e) {
+            /* storage blocked — sign-in still works, on the shared limit */
           }
         }
 
@@ -817,6 +849,9 @@
 
         async function api(url, options) {
           var opts = options || {};
+          // A 401 from sign-in itself is a wrong username or password, not
+          // an expired session, and belongs under the form, not in a banner.
+          var signingIn = url === LOGIN_URL;
           opts.headers = Object.assign(
             { 'Content-Type': 'application/json' },
             opts.headers || {},
@@ -845,7 +880,7 @@
             /* not every response carries JSON */
           }
 
-          if (response.status === 401) {
+          if (response.status === 401 && !signingIn) {
             setToken('');
             show('login');
             message('login-msg', 'Your session expired. Sign in again.', 'error');
@@ -854,7 +889,7 @@
 
           if (!response.ok) {
             var text = explainStatus(response.status, payload.error);
-            banner(text);
+            if (!signingIn) banner(text);
             throw new Error(text);
           }
 
@@ -885,9 +920,11 @@
               body: JSON.stringify({
                 staff: el('staff').value,
                 password: el('password').value,
+                device: deviceToken() || undefined,
               }),
             });
             setToken(data.token);
+            setDeviceToken(data.deviceToken);
             el('password').value = '';
             await loadStock();
           } catch (error) {
@@ -947,7 +984,9 @@
         // than when it expires. The tab forgets the token either way.
         async function signOut(everywhere) {
           var current = token();
-          var confirmed = true;
+          // 'confirmed', 'ended' (this sign-in had already expired or been
+          // revoked) or 'unconfirmed' (no answer, or the server failed).
+          var outcome = current ? 'unconfirmed' : 'ended';
           if (current) {
             try {
               var response = await fetch(LOGOUT_URL, {
@@ -958,22 +997,32 @@
                 },
                 body: JSON.stringify({ everywhere: everywhere }),
               });
-              // 401: the session had already ended, which is the goal.
-              confirmed = response.ok || response.status === 401;
+              outcome = response.ok ? 'confirmed' : response.status === 401 ? 'ended' : 'unconfirmed';
             } catch (e) {
-              confirmed = false;
+              outcome = 'unconfirmed';
             }
           }
           setToken('');
           items = [];
           edits = Object.create(null);
           show('login');
-          if (confirmed) {
+          if (outcome === 'confirmed' || (outcome === 'ended' && !everywhere)) {
+            // For this device alone, an already-ended sign-in is the goal.
             message('login-msg', everywhere ? 'Signed out on every device.' : 'Signed out.', 'ok');
+          } else if (everywhere && outcome === 'ended') {
+            // An ended sign-in cannot sign the others out: nothing happened
+            // to them, and saying otherwise would leave a lost device signed in.
+            message(
+              'login-msg',
+              'This sign-in had already ended, so the other devices were NOT signed out. Sign in again, then press Sign out everywhere again.',
+              'error'
+            );
           } else {
             message(
               'login-msg',
-              'Signed out on this device, but the server did not confirm it. Sign in and sign out again once the connection is back.',
+              everywhere
+                ? 'Signed out on this device, but the server did not confirm signing out the other devices. Sign in and press Sign out everywhere again once the connection is back.'
+                : 'Signed out on this device, but the server did not confirm it. Sign in and sign out again once the connection is back.',
               'error'
             );
           }
@@ -1061,86 +1110,123 @@
           provider: 'The email service rejected it, so this was never emailed.',
         };
 
+        // One page at a time, newest first. "Show older" appends the next
+        // page; changing the filter or reloading starts again from the top.
+        var inquiryList = [];
+        var inquiryNext = null;
+
+        function inquiryRow(item) {
+          var row = document.createElement('article');
+          row.style.cssText = 'border-bottom:1px solid var(--line);padding:1.2rem 0;overflow-wrap:anywhere';
+          if (item.handledAt) row.style.opacity = '0.6';
+
+          var title = document.createElement('h3');
+          title.style.cssText = 'font-size:1rem;margin:0 0 .35rem';
+          title.textContent = (item.serviceLabel || item.service || 'Inquiry') + ' · ' + fmtWhen(item.recordedAt);
+          row.appendChild(title);
+
+          if (!item.emailSent) {
+            var flag = document.createElement('span');
+            flag.className = 'pill unpaid';
+            flag.textContent = 'Email not sent';
+            row.appendChild(flag);
+            var why = document.createElement('p');
+            why.className = 'state out';
+            why.textContent = EMAIL_PROBLEMS[item.emailError] || 'This inquiry was not emailed. Reply to the customer directly.';
+            row.appendChild(why);
+          }
+
+          var contact = document.createElement('p');
+          contact.textContent = item.name + ' | ' + item.email + (item.phone ? ' | ' + item.phone : '');
+          row.appendChild(contact);
+
+          var details = document.createElement('p');
+          details.style.whiteSpace = 'pre-wrap';
+          details.textContent = item.details || '';
+          row.appendChild(details);
+
+          var meta = document.createElement('p');
+          meta.className = 'state';
+          meta.textContent = (item.source ? item.source + ' | ' : '') + item.id +
+            (item.handledAt ? ' | Handled by ' + (item.handledBy || 'staff') + ', ' + fmtWhen(item.handledAt) : '');
+          row.appendChild(meta);
+
+          var toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'secondary';
+          toggle.textContent = item.handledAt ? 'Mark not handled' : 'Mark handled';
+          toggle.addEventListener('click', async function () {
+            toggle.disabled = true;
+            message('inquiry-msg', '');
+            try {
+              await api(INQUIRIES_URL, {
+                method: 'POST',
+                body: JSON.stringify({ id: item.id, action: item.handledAt ? 'reopen' : 'handled' }),
+              });
+              await loadInquiries();
+            } catch (error) {
+              if (error.message !== 'unauthorized') message('inquiry-msg', error.message, 'error');
+              toggle.disabled = false;
+            }
+          });
+          row.appendChild(toggle);
+          return row;
+        }
+
         function renderInquiries(data) {
-          var list = data.inquiries || [];
           var rows = el('inquiry-rows');
           rows.replaceChildren();
-          var open = list.filter(function (item) { return !item.emailSent && !item.handledAt; }).length;
-          el('inquiry-summary').textContent = list.length
-            ? 'Showing ' + list.length + ' of ' + (data.total || list.length) +
-              (open ? ' · ' + open + ' not emailed and not yet handled' : '')
+          var unsentOnly = el('inquiry-filter').value === 'unsent';
+          var unsent = data.unsentTotal || 0;
+          var total = unsentOnly ? unsent : data.total || 0;
+          // Older inquiries are checked a batch per load until all have been.
+          var checking = data.indexing
+            ? 'Still checking older inquiries for ones that need a reply — press Reload to continue.'
             : '';
-          if (!list.length) {
-            rows.textContent = 'No inquiries stored yet.';
+          el('inquiry-summary').textContent = inquiryList.length
+            ? 'Showing ' + inquiryList.length + ' of ' + total +
+              (!unsentOnly && unsent
+                ? ' · ' + unsent + ' not emailed and not handled — choose "Needs a reply here" to see only those'
+                : '') +
+              (checking ? ' · ' + checking : '')
+            : checking;
+          el('inquiry-more').classList.toggle('hidden', !inquiryNext);
+          if (!inquiryList.length) {
+            rows.textContent = unsentOnly
+              ? checking
+                ? 'None found yet.'
+                : 'Nothing is waiting: every inquiry was emailed or has been handled.'
+              : 'No inquiries stored yet.';
             return;
           }
-          list.forEach(function (item) {
-            var row = document.createElement('article');
-            row.style.cssText = 'border-bottom:1px solid var(--line);padding:1.2rem 0;overflow-wrap:anywhere';
-            if (item.handledAt) row.style.opacity = '0.6';
-
-            var title = document.createElement('h3');
-            title.style.cssText = 'font-size:1rem;margin:0 0 .35rem';
-            title.textContent = (item.serviceLabel || item.service || 'Inquiry') + ' · ' + fmtWhen(item.recordedAt);
-            row.appendChild(title);
-
-            if (!item.emailSent) {
-              var flag = document.createElement('span');
-              flag.className = 'pill unpaid';
-              flag.textContent = 'Email not sent';
-              row.appendChild(flag);
-              var why = document.createElement('p');
-              why.className = 'state out';
-              why.textContent = EMAIL_PROBLEMS[item.emailError] || 'This inquiry was not emailed. Reply to the customer directly.';
-              row.appendChild(why);
-            }
-
-            var contact = document.createElement('p');
-            contact.textContent = item.name + ' | ' + item.email + (item.phone ? ' | ' + item.phone : '');
-            row.appendChild(contact);
-
-            var details = document.createElement('p');
-            details.style.whiteSpace = 'pre-wrap';
-            details.textContent = item.details || '';
-            row.appendChild(details);
-
-            var meta = document.createElement('p');
-            meta.className = 'state';
-            meta.textContent = (item.source ? item.source + ' | ' : '') + item.id +
-              (item.handledAt ? ' | Handled by ' + (item.handledBy || 'staff') + ', ' + fmtWhen(item.handledAt) : '');
-            row.appendChild(meta);
-
-            var toggle = document.createElement('button');
-            toggle.type = 'button';
-            toggle.className = 'secondary';
-            toggle.textContent = item.handledAt ? 'Mark not handled' : 'Mark handled';
-            toggle.addEventListener('click', async function () {
-              toggle.disabled = true;
-              message('inquiry-msg', '');
-              try {
-                await api(INQUIRIES_URL, {
-                  method: 'POST',
-                  body: JSON.stringify({ id: item.id, action: item.handledAt ? 'reopen' : 'handled' }),
-                });
-                await loadInquiries();
-              } catch (error) {
-                if (error.message !== 'unauthorized') message('inquiry-msg', error.message, 'error');
-                toggle.disabled = false;
-              }
-            });
-            row.appendChild(toggle);
-            rows.appendChild(row);
+          inquiryList.forEach(function (item) {
+            rows.appendChild(inquiryRow(item));
           });
         }
 
-        async function loadInquiries() {
+        async function loadInquiries(older) {
           message('inquiry-msg', '');
+          var query = '?filter=' + encodeURIComponent(el('inquiry-filter').value) + '&limit=50' +
+            (older && inquiryNext ? '&before=' + encodeURIComponent(inquiryNext) : '');
+          el('inquiry-more').disabled = true;
           try {
-            renderInquiries(await api(INQUIRIES_URL, { method: 'GET' }));
+            var data = await api(INQUIRIES_URL + query, { method: 'GET' });
+            inquiryList = older ? inquiryList.concat(data.inquiries || []) : data.inquiries || [];
+            inquiryNext = data.nextBefore || null;
+            renderInquiries(data);
           } catch (error) {
             if (error.message !== 'unauthorized') message('inquiry-msg', error.message, 'error');
+          } finally {
+            el('inquiry-more').disabled = false;
           }
         }
+
+        el('inquiry-filter').addEventListener('change', function () {
+          loadInquiries(false);
+        });
+        el('inquiry-more').addEventListener('click', function () {
+          loadInquiries(true);
+        });
 
         var insightsDays = [];
         function renderInsights() {
@@ -1192,10 +1278,30 @@
               function hour(h) { return (h % 12 || 12) + (h >= 12 && h < 24 ? ' PM' : ' AM'); }
               title.textContent = booking.date + ' | ' + hour(start) + ' - ' + hour(start + booking.hours) + ' (Los Angeles) | $' + (booking.amountCents / 100);
               row.appendChild(title);
-              var labels = { requested: 'Awaiting approval', approving: 'Preparing payment link', awaiting_payment: 'Approved - awaiting payment', paid: 'Booked and paid', declined: 'Declined', cancelled: 'Cancelled', expired: 'Payment link expired' };
+              var labels = { requested: 'Awaiting approval', approving: 'Preparing payment link', awaiting_payment: 'Approved - awaiting payment', paid: 'Booked and paid', declined: 'Declined', cancelled: 'Cancelled', expired: 'Payment link expired', needs_review: 'Payment needs review' };
               var status = document.createElement('strong');
               status.textContent = labels[booking.status] || booking.status;
               row.appendChild(status);
+              // A payment Stripe took that the booking cannot account for.
+              // Nothing retries it: staff check Stripe, then keep or release.
+              var review = booking.paymentReview;
+              if (review && !review.resolution) {
+                var reviewNote = document.createElement('p');
+                reviewNote.className = 'state out';
+                reviewNote.textContent = 'Check this payment in Stripe: ' + review.reason +
+                  (review.amountTotal != null ? ' Paid: $' + (review.amountTotal / 100).toFixed(2) + '.' : '') +
+                  (review.paymentIntentId ? ' Payment: ' + review.paymentIntentId + '.' : '') +
+                  (booking.status === 'needs_review'
+                    ? ' Keep the booking if the payment is right, or refund it in Stripe and release the time.'
+                    : '');
+                row.appendChild(reviewNote);
+              }
+              if (booking.status === 'requested' && booking.approvalError) {
+                var refused = document.createElement('p');
+                refused.className = 'state out';
+                refused.textContent = 'Stripe refused the last payment link (' + booking.approvalError.code + ', ' + fmtWhen(booking.approvalError.at) + '). Nothing was sent or charged.';
+                row.appendChild(refused);
+              }
               var contact = document.createElement('p');
               contact.textContent = booking.name + ' | ' + booking.email + (booking.phone ? ' | ' + booking.phone : '');
               row.appendChild(contact);
@@ -1212,6 +1318,7 @@
               if (booking.status === 'requested') choices.push(['approve', 'Approve & email payment link'], ['decline', 'Decline']);
               if (booking.status === 'approving') choices.push(['approve', 'Retry approval'], ['sync', 'Check Stripe']);
               if (booking.status === 'awaiting_payment') choices.push(['sync', 'Check payment'], ['cancel', 'Cancel unpaid reservation']);
+              if (booking.status === 'needs_review') choices.push(['confirm', 'Keep booking (payment checked)'], ['release', 'Release time (after refund)']);
               if (Object.values(booking.notifications || {}).some(function (n) { return n.state === 'failed'; })) choices.push(['retry', 'Retry notifications']);
               choices.forEach(function (choice) {
                 var button = document.createElement('button');
@@ -1219,7 +1326,7 @@
                 button.className = choice[0] === 'approve' ? '' : 'secondary';
                 button.textContent = choice[1];
                 button.addEventListener('click', async function () {
-                  if (['approve', 'decline', 'cancel'].includes(choice[0]) && !window.confirm(choice[1] + ' for ' + booking.name + ' on ' + booking.date + '?')) return;
+                  if (['approve', 'decline', 'cancel', 'confirm', 'release'].includes(choice[0]) && !window.confirm(choice[1] + ' for ' + booking.name + ' on ' + booking.date + '?')) return;
                   actions.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
                   message('booking-msg', '');
                   try {
@@ -1639,6 +1746,8 @@
             ? shown.length + ' of ' + data.total
             : '';
 
+          renderStuck(data.stuck || [], data.stuckTotal || 0);
+
           var tbody = el('order-rows');
           tbody.innerHTML = '';
 
@@ -1699,6 +1808,13 @@
               whoCell.appendChild(place);
             }
             if (oversold.length) whoCell.appendChild(oversoldDetail(oversold));
+            if (order.stockState === 'needs_review') {
+              var recount = document.createElement('div');
+              recount.className = 'oversold-detail';
+              recount.textContent =
+                'Stock was not deducted automatically for this order. Count these items by hand and correct the Stock tab.';
+              whoCell.appendChild(recount);
+            }
             tr.appendChild(whoCell);
 
             var totalCell = document.createElement('td');
@@ -1781,6 +1897,56 @@
         el('order-filter').addEventListener('change', function () {
           if (lastOrderData) renderOrders(lastOrderData);
         });
+
+        // Paid checkouts the automatic retries gave up on, longest waiting
+        // first. They are retried once a day, but someone should look; one
+        // that can never finish (a test-mode checkout after going live, or one
+        // sorted out by hand) can be dismissed so it stops being retried.
+        var STUCK_SHOWN = 20;
+
+        function renderStuck(stuck, total) {
+          var box = el('order-stuck');
+          box.replaceChildren();
+          if (!stuck.length) return;
+          var panel = document.createElement('div');
+          panel.className = 'msg error';
+          var lead = document.createElement('strong');
+          lead.textContent = plural(total || stuck.length, 'paid checkout') +
+            ' could not be finished automatically. Check each in Stripe and the Netlify function log.';
+          panel.appendChild(lead);
+          var list = document.createElement('ul');
+          stuck.slice(0, STUCK_SHOWN).forEach(function (entry) {
+            var item = document.createElement('li');
+            item.textContent = entry.orderId + (entry.lastError ? ': ' + entry.lastError : '') + ' ';
+            var dismiss = document.createElement('button');
+            dismiss.type = 'button';
+            dismiss.className = 'secondary';
+            dismiss.textContent = 'Stop retrying';
+            dismiss.addEventListener('click', async function () {
+              if (!window.confirm('Stop retrying ' + entry.orderId + '? Do this only once it is sorted out in Stripe, or if it is a test checkout.')) return;
+              dismiss.disabled = true;
+              try {
+                await api(ORDERS_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ action: 'dismiss-stuck', orderId: entry.orderId }),
+                });
+                await loadOrders();
+              } catch (error) {
+                if (error.message !== 'unauthorized') message('order-msg', error.message, 'error');
+                dismiss.disabled = false;
+              }
+            });
+            item.appendChild(dismiss);
+            list.appendChild(item);
+          });
+          panel.appendChild(list);
+          if (total > STUCK_SHOWN) {
+            var more = document.createElement('p');
+            more.textContent = 'And ' + (total - STUCK_SHOWN) + ' more, shown as these are cleared.';
+            panel.appendChild(more);
+          }
+          box.appendChild(panel);
+        }
 
         async function loadOrders() {
           message('order-msg', '');

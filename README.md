@@ -21,7 +21,7 @@ npm run dev:api           # optional: the production API functions on :4242, wit
 
 Stripe test mode works with card `4242 4242 4242 4242`. The staff page is at
 `/staff-cc6436694e.html`; create its credentials with
-`node scripts/hash-staff-password.mjs "username" "password"`.
+`node scripts/hash-staff-password.mjs "username"` (it asks for the password).
 
 ## Commands
 

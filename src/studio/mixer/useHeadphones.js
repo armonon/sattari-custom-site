@@ -74,7 +74,7 @@ export function useHeadphones({ getEngine, onEngine, setNotice }) {
   const chooseOutput = useCallback(
     async (deviceId) => {
       const audio = getEngine();
-      let applied = false;
+      let applied;
       try {
         applied = (await audio.setOutputDevice?.(deviceId)) === true;
       } catch {

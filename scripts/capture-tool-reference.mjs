@@ -23,7 +23,9 @@ try {
   await page.getByRole('button', { name: /Analyze & teach/i }).click();
   await page.getByText('Local analysis', { exact: true }).waitFor({ timeout: 90000 });
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.locator('.learn-command-grid').screenshot({ path: 'public/images/tools/learn.jpg', type: 'jpeg', quality: 90 });
+  await page
+    .locator('.learn-command-grid')
+    .screenshot({ path: 'public/images/tools/learn.jpg', type: 'jpeg', quality: 90 });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(`${base}/studio`);
   await page

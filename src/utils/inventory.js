@@ -321,9 +321,32 @@ function isTrackedKey(stock, key) {
   return Object.prototype.hasOwnProperty.call(stock, key);
 }
 
+// Opening a checkout takes no sign-in and reserves units for up to 46 minutes
+// whether or not anyone pays. These bound what one address (`owner`, a keyed
+// hash of it) can hold in open checkouts at once, so a script cannot take the
+// whole shop off sale. A shopper starting over replaces their earlier hold
+// rather than adding to it, and a completed checkout's hold no longer counts.
+export const HOLD_BUDGET = { holdsPerOwner: 3, unitsPerOwner: 30 };
+
+export function heldByOwner(holds, owner, now) {
+  const held = { holds: 0, units: 0 };
+  if (!owner) return held;
+  for (const hold of Object.values(holds || {})) {
+    if (hold?.owner !== owner || hold.state !== 'active' || !isHoldReserving(hold, now)) continue;
+    held.holds += 1;
+    held.units += hold.lines.reduce((total, line) => total + line.quantity, 0);
+  }
+  return held;
+}
+
 // Reserves `lines` for a new checkout. Returns the next document, or the
 // shortfalls that prevented the reservation. Untracked lines are never held.
-export function placeHold(doc, { holdId, lines, now, expiresAt, extra = {} }) {
+// With an `owner` and a `budget`, a reservation that would take that owner
+// past the budget is refused with `overBudget`.
+export function placeHold(
+  doc,
+  { holdId, lines, now, expiresAt, extra = {}, owner = null, budget = null }
+) {
   const holds = { ...doc.holds };
   const available = availableStock(doc.stock, holds, now);
 
@@ -336,8 +359,17 @@ export function placeHold(doc, { holdId, lines, now, expiresAt, extra = {} }) {
   const tracked = lines.filter((line) => isTrackedKey(doc.stock, line.key));
   if (!tracked.length) return { doc: null, shortfalls: [], held: false };
 
+  if (owner && budget) {
+    const held = heldByOwner(holds, owner, now);
+    const units = tracked.reduce((total, line) => total + line.quantity, 0);
+    if (held.holds >= budget.holdsPerOwner || held.units + units > budget.unitsPerOwner) {
+      return { doc: null, shortfalls: [], held: false, overBudget: true };
+    }
+  }
+
   holds[holdId] = {
     ...extra,
+    ...(owner ? { owner } : {}),
     state: 'active',
     lines: tracked.map(({ key, quantity }) => ({ key, quantity })),
     createdAt: now,
@@ -404,6 +436,7 @@ export function commitSale(doc, { holdId, lines, now, sessionId = null }) {
         applied: existing.lines,
         oversold: Array.isArray(existing.oversold) ? existing.oversold : [],
         untracked: Array.isArray(existing.untracked) ? existing.untracked : [],
+        soldOut: [],
       },
     };
   }
@@ -414,6 +447,9 @@ export function commitSale(doc, { holdId, lines, now, sessionId = null }) {
   const applied = [];
   const oversold = [];
   const untracked = [];
+  // Variants this sale emptied: what the storefront shows for them changes
+  // from in stock to sold out.
+  const soldOut = [];
 
   for (const line of lines) {
     if (!isTrackedKey(stock, line.key)) {
@@ -425,6 +461,7 @@ export function commitSale(doc, { holdId, lines, now, sessionId = null }) {
     const take = Math.min(line.quantity, available);
     stock[line.key] -= take;
     if (take) applied.push({ key: line.key, quantity: take });
+    if (take && stock[line.key] === 0) soldOut.push(line.key);
     if (take < line.quantity) {
       oversold.push({
         key: line.key,
@@ -438,7 +475,7 @@ export function commitSale(doc, { holdId, lines, now, sessionId = null }) {
     }
   }
 
-  const sale = { alreadyApplied: false, appliedAt: now, applied, oversold, untracked };
+  const sale = { alreadyApplied: false, appliedAt: now, applied, oversold, untracked, soldOut };
 
   // Nothing held and nothing tracked: there is no count to protect, so there
   // is nothing to write.

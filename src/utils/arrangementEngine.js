@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import { getAudioAsset } from './audioProjectStore';
 import { decodeSourceWindow, sourceWindows } from './arrangementSourceWindow';
+import { releaseDecodedSongs } from './compressedAudioWindow';
 import { playbackWindow, needsStreaming } from './arrangementStreaming';
 import {
   arrangementDuration,
@@ -707,13 +708,14 @@ export class ArrangementEngine {
       if (ranges) {
         for (const [index, range] of ranges.entries()) {
           if (reusable.has(identity(id, range))) continue;
+          const blob = await load();
           const decoded = await decodeSourceWindow(
             this.context.rawContext,
-            await load(),
+            blob,
             range.start,
             range.end,
             budget - used(),
-            { signal: window.signal }
+            { signal: window.signal, cacheKey: `${id}:${blob.size}` }
           );
           place(id, windowKey(id, ranges, index), decoded, range);
         }
@@ -1635,7 +1637,8 @@ export class ArrangementEngine {
       await sink.abort();
       if (error?.name === 'QuotaExceededError')
         throw new Error(
-          'Browser disk space ran out. Partial export removed; your project and source audio are unchanged.'
+          'Browser disk space ran out. Partial export removed; your project and source audio are unchanged.',
+          { cause: error }
         );
       throw error;
     } finally {
@@ -1653,5 +1656,6 @@ export class ArrangementEngine {
     for (const meter of this.trackMeters.values()) meter.dispose();
     this.trackMeters.clear();
     this.buffers.clear();
+    releaseDecodedSongs();
   }
 }

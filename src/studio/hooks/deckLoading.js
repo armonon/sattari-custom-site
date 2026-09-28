@@ -62,7 +62,7 @@ export function createDeckLoading({
         if (validBpm) analysis.bpm = cachedAnalysis.bpm;
         if (validKey) analysis.key = cachedAnalysis.key;
       }
-      const asset = await putAudioAsset(file, { name: file.name, analysis });
+      const asset = await putAudioAsset(file, { name: file.name, analysis, dedupe: true });
       const oldUrl = objectUrlsRef.current.get(key);
       const deck = decks.find((item) => item.id === deckId);
       const audio = getEngine();

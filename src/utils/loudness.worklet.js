@@ -1,4 +1,4 @@
-/* global sampleRate, ProgrammeMeter */
+/* global ProgrammeMeter */
 // DSP source is prepended by liveLoudness.js; keep this script import-free.
 class LoudnessProcessor extends AudioWorkletProcessor {
   constructor() {

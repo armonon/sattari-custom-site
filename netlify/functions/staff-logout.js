@@ -1,4 +1,10 @@
 import { requireStaff, revokeAllSessions, revokeSession } from '../../server/staffAuth.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/logout', '/.netlify/functions/staff-logout'],
+};
 
 function json(statusCode, body) {
   return {
@@ -11,7 +17,11 @@ function json(statusCode, body) {
 // Signing out in the page only forgets the token in that tab; a copied token
 // would keep working until it expired. This ends it on the server: this
 // sign-in by default, or every sign-in when `everywhere` is true.
-export async function handler(event) {
+export default async function staffLogout(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });

@@ -1,7 +1,13 @@
 import process from 'node:process';
 import { maskEmail } from '../../src/utils/orderProcessing.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { errorMessage, logError } from '../../server/log.js';
 import { getStripe } from '../../server/stripeClient.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/checkout-session-status', '/.netlify/functions/checkout-session-status'],
+};
 
 const SESSION_ID = /^cs_[A-Za-z0-9_]{8,250}$/;
 
@@ -17,7 +23,11 @@ function json(statusCode, body) {
 // so it ends up in browser history, screenshots, and referrer logs. The
 // response is limited to what the confirmation page needs: no name, no full
 // email, no address.
-export async function handler(event) {
+export default async function checkoutSessionStatus(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   if (event.httpMethod !== 'GET') {
     return json(405, { error: 'Method not allowed.' });
   }

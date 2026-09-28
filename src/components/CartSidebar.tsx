@@ -4,8 +4,20 @@ import { useCart } from '@context/CartContext';
 import type { CartContextValue, CartItem } from '@/types';
 import { FLAT_SHIPPING_CENTS } from '@data/shipping';
 import CartNotice from './CartNotice';
+import QuantityInput from './QuantityInput';
+import { MAX_LINE_QUANTITY } from '@utils/cartCatalog';
 import { useCheckout } from '../hooks/useCheckout';
 import '@/styles-cart-premium.css';
+
+// A line whose product comes in colors but has none chosen (see cartCatalog.js).
+type CartLine = CartItem & { needsColor?: boolean };
+type CartState = Omit<CartContextValue, 'cartItems'> & { cartItems: CartLine[] };
+interface CheckoutState {
+  startCheckout: () => Promise<void>;
+  isCheckingOut: boolean;
+  checkoutError: string;
+  checkoutProduct: { slug: string; name: string | null; label: string } | null;
+}
 
 interface CartSidebarProps {
   onNavigate?: () => void;
@@ -13,8 +25,9 @@ interface CartSidebarProps {
 
 const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
   const { cartItems, itemCount, subtotal, updateQuantity, removeFromCart, clearCart } =
-    useCart() as CartContextValue;
-  const { startCheckout, isCheckingOut, checkoutError } = useCheckout();
+    useCart() as CartState;
+  const { startCheckout, isCheckingOut, checkoutError, checkoutProduct } =
+    useCheckout() as CheckoutState;
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const shipping = cartItems.length ? FLAT_SHIPPING_CENTS / 100 : 0;
 
@@ -48,7 +61,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
           </div>
         ) : (
           <ul className="cart-list-premium">
-            {cartItems.map((item: CartItem, index: number) => (
+            {cartItems.map((item: CartLine, index: number) => (
               <li
                 key={item.key}
                 className={`cart-item-premium anim-item ${isRemoving === item.key ? 'removing' : ''}`}
@@ -85,6 +98,17 @@ const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
                   </Link>
                   {item.size && <p className="cart-item-size">{item.size}</p>}
                   {item.color && <p className="cart-item-size">{item.color}</p>}
+                  {item.needsColor && (
+                    <p className="cart-item-size cart-item-needs-color">
+                      <Link
+                        to={`/product/${item.product.slug}`}
+                        onClick={onNavigate}
+                        aria-label={`Choose a color for ${item.product.name}`}
+                      >
+                        Choose a color
+                      </Link>
+                    </p>
+                  )}
                   <p className="cart-item-price">${item.unitPrice.toFixed(2)}</p>
                 </div>
 
@@ -98,12 +122,9 @@ const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
                     >
                       −
                     </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="99"
+                    <QuantityInput
                       value={item.quantity}
-                      onChange={(e) => updateQuantity(item.key, e.target.value)}
+                      onCommit={(quantity: number) => updateQuantity(item.key, quantity)}
                       className="qty-input"
                       aria-label={`Quantity for ${item.product.name}`}
                     />
@@ -111,10 +132,15 @@ const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
                       onClick={() => updateQuantity(item.key, item.quantity + 1)}
                       className="qty-btn"
                       aria-label="Increase quantity"
+                      disabled={item.quantity >= MAX_LINE_QUANTITY}
                     >
                       +
                     </button>
                   </div>
+                  {/* Checkout refuses more (409 quantity_limit). */}
+                  {item.quantity >= MAX_LINE_QUANTITY && (
+                    <p className="cart-quantity-limit">Limit {MAX_LINE_QUANTITY} per order</p>
+                  )}
                   <p className="cart-item-total">${item.lineTotal.toFixed(2)}</p>
                 </div>
 
@@ -160,6 +186,23 @@ const CartSidebar: FC<CartSidebarProps> = ({ onNavigate }) => {
           {checkoutError && (
             <div className="cart-checkout-error" role="alert">
               {checkoutError}
+              {checkoutProduct && (
+                <>
+                  {' '}
+                  <Link
+                    to={`/product/${checkoutProduct.slug}`}
+                    className="checkout-error-link"
+                    onClick={onNavigate}
+                    aria-label={
+                      checkoutProduct.name
+                        ? `${checkoutProduct.label} for ${checkoutProduct.name}`
+                        : undefined
+                    }
+                  >
+                    {checkoutProduct.label}
+                  </Link>
+                </>
+              )}
             </div>
           )}
           <button onClick={startCheckout} disabled={isCheckingOut} className="checkout-btn-premium">

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
+import { captureException } from '../utils/monitoring';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -23,7 +23,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: {
         componentStack: errorInfo.componentStack,
       },
@@ -72,20 +72,4 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-export default Sentry.withErrorBoundary(ErrorBoundary, {
-  fallback: (
-    <div
-      style={{
-        padding: '2rem',
-        background: 'rgba(255, 59, 48, 0.1)',
-        border: '1px solid #ff3b30',
-        borderRadius: '8px',
-        textAlign: 'center',
-        color: '#ff3b30',
-      }}
-    >
-      <h2>Something went wrong</h2>
-      <p>We&apos;re sorry for the inconvenience. Please try refreshing the page.</p>
-    </div>
-  ),
-});
+export default ErrorBoundary;

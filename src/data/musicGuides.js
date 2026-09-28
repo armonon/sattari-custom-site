@@ -1,3 +1,5 @@
+import { separatorGuides } from './stemSeparatorContent';
+
 export const musicGuides = [
   {
     slug: 'how-to-separate-vocals-drums-bass',
@@ -42,7 +44,12 @@ export const musicGuides = [
         ],
       },
     ],
-    related: ['/tools/stem-separator', '/guides/practice-bass-with-isolated-stems'],
+    related: [
+      '/tools/stem-separator',
+      '/guides/remove-vocals-for-karaoke',
+      '/guides/batch-separate-audio-stems',
+      '/guides/practice-bass-with-isolated-stems',
+    ],
   },
   {
     slug: 'practice-bass-with-isolated-stems',
@@ -88,8 +95,14 @@ export const musicGuides = [
         ],
       },
     ],
-    related: ['/tools/learn', '/tools/studio', '/guides/how-to-separate-vocals-drums-bass'],
+    related: [
+      '/tools/learn',
+      '/tools/studio',
+      '/guides/find-song-key-and-bpm',
+      '/guides/how-to-separate-vocals-drums-bass',
+    ],
   },
+  ...separatorGuides,
   {
     slug: 'instrument-repairs-near-encino',
     title: 'Where can I get instrument repairs near Encino?',

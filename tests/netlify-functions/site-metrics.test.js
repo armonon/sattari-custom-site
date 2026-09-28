@@ -15,9 +15,11 @@ const target = vi.hoisted(() => ({
 vi.mock('@netlify/blobs', () => ({ connectLambda: vi.fn(), getStore: () => target }));
 vi.mock('../../server/staffAuth.js', () => ({ requireStaff: vi.fn(async () => null) }));
 import handler, { config } from '../../netlify/functions/site-event';
-import { handler as staffHandler } from '../../netlify/functions/staff-insights';
+import staffInsights from '../../netlify/functions/staff-insights';
+import { callWith } from './helpers/invoke.js';
 import { incrementMetric, metricDay, readMetrics } from '../../server/siteMetricsStore';
 import { requireStaff } from '../../server/staffAuth';
+const staffHandler = callWith(staffInsights);
 const metric = { event: 'page_view', page: 'guides', source: 'chatgpt' };
 const request = (body = metric, options = {}, host = 'sattarimusic.com') =>
   new Request(`https://${host}/api/site-event`, {
@@ -32,6 +34,14 @@ beforeEach(() => {
   requireStaff.mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllEnvs());
+it.each(['guide-karaoke', 'guide-drumless', 'guide-key-bpm', 'guide-batch'])(
+  'accepts the new %s page group and exposes only aggregate counts',
+  async (page) => {
+    expect((await handler(request({ ...metric, page }))).status).toBe(204);
+    const [data] = await readMetrics({});
+    expect(data.counts).toEqual({ [`chatgpt|${page}|page_view`]: 1 });
+  }
+);
 it('stores counts, not event records, IPs or headers', async () => {
   expect((await handler(request())).status).toBe(204);
   expect((await handler(request())).status).toBe(204);

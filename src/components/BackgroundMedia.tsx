@@ -15,9 +15,20 @@ export const BACKGROUND_VIDEOS = {
   night: '/sattari site/INSTRA PATTERN.mp4',
 };
 
+// Lighter loops for phones. The night loop is 4.8 MB at 1200×1200; this 720×720
+// encode (no audio track) looks the same behind the homepage hero.
+export const COMPACT_BACKGROUND_VIDEOS = {
+  day: BACKGROUND_VIDEOS.day,
+  night: '/images/home/night-loop-720.mp4',
+};
+
+// The colors (gradients, watermark, video treatment and frosted glass) live in
+// styles-theme.css, keyed on <html data-theme>. Choosing them here from `mode`
+// put the prerender's guess in inline styles, which painted light text on a
+// cream background for dark-mode visitors until the app loaded.
 export default function BackgroundMedia() {
-  const { mode } = useTheme();
-  const isDay = mode === 'day';
+  // `mode` is a placeholder until `ready`; the loop waits so it loads once.
+  const { mode, ready } = useTheme();
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
@@ -42,77 +53,28 @@ export default function BackgroundMedia() {
   }, []);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: -1,
-        pointerEvents: 'none',
-        overflow: 'hidden',
-        transition: 'background 400ms ease',
-        background: isDay
-          ? 'radial-gradient(circle at top, rgba(255,252,245,0.98), rgba(240,233,219,0.98) 55%), #f6f1e6'
-          : 'radial-gradient(circle at top, rgba(21,21,25,0.95), rgba(8,8,9,0.98) 48%), #000',
-      }}
-      aria-hidden="true"
-    >
+    <div className="background-media" aria-hidden="true">
       {/* Faint watermark — night only; in day the video is the backdrop. */}
-      {!isDay ? (
-        <div
-          style={{
-            position: 'absolute',
-            inset: '10% 10% auto',
-            height: '60vh',
-            backgroundImage: "url('/sattari site/sattari logo.avif')",
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'min(40vw, 480px)',
-            opacity: 0.05,
-            filter: 'blur(2px)',
-          }}
-        />
-      ) : null}
-      {/* Ambient loop: bg.mp4 by day, the pattern loop by night. Keyed by mode
-          so the element reloads the correct source when the theme flips. */}
-      {showVideo ? (
+      <div className="background-media-watermark" />
+      {/* Ambient loop: bg.mp4 by day, the pattern loop by night. It starts after
+          mount, when `mode` is the visitor's; keyed by mode so the element
+          reloads the correct source when the theme flips. */}
+      {showVideo && ready ? (
         <video
           key={mode}
+          className="background-media-video"
           autoPlay
           muted
           loop
           playsInline
           preload="none"
           poster="/sattari site/sattari logo.avif"
-          style={{
-            width: '100vw',
-            height: '100vh',
-            objectFit: 'cover',
-            display: 'block',
-            // bg.mp4 is pre-cropped to remove its baked-in black bars, so only a
-            // small overscan is needed to hide the blur's soft (transparent) edge.
-            transform: 'scale(1.1)',
-            transformOrigin: 'center',
-            background: isDay ? '#f6f1e6' : '#000',
-            filter: isDay ? 'blur(14px) saturate(1.05)' : 'blur(8px)',
-            opacity: isDay ? 0.9 : 0.42,
-          }}
         >
           <source src={BACKGROUND_VIDEOS[mode]} type="video/mp4" />
         </video>
       ) : null}
       {/* Frosted "gaussian glass" over the video so content stays readable. */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: isDay
-            ? 'linear-gradient(180deg, rgba(255,255,255,0.5), rgba(246,241,230,0.62))'
-            : 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45))',
-        }}
-      />
+      <div className="background-media-glass" />
     </div>
   );
 }

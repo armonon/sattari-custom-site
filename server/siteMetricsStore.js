@@ -1,4 +1,5 @@
 import { connectLambda, getStore } from '@netlify/blobs';
+import { blobsEvent } from './functionAdapter.js';
 
 const DAY = 86400000;
 export function metricDay(now = Date.now()) {
@@ -6,8 +7,10 @@ export function metricDay(now = Date.now()) {
   return { key: `day-${day % 90}`, date: new Date(day * DAY).toISOString().slice(0, 10) };
 }
 function store(event) {
-  // V2 functions receive the Blobs context automatically; legacy staff uses Lambda.
-  if (event) connectLambda(event);
+  // v2 functions receive the Blobs context from the runtime; only an event
+  // that carries Lambda-style credentials is connected.
+  const lambda = blobsEvent(event);
+  if (lambda) connectLambda(lambda);
   return getStore({ name: 'site-metrics', consistency: 'strong' });
 }
 export async function incrementMetric(event, metric, now = Date.now(), target = store(event)) {

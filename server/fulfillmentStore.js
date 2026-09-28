@@ -3,7 +3,7 @@ import {
   FULFILLMENT_STORE,
   sanitizeFulfillmentDoc,
 } from '../src/utils/fulfillment.js';
-import { openStore } from './blobs.js';
+import { openStore, pauseBeforeRetry, writeIfUnchanged } from './blobs.js';
 
 // One document for every order's fulfilment state. At a shop's order volume
 // this stays small, and a single blob means one read for the whole dashboard
@@ -33,11 +33,10 @@ export async function updateFulfillmentDoc(event, mutate, { attempts = 5 } = {})
     if (!next) return { doc, changed: false };
 
     const clean = sanitizeFulfillmentDoc(next);
-    const result = current?.etag
-      ? await store.setJSON(FULFILLMENT_BLOB_KEY, clean, { onlyIfMatch: current.etag })
-      : await store.setJSON(FULFILLMENT_BLOB_KEY, clean, { onlyIfNew: true });
-
-    if (result?.modified !== false) return { doc: clean, changed: true };
+    if (await writeIfUnchanged(store, FULFILLMENT_BLOB_KEY, clean, current)) {
+      return { doc: clean, changed: true };
+    }
+    if (attempt + 1 < attempts) await pauseBeforeRetry(attempt);
   }
 
   throw new Error('Someone else is updating orders right now. Try again.');

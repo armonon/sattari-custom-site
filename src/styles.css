@@ -829,6 +829,8 @@ button {
 
 .service-form-shell {
   margin-top: 2rem;
+  /* A #local-inquiry / #repair-inquiry link lands below the sticky navbar. */
+  scroll-margin-top: 6rem;
 }
 
 .service-form-copy {
@@ -1502,6 +1504,12 @@ textarea:focus-visible {
   will-change: transform;
 }
 
+/* Focus lands on the dialog itself when it opens (so screen readers announce
+   it); the controls inside keep their own focus rings. */
+.cart-drawer:focus {
+  outline: none;
+}
+
 .cart-drawer.open {
   visibility: visible;
   transform: translateX(0);
@@ -1704,6 +1712,9 @@ textarea:focus-visible {
     transform: translateY(-7px) rotate(-45deg);
   }
 
+  /* Collapsed, the menu must also be hidden from the keyboard and screen
+     readers, not just faded out: visibility does both, and switches only after
+     the closing animation so the menu can still be seen shrinking. */
   .nav-links {
     grid-column: 1 / -1;
     width: 100%;
@@ -1714,10 +1725,12 @@ textarea:focus-visible {
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
     transition:
       max-height 260ms ease,
       opacity 200ms ease,
-      padding 200ms ease;
+      padding 200ms ease,
+      visibility 0s linear 260ms;
   }
 
   .nav-links-open {
@@ -1726,7 +1739,13 @@ textarea:focus-visible {
     overscroll-behavior: contain;
     opacity: 1;
     pointer-events: auto;
+    visibility: visible;
     padding-top: 0.75rem;
+    transition:
+      max-height 260ms ease,
+      opacity 200ms ease,
+      padding 200ms ease,
+      visibility 0s;
   }
 
   .nav-link {

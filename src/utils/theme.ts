@@ -18,6 +18,16 @@ export type ThemePreference = 'auto' | ThemeMode;
 
 export const THEME_STORAGE_KEY = 'sattari-theme-pref-v1';
 
+/**
+ * The mode React renders with before it has read the visitor's theme, on the
+ * prerender server and in the first client render alike, so the two match.
+ * Never resolve the theme during render: on the server that would be the build
+ * machine's clock. What the visitor sees comes from `data-theme` (set before
+ * first paint by index.html), so markup that differs by theme must be switched
+ * in CSS keyed on that attribute, not chosen from `mode` at render.
+ */
+export const INITIAL_RENDER_THEME: ThemeMode = 'night';
+
 /** Daytime runs from 06:00 up to (but not including) 18:00 local time. */
 export const DAY_START_HOUR = 6;
 export const DAY_END_HOUR = 18;

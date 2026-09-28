@@ -1,12 +1,9 @@
-import { Link, useLocation } from 'react-router-dom';
-
-function useQuery() {
-  const { search } = useLocation();
-  return new URLSearchParams(search);
-}
+import { Link } from 'react-router-dom';
+import { useHydratedSearchParams } from './useHydratedSearchParams';
 
 export default function InstagramCallback() {
-  const query = useQuery();
+  // Read after hydration: the prerendered page has no query string.
+  const query = useHydratedSearchParams();
   const code = query.get('code');
   const error = query.get('error') || query.get('error_description');
 

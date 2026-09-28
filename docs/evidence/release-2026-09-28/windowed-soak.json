@@ -1,0 +1,210 @@
+{
+  "pass": true,
+  "checks": [
+    {
+      "sampleRate": 44100,
+      "offset": 3.9,
+      "rate": 1,
+      "detune": 0,
+      "maxError": 0
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 44100,
+      "offset": 3.9,
+      "rate": 1,
+      "detune": 0,
+      "maxError": 0
+    },
+    {
+      "sampleRate": 44100,
+      "offset": 17,
+      "rate": 1.5,
+      "detune": 700,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 44100,
+      "offset": 17,
+      "rate": 1.5,
+      "detune": 700,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "sampleRate": 44100,
+      "offset": 20.4,
+      "rate": 0.75,
+      "detune": -500,
+      "loop": true,
+      "loopStart": 19.5,
+      "loopEnd": 20.5,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 44100,
+      "offset": 20.4,
+      "rate": 0.75,
+      "detune": -500,
+      "loop": true,
+      "loopStart": 19.5,
+      "loopEnd": 20.5,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "sampleRate": 44100,
+      "offset": 19.9,
+      "rate": 1,
+      "detune": 0,
+      "loop": true,
+      "loopStart": 2,
+      "loopEnd": 20,
+      "maxError": 2.9802322387695312e-8
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 44100,
+      "offset": 19.9,
+      "rate": 1,
+      "detune": 0,
+      "loop": true,
+      "loopStart": 2,
+      "loopEnd": 20,
+      "maxError": 2.9802322387695312e-8
+    },
+    {
+      "sampleRate": 48000,
+      "offset": 3.9,
+      "rate": 1,
+      "detune": 0,
+      "maxError": 0
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 48000,
+      "offset": 3.9,
+      "rate": 1,
+      "detune": 0,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "sampleRate": 48000,
+      "offset": 17,
+      "rate": 1.5,
+      "detune": 700,
+      "maxError": 0
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 48000,
+      "offset": 17,
+      "rate": 1.5,
+      "detune": 700,
+      "maxError": 0
+    },
+    {
+      "sampleRate": 48000,
+      "offset": 20.4,
+      "rate": 0.75,
+      "detune": -500,
+      "loop": true,
+      "loopStart": 19.5,
+      "loopEnd": 20.5,
+      "maxError": 0
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 48000,
+      "offset": 20.4,
+      "rate": 0.75,
+      "detune": -500,
+      "loop": true,
+      "loopStart": 19.5,
+      "loopEnd": 20.5,
+      "maxError": 7.450580596923828e-9
+    },
+    {
+      "sampleRate": 48000,
+      "offset": 19.9,
+      "rate": 1,
+      "detune": 0,
+      "loop": true,
+      "loopStart": 2,
+      "loopEnd": 20,
+      "maxError": 0
+    },
+    {
+      "nativeQueueParity": true,
+      "sampleRate": 48000,
+      "offset": 19.9,
+      "rate": 1,
+      "detune": 0,
+      "loop": true,
+      "loopStart": 2,
+      "loopEnd": 20,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "scheduledLoopAndRateDeliveryParity": true,
+      "sampleRate": 44100,
+      "maxError": 0
+    },
+    {
+      "nativeQueueLoopAndRateParity": true,
+      "sampleRate": 44100,
+      "maxError": 0
+    },
+    {
+      "scheduledLoopAndRateDeliveryParity": true,
+      "sampleRate": 48000,
+      "maxError": 0
+    },
+    {
+      "nativeQueueLoopAndRateParity": true,
+      "sampleRate": 48000,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "compiledPitchKeyLockStemRateParity": true,
+      "sampleRate": 44100,
+      "lateDelivery": false,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "compiledPitchKeyLockStemRateParity": true,
+      "sampleRate": 44100,
+      "lateDelivery": true,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "compiledPitchKeyLockStemRateParity": true,
+      "sampleRate": 48000,
+      "lateDelivery": false,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "compiledPitchKeyLockStemRateParity": true,
+      "sampleRate": 48000,
+      "lateDelivery": true,
+      "maxError": 1.4901161193847656e-8
+    },
+    {
+      "fourStereoStems": true,
+      "sourceSeconds": 180,
+      "playedSeconds": 120,
+      "seeks": 2,
+      "prepareMs": 1396.4000000059605,
+      "retainedPcmBytes": 122774864,
+      "peakAdmittedBytes": 132946296,
+      "budgetBytes": 134217728,
+      "underruns": 0,
+      "peak": 0.06947134513888364,
+      "lateEvents": 0,
+      "maxLateness": 0
+    }
+  ],
+  "physicalHardwareMeasured": false,
+  "realMusicMeasured": false,
+  "errors": []
+}

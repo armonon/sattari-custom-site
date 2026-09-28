@@ -1,7 +1,13 @@
 import process from 'node:process';
 import { releaseCheckoutSession } from '../../server/checkoutOrders.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { getStripe } from '../../server/stripeClient.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/checkout-release', '/.netlify/functions/checkout-release'],
+};
 
 const SESSION_ID = /^cs_[A-Za-z0-9_]{8,250}$/;
 
@@ -21,7 +27,11 @@ function json(statusCode, body) {
 // shopper's browser was given. The answer is the same whatever happened, so it
 // tells a caller nothing about a session. Completed checkouts are never touched
 // (see releaseCheckoutSession), and repeating a call changes nothing.
-export async function handler(event) {
+export default async function checkoutRelease(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed.' });
   }

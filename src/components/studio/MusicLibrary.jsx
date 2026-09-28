@@ -209,12 +209,11 @@ export default memo(function MusicLibrary({
     setBusy(true);
     let added = 0,
       duplicates = 0,
-      failed = 0,
-      ignored = 0;
+      failed = 0;
     try {
       const entries = await pendingFiles;
       const usable = entries.filter(({ file }) => isLibraryAudio(file));
-      ignored = entries.length - usable.length;
+      const ignored = entries.length - usable.length;
       for (const [index, { file, path }] of usable.entries()) {
         if (cancel.current) break;
         if (alive.current) setStatus(`Importing ${index + 1}/${usable.length}: ${file.name}`);

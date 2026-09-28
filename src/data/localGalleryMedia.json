@@ -1,0 +1,500 @@
+[
+  {
+    "id": "owner-01",
+    "src": "/images/local-gallery/owner-01.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-01-thumb.jpg"
+  },
+  {
+    "id": "owner-02",
+    "src": "/images/local-gallery/owner-02.mp4",
+    "video": true,
+    "width": 640,
+    "height": 370,
+    "poster": "/images/local-gallery/owner-02-poster.jpg",
+    "duration": 44.768073,
+    "thumbnail": "/images/local-gallery/owner-02-thumb.jpg"
+  },
+  {
+    "id": "owner-03",
+    "src": "/images/local-gallery/owner-03.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-03-thumb.jpg"
+  },
+  {
+    "id": "owner-04",
+    "src": "/images/local-gallery/owner-04.webp",
+    "video": false,
+    "width": 640,
+    "height": 361,
+    "thumbnail": "/images/local-gallery/owner-04-thumb.jpg"
+  },
+  {
+    "id": "owner-05",
+    "src": "/images/local-gallery/owner-05.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-05-thumb.jpg"
+  },
+  {
+    "id": "owner-06",
+    "src": "/images/local-gallery/owner-06.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-06-thumb.jpg"
+  },
+  {
+    "id": "owner-07",
+    "src": "/images/local-gallery/owner-07.webp",
+    "video": false,
+    "width": 1019,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-07-thumb.jpg"
+  },
+  {
+    "id": "owner-08",
+    "src": "/images/local-gallery/owner-08.mp4",
+    "video": true,
+    "width": 640,
+    "height": 360,
+    "poster": "/images/local-gallery/owner-08-poster.jpg",
+    "duration": 15.905669,
+    "thumbnail": "/images/local-gallery/owner-08-thumb.jpg"
+  },
+  {
+    "id": "owner-09",
+    "src": "/images/local-gallery/owner-09.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-09-thumb.jpg"
+  },
+  {
+    "id": "owner-10",
+    "src": "/images/local-gallery/owner-10.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-10-thumb.jpg"
+  },
+  {
+    "id": "owner-11",
+    "src": "/images/local-gallery/owner-11.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-11-thumb.jpg"
+  },
+  {
+    "id": "owner-12",
+    "src": "/images/local-gallery/owner-12.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-12-poster.jpg",
+    "duration": 8.103764,
+    "thumbnail": "/images/local-gallery/owner-12-thumb.jpg"
+  },
+  {
+    "id": "owner-13",
+    "src": "/images/local-gallery/owner-13.mp4",
+    "video": true,
+    "width": 640,
+    "height": 360,
+    "poster": "/images/local-gallery/owner-13-poster.jpg",
+    "duration": 30.255601,
+    "thumbnail": "/images/local-gallery/owner-13-thumb.jpg"
+  },
+  {
+    "id": "owner-14",
+    "src": "/images/local-gallery/owner-14.mp4",
+    "video": true,
+    "width": 640,
+    "height": 360,
+    "poster": "/images/local-gallery/owner-14-poster.jpg",
+    "duration": 28.699864,
+    "thumbnail": "/images/local-gallery/owner-14-thumb.jpg"
+  },
+  {
+    "id": "owner-15",
+    "src": "/images/local-gallery/owner-15.webp",
+    "video": false,
+    "width": 1047,
+    "height": 671,
+    "thumbnail": "/images/local-gallery/owner-15-thumb.jpg"
+  },
+  {
+    "id": "owner-16",
+    "src": "/images/local-gallery/owner-16.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-16-thumb.jpg"
+  },
+  {
+    "id": "owner-17",
+    "src": "/images/local-gallery/owner-17.webp",
+    "video": false,
+    "width": 766,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-17-thumb.jpg"
+  },
+  {
+    "id": "owner-18",
+    "src": "/images/local-gallery/owner-18.mp4",
+    "video": true,
+    "width": 640,
+    "height": 360,
+    "poster": "/images/local-gallery/owner-18-poster.jpg",
+    "duration": 8.986122,
+    "thumbnail": "/images/local-gallery/owner-18-thumb.jpg"
+  },
+  {
+    "id": "owner-19",
+    "src": "/images/local-gallery/owner-19.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-19-thumb.jpg"
+  },
+  {
+    "id": "owner-20",
+    "src": "/images/local-gallery/owner-20.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-20-poster.jpg",
+    "duration": 18.599184,
+    "thumbnail": "/images/local-gallery/owner-20-thumb.jpg"
+  },
+  {
+    "id": "owner-21",
+    "src": "/images/local-gallery/owner-21.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-21-thumb.jpg"
+  },
+  {
+    "id": "owner-22",
+    "src": "/images/local-gallery/owner-22.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-22-poster.jpg",
+    "duration": 18.413424,
+    "thumbnail": "/images/local-gallery/owner-22-thumb.jpg"
+  },
+  {
+    "id": "owner-23",
+    "src": "/images/local-gallery/owner-23.webp",
+    "video": false,
+    "width": 1020,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-23-thumb.jpg"
+  },
+  {
+    "id": "owner-24",
+    "src": "/images/local-gallery/owner-24.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-24-thumb.jpg"
+  },
+  {
+    "id": "owner-25",
+    "src": "/images/local-gallery/owner-25.webp",
+    "video": false,
+    "width": 470,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-25-thumb.jpg"
+  },
+  {
+    "id": "owner-26",
+    "src": "/images/local-gallery/owner-26.webp",
+    "video": false,
+    "width": 574,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-26-thumb.jpg"
+  },
+  {
+    "id": "owner-27",
+    "src": "/images/local-gallery/owner-27.webp",
+    "video": false,
+    "width": 766,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-27-thumb.jpg"
+  },
+  {
+    "id": "owner-28",
+    "src": "/images/local-gallery/owner-28.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-28-thumb.jpg"
+  },
+  {
+    "id": "owner-29",
+    "src": "/images/local-gallery/owner-29.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-29-thumb.jpg"
+  },
+  {
+    "id": "owner-30",
+    "src": "/images/local-gallery/owner-30.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-30-poster.jpg",
+    "duration": 15.000091,
+    "thumbnail": "/images/local-gallery/owner-30-thumb.jpg"
+  },
+  {
+    "id": "owner-31",
+    "src": "/images/local-gallery/owner-31.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-31-thumb.jpg"
+  },
+  {
+    "id": "owner-32",
+    "src": "/images/local-gallery/owner-32.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-32-poster.jpg",
+    "duration": 8.080544,
+    "thumbnail": "/images/local-gallery/owner-32-thumb.jpg"
+  },
+  {
+    "id": "owner-33",
+    "src": "/images/local-gallery/owner-33.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-33-poster.jpg",
+    "duration": 15.023311,
+    "thumbnail": "/images/local-gallery/owner-33-thumb.jpg"
+  },
+  {
+    "id": "owner-34",
+    "src": "/images/local-gallery/owner-34.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-34-thumb.jpg"
+  },
+  {
+    "id": "owner-35",
+    "src": "/images/local-gallery/owner-35.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-35-thumb.jpg"
+  },
+  {
+    "id": "owner-36",
+    "src": "/images/local-gallery/owner-36.webp",
+    "video": false,
+    "width": 900,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-36-thumb.jpg"
+  },
+  {
+    "id": "owner-37",
+    "src": "/images/local-gallery/owner-37.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-37-thumb.jpg"
+  },
+  {
+    "id": "owner-38",
+    "src": "/images/local-gallery/owner-38.mp4",
+    "video": true,
+    "width": 360,
+    "height": 640,
+    "poster": "/images/local-gallery/owner-38-poster.jpg",
+    "duration": 40.170522,
+    "thumbnail": "/images/local-gallery/owner-38-thumb.jpg"
+  },
+  {
+    "id": "owner-39",
+    "src": "/images/local-gallery/owner-39.mp4",
+    "video": true,
+    "width": 640,
+    "height": 360,
+    "poster": "/images/local-gallery/owner-39-poster.jpg",
+    "duration": 5.897868,
+    "thumbnail": "/images/local-gallery/owner-39-thumb.jpg"
+  },
+  {
+    "id": "owner-40",
+    "src": "/images/local-gallery/owner-40.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-40-thumb.jpg"
+  },
+  {
+    "id": "owner-41",
+    "src": "/images/local-gallery/owner-41.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-41-thumb.jpg"
+  },
+  {
+    "id": "owner-42",
+    "src": "/images/local-gallery/owner-42.webp",
+    "video": false,
+    "width": 1360,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-42-thumb.jpg"
+  },
+  {
+    "id": "owner-43",
+    "src": "/images/local-gallery/owner-43.webp",
+    "video": false,
+    "width": 692,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-43-thumb.jpg"
+  },
+  {
+    "id": "owner-44",
+    "src": "/images/local-gallery/owner-44.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-44-thumb.jpg"
+  },
+  {
+    "id": "owner-45",
+    "src": "/images/local-gallery/owner-45.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-45-thumb.jpg"
+  },
+  {
+    "id": "owner-46",
+    "src": "/images/local-gallery/owner-46.webp",
+    "video": false,
+    "width": 1360,
+    "height": 765,
+    "thumbnail": "/images/local-gallery/owner-46-thumb.jpg"
+  },
+  {
+    "id": "owner-47",
+    "src": "/images/local-gallery/owner-47.webp",
+    "video": false,
+    "width": 818,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-47-thumb.jpg"
+  },
+  {
+    "id": "owner-48",
+    "src": "/images/local-gallery/owner-48.webp",
+    "video": false,
+    "width": 862,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-48-thumb.jpg"
+  },
+  {
+    "id": "owner-49",
+    "src": "/images/local-gallery/owner-49.webp",
+    "video": false,
+    "width": 574,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-49-thumb.jpg"
+  },
+  {
+    "id": "owner-50",
+    "src": "/images/local-gallery/owner-50.webp",
+    "video": false,
+    "width": 788,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-50-thumb.jpg"
+  },
+  {
+    "id": "owner-51",
+    "src": "/images/local-gallery/owner-51.webp",
+    "video": false,
+    "width": 711,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-51-thumb.jpg"
+  },
+  {
+    "id": "owner-52",
+    "src": "/images/local-gallery/owner-52.webp",
+    "video": false,
+    "width": 788,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-52-thumb.jpg"
+  },
+  {
+    "id": "owner-53",
+    "src": "/images/local-gallery/owner-53.webp",
+    "video": false,
+    "width": 1242,
+    "height": 699,
+    "thumbnail": "/images/local-gallery/owner-53-thumb.jpg"
+  },
+  {
+    "id": "owner-54",
+    "src": "/images/local-gallery/owner-54.webp",
+    "video": false,
+    "width": 1019,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-54-thumb.jpg"
+  },
+  {
+    "id": "owner-55",
+    "src": "/images/local-gallery/owner-55.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-55-thumb.jpg"
+  },
+  {
+    "id": "owner-56",
+    "src": "/images/local-gallery/owner-56.webp",
+    "video": false,
+    "width": 709,
+    "height": 708,
+    "thumbnail": "/images/local-gallery/owner-56-thumb.jpg"
+  },
+  {
+    "id": "owner-57",
+    "src": "/images/local-gallery/owner-57.webp",
+    "video": false,
+    "width": 574,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-57-thumb.jpg"
+  },
+  {
+    "id": "owner-58",
+    "src": "/images/local-gallery/owner-58.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-58-thumb.jpg"
+  },
+  {
+    "id": "owner-59",
+    "src": "/images/local-gallery/owner-59.webp",
+    "video": false,
+    "width": 765,
+    "height": 1020,
+    "thumbnail": "/images/local-gallery/owner-59-thumb.jpg"
+  }
+]

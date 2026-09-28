@@ -71,8 +71,16 @@ describe('sendOrderNotification', () => {
       expect.objectContaining({
         to: ['armonnasiri@gmail.com', 'info@sattarimusic.com'],
         from: 'orders@sattarimusic.com',
-      })
+      }),
+      expect.anything()
     );
+  });
+
+  // A slow provider must not hold the webhook or the sweep past its limit.
+  it('gives the provider a time limit', async () => {
+    await sendOrderNotification(orderRecord);
+
+    expect(sendMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
 
   it('includes the total and the items in the message', async () => {
@@ -112,9 +120,10 @@ describe('sendOrderNotification', () => {
   it('passes an idempotency key so a retried send is not a second email', async () => {
     await sendOrderNotification(orderRecord, { idempotencyKey: 'sattari-order-cs_test_1' });
 
-    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: expect.any(Array) }), {
-      idempotencyKey: 'sattari-order-cs_test_1',
-    });
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({ to: expect.any(Array) }),
+      expect.objectContaining({ idempotencyKey: 'sattari-order-cs_test_1' })
+    );
   });
 
   it('leads with an alert when stock could not cover the order', async () => {

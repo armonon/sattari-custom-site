@@ -6,6 +6,7 @@ export function useStudioEngine() {
   const engineRef = useRef(null);
   const objectUrlsRef = useRef(new Map());
   const setups = useRef(new Set());
+  const finalizers = useRef(new Set());
 
   const getEngine = useCallback(() => {
     if (!engineRef.current) {
@@ -25,6 +26,16 @@ export function useStudioEngine() {
     return () => setups.current.delete(setup);
   }, []);
 
+  /**
+   * Runs `finalize(engine)` before the page's engine is disposed on unmount
+   * (for example to stop and save a recording in progress); the engine stays
+   * alive until every finalizer settles. Returns the unsubscribe function.
+   */
+  const onBeforeDispose = useCallback((finalize) => {
+    finalizers.current.add(finalize);
+    return () => finalizers.current.delete(finalize);
+  }, []);
+
   const revokeObjectUrls = useCallback(() => {
     objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     objectUrlsRef.current.clear();
@@ -40,12 +51,20 @@ export function useStudioEngine() {
 
   useEffect(
     () => () => {
-      revokeObjectUrls();
-      engineRef.current?.dispose();
+      const current = engineRef.current;
       engineRef.current = null;
+      const pending = [...finalizers.current].map((finalize) =>
+        Promise.resolve()
+          .then(() => current && finalize(current))
+          .catch(() => {})
+      );
+      void Promise.all(pending).finally(() => {
+        revokeObjectUrls();
+        current?.dispose();
+      });
     },
     [revokeObjectUrls]
   );
 
-  return { engineRef, objectUrlsRef, getEngine, onEngine, releaseAudio };
+  return { engineRef, objectUrlsRef, getEngine, onEngine, onBeforeDispose, releaseAudio };
 }

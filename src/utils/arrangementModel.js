@@ -46,8 +46,9 @@ export const audioClip = (assetId, name, duration, start = 0) => ({
   sourceDuration: duration,
   rate: 1,
   gain: 100,
-  fadeIn: 0.005,
-  fadeOut: 0.005,
+  // Declicking fades, never longer than a very short clip.
+  fadeIn: Math.min(0.005, duration),
+  fadeOut: Math.min(0.005, duration),
   automation: { volume: [], pan: [], filter: [] },
 });
 
@@ -748,6 +749,16 @@ export function migrateArrangement(project) {
   return result;
 }
 
+// Edits replace clips and event lists rather than mutating them (undo relies
+// on it), so one that passed validation stays valid: unchanged ones are not
+// re-scanned on every edit (an hour of capture is thousands of clips, and a
+// long take holds hundreds of thousands of events). Track and take fields are
+// cheap and always re-checked, as are identifiers and pattern references,
+// which depend on the rest of the project. An event list's length guards
+// against events appended in place.
+const validClips = new WeakSet();
+const validEvents = new WeakMap();
+
 export function validateArrangement(project) {
   const fail = () => {
     throw new Error('Project contains invalid arrangement data.');
@@ -815,6 +826,12 @@ export function validateArrangement(project) {
       fail();
     ids.add(track.id);
     for (const clip of track.clips) {
+      if (validClips.has(clip)) {
+        if (ids.has(clip.id)) fail();
+        ids.add(clip.id);
+        if (clip.patternId != null && !project.patterns?.[clip.patternId]) fail();
+        continue;
+      }
       if (
         !clip ||
         typeof clip.id !== 'string' ||
@@ -914,25 +931,169 @@ export function validateArrangement(project) {
         fail();
     }
   }
+  for (const track of project.tracks) for (const clip of track.clips) validClips.add(clip);
   for (const capture of project.captures) {
     if (!capture || typeof capture.assetId !== 'string' || !Array.isArray(capture.events)) fail();
     if (capture.duration !== undefined && !finite(capture.duration, 0, 86400)) fail();
     if (capture.timelineStart !== undefined && !finite(capture.timelineStart, 0, 86400)) fail();
     if (capture.originalEvents !== undefined && !Array.isArray(capture.originalEvents)) fail();
-    for (const event of [...capture.events, ...(capture.originalEvents || [])])
-      if (
-        !event ||
-        !finite(event.time, 0, 86400) ||
-        typeof event.type !== 'string' ||
-        !Array.isArray(event.args) ||
-        (event.scheduledTime != null && !finite(event.scheduledTime, 0, 86401)) ||
-        (event.sampleRate != null && !finite(event.sampleRate, 8000, 384000)) ||
-        (event.frame != null && (!Number.isSafeInteger(event.frame) || event.frame < 0)) ||
-        (event.scheduledFrame != null &&
-          (!Number.isSafeInteger(event.scheduledFrame) || event.scheduledFrame < 0)) ||
-        (event.disabled !== undefined && typeof event.disabled !== 'boolean')
-      )
-        fail();
+    for (const events of [capture.events, capture.originalEvents || []]) {
+      if (validEvents.get(events) === events.length) continue;
+      for (const event of events)
+        if (
+          !event ||
+          !finite(event.time, 0, 86400) ||
+          typeof event.type !== 'string' ||
+          !Array.isArray(event.args) ||
+          (event.scheduledTime != null && !finite(event.scheduledTime, 0, 86401)) ||
+          (event.sampleRate != null && !finite(event.sampleRate, 8000, 384000)) ||
+          (event.frame != null && (!Number.isSafeInteger(event.frame) || event.frame < 0)) ||
+          (event.scheduledFrame != null &&
+            (!Number.isSafeInteger(event.scheduledFrame) || event.scheduledFrame < 0)) ||
+          (event.disabled !== undefined && typeof event.disabled !== 'boolean')
+        )
+          fail();
+      validEvents.set(events, events.length);
+    }
   }
   return project;
+}
+
+// Keeps fades, fade curves, automation and notes inside their clip. Audio
+// pieces under a millisecond are dropped. Unchanged clips keep their identity.
+function sanitizeClip(clip) {
+  if (!clip || !Number.isFinite(clip.duration)) return clip;
+  if (clip.duration < 0.001) return clip.kind === 'audio' ? null : clip;
+  const duration = clip.duration,
+    next = { ...clip },
+    beyond = (point) => point?.time > duration;
+  let changed = false;
+  for (const key of ['fadeIn', 'fadeOut'])
+    if (Number.isFinite(clip[key]) && (clip[key] < 0 || clip[key] > duration)) {
+      next[key] = Math.min(Math.max(clip[key], 0), duration);
+      changed = true;
+    }
+  for (const key of ['fadeInCurve', 'fadeOutCurve'])
+    if (Array.isArray(clip[key]) && clip[key].some(beyond)) {
+      next[key] = clip[key].map((point) => (beyond(point) ? { ...point, time: duration } : point));
+      changed = true;
+    }
+  if (clip.automation && typeof clip.automation === 'object') {
+    const targets = Object.entries(clip.automation);
+    if (targets.some(([, points]) => Array.isArray(points) && points.some(beyond))) {
+      next.automation = Object.fromEntries(
+        targets.map(([target, points]) => [
+          target,
+          Array.isArray(points) ? points.filter((point) => !beyond(point)) : points,
+        ])
+      );
+      changed = true;
+    }
+  }
+  if (
+    Array.isArray(clip.notes) &&
+    clip.notes.some((note) => beyond(note) || note?.duration > duration)
+  ) {
+    next.notes = clip.notes
+      .filter((note) => !beyond(note))
+      .map((note) => (note?.duration > duration ? { ...note, duration } : note));
+    changed = true;
+  }
+  return changed ? next : clip;
+}
+
+/** Repairs what can be repaired without guessing; returns `project` itself when nothing did. */
+export function sanitizeArrangement(project) {
+  if (!project || !Array.isArray(project.tracks)) return project;
+  let changed = false;
+  const tracks = project.tracks.map((track) => {
+    if (!track || !Array.isArray(track.clips)) return track;
+    const clips = track.clips.map(sanitizeClip);
+    if (clips.every((clip, index) => clip === track.clips[index])) return track;
+    changed = true;
+    return { ...track, clips: clips.filter(Boolean) };
+  });
+  return changed ? { ...project, tracks } : project;
+}
+
+/**
+ * Repairs an arrangement, then sets aside the tracks, clips and takes that are
+ * still invalid, so one damaged part cannot stop a whole project from opening
+ * or saving. Set-aside parts are kept in `setAside` (with their track name),
+ * never deleted. A valid arrangement is returned unchanged.
+ */
+export function repairArrangement(project) {
+  const sanitized = sanitizeArrangement(project);
+  try {
+    return validateArrangement(sanitized);
+  } catch {
+    // Find the damaged parts below.
+  }
+  const kept = Array.isArray(sanitized?.setAside) ? sanitized.setAside : [];
+  const whole = () => ({
+    ...emptyArrangement(),
+    setAside: [...kept, { kind: 'arrangement', name: 'Arrangement', part: sanitized }],
+  });
+  if (!sanitized || sanitized.version !== 1 || !Array.isArray(sanitized.tracks)) return whole();
+  const valid = (parts) => {
+    try {
+      validateArrangement({ ...emptyArrangement(), patterns: sanitized.patterns, ...parts });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const aside = [];
+  const setAside = (kind, part, track) =>
+    aside.push({
+      kind,
+      name: typeof part?.name === 'string' && part.name ? part.name : kind,
+      ...(track ? { track } : {}),
+      part,
+    });
+  const ids = new Set(),
+    tracks = [];
+  for (const track of sanitized.tracks) {
+    if (
+      !track ||
+      typeof track.id !== 'string' ||
+      ids.has(track.id) ||
+      !Array.isArray(track.clips) ||
+      !valid({ tracks: [{ ...track, clips: [] }] })
+    ) {
+      setAside('track', track);
+      continue;
+    }
+    ids.add(track.id);
+    const clips = track.clips.filter((clip) => {
+      const ok =
+        typeof clip?.id === 'string' &&
+        !ids.has(clip.id) &&
+        valid({ tracks: [{ ...track, clips: [clip] }] });
+      if (ok) ids.add(clip.id);
+      else setAside('clip', clip, track.name);
+      return ok;
+    });
+    tracks.push(clips.length === track.clips.length ? track : { ...track, clips });
+  }
+  const captures = (Array.isArray(sanitized.captures) ? sanitized.captures : []).filter(
+    (capture) => valid({ captures: [capture] }) || (setAside('take', capture), false)
+  );
+  const locators =
+    sanitized.locators == null || valid({ locators: sanitized.locators })
+      ? sanitized.locators
+      : (setAside('locators', { name: 'Locators', markers: sanitized.locators }), undefined);
+  const repaired = {
+    ...sanitized,
+    tracks,
+    captures,
+    locators,
+    setAside: [...kept, ...aside],
+  };
+  if (locators === undefined) delete repaired.locators;
+  try {
+    return validateArrangement(repaired);
+  } catch {
+    return whole();
+  }
 }

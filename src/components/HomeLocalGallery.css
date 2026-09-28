@@ -1,0 +1,207 @@
+.home-local-gallery {
+  min-width: 0;
+  align-self: start;
+}
+.home-local-gallery-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #141616;
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+}
+.home-local-gallery-slide {
+  position: absolute;
+  inset: 0;
+  background: #141616;
+  opacity: 0;
+  transition: opacity 650ms ease-in-out;
+  pointer-events: none;
+}
+.home-local-gallery-slide.is-previous {
+  z-index: 1;
+  opacity: 1;
+}
+.home-local-gallery-slide.is-current {
+  z-index: 2;
+}
+.home-local-gallery-slide.is-current.is-ready {
+  opacity: 1;
+}
+.home-local-gallery-slide img,
+.home-local-gallery-slide video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.home-local-gallery-kind {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  padding: 5px 9px;
+  background: rgba(15, 18, 18, 0.85);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.home-local-gallery-thumbnails {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 12px 2px 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--home-line) transparent;
+  scroll-behavior: smooth;
+}
+.home-local-gallery-thumbnails button {
+  position: relative;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: #141616;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 180ms ease;
+}
+.home-local-gallery-thumbnails button[aria-pressed='true'],
+.home-local-gallery-thumbnails button:hover {
+  opacity: 1;
+}
+.home-local-gallery-thumbnails button[aria-pressed='true'] {
+  outline: 2px solid var(--home-ink);
+  outline-offset: 2px;
+}
+.home-local-gallery-thumbnails button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.home-local-gallery-thumbnails img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+.home-local-gallery-thumbnails svg {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  box-sizing: content-box;
+  padding: 3px;
+  color: white;
+  background: #141616;
+  border-radius: 50%;
+}
+.home-local-gallery-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-height: 80px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--home-line);
+}
+.home-local-gallery-caption {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.home-local-gallery-caption > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--home-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.home-local-gallery-caption strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.home-local-gallery-caption small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--home-muted);
+}
+.home-local-gallery-controls {
+  display: flex;
+  flex: 0 0 176px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.home-local-gallery-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.home-local-gallery-controls button:hover {
+  border-color: var(--home-line);
+  background: var(--home-paper);
+}
+.home-local-gallery-controls button:focus-visible,
+.home-local-gallery-footer a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.home-local-gallery-footer {
+  padding-top: 16px;
+}
+.home-local-gallery-footer > strong {
+  font-family: Sora, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.home-local-gallery-footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 8px;
+}
+.home-local-gallery-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--home-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.home-local-gallery-footer a:hover {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-local-gallery-slide,
+  .home-local-gallery-thumbnails button {
+    transition: none;
+  }
+  .home-local-gallery-thumbnails {
+    scroll-behavior: auto;
+  }
+}

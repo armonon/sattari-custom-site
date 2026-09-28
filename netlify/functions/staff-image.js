@@ -1,9 +1,13 @@
 import crypto from 'node:crypto';
 import { requireStaff } from '../../server/staffAuth.js';
 import { openStore } from '../../server/blobs.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { IMAGE_STORE } from '../../server/imageStore.js';
 
-export { IMAGE_STORE };
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/image', '/.netlify/functions/staff-image'],
+};
 
 // Only formats a browser will render inline. No SVG: it can carry script, and
 // these files are served from our own origin.
@@ -52,7 +56,11 @@ function sniffType(buffer) {
   return null;
 }
 
-export async function handler(event) {
+export default async function staffImage(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });

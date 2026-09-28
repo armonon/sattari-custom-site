@@ -118,6 +118,14 @@
   height: 100%;
   object-fit: cover;
 }
+/* The video's still, by theme: the attribute set before first paint picks it,
+   and only the matching image is downloaded (index.html preloads it). */
+.home-hero-background {
+  background: url('/images/home/video-night-poster.jpg') center / cover no-repeat;
+}
+[data-theme='day'] .home-hero-background {
+  background-image: url('/images/home/video-day-poster.jpg');
+}
 .home-hero-motion {
   position: absolute;
   bottom: 20px;
@@ -390,45 +398,6 @@
   grid-template-columns: 0.9fr 1.4fr;
   gap: 50px;
   align-items: stretch;
-}
-.home-founder {
-  position: relative;
-  min-height: 310px;
-  overflow: hidden;
-  background: #17191a;
-  color: #fff;
-}
-.home-founder img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  position: absolute;
-  inset: 0;
-  object-position: 50% 35%;
-}
-.home-founder > span {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 18px 23px;
-  background: rgba(10, 15, 18, 0.88);
-}
-.home-founder strong {
-  display: block;
-  font-family: Sora, sans-serif;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-.home-founder > span > span {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 11px;
-  margin-top: 12px;
-  color: #dce8e9;
 }
 .home-service-list {
   display: flex;
@@ -846,18 +815,6 @@
   .home-local-grid {
     grid-template-columns: 1fr;
     gap: 24px;
-  }
-  .home-founder {
-    min-height: 260px;
-  }
-  .home-founder img {
-    object-position: 50% 30%;
-  }
-  .home-founder > span {
-    padding: 16px 20px;
-  }
-  .home-founder strong {
-    font-size: 23px;
   }
   .home-service {
     padding: 18px 0;

@@ -85,9 +85,10 @@ vi.mock('resend', () => ({
 }));
 
 import handler, { config } from '../../netlify/functions/studio-bookings.js';
-import { handler as staffHandler } from '../../netlify/functions/staff-bookings.js';
-import { handler as webhookHandler } from '../../netlify/functions/stripe-webhook.js';
-import { handler as maintenanceHandler } from '../../netlify/functions/studio-booking-maintenance.js';
+import staffBookings from '../../netlify/functions/staff-bookings.js';
+import stripeWebhook from '../../netlify/functions/stripe-webhook.js';
+import studioBookingMaintenance from '../../netlify/functions/studio-booking-maintenance.js';
+import { callWith } from './helpers/invoke.js';
 import { createSession } from '../../server/staffAuth.js';
 import {
   applyBookingPayment,
@@ -99,9 +100,22 @@ import {
   requestBooking,
   retryBookingNotifications,
 } from '../../server/studioBookings.js';
-import { ARCHIVE_AFTER_DAYS, archivePastBookings } from '../../server/studioBookingStore.js';
-import { bookingPrice, holdsTime, studioTimestamp } from '../../src/utils/studioBooking.js';
+import {
+  ARCHIVE_AFTER_DAYS,
+  archivePastBookings,
+  patchBooking,
+} from '../../server/studioBookingStore.js';
+import { runBookingMaintenance } from '../../server/studioBookingMaintenance.js';
+import {
+  availableHours,
+  bookingPrice,
+  holdsTime,
+  studioTimestamp,
+  validBookingEmail,
+} from '../../src/utils/studioBooking.js';
 
+const staffHandler = callWith(staffBookings);
+const webhookHandler = callWith(stripeWebhook);
 const event = { headers: { 'x-nf-client-connection-ip': '127.0.0.1' } };
 const publicUrl = 'https://sattarimusic.com/api/studio-bookings';
 const getRequest = (query = '') => handler(new Request(`${publicUrl}${query}`), {});
@@ -482,13 +496,19 @@ describe('staff approval and payments', () => {
   });
   it('does not finalize an unpaid session or a spoofed amount', async () => {
     const b = await approved();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(
       (await applyBookingPayment(event, await mocks.retrieve(b.checkoutSessionId))).status
     ).toBe('awaiting_payment');
-    await expect(
-      applyBookingPayment(event, { ...paidSession(b), amount_total: 1 })
-    ).rejects.toThrow('amount');
-    expect(memory.value[b.id].status).toBe('awaiting_payment');
+    // Money moved that does not match the booking: flagged for staff, time
+    // still held, and never marked paid.
+    const flagged = await applyBookingPayment(event, { ...paidSession(b), amount_total: 1 });
+    expect(flagged.status).toBe('needs_review');
+    expect(flagged.paymentReview).toMatchObject({ reason: expect.stringMatching(/amount/) });
+    expect(holdsTime(memory.value[b.id])).toBe(true);
+    expect(
+      mocks.send.mock.calls.filter(([payload]) => payload.subject.includes('finalized'))
+    ).toHaveLength(0);
   });
   it('finalizes paid checkout once and sends one confirmation email', async () => {
     const b = await approved();
@@ -546,27 +566,108 @@ describe('staff approval and payments', () => {
 });
 
 describe('staff booking errors', () => {
-  it('shows staff messages written for them, but not raw provider errors', async () => {
-    const b = await requested();
+  function staffAction(id) {
     const token = createSession('staff');
-    const act = (action) =>
+    return (action) =>
       staffHandler({
         httpMethod: 'POST',
         headers: { authorization: `Bearer ${token}` },
-        body: JSON.stringify({ id: b.id, action }),
+        body: JSON.stringify({ id, action }),
       });
+  }
+
+  it('shows staff messages written for them, but not raw provider errors', async () => {
+    const b = await requested();
+    const act = staffAction(b.id);
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
+    // No answer from Stripe: a link may exist, so the time stays held.
     mocks.create.mockRejectedValueOnce(
-      Object.assign(new Error('Invalid API Key provided: sk_live_****1234'), { statusCode: 401 })
+      Object.assign(new Error('Request to api.stripe.com timed out (sk_live_****1234)'), {
+        type: 'StripeConnectionError',
+      })
     );
     const failed = await act('approve');
     expect(failed.statusCode).toBe(503);
     expect(failed.body).not.toContain('sk_live');
+    expect(memory.value[b.id].status).toBe('approving');
 
     const refused = await act('cancel');
     expect(refused.statusCode).toBe(409);
     expect(JSON.parse(refused.body).error).toMatch(/Retry approval/);
+  });
+
+  it('puts the request back when Stripe refuses the payment link', async () => {
+    const b = await requested();
+    const act = staffAction(b.id);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    mocks.create.mockRejectedValueOnce(
+      Object.assign(new Error('Invalid API Key provided: sk_live_****1234'), {
+        type: 'StripeAuthenticationError',
+        statusCode: 401,
+      })
+    );
+    const failed = await act('approve');
+
+    expect(failed.statusCode).toBe(502);
+    expect(JSON.parse(failed.body).error).toMatch(/back to awaiting approval/);
+    expect(failed.body).not.toContain('sk_live');
+    expect(memory.value[b.id]).toMatchObject({
+      status: 'requested',
+      approvalError: { code: '401' },
+    });
+    expect(holdsTime(memory.value[b.id])).toBe(false);
+
+    // Decline works again, and so does a fresh approval — under a new
+    // idempotency key, so Stripe cannot answer it with the stored refusal.
+    const retried = await act('approve');
+    expect(retried.statusCode).toBe(200);
+    expect(memory.value[b.id].status).toBe('awaiting_payment');
+    const keys = mocks.create.mock.calls.map(([, options]) => options.idempotencyKey);
+    expect(keys).toEqual([`studio-booking-${b.id}`, `studio-booking-${b.id}-2`]);
+  });
+
+  it('moves an approval started before attempts were counted to a fresh key after a refusal', async () => {
+    const b = await requested();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Left 'approving' by the previous version, which kept no attempt count.
+    memory.value[b.id] = {
+      ...memory.value[b.id],
+      status: 'approving',
+      approvedBy: 'staff',
+      approvedAt: new Date().toISOString(),
+      checkoutExpiresAt: Date.now() + 23 * 3600000,
+    };
+    memory.version += 1;
+    mocks.create.mockRejectedValueOnce(
+      Object.assign(new Error('Invalid email address'), {
+        type: 'StripeInvalidRequestError',
+        statusCode: 400,
+      })
+    );
+
+    expect((await staffAction(b.id)('approve')).statusCode).toBe(502);
+    expect(memory.value[b.id]).toMatchObject({ status: 'requested', approvalAttempt: 1 });
+
+    expect((await staffAction(b.id)('approve')).statusCode).toBe(200);
+    const keys = mocks.create.mock.calls.map(([, options]) => options.idempotencyKey);
+    // The retry of the old approval used the old key; the new one does not.
+    expect(keys).toEqual([`studio-booking-${b.id}`, `studio-booking-${b.id}-2`]);
+  });
+
+  it('keeps the time held when Stripe reports the same request in progress', async () => {
+    const b = await requested();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.create.mockRejectedValueOnce(
+      Object.assign(new Error('Idempotent request in progress'), {
+        type: 'StripeIdempotencyError',
+        statusCode: 409,
+      })
+    );
+
+    expect((await staffAction(b.id)('approve')).statusCode).toBe(503);
+    expect(memory.value[b.id].status).toBe('approving');
   });
 });
 
@@ -630,8 +731,9 @@ describe('retention', () => {
   it('runs from the scheduled maintenance job', async () => {
     const seeded = await seedCalendar();
     vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+    vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    expect((await maintenanceHandler(event)).statusCode).toBe(200);
+    await studioBookingMaintenance(new Request('https://sattarimusic.com/'), {});
     expect(memory.value[seeded.paid.id]).toBeUndefined();
     expect(memory.value[seeded.awaiting.id]).toBeDefined();
   });
@@ -652,5 +754,207 @@ describe('pricing and timezone', () => {
       '2026-12-11T08:00:00.000Z'
     );
     expect(Number.isNaN(studioTimestamp('2026-03-08', 2))).toBe(true);
+  });
+  it('never offers the hour the spring daylight-saving change skips', () => {
+    const allDay = { days: [0, 1, 2, 3, 4, 5, 6], openHour: 0, closeHour: 6 };
+    const before = Date.parse('2027-03-01T00:00:00Z');
+
+    expect(availableHours('2027-03-14', 1, allDay, [], before)).toEqual([0, 1, 3, 4, 5]);
+    expect(availableHours('2027-03-13', 1, allDay, [], before)).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+});
+
+describe('customer email addresses', () => {
+  it.each(['musician@example.com', 'first.last+studio@sub.example.co.uk', "o'brien@example.com"])(
+    'accepts %s',
+    (email) => {
+      expect(validBookingEmail(email)).toBe(true);
+    }
+  );
+
+  // Each passed the old check and would make Stripe refuse the payment link.
+  it.each([
+    'a@b.c',
+    'a..b@example.com',
+    '.a@example.com',
+    'a@-example.com',
+    'a@exa_mple.com',
+    'ü@example.com',
+    'a@example.123',
+  ])('refuses %s before it reaches Stripe', async (email) => {
+    expect(validBookingEmail(email)).toBe(false);
+    await expect(requested({ email })).rejects.toThrow('valid email');
+  });
+});
+
+describe('write and Stripe economy', () => {
+  it('does not rewrite the calendar when a change changes nothing', async () => {
+    const b = await requested();
+    const version = memory.version;
+
+    await patchBooking(event, b.id, (current) => ({
+      status: current.status,
+      notes: current.notes,
+    }));
+    await retryBookingNotifications(event, b.id);
+
+    expect(memory.version).toBe(version);
+  });
+
+  it('answers the payment page from storage once a payment is settled', async () => {
+    const b = await approved();
+    await applyBookingPayment(event, paidSession(b));
+    mocks.retrieve.mockClear();
+    const version = memory.version;
+
+    const response = await getRequest(`?session_id=${b.checkoutSessionId}`);
+
+    expect((await response.json()).booking.status).toBe('paid');
+    expect(mocks.retrieve).not.toHaveBeenCalled();
+    expect(memory.version).toBe(version);
+  });
+
+  it('asks Stripe while payment is outstanding, but writes only on a change', async () => {
+    const b = await approved();
+    mocks.retrieve.mockClear();
+    const version = memory.version;
+
+    await getRequest(`?session_id=${b.checkoutSessionId}`);
+    await getRequest(`?session_id=${b.checkoutSessionId}`);
+
+    expect(mocks.retrieve).toHaveBeenCalledTimes(2);
+    expect(memory.version).toBe(version);
+  });
+});
+
+describe('scheduled maintenance', () => {
+  it('starts no new work once its time budget is spent', async () => {
+    const b = await approved();
+    mocks.retrieve.mockClear();
+
+    const summary = await runBookingMaintenance(event, { budgetMs: -1 });
+
+    expect(summary).toMatchObject({ checked: 0, deferred: 1 });
+    expect(mocks.retrieve).not.toHaveBeenCalled();
+    expect(memory.value[b.id].status).toBe('awaiting_payment');
+  });
+
+  it('gives every provider call a short timeout', async () => {
+    const b = await requested();
+    memory.value[b.id].notifications.ownerEmail = { state: 'failed', attempts: 1 };
+    memory.version += 1;
+
+    await runBookingMaintenance(event);
+
+    const [, options] = mocks.send.mock.calls.at(-1);
+    expect(options.signal).toBeInstanceOf(AbortSignal);
+    expect(memory.value[b.id].notifications.ownerEmail.state).toBe('sent');
+  });
+
+  // The confirmation email a payment found by the job sends goes out from
+  // inside the payment check; it must keep to the job's deadline too.
+  it('keeps to its deadline when a payment it finds sends the confirmation', async () => {
+    const b = await approved();
+    paidSession(b);
+    const retrieve = mocks.retrieve.getMockImplementation();
+    mocks.retrieve.mockImplementationOnce(async (id) => {
+      // Stripe answers slowly: the job's time is up by the time it does.
+      vi.setSystemTime(Date.now() + 5000);
+      return retrieve(id);
+    });
+    const confirmations = () =>
+      mocks.send.mock.calls.filter(([payload]) => payload.subject.includes('finalized'));
+
+    const summary = await runBookingMaintenance(event, { budgetMs: 1000 });
+
+    expect(summary).toMatchObject({ checked: 1, failed: 0 });
+    expect(memory.value[b.id].status).toBe('paid');
+    expect(confirmations()).toHaveLength(0);
+    expect(memory.value[b.id].notifications.customerPaid.state).toBe('pending');
+
+    // The next run sends it, with the job's short provider timeout.
+    await runBookingMaintenance(event);
+    expect(confirmations()).toHaveLength(1);
+    expect(mocks.send.mock.calls.at(-1)[1].signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+describe('payments that need a person', () => {
+  it('flags a mismatched payment from the webhook and answers 200, not a retry', async () => {
+    const b = await approved();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.webhook.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: { object: { ...paidSession(b), amount_total: 100 } },
+    });
+
+    const response = await webhookHandler({
+      httpMethod: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: '{}',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(memory.value[b.id]).toMatchObject({
+      status: 'needs_review',
+      paymentReview: { amountTotal: 100, paymentIntentId: 'pi_test' },
+    });
+    // The time stays held while staff check Stripe.
+    await expect(requested({ requestId: randomUUID() })).rejects.toThrow('just reserved');
+  });
+
+  it('answers 200 for a payment on a booking that no longer exists', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.webhook.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_orphan',
+          status: 'complete',
+          payment_status: 'paid',
+          metadata: { kind: 'studio_booking', bookingId: `studio_${randomUUID()}` },
+        },
+      },
+    });
+
+    const response = await webhookHandler({
+      httpMethod: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: '{}',
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('lets staff keep a checked payment or release the time after a refund', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const token = createSession('staff');
+    const act = (id, action) =>
+      staffHandler({
+        httpMethod: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, action }),
+      });
+
+    const kept = await approved();
+    await applyBookingPayment(event, { ...paidSession(kept), amount_total: 100 });
+    expect((await act(kept.id, 'confirm')).statusCode).toBe(200);
+    expect(memory.value[kept.id]).toMatchObject({
+      status: 'paid',
+      paymentReview: { resolution: 'kept', resolvedBy: 'staff' },
+    });
+    expect(memory.value[kept.id].notifications.customerPaid.state).toBe('sent');
+
+    const released = await approved({ date: '2026-10-11' });
+    await applyBookingPayment(event, { ...paidSession(released), amount_total: 100 });
+    expect((await act(released.id, 'release')).statusCode).toBe(200);
+    expect(memory.value[released.id]).toMatchObject({
+      status: 'cancelled',
+      paymentReview: { resolution: 'released' },
+    });
+    expect(holdsTime(memory.value[released.id])).toBe(false);
+
+    // Only a booking under review can be resolved this way.
+    expect((await act(kept.id, 'release')).statusCode).toBe(409);
   });
 });

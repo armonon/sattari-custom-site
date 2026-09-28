@@ -2,17 +2,18 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+  # One path to production. GitHub Actions deploys the exact build that passed
+  # the release gate (.github/workflows/build-deploy.yml); a Netlify build of
+  # the same push would race it with an unqualified build. So Netlify skips
+  # production builds (exit 0 = skip) unless the site's environment sets
+  # NETLIFY_PRODUCTION_BUILDS=on, for owners who deploy from Netlify instead.
+  # Deploy previews and branch deploys always build. See docs/DEPLOYMENT.md.
+  ignore = '[ "$CONTEXT" = "production" ] && [ "$NETLIFY_PRODUCTION_BUILDS" != "on" ]'
 
-# Pin the Node version so Netlify matches the version CI builds and tests
-# against. Without this Netlify picks its build-image default, which can
-# change under us and produce builds that pass in CI but fail here.
+# Pin the Node major so Netlify matches the version CI builds, tests and
+# qualifies. Node 20 reached end of life on 2026-04-30; 22 is LTS into 2027.
 [build.environment]
-  NODE_VERSION = "20.19.0"
-
-[[redirects]]
-  from = "/api/staff/insights"
-  to = "/.netlify/functions/staff-insights"
-  status = 200
+  NODE_VERSION = "22"
 
 [[redirects]]
   from = "/buy"
@@ -49,90 +50,29 @@
   to = "/stem-separator"
   status = 301
 
-[[redirects]]
-  from = "/api/create-checkout-session"
-  to = "/.netlify/functions/create-checkout-session"
-  status = 200
+# No /api/* or /product-images/* rules on purpose. Every function is a v2
+# function that declares its own routes in `config.path` (and its schedule in
+# `config.schedule`). Netlify matches those before any redirect, so a rule here
+# would be dead and could drift from the real route. v2 is also what gives a
+# function the strongly consistent Blobs reads stock and bookings rely on;
+# see server/blobs.js.
 
-[[redirects]]
-  from = "/api/checkout-session-status"
-  to = "/.netlify/functions/checkout-session-status"
-  status = 200
-
-[[redirects]]
-  from = "/api/checkout-release"
-  to = "/.netlify/functions/checkout-release"
-  status = 200
-
-[[redirects]]
-  from = "/api/stripe-webhook"
-  to = "/.netlify/functions/stripe-webhook"
-  status = 200
-
-# Not here on purpose: /api/admin/orders, /api/service-inquiry,
-# /api/studio-bookings, /api/staff/login and /api/site-event. Those are v2
-# functions whose routes are declared in their own `config.path`, which Netlify
-# requires for a code-defined rate limit and matches before any redirect, so
-# a rule here would be dead and could drift from the real route.
-
-[[redirects]]
-  from = "/api/staff/bookings"
-  to = "/.netlify/functions/staff-bookings"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/inquiries"
-  to = "/.netlify/functions/staff-inquiries"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/logout"
-  to = "/.netlify/functions/staff-logout"
-  status = 200
-
-[[redirects]]
-  from = "/api/inventory"
-  to = "/.netlify/functions/inventory"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/stock"
-  to = "/.netlify/functions/staff-stock"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/catalog"
-  to = "/.netlify/functions/staff-catalog"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/orders"
-  to = "/.netlify/functions/staff-orders"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/backup"
-  to = "/.netlify/functions/staff-backup"
-  status = 200
-
-[[redirects]]
-  from = "/api/staff/image"
-  to = "/.netlify/functions/staff-image"
-  status = 200
-
-[[redirects]]
-  from = "/product-images/*"
-  to = "/.netlify/functions/product-image"
-  status = 200
-
-# Nightly snapshot of everything the shop cannot recover from elsewhere.
-# Scheduled functions run on published production deploys only, and cannot be
-# triggered over HTTP — the staff-facing download and restore are separate.
-[functions."nightly-backup"]
-  schedule = "0 9 * * *"
-
-[functions."studio-booking-maintenance"]
-  schedule = "*/5 * * * *"
+# Site-wide security headers. The full Content-Security-Policy ships in
+# report-only mode first: browsers log what it would block (DevTools console)
+# without blocking anything, so a missed third party cannot break checkout.
+# Once production shows no violations, rename the header to
+# Content-Security-Policy to enforce it (docs/DEPLOYMENT.md). Framing is
+# enforced now. The script hashes are the day/night theme script in index.html
+# and the staff page's script (every enforced policy applies to a page, so this
+# one must allow it too); tests/security-headers.test.js fails if they drift.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Content-Security-Policy = "frame-ancestors 'self'"
+    Permissions-Policy = "camera=(), geolocation=(), payment=(), usb=(), microphone=(self), midi=(self)"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'sha256-8EcVp8/rZS/V1u4IjoMzdQxQA8+pQuBvF5vSFQ1DlE0=' 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U=' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data: https://*.sentry.io https://huggingface.co https://*.huggingface.co https://*.hf.co; worker-src 'self' blob:; frame-src https://www.google.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; manifest-src 'self'"
 
 [[headers]]
   for = "/studio-booking"
@@ -151,6 +91,19 @@
     X-Robots-Tag = "noindex, nofollow"
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
+    # Enforced: the staff page is one self-contained file. Its inline script
+    # is allowed by hash (tests/security-headers.test.js keeps it current), and
+    # it can never be framed, so staff actions cannot be clickjacked.
+    Content-Security-Policy = "default-src 'self'; script-src 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"
+
+# Same page without the extension (Netlify's pretty URLs).
+[[headers]]
+  for = "/staff-cc6436694e"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Content-Security-Policy = "default-src 'self'; script-src 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"
 
 # Products added by staff after a build still need the live catalog lookup.
 [[redirects]]

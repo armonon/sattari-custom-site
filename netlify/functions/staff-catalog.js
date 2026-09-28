@@ -5,8 +5,15 @@ import {
   sanitizeOverride,
   slugify,
 } from '../../src/utils/catalogMerge.js';
+import { requestSiteRebuild } from '../../server/buildHook.js';
 import { readCatalogDoc, updateCatalogDoc } from '../../server/catalogStore.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { requireStaff } from '../../server/staffAuth.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/catalog', '/.netlify/functions/staff-catalog'],
+};
 
 function json(statusCode, body) {
   return {
@@ -73,7 +80,11 @@ function failure(error) {
     : json(503, { error: 'Could not reach the catalog. Reload and check before trying again.' });
 }
 
-export async function handler(event) {
+export default async function staffCatalog(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     return json(401, { error: 'Sign in to continue.' });
@@ -127,6 +138,7 @@ export async function handler(event) {
       }));
 
       console.log(JSON.stringify({ type: 'staff-catalog-edit', staff: session.staff, slug }));
+      await requestSiteRebuild(event, 'product edited');
       return json(200, { staff: session.staff, listings: buildListingRows(doc) });
     }
 
@@ -154,6 +166,7 @@ export async function handler(event) {
       console.log(
         JSON.stringify({ type: 'staff-catalog-add', staff: session.staff, slug: product.slug })
       );
+      await requestSiteRebuild(event, 'product added');
       return json(200, {
         staff: session.staff,
         listings: buildListingRows(doc),
@@ -165,16 +178,24 @@ export async function handler(event) {
       const slug = slugify(body.slug) === body.slug ? String(body.slug) : String(body.slug || '');
       if (!slug) return json(400, { error: 'Which product?' });
 
-      const { doc } = await updateCatalogDoc(event, (current) => {
+      const { doc, changed } = await updateCatalogDoc(event, (current) => {
         const hidden = new Set(current.hidden);
         // Hiding is a flag, never a delete. The product data survives so an
         // accidental removal is one click away from being undone.
         if (action === 'hide') hidden.add(slug);
         else hidden.delete(slug);
+        if (
+          hidden.size === current.hidden.length &&
+          current.hidden.every((item) => hidden.has(item))
+        ) {
+          return null;
+        }
         return { ...current, hidden: [...hidden] };
       });
 
       console.log(JSON.stringify({ type: `staff-catalog-${action}`, staff: session.staff, slug }));
+      if (changed)
+        await requestSiteRebuild(event, action === 'hide' ? 'product removed' : 'product restored');
       return json(200, { staff: session.staff, listings: buildListingRows(doc) });
     }
 

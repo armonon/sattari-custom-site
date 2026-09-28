@@ -74,6 +74,34 @@ html[data-theme='night'] .resource-label {
   max-width: 790px;
   margin: 0 0 24px;
 }
+.resource-page .resource-byline {
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+.resource-contents {
+  max-width: 760px;
+  margin: 32px 0;
+  padding: 24px 0;
+  border-block: 1px solid var(--resource-line);
+}
+.resource-contents h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.resource-contents ol {
+  margin: 0;
+}
+.resource-contents li {
+  margin-bottom: 4px;
+}
+.resource-contents a {
+  display: inline-block;
+  padding: 6px 0;
+  text-underline-offset: 4px;
+}
+.resource-section[id] {
+  scroll-margin-top: 180px;
+}
 .resource-action,
 .resource-link {
   display: inline-flex;
@@ -124,6 +152,24 @@ html[data-theme='night'] .resource-label {
 }
 .resource-section p {
   margin: 0 0 16px;
+}
+.resource-questions details {
+  border-bottom: 1px solid var(--resource-line);
+  padding: 18px 0;
+}
+.resource-questions summary {
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.resource-questions summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+.resource-questions details p {
+  max-width: 760px;
+  margin: 16px 0 0;
 }
 .resource-page ol {
   padding-left: 24px;

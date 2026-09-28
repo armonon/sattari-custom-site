@@ -1,5 +1,6 @@
 import { connectLambda, getStore } from '@netlify/blobs';
 import { localDate } from '../src/utils/studioBooking.js';
+import { pauseBeforeRetry, writeIfUnchanged } from './blobs.js';
 import { blobsEvent } from './functionAdapter.js';
 
 export const BOOKING_STORE = 'studio-bookings';
@@ -11,15 +12,17 @@ const KEY = 'calendar-v1';
 // nothing rewrites.
 export const ARCHIVE_PREFIX = 'archive/';
 export const ARCHIVE_AFTER_DAYS = 30;
-// 'approving' and 'awaiting_payment' may still have money moving at Stripe, so
-// they stay in the live calendar until reconciliation settles them.
+// 'approving' and 'awaiting_payment' may still have money moving at Stripe, and
+// 'needs_review' is waiting on staff, so they stay in the live calendar.
 const SETTLED_STATUSES = new Set(['requested', 'declined', 'cancelled', 'expired', 'paid']);
 
 function store(event) {
   const lambda = blobsEvent(event);
   if (lambda) connectLambda(lambda);
   // Fail closed if strong reads are unavailable. Reservations cannot use the
-  // eventual-consistency fallback used by the general-purpose shop store.
+  // eventual-consistency fallback used by the general-purpose shop store. The
+  // runtime only provides strong reads to v2 functions, which is why every
+  // function that reaches this store is one.
   return getStore({ name: BOOKING_STORE, consistency: 'strong' });
 }
 
@@ -31,31 +34,36 @@ export async function readBookings(event) {
   return (await store(event).get(KEY, { type: 'json', consistency: 'strong' })) || {};
 }
 
-export async function updateBookings(event, mutate) {
+export async function updateBookings(event, mutate, { attempts = 8 } = {}) {
   const blob = store(event);
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await blob.getWithMetadata(KEY, { type: 'json', consistency: 'strong' });
     const doc = current?.data || {};
     const next = mutate(doc);
     if (!next) return doc;
-    const result = await blob.setJSON(
-      KEY,
-      next,
-      current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }
-    );
-    if (result?.modified === true) return next;
-    if (result?.modified !== false)
-      throw new Error('Booking storage does not support conditional writes.');
+    if (await writeIfUnchanged(blob, KEY, next, current)) return next;
+    if (attempt + 1 < attempts) await pauseBeforeRetry(attempt);
   }
   throw storeError('Bookings are being updated. Please try again.', 409);
 }
 
+function sameValue(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+// `update` returns the fields to change. When none of them differ from what is
+// stored, nothing is written: every write rewrites the whole calendar, and
+// most calls (a delivery check, a payment lookup) find nothing to change.
 export async function patchBooking(event, id, update) {
   const doc = await updateBookings(event, (records) => {
     if (!records[id]) throw storeError('Booking not found.', 404);
+    const changes = update(records[id]) || {};
+    if (Object.entries(changes).every(([field, value]) => sameValue(records[id][field], value))) {
+      return null;
+    }
     return {
       ...records,
-      [id]: { ...records[id], ...update(records[id]), updatedAt: new Date().toISOString() },
+      [id]: { ...records[id], ...changes, updatedAt: new Date().toISOString() },
     };
   });
   return doc[id];

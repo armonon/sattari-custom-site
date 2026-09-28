@@ -1,4 +1,4 @@
-import { Blob as NodeBlob } from 'node:buffer';
+import { Blob as NodeBlob, Buffer } from 'node:buffer';
 import { webcrypto } from 'node:crypto';
 import { afterEach, it, expect, vi } from 'vitest';
 import { getAudioAsset } from './audioProjectStore';
@@ -46,4 +46,22 @@ it('rejects truncated and corrupted archives before importing any assets', async
 it('still reads older JSON projects', async () => {
   const project = { schema: 'SattariStudio.project.v5', decks: [], assets: [] };
   expect(await readProjectArchive(new NodeBlob([JSON.stringify(project)]))).toEqual(project);
+});
+it('still saves a backup when there is no temporary disk space, without copying audio', async () => {
+  vi.stubGlobal('crypto', webcrypto);
+  vi.stubGlobal('Blob', NodeBlob);
+  createExportSink.mockRejectedValue(new Error('Not enough browser disk space for this export.'));
+  const audio = new NodeBlob([new Uint8Array(2 * 1024 * 1024 + 3).fill(7)]);
+  getAudioAsset.mockResolvedValue({ id: 'source', name: 'take.wav', blob: audio });
+  const progress = vi.fn();
+  const file = await writeProjectArchive(
+    { decks: [], sessionName: 'Full disk' },
+    ['source'],
+    progress
+  );
+  expect(progress).toHaveBeenCalledWith('Saving audio 1 / 1');
+  const read = await readProjectArchive(file);
+  expect(read.sessionName).toBe('Full disk');
+  const restored = Buffer.from(await read.assets[0].blob.arrayBuffer());
+  expect(restored.equals(Buffer.from(await audio.arrayBuffer()))).toBe(true);
 });

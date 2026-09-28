@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import AudioAlphaSignup from '@components/AudioAlphaSignup';
 import OptimizedProductImage from '@components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
+import { businessSchema } from '../data/siteSeo';
 
 /**
  * Sattari Audio Suite — the whole thing on one tab: what it is, the product
@@ -203,20 +204,29 @@ export default function DownloadsPage() {
         description="Download the Sattari Audio Suite alpha for macOS: Mix, Vocal, Create and Stack racks, Auto Pitch and Compass. Free alpha builds with SHA-256 checksums."
         url={url}
         image="/sattari site/audio-suite/mix.png"
+        imageWidth={1080}
+        imageHeight={660}
       />
+      {/* A page about the suite rather than SoftwareApplication markup: Google
+          only accepts app markup with ratings or reviews, and an alpha has
+          none (they must never be made up), so the app item was invalid. */}
       <StructuredData
         data={{
           '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          name: 'Sattari Audio Suite',
-          applicationCategory: 'MultimediaApplication',
-          operatingSystem: 'macOS',
-          softwareVersion: '0.1.0-alpha',
-          description:
-            'Connected Mac music products sharing one musical session context. Audio Unit, VST3 and standalone.',
+          '@type': 'WebPage',
+          '@id': `${url}#webpage`,
           url,
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-          author: { '@type': 'Organization', name: 'Sattari Music' },
+          name: 'Sattari Audio Suite — Alpha Downloads for Mac',
+          description:
+            'Free alpha builds of the Sattari Audio Suite for macOS, with SHA-256 checksums.',
+          isAccessibleForFree: true,
+          about: {
+            '@type': 'Thing',
+            name: 'Sattari Audio Suite',
+            description:
+              'Connected Mac music products sharing one musical session context. Audio Unit, VST3 and standalone; alpha 0.1.0 for macOS.',
+          },
+          publisher: { '@id': businessSchema['@id'] },
         }}
       />
 
@@ -253,7 +263,7 @@ export default function DownloadsPage() {
             alt="The Sattari Mix rack, showing an eight-slot signal chain with EQ controls"
             className="suite-shot-img"
             loading="eager"
-            fetchPriority="high"
+            fetchpriority="high"
             sizes="(max-width: 900px) 100vw, 50vw"
           />
         </div>

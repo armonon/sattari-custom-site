@@ -44,6 +44,20 @@ import './ArrangementWorkspace.css';
 
 const WELCOME = 'Import audio, add an instrument, or copy deck audio into independent tracks.';
 const NO_RECORDINGS = [];
+// Track fields the playing engine applies in place (updateMix). Editing them
+// must not reschedule: for streamed arrangements a reschedule restarts playback.
+const MIX_FIELDS = new Set([
+  'gain',
+  'pan',
+  'muted',
+  'solo',
+  'sends',
+  'name',
+  'color',
+  'stemRole',
+  'offline',
+]);
+const mixOnlyUpdate = (updates) => Object.keys(updates).every((key) => MIX_FIELDS.has(key));
 
 function ArrangementEditor(
   {
@@ -142,7 +156,7 @@ function ArrangementEditor(
     const next = typeof change === 'function' ? change(current.current) : change;
     return history.commit(next, sliderGesture.current ? { ...options, live: true } : options);
   };
-  const changeTrack = (id, updates, mixOnly = false) =>
+  const changeTrack = (id, updates, mixOnly = mixOnlyUpdate(updates)) =>
     edit((next) => edits.updateTrack(next, id, updates), { mix: true, mixOnly });
   const changeClip = (updates) =>
     edit((next) =>
@@ -390,8 +404,14 @@ function ArrangementEditor(
     },
     beginSliderGesture: (event) => beginSliderTransaction(event, history, sliderGesture),
     keyDown: (event) => handleEditorKey(event, actions, zoom),
-    updateTrack: (id, updates, options) =>
-      edit((next) => edits.updateTrack(next, id, updates), { live: options?.live === true }),
+    updateTrack: (id, updates, options) => {
+      const mixOnly = mixOnlyUpdate(updates);
+      return edit((next) => edits.updateTrack(next, id, updates), {
+        live: options?.live === true,
+        mix: mixOnly,
+        mixOnly,
+      });
+    },
     openExport: () => {
       setMobileTools(true);
       exportTools.current?.scrollIntoView?.({ block: 'nearest' });
@@ -410,6 +430,7 @@ function ArrangementEditor(
       if (id) void operations.relinkFile(file, id);
     },
     reset: () => {
+      operations.cancelReplay();
       playback.rewind();
       history.reset();
       setSelection(null);
@@ -426,6 +447,12 @@ function ArrangementEditor(
       commitLiveEdit: () => history.end(),
       // Unlike editor edits, the page's edits are never gated: a take must not be dropped.
       applyEdit: (updater) => history.commit(updater(history.project)),
+      // Display data computed after an edit (a take's waveform): no undo step
+      // of its own, and nothing to reschedule.
+      amendDisplay: (updater) => {
+        const next = updater(history.project);
+        return next === history.project || history.replace(next, false, false);
+      },
       openPerformance: actions.openPerformance,
       openExport: actions.openExport,
       openDevices: actions.openDevices,

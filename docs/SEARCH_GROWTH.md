@@ -1,6 +1,80 @@
 # Search and AI Discovery
 
-## Delivered in This Change
+## Current Audit: September 28, 2026
+
+Local changes are not published yet. The owner confirmed in this task that Google
+Search Console is verified; Bing Webmaster Tools is not yet verified. This updates
+the historical September 23 verification status below. We have not inspected the
+current Search Console reports or submitted another sitemap in this task.
+
+Onsite improvements:
+
+- Eight answer-first guides, including karaoke vocal removal, drumless practice,
+  song key/BPM analysis and batch separation. Tool claims match the implemented
+  file, memory, model and analysis limits. No perfect-isolation claims.
+- Visible Sattari Music publisher attribution, section permalinks, three-level
+  guide breadcrumbs and matching Article metadata. No invented expert reviewer,
+  rating or automatically refreshed publication date.
+- One shared MusicStore and WebSite identity on every rendered page. Tool and
+  article metadata link back to those identities; no fictional city storefronts.
+- All eight guides have distinct, allowlisted reporting buckets. About and the
+  new local drum/violin pages are also covered. Consent, GPC/DNT, coarse source
+  labels and private-page exclusions are preserved; no extra personal data.
+- The build's SEO checks now enforce the site identities, visible guide publisher
+  and working section links, and run after prerendering in the automated release
+  gate. Crawl-policy tests protect public search access and
+  keep private APIs excluded without changing the training-bot policy.
+
+Read-only production probes returned 200 for robots, sitemap, home, separator and
+separator reference pages using normal, Googlebot, bingbot and OAI-SearchBot user
+agents. HTML content, canonicals and snippet/indexing eligibility are checked by
+`scripts/audit-search-access.mjs`. User-agent probes are not real crawler-IP tests
+and do not establish indexing or inclusion in generated answers. Live production
+still has the previous Stem Separator metadata until the local changes are deployed.
+
+Remaining account work:
+
+1. In the verified Google Search Console property, check sitemap status, indexing
+   and selected canonical URLs. Submit the live sitemap after publishing updates;
+   it should contain 74 canonical URLs for the currently built catalog.
+2. Add/verify Sattari in Bing Webmaster Tools, using the verified Google property
+   import or Bing's ownership flow. Submit the sitemap and review crawl/indexing
+   health, then AI Performance when data is available. Import requires the owner's
+   account authorization; no credentials or ownership tokens were invented.
+3. Have the current Google Business Profile owner confirm the real shop hours and
+   services. Studio hours must not become the shop's opening-hours claim.
+4. Check hosting firewall logs/settings for actual crawler-IP access without
+   disabling general security protections. CLI publishing access alone does not
+   establish this dashboard check.
+
+Measure 28-day trends in indexed pages, relevant queries, inquiries and successful
+tool actions. Identifiable AI referrals are only a subset of traffic; suppressed
+referrers and zero-click citations are not measured by the site's opt-in collector.
+Google AI traffic cannot be reliably separated from ordinary Google referrals here.
+Bing's AI Performance report supplements this with citation data; it is not a
+visitor-level conversion report. No ranking or citation guarantee is implied.
+
+No special AI schema or `llms.txt` file is required by Google's current guidance.
+Continue publishing useful, product-specific evidence: real tool demonstrations,
+honest limitations and owner-approved service details. Do not mass-produce city
+or question pages, hide crawler-only copy, or add instructions aimed at AI bots.
+
+```sh
+npm run build
+npm run test:seo
+npx vitest run tests/search-access.test.js src/utils/seo.test.jsx src/pages/StemSeparatorSeo.test.jsx src/utils/siteMetrics.test.js src/utils/siteMeasurement.test.js tests/netlify-functions/site-metrics.test.js
+SEARCH_AUDIT_REPORT=/tmp/sattari-search-access.json node scripts/audit-search-access.mjs
+SEO_URL=http://127.0.0.1:4199 node scripts/qualify-stem-separator-seo.mjs
+```
+
+Current primary guidance:
+
+- [Google: optimizing for generative AI search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)
+- [OpenAI: search crawlers and independent training controls](https://developers.openai.com/api/docs/bots)
+- [Bing: webmaster guidelines](https://www.bing.com/webmasters/help/webmaster-guidelines-30fba23a)
+- [Bing: AI Performance](https://www.bing.com/webmasters/help/ai-performance-9f8e7d6c)
+
+## Initial Rollout: September 23, 2026
 
 - `/guides`: a linked index with four substantial, answer-first articles.
 - `/guides/how-to-separate-vocals-drums-bass`

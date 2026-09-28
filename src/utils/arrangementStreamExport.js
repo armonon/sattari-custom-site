@@ -68,50 +68,60 @@ export function pcm24(channels, crc = 0xffffffff) {
   return { bytes, crc: updateCrc(crc, bytes) };
 }
 
-export async function createExportSink(expectedBytes, extension = 'wav') {
-  if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0)
-    throw new Error('Invalid export size.');
-  if (globalThis.navigator?.storage?.getDirectory) {
-    const estimate = await navigator.storage.estimate?.();
-    if (
-      Number.isFinite(estimate?.quota) &&
-      estimate.quota - (estimate.usage || 0) < expectedBytes * 1.1 + 16 * 1024 * 1024
-    )
-      throw new Error(
-        'Not enough browser disk space for this export. Download and clear older export files, free disk space, or export a shorter range.'
-      );
-    const root = await navigator.storage.getDirectory();
-    const directory = await root.getDirectoryHandle(DIRECTORY, { create: true });
-    const name = `export-${Date.now()}-${crypto.randomUUID()}.${extension}`;
-    const handle = await directory.getFileHandle(name, { create: true });
-    let writer;
+const exportWorker = () =>
+  new Worker(new URL('./exportSink.worker.js', import.meta.url), { type: 'module' });
+
+// A writable-stream-shaped writer backed by the export worker. Each write waits
+// for the worker, so at most one section is in flight.
+async function workerWriter(directory, name, createWorker) {
+  const worker = createWorker();
+  const pending = new Map();
+  let next = 0,
+    failure = null;
+  const fail = (error) => {
+    failure ||= error;
+    for (const { reject } of pending.values()) reject(failure);
+    pending.clear();
+  };
+  worker.onmessage = ({ data }) => {
+    const request = pending.get(data.id);
+    pending.delete(data.id);
+    if (data.ok) request?.resolve();
+    else request?.reject(Object.assign(new Error(data.message), { name: data.name || 'Error' }));
+  };
+  worker.onerror = (event) => {
+    event.preventDefault?.();
+    fail(new Error(event.message || 'The export writer stopped.'));
+  };
+  const call = (type, extra = {}) =>
+    failure
+      ? Promise.reject(failure)
+      : new Promise((resolve, reject) => {
+          const id = ++next;
+          pending.set(id, { resolve, reject });
+          worker.postMessage({ id, type, ...extra });
+        });
+  const finish = async (type) => {
     try {
-      writer = await handle.createWritable();
-    } catch (error) {
-      await directory.removeEntry(name);
-      throw error;
+      await call(type);
+    } finally {
+      worker.terminate();
     }
-    let written = 0,
-      finished = false;
-    return {
-      async write(bytes) {
-        await writer.write(bytes);
-        written += bytes.byteLength;
-      },
-      async finish() {
-        await writer.close();
-        finished = true;
-        const file = await handle.getFile();
-        if (file.size !== written) throw new Error('Export file did not finish writing.');
-        cleanup.set(file, () => directory.removeEntry(name));
-        return file;
-      },
-      async abort() {
-        if (!finished) await writer.abort().catch(() => {});
-        await directory.removeEntry(name).catch(() => {});
-      },
-    };
+  };
+  try {
+    await call('open', { directory, name });
+  } catch (error) {
+    worker.terminate();
+    throw error;
   }
+  return {
+    write: (bytes) => call('write', { bytes }),
+    close: () => finish('close'),
+    abort: () => finish('abort'),
+  };
+}
+
+function memorySink(expectedBytes, extension) {
   if (expectedBytes > MEMORY_FALLBACK)
     throw new Error(
       'This browser cannot write long exports to temporary disk. Use a current browser with private file-system support or export a shorter range.'
@@ -134,6 +144,79 @@ export async function createExportSink(expectedBytes, extension = 'wav') {
       parts.length = 0;
     },
   };
+}
+
+async function openDiskFile(extension, createWorker) {
+  const root = await navigator.storage.getDirectory();
+  const directory = await root.getDirectoryHandle(DIRECTORY, { create: true });
+  const name = `export-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  const handle = await directory.getFileHandle(name, { create: true });
+  try {
+    const writer =
+      typeof handle.createWritable === 'function'
+        ? await handle.createWritable()
+        : typeof Worker === 'function'
+          ? await workerWriter(DIRECTORY, name, createWorker)
+          : null;
+    if (!writer) throw new Error('No temporary-disk writer is available.');
+    return { directory, name, handle, writer };
+  } catch (error) {
+    await directory.removeEntry(name).catch(() => {});
+    throw error;
+  }
+}
+
+export async function createExportSink(
+  expectedBytes,
+  extension = 'wav',
+  { createWorker = exportWorker } = {}
+) {
+  if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0)
+    throw new Error('Invalid export size.');
+  if (globalThis.navigator?.storage?.getDirectory) {
+    const estimate = await navigator.storage.estimate?.();
+    if (
+      Number.isFinite(estimate?.quota) &&
+      estimate.quota - (estimate.usage || 0) < expectedBytes * 1.1 + 16 * 1024 * 1024
+    )
+      throw new Error(
+        'Not enough browser disk space for this export. Download and clear older export files, free disk space, or export a shorter range.'
+      );
+    let disk;
+    try {
+      disk = await openDiskFile(extension, createWorker);
+    } catch (error) {
+      // Private windows and older browsers may refuse temporary disk access;
+      // short exports still work in memory.
+      if (expectedBytes <= MEMORY_FALLBACK) return memorySink(expectedBytes, extension);
+      throw new Error(
+        'This browser refused temporary disk space for the export (private windows often do). Use a regular window or export a shorter range.',
+        { cause: error }
+      );
+    }
+    const { directory, name, handle, writer } = disk;
+    let written = 0,
+      finished = false;
+    return {
+      async write(bytes) {
+        await writer.write(bytes);
+        written += bytes.byteLength;
+      },
+      async finish() {
+        await writer.close();
+        finished = true;
+        const file = await handle.getFile();
+        if (file.size !== written) throw new Error('Export file did not finish writing.');
+        cleanup.set(file, () => directory.removeEntry(name));
+        return file;
+      },
+      async abort() {
+        if (!finished) await writer.abort().catch(() => {});
+        await directory.removeEntry(name).catch(() => {});
+      },
+    };
+  }
+  return memorySink(expectedBytes, extension);
 }
 export async function clearExportFile(file) {
   await cleanup.get(file)?.();

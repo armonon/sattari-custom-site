@@ -55,7 +55,10 @@ function emailMessage(booking, key, config) {
   return { to: booking.email, ...messages[key]() };
 }
 
-async function send(booking, key) {
+// Provider calls give up after `timeoutMs`. A call that timed out may still
+// have gone through: the email is retried under the same idempotency key, so
+// it is not sent twice; a text can be (see docs/STUDIO_BOOKINGS.md).
+async function send(booking, key, timeoutMs) {
   const config = bookingConfig();
   if (key.startsWith('ownerSms')) {
     const to = config.smsTo[Number(key.slice('ownerSms'.length))];
@@ -80,7 +83,7 @@ async function send(booking, key) {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: body.toString(),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(timeoutMs),
       }
     );
     const result = await response.json();
@@ -94,17 +97,26 @@ async function send(booking, key) {
       from: config.emailFrom,
       ...emailMessage(booking, key, config),
     },
-    { idempotencyKey: `studio-${booking.id}-${key}` }
+    { idempotencyKey: `studio-${booking.id}-${key}`, signal: AbortSignal.timeout(timeoutMs) }
   );
   if (response.error || !response.data?.id)
     throw new Error('Email provider rejected the booking message.');
   return { providerId: response.data.id, providerStatus: 'accepted' };
 }
 
-export async function deliverBookingNotifications(event, id) {
+// `deadline` stops the loop before a new send starts, so a scheduled run that
+// is out of time leaves the rest for the next run instead of being cut off
+// mid-send. Every claimed send holds a lease, so a run that is cut off anyway
+// is retried once the lease lapses.
+export async function deliverBookingNotifications(
+  event,
+  id,
+  { deadline = Infinity, timeoutMs = 10000 } = {}
+) {
   let booking = (await readBookings(event))[id];
   if (!booking) return;
   for (const key of Object.keys(booking.notifications || {})) {
+    if (Date.now() > deadline) break;
     const lease = crypto.randomUUID();
     const now = Date.now();
     booking = await patchBooking(event, id, (current) => {
@@ -140,7 +152,11 @@ export async function deliverBookingNotifications(event, id) {
     if (booking.notifications[key].lease !== lease) continue;
     let result;
     try {
-      result = { state: 'sent', sentAt: new Date().toISOString(), ...(await send(booking, key)) };
+      result = {
+        state: 'sent',
+        sentAt: new Date().toISOString(),
+        ...(await send(booking, key, timeoutMs)),
+      };
     } catch {
       result = {
         state: 'failed',

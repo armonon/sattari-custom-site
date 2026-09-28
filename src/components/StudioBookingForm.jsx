@@ -35,7 +35,14 @@ export default function StudioBookingForm({
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState(null);
   const [error, setError] = useState('');
+  // Today's date comes from the browser after mount: the prerendered page was
+  // built on another day, and hydration keeps whatever the HTML says.
+  const [today, setToday] = useState(null);
   const requestId = useRef(null);
+
+  useEffect(() => {
+    setToday(Date.now());
+  }, []);
 
   useEffect(() => {
     setForm((current) => ({ ...current, purpose: initialPurpose }));
@@ -203,8 +210,8 @@ export default function StudioBookingForm({
               type="date"
               name="date"
               value={form.date}
-              min={localDate()}
-              max={localDate(Date.now() + 90 * 86400000)}
+              min={today ? localDate(today) : undefined}
+              max={today ? localDate(today + 90 * 86400000) : undefined}
               onChange={change}
             />
           </label>

@@ -11,7 +11,7 @@ import {
   releaseHold,
   updateHold,
 } from '../src/utils/inventory.js';
-import { openStore } from './blobs.js';
+import { openStore, pauseBeforeRetry, writeIfUnchanged } from './blobs.js';
 
 // Strong consistency rather than the eventual default. A stale read here is
 // precisely how you sell the last item twice.
@@ -68,15 +68,13 @@ export async function updateInventory(event, mutate, { attempts = 5 } = {}) {
       stock: next.stock,
       holds: pruneHolds(next.holds, Date.now()),
     });
-    const result = current?.etag
-      ? await store.setJSON(STOCK_BLOB_KEY, body, { onlyIfMatch: current.etag })
-      : await store.setJSON(STOCK_BLOB_KEY, body, { onlyIfNew: true });
 
-    // `modified: false` means another writer got there first. Re-read and
-    // reapply the change against their result instead of overwriting it.
-    if (result?.modified !== false) {
+    // Losing means another writer got there first. Re-read and reapply the
+    // change against their result instead of overwriting it.
+    if (await writeIfUnchanged(store, STOCK_BLOB_KEY, body, current)) {
       return { doc: next, changed: true };
     }
+    if (attempt + 1 < attempts) await pauseBeforeRetry(attempt);
   }
 
   throw Object.assign(new Error('Stock is being updated by someone else. Try again.'), {
@@ -106,8 +104,14 @@ export async function updateStock(event, mutate, options) {
 // units straight to this checkout instead of putting them back on sale first.
 // It is released even when the new reservation falls short: nothing can be
 // paid against it any more.
-export async function reserveStock(event, { holdId, lines, expiresAt, extra, replaces = null }) {
-  let outcome = { held: false, shortfalls: [] };
+//
+// `owner` and `budget` cap what one address holds at once (see HOLD_BUDGET);
+// `overBudget` reports a refusal for that reason.
+export async function reserveStock(
+  event,
+  { holdId, lines, expiresAt, extra, replaces = null, owner = null, budget = null }
+) {
+  let outcome = { held: false, shortfalls: [], overBudget: false };
 
   await updateInventory(event, (doc) => {
     const released = replaces ? releaseHold(doc, replaces, { states: ['active'] }) : null;
@@ -117,8 +121,14 @@ export async function reserveStock(event, { holdId, lines, expiresAt, extra, rep
       now: Date.now(),
       expiresAt,
       extra,
+      owner,
+      budget,
     });
-    outcome = { held: placed.held, shortfalls: placed.shortfalls };
+    outcome = {
+      held: placed.held,
+      shortfalls: placed.shortfalls,
+      overBudget: Boolean(placed.overBudget),
+    };
     return placed.doc || released;
   });
 

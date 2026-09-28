@@ -1,56 +1,30 @@
-import {
-  archivePastBookings,
-  patchBooking,
-  readBookings,
-} from '../../server/studioBookingStore.js';
-import { reconcileBooking } from '../../server/studioBookings.js';
-import { deliverBookingNotifications } from '../../server/studioBookingNotifications.js';
+import { runBookingMaintenance } from '../../server/studioBookingMaintenance.js';
 
-export async function handler(event) {
-  let bookings;
+// Every five minutes on published production deploys: checks unfinished
+// payment links with Stripe, retries notifications that failed, and archives
+// old bookings. A v2 scheduled function, so it gets the strong Blobs reads the
+// booking store requires; the Lambda-style version could not read it at all.
+export const config = { schedule: '*/5 * * * *' };
+
+export default async function studioBookingMaintenance() {
+  const startedAt = Date.now();
+  let summary;
   try {
-    bookings = Object.values(await readBookings(event));
+    summary = await runBookingMaintenance(undefined);
   } catch (error) {
+    // The calendar could not be read; nothing was changed.
     console.error(
       JSON.stringify({ type: 'studio-booking-maintenance-read-failed', message: error?.message })
     );
-    return { statusCode: 503 };
+    throw error;
   }
-  const candidates = bookings
-    .filter(
-      (booking) =>
-        ['approving', 'awaiting_payment'].includes(booking.status) ||
-        Object.values(booking.notifications || {}).some(
-          (n) =>
-            !['sent', 'skipped'].includes(n.state) &&
-            n.attempts < 8 &&
-            !(n.nextAttemptAt > Date.now())
-        )
-    )
-    .sort((a, b) => (a.lastMaintenanceAt || 0) - (b.lastMaintenanceAt || 0));
-  const deadline = Date.now() + 40000;
-  for (const booking of candidates.slice(0, 10)) {
-    if (Date.now() > deadline) break;
-    try {
-      await patchBooking(event, booking.id, () => ({ lastMaintenanceAt: Date.now() }));
-      if (['approving', 'awaiting_payment'].includes(booking.status))
-        await reconcileBooking(event, booking.id);
-      await deliverBookingNotifications(event, booking.id);
-    } catch {
-      console.error(
-        JSON.stringify({ type: 'studio-booking-maintenance-failed', bookingId: booking.id })
-      );
-    }
+  if (summary.checked || summary.archived || summary.deferred) {
+    console.log(
+      JSON.stringify({
+        type: 'studio-booking-maintenance',
+        ...summary,
+        ms: Date.now() - startedAt,
+      })
+    );
   }
-  if (Date.now() < deadline) {
-    try {
-      const archived = await archivePastBookings(event);
-      if (archived) console.log(JSON.stringify({ type: 'studio-booking-archived', archived }));
-    } catch (error) {
-      console.error(
-        JSON.stringify({ type: 'studio-booking-archive-failed', message: error?.message })
-      );
-    }
-  }
-  return { statusCode: 200 };
 }

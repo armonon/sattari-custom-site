@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { repairArrangement } from '../../utils/arrangementModel';
 
 /**
  * Stable callbacks between the page and the always-mounted arrangement editor.
@@ -39,12 +40,23 @@ export function useArrangerBridge({ arrangerRef, actions, activity, showArranger
    * editor reports applied edits synchronously through onChange; if it
    * declines (busy, not ready, invalid result), the change is applied directly
    * so a recording is never dropped, at the cost of that edit's undo step.
+   * That direct path is repaired first: parts that are still invalid are set
+   * aside rather than saved, so they can never make the session unopenable.
    */
   const applyEdit = useCallback(
     (updater) => {
       const before = editorChanges.current;
       arrangerRef.current?.applyEdit?.(updater);
-      if (editorChanges.current === before) setArranger(updater);
+      if (editorChanges.current === before)
+        setArranger((project) => repairArrangement(updater(project)));
+    },
+    [arrangerRef, setArranger]
+  );
+
+  /** Display-only updates (a take's waveform drawn after it was saved): no undo step. */
+  const amendDisplay = useCallback(
+    (updater) => {
+      if (!arrangerRef.current?.amendDisplay?.(updater)) setArranger(updater);
     },
     [arrangerRef, setArranger]
   );
@@ -73,6 +85,7 @@ export function useArrangerBridge({ arrangerRef, actions, activity, showArranger
     onBusy,
     onPlaying,
     applyEdit,
+    amendDisplay,
     updateTrack,
     commitLiveEdit,
     importToArranger,

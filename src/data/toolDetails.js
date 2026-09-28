@@ -54,7 +54,14 @@ export const toolDetails = {
       'Add it to Stem Separator and choose Bass and Drums, or all four stems.',
       'Run separation and compare the returned parts with the original. This synthetic sample tests the workflow, not vocal-isolation quality.',
     ],
-    guides: ['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'],
+    guides: [
+      'how-to-separate-vocals-drums-bass',
+      'remove-vocals-for-karaoke',
+      'make-drumless-practice-tracks',
+      'find-song-key-and-bpm',
+      'batch-separate-audio-stems',
+      'practice-bass-with-isolated-stems',
+    ],
   },
   studio: {
     key: 'studio',

@@ -11,23 +11,12 @@ export default function AboutPage() {
       <StructuredData
         data={{
           '@context': 'https://schema.org',
-          '@graph': [
-            {
-              '@type': 'WebSite',
-              '@id': `${SITE_ORIGIN}/#website`,
-              name: 'Sattari Music',
-              url: `${SITE_ORIGIN}/`,
-              publisher: { '@id': `${SITE_ORIGIN}/#business` },
-            },
-            {
-              '@type': 'AboutPage',
-              '@id': `${PAGE_SEO.about.url}#page`,
-              name: 'About Sattari Music',
-              url: PAGE_SEO.about.url,
-              about: { '@id': `${SITE_ORIGIN}/#business` },
-              isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
-            },
-          ],
+          '@type': 'AboutPage',
+          '@id': `${PAGE_SEO.about.url}#page`,
+          name: 'About Sattari Music',
+          url: PAGE_SEO.about.url,
+          about: { '@id': `${SITE_ORIGIN}/#business` },
+          isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
         }}
       />
       <section className="hero-section hero-shell">

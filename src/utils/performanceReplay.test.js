@@ -135,9 +135,11 @@ it('validates retained original event history and capture bounds when reopening'
   take.originalEvents = structuredClone(take.events);
   const project = { ...emptyArrangement(), captures: [take] };
   expect(() => validateArrangement(project)).not.toThrow();
-  take.originalEvents[0].time = -1;
+  // Edits replace event lists (undo and the validation cache rely on it).
+  const original = take.originalEvents;
+  take.originalEvents = [{ ...original[0], time: -1 }, ...original.slice(1)];
   expect(() => validateArrangement(project)).toThrow();
-  take.originalEvents[0].time = 0;
+  take.originalEvents = original;
   take.duration = Infinity;
   expect(() => validateArrangement(project)).toThrow();
 });

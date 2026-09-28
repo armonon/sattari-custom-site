@@ -130,3 +130,21 @@ it('does not start checkout while items in the cart cannot be priced yet', async
     ['pirouz-series-cymbals', 'frame-drum']
   );
 });
+
+it('keeps the line while its quantity box is cleared to type a new number', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse(INVENTORY))
+  );
+
+  renderDrawer();
+  const input = await screen.findByRole('spinbutton', {
+    name: 'Quantity for Pirouz Series Cymbals',
+  });
+
+  fireEvent.change(input, { target: { value: '' } });
+  expect(screen.getByRole('link', { name: 'Pirouz Series Cymbals' })).toBeInTheDocument();
+
+  fireEvent.change(input, { target: { value: '3' } });
+  expect(screen.getByText('Subtotal').parentElement).toHaveTextContent('Subtotal$240.00');
+});

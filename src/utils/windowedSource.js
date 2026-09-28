@@ -2,6 +2,7 @@ import { decodeSourceWindow } from './arrangementSourceWindow';
 import { mp3Gapless } from './mp3Gapless';
 import { wavBytes } from './arrangementExport';
 import { describeAiff } from './aiffWindow';
+import { decodedSongDuration } from './compressedAudioWindow';
 
 export async function describeAudioSource(blob) {
   const aiff = await describeAiff(blob);
@@ -255,5 +256,24 @@ export class SourceWindowPool {
     this.controller.abort();
     this.pages.clear();
     this.bytes = 0;
+  }
+}
+
+/**
+ * A source's length: from its container where this browser can read it, else
+ * from one bounded decode that later windows with the same cacheKey reuse.
+ */
+export async function sourceDuration(
+  raw,
+  blob,
+  cacheKey,
+  { describe = describeAudioSource, decodeWhole = decodedSongDuration } = {}
+) {
+  try {
+    return (await describe(blob)).duration;
+  } catch (error) {
+    const duration = await decodeWhole(raw, blob, cacheKey).catch(() => null);
+    if (duration > 0) return duration;
+    throw error;
   }
 }

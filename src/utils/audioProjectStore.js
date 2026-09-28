@@ -50,7 +50,54 @@ async function runTransaction(mode, operation) {
   }
 }
 
+// Browsers may evict unpersisted site storage under pressure. Ask once, when
+// the user first stores audio (Firefox shows a prompt, so never on page load).
+let persistRequest;
+export function requestPersistentStorage() {
+  const storage = globalThis.navigator?.storage;
+  if (!storage?.persist) return Promise.resolve(false);
+  persistRequest ??= Promise.resolve(storage.persisted?.())
+    .then((persisted) => persisted || storage.persist())
+    .catch(() => false);
+  return persistRequest;
+}
+
+const COMPARE_CHUNK = 4 * 1024 * 1024;
+async function sameBytes(a, b) {
+  if (a.size !== b.size) return false;
+  for (let at = 0; at < a.size; at += COMPARE_CHUNK) {
+    const [x, y] = await Promise.all([
+      a.slice(at, at + COMPARE_CHUNK).arrayBuffer(),
+      b.slice(at, at + COMPARE_CHUNK).arrayBuffer(),
+    ]);
+    const left = new Uint8Array(x),
+      right = new Uint8Array(y);
+    for (let index = 0; index < left.length; index += 1)
+      if (left[index] !== right[index]) return false;
+  }
+  return true;
+}
+
+/** A stored asset with exactly these bytes, if any (only equal sizes are compared). */
+export async function findIdenticalAsset(blob, assets) {
+  const candidates = (assets || (await listAudioAssets())).filter(
+    (asset) => asset.size === blob.size && asset.blob
+  );
+  for (const candidate of candidates) if (await sameBytes(candidate.blob, blob)) return candidate;
+  return null;
+}
+
+/**
+ * Stores one audio blob. `dedupe` reuses a byte-identical stored asset, so the
+ * same song loaded twice (decks, pads, arrangement, reopened projects) is kept
+ * once. Recordings and capture chunks are unique and skip the comparison.
+ */
 export async function putAudioAsset(blob, metadata = {}) {
+  void requestPersistentStorage();
+  if (metadata.dedupe && !metadata.id) {
+    const existing = await findIdenticalAsset(blob);
+    if (existing) return { ...existing, blob: undefined };
+  }
   const id = metadata.id || createId('audio');
   const record = {
     id,
@@ -59,6 +106,7 @@ export async function putAudioAsset(blob, metadata = {}) {
     type: metadata.type || blob.type || 'audio/*',
     size: blob.size,
     createdAt: metadata.createdAt || new Date().toISOString(),
+    storedAt: new Date().toISOString(),
     analysis: metadata.analysis || null,
   };
   await runTransaction('readwrite', (store) => store.put(record));
@@ -77,6 +125,34 @@ export async function deleteAudioAsset(id) {
 
 export async function listAudioAssets() {
   return (await runTransaction('readonly', (store) => store.getAll())) || [];
+}
+
+export async function deleteAudioAssets(ids) {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return;
+  await runTransaction('readwrite', (store) => {
+    let last;
+    for (const id of unique) last = store.delete(id);
+    return last;
+  });
+}
+
+/**
+ * Stored assets nothing references: not the session (`referenced`), not a
+ * recoverable take, and stored on this device more than `graceMs` ago, so an
+ * import or recording that is still being committed is never treated as
+ * unused. Imported audio keeps its original createdAt, so storedAt decides.
+ */
+export async function unusedAudioAssets(
+  referenced,
+  { graceMs = 60 * 60 * 1000, now = Date.now() } = {}
+) {
+  const keep = new Set(referenced);
+  const recent = (asset) =>
+    [asset.storedAt, asset.createdAt].some((time) => Date.parse(time) > now - graceMs);
+  return (await listAudioAssets())
+    .filter((asset) => !keep.has(asset.id) && !recent(asset))
+    .map(({ id, name, size, createdAt }) => ({ id, name, size, createdAt }));
 }
 
 export function blobToDataUrl(blob) {
@@ -123,6 +199,7 @@ export async function exportAudioAssets(ids) {
 
 export async function importAudioAssets(records = []) {
   if (!Array.isArray(records)) throw new Error('Project audio assets must be a list.');
+  void requestPersistentStorage();
   const idMap = new Map();
   // Validate everything before writing. New IDs isolate imports from existing
   // sets, even when another project reuses an embedded asset identifier.
@@ -144,12 +221,25 @@ export async function importAudioAssets(records = []) {
       name: record.name,
       type: record.type || blob.type,
       createdAt: record.createdAt,
+      storedAt: new Date().toISOString(),
       analysis: record.analysis || null,
     };
   });
-  if (prepared.length)
+  // Reopening a project must not store its audio a second time: identical
+  // bytes already on this device are reused under their existing ID.
+  const stored = prepared.length ? await listAudioAssets() : [];
+  const fresh = [];
+  for (const record of prepared) {
+    const existing = await findIdenticalAsset(record.blob, stored);
+    if (!existing) {
+      fresh.push(record);
+      continue;
+    }
+    for (const [original, id] of idMap) if (id === record.id) idMap.set(original, existing.id);
+  }
+  if (fresh.length)
     await runTransaction('readwrite', (store) => {
-      for (const record of prepared) store.put(record);
+      for (const record of fresh) store.put(record);
     });
   return idMap;
 }

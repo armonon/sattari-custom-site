@@ -27,11 +27,25 @@ import {
 import LearnArranger from '../components/LearnArranger';
 import ToolReferenceLink from '../components/ToolReferenceLink';
 import { trackSiteEvent } from '../utils/siteMeasurement';
-import { analyzeAudioFile, detectPitch } from '../utils/audioAnalysis';
-import { putAudioAsset } from '../utils/audioProjectStore';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import '../styles-audio-workspaces.css';
+
+// Loaded on first use. Imported statically they pulled the chunk they share
+// with the Studio (Tone.js and the audio engine, ~75 KB gzipped) into this
+// page's first load, although nothing needs them until a file is analyzed, the
+// mic is turned on or the session goes to the Studio. One request per module,
+// shared by every caller; a failed download is retried on the next use.
+function loadOnce(load) {
+  let pending = null;
+  return () =>
+    (pending ??= load().catch((error) => {
+      pending = null;
+      throw error;
+    }));
+}
+const loadAudioAnalysis = loadOnce(() => import('../utils/audioAnalysis'));
+const loadProjectStore = loadOnce(() => import('../utils/audioProjectStore'));
 
 const STARTER_ANALYSIS = {
   source: 'starter',
@@ -254,6 +268,8 @@ export default function SattariLearnPage() {
 
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     const nextUrl = URL.createObjectURL(file);
+    // Likely next step is analysis; start fetching its code now.
+    loadAudioAnalysis().catch(() => {});
     setAudioUrl(nextUrl);
     setSelectedFile(file);
     setAudioAssetId('');
@@ -283,6 +299,7 @@ export default function SattariLearnPage() {
     setAnalysisResult(null);
     setAnalysisError('');
     try {
+      const { analyzeAudioFile } = await loadAudioAnalysis();
       const result = await analyzeAudioFile(selectedFile, setAnalysisProgress);
       setAnalysisResult(result);
       trackSiteEvent('learn_completed');
@@ -374,6 +391,7 @@ export default function SattariLearnPage() {
     }
 
     try {
+      const { detectPitch } = await loadAudioAnalysis();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const context = new AudioContextClass();
@@ -413,6 +431,7 @@ export default function SattariLearnPage() {
     try {
       let nextAssetId = audioAssetId;
       if (selectedFile && !nextAssetId) {
+        const { putAudioAsset } = await loadProjectStore();
         const asset = await putAudioAsset(selectedFile, {
           name: selectedFile.name,
           analysis: analysisResult,
@@ -488,6 +507,9 @@ export default function SattariLearnPage() {
         </div>
 
         <ToolReferenceLink tool="learn" />
+        <Link className="button secondary" to="/loop">
+          <Guitar size={16} /> Open Loop guitar practice
+        </Link>
         <div className="learn-command-grid">
           <aside className="learn-source-panel workspace-panel">
             <div className="workspace-panel-heading">

@@ -1,0 +1,16 @@
+{
+  "at": "2026-09-28T19:09:33.501Z",
+  "pass": true,
+  "site_id": "53a43ab7-fd89-4b5b-902e-6bc0e36c58b2",
+  "domain": "sattarimusic.com",
+  "deploy_id": "6ababac9846a154c55561a17",
+  "deployConfirmedBy": "Netlify CLI successful production result",
+  "siteApiRead": "Rate-limited (429); verified live domain and exact JavaScript bytes instead",
+  "mainBundle": "/assets/index-ynSXSemm.js",
+  "mainBundleSha256": "16837d3cf624046882c8c26b6984b883db1c43b04f80ce5fc737d42776f1ff72",
+  "inventoryDegraded": false,
+  "eventualConsistency": false,
+  "studioBookingsEnabled": false,
+  "authenticatedRoutesRejectAnonymous": true,
+  "paymentRoutesRejectInvalidRequests": true
+}

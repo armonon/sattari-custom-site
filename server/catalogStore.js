@@ -4,7 +4,7 @@ import {
   EMPTY_CATALOG_DOC,
   sanitizeCatalogDoc,
 } from '../src/utils/catalogMerge.js';
-import { openStore } from './blobs.js';
+import { openStore, pauseBeforeRetry, writeIfUnchanged } from './blobs.js';
 
 export function getCatalogStore(event) {
   return openStore(event, CATALOG_STORE);
@@ -30,11 +30,10 @@ export async function updateCatalogDoc(event, mutate, { attempts = 5 } = {}) {
     if (!next) return { doc, changed: false };
 
     const clean = sanitizeCatalogDoc(next);
-    const result = current?.etag
-      ? await store.setJSON(CATALOG_BLOB_KEY, clean, { onlyIfMatch: current.etag })
-      : await store.setJSON(CATALOG_BLOB_KEY, clean, { onlyIfNew: true });
-
-    if (result?.modified !== false) return { doc: clean, changed: true };
+    if (await writeIfUnchanged(store, CATALOG_BLOB_KEY, clean, current)) {
+      return { doc: clean, changed: true };
+    }
+    if (attempt + 1 < attempts) await pauseBeforeRetry(attempt);
   }
 
   throw new Error('The catalog is being edited by someone else. Try again.');

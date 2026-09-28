@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { renderToString } from 'react-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
-import { MemoryRouter } from 'react-router-dom';
+import { StaticRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { products } from '../data/catalog';
 import { BUSINESS, CATEGORY_LOCAL_HELP, CATEGORY_SEO, PAGE_SEO } from '../data/siteSeo';
@@ -23,7 +23,7 @@ function renderPage(element) {
   try {
     const body = renderToString(
       <HelmetProvider context={context}>
-        <MemoryRouter>{element}</MemoryRouter>
+        <StaticRouter location="/">{element}</StaticRouter>
       </HelmetProvider>
     );
     const { helmet } = context;

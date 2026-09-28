@@ -34,10 +34,14 @@ it.each(['/about'])('preserves the original content at %s with About metadata', 
     )
   );
   expect(document.title).toBe('About Us | Woodland Hills Music Store | Sattari Music');
-  const schema = JSON.parse(
-    document.querySelector('script[type="application/ld+json"]').textContent
+  // Structured data may arrive as several blocks, each an entity or a @graph.
+  const entities = [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(
+    (node) => {
+      const data = JSON.parse(node.textContent);
+      return data['@graph'] || [data];
+    }
   );
-  expect(schema['@graph']).toEqual(
+  expect(entities).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ '@type': 'AboutPage', url: 'https://sattarimusic.com/about' }),
     ])

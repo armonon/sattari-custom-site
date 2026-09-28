@@ -20,9 +20,9 @@ This guide covers the current storefront setup: React + Vite frontend, Netlify-r
 ### Key Configuration Files
 - `tsconfig.json` - App TypeScript configuration
 - `tsconfig.node.json` - Tooling config references
-- `.eslintrc.json` - Lint rules
+- `eslint.config.js` - Lint rules (ESLint 10 flat config; lints `src`, functions, server, scripts and tests)
 - `vitest.config.ts` - Testing setup
-- `netlify.toml` - Build output and function redirects
+- `netlify.toml` - Build output, headers, redirects and the deploy-path guard (functions declare their own routes)
 
 ### Current Launch Features
 ✅ Lazy-loaded routes and split bundles  
@@ -50,7 +50,7 @@ This guide covers the current storefront setup: React + Vite frontend, Netlify-r
 ### Configuration
 - **[tsconfig.json](tsconfig.json)** - TypeScript settings
 - **[vite.config.js](vite.config.js)** - Build configuration
-- **[.eslintrc.json](.eslintrc.json)** - Code linting rules
+- **[eslint.config.js](../eslint.config.js)** - Code linting rules
 - **[.prettierrc](.prettierrc)** - Code formatting rules
 - **[vitest.config.ts](vitest.config.ts)** - Test configuration
 
@@ -64,7 +64,8 @@ This guide covers the current storefront setup: React + Vite frontend, Netlify-r
 - **[src/types/index.ts](src/types/index.ts)** - Type definitions
 
 ### Styles
-- **[src/styles-enhanced.css](src/styles-enhanced.css)** - New design system with tokens
+- **[src/styles-theme.css](../src/styles-theme.css)** - Site design tokens and light/dark theme
+- **[src/styles-studio-tokens.css](../src/styles-studio-tokens.css)** - Studio design tokens
 
 ### SEO
 - **[public/robots.txt](public/robots.txt)** - Search engine instructions
@@ -88,7 +89,7 @@ cp .env.example .env
 # - Add your Stripe publishable and secret keys
 # - Add STRIPE_WEBHOOK_SECRET for verified order processing
 # - Add optional Resend notification settings if you want email alerts
-# - Add the STAFF_* values (node scripts/hash-staff-password.mjs) to use the staff page
+# - Add the STAFF_* values (node scripts/hash-staff-password.mjs "username"; it asks for the password) to use the staff page
 # - Add Sentry DSN (optional)
 # - Set optional checkout/API URLs only if not using the default Netlify function route
 ```

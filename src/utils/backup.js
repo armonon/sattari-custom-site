@@ -11,21 +11,47 @@ export const BACKUP_STORE = 'backups';
 export const BACKUP_PREFIX = 'snapshot/';
 export const BACKUP_VERSION = 1;
 
-// About a month of daily snapshots. Enough to notice and undo a bad bulk edit,
-// small enough that the store never becomes a cost.
+// About a month of nightly snapshots. Enough to notice and undo a bad bulk
+// edit, small enough that the store never becomes a cost.
 export const KEEP_SNAPSHOTS = 30;
 
-export function snapshotKey(isoString) {
-  // Second precision, so a manual snapshot taken minutes before a restore
-  // cannot overwrite the night's automatic one.
+// Snapshots staff take by hand ('manual') and the automatic one taken before
+// every restore ('restore') are kept on their own count, so a busy day of
+// manual snapshots can never push the nightly history out.
+export const KEEP_STAFF_SNAPSHOTS = 20;
+
+export const SNAPSHOT_KINDS = ['scheduled', 'manual', 'restore'];
+
+// The kind is part of the key, so retention can be decided from a listing
+// without reading every snapshot. Nightly keys keep the original format.
+export function snapshotKey(isoString, kind = 'scheduled') {
+  // Millisecond precision, so a manual snapshot taken minutes before a
+  // restore cannot overwrite the night's automatic one.
   const stamp = String(isoString).replace(/[:.]/g, '-').replace(/Z$/, '');
-  return `${BACKUP_PREFIX}${stamp}.json`;
+  const suffix = kind && kind !== 'scheduled' ? `.${kind}` : '';
+  return `${BACKUP_PREFIX}${stamp}${suffix}.json`;
 }
 
-export function buildSnapshot({ stock, stockSales, catalog, fulfillment, imageKeys, reason, at }) {
+// Keys written before kinds existed read as nightly ones.
+export function snapshotKind(key) {
+  const match = /\.(manual|restore)\.json$/.exec(String(key));
+  return match ? match[1] : 'scheduled';
+}
+
+export function buildSnapshot({
+  stock,
+  stockSales,
+  catalog,
+  fulfillment,
+  imageKeys,
+  reason,
+  at,
+  kind = 'scheduled',
+}) {
   return {
     version: BACKUP_VERSION,
     createdAt: new Date(at).toISOString(),
+    kind: SNAPSHOT_KINDS.includes(kind) ? kind : 'manual',
     reason: reason || 'scheduled',
     stock: stock || {},
     // Sales already reflected in `stock`, read from the same blob in the same
@@ -190,13 +216,16 @@ export function reconcileRestoredFulfillment({ snapshot, live = {}, orders = [] 
   return { doc, kept };
 }
 
-// Newest first, then everything past the keep count is returned for deletion.
-export function selectExpired(keys, keep = KEEP_SNAPSHOTS) {
+// Newest first, then everything past the keep count is returned for deletion:
+// `keep` counts nightly snapshots and `keepStaff` counts the rest, separately.
+export function selectExpired(keys, keep = KEEP_SNAPSHOTS, keepStaff = KEEP_STAFF_SNAPSHOTS) {
   const snapshots = keys
     .filter((key) => key.startsWith(BACKUP_PREFIX))
     .sort()
     .reverse();
-  return snapshots.slice(keep);
+  const nightly = snapshots.filter((key) => snapshotKind(key) === 'scheduled');
+  const staff = snapshots.filter((key) => snapshotKind(key) !== 'scheduled');
+  return [...nightly.slice(keep), ...staff.slice(keepStaff)];
 }
 
 export function describeSnapshot(snapshot) {
@@ -208,6 +237,7 @@ export function describeSnapshot(snapshot) {
 
   return {
     createdAt: snapshot?.createdAt || '',
+    kind: snapshot?.kind || 'scheduled',
     reason: snapshot?.reason || '',
     trackedVariants: stockCount,
     editedProducts: overrides,

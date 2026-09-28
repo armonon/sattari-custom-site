@@ -1,11 +1,13 @@
 import {
   checkPassword,
   checkUsername,
+  createDeviceToken,
   createSession,
   currentSessionEpoch,
   getClientIp,
   isConfigured,
   SESSION_TTL_HOURS,
+  verifyDeviceToken,
 } from '../../server/staffAuth.js';
 import {
   pruneLoginRecords,
@@ -13,9 +15,11 @@ import {
   reserveLoginAttempt,
 } from '../../server/loginThrottle.js';
 import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
+import { hashIp } from '../../server/ipHash.js';
 
-// The edge limit is a cheap outer bound on request volume per address; the
-// blob-backed throttle below is what bounds password guesses.
+// No edge rate limit: the plan's two rules are spent elsewhere (see
+// function-routes.test.js). The blob-backed throttle is what bounds password
+// guesses. A custom path replaces the default URL, so both are listed.
 export const config = {
   path: ['/api/staff/login', '/.netlify/functions/staff-login'],
 };
@@ -32,6 +36,12 @@ const UNAVAILABLE = 'Sign-in is temporarily unavailable. Try again shortly.';
 
 export default async function staffLogin(request, context) {
   return webResponse(await login(await lambdaEvent(request, context), context));
+}
+
+// Logs carry a keyed hash of the address, never the address, and never what
+// was typed as a username: a mistyped password often lands in that field.
+function logLogin(type, ip, details) {
+  console.log(JSON.stringify({ type, ipHash: hashIp(ip).slice(0, 16), ...details }));
 }
 
 async function login(event, context) {
@@ -58,9 +68,24 @@ async function login(event, context) {
     return json(400, { error: 'Enter the username.' });
   }
 
+  // Needed before the attempt is counted: a device token only counts under
+  // the epoch it was issued in. If it cannot be read, device tokens are
+  // ignored and the attempt is counted the ordinary way.
+  let epoch = null;
+  try {
+    epoch = await currentSessionEpoch(event);
+  } catch (error) {
+    console.error(JSON.stringify({ type: 'staff-session-read-error', message: error?.message }));
+  }
+
+  // A browser that signed in before is counted on its own record rather than
+  // against the site-wide ceiling. An invalid, expired or revoked token is
+  // ignored.
+  const device = epoch === null ? null : verifyDeviceToken(body?.device, { epoch });
+
   let reservation;
   try {
-    reservation = await reserveLoginAttempt(event, ip);
+    reservation = await reserveLoginAttempt(event, ip, Date.now(), { device });
   } catch (error) {
     // Fail CLOSED. If an attempt cannot be counted, guessing is unbounded, and
     // refusing a sign-in costs far less than that.
@@ -83,20 +108,16 @@ async function login(event, context) {
   const passwordOk = checkPassword(body.password);
 
   if (!usernameOk || !passwordOk) {
-    console.log(JSON.stringify({ type: 'staff-login-failed', staff: staff.slice(0, 40), ip }));
+    logLogin('staff-login-failed', ip, { usernameMatched: usernameOk, device: Boolean(device) });
     return json(401, { error: 'That username or password is not right.' });
   }
 
-  let epoch;
-  try {
-    epoch = await currentSessionEpoch(event);
-  } catch (error) {
-    console.error(JSON.stringify({ type: 'staff-session-read-error', message: error?.message }));
-    return json(503, { error: UNAVAILABLE });
-  }
+  // A session is only issued under a known epoch; one minted under a guessed
+  // epoch would be rejected by every staff function anyway.
+  if (epoch === null) return json(503, { error: UNAVAILABLE });
 
   try {
-    await recordLoginSuccess(event, ip);
+    await recordLoginSuccess(event, ip, Date.now(), { device });
   } catch (error) {
     console.error(JSON.stringify({ type: 'throttle-clear-error', message: error?.message }));
   }
@@ -106,11 +127,13 @@ async function login(event, context) {
     )
   );
 
-  console.log(JSON.stringify({ type: 'staff-login', staff: staff.slice(0, 40), ip }));
+  logLogin('staff-login', ip, { device: Boolean(device) });
 
   return json(200, {
     token: createSession(staff, { epoch }),
     staff: staff.slice(0, 40),
     expiresInHours: SESSION_TTL_HOURS,
+    // Renewed on every sign-in, keeping the same device id.
+    deviceToken: createDeviceToken(device || undefined, { epoch }),
   });
 }

@@ -45,6 +45,25 @@ it('sends only an allowlisted source, page group and event', () => {
     credentials: 'omit',
   });
 });
+it('attributes a new guide referral to later tool actions without retaining its URL', () => {
+  window.location.pathname = '/guides/remove-vocals-for-karaoke';
+  setMeasurementPreference(true);
+  trackSiteEvent('page_view');
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    source: 'chatgpt',
+    page: 'guide-karaoke',
+    event: 'page_view',
+  });
+  window.location.pathname = '/stem-separator';
+  document.referrer = 'https://sattarimusic.com/guides/remove-vocals-for-karaoke';
+  trackSiteEvent('separator_completed');
+  expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({
+    source: 'chatgpt',
+    page: 'stem-separator',
+    event: 'separator_completed',
+  });
+  expect(sessionStorage.getItem('sattari-referral-v1')).toBe('chatgpt');
+});
 it.each([{ globalPrivacyControl: true }, { doNotTrack: '1' }])(
   'honors browser privacy signal %s',
   (signal) => {

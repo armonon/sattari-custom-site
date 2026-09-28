@@ -101,9 +101,9 @@ function HeadphonesPanel({ headphones }) {
       ) : null}
       {capabilities.sinkSelectable ? (
         <label className="sd-mixer-output">
-          <span>Output device</span>
+          <span>Studio output (main + headphones)</span>
           <select
-            aria-label="Output device"
+            aria-label="Studio output (main + headphones)"
             value={cue.deviceId}
             disabled={choosing}
             onChange={async (event) => {
@@ -125,6 +125,9 @@ function HeadphonesPanel({ headphones }) {
               <option value={cue.deviceId}>Saved output</option>
             ) : null}
           </select>
+          <small>
+            Switches where the whole Studio plays: the main mix and the headphone cue move together.
+          </small>
           {outputs.note ? <small>{outputs.note}</small> : null}
         </label>
       ) : null}

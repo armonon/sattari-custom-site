@@ -214,10 +214,13 @@ export function normalizeDeck(saved, index) {
       STEM_IDS.map((stemId) => [stemId, { ...base.stemFx[stemId], ...saved.stemFx?.[stemId] }])
     ),
     lanes: Object.fromEntries(
-      LANE_DEFINITIONS.map((definition) => [
-        definition.id,
-        { ...base.lanes[definition.id], ...saved.lanes?.[definition.id] },
-      ])
+      LANE_DEFINITIONS.map((definition) => {
+        const lane = { ...base.lanes[definition.id], ...saved.lanes?.[definition.id] };
+        // A lane saved mid-load with nothing stored yet never finished loading:
+        // it is empty again. Lanes with stored audio are reloaded on restore.
+        const stale = lane.status === 'loading' && !lane.assetId;
+        return [definition.id, stale ? base.lanes[definition.id] : lane];
+      })
     ),
     arrangement: normalizeArrangement(saved.arrangement, saved.duration || base.duration),
   };

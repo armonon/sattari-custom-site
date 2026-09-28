@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
+# Pages fetch live prices, stock and staff-added products from here while they
+# render. Search engines render pages too, so they need this one endpoint; the
+# longer (more specific) Allow wins over the Disallow below it.
+Allow: /api/inventory
 Disallow: /api/
 Disallow: /.netlify/functions/
 
@@ -7,6 +11,7 @@ Disallow: /.netlify/functions/
 # available to search crawlers; API endpoints are not search content.
 User-agent: OAI-SearchBot
 Allow: /
+Allow: /api/inventory
 Disallow: /api/
 Disallow: /.netlify/functions/
 

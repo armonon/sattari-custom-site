@@ -7,7 +7,7 @@ import {
   saveStudioSession,
   validateStudioProject,
 } from '../../utils/audioProjectStore';
-import { migrateArrangement } from '../../utils/arrangementModel';
+import { migrateArrangement, repairArrangement } from '../../utils/arrangementModel';
 import { clearExportFile } from '../../utils/arrangementStreamExport';
 import { deferredSessionSave } from '../../utils/deferredSessionSave';
 import { readProjectArchive, writeProjectArchive } from '../../utils/projectArchive';
@@ -16,6 +16,13 @@ import { trackSiteEvent } from '../../utils/siteMeasurement';
 import { downloadBlob } from '../downloads';
 import { useLatest } from '../hooks/useLatest';
 import { SEND_BUSES } from '../mixer/mixerModel';
+import {
+  formatBytes,
+  holdStudioTabLock,
+  otherStudioTabsOpen,
+  planStorageCleanup,
+  runStorageCleanup,
+} from './storageCleanup';
 import { normalizeDeck, normalizeDecks } from './sessionModel';
 import {
   consumeLearnTransfer,
@@ -27,6 +34,19 @@ import {
   snapshotFromSaved,
 } from './sessionSnapshot';
 import { createSessionActions, initialSessionState, sessionReducer } from './sessionState';
+
+/**
+ * Repairs `project.arranger` in place and returns how many damaged parts were
+ * newly set aside, so one bad clip or take cannot keep a project from opening.
+ */
+function repairSavedArrangement(project) {
+  const before = project.arranger?.setAside?.length || 0;
+  project.arranger = repairArrangement(project.arranger);
+  return (project.arranger.setAside?.length || 0) - before;
+}
+
+const setAsideNotice = (count, reason = 'so the project could open') =>
+  `${count} damaged arrangement ${count === 1 ? 'part was' : 'parts were'} set aside ${reason}. They are kept with this session: open Tools, then Files.`;
 
 const AUTOSAVE_FAILED =
   'Autosave failed: local storage is full or unavailable. Use Save project to download a backup before closing.';
@@ -78,6 +98,19 @@ export function useStudioSession({
   // Incremented whenever the current session is torn down; an in-flight
   // restore that sees a newer epoch must not apply over the replacement.
   const epoch = useRef(0);
+  // The last portable backup stays downloadable until it is replaced or
+  // cleared: a slow or blocked multi-GB download can be started again.
+  const [backup, setBackup] = useState(null);
+  // How many set-aside arrangement parts the user has already been told about.
+  const setAsideSeen = useRef(0);
+  const backupRef = useRef(null);
+  const replaceBackup = useCallback((next) => {
+    const previous = backupRef.current;
+    backupRef.current = next;
+    setBackup(next);
+    if (previous && previous.file !== next?.file)
+      void clearExportFile(previous.file).catch(() => {});
+  }, []);
 
   const hydrateAudio = useCallback(
     async (nextDecks, nextPads, isCancelled, tempo) => {
@@ -148,11 +181,10 @@ export function useStudioSession({
       for (const bus of SEND_BUSES) audio.setReturn?.(bus, session.mixer.returns[bus]);
       const decks = await hydrateAudio(session.decks, session.pads, isCancelled, session.masterBpm);
       if (isCancelled()) return;
-      actions.apply({
-        ...session,
-        decks,
-        arranger: migrateArrangement({ ...arrangerSource, decks }),
-      });
+      const arranger = migrateArrangement({ ...arrangerSource, decks });
+      // Restore and import report their own set-aside parts.
+      setAsideSeen.current = arranger.setAside?.length || 0;
+      actions.apply({ ...session, decks, arranger });
     },
     [actions, getEngine, hydrateAudio]
   );
@@ -172,21 +204,30 @@ export function useStudioSession({
     const stale = () => cancelled || epoch.current !== startedAt;
     const restore = async () => {
       const saved = await persistence.load();
+      const setAside = saved?.arranger ? repairSavedArrangement(saved) : 0;
       if (saved) validateStudioProject({ ...saved, decks: saved.decks || [] });
       if (stale()) return;
       const { decks, transfer } = consumeLearnTransfer(normalizeDecks(saved?.decks));
       await applySession(snapshotFromSaved(saved, { decks, transfer }), stale);
+      if (setAside && !stale()) setNotice(setAsideNotice(setAside));
     };
-    void restore().catch((error) => {
-      if (!stale())
-        setNotice(
-          `Project restore failed: ${error instanceof Error ? error.message : 'audio unavailable'}. Reload to retry; your saved session has not been overwritten.`
-        );
-    });
+    // Loads, imports and recording wait until the restored session is in
+    // place; otherwise the restore would overwrite what they just loaded.
+    setProjectPending(true);
+    void restore()
+      .catch((error) => {
+        if (!stale())
+          setNotice(
+            `Project restore failed: ${error instanceof Error ? error.message : 'audio unavailable'}. Reload to retry; your saved session has not been overwritten.`
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setProjectPending(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [applySession, persistence, setNotice]);
+  }, [applySession, persistence, setNotice, setProjectPending]);
 
   useEffect(() => {
     const flush = () => saver.flush();
@@ -226,6 +267,12 @@ export function useStudioSession({
     arranger,
     mixer,
   } = state;
+  const setAsideCount = arranger.setAside?.length || 0;
+  useEffect(() => {
+    if (setAsideCount > setAsideSeen.current)
+      setNotice(setAsideNotice(setAsideCount - setAsideSeen.current, 'instead of being saved'));
+    setAsideSeen.current = setAsideCount;
+  }, [setAsideCount, setNotice]);
   useEffect(() => {
     if (!restored) return;
     saver.schedule({
@@ -288,25 +335,60 @@ export function useStudioSession({
       const session = latest.current;
       const assetIds = projectAssetIds(session);
       const blob = await writeProjectArchive(projectManifest(session), assetIds, setNotice);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `${session.sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'sattari-session'}.sattari`;
-      anchor.click();
+      const name = `${session.sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'sattari-session'}.sattari`;
+      replaceBackup({ file: blob, name });
+      downloadBlob(blob, name, 60000);
       trackSiteEvent('studio_exported');
-      window.setTimeout(() => {
-        URL.revokeObjectURL(url);
-        void clearExportFile(blob).catch(() => {});
-      }, 60000);
+      const count = new Set(assetIds.filter(Boolean)).size;
       setNotice(
-        `Portable project saved with ${new Set(assetIds.filter(Boolean)).size} audio assets.`
+        `Project backup ready (${count} audio ${count === 1 ? 'file' : 'files'}, ${formatBytes(blob.size)}). If the download does not finish, use Download again in Tools › Files.`
       );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Project could not be saved.');
     } finally {
       setProjectPending(false);
     }
-  }, [activity, latest, setNotice, setProjectPending]);
+  }, [activity, latest, replaceBackup, setNotice, setProjectPending]);
+
+  // Damaged arrangement parts set aside by repairArrangement.
+  const downloadSetAside = useCallback(() => {
+    const { arranger, sessionName } = latest.current;
+    if (!arranger.setAside?.length) return;
+    const report = {
+      schema: 'SattariStudio.setAside.v1',
+      sessionName,
+      exportedAt: new Date().toISOString(),
+      parts: arranger.setAside,
+    };
+    const slug = sessionName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'sattari-session';
+    downloadBlob(
+      new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }),
+      `${slug}-damaged-parts.json`,
+      60000
+    );
+  }, [latest]);
+  const discardSetAside = useCallback(() => {
+    const count = latest.current.arranger.setAside?.length || 0;
+    if (
+      !count ||
+      !window.confirm(
+        `Discard ${count} damaged arrangement ${count === 1 ? 'part' : 'parts'}? Download them first if you might need them.`
+      )
+    )
+      return;
+    const without = (project) => {
+      const next = { ...project };
+      delete next.setAside;
+      return next;
+    };
+    if (!arrangerRef.current?.applyEdit?.(without)) actions.setArranger(without);
+  }, [actions, arrangerRef, latest]);
+
+  const downloadBackup = useCallback(() => {
+    const current = backupRef.current;
+    if (current) downloadBlob(current.file, current.name, 60000);
+  }, []);
+  const clearBackup = useCallback(() => replaceBackup(null), [replaceBackup]);
 
   const importSession = useCallback(
     async (file) => {
@@ -323,6 +405,7 @@ export function useStudioSession({
       try {
         const manifest = await readProjectArchive(file);
         if (!isProjectManifest(manifest)) throw new Error('Not a Sattari Studio project.');
+        const setAside = manifest.arranger ? repairSavedArrangement(manifest) : 0;
         validateStudioProject(manifest);
         if (
           !window.confirm(
@@ -335,9 +418,11 @@ export function useStudioSession({
         releaseSession();
         await applySession(snapshotFromManifest(manifest));
         setNotice(
-          manifest.assets?.length
-            ? `${file.name} imported with ${manifest.assets.length} embedded audio assets.`
-            : `${file.name} imported. Reconnect audio files that are not stored on this device.`
+          `${
+            manifest.assets?.length
+              ? `${file.name} imported with ${manifest.assets.length} embedded audio assets.`
+              : `${file.name} imported. Reconnect audio files that are not stored on this device.`
+          }${setAside ? ` ${setAsideNotice(setAside)}` : ''}`
         );
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'Project could not be imported.');
@@ -393,6 +478,68 @@ export function useStudioSession({
     [setNotice]
   );
 
+  /**
+   * Frees browser storage nothing uses: stored audio no project, pending
+   * transfer or recoverable take references, and recovery copies of takes the
+   * project already contains. The session is saved first, so a take is never
+   * left with only its recovery copy, and nothing is removed without asking.
+   */
+  useEffect(() => holdStudioTabLock(), []);
+
+  const cleanUpStorage = useCallback(async () => {
+    if (
+      activity.captureActive ||
+      activity.capturePending ||
+      activity.projectPending ||
+      activity.loads.size
+    ) {
+      setNotice('Finish loading and stop the recording before cleaning up storage.');
+      return false;
+    }
+    try {
+      if (await otherStudioTabsOpen()) {
+        setNotice(
+          'Close other Studio tabs before cleaning up storage: their audio is not visible here.'
+        );
+        return false;
+      }
+      await saver.flush();
+      const plan = await planStorageCleanup(latest.current, {
+        keepFiles: [backupRef.current?.file?.name],
+      });
+      if (
+        !plan.unused.length &&
+        !plan.exports.length &&
+        !plan.takeIds.length &&
+        !plan.captureIds.length
+      ) {
+        setNotice('Nothing to clean up: all stored audio is in use.');
+        return false;
+      }
+      const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+      const parts = [
+        plan.unused.length &&
+          `${count(plan.unused.length, 'unused audio file', 'unused audio files')} (${formatBytes(plan.bytes)})`,
+        plan.exports.length &&
+          `${count(plan.exports.length, 'old temporary export copy', 'old temporary export copies')} (${formatBytes(plan.exportBytes)})`,
+        plan.takeIds.length + plan.captureIds.length &&
+          'recovery copies of takes already saved in this project',
+      ].filter(Boolean);
+      if (
+        !window.confirm(
+          `Remove ${parts.join(', ')}? Audio this project, the pending Learn transfer and unsaved recoverable takes use is kept. This cannot be undone.`
+        )
+      )
+        return false;
+      await runStorageCleanup(plan);
+      setNotice(`Storage cleaned up: ${formatBytes(plan.bytes + plan.exportBytes)} removed.`);
+      return true;
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Storage could not be cleaned up.');
+      return false;
+    }
+  }, [activity, latest, saver, setNotice]);
+
   return {
     state,
     latest,
@@ -402,5 +549,11 @@ export function useStudioSession({
     importSession,
     newSession,
     downloadRecording,
+    cleanUpStorage,
+    backup,
+    downloadBackup,
+    clearBackup,
+    downloadSetAside,
+    discardSetAside,
   };
 }

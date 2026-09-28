@@ -218,6 +218,14 @@
   box-shadow: 0 20px 65px #0009;
   padding: 20px;
 }
+/* The floating Tools panel wraps instead of scrolling its help text away. */
+.sd-session-shell .sd-advanced-strip {
+  flex-wrap: wrap;
+}
+.sd-session-shell .sd-advanced-strip > span {
+  flex: 1 1 100%;
+  white-space: normal;
+}
 .sd-session-shell .sd-session-inspector {
   position: absolute;
   z-index: 40;

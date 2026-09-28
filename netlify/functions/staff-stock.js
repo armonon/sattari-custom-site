@@ -7,9 +7,16 @@ import {
 } from '../../src/utils/inventory.js';
 import { mergeCatalog } from '../../src/utils/catalogMerge.js';
 import { isStockContention, readInventory, updateStock } from '../../server/stockStore.js';
+import { requestSiteRebuild } from '../../server/buildHook.js';
 import { readCatalogDoc } from '../../server/catalogStore.js';
+import { lambdaEvent, webResponse } from '../../server/functionAdapter.js';
 import { errorMessage, logError, logEvent } from '../../server/log.js';
 import { requireStaff } from '../../server/staffAuth.js';
+
+// A custom path replaces the default URL, so both are listed.
+export const config = {
+  path: ['/api/staff/stock', '/.netlify/functions/staff-stock'],
+};
 
 // Stock rows come from the merged catalog, not the base file, so products an
 // employee added are stockable and edited variants line up with what the shop
@@ -60,7 +67,22 @@ function buildVariantRows(stock, holds, products) {
   return rows;
 }
 
-export async function handler(event) {
+// What a published product page says about a variant: sold out only when it
+// is tracked at zero. A change that flips this is worth rebuilding the pages
+// for; a recount from 5 to 7 is not.
+function soldOutKeys(stock) {
+  return new Set(Object.keys(stock).filter((key) => stock[key] <= 0));
+}
+
+function sameKeys(left, right) {
+  return left.size === right.size && [...left].every((key) => right.has(key));
+}
+
+export default async function staffStock(request, context) {
+  return webResponse(await handle(await lambdaEvent(request, context)));
+}
+
+async function handle(event) {
   const session = await requireStaff(event);
   if (!session) {
     // Same response for a missing and an invalid token: no signal about which
@@ -71,8 +93,13 @@ export async function handler(event) {
   const products = await getProducts(event);
 
   if (event.httpMethod === 'GET') {
-    const { stock, holds } = await readInventory(event);
-    return json(200, { staff: session.staff, items: buildVariantRows(stock, holds, products) });
+    try {
+      const { stock, holds } = await readInventory(event);
+      return json(200, { staff: session.staff, items: buildVariantRows(stock, holds, products) });
+    } catch (error) {
+      logError('staff-stock-read-error', { staff: session.staff, message: errorMessage(error) });
+      return json(503, { error: 'Stock could not be loaded right now. Try Reload.' });
+    }
   }
 
   if (event.httpMethod !== 'POST') {
@@ -131,6 +158,7 @@ export async function handler(event) {
   }
 
   try {
+    let availabilityChanged = false;
     const { stock, holds } = await updateStock(event, (current) => {
       const next = { ...current };
       for (const change of applied) {
@@ -140,10 +168,13 @@ export async function handler(event) {
           next[change.key] = change.quantity;
         }
       }
-      return sanitizeStockMap(next);
+      const clean = sanitizeStockMap(next);
+      availabilityChanged = !sameKeys(soldOutKeys(current), soldOutKeys(clean));
+      return clean;
     });
 
     logEvent({ type: 'staff-stock-update', staff: session.staff, changed: applied.length });
+    if (availabilityChanged) await requestSiteRebuild(event, 'stock changed');
 
     return json(200, {
       staff: session.staff,

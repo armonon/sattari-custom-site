@@ -1,6 +1,7 @@
 // @vitest-environment node
 import process from 'node:process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { callWith } from './helpers/invoke.js';
 
 const createSessionMock = vi.fn();
 
@@ -21,7 +22,9 @@ vi.mock('@netlify/blobs', async () => {
   return createMemoryBlobs().module;
 });
 
-const { handler } = await import('../../netlify/functions/create-checkout-session.js');
+const handler = callWith(
+  (await import('../../netlify/functions/create-checkout-session.js')).default
+);
 
 function post(body) {
   return handler({

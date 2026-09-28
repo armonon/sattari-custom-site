@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { useState } from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createRef, useState } from 'react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import ArrangementEditor from './ArrangementEditor';
 import { audioClip, audioTrack, emptyArrangement } from '../../utils/arrangementModel';
@@ -40,11 +40,12 @@ vi.mock('../../utils/arrangementEngine', () => ({
 }));
 const live = { getAudioContext: () => ({}), pauseAll: vi.fn(), unlock: vi.fn(async () => {}) };
 let saved;
-function Host({ initial = emptyArrangement() }) {
+function Host({ initial = emptyArrangement(), editorRef }) {
   const [project, setProject] = useState(initial);
   saved = project;
   return (
     <ArrangementEditor
+      ref={editorRef}
       project={project}
       onChange={setProject}
       getEngine={() => live}
@@ -117,6 +118,35 @@ it('changes supported insert effects through live mix updates without pausing or
   expect(saved).toBe(savedBeforeFailure);
   expect(screen.getByText('Effect resources unavailable')).toHaveAttribute('role', 'status');
   expect(audio.pause).not.toHaveBeenCalled();
+});
+it('applies track mix edits in place during playback, never rescheduling streamed audio', async () => {
+  const project = emptyArrangement(),
+    track = audioTrack('Song');
+  track.clips.push(audioClip('a', 'Audio', 10));
+  project.tracks.push(track);
+  const editorRef = createRef();
+  render(<Host initial={project} editorRef={editorRef} />);
+  fireEvent.click(actionsBar().getByRole('button', { name: 'Play arrangement' }));
+  await waitFor(() => expect(audio.play).toHaveBeenCalled());
+  audio.revise.mockClear();
+  audio.updateMix.mockClear();
+  // Track header controls.
+  fireEvent.change(screen.getByLabelText('Gain Song'), { target: { value: '140' } });
+  fireEvent.click(screen.getByLabelText('Mute Song'));
+  // Mixer dock gestures and sends arrive through the imperative handle.
+  act(() => {
+    editorRef.current.updateTrack(saved.tracks[0].id, { sends: { a: 40, b: 0 } }, { live: true });
+    editorRef.current.updateTrack(saved.tracks[0].id, { pan: 0.25 }, { live: true });
+    editorRef.current.commitLiveEdit();
+  });
+  expect(saved.tracks[0]).toMatchObject({ gain: 140, muted: true, pan: 0.25 });
+  expect(saved.tracks[0].sends).toEqual({ a: 40, b: 0 });
+  expect(audio.updateMix).toHaveBeenCalledWith(saved);
+  expect(audio.revise).not.toHaveBeenCalled();
+  // Undoing a mix gesture is mix-only too.
+  act(() => editorRef.current.undo(false));
+  expect(saved.tracks[0].pan).toBe(0);
+  expect(audio.revise).not.toHaveBeenCalled();
 });
 it('edits the selected captured take without touching another take or the original events', () => {
   const project = emptyArrangement();
