@@ -141,21 +141,34 @@ Ready for the current Business Profile owner:
 
 ## Search Console and Hosting Audit
 
-The Google session for `armonnasiri@gmail.com` reached the verification step for
-the URL-prefix property `https://sattarimusic.com/`. Publication is complete, but
-ownership verification is awaiting explicit confirmation to grant that account
-Search Console ownership. No verification token was published. Sitemap submission
-and indexing requests remain pending verification. Business Profile changes need
-the separate account that owns the existing listing.
+On September 28, 2026, after the owner's explicit approval, Google confirmed
+**Ownership verified** for `armonnasiri@gmail.com` on the URL-prefix property
+`https://sattarimusic.com/`, using the HTML-file method.
 
-When access resumes:
+- Keep `public/google42e3d2164ecfc40d.html` in every future build. The live root
+  URL responds HTTP 200 with Google's verification text. The search-access test
+  guards against removing or changing the file.
+- Verification-only production deploy: `6abaf069ec4ca061a1fe6987`, based on
+  the existing tested release `6ababac9846a154c55561a17`. Its 319 existing static
+  files, 24 function bundles/configurations and three schedules were unchanged.
+  Newer local application changes were not published as part of verification.
+- Google accepted `https://sattarimusic.com/sitemap.xml`. After an initial
+  **Couldn't fetch** response, one resubmission following the successful live
+  test resulted in **Success**, type **Sitemap**, and **70 discovered pages**.
+  The live XML validates. Discovered pages are not necessarily indexed pages.
+- Google's live URL Inspection test at 3:57 PM Pacific confirmed **URL is
+  available to Google**, **Crawl allowed: Yes**, and **Page fetch: Successful**
+  for the sitemap.
+- The overview's indexing report is still processing data. Business Profile
+  management remains separate and requires the account that owns the listing.
 
-1. Finish ownership verification using Google's actual downloaded verification
-   file or displayed HTML meta tag. Keep the verified file/tag in future builds.
-2. Submit the live `https://sattarimusic.com/sitemap.xml` (66 canonical URLs).
-3. Inspect `/`, `/guides`, the four articles and the tool reference pages. Check
+Next checks:
+
+1. Keep the verification file in future deployments and check the Sitemaps report
+   after releases for continued successful processing.
+2. Inspect `/`, `/guides`, the four articles and the tool reference pages. Check
    the indexed canonical and rendered content, then request indexing where useful.
-4. Use the Performance report for query impressions, clicks, CTR and position;
+3. Use the Performance report for query impressions, clicks, CTR and position;
    compare 28-day periods. Do not promise a particular indexing date or ranking.
 
 On 2026-09-23, live `/stem-separator` responded 200 with readable content and no

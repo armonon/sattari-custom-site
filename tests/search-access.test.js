@@ -27,4 +27,13 @@ describe('public crawl policy', () => {
     expect(robots).toContain('Sitemap: https://sattarimusic.com/sitemap.xml');
     expect(robots).not.toMatch(/staff-|studio-booking\?/);
   });
+
+  it('preserves the Google Search Console ownership file in public assets', () => {
+    const verificationFile = 'google42e3d2164ecfc40d.html';
+    const verification = readFileSync(
+      new URL(`../public/${verificationFile}`, import.meta.url),
+      'utf8'
+    );
+    expect(verification.trim()).toBe(`google-site-verification: ${verificationFile}`);
+  });
 });
