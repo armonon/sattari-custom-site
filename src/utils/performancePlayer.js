@@ -435,9 +435,17 @@ export class PerformancePlayer {
       ),
       ...(this.loopEvents || []).filter((event) => event.args[1]),
     ]
-      .filter((event) => event.time >= elapsed && event.time <= elapsed + 8)
-      .sort((a, b) => a.time - b.time);
-    for (const event of upcoming) {
+      .map((event) => ({
+        event,
+        at: performanceAudioTime(
+          event,
+          this.raw?.sampleRate || 48000,
+          this.engine.getAudioContext?.().lookAhead || 0
+        ),
+      }))
+      .filter(({ at }) => at >= elapsed && at <= elapsed + 8)
+      .sort((a, b) => a.at - b.at);
+    for (const { event, at } of upcoming) {
       const transport = event.type === 'deckTransport';
       const start = transport
         ? event.args[1].position || 0
@@ -462,7 +470,7 @@ export class PerformancePlayer {
             !lane.player.disposed &&
             this.engine.decks.get(event.args[0]) === deck &&
             deck.lanes.get(id) === lane &&
-            (!Number.isFinite(this.base) || this.raw.currentTime < this.base + event.time + 0.1);
+            (!Number.isFinite(this.base) || this.raw.currentTime < this.base + at + 0.1);
           return lane.player.warmWindow?.(
             start,
             { ...region, prepareSeconds: 1, priority: 1 },

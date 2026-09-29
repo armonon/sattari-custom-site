@@ -114,7 +114,9 @@ it.each(['stop', 'replace', 'deadline'])(
       { type: 'deckTransport', time: 4, args: ['A', { position: 80, action: 'rate' }] },
       { type: 'deckTransport', time: 9, args: ['A', { position: 40 }] },
     ];
-    replay.loopEvents = [{ type: 'setLoopRegion', time: 5, args: ['A', true, 75, 77] }];
+    replay.loopEvents = [
+      { type: 'setLoopRegion', time: 5, scheduledTime: 6, args: ['A', true, 75, 77] },
+    ];
     await replay.queueSources(0);
     expect(warm.mock.calls.map(([position]) => position)).toEqual([75, 150]);
     const [, , current, retainUntil] = warm.mock.calls[0];
@@ -122,7 +124,11 @@ it.each(['stop', 'replace', 'deadline'])(
     expect(current()).toBe(true);
     if (reason === 'stop') replay.stopped = true;
     if (reason === 'replace') deck.lanes.delete('vocals');
-    if (reason === 'deadline') replay.raw.currentTime = 15.2;
+    if (reason === 'deadline') {
+      replay.raw.currentTime = 15.2;
+      expect(current()).toBe(true);
+      replay.raw.currentTime = 16.2;
+    }
     expect(current()).toBe(false);
   }
 );
