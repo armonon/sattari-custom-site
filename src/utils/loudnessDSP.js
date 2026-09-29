@@ -68,23 +68,24 @@ export class ProgrammeMeter {
     this.reset();
   }
   reset() {
-    const coefficients = kWeighting(this.rate);
-    this.filters = [coefficients.map((c) => new Biquad(c)), coefficients.map((c) => new Biquad(c))];
-    // Mirrored ring avoids modulo in the 4x interpolation hot loop.
-    this.history = [new Float64Array(24), new Float64Array(24)];
+    // Reset measurements, not the continuous signal. Zeroing FIR/IIR history
+    // mid-wave invents an onset transient and a false held true-peak maximum.
+    if (!this.filters) {
+      const coefficients = kWeighting(this.rate);
+      this.filters = [
+        coefficients.map((c) => new Biquad(c)),
+        coefficients.map((c) => new Biquad(c)),
+      ];
+      // Mirrored ring avoids modulo in the 4x interpolation hot loop.
+      this.history = [new Float64Array(24), new Float64Array(24)];
+      this.historyAt = 0;
+    }
     this.counts = new Float64Array(10001);
     this.energies = new Float64Array(10001);
     this.recent = new Float64Array(150);
     this.rangeCounts = new Float64Array(10001);
     this.rangeSum = this.rangeCount = 0;
-    this.frames =
-      this.filled =
-      this.blocks =
-      this.hops =
-      this.sum =
-      this.recentAt =
-      this.historyAt =
-        0;
+    this.frames = this.filled = this.blocks = this.hops = this.sum = this.recentAt = 0;
     this.measurementFrames = this.activeFrames = 0;
     this.running = true;
     this.absoluteSum = this.absoluteCount = this.truePeak = this.samplePeak = this.invalid = 0;

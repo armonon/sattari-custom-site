@@ -52,7 +52,11 @@ try {
           if (name === 'performance-recovery') return value.includes('COMPLETE:');
           // A first failure is not completion: allow cleanup and later checks
           // to finish before closing the isolated context.
-          return window.qaResult || /\d+ passed[,;]|COMPLETE:|"pass"\s*:/.test(value);
+          return (
+            window.qaComplete ||
+            window.qaResult ||
+            /\d+ passed[,;]|COMPLETE:|"pass"\s*:/.test(value)
+          );
         },
         name,
         { timeout: 180000 }

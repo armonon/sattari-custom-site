@@ -43,6 +43,23 @@ it('waits for complete gating blocks and detects intersample peaks', () => {
   const value = feed(meter, signal(48000, 1, 0.99, 12000, Math.PI / 4));
   expect(value.truePeak - value.samplePeak).toBeGreaterThan(2);
 });
+it.each([44100, 48000])(
+  'resets measurement at arbitrary waveform phases without inventing a peak at %i Hz',
+  (rate) => {
+    const tone = signal(rate, 1);
+    for (const phase of [0, 8, 12, 20, 32, 40]) {
+      const meter = new ProgrammeMeter(rate);
+      const cut = Math.floor(rate / 4) + phase;
+      feed(meter, tone.subarray(0, cut));
+      meter.reset();
+      expect(meter.snapshot().truePeak).toBeNull();
+      expect(meter.snapshot().measurementSeconds).toBe(0);
+      const value = feed(meter, tone.subarray(cut));
+      expect(Math.abs(value.truePeak + 20)).toBeLessThan(0.1);
+      expect(Math.abs(value.integrated + 20)).toBeLessThan(0.1);
+    }
+  }
+);
 it('holds maxima between UI updates and excludes paused time from programme integration', () => {
   const meter = new ProgrammeMeter(48000);
   feed(meter, new Float32Array(960));
