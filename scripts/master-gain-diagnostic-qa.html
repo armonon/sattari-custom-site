@@ -7,6 +7,18 @@ import { normalizeMasterProcessing } from '/src/utils/masterOutput.js';
 import { createMutableEffectRack } from '/src/utils/arrangementEffects.js';
 const stages = {
   lowcut: context => new Tone.Filter({context,type:'highpass',frequency:20,rolloff:-12}),
+  biquad: context => new Tone.BiquadFilter({context,type:'highpass',frequency:20,Q:1}),
+  biquadKRate: context => {
+    const node=context.rawContext.createBiquadFilter();
+    node.type='highpass';node.frequency.value=20;node.Q.value=1;
+    node.frequency.automationRate='k-rate';node.Q.automationRate='k-rate';
+    return {input:node,output:node,dispose:()=>node.disconnect()};
+  },
+  iir: context => {
+    const w=2*Math.PI*20/context.sampleRate,c=Math.cos(w),a=Math.sin(w)/(2*10**(1/20));
+    const node=context.rawContext.createIIRFilter([(1+c)/2,-(1+c),(1+c)/2],[1+a,-2*c,1-a]);
+    return {input:node,output:node,dispose:()=>node.disconnect()};
+  },
   eq: context => arrangementMasterEqualizer(context, normalizeMasterProcessing({})),
   toneEq: context => new Tone.EQ3({context,low:0,mid:0,high:0,lowFrequency:250,highFrequency:2500}),
   width: context => new Tone.StereoWidener({context,width:.5}),
@@ -48,7 +60,7 @@ async function render(names, trim, quantized = false) {
 document.querySelector('#run').onclick = async () => {
   const results = [];
   try {
-    for(const quantized of [false,true]) for(const names of [[],...Object.keys(stages).map(name=>[name]),['lowcut','eq'],['lowcut','eq','width'],['lowcut','eq','width','inserts'],['lowcut','eq','width','inserts','compressor'],['lowcut','eq','width','inserts','hardKnee']]) {
+    for(const quantized of [false,true]) for(const names of [[],...Object.keys(stages).map(name=>[name]),['lowcut','eq'],['lowcut','eq','width'],['lowcut','eq','width','inserts'],['lowcut','eq','width','inserts','compressor'],['biquad','eq','width','inserts','compressor'],['iir','eq','width','inserts','compressor']]) {
       const a=await render(names,0,quantized),b=await render(names,6,quantized);
       let max=0,energy=0; for(let i=24000;i<40000;i++){max=Math.max(max,Math.abs(a[i]-b[i]));energy+=(a[i]-b[i])**2;}
       results.push({names,quantized,max,rms:Math.sqrt(energy/16000)});
