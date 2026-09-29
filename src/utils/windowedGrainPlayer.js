@@ -186,11 +186,11 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     this.invalidatePrefetch();
     return this.warmWindow(position, region);
   }
-  warmWindow(position, region = this) {
+  warmWindow(position, region = this, isCurrent = () => true) {
     // Reading a future replay destination is not a live seek: keep the
     // currently audible source's background read-ahead intact.
     if (region === this) region = this.loopStateAt(this.context.now());
-    return this.pool.prepare(this.source, position, region);
+    return this.pool.prepare(this.source, position, region, isCurrent);
   }
   prefetchWindow(position, region) {
     if (this.preparing) return this.preparing;
@@ -199,7 +199,7 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
       .prepare(
         this.source,
         position,
-        region,
+        { ...region, priority: 1 },
         () => !this.disposed && epoch === this.preparationEpoch
       )
       .catch((error) => {

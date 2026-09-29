@@ -57,12 +57,16 @@ it.each(['commit', 'cancel', 'reject'])(
     const job = preparedTransport({}, deck, 150, apply, { loop: true, loopStart: 75, loopEnd: 77 });
     expect(isAudibleCurrent()).toBe(true);
     expect(player.preparing).toBe(audibleJob);
-    expect(player.pool.prepare).toHaveBeenLastCalledWith(undefined, 150, {
-      loop: true,
-      loopStart: 75,
-      loopEnd: 77,
-      prepareSeconds: 4,
-    });
+    expect(player.pool.prepare).toHaveBeenLastCalledWith(
+      undefined,
+      150,
+      {
+        loop: true,
+        loopStart: 75,
+        loopEnd: 77,
+      },
+      expect.any(Function)
+    );
     if (outcome === 'cancel') cancelPreparedTransport(deck);
     if (outcome === 'reject') destination.reject(new Error('Unavailable loop'));
     else destination.resolve();
