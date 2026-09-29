@@ -1385,6 +1385,7 @@ export class StudioAudioEngine {
     this.setPlaybackRate(deckId, tempo / grid.bpm);
     const playing = deck.playing || start;
     for (const lane of deck.lanes.values()) {
+      lane.player.invalidatePrefetch?.();
       if (deck.playing) lane.player.stop(when);
       if (playing) lane.player.start(when, (offset % lane.duration) / deck.playbackRate);
     }

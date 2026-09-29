@@ -70,7 +70,33 @@ export class SourceWindowPool {
     if (!this.ids.has(source)) this.ids.set(source, ++this.sequence);
     return `${this.ids.get(source)}:${index}`;
   }
-  async page(source, index) {
+  async drain() {
+    if (this.decoding) return;
+    this.decoding = true;
+    try {
+      while (true) {
+        const job = [...this.pending.values()]
+          .filter((item) => !item.started)
+          .sort((a, b) => b.priority - a.priority)[0];
+        if (!job) break;
+        job.started = true;
+        try {
+          if (this.controller.signal.aborted) throw new Error('Audio preparation cancelled.');
+          const page = job.guards.some((current) => current()) ? await job.run() : undefined;
+          this.pending.delete(job.key);
+          job.resolve(page);
+        } catch (error) {
+          this.pending.delete(job.key);
+          job.reject(error);
+        }
+        // Let a current reader enqueue its next page before speculative work.
+        await Promise.resolve();
+      }
+    } finally {
+      this.decoding = false;
+    }
+  }
+  async page(source, index, { priority = 0, isCurrent = () => true } = {}) {
     if (this.controller.signal.aborted) throw new Error('Audio preparation cancelled.');
     const key = this.key(source, index);
     const cached = this.pages.get(key);
@@ -78,10 +104,13 @@ export class SourceWindowPool {
       cached.used = ++this.sequence;
       return cached;
     }
-    if (this.pending.has(key)) return this.pending.get(key);
-    const previous = this.decodeTail || Promise.resolve();
-    const job = (async () => {
-      await previous;
+    const pending = this.pending.get(key);
+    if (pending) {
+      pending.priority = Math.max(pending.priority, priority);
+      pending.guards.push(isCurrent);
+      return pending.promise;
+    }
+    const run = async () => {
       if (this.controller.signal.aborted) throw new Error('Audio preparation cancelled.');
       const from = index * 4,
         to = Math.min(source.duration, from + 6);
@@ -142,19 +171,23 @@ export class SourceWindowPool {
       } finally {
         this.reserved -= reserve;
       }
-    })();
+    };
+    const job = { key, run, priority, guards: [isCurrent], started: false };
+    job.promise = new Promise((resolve, reject) => Object.assign(job, { resolve, reject }));
     this.pending.set(key, job);
-    this.decodeTail = job.catch(() => {});
-    try {
-      return await job;
-    } finally {
-      this.pending.delete(key);
-    }
+    void this.drain();
+    return job.promise;
   }
   async prepare(
     source,
     position,
-    { loop = false, loopStart = 0, loopEnd = source.duration, prepareSeconds = 8 } = {},
+    {
+      loop = false,
+      loopStart = 0,
+      loopEnd = source.duration,
+      prepareSeconds = 8,
+      priority = 0,
+    } = {},
     isCurrent = () => true
   ) {
     if (loop && position >= loopEnd)
@@ -173,7 +206,7 @@ export class SourceWindowPool {
       // admitted decode, but never queue its obsolete remaining pages ahead
       // of the currently audible destination.
       if (!isCurrent()) return;
-      await this.page(source, index);
+      await this.page(source, index, { priority, isCurrent });
     }
   }
   acquire(source, offset, span, { loop = false, loopStart = 0, loopEnd = source.duration } = {}) {

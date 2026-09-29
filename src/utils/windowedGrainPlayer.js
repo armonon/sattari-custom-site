@@ -175,18 +175,22 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     super.loopEnd = value;
     this.requeueGrains();
   }
-  prepareWindow(position, region = this) {
+  invalidatePrefetch() {
     this.preparationEpoch = (this.preparationEpoch || 0) + 1;
     // The old prefetch must not block read-ahead at a newly prepared seek.
     // Its generation guard retires it after its current admitted decode.
     this.preparing = null;
+    this.lastPrefetch = -1;
+  }
+  prepareWindow(position, region = this) {
+    this.invalidatePrefetch();
     return this.warmWindow(position, region);
   }
-  warmWindow(position, region = this) {
+  warmWindow(position, region = this, isCurrent = () => true) {
     // Reading a future replay destination is not a live seek: keep the
     // currently audible source's background read-ahead intact.
     if (region === this) region = this.loopStateAt(this.context.now());
-    return this.pool.prepare(this.source, position, region);
+    return this.pool.prepare(this.source, position, region, isCurrent);
   }
   prefetchWindow(position, region) {
     if (this.preparing) return this.preparing;
@@ -195,7 +199,13 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
       .prepare(
         this.source,
         position,
-        region,
+        {
+          loop: region.loop,
+          loopStart: region.loopStart,
+          loopEnd: region.loopEnd,
+          prepareSeconds: region.prepareSeconds,
+          priority: 1,
+        },
         () => !this.disposed && epoch === this.preparationEpoch
       )
       .catch((error) => {

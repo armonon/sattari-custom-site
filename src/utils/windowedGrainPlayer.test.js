@@ -132,6 +132,19 @@ it('warms a future replay destination without canceling currently audible read-a
   await background;
 });
 
+it('preserves prototype-backed loop controls when prioritizing audible reads', async () => {
+  const player = Object.create(WindowedGrainPlayer.prototype);
+  player.pool = { prepare: vi.fn().mockResolvedValue(undefined) };
+  const region = Object.create({ loop: true, loopStart: 75, loopEnd: 77 });
+  await player.prefetchWindow(150, region);
+  expect(player.pool.prepare).toHaveBeenCalledWith(
+    undefined,
+    150,
+    { loop: true, loopStart: 75, loopEnd: 77, prepareSeconds: undefined, priority: 1 },
+    expect.any(Function)
+  );
+});
+
 it('contains a missed real-time deadline without decoding or bursting obsolete grains', () => {
   const player = Object.create(WindowedGrainPlayer.prototype);
   Object.defineProperty(player, 'context', {

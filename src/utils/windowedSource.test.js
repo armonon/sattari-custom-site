@@ -110,3 +110,70 @@ it('warms a scheduled launch without decoding its speculative tail, then fills n
   expect(read.mock.calls.map((call) => call[2])).toEqual([40, 44]);
   pool.dispose();
 });
+
+it('decodes audible read-ahead before queued cold destinations without parallel allocations', async () => {
+  const first = deferred();
+  const started = [];
+  const pool = new SourceWindowPool(raw, {
+    decode: async (...args) => {
+      started.push(args[2]);
+      if (args[2] === 0) await first.promise;
+      return decode(...args);
+    },
+  });
+  const song = source();
+  const initial = pool.page(song, 0);
+  const cold = pool.page(song, 30);
+  const audible = pool.page(song, 2, { priority: 1 });
+  expect(started).toEqual([0]);
+  first.resolve();
+  await Promise.all([initial, cold, audible]);
+  expect(started).toEqual([0, 8, 120]);
+  expect(pool.reserved).toBe(0);
+  expect(pool.peakBytes).toBeLessThanOrEqual(pool.budget);
+  pool.dispose();
+});
+
+it('skips obsolete reads still in the decode queue', async () => {
+  const first = deferred();
+  const read = vi.fn(async (...args) => {
+    if (args[2] === 0) await first.promise;
+    return decode(...args);
+  });
+  const pool = new SourceWindowPool(raw, { decode: read });
+  const song = source();
+  const initial = pool.page(song, 0);
+  let current = true;
+  const obsolete = pool.prepare(song, 150, { priority: 1 }, () => current);
+  current = false;
+  first.resolve();
+  await Promise.all([initial, obsolete]);
+  expect(read).toHaveBeenCalledOnce();
+  expect(pool.pending.size).toBe(0);
+  pool.dispose();
+});
+
+it('promotes a shared page and retains it when a newer reader still needs it', async () => {
+  const first = deferred();
+  const started = [];
+  const pool = new SourceWindowPool(raw, {
+    decode: async (...args) => {
+      started.push(args[2]);
+      if (args[2] === 0) await first.promise;
+      return decode(...args);
+    },
+  });
+  const song = source();
+  const initial = pool.page(song, 0);
+  const cold = pool.page(song, 40);
+  let oldCurrent = true;
+  const old = pool.page(song, 2, { isCurrent: () => oldCurrent });
+  oldCurrent = false;
+  const active = pool.page(song, 2, { priority: 1 });
+  first.resolve();
+  const [, , oldPage, activePage] = await Promise.all([initial, cold, old, active]);
+  expect(started).toEqual([0, 8, 160]);
+  expect(oldPage).toBe(activePage);
+  expect(pool.pending.size).toBe(0);
+  pool.dispose();
+});

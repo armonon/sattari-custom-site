@@ -23,6 +23,7 @@ const checks = [
   ['windowed-replay', null],
   ['grain-stall', null],
   ['live-window', null],
+  ['live-window', null, '?slow-decode'],
   ['input-audio', null],
   ['input-recording', null],
   ['sync-audio', '#run'],
@@ -35,13 +36,14 @@ const checks = [
 ];
 const results = [];
 try {
-  for (const [name, button] of checks) {
+  for (const [name, button, query = ''] of checks) {
+    const label = name + query;
     const context = await browser.newContext();
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     try {
-      await page.goto(new URL(`/scripts/${name}-qa.html`, origin).href, { timeout: 90000 });
+      await page.goto(new URL(`/scripts/${name}-qa.html${query}`, origin).href, { timeout: 90000 });
       if (button) await page.locator(button).click({ timeout: 90000 });
       await page.waitForFunction(
         (name) => {
@@ -58,10 +60,10 @@ try {
       let pass = !errors.length && !/FAIL|[1-9]\d* failed/.test(output);
       if (output.trim().startsWith('{')) pass &&= JSON.parse(output).pass === true;
       else pass &&= /[1-9]\d* passed/.test(output);
-      results.push({ name, pass, output, errors });
+      results.push({ name: label, pass, output, errors });
     } catch (error) {
       results.push({
-        name,
+        name: label,
         pass: false,
         error: error.message,
         errors,

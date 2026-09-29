@@ -1,17 +1,24 @@
 // Preparing a cold destination must not stop the source that is currently audible.
 // All lanes commit together; a newer command, source replacement or disposal wins.
-export function prepareDeckAudio(deck, position, region) {
+export function prepareDeckAudio(deck, position, region, isCurrent = () => true) {
   const jobs = [];
   for (const lane of deck.lanes.values()) {
     if (!lane.player.prepareWindow) continue;
     const offset = lane.duration ? Math.max(0, position) % lane.duration : 0;
     const requested = region || lane.player.loopStateAt?.(lane.player.context.now()) || lane.player;
+    // Keep audible read-ahead alive while the full cold destination is loading.
+    const warm = lane.player.warmWindow || lane.player.prepareWindow;
     jobs.push(
-      lane.player.prepareWindow(offset, {
-        loop: requested.loop,
-        loopStart: Math.min(Math.max(0, lane.duration - 0.001), requested.loopStart || 0),
-        loopEnd: Math.min(lane.duration, requested.loopEnd || lane.duration),
-      })
+      warm.call(
+        lane.player,
+        offset,
+        {
+          loop: requested.loop,
+          loopStart: Math.min(Math.max(0, lane.duration - 0.001), requested.loopStart || 0),
+          loopEnd: Math.min(lane.duration, requested.loopEnd || lane.duration),
+        },
+        isCurrent
+      )
     );
   }
   return jobs.length ? Promise.all(jobs) : null;
@@ -45,6 +52,7 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
     deck.transportError = restart ? null : failure?.message || null;
     if (restart)
       for (const lane of lanes) if (lane.player.prepareWindow) lane.player.failure = null;
+    for (const lane of lanes) lane.player.invalidatePrefetch?.();
     return apply();
   };
   const fail = (error) => {
@@ -56,7 +64,7 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
     return false;
   };
   try {
-    const pending = prepareDeckAudio(deck, position, region);
+    const pending = prepareDeckAudio(deck, position, region, current);
     if (!pending) return commit();
     deck.preparing = true;
     return pending.then(commit).catch(fail);
