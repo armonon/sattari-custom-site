@@ -4,6 +4,16 @@ import { wavBytes } from './arrangementExport';
 import { describeAiff } from './aiffWindow';
 import { decodedSongDuration } from './compressedAudioWindow';
 
+// Grain-clock arithmetic can land a few floating-point ULPs before an exact
+// sample/page boundary. Preserve real sub-sample offsets, but not that noise.
+function stableSourceTime(seconds, sampleRate) {
+  const frame = seconds * sampleRate;
+  const nearest = Math.round(frame);
+  return Math.abs(frame - nearest) <= Number.EPSILON * Math.max(1, Math.abs(frame)) * 8
+    ? nearest / sampleRate
+    : seconds;
+}
+
 export async function describeAudioSource(blob) {
   const aiff = await describeAiff(blob);
   if (aiff)
@@ -207,8 +217,11 @@ export class SourceWindowPool {
     isCurrent = () => true,
     retainUntil
   ) {
+    const rate = this.raw.sampleRate || source.sampleRate;
+    position = stableSourceTime(position, rate);
     if (loop && position >= loopEnd)
       position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
+    position = stableSourceTime(position, rate);
     const start = Math.max(0, Math.min(position, source.duration - 1 / source.sampleRate));
     const ahead = Math.max(1, Math.min(8, Number(prepareSeconds) || 8));
     const end = Math.min(source.duration, start + ahead, loop ? loopEnd : Infinity);
@@ -227,8 +240,11 @@ export class SourceWindowPool {
     }
   }
   acquire(source, offset, span, { loop = false, loopStart = 0, loopEnd = source.duration } = {}) {
+    const rate = this.raw.sampleRate || source.sampleRate;
+    offset = stableSourceTime(offset, rate);
     if (loop && offset >= loopEnd)
       offset = loopStart + ((offset - loopStart) % (loopEnd - loopStart));
+    offset = stableSourceTime(offset, rate);
     const end = Math.min(source.duration, offset + span);
     // A small loop can use the browser's native looping without copying grains.
     const page = [...this.pages.values()].find(
@@ -256,7 +272,6 @@ export class SourceWindowPool {
     }
     // Large-loop boundary: assemble only this grain, never the entire loop.
     if (!loop || offset + span <= loopEnd) return null;
-    const rate = this.raw.sampleRate || source.sampleRate;
     const frames = Math.ceil(span * rate) + 2;
     const bytes = frames * source.channels * 4;
     if (this.bytes + this.reserved + bytes > this.budget) return null;

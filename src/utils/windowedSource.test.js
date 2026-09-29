@@ -235,3 +235,30 @@ it('refuses excess preparation without evicting a destination still awaiting com
   expect(pool.peakBytes).toBeLessThanOrEqual(pool.budget);
   pool.dispose();
 });
+
+it.each([8000, 44100, 48000, 96000])(
+  'recognizes an exact page boundary despite grain-clock roundoff at %i Hz',
+  async (sampleRate) => {
+    const read = vi.fn(async (_raw, _blob, start, end) => ({
+      buffer: raw.createBuffer(2, Math.ceil((end - start) * sampleRate) + 1, sampleRate),
+      offset: start,
+    }));
+    const pool = new SourceWindowPool({ ...raw, sampleRate }, { decode: read });
+    const song = { ...source(), sampleRate };
+    await pool.prepare(song, 39.99999999999999, { prepareSeconds: 1 });
+    expect(read.mock.calls.map((call) => call[2])).toEqual([40]);
+    const grain = pool.acquire(song, 39.99999999999999, 0.12);
+    expect(grain).toBeTruthy();
+    expect(grain.offset).toBe(0);
+    grain.release();
+    expect(pool.acquire(song, 40 - 0.25 / sampleRate, 0.12)).toBeNull();
+    const looped = pool.acquire(song, 43.99999999999999, 0.12, {
+      loop: true,
+      loopStart: 40,
+      loopEnd: 44,
+    });
+    expect(looped.offset).toBe(0);
+    looped.release();
+    pool.dispose();
+  }
+);
