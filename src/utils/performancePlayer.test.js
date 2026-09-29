@@ -83,14 +83,55 @@ it('prefetches scheduled seeks and new loops after events have been partitioned 
   replay.transportEvents = [{ type: 'deckTransport', time: 5, args: ['A', { position: 150 }] }];
   replay.loopEvents = [{ type: 'setLoopRegion', time: 5, args: ['A', true, 75, 77] }];
   await replay.queueSources(3);
-  expect(warm).toHaveBeenCalledWith(150, { loop: false, prepareSeconds: 1 });
-  expect(warm).toHaveBeenCalledWith(75, {
-    loop: true,
-    loopStart: 75,
-    loopEnd: 77,
-    prepareSeconds: 1,
-  });
+  expect(warm).toHaveBeenCalledWith(
+    150,
+    { loop: false, prepareSeconds: 1, priority: 1 },
+    expect.any(Function),
+    expect.any(Function)
+  );
+  expect(warm).toHaveBeenCalledWith(
+    75,
+    { loop: true, loopStart: 75, loopEnd: 77, prepareSeconds: 1, priority: 1 },
+    expect.any(Function),
+    expect.any(Function)
+  );
 });
+
+it.each(['stop', 'replace', 'deadline'])(
+  'prepares upcoming loops and seeks in deadline order and retires retention on %s',
+  async (reason) => {
+    const warm = vi.fn(async () => {});
+    const lane = { assetId: 'song', player: { warmWindow: warm } };
+    const deck = { lanes: new Map([['vocals', lane]]) };
+    const replay = new PerformancePlayer({});
+    replay.engine = { decks: new Map([['A', deck]]), padPlayers: new Map() };
+    replay.raw = { currentTime: 10 };
+    replay.base = 10;
+    replay.sourceCache = { prepare: vi.fn(async () => {}) };
+    replay.sourceEvents = [];
+    replay.transportEvents = [
+      { type: 'deckTransport', time: 7, args: ['A', { position: 150 }] },
+      { type: 'deckTransport', time: 4, args: ['A', { position: 80, action: 'rate' }] },
+      { type: 'deckTransport', time: 9, args: ['A', { position: 40 }] },
+    ];
+    replay.loopEvents = [
+      { type: 'setLoopRegion', time: 5, scheduledTime: 6, args: ['A', true, 75, 77] },
+    ];
+    await replay.queueSources(0);
+    expect(warm.mock.calls.map(([position]) => position)).toEqual([75, 150]);
+    const [, , current, retainUntil] = warm.mock.calls[0];
+    expect(current).toBe(retainUntil);
+    expect(current()).toBe(true);
+    if (reason === 'stop') replay.stopped = true;
+    if (reason === 'replace') deck.lanes.delete('vocals');
+    if (reason === 'deadline') {
+      replay.raw.currentTime = 15.2;
+      expect(current()).toBe(true);
+      replay.raw.currentTime = 16.2;
+    }
+    expect(current()).toBe(false);
+  }
+);
 it('uses source seconds for confirmed transport when a grain player runs at non-unit rate', () => {
   const source = { start: vi.fn(), stop: vi.fn() };
   const deck = {

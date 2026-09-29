@@ -334,6 +334,14 @@
       await replay.prepare(capture);
       const prepareMs = performance.now() - begin;
       assert(replay.sourceCache.bytes === 0, 'Deck sources retained whole PCM');
+      if (new URL(location.href).searchParams.has('slow-decode')) {
+        const pool = replay.engine.sourceWindowPool;
+        const decode = pool.decode;
+        pool.decode = async (...args) => {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          return decode(...args);
+        };
+      }
       let peak = 0;
       const poll = setInterval(() => {
         peak = Math.max(peak, Number(replay.engine.getDeckMeterLevel('A')) || 0);
