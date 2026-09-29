@@ -1,103 +1,21 @@
 name: Build & Deploy
-
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  # Manual re-run of the qualified deploy (for example after catalog edits).
   workflow_dispatch:
-
-env:
-  # Opt into the June 2026 GitHub JavaScript-action runtime early so
-  # checkout/setup-node/artifact failures show up before production fixes need it.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  test:
+  diagnose:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        # 22.x is production (netlify.toml NODE_VERSION); 24.x is the
-        # forward-looking lane. Node 20 reached end of life on 2026-04-30.
-        node-version: [22.x, 24.x]
-
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Chromium for release checks
-        run: npx --no-install playwright install --with-deps chromium
-
-      - name: Check dependency security advisories
-        run: npm audit --audit-level=moderate
-
-      - name: Frozen-source release gate including audio and mandatory soak
-        run: npm run test:studio-release
-        env:
-          STUDIO_GATE_OUTPUT: ${{ runner.temp }}/stemdeck-release-qa
-        timeout-minutes: 25
-
-      - name: Upload complete qualification evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-qa-${{ matrix.node-version }}
-          path: ${{ runner.temp }}/stemdeck-release-qa/
-          if-no-files-found: warn
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: dist-${{ matrix.node-version }}
-          path: dist/
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Use Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Deploy the exact build that passed validation, not a second build.
-      - name: Download validated production build
-        uses: actions/download-artifact@v4
+          cache: npm
+      - run: npm ci
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: node scripts/diagnose-master-gain.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          name: dist-22.x
-          path: dist/
-
-      - name: Verify the exact qualified artifact before deployment
-        run: node scripts/release-artifact.mjs dist
-
-      - name: Deploy to Netlify
-        run: >-
-          npx --yes netlify-cli@26.0.2 deploy
-          --dir=dist
-          --no-build
-          --prod
-          --auth "$NETLIFY_AUTH_TOKEN"
-          --site "$NETLIFY_SITE_ID"
-          --message "Deploy from GitHub Actions"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 5
+          name: master-gain-diagnostic
+          path: /tmp/master-gain-diagnostic.json

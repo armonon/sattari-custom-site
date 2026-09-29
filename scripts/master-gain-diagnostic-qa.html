@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Master gain stage diagnosis</title>
+<button id="run">Run</button><pre id="result"></pre>
+<script type="module">
+import * as Tone from 'tone';
+import { arrangementMasterEqualizer } from '/src/utils/arrangementEngine.js';
+import { normalizeMasterProcessing } from '/src/utils/masterOutput.js';
+import { createMutableEffectRack } from '/src/utils/arrangementEffects.js';
+const stages = {
+  lowcut: context => new Tone.Filter({context,type:'highpass',frequency:20,rolloff:-12}),
+  eq: context => arrangementMasterEqualizer(context, normalizeMasterProcessing({})),
+  toneEq: context => new Tone.EQ3({context,low:0,mid:0,high:0,lowFrequency:250,highFrequency:2500}),
+  width: context => new Tone.StereoWidener({context,width:.5}),
+  inserts: context => createMutableEffectRack(context.rawContext, []),
+  compressor: context => new Tone.Compressor({context,threshold:-1,ratio:1,attack:.012,release:.2}),
+  hardKnee: context => new Tone.Compressor({context,threshold:-1,ratio:1,knee:0,attack:.012,release:.2}),
+};
+async function render(names, trim, quantized = false) {
+  const context = new Tone.OfflineContext(2,1.1,48000);
+  const nodes = [];
+  try {
+    const before = new Tone.Gain({context,gain:10 ** (-trim/20)});
+    const after = new Tone.Gain({context,gain:10 ** (trim/20)});
+    nodes.push(before, after);
+    let tail = before;
+    for (const name of names) {
+      const stage = stages[name](context);
+      nodes.push(stage);
+      Tone.connect(tail, stage.input || stage);
+      tail = stage.output || stage;
+    }
+    Tone.connect(tail, after);
+    Tone.connect(after, context.rawContext.destination);
+    const source = context.rawContext.createBufferSource();
+    const buffer = context.rawContext.createBuffer(2,48000,48000);
+    for(let c=0;c<2;c++) for(let i=0;i<48000;i++) {
+      const value = .08*Math.sin(2*Math.PI*400*i/48000);
+      buffer.getChannelData(c)[i] = quantized ? Math.round(value*32767)/32768 : value;
+    }
+    source.buffer = buffer;
+    Tone.connect(source, before);
+    source.start(0);
+    return (await context.render(false)).get().getChannelData(0).slice();
+  } finally {
+    for(const node of nodes) node.dispose();
+    context.dispose();
+  }
+}
+document.querySelector('#run').onclick = async () => {
+  const results = [];
+  try {
+    for(const quantized of [false,true]) for(const names of [[],...Object.keys(stages).map(name=>[name]),['lowcut','eq'],['lowcut','eq','width'],['lowcut','eq','width','inserts'],['lowcut','eq','width','inserts','compressor'],['lowcut','eq','width','inserts','hardKnee']]) {
+      const a=await render(names,0,quantized),b=await render(names,6,quantized);
+      let max=0,energy=0; for(let i=24000;i<40000;i++){max=Math.max(max,Math.abs(a[i]-b[i]));energy+=(a[i]-b[i])**2;}
+      results.push({names,quantized,max,rms:Math.sqrt(energy/16000)});
+    }
+  } catch(error) { results.push({error:error.stack}); }
+  document.querySelector('#result').textContent=JSON.stringify({complete:true,results},null,2);
+};
+</script></html>
