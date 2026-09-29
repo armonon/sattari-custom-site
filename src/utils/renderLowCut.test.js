@@ -12,7 +12,7 @@ describe('fixed export low-cut', () => {
       expect(feedback.every(Number.isFinite)).toBe(true);
       expect(feedforward.reduce((sum, value) => sum + value, 0)).toBe(0);
       expect(feedforward[0]).toBe(feedforward[2]);
-      expect(feedback[0]).toBeGreaterThan(1);
+      expect(feedback[0]).toBe(1);
       // A conjugate pole pair stays inside the unit circle.
       expect(Math.sqrt(feedback[2] / feedback[0])).toBeLessThan(1);
       const nyquistGain =

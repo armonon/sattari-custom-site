@@ -9,8 +9,11 @@ export function createRenderLowCut(context, frequency) {
   const cosine = Math.cos(omega);
   // Web Audio high-pass Q is in decibels; Tone.Filter's existing default is 1.
   const alpha = Math.sin(omega) / (2 * 10 ** (1 / 20));
+  // Normalize in JS double precision; browser coefficient normalization can
+  // otherwise shift the response at very low cutoffs.
+  const a0 = 1 + alpha;
   return context.createIIRFilter(
-    [(1 + cosine) / 2, -(1 + cosine), (1 + cosine) / 2],
-    [1 + alpha, -2 * cosine, 1 - alpha]
+    [(1 + cosine) / (2 * a0), -(1 + cosine) / a0, (1 + cosine) / (2 * a0)],
+    [1, (-2 * cosine) / a0, (1 - alpha) / a0]
   );
 }

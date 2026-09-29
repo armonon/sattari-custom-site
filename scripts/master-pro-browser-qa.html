@@ -31,19 +31,32 @@ document.querySelector('#run').onclick=async event=>{
  };
  const context=new Tone.OfflineContext(2,1.1,48000),engine=new ArrangementEngine(context,context.rawContext.destination);
  try{
-   await test('fixed export low-cut preserves the live frequency response at every supported cutoff',async()=>{
+   await test('fixed export low-cut renders the defined live-filter magnitude and phase',async()=>{
      for(const sampleRate of [44100,48000,96000]) for(const cutoff of [20,80,200]) {
-       const responseContext=new Tone.OfflineContext(2,.1,sampleRate),raw=responseContext.rawContext;
-       const fixed=createRenderLowCut(raw,cutoff),live=new Tone.Filter({context:responseContext,type:'highpass',frequency:cutoff,rolloff:-12});
-       const frequencies=Float32Array.from({length:128},(_,i)=>Math.min(sampleRate*.49,5*2**(i/10)));
-       const actual=new Float32Array(128),phase=new Float32Array(128),expected=new Float32Array(128),expectedPhase=new Float32Array(128);
-       const reference=raw.createBiquadFilter();reference.type='highpass';reference.frequency.value=live.frequency.value;reference.Q.value=live.Q.value;
-       fixed.getFrequencyResponse(frequencies,actual,phase);reference.getFrequencyResponse(frequencies,expected,expectedPhase);
-       for(let i=0;i<128;i++) {
-         assert(Math.abs(actual[i]-expected[i])<1e-5,`response mismatch at ${sampleRate}/${cutoff}/${frequencies[i]}`);
-         assert(Math.abs(phase[i]-expectedPhase[i])<1e-5,`phase mismatch at ${sampleRate}/${cutoff}/${frequencies[i]}`);
+       const responseContext=new Tone.OfflineContext(1,1,sampleRate),raw=responseContext.rawContext;
+       const fixed=createRenderLowCut(raw,cutoff),live=new Tone.Filter({context:responseContext,type:'highpass',frequency:cutoff,rolloff:-12}),source=raw.createBufferSource();
+       try {
+         const frequencies=[10,cutoff,400,3000],amplitude=.025;
+         source.buffer=raw.createBuffer(1,sampleRate,sampleRate);
+         for(let i=0;i<sampleRate;i++)source.buffer.getChannelData(0)[i]=frequencies.reduce((sum,hz)=>sum+amplitude*Math.sin(2*Math.PI*hz*i/sampleRate),0);
+         source.connect(fixed).connect(raw.destination);source.start(0);
+         const pcm=(await responseContext.render(false)).get().getChannelData(0);
+         // Measure actual PCM, not only the filter's reported frequency response.
+         // Equivalent bilinear coefficients independently describe the live filter.
+         const k=Math.tan(Math.PI*live.frequency.value/sampleRate),q=10**(live.Q.value/20),normal=1/(1+k/q+k*k);
+         const b=[normal,-2*normal,normal],a=[1,2*(k*k-1)*normal,(1-k/q+k*k)*normal];
+         for(const hz of frequencies) {
+           const w=2*Math.PI*hz/sampleRate;
+           let real=0,imag=0;
+           for(let i=sampleRate/2;i<sampleRate;i++){real+=pcm[i]*Math.sin(w*i);imag+=pcm[i]*Math.cos(w*i);}
+           real*=4/(sampleRate*amplitude);imag*=4/(sampleRate*amplitude);
+           const br=b.reduce((s,v,i)=>s+v*Math.cos(w*i),0),bi=b.reduce((s,v,i)=>s-v*Math.sin(w*i),0),ar=a.reduce((s,v,i)=>s+v*Math.cos(w*i),0),ai=a.reduce((s,v,i)=>s-v*Math.sin(w*i),0),den=ar*ar+ai*ai;
+           assert(Math.abs(real-(br*ar+bi*ai)/den)<1e-5,`real response mismatch ${sampleRate}/${cutoff}/${hz}`);
+           assert(Math.abs(imag-(bi*ar-br*ai)/den)<1e-5,`phase response mismatch ${sampleRate}/${cutoff}/${hz}`);
+         }
+       } finally {
+         source.disconnect();fixed.disconnect();live.dispose();responseContext.dispose();
        }
-       fixed.disconnect();reference.disconnect();live.dispose();responseContext.dispose();
      }
    });
    await test('fixed export low-cut preserves gain cancellation for stereo composite audio',async()=>{
