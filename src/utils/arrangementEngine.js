@@ -30,6 +30,7 @@ import {
   sendGain,
 } from './mixerReturns';
 import { LevelMeter, meterReading } from './mixerMeters';
+import { createRenderLowCut } from './renderLowCut';
 
 // Tempo-synced returns follow the session tempo passed with the master settings.
 const returnsTempo = (project, settings) => {
@@ -183,7 +184,7 @@ export function arrangementMasterEqualizer(context, processing) {
   };
 }
 
-function masterGraph(context, settings, output, preMaster = false) {
+function masterGraph(context, settings, output, { preMaster = false, staticRender = false } = {}) {
   const input = new Tone.Gain({ context, gain: preMaster ? 1 : masterGain(settings.level ?? 100) });
   if (preMaster) {
     Tone.connect(input, output);
@@ -194,12 +195,10 @@ function masterGraph(context, settings, output, preMaster = false) {
   const limiterDrive = new Tone.Gain({ context, gain: trimGain(processing.limiterDrive) });
   const reference = new Tone.Gain({ context, gain: linearGain(settings.level ?? 100) });
   Tone.connect(reference, output);
-  const lowCut = new Tone.Filter({
-    context,
-    type: 'highpass',
-    frequency: processing.bypass ? 20 : processing.lowCut,
-    rolloff: -12,
-  });
+  const cutoff = processing.bypass ? 20 : processing.lowCut;
+  const lowCut = staticRender
+    ? createRenderLowCut(context.rawContext, cutoff)
+    : new Tone.Filter({ context, type: 'highpass', frequency: cutoff, rolloff: -12 });
   const eq = arrangementMasterEqualizer(context, processing);
   const width = new Tone.StereoWidener({
     context,
@@ -239,6 +238,7 @@ function masterGraph(context, settings, output, preMaster = false) {
     referenceOutput: reference,
     reduction: () => Math.max(0, -(compressor.reduction || 0)),
     update(next) {
+      if (staticRender) throw new Error('Offline master settings are fixed for each render.');
       const value = normalizeMasterProcessing(next.processing),
         profile = masterAssistProfile(next.compression, next.mode);
       inserts.update(value.effects || []);
@@ -1499,7 +1499,10 @@ export class ArrangementEngine {
     const offline = new Tone.OfflineContext(2, duration, sampleRate);
     let graph, returns;
     try {
-      const master = masterGraph(offline, settings, offline.rawContext.destination, !!trackId);
+      const master = masterGraph(offline, settings, offline.rawContext.destination, {
+        preMaster: !!trackId,
+        staticRender: true,
+      });
       graph = { nodes: master.nodes, sources: [] };
       returns = offlineReturns(offline, selection, settings, master.input, trackId);
       const scheduled = scheduleArrangement(
