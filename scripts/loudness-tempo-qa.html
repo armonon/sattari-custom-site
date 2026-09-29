@@ -33,6 +33,7 @@
       const button = document.querySelector('#run'),
         result = document.querySelector('#result');
       button.disabled = true;
+      window.qaComplete = false;
       result.textContent = '';
       let engine, oscillator, gain, heartbeat;
       try {
@@ -47,11 +48,18 @@
         oscillator = raw.createOscillator();
         oscillator.frequency.value = 997;
         gain = raw.createGain();
-        gain.gain.value = 0.1;
+        gain.gain.value = 0;
         oscillator.connect(gain);
         Tone.connect(gain, engine.output);
         engine.resetLoudness();
-        oscillator.start();
+        // A steady-tone calibration must not include a hard, arbitrary-phase
+        // onset. Reset once it is sounding to also verify continuous reset DSP.
+        const startAt = raw.currentTime + 0.05;
+        gain.gain.setValueAtTime(0, startAt);
+        gain.gain.linearRampToValueAtTime(0.1, startAt + 0.02);
+        oscillator.start(startAt);
+        await wait(300);
+        engine.resetLoudness();
         await wait(4300);
         const meter = engine.getMasterStatus().loudness;
         assert(Math.abs(meter.integrated + 20) < 0.3, `integrated ${meter.integrated}`);
@@ -93,6 +101,7 @@
         gain?.disconnect();
         engine?.dispose();
         button.disabled = false;
+        window.qaComplete = true;
       }
     };
   </script>
