@@ -14,6 +14,8 @@ async function fixture() {
   await mkdir(join(root, 'assets'));
   await writeFile(join(root, 'index.html'), '<html>qualified build</html>');
   await writeFile(join(root, 'assets', 'studio.js'), 'export const version = 1;');
+  await mkdir(join(root, '.vite'));
+  await writeFile(join(root, '.vite', 'manifest.json'), '{"entry":"assets/studio.js"}');
   const manifest = {
     softwarePassed: true,
     unchanged: true,
@@ -49,4 +51,10 @@ it('rejects symlinks and failed evidence', async () => {
     JSON.stringify({ ...manifest, softwarePassed: false })
   );
   await expect(verifyArtifact(root)).rejects.toThrow('no passing');
+});
+it('rejects an archive that omits hidden files from the qualified build', async () => {
+  const { root, manifest } = await fixture();
+  expect(manifest.artifact.files).toBe(3);
+  await rm(join(root, '.vite'), { recursive: true });
+  await expect(verifyArtifact(root)).rejects.toThrow('bytes differ');
 });

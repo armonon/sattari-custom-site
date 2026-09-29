@@ -60,6 +60,8 @@ jobs:
         with:
           name: dist-${{ matrix.node-version }}
           path: dist/
+          # The qualified digest includes Vite's hidden manifest and template.
+          include-hidden-files: true
 
   deploy:
     needs: test
