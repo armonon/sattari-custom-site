@@ -425,39 +425,51 @@ export class PerformancePlayer {
         ),
       ])
     );
-    for (const event of this.transportEvents || []) {
-      if (event.type !== 'deckTransport' || event.time < elapsed || event.time > elapsed + 3)
-        continue;
-      const deck = this.engine.decks.get(event.args[0]);
-      // Prepare the launch window, not eight speculative seconds for every
-      // upcoming seek. The audible player's normal read-ahead fills the tail;
-      // otherwise an earlier seek's tail can starve the next musical deadline.
-      // The shared pool still serializes decoding and enforces its memory cap.
-      await Promise.all(
-        [...(deck?.lanes.values() || [])].map((lane) =>
-          lane.player.warmWindow?.(event.args[1].position || 0, {
-            loop: false,
-            prepareSeconds: 1,
-          })
-        )
-      );
-    }
-    for (const event of this.loopEvents || []) {
-      if (!event.args[1] || event.time < elapsed || event.time > elapsed + 3) continue;
-      const start = event.type === 'setLoopRegion' ? Math.max(0, Number(event.args[2]) || 0) : 0;
-      const end =
-        event.type === 'setLoopRegion'
-          ? Number(event.args[3])
-          : 240 / Math.max(1, Number(event.args[2]) || 120);
-      await Promise.all(
-        [...(this.engine.decks.get(event.args[0])?.lanes.values() || [])].map((lane) =>
-          lane.player.warmWindow?.(start, {
+    if (this.stopped) return;
+    // Warm only each launch page, in musical deadline order. Start far enough
+    // ahead for slow decoders, give it audible-read priority, and keep it resident
+    // until native grains take over. The shared pool still bounds all admission.
+    const upcoming = [
+      ...(this.transportEvents || []).filter(
+        (event) => event.args[1].playing !== false && event.args[1].action !== 'rate'
+      ),
+      ...(this.loopEvents || []).filter((event) => event.args[1]),
+    ]
+      .filter((event) => event.time >= elapsed && event.time <= elapsed + 8)
+      .sort((a, b) => a.time - b.time);
+    for (const event of upcoming) {
+      const transport = event.type === 'deckTransport';
+      const start = transport
+        ? event.args[1].position || 0
+        : event.type === 'setLoopRegion'
+          ? Math.max(0, Number(event.args[2]) || 0)
+          : 0;
+      const region = transport
+        ? { loop: false }
+        : {
             loop: true,
             loopStart: start,
-            loopEnd: end,
-            prepareSeconds: 1,
-          })
-        )
+            loopEnd:
+              event.type === 'setLoopRegion'
+                ? Number(event.args[3])
+                : 240 / Math.max(1, Number(event.args[2]) || 120),
+          };
+      const deck = this.engine.decks.get(event.args[0]);
+      await Promise.all(
+        [...(deck?.lanes || [])].map(([id, lane]) => {
+          const current = () =>
+            !this.stopped &&
+            !lane.player.disposed &&
+            this.engine.decks.get(event.args[0]) === deck &&
+            deck.lanes.get(id) === lane &&
+            (!Number.isFinite(this.base) || this.raw.currentTime < this.base + event.time + 0.1);
+          return lane.player.warmWindow?.(
+            start,
+            { ...region, prepareSeconds: 1, priority: 1 },
+            current,
+            current
+          );
+        })
       );
     }
   }

@@ -14,7 +14,7 @@ try {
   }
   browser = await chromium.launch({headless:true,args:['--mute-audio']});
   const results = {};
-  for (const [name, query] of [['master-pro-browser',''],['live-window',''],['live-window','?slow-decode']]) {
+  for (const [name, query] of [['master-pro-browser',''],['windowed-replay',''],['windowed-replay','?slow-decode'],['live-window','?slow-decode']]) {
     const context = await browser.newContext();
     const page = await context.newPage();
     page.on('pageerror', error => {console.error(error);process.exitCode=1;});

@@ -49,6 +49,7 @@ it.each(['commit', 'cancel', 'reject'])(
     const isAudibleCurrent = player.pool.prepare.mock.calls[0][3];
     const deck = { playbackRate: 2, lanes: new Map([['vocals', { duration: 180, player }]]) };
     const apply = vi.fn(() => {
+      expect(player.pool.prepare.mock.calls[1][4]()).toBe(true);
       expect(isAudibleCurrent()).toBe(false);
       expect(player.preparing).toBeNull();
       expect(player.lastPrefetch).toBe(-1);
@@ -65,12 +66,16 @@ it.each(['commit', 'cancel', 'reject'])(
         loopStart: 75,
         loopEnd: 77,
       },
+      expect.any(Function),
       expect.any(Function)
     );
+    const retainUntil = player.pool.prepare.mock.calls[1][4];
+    expect(retainUntil()).toBe(true);
     if (outcome === 'cancel') cancelPreparedTransport(deck);
     if (outcome === 'reject') destination.reject(new Error('Unavailable loop'));
     else destination.resolve();
     expect(await job).toBe(outcome === 'commit');
+    expect(retainUntil()).toBe(false);
     expect(isAudibleCurrent()).toBe(outcome !== 'commit');
     expect(apply).toHaveBeenCalledTimes(outcome === 'commit' ? 1 : 0);
     currentRead.resolve();

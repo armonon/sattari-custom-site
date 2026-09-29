@@ -21,6 +21,7 @@ const browser = await chromium.launch({
 const checks = [
   ['compressed-window', null],
   ['windowed-replay', null],
+  ['windowed-replay', null, '?slow-decode'],
   ['grain-stall', null],
   ['live-window', null],
   ['live-window', null, '?slow-decode'],
