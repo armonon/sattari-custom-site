@@ -11,6 +11,7 @@ import {ArrangementEngine} from '/src/utils/arrangementEngine.js';
 import {emptyArrangement,audioTrack,audioClip} from '/src/utils/arrangementModel.js';
 import {wavBytes} from '/src/utils/arrangementExport.js';
 import {putAudioAsset,deleteAudioAsset} from '/src/utils/audioProjectStore.js';
+import {createRenderLowCut} from '/src/utils/renderLowCut.js';
 const assert=(ok,message)=>{if(!ok)throw Error(message)};
 const rms=buffer=>{const pcm=buffer.getChannelData(0);let sum=0;for(let i=24000;i<40000;i++)sum+=pcm[i]*pcm[i];return Math.sqrt(sum/16000)};
 const difference=(a,b)=>{let maximum=0;for(let i=24000;i<40000;i++)maximum=Math.max(maximum,Math.abs(a.getChannelData(0)[i]-b.getChannelData(0)[i]));return maximum};
@@ -30,6 +31,56 @@ document.querySelector('#run').onclick=async event=>{
  };
  const context=new Tone.OfflineContext(2,1.1,48000),engine=new ArrangementEngine(context,context.rawContext.destination);
  try{
+   await test('fixed export low-cut renders the defined live-filter magnitude and phase',async()=>{
+     for(const sampleRate of [44100,48000,96000]) for(const cutoff of [20,80,200]) {
+       const responseContext=new Tone.OfflineContext(1,1,sampleRate),raw=responseContext.rawContext;
+       const fixed=createRenderLowCut(raw,cutoff),live=new Tone.Filter({context:responseContext,type:'highpass',frequency:cutoff,rolloff:-12}),source=raw.createBufferSource();
+       try {
+         const frequencies=[10,cutoff,400,3000],amplitude=.025;
+         source.buffer=raw.createBuffer(1,sampleRate,sampleRate);
+         for(let i=0;i<sampleRate;i++)source.buffer.getChannelData(0)[i]=frequencies.reduce((sum,hz)=>sum+amplitude*Math.sin(2*Math.PI*hz*i/sampleRate),0);
+         source.connect(fixed).connect(raw.destination);source.start(0);
+         const pcm=(await responseContext.render(false)).get().getChannelData(0);
+         // Measure actual PCM, not only the filter's reported frequency response.
+         // Equivalent bilinear coefficients independently describe the live filter.
+         const k=Math.tan(Math.PI*live.frequency.value/sampleRate),q=10**(live.Q.value/20),normal=1/(1+k/q+k*k);
+         const b=[normal,-2*normal,normal],a=[1,2*(k*k-1)*normal,(1-k/q+k*k)*normal];
+         for(const hz of frequencies) {
+           const w=2*Math.PI*hz/sampleRate;
+           let real=0,imag=0;
+           for(let i=sampleRate/2;i<sampleRate;i++){real+=pcm[i]*Math.sin(w*i);imag+=pcm[i]*Math.cos(w*i);}
+           real*=4/(sampleRate*amplitude);imag*=4/(sampleRate*amplitude);
+           const br=b.reduce((s,v,i)=>s+v*Math.cos(w*i),0),bi=b.reduce((s,v,i)=>s-v*Math.sin(w*i),0),ar=a.reduce((s,v,i)=>s+v*Math.cos(w*i),0),ai=a.reduce((s,v,i)=>s-v*Math.sin(w*i),0),den=ar*ar+ai*ai;
+           assert(Math.abs(real-(br*ar+bi*ai)/den)<1e-5,`real response mismatch ${sampleRate}/${cutoff}/${hz}`);
+           assert(Math.abs(imag-(bi*ar-br*ai)/den)<1e-5,`phase response mismatch ${sampleRate}/${cutoff}/${hz}`);
+         }
+       } finally {
+         source.disconnect();fixed.disconnect();live.dispose();responseContext.dispose();
+       }
+     }
+   });
+   await test('fixed export low-cut preserves gain cancellation for stereo composite audio',async()=>{
+     for(const sampleRate of [44100,48000,96000]) for(const cutoff of [20,80,200]) {
+       const render=async(trim)=>{
+         const raw=new OfflineAudioContext(2,sampleRate,sampleRate),source=raw.createBufferSource();
+         const input=raw.createGain(),output=raw.createGain(),filter=createRenderLowCut(raw,cutoff);
+         source.buffer=raw.createBuffer(2,sampleRate,sampleRate);
+         for(let c=0;c<2;c++)for(let i=0;i<sampleRate;i++)source.buffer.getChannelData(c)[i]=[10,40,120,400,3000].reduce((sum,hz)=>sum+.025*Math.sin(2*Math.PI*hz*i/sampleRate+c*.7),0);
+         input.gain.value=10**(-trim/20);output.gain.value=10**(trim/20);
+         source.connect(input).connect(filter).connect(output).connect(raw.destination);source.start();
+         try{return await raw.startRendering()}finally{source.disconnect();input.disconnect();filter.disconnect();output.disconnect()}
+       };
+       const clean=await render(0);
+       for(const trim of [-6,6]){
+         const changed=await render(trim);let maximum=0;
+         for(let c=0;c<2;c++)for(let i=0;i<sampleRate;i++){
+           const value=changed.getChannelData(c)[i];assert(Number.isFinite(value),'non-finite output');
+           maximum=Math.max(maximum,Math.abs(clean.getChannelData(c)[i]-value));
+         }
+         assert(maximum<1e-5,`low-cut cancellation mismatch ${sampleRate}/${cutoff}/${trim}: ${maximum}`);
+       }
+     }
+   });
    asset=await putAudioAsset(new Blob([wavBytes(tone(context.rawContext))],{type:'audio/wav'}),{name:'master-pro-generated-verification'});
    const track=audioTrack('Generated check');track.clips=[audioClip(asset.id,'Tone',1)];
    const project={...emptyArrangement(),tracks:[track]};
