@@ -177,3 +177,61 @@ it('promotes a shared page and retains it when a newer reader still needs it', a
   expect(pool.pending.size).toBe(0);
   pool.dispose();
 });
+
+it('retains an entire cold destination through cache churn until its transport commits', async () => {
+  const pool = new SourceWindowPool(raw, { budget: 4 * 384008 + 60, decode });
+  const song = source();
+  let preparing = true;
+  await pool.prepare(
+    song,
+    150,
+    {},
+    () => true,
+    () => preparing
+  );
+  for (let index = 0; index < 5; index++) await pool.page(song, index);
+  for (const offset of [150, 154, 158]) {
+    const grain = pool.acquire(song, offset, 0.1);
+    expect(grain).toBeTruthy();
+    grain.release();
+  }
+  expect(pool.peakBytes).toBeLessThanOrEqual(pool.budget);
+  preparing = false;
+  for (let index = 5; index < 10; index++) await pool.page(song, index);
+  expect(pool.acquire(song, 150, 0.1)).toBeNull();
+  pool.dispose();
+});
+
+it('retains cached and deduplicated pages for the current request only', async () => {
+  const pending = deferred();
+  const pool = new SourceWindowPool(raw, { decode: () => pending.promise });
+  const song = source();
+  const initial = pool.page(song, 0);
+  let current = true;
+  const keep = () => current;
+  const shared = pool.page(song, 0, { retainUntil: keep });
+  pending.resolve({ buffer: raw.createBuffer(2, 48001, 8000), offset: 0 });
+  const page = await shared;
+  expect(page).toBe(await initial);
+  expect(pool.retain(page)).toBe(true);
+  current = false;
+  expect(pool.retain(page)).toBe(false);
+  const keepCached = () => true;
+  expect(await pool.page(song, 0, { retainUntil: keepCached })).toBe(page);
+  expect(page.retainedBy).toEqual(new Set([keepCached]));
+  pool.dispose();
+});
+
+it('refuses excess preparation without evicting a destination still awaiting commit', async () => {
+  const pool = new SourceWindowPool(raw, { budget: 400000, decode });
+  const song = source();
+  let current = true;
+  await pool.page(song, 0, { retainUntil: () => current });
+  await expect(pool.page(song, 4)).rejects.toThrow('Too many sources');
+  expect(pool.pages.size).toBe(1);
+  current = false;
+  await pool.page(song, 4);
+  expect(pool.acquire(song, 1, 0.1)).toBeNull();
+  expect(pool.peakBytes).toBeLessThanOrEqual(pool.budget);
+  pool.dispose();
+});

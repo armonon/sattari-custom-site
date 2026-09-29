@@ -70,6 +70,12 @@ export class SourceWindowPool {
     if (!this.ids.has(source)) this.ids.set(source, ++this.sequence);
     return `${this.ids.get(source)}:${index}`;
   }
+  retain(page, until) {
+    page.retainedBy ||= new Set();
+    for (const current of page.retainedBy) if (!current()) page.retainedBy.delete(current);
+    if (until?.()) page.retainedBy.add(until);
+    return page.retainedBy.size > 0;
+  }
   async drain() {
     if (this.decoding) return;
     this.decoding = true;
@@ -83,6 +89,7 @@ export class SourceWindowPool {
         try {
           if (this.controller.signal.aborted) throw new Error('Audio preparation cancelled.');
           const page = job.guards.some((current) => current()) ? await job.run() : undefined;
+          if (page) for (const until of job.retainers) this.retain(page, until);
           this.pending.delete(job.key);
           job.resolve(page);
         } catch (error) {
@@ -96,18 +103,20 @@ export class SourceWindowPool {
       this.decoding = false;
     }
   }
-  async page(source, index, { priority = 0, isCurrent = () => true } = {}) {
+  async page(source, index, { priority = 0, isCurrent = () => true, retainUntil } = {}) {
     if (this.controller.signal.aborted) throw new Error('Audio preparation cancelled.');
     const key = this.key(source, index);
     const cached = this.pages.get(key);
     if (cached) {
       cached.used = ++this.sequence;
+      this.retain(cached, retainUntil);
       return cached;
     }
     const pending = this.pending.get(key);
     if (pending) {
       pending.priority = Math.max(pending.priority, priority);
       pending.guards.push(isCurrent);
+      if (retainUntil) pending.retainers.add(retainUntil);
       return pending.promise;
     }
     const run = async () => {
@@ -130,7 +139,7 @@ export class SourceWindowPool {
         throw new Error('This source configuration exceeds available playback capacity.');
       for (const [oldKey, old] of [...this.pages].sort((a, b) => a[1].used - b[1].used)) {
         if (this.bytes + this.reserved + reserve <= this.budget) break;
-        if (!old.pins) {
+        if (!old.pins && !this.retain(old)) {
           this.pages.delete(oldKey);
           this.bytes -= old.bytes;
         }
@@ -172,7 +181,14 @@ export class SourceWindowPool {
         this.reserved -= reserve;
       }
     };
-    const job = { key, run, priority, guards: [isCurrent], started: false };
+    const job = {
+      key,
+      run,
+      priority,
+      guards: [isCurrent],
+      retainers: new Set(retainUntil ? [retainUntil] : []),
+      started: false,
+    };
     job.promise = new Promise((resolve, reject) => Object.assign(job, { resolve, reject }));
     this.pending.set(key, job);
     void this.drain();
@@ -188,7 +204,8 @@ export class SourceWindowPool {
       prepareSeconds = 8,
       priority = 0,
     } = {},
-    isCurrent = () => true
+    isCurrent = () => true,
+    retainUntil
   ) {
     if (loop && position >= loopEnd)
       position = loopStart + ((position - loopStart) % (loopEnd - loopStart));
@@ -206,7 +223,7 @@ export class SourceWindowPool {
       // admitted decode, but never queue its obsolete remaining pages ahead
       // of the currently audible destination.
       if (!isCurrent()) return;
-      await this.page(source, index, { priority, isCurrent });
+      await this.page(source, index, { priority, isCurrent, retainUntil });
     }
   }
   acquire(source, offset, span, { loop = false, loopStart = 0, loopEnd = source.duration } = {}) {

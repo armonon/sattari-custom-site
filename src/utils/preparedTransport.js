@@ -1,6 +1,6 @@
 // Preparing a cold destination must not stop the source that is currently audible.
 // All lanes commit together; a newer command, source replacement or disposal wins.
-export function prepareDeckAudio(deck, position, region, isCurrent = () => true) {
+export function prepareDeckAudio(deck, position, region, isCurrent = () => true, retainUntil) {
   const jobs = [];
   for (const lane of deck.lanes.values()) {
     if (!lane.player.prepareWindow) continue;
@@ -17,7 +17,8 @@ export function prepareDeckAudio(deck, position, region, isCurrent = () => true)
           loopStart: Math.min(Math.max(0, lane.duration - 0.001), requested.loopStart || 0),
           loopEnd: Math.min(lane.duration, requested.loopEnd || lane.duration),
         },
-        isCurrent
+        isCurrent,
+        retainUntil
       )
     );
   }
@@ -33,7 +34,9 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
   cancelPreparedTransport(deck);
   const generation = deck.transportGeneration;
   const lanes = [...deck.lanes.values()];
+  let finished = false;
   const finish = () => {
+    finished = true;
     // An invalidated source/disposed engine still owns its pending indicator.
     // A newer command owns a different generation and must remain untouched.
     if (deck.transportGeneration === generation) deck.preparing = false;
@@ -44,8 +47,10 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
     lanes.length === deck.lanes.size &&
     lanes.every((lane) => [...deck.lanes.values()].includes(lane));
   const commit = () => {
-    finish();
-    if (!current()) return false;
+    if (!current()) {
+      finish();
+      return false;
+    }
     // Warming source pages is not a playback restart. In particular, changing
     // a loop must not erase a deadline failure while its grain clock is stopped.
     const failure = lanes.find((lane) => lane.player.failure)?.player.failure;
@@ -53,7 +58,13 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
     if (restart)
       for (const lane of lanes) if (lane.player.prepareWindow) lane.player.failure = null;
     for (const lane of lanes) lane.player.invalidatePrefetch?.();
-    return apply();
+    // Keep every destination page resident until all lanes have queued their
+    // first native grains; those grains then own their ordinary page leases.
+    try {
+      return apply();
+    } finally {
+      finish();
+    }
   };
   const fail = (error) => {
     finish();
@@ -64,7 +75,7 @@ export function preparedTransport(engine, deck, position, apply, region, { resta
     return false;
   };
   try {
-    const pending = prepareDeckAudio(deck, position, region, current);
+    const pending = prepareDeckAudio(deck, position, region, current, () => !finished && current());
     if (!pending) return commit();
     deck.preparing = true;
     return pending.then(commit).catch(fail);
