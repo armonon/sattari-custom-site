@@ -13,15 +13,19 @@ try {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   browser = await chromium.launch({headless:true,args:['--mute-audio']});
-  const page = await browser.newPage();
-  page.on('pageerror', error => console.error(error));
   const results = {};
-  for (const name of ['master-pro-browser', 'master-gain-diagnostic']) {
-    await page.goto(`${origin}/scripts/${name}-qa.html`);
-    await page.locator('#run').click();
-    await page.waitForFunction(() => /\d+ passed[,;]|"complete"/.test(document.querySelector('#result')?.textContent || ''), null, {timeout:120000});
-    results[name] = await page.locator('#result').innerText();
-    console.log(name, results[name]);
+  for (const [name, query] of [['master-pro-browser',''],['live-window',''],['live-window','?slow-decode']]) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    page.on('pageerror', error => {console.error(error);process.exitCode=1;});
+    await page.goto(`${origin}/scripts/${name}-qa.html${query}`);
+    if(name === 'master-pro-browser') await page.locator('#run').click();
+    await page.waitForFunction(() => window.qaResult || /\d+ passed[,;]|"complete"/.test(document.querySelector('#result')?.textContent || ''), null, {timeout:180000});
+    const output=await page.locator('#result').innerText();
+    results[name+query] = output;
+    console.log(name+query, output);
+    if(/FAIL|[1-9]\d* failed/.test(output) || (output.startsWith('{') && !JSON.parse(output).pass))process.exitCode=1;
+    await context.close();
   }
   await writeFile('/tmp/master-gain-diagnostic.json', JSON.stringify(results, null, 2));
 } finally {

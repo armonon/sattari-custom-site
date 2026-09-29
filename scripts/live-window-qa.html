@@ -46,6 +46,13 @@
       }
     assert((await engine.playAll()).length === 2, 'Both decks did not start');
     await sleep(800);
+    if (new URL(location.href).searchParams.has('slow-decode')) {
+      const decode = engine.sourceWindowPool.decode;
+      engine.sourceWindowPool.decode = async (...args) => {
+        await sleep(100);
+        return decode(...args);
+      };
+    }
     const before = performance.now();
     await Promise.all(['A', 'B'].map((id) => engine.seekDeck(id, 150)));
     const seekMs = performance.now() - before;

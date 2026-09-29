@@ -1,6 +1,7 @@
 import { deferred } from '../test/deferred';
 import { it, expect, vi } from 'vitest';
 import { preparedTransport, cancelPreparedTransport } from './preparedTransport';
+import { WindowedGrainPlayer } from './windowedGrainPlayer';
 
 function fixture() {
   const wait = deferred();
@@ -30,6 +31,48 @@ it('leaves the audible source unchanged until all destination audio is ready', a
   expect(apply).toHaveBeenCalledOnce();
   expect(deck.preparing).toBe(false);
 });
+
+it.each(['commit', 'cancel', 'reject'])(
+  'keeps current read-ahead alive during a cold loop until %s',
+  async (outcome) => {
+    const currentRead = deferred();
+    const destination = deferred();
+    const player = Object.create(WindowedGrainPlayer.prototype);
+    player.pool = {
+      prepare: vi
+        .fn()
+        .mockReturnValueOnce(currentRead.promise)
+        .mockReturnValueOnce(destination.promise),
+    };
+    player.lastPrefetch = 153;
+    const audibleJob = player.prefetchWindow(150, { loop: false });
+    const isAudibleCurrent = player.pool.prepare.mock.calls[0][3];
+    const deck = { playbackRate: 2, lanes: new Map([['vocals', { duration: 180, player }]]) };
+    const apply = vi.fn(() => {
+      expect(isAudibleCurrent()).toBe(false);
+      expect(player.preparing).toBeNull();
+      expect(player.lastPrefetch).toBe(-1);
+      return true;
+    });
+    const job = preparedTransport({}, deck, 150, apply, { loop: true, loopStart: 75, loopEnd: 77 });
+    expect(isAudibleCurrent()).toBe(true);
+    expect(player.preparing).toBe(audibleJob);
+    expect(player.pool.prepare).toHaveBeenLastCalledWith(undefined, 150, {
+      loop: true,
+      loopStart: 75,
+      loopEnd: 77,
+      prepareSeconds: 4,
+    });
+    if (outcome === 'cancel') cancelPreparedTransport(deck);
+    if (outcome === 'reject') destination.reject(new Error('Unavailable loop'));
+    else destination.resolve();
+    expect(await job).toBe(outcome === 'commit');
+    expect(isAudibleCurrent()).toBe(outcome !== 'commit');
+    expect(apply).toHaveBeenCalledTimes(outcome === 'commit' ? 1 : 0);
+    currentRead.resolve();
+    await audibleJob;
+  }
+);
 it.each(['cancel', 'dispose', 'replace'])(
   'does not restart after %s during destination decoding',
   async (operation) => {

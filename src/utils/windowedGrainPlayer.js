@@ -175,11 +175,15 @@ export class WindowedGrainPlayer extends Tone.GrainPlayer {
     super.loopEnd = value;
     this.requeueGrains();
   }
-  prepareWindow(position, region = this) {
+  invalidatePrefetch() {
     this.preparationEpoch = (this.preparationEpoch || 0) + 1;
     // The old prefetch must not block read-ahead at a newly prepared seek.
     // Its generation guard retires it after its current admitted decode.
     this.preparing = null;
+    this.lastPrefetch = -1;
+  }
+  prepareWindow(position, region = this) {
+    this.invalidatePrefetch();
     return this.warmWindow(position, region);
   }
   warmWindow(position, region = this) {
