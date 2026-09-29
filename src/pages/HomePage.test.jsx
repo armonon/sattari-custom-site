@@ -43,6 +43,14 @@ it('keeps the three main Hub destinations on the homepage', () => {
   expect(screen.getByRole('link', { name: 'Enter the Hub' })).toHaveAttribute('href', '/hub');
 });
 
+it('lets visitors call to arrange an appointment without implying shop opening hours', () => {
+  renderHome();
+  expect(
+    screen.getByRole('link', { name: 'By appointment only. Call to arrange your visit.' })
+  ).toHaveAttribute('href', 'tel:+14244653020');
+  expect(screen.getByText('Studio & rehearsal / Every day, 6 PM to midnight')).toBeInTheDocument();
+});
+
 it('omits the listening desk, extra promotions, development row and listening shortcut', () => {
   const { container } = renderHome();
   expect(container.querySelector('audio')).toBeNull();

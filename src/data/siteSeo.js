@@ -7,7 +7,7 @@ export const BUSINESS = {
   phoneDisplay: '(424) 465-3020',
   phoneHref: 'tel:+14244653020',
   addressLine: '4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364',
-  shopHoursNote: 'Contact the shop to confirm hours and arrange your visit.',
+  shopHoursNote: 'By appointment only. Call to arrange your visit.',
   studioHoursNote: 'Every day, 6 PM to midnight (Los Angeles time).',
   address: {
     '@type': 'PostalAddress',
@@ -47,7 +47,7 @@ export const businessSchema = {
   image: absoluteUrl('/sattari site/sattari logo.png'),
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
+    'Appointment-only Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
 };
 
 export const websiteSchema = {
@@ -175,7 +175,7 @@ export const CATEGORY_LOCAL_HELP = {
   },
   all: {
     title: 'Shop online or plan a local visit',
-    copy: 'Sattari Music is based at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Contact us to confirm hours and in-store availability before visiting.',
+    copy: 'Sattari Music is based at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Shop visits are by appointment only. Call to arrange your visit and confirm in-store availability.',
     links: [
       { label: 'Visit our Woodland Hills music store', to: '/woodland-hills-music-store' },
       { label: 'Repairs, rentals and lessons', to: '/services' },

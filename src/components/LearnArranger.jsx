@@ -275,6 +275,7 @@ function createAudioEngine(Tone, rawContext) {
 export default function LearnArranger({
   bpm = 96,
   initialChords = DEFAULT_PROGRESSION,
+  initialInstrument = 'chords',
   onArrangementChange,
 }) {
   const [tempo, setTempo] = useState(bpm);
@@ -288,9 +289,11 @@ export default function LearnArranger({
   const [audioReady, setAudioReady] = useState(false);
   const [activeBar, setActiveBar] = useState(0);
   const [activeStep, setActiveStep] = useState(-1);
-  const [activeInstrument, setActiveInstrument] = useState('chords');
+  const [activeInstrument, setActiveInstrument] = useState(initialInstrument);
   const [hitPad, setHitPad] = useState('');
+  const [audioError, setAudioError] = useState('');
 
+  const lifetimeRef = useRef(0);
   const toneRef = useRef(null);
   const audioContextRef = useRef(null);
   const engineRef = useRef(null);
@@ -367,6 +370,7 @@ export default function LearnArranger({
 
   useEffect(
     () => () => {
+      lifetimeRef.current += 1;
       // Nothing to stop if nothing ever played.
       const engine = engineRef.current;
       if (engine) {
@@ -375,7 +379,9 @@ export default function LearnArranger({
       }
       scheduleRef.current.sequences.forEach((sequence) => sequence.dispose());
       engine?.dispose();
+      engineRef.current = null;
       audioContextRef.current?.close().catch(() => {});
+      audioContextRef.current = null;
       if (hitTimerRef.current) window.clearTimeout(hitTimerRef.current);
     },
     []
@@ -383,18 +389,32 @@ export default function LearnArranger({
 
   // Call straight from the tap handler: the unlock must happen before any await.
   const ensureEngine = async () => {
-    const rawContext = unlockAudioContext(audioContextRef);
-    toneRef.current ??= await loadTone();
-    if (!engineRef.current) {
-      engineRef.current = createAudioEngine(toneRef.current, rawContext);
-      const current = arrangementRef.current;
-      Object.entries(engineRef.current.gains).forEach(([track, gain]) => {
-        gain.gain.value = gainFromLevel(current.levels[track], current.mutes[track]);
-      });
+    const lifetime = lifetimeRef.current;
+    setAudioError('');
+    try {
+      const rawContext = unlockAudioContext(audioContextRef);
+      if (!rawContext) throw new Error('Audio unavailable');
+      toneRef.current ??= await loadTone();
+      if (lifetimeRef.current !== lifetime) return null;
+      if (!engineRef.current) {
+        engineRef.current = createAudioEngine(toneRef.current, rawContext);
+        const current = arrangementRef.current;
+        Object.entries(engineRef.current.gains).forEach(([track, gain]) => {
+          gain.gain.value = gainFromLevel(current.levels[track], current.mutes[track]);
+        });
+      }
+      const engine = engineRef.current;
+      await engine.context.resume();
+      if (lifetimeRef.current !== lifetime) return null;
+      setAudioReady(true);
+      return engine;
+    } catch {
+      if (lifetimeRef.current === lifetime) {
+        setAudioError('Audio could not start. Check your output and try again.');
+        setIsPlaying(false);
+      }
+      return null;
     }
-    await engineRef.current.context.resume();
-    setAudioReady(true);
-    return engineRef.current;
   };
 
   const clearSchedule = (transport) => {
@@ -498,6 +518,7 @@ export default function LearnArranger({
 
   const toggleTransport = async () => {
     const engine = await ensureEngine();
+    if (!engine) return;
     const { transport } = engine;
 
     if (transport.state === 'started') {
@@ -526,18 +547,21 @@ export default function LearnArranger({
 
   const playChord = async (chordName) => {
     const engine = await ensureEngine();
+    if (!engine) return;
     engine.chords.triggerAttackRelease(chordFor(chordName).notes, '2n', undefined, 0.72);
     triggerPad(`chord-${chordName}`);
   };
 
   const playBass = async (note) => {
     const engine = await ensureEngine();
+    if (!engine) return;
     engine.bass.triggerAttackRelease(note, '8n', undefined, 0.82);
     triggerPad(`bass-${note}`);
   };
 
   const playDrum = async (drum) => {
     const engine = await ensureEngine();
+    if (!engine) return;
     if (drum === 'kick') engine.kick.triggerAttackRelease('C1', '8n', undefined, 0.95);
     if (drum === 'snare') engine.snare.triggerAttackRelease('16n', undefined, 0.72);
     if (drum === 'hat') engine.hat.triggerAttackRelease('32n', undefined, 0.48);
@@ -569,6 +593,7 @@ export default function LearnArranger({
 
   return (
     <div className="learn-arranger" onPointerDown={() => loadTone().catch(() => {})}>
+      {audioError && <p role="alert">{audioError}</p>}
       <header className="learn-arranger-toolbar">
         <div className="learn-arranger-title">
           <span>

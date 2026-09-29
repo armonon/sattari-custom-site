@@ -6,7 +6,7 @@ import LearnArranger from './LearnArranger';
 
 // Set when the mock is first imported (Tone.js must not load with the page), and
 // records the AudioContexts the arranger's Tone contexts are built on.
-const tone = vi.hoisted(() => ({ loaded: false, wrapped: [] }));
+const tone = vi.hoisted(() => ({ loaded: false, wrapped: [], resume: null }));
 
 vi.mock('tone', () => {
   tone.loaded = true;
@@ -50,7 +50,7 @@ vi.mock('tone', () => {
       this.draw = { schedule() {} };
     }
     resume() {
-      return Promise.resolve();
+      return tone.resume ? tone.resume() : Promise.resolve();
     }
     dispose() {}
   }
@@ -72,6 +72,7 @@ vi.mock('tone', () => {
 });
 
 afterEach(() => {
+  tone.resume = null;
   vi.unstubAllGlobals();
 });
 
@@ -137,4 +138,36 @@ describe('LearnArranger', () => {
     unmount();
     expect(contexts[0].close).toHaveBeenCalled();
   }, 10000);
+
+  it('opens the requested practice instrument', () => {
+    render(<LearnArranger initialInstrument="bass" />);
+    expect(screen.getByRole('tab', { name: 'Bass', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(document.querySelectorAll('.instrument-bass button').length).toBeGreaterThan(0);
+  });
+
+  it('does not restart an arrangement after leaving while audio resume is pending', async () => {
+    let finish;
+    tone.resume = () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      });
+    const close = vi.fn(async () => {});
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running';
+        close = close;
+      }
+    );
+    const { unmount } = render(<LearnArranger />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play arrangement' }));
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    unmount();
+    await act(async () => finish());
+    expect(close).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Pause arrangement' })).not.toBeInTheDocument();
+  });
 });

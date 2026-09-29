@@ -320,6 +320,7 @@ export default function HomePage() {
               <span>
                 <MapPin size={16} /> {BUSINESS.addressLine}
               </span>
+              <a href={BUSINESS.phoneHref}>{BUSINESS.shopHoursNote}</a>
               <a href={BUSINESS.directions} target="_blank" rel="noreferrer">
                 Get directions <ArrowUpRight size={15} />
               </a>

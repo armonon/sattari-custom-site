@@ -219,12 +219,12 @@ export default function ServicesPage() {
 
         <section className="services-location" id="visit" aria-labelledby="services-location-title">
           <div className="services-location-copy">
-            <p className="eyebrow">Visit the shop</p>
+            <p className="eyebrow">Visit by appointment</p>
             <h2 id="services-location-title">SATTARI Musical Instruments</h2>
             <address>{BUSINESS.addressLine}</address>
             <p>
-              Bring in an instrument, talk through a repair, or plan a rental, lesson, or session
-              with us in person.
+              {BUSINESS.shopHoursNote} We can discuss an instrument, repair, rental, lesson, or
+              session before you come in.
             </p>
             <div className="services-location-actions">
               <a
@@ -236,9 +236,9 @@ export default function ServicesPage() {
                 <MapPin size={17} aria-hidden="true" />
                 Get directions
               </a>
-              <a className="button button-outline" href="tel:+14244653020">
+              <a className="button button-outline" href={BUSINESS.phoneHref}>
                 <Phone size={17} aria-hidden="true" />
-                Call shop
+                Arrange a visit
               </a>
             </div>
           </div>

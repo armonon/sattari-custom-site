@@ -65,7 +65,7 @@ export const localSeoPages = {
     faqs: [
       {
         q: 'Where is Sattari Music located?',
-        a: 'Sattari Music is based in Woodland Hills and serves Los Angeles and the greater San Fernando Valley. You can visit the shop in person or start any request online.',
+        a: 'Sattari Music is based in Woodland Hills and serves Los Angeles and the greater San Fernando Valley. Shop visits are by appointment only. Call to arrange a visit or start your request online.',
       },
       {
         q: 'What can I do at a local music store like Sattari?',
@@ -365,7 +365,7 @@ export const localSeoPages = {
     schemaType: 'MusicStore',
     schemaName: 'Sattari Music — Woodland Hills',
     intro:
-      'Our shop is at 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364. Start with the current catalog for cymbals, drumsticks, violins, guitars and bass, or tell us what needs repairing. Contact the shop to confirm hours, availability and arrangements before visiting.',
+      'Our shop is at 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364. Start with the current catalog for cymbals, drumsticks, violins, guitars and bass, or tell us what needs repairing. Shop visits are by appointment only. Call to arrange your visit and confirm availability.',
     highlights: ['Instruments', 'Drum gear', 'Violins', 'Guitars', 'Repairs', 'Lessons'],
     offerings: [
       'Instrument and gear sales for players across Woodland Hills and the Valley',

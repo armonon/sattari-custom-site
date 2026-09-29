@@ -314,7 +314,7 @@ export function VisitPage() {
   return (
     <Page
       title="Visit Sattari Music in Woodland Hills"
-      description="Find Sattari Music at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Contact the shop for instruments, repairs, rentals, lessons and rehearsal inquiries."
+      description="Visit Sattari Music in Woodland Hills by appointment only. Call to arrange a visit for instruments, repairs, rentals and lessons at 4881 Topanga Canyon Blvd #202."
     >
       <p className="resource-lead">Instruments, music tools, and local support.</p>
       <dl className="resource-facts">
@@ -362,7 +362,7 @@ export function VisitPage() {
         </a>
         <a className="resource-link" href={BUSINESS.phoneHref}>
           <Phone size={18} />
-          Call the shop
+          Arrange a visit
         </a>
       </div>
       <section className="resource-section">

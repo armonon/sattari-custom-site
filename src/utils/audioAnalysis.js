@@ -382,14 +382,17 @@ export function analyzeDecodedAudio(audioBuffer) {
 }
 
 let analysisTail = Promise.resolve();
-export function analyzeAudioFile(file, onProgress) {
+export function analyzeAudioFile(file, onProgress, { signal } = {}) {
   // Imports from different decks/library actions share one bounded analysis job.
-  const job = analysisTail.then(() => analyzeFileWindows(file, onProgress));
+  const job = analysisTail.then(() => {
+    signal?.throwIfAborted();
+    return analyzeFileWindows(file, onProgress, signal);
+  });
   analysisTail = job.catch(() => {});
   return job;
 }
 
-async function analyzeFileWindows(file, onProgress) {
+async function analyzeFileWindows(file, onProgress, signal) {
   const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   if (!OfflineContextClass) throw new Error('Web Audio is not supported by this browser.');
 
@@ -406,13 +409,23 @@ async function analyzeFileWindows(file, onProgress) {
             type: 'module',
           });
           const timeout = setTimeout(() => {
-            worker.terminate();
+            finish();
             reject(new Error('Track analysis timed out. Try a shorter source.'));
           }, 120000);
           const finish = () => {
             clearTimeout(timeout);
+            signal?.removeEventListener('abort', abort);
             worker.terminate();
           };
+          const abort = () => {
+            finish();
+            reject(signal.reason || new DOMException('Analysis cancelled.', 'AbortError'));
+          };
+          signal?.addEventListener('abort', abort, { once: true });
+          if (signal?.aborted) {
+            abort();
+            return;
+          }
           worker.onmessage = ({ data }) => {
             finish();
             if (data.error) reject(new Error(data.error));
@@ -436,7 +449,9 @@ async function analyzeFileWindows(file, onProgress) {
           }
         });
   const { analyzeWindowedAudio } = await import('./windowedAudioAnalysis');
-  const analysis = await analyzeWindowedAudio(file, context, { analyze, onProgress });
+  signal?.throwIfAborted();
+  const analysis = await analyzeWindowedAudio(file, context, { analyze, onProgress, signal });
+  signal?.throwIfAborted();
   onProgress?.({ value: 100, label: 'Analysis ready' });
   return analysis;
 }

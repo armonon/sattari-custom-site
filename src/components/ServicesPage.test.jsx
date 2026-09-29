@@ -7,6 +7,24 @@ import { describe, expect, it } from 'vitest';
 import ServicesPage from './ServicesPage';
 
 describe('ServicesPage', () => {
+  it('makes shop visits appointment-only and provides a direct call action', () => {
+    render(
+      <HelmetProvider>
+        <MemoryRouter>
+          <ServicesPage />
+        </MemoryRouter>
+      </HelmetProvider>
+    );
+    expect(screen.getByText('Visit by appointment')).toBeInTheDocument();
+    expect(
+      screen.getByText(/By appointment only\. Call to arrange your visit\./)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Arrange a visit' })).toHaveAttribute(
+      'href',
+      'tel:+14244653020'
+    );
+  });
+
   it('updates the inquiry type without clearing entered contact details', async () => {
     render(
       <HelmetProvider>

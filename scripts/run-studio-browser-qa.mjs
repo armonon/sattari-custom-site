@@ -71,7 +71,11 @@ try {
     'http://127.0.0.1:4193',
     resolve(output, 'ui'),
   ]).done;
-  const checks = [audioStatus, uiStatus];
+  const learnStatus = await run(['scripts/qualify-learn-review.mjs'], {
+    LEARN_QA_URL: 'http://127.0.0.1:4192',
+    LEARN_QA_OUTPUT: resolve(output, 'learn'),
+  }).done;
+  const checks = [audioStatus, uiStatus, learnStatus];
   if (checks.some((code) => code !== 0)) process.exitCode = 1;
 } finally {
   for (const child of children) child.kill('SIGTERM');

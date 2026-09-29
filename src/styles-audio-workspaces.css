@@ -895,6 +895,45 @@
   cursor: pointer;
 }
 
+.learn-guided-exercise {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.learn-exercise-heading,
+.learn-exercise-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.learn-exercise-heading > div {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.learn-exercise-heading h3,
+.learn-exercise-result h4 {
+  margin: 0.35rem 0;
+  color: var(--aw-text);
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.learn-exercise-heading p,
+.learn-exercise-result p {
+  color: var(--aw-muted);
+  font-size: 0.85rem;
+}
+
+.learn-guided-exercise .button {
+  justify-self: start;
+  white-space: normal;
+}
+
 .learn-challenge-layout {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 180px minmax(230px, 0.8fr);

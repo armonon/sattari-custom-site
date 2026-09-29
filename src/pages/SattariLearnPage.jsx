@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AudioWaveform,
+  ArrowLeft,
   Cable,
   Check,
   ChevronRight,
@@ -198,11 +199,24 @@ function ChordStrip({ chords }) {
   );
 }
 
+function releaseMicrophone(runtime) {
+  if (!runtime) return;
+  window.cancelAnimationFrame(runtime.frame);
+  runtime.stream?.getTracks().forEach((track) => track.stop());
+  runtime.source?.disconnect();
+  if (runtime.context) void runtime.context.close().catch(() => {});
+}
+
 export default function SattariLearnPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const audioRef = useRef(null);
   const micRuntimeRef = useRef(null);
+  const micRequestRef = useRef(null);
+  const analysisRequestRef = useRef(null);
+  const sourceVersionRef = useRef(0);
+  const handoffRequestRef = useRef(null);
+  const exerciseHeadingRef = useRef(null);
   const analysisRef = useRef(STARTER_ANALYSIS);
   const [audioUrl, setAudioUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -219,6 +233,7 @@ export default function SattariLearnPage() {
   const [selectedSection, setSelectedSection] = useState(1);
   const [sourceLoop, setSourceLoop] = useState(false);
   const [activeExercise, setActiveExercise] = useState(null);
+  const [exerciseComplete, setExerciseComplete] = useState(false);
   const [tapTimes, setTapTimes] = useState([]);
   const [midiState, setMidiState] = useState({ status: 'idle', note: '', inKey: false });
   const [micState, setMicState] = useState({ status: 'idle', pitch: null });
@@ -253,19 +268,33 @@ export default function SattariLearnPage() {
 
   useEffect(
     () => () => {
-      const runtime = micRuntimeRef.current;
-      if (!runtime) return;
-      window.cancelAnimationFrame(runtime.frame);
-      runtime.stream.getTracks().forEach((track) => track.stop());
-      void runtime.context.close();
+      sourceVersionRef.current += 1;
+      handoffRequestRef.current = null;
+      analysisRequestRef.current?.abort();
+      analysisRequestRef.current = null;
+      micRequestRef.current = null;
+      releaseMicrophone(micRuntimeRef.current);
       micRuntimeRef.current = null;
     },
     []
   );
 
+  useEffect(() => {
+    if (activeExercise !== null) exerciseHeadingRef.current?.focus();
+  }, [activeExercise]);
+
   const loadFile = (file) => {
     if (!file || !file.type.startsWith('audio/')) return;
 
+    sourceVersionRef.current += 1;
+    analysisRequestRef.current?.abort();
+    analysisRequestRef.current = null;
+    handoffRequestRef.current = null;
+    setIsAnalyzing(false);
+    setHandoffState('idle');
+    setArrangement(null);
+    setActiveExercise(null);
+    setExerciseComplete(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     const nextUrl = URL.createObjectURL(file);
     // Likely next step is analysis; start fetching its code now.
@@ -294,23 +323,41 @@ export default function SattariLearnPage() {
       return;
     }
 
+    analysisRequestRef.current?.abort();
+    const request = new AbortController();
+    analysisRequestRef.current = request;
+    const isCurrent = () => analysisRequestRef.current === request && !request.signal.aborted;
     setIsAnalyzing(true);
+    setActiveExercise(null);
+    setExerciseComplete(false);
     trackSiteEvent('learn_started');
     setAnalysisResult(null);
     setAnalysisError('');
     try {
       const { analyzeAudioFile } = await loadAudioAnalysis();
-      const result = await analyzeAudioFile(selectedFile, setAnalysisProgress);
+      if (!isCurrent()) return;
+      const result = await analyzeAudioFile(
+        selectedFile,
+        (progress) => {
+          if (isCurrent()) setAnalysisProgress(progress);
+        },
+        { signal: request.signal }
+      );
+      if (!isCurrent()) return;
       setAnalysisResult(result);
       trackSiteEvent('learn_completed');
       setSelectedSection(0);
       setTapTimes([]);
       setActiveMode('analyze');
     } catch (error) {
+      if (!isCurrent()) return;
       setAnalysisError(error instanceof Error ? error.message : 'This file could not be analyzed.');
       trackSiteEvent('learn_failed');
     } finally {
-      setIsAnalyzing(false);
+      if (isCurrent()) {
+        analysisRequestRef.current = null;
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -369,19 +416,19 @@ export default function SattariLearnPage() {
     }
   };
 
-  const stopMic = () => {
-    const runtime = micRuntimeRef.current;
-    if (runtime) {
-      window.cancelAnimationFrame(runtime.frame);
-      runtime.stream.getTracks().forEach((track) => track.stop());
-      void runtime.context.close();
-      micRuntimeRef.current = null;
-    }
+  const stopMic = useCallback(() => {
+    micRequestRef.current = null;
+    releaseMicrophone(micRuntimeRef.current);
+    micRuntimeRef.current = null;
     setMicState({ status: 'idle', pitch: null });
-  };
+  }, []);
+
+  useEffect(() => {
+    if (activeMode !== 'challenge') stopMic();
+  }, [activeMode, stopMic]);
 
   const connectMic = async () => {
-    if (micRuntimeRef.current) {
+    if (micRequestRef.current || micRuntimeRef.current) {
       stopMic();
       return;
     }
@@ -390,18 +437,33 @@ export default function SattariLearnPage() {
       return;
     }
 
+    const request = {};
+    micRequestRef.current = request;
+    setMicState({ status: 'connecting', pitch: null });
+    const isCurrent = () => micRequestRef.current === request;
+    let runtime = null;
     try {
       const { detectPitch } = await loadAudioAnalysis();
+      if (!isCurrent()) return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      runtime = { stream, context: null, frame: 0 };
+      if (!isCurrent()) {
+        releaseMicrophone(runtime);
+        return;
+      }
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const context = new AudioContextClass();
+      runtime.context = context;
+      micRuntimeRef.current = runtime;
       const analyser = context.createAnalyser();
       analyser.fftSize = 4096;
       analyser.smoothingTimeConstant = 0.1;
-      context.createMediaStreamSource(stream).connect(analyser);
+      runtime.source = context.createMediaStreamSource(stream);
+      runtime.source.connect(analyser);
       const samples = new Float32Array(analyser.fftSize);
-      const runtime = { stream, context, analyser, samples, frame: 0, lastUpdate: 0 };
-      micRuntimeRef.current = runtime;
+      runtime.lastUpdate = 0;
+      await context.resume();
+      if (!isCurrent()) return;
       setMicState({ status: 'listening', pitch: null });
 
       const readPitch = () => {
@@ -421,25 +483,40 @@ export default function SattariLearnPage() {
         runtime.frame = window.requestAnimationFrame(readPitch);
       };
       readPitch();
-    } catch {
-      setMicState({ status: 'denied', pitch: null });
+    } catch (error) {
+      releaseMicrophone(runtime);
+      if (!isCurrent()) return;
+      micRuntimeRef.current = null;
+      micRequestRef.current = null;
+      setMicState({
+        status: ['NotAllowedError', 'SecurityError'].includes(error?.name) ? 'denied' : 'error',
+        pitch: null,
+      });
     }
   };
 
   const saveForStudio = async () => {
+    if (isAnalyzing || handoffRequestRef.current) return;
+    const request = { sourceVersion: sourceVersionRef.current };
+    handoffRequestRef.current = request;
+    const isCurrent = () =>
+      handoffRequestRef.current === request && sourceVersionRef.current === request.sourceVersion;
     setHandoffState('saving');
     try {
       let nextAssetId = audioAssetId;
       if (selectedFile && !nextAssetId) {
         const { putAudioAsset } = await loadProjectStore();
+        if (!isCurrent()) return;
         const asset = await putAudioAsset(selectedFile, {
           name: selectedFile.name,
           analysis: analysisResult,
         });
+        if (!isCurrent()) return;
         nextAssetId = asset.id;
         setAudioAssetId(asset.id);
       }
 
+      if (!isCurrent()) return;
       window.localStorage.setItem(
         'sattari-studio-transfer-v1',
         JSON.stringify({
@@ -455,10 +532,13 @@ export default function SattariLearnPage() {
       );
       navigate('/studio');
     } catch (error) {
+      if (!isCurrent()) return;
       setHandoffState('error');
       setAnalysisError(
         error instanceof Error ? error.message : 'Could not prepare the Studio session.'
       );
+    } finally {
+      if (isCurrent()) handoffRequestRef.current = null;
     }
   };
 
@@ -705,7 +785,11 @@ export default function SattariLearnPage() {
               role="tab"
               aria-selected={activeMode === id}
               className={activeMode === id ? 'is-active' : ''}
-              onClick={() => setActiveMode(id)}
+              onClick={() => {
+                setActiveExercise(null);
+                setExerciseComplete(false);
+                setActiveMode(id);
+              }}
             >
               <Icon size={17} />
               {label}
@@ -743,7 +827,7 @@ export default function SattariLearnPage() {
             </div>
           )}
 
-          {activeMode === 'practice' && (
+          {activeMode === 'practice' && activeExercise === null && (
             <div className="learn-practice-layout">
               <div className="learn-mode-title">
                 <p>Choose your instrument</p>
@@ -755,7 +839,11 @@ export default function SattariLearnPage() {
                     key={id}
                     type="button"
                     className={instrument === id ? 'is-active' : ''}
-                    onClick={() => setInstrument(id)}
+                    onClick={() => {
+                      setInstrument(id);
+                      setActiveExercise(null);
+                      setExerciseComplete(false);
+                    }}
                   >
                     <Icon size={18} />
                     {label}
@@ -774,7 +862,12 @@ export default function SattariLearnPage() {
                       type="button"
                       aria-label={`Start ${title}`}
                       title="Start exercise"
-                      onClick={() => setActiveExercise(index)}
+                      onClick={() => {
+                        audioRef.current?.pause();
+                        setIsPlaying(false);
+                        setExerciseComplete(false);
+                        setActiveExercise(index);
+                      }}
                     >
                       <Play size={15} />
                     </button>
@@ -784,8 +877,87 @@ export default function SattariLearnPage() {
             </div>
           )}
 
+          {activeMode === 'practice' && activeExercise !== null && (
+            <div className="learn-guided-exercise">
+              <header className="learn-exercise-heading">
+                <div>
+                  <p>
+                    {instrument} / Exercise {activeExercise + 1} of{' '}
+                    {practicePlans[instrument].length}
+                  </p>
+                  <h3 ref={exerciseHeadingRef} tabIndex={-1}>
+                    {practicePlans[instrument][activeExercise][0]}
+                  </h3>
+                  <p>{practicePlans[instrument][activeExercise][1]}</p>
+                </div>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setActiveExercise(null)}
+                >
+                  <ArrowLeft size={16} /> All exercises
+                </button>
+              </header>
+              {!exerciseComplete ? (
+                <>
+                  <LearnArranger
+                    key={`${instrument}-${activeExercise}`}
+                    bpm={
+                      activeExercise === 0 || instrument === 'drums'
+                        ? currentAnalysis.bpm
+                        : suggestions.practiceTempo
+                    }
+                    initialChords={currentAnalysis.chords}
+                    initialInstrument={
+                      instrument === 'bass' || instrument === 'drums' ? instrument : 'chords'
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={() => setExerciseComplete(true)}
+                  >
+                    <Check size={16} /> Mark practiced
+                  </button>
+                </>
+              ) : (
+                <div className="learn-exercise-result" role="status">
+                  <h4>Practice marked complete</h4>
+                  <p>Self-reported practice. No microphone or performance score was recorded.</p>
+                  <div className="learn-exercise-actions">
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() => setExerciseComplete(false)}
+                    >
+                      <RefreshCw size={16} /> Practice again
+                    </button>
+                    <button
+                      type="button"
+                      className="button"
+                      onClick={() => {
+                        setExerciseComplete(false);
+                        setActiveExercise(
+                          activeExercise + 1 < practicePlans[instrument].length
+                            ? activeExercise + 1
+                            : null
+                        );
+                      }}
+                    >
+                      <ChevronRight size={16} />{' '}
+                      {activeExercise + 1 < practicePlans[instrument].length
+                        ? 'Next exercise'
+                        : 'All exercises'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeMode === 'arrange' && (
             <LearnArranger
+              key={`${sourceVersionRef.current}-${analysisReady}`}
               bpm={currentAnalysis.bpm}
               initialChords={currentAnalysis.chords}
               onArrangementChange={setArrangement}
@@ -806,7 +978,11 @@ export default function SattariLearnPage() {
                 <small>{rhythmScore === null ? 'Find the pulse' : 'Timing score'}</small>
               </button>
               <div className="learn-input-stack">
-                <button type="button" onClick={connectMic}>
+                <button
+                  type="button"
+                  onClick={connectMic}
+                  aria-pressed={micState.status === 'listening'}
+                >
                   <Mic2 size={19} />
                   <span>
                     <strong>Microphone</strong>
@@ -817,7 +993,13 @@ export default function SattariLearnPage() {
                           ? 'Listening for a steady note'
                           : micState.status === 'denied'
                             ? 'Permission was not granted'
-                            : 'Start live pitch detection'}
+                            : micState.status === 'connecting'
+                              ? 'Connecting - click to cancel'
+                              : micState.status === 'error'
+                                ? 'Microphone could not start. Try again.'
+                                : micState.status === 'unsupported'
+                                  ? 'Microphone unavailable in this browser'
+                                  : 'Start live pitch detection'}
                     </small>
                   </span>
                   <i className={micState.status === 'listening' ? 'is-connected' : ''} />
@@ -874,7 +1056,7 @@ export default function SattariLearnPage() {
                 type="button"
                 className="send-to-studio"
                 onClick={saveForStudio}
-                disabled={handoffState === 'saving'}
+                disabled={handoffState === 'saving' || isAnalyzing}
               >
                 <span className="send-icon">
                   <Send size={18} />

@@ -75,6 +75,7 @@ describe('local search pages', () => {
       );
       expect(doc.querySelector('meta[name="description"]').content).toBe(page.description);
       expect(doc.querySelector('address').textContent).toBe(BUSINESS.addressLine);
+      expect(doc.body.textContent).toContain('By appointment only. Call to arrange your visit.');
       expect(doc.querySelector('form').dataset.service).toBe(page.formService);
       expect(
         schema.some((item) => ['Store', 'MusicStore', 'LocalBusiness'].includes(item['@type']))

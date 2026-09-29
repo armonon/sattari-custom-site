@@ -268,8 +268,9 @@ export default function SattariStudioPage() {
                 }}
               />
 
-              <main
+              <section
                 id="studio-workspace"
+                aria-label="Studio workspace"
                 tabIndex={-1}
                 className={`sd-workspace sd-view-${activeView}`}
               >
@@ -377,7 +378,7 @@ export default function SattariStudioPage() {
                     onDiscardSetAside={session.discardSetAside}
                   />
                 ) : null}
-              </main>
+              </section>
 
               <MixerDock
                 dock={dock}

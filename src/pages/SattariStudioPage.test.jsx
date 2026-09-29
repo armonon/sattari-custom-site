@@ -276,7 +276,8 @@ describe('SattariStudioPage', () => {
         .getAllByRole('button')
         .map((button) => button.textContent)
     ).toEqual(['Library', 'Perform', 'Arrange', 'Mixer']);
-    const workspace = screen.getByRole('main');
+    const workspace = screen.getByRole('region', { name: 'Studio workspace' });
+    expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(
       within(workspace).queryByRole('region', { name: 'Live input strip' })
     ).not.toBeInTheDocument();

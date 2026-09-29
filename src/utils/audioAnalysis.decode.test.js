@@ -61,3 +61,36 @@ it('reports missing Web Audio support clearly', async () => {
     'Web Audio is not supported'
   );
 });
+
+it('skips an analysis that was cancelled before its queued job began', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await expect(
+    analyzeAudioFile({ sampleRate: 44100 }, undefined, { signal: controller.signal })
+  ).rejects.toMatchObject({ name: 'AbortError' });
+  expect(created).toHaveLength(0);
+});
+
+it('terminates cancelled workers and releases the shared analysis queue', async () => {
+  const workers = [];
+  class FakeWorker {
+    terminate = vi.fn();
+    postMessage = vi.fn();
+    constructor() {
+      workers.push(this);
+    }
+  }
+  vi.stubGlobal('Worker', FakeWorker);
+  const controller = new AbortController();
+  const first = analyzeAudioFile({ sampleRate: 44100 }, undefined, { signal: controller.signal });
+  const rejection = expect(first).rejects.toMatchObject({ name: 'AbortError' });
+  await vi.waitFor(() => expect(workers).toHaveLength(1));
+  controller.abort();
+  await rejection;
+  expect(workers[0].terminate).toHaveBeenCalledTimes(1);
+  const second = analyzeAudioFile({ sampleRate: 48000 });
+  await vi.waitFor(() => expect(workers).toHaveLength(2));
+  workers[1].onmessage({ data: { result: { key: 'C major' } } });
+  await expect(second).resolves.toMatchObject({ key: 'C major', sampleRate: 48000 });
+  expect(workers[1].terminate).toHaveBeenCalledTimes(1);
+});

@@ -108,6 +108,10 @@ describe('search metadata', () => {
     expect(BUSINESS.areas).toEqual(expect.arrayContaining(['Encino', 'Calabasas', 'Los Angeles']));
     expect(businessSchema).not.toHaveProperty('aggregateRating');
     expect(businessSchema).not.toHaveProperty('openingHours');
+    expect(businessSchema).not.toHaveProperty('openingHoursSpecification');
+    expect(businessSchema.description).toContain('Appointment-only');
+    expect(BUSINESS.shopHoursNote).toBe('By appointment only. Call to arrange your visit.');
+    expect(BUSINESS.studioHoursNote).toBe('Every day, 6 PM to midnight (Los Angeles time).');
     expect(musicToolSchema('separator', []).publisher['@id']).toBe(businessSchema['@id']);
   });
 
