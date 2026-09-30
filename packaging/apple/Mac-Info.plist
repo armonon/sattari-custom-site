@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key><string>com.sattarimusic.stemdeck.web</string>
+  <key>CFBundleName</key><string>STEMDECK Web</string>
+  <key>CFBundleDisplayName</key><string>STEMDECK Web</string>
+  <key>CFBundleExecutable</key><string>StemDeckWeb</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleIconFile</key><string>StemDeck</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Record microphone or audio-interface inputs into your StemDeck performances.</string>
+</dict></plist>

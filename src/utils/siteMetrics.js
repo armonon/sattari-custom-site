@@ -40,6 +40,7 @@ export const METRIC_PAGES = [
   'guides',
   'guide-separation',
   'guide-bass',
+  'guide-guitar',
   'guide-repair',
   'guide-cymbals',
   'guide-karaoke',
@@ -65,6 +66,7 @@ export function metricPage(path) {
   const guides = {
     '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
     '/guides/practice-bass-with-isolated-stems': 'guide-bass',
+    '/guides/learn-guitar-from-a-song': 'guide-guitar',
     '/guides/instrument-repairs-near-encino': 'guide-repair',
     '/guides/choose-your-first-cymbals': 'guide-cymbals',
     '/guides/remove-vocals-for-karaoke': 'guide-karaoke',

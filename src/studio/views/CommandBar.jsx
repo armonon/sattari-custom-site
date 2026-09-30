@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import {
   AlignJustify,
+  ArrowLeft,
   Circle,
   Folder,
   Grid2X2,
@@ -153,6 +154,14 @@ export default function CommandBar({
         </div>
       </div>
       <div className="sd-title-block">
+        <a
+          className="sd-hub-return"
+          href="/hub"
+          aria-label="Back to Sattari Hub"
+          title="Back to Sattari Hub"
+        >
+          <ArrowLeft size={18} aria-hidden="true" />
+        </a>
         <h1 className="sd-product-brand">STEMDECK</h1>
         <small>
           <i className={restored ? 'is-ready' : ''} />

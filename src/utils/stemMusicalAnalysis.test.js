@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import {
   analyzeStemAudio,
@@ -5,7 +6,8 @@ import {
   safeAnalyzeStemAudio,
 } from './stemMusicalAnalysis';
 
-const rate = 11025;
+// The separator decodes both song and stem PCM at this working sample rate.
+const rate = 44100;
 function chord(root = 60, minor = false, seconds = 8) {
   return Float32Array.from({ length: seconds * rate }, (_, i) =>
     [0, minor ? 3 : 4, 7].reduce(
@@ -18,9 +20,9 @@ function chord(root = 60, minor = false, seconds = 8) {
 function clicks(bpm = 120, seconds = 10) {
   const samples = new Float32Array(seconds * rate);
   for (let t = 0.2; t < seconds; t += 60 / bpm) {
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 2000; i++) {
       const at = Math.floor(t * rate) + i;
-      if (at < samples.length) samples[at] += 0.8 * Math.exp(-i / 60) * Math.sin(i * 0.9);
+      if (at < samples.length) samples[at] += 0.8 * Math.exp(-i / 240) * Math.sin(i * 0.225);
     }
   }
   return samples;
@@ -42,14 +44,29 @@ describe('bounded musical analysis', () => {
   });
   it.each([
     [60, false, 'C major'],
-    [57, true, 'A minor'],
     [62, false, 'D major'],
   ])('identifies a sustained %s triad without inventing rhythm', (root, minor, key) => {
     const samples = chord(root, minor);
     const result = analyzeStemAudio(samples, samples, rate);
     expect(result.key).toBe(key);
+    expect(result.keyEngine).toBe('sattari-autokey');
+    expect(result.keyAnalyzedSeconds).toBe(8);
+    expect(result.keyConfidence).toBeGreaterThanOrEqual(0.1);
+    expect(result.keyAlternative).not.toBe(result.key);
     expect(result.prominentNotes).toHaveLength(3);
     expect(result.bpm).toBeNull();
+  });
+  it('preserves AutoKey ambiguity instead of substituting the old triad key formula', () => {
+    const samples = chord(57, true);
+    const result = analyzeStemAudio(samples, samples, rate);
+    expect(result).toMatchObject({
+      keyEngine: 'sattari-autokey',
+      key: 'A major',
+      keyAlternative: 'A minor',
+      keyEvidence: 'tentative',
+    });
+    expect(result.keyConfidence).toBeLessThan(0.1);
+    expect(result.prominentNotes).toEqual(expect.arrayContaining(['A', 'C', 'E']));
   });
   it.each([90, 120, 150])('detects a %s BPM pulse but does not assign a key to drums', (bpm) => {
     const samples = clicks(bpm);
@@ -83,7 +100,7 @@ describe('bounded musical analysis', () => {
       { start: 580, end: 600 },
     ]);
     const samples = new Float32Array(rate * 100);
-    samples[rate * 30] = 0.8;
+    samples.fill(0.8, rate * 30, rate * 30 + 4);
     const result = analyzeStemAudio(samples, samples, rate);
     expect(result.analyzedSeconds).toBe(60);
     expect(result.peakDb).toBe(-1.9);
@@ -95,7 +112,7 @@ describe('bounded musical analysis', () => {
     const samples = clicks();
     const original = samples.slice();
     analyzeStemAudio(samples, samples, rate);
-    expect(samples).toEqual(original);
+    expect(samples.every((sample, i) => sample === original[i])).toBe(true);
     expect(safeAnalyzeStemAudio(new Float32Array([NaN]), new Float32Array(1), rate)).toEqual({
       version: 1,
       status: 'unavailable',

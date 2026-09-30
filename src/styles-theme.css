@@ -231,14 +231,14 @@ body {
 
 [data-theme='day'] {
   /* Core tokens (styles.css) */
-  --bg: #f6f1e6;
-  --panel: #fffdf8;
-  --panel-2: #efe7d6;
-  --line: rgba(58, 48, 28, 0.14);
-  --line-strong: rgba(58, 48, 28, 0.26);
-  --text: #241f16;
-  --muted: #6c6353;
-  --accent: #9a7a2e;
+  --bg: #f7f8f9;
+  --panel: #ffffff;
+  --panel-2: #edf0f2;
+  --line: rgba(26, 32, 36, 0.14);
+  --line-strong: rgba(26, 32, 36, 0.26);
+  --text: #1a2024;
+  --muted: #56626b;
+  --accent: #82621f;
   --accent-dark: #7c6224;
   --accent-soft: rgba(154, 122, 46, 0.14);
   --accent-glow: rgba(154, 122, 46, 0.28);
@@ -248,7 +248,7 @@ body {
   --shadow-lg: 0 32px 96px rgba(60, 50, 30, 0.2);
 
   /* Refined ramp + elevation (styles-refresh.css) */
-  --grad-text: linear-gradient(180deg, #2a2417 0%, #6b5322 55%, #937425 100%);
+  --grad-text: linear-gradient(180deg, #1a2024, #39434a);
   --elev-1: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 8px 24px rgba(60, 50, 30, 0.1);
   --elev-2: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 48px rgba(60, 50, 30, 0.14);
   --elev-3: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 30px 80px rgba(60, 50, 30, 0.18);
@@ -259,10 +259,7 @@ body {
 
 /* ---- Hardcoded surfaces that don't read from tokens ---- */
 [data-theme='day'] body {
-  background:
-    radial-gradient(circle at top, rgba(214, 179, 109, 0.16), transparent 26%),
-    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, 0.6), transparent 22%),
-    radial-gradient(circle at top, #fbf7ee, #efe7d7 55%);
+  background: var(--bg);
 }
 
 [data-theme='day'] .nav-wrap {
@@ -443,6 +440,12 @@ body {
 [data-theme='day'] .cart-checkout-error {
   color: #a3282d;
   background: rgba(210, 31, 42, 0.08);
+}
+
+[data-theme='day'] :is(.total-amount, .total-price, .summary-total) {
+  color: var(--text);
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 /* ---- Local services action workspace ---- */

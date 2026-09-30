@@ -1,0 +1,275 @@
+/* Shared storefront chrome. Workspaces retain their own instrument controls. */
+:root {
+  --site-surface: #171b1e;
+  --site-raised: #242a2e;
+  --site-ink: #f4f6f5;
+  --site-muted: #b6bfc5;
+  --site-border: #39434a;
+  --site-action: #245be7;
+  --site-focus: #8eb5ff;
+  --fs-display: 4rem;
+  --fs-h2: 2.25rem;
+  --fs-h3: 1.375rem;
+  --fs-body: 1rem;
+}
+
+[data-theme='day'] {
+  --site-surface: #ffffff;
+  --site-raised: #f1f4f6;
+  --site-ink: #1a2024;
+  --site-muted: #56626b;
+  --site-border: #d7dfe3;
+  --site-focus: #245be7;
+}
+
+.site-shell > .nav-wrap {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-border);
+  box-shadow: none;
+}
+
+.site-shell .nav-inner {
+  width: min(1280px, calc(100% - 48px));
+  min-height: 80px;
+  gap: 20px;
+  padding-block: 12px;
+}
+
+.site-shell .nav-chrome::after,
+.site-shell .brand-copy {
+  display: none;
+}
+
+.site-shell .nav-logo-frame {
+  padding: 6px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.site-shell .brand-logo {
+  width: 152px;
+}
+
+.site-shell .nav-links {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.site-shell .nav-link {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--site-muted);
+  background: transparent;
+  box-shadow: none;
+  letter-spacing: 0;
+}
+
+.site-shell .nav-link:hover,
+.site-shell .nav-link-active {
+  color: var(--site-ink);
+  background: var(--site-raised);
+  border-color: var(--site-border);
+}
+
+.site-shell .nav-hub-button {
+  background: var(--site-action);
+  border-color: var(--site-action);
+  color: #fff;
+  font-weight: 650;
+  margin-inline: 6px;
+}
+
+.site-shell .nav-hub-button:hover,
+.site-shell .nav-hub-button-active {
+  background: #1849c6;
+  border-color: #1849c6;
+  color: #fff;
+  box-shadow: none;
+}
+
+.site-shell .theme-toggle,
+.site-shell .mobile-menu-button {
+  background: var(--site-raised);
+  border-color: var(--site-border);
+  color: var(--site-ink);
+  box-shadow: none;
+  border-radius: 6px;
+}
+
+.site-shell :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--site-focus);
+  outline-offset: 3px;
+}
+
+.site-skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 8px;
+  left: 16px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  background: var(--site-action);
+  color: white;
+  transform: translateY(-160%);
+}
+
+.site-skip-link:focus {
+  transform: none;
+}
+
+#main-content {
+  scroll-margin-top: 100px;
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+.site-shell > .footer {
+  padding-block: 40px;
+  border-color: var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-ink);
+}
+
+.site-shell .footer-grid {
+  width: min(1280px, calc(100% - 48px));
+  gap: 48px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+}
+
+.site-shell .footer-copy {
+  color: var(--site-muted);
+  font-size: 14px;
+  max-width: 58ch;
+  line-height: 1.75;
+}
+
+.site-shell .footer-title {
+  margin-top: 0;
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
+.site-shell .footer-quick-links {
+  gap: 0 20px;
+}
+
+.site-shell .footer-quick-links a {
+  padding: 8px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--site-ink);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+}
+
+.site-shell .footer a:hover {
+  color: var(--site-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.site-shell :is(h1, h2, h3, .brand-name, .button) {
+  letter-spacing: 0;
+}
+
+.site-shell
+  :is(
+    .button,
+    .checkout-btn-premium,
+    .checkout-btn-full,
+    .cart-empty-link,
+    .cart-view-link-premium,
+    .clear-cart-btn-premium
+  ) {
+  border-radius: 6px;
+  box-shadow: none;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.site-shell :is(.button-solid, .btn-add-cart, .checkout-btn-premium, .checkout-btn-full) {
+  background: var(--site-action);
+  color: #fff;
+  border-color: var(--site-action);
+  box-shadow: none;
+}
+
+.site-shell :is(.button-solid, .btn-add-cart, .checkout-btn-premium, .checkout-btn-full):hover {
+  background: #1849c6;
+  border-color: #1849c6;
+  box-shadow: none;
+}
+
+@media (min-width: 761px) {
+  .site-shell .nav-inner {
+    flex-direction: row;
+    align-items: center;
+  }
+  .site-shell .nav-links {
+    order: 1;
+    margin-left: auto;
+  }
+  .site-shell .nav-actions-row {
+    order: 2;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1040px) {
+  .site-shell .nav-inner {
+    gap: 8px;
+    width: calc(100% - 32px);
+  }
+  .site-shell .brand-logo {
+    width: 116px;
+  }
+  .site-shell .nav-link {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --fs-display: 2.5rem;
+    --fs-h2: 1.75rem;
+    --fs-h3: 1.25rem;
+  }
+  .site-shell .nav-inner {
+    width: calc(100% - 32px);
+    min-height: 72px;
+    gap: 0 16px;
+    padding-block: 10px;
+  }
+  .site-shell .brand-logo {
+    width: 132px;
+  }
+  .site-shell .nav-links {
+    gap: 6px;
+  }
+  .site-shell .nav-hub-button {
+    margin-inline: 0;
+  }
+  .site-shell .nav-link {
+    justify-content: flex-start;
+    font-size: 15px;
+  }
+  .site-shell .footer-grid {
+    width: calc(100% - 32px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}

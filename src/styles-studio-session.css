@@ -39,8 +39,26 @@
   border-bottom: 1px solid #ffffff12;
 }
 .sd-session-shell .sd-title-block {
-  align-items: flex-start;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
   text-align: left;
+}
+.sd-hub-return {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  color: #bdc6ce;
+  border-radius: 6px;
+}
+.sd-hub-return:hover {
+  background: #ffffff12;
+  color: #fff;
 }
 .sd-session-shell .sd-title-block h1.sd-product-brand {
   font-size: 18px;

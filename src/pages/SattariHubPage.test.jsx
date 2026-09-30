@@ -4,9 +4,6 @@ import { expect, it, vi } from 'vitest';
 import SattariHubPage from './SattariHubPage';
 
 vi.mock('../utils/seo', () => ({ SEO: () => null }));
-vi.mock('../components/HubListeningDesk', () => ({
-  default: () => <section aria-label="Listening desk" />,
-}));
 
 it('launches all three real workspaces and their reference pages', () => {
   render(
@@ -42,4 +39,18 @@ it('links to published guides and keeps future projects out of the live tool lis
   expect(screen.getByText('Planned projects')).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Radio' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Market' })).not.toBeInTheDocument();
+});
+
+it('omits the listening desk, demo player and header shortcut', () => {
+  const { container } = render(
+    <MemoryRouter>
+      <SattariHubPage />
+    </MemoryRouter>
+  );
+  expect(screen.queryByText(/Listening (desk|deck)/i)).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Play demo/i })).not.toBeInTheDocument();
+  expect(
+    container.querySelector('audio, #hub-listening-desk, a[href="#hub-listening-desk"]')
+  ).toBeNull();
+  expect(container.querySelector('.hub-workspaces').nextElementSibling).toHaveClass('hub-reading');
 });

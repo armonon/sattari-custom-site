@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import ArrangementEditor from '../components/studio/ArrangementEditor';
+import StudioInstallMetadata from '../components/studio/StudioInstallMetadata';
 import SourceChooser from '../components/studio/SourceChooser';
 import { PanelLayoutProvider } from '../components/studio/StudioPanel';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
@@ -178,6 +179,7 @@ export default function SattariStudioPage() {
             className="stemdeck-web sd-studio-next sd-session-shell"
             data-compact-icons={compactIcons}
           >
+            <StudioInstallMetadata />
             {input.chooserOpen && (
               <SourceChooser
                 inputActive={input.microphoneActive}

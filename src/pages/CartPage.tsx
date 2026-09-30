@@ -55,7 +55,7 @@ const CartPage: FC = () => {
       <div className="container section-header narrow anim-rise-sm">
         <p className="eyebrow">Shopping Bag</p>
         <h1>Your Sattari Selection</h1>
-        <p>Premium drum gear curated just for you. Review, adjust, and checkout securely.</p>
+        <p>Review your instruments and accessories, adjust quantities, and check out securely.</p>
         <div className="cart-header-chips" aria-label="Checkout highlights">
           {orderHighlights.map((highlight) => (
             <span className="trust-chip" key={highlight}>
@@ -81,7 +81,7 @@ const CartPage: FC = () => {
                 <div className="drum-icon">🥁</div>
               </div>
               <h2>Your bag is empty</h2>
-              <p>Discover our curated collection of premium drum gear</p>
+              <p>Explore instruments, cymbals, sticks, and accessories.</p>
               <Link to="/shop" className="button button-solid">
                 Start Shopping
               </Link>

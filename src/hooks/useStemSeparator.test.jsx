@@ -173,3 +173,60 @@ it('releases output URLs on remove, clear, and unmount', async () => {
   unmount();
   expect(URL.revokeObjectURL).toHaveBeenCalledTimes(16);
 });
+
+it('runs the real demo pipeline with the selected stems and CPU preference', async () => {
+  const fetchDemo = vi.fn(async () => ({ ok: true, blob: async () => new Blob(['audio']) }));
+  vi.stubGlobal('fetch', fetchDemo);
+  const { result } = renderHook(useStemSeparator);
+  act(() => {
+    result.current.setSelected(['drums', 'bass']);
+    result.current.setCpuOnly(true);
+    result.current.addFiles([file('waiting.wav')]);
+  });
+  await act(async () => result.current.loadDemo());
+  expect(result.current.jobs.map((job) => job.status)).toEqual(['queued', 'done']);
+  expect(result.current.jobs[1].file.name).toBe('sattari-practice-demo.wav');
+  expect(result.current.jobs[1].outputs.map((output) => output.id)).toEqual(['drums', 'bass']);
+  expect(separate.mock.lastCall[5]).toBe(true);
+  expect(result.current.loadingDemo).toBe(false);
+  expect(fetchDemo.mock.calls[0][0]).toBe('/audio/sattari-practice-demo.wav');
+});
+
+it('cancels a pending demo fetch without adding or processing audio', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      (_url, { signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () =>
+            reject(new DOMException('Cancelled', 'AbortError'))
+          );
+        })
+    )
+  );
+  const { result } = renderHook(useStemSeparator);
+  let demo;
+  act(() => {
+    demo = result.current.loadDemo();
+  });
+  expect(result.current.loadingDemo).toBe(true);
+  await act(async () => {
+    result.current.cancel();
+    await demo;
+  });
+  expect(result.current.loadingDemo).toBe(false);
+  expect(result.current.jobs).toEqual([]);
+  expect(separate).not.toHaveBeenCalled();
+});
+
+it('shows a failed demo request without leaving the page locked', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok: false }))
+  );
+  const { result } = renderHook(useStemSeparator);
+  await act(async () => result.current.loadDemo());
+  expect(result.current.errors[0]).toContain('demo could not load');
+  expect(result.current.loadingDemo).toBe(false);
+  expect(result.current.running).toBe(false);
+});

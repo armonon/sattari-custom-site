@@ -1,4 +1,5 @@
-import { chromaForRange, estimateKeyFromChroma } from './audioAnalysis';
+import { analyzeAutoKey, AUTO_KEY_ENGINE, AUTO_KEY_MIN_MARGIN } from './sattariAutoKey';
+import { chromaForRange } from './audioAnalysis';
 import { trackTempo } from './tempoMap';
 
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -76,9 +77,14 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
         ? 0
         : 1
       : null;
+  const autoKey =
+    !silent && duration >= 3 && stem !== 'drums'
+      ? analyzeAutoKey(left, right, rate, useChannel)
+      : null;
   if (!silent && duration >= 3) {
     for (const window of windows) {
       const part = compactWindow(left, right, rate, window, useChannel);
+      // AutoKey adds subharmonic hypotheses for key scoring, not note naming.
       if (stem !== 'drums') {
         const pitches = chromaForRange(part.samples, part.rate, 0, 1, 20);
         pitches.forEach((value, i) => {
@@ -102,7 +108,7 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
     ? ranked.filter(({ weight }) => weight >= Math.max(0.075, ranked[0].weight * 0.2)).slice(0, 5)
     : [];
   const keyResult =
-    tonal && notes.length >= 3 && ranked[0].weight < 0.7 ? estimateKeyFromChroma(chroma) : null;
+    tonal && notes.length >= 3 && ranked[0].weight < 0.7 && autoKey?.valid ? autoKey : null;
   const bpm = tempos.length ? median(tempos.map((tempo) => tempo.bpm)) : null;
   const consistentTempo =
     bpm !== null && tempos.every((tempo) => Math.abs(tempo.bpm - bpm) / bpm < 0.08);
@@ -116,8 +122,13 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
     rmsDb: db(rms),
     peakDb: db(peak),
     key: keyResult?.key || null,
+    keyEngine: AUTO_KEY_ENGINE,
+    keyEngineVersion: 1,
+    keyConfidence: keyResult?.confidence ?? null,
+    keyAlternative: keyResult?.alternative?.key || null,
+    keyAnalyzedSeconds: autoKey ? rounded(duration) : 0,
     keyEvidence: keyResult
-      ? keyResult.confidence >= 0.55
+      ? keyResult.confidence >= AUTO_KEY_MIN_MARGIN
         ? 'supported'
         : 'tentative'
       : 'insufficient',

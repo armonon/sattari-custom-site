@@ -24,7 +24,6 @@ import {
   RepairPage,
   SattariHubPage,
   SattariLearnPage,
-  LoopPracticePage,
   SattariStudioPage,
   StemSeparatorPage,
   ServicesPage,
@@ -69,8 +68,8 @@ const ROUTES: RouteDefinition[] = [
   { path: '/shop', page: ShopPage },
   { path: '/buy', redirect: '/shop' },
   { path: '/hub', page: SattariHubPage },
-  { path: '/learn', page: SattariLearnPage },
-  { path: '/loop', page: LoopPracticePage, hydrate: false },
+  { path: '/learn', page: SattariLearnPage, hydrate: false },
+  { path: '/loop', redirect: '/learn' },
   // Restores its panels from localStorage while rendering.
   { path: '/studio', page: SattariStudioPage, hydrate: false },
   { path: '/stem-separator', page: StemSeparatorPage },
@@ -158,12 +157,13 @@ function restoreFocus(opener: HTMLElement | null) {
 const App: FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const location = useLocation();
+  const pagePath = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const isAudioWorkspace = ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(
-    location.pathname
+    pagePath
   );
-  const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(location.pathname);
+  const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
     openerRef.current =
@@ -234,24 +234,33 @@ const App: FC = () => {
   }, [cartOpen]);
 
   return (
-    <div className={`site-shell${location.pathname === '/' ? ' is-home' : ''}`}>
+    <div className={`site-shell${pagePath === '/' ? ' is-home' : ''}`}>
       <OrganizationSchema />
       <ScrollManager />
+      {pagePath !== '/studio' && (
+        <a
+          className="site-skip-link"
+          href="#main-content"
+          onClick={() => document.getElementById('main-content')?.focus()}
+        >
+          Skip to content
+        </a>
+      )}
       {['/cart', '/checkout/success', '/checkout/cancel', '/instagram/callback'].includes(
-        location.pathname
+        pagePath
       ) && (
         <SEO
           title="Your Sattari Music Account & Checkout"
           description="Manage your Sattari Music cart, checkout or account connection."
-          url={`https://sattarimusic.com${location.pathname}`}
+          url={`https://sattarimusic.com${pagePath}`}
           noindex
         />
       )}
-      {!['/', '/studio', '/loop', '/stem-separator'].includes(location.pathname) && (
+      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
         <BackgroundMedia />
       )}
 
-      {!['/studio', '/loop'].includes(location.pathname) && <Navbar onCartClick={openCart} />}
+      {!['/studio', '/learn', '/loop'].includes(pagePath) && <Navbar onCartClick={openCart} />}
 
       {/* Cart Drawer */}
       <div
@@ -272,7 +281,7 @@ const App: FC = () => {
       {/* Overlay */}
       {cartOpen && <div className="cart-drawer-overlay" onClick={closeCart} aria-hidden="true" />}
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <RouteErrorBoundary resetKey={location.pathname}>
           <Routes>
             {ROUTES.map((route) =>
@@ -300,7 +309,7 @@ const App: FC = () => {
       </main>
 
       {!isAudioWorkspace && <Footer />}
-      {location.pathname !== '/loop' && <SiteMeasurement />}
+      {!['/learn', '/loop'].includes(pagePath) && <SiteMeasurement />}
       {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
     </div>
   );

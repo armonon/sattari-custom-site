@@ -1,0 +1,2 @@
+participant_code,date,device_browser,instrument,input,headphones,room,tuning,capo,lesson_id,setup_seconds,navigation_help,correct_notes_attempted,correct_notes_detected,wrong_notes_attempted,wrong_notes_accepted,silent_windows,silent_matches,first_attempt_on_time,first_attempt_total,last_attempt_on_time,last_attempt_total,speed_percent,teacher_verified,backup_restored,issue_notes,return_intent
+,,,,,,,,,,,,,,,,,,,,,,,,,,

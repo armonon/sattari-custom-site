@@ -133,7 +133,15 @@ try {
   ]);
   await download.saveAs(`${outputDir}/sattari-stems.zip`);
   const archive = unzipSync(await readFile(`${outputDir}/sattari-stems.zip`));
-  assert.equal(Object.keys(archive).length, stems.length * 2);
+  const names = Object.keys(archive);
+  assert.equal(names.filter((name) => name.endsWith('.wav')).length, stems.length * 2);
+  const reports = names.filter((name) => name.endsWith('/analysis.json'));
+  assert.equal(reports.length, 2);
+  for (const name of reports) {
+    const report = JSON.parse(new TextDecoder().decode(archive[name]));
+    assert.equal(report.stems.length, stems.length);
+    assert.equal(report.song.status, 'ready');
+  }
   const player = page.locator('.separator-output audio').first();
   await player.evaluate((audio) => audio.play());
   await page.waitForFunction(

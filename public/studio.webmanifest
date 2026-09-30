@@ -1,0 +1,25 @@
+{
+  "id": "/studio",
+  "name": "STEMDECK",
+  "short_name": "STEMDECK",
+  "description": "Perform, capture and arrange with StemDeck. Internet required to open; export projects to keep backups.",
+  "start_url": "/studio?installed=1",
+  "scope": "/studio",
+  "display": "standalone",
+  "background_color": "#101114",
+  "theme_color": "#101114",
+  "icons": [
+    {
+      "src": "/images/stemdeck/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/stemdeck/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

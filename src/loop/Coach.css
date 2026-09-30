@@ -1,0 +1,1037 @@
+.lf-input-setup {
+  width: min(100%, 490px);
+  text-align: left;
+  padding: 24px;
+  border: 1px solid #ddd6e4;
+  border-radius: 20px;
+  background: #fffdf9;
+  margin: 24px auto;
+}
+
+.lf-import-setup .loop-drop-zone.has-file {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding: 16px;
+  gap: 5px 12px;
+  text-align: left;
+}
+.lf-import-setup .loop-drop-zone.has-file > span:first-child {
+  grid-row: 1 / 4;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+}
+.lf-import-setup .loop-drop-zone.has-file > :not(:first-child) {
+  grid-column: 2;
+  margin: 0;
+}
+.lf-import-setup .loop-drop-zone small {
+  color: #796482;
+}
+.lf-import-setup .loop-drop-zone strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.lf-import-options {
+  border: 0;
+  padding: 0;
+  margin: 25px 0 14px;
+  display: grid;
+  gap: 10px;
+}
+.lf-import-options legend {
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0 0 12px;
+}
+.lf-import-options label {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 18px 15px;
+  border: 1px solid #dfd9e3;
+  background: #fffdfa;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.lf-import-options label.is-selected {
+  border-color: #80629e;
+  background: #f1ebf5;
+}
+.lf-import-options input {
+  accent-color: #745592;
+}
+.lf-import-options svg {
+  flex-shrink: 0;
+  color: #775792;
+}
+.lf-import-options strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.lf-import-options small,
+.lf-import-expectation {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #68606d;
+}
+.lf-import-start {
+  width: 100%;
+  justify-content: center;
+  margin: 12px 0 4px;
+}
+.lf-import-engine {
+  display: grid;
+  gap: 7px;
+  text-align: center;
+  margin-top: 23px;
+}
+.lf-import-engine > span {
+  letter-spacing: 1.6px;
+  font-size: 10px;
+  color: #796184;
+}
+.lf-import-engine small {
+  color: #6f6971;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.lf-recording-source {
+  margin: 22px 0;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.lf-recording-source > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #675970;
+}
+.lf-recording-source > div {
+  display: flex;
+  padding: 4px;
+  background: #ebe6ed;
+  border-radius: 12px;
+  gap: 4px;
+}
+.lf-recording-source button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 15px;
+  min-height: 44px;
+  background: transparent;
+  color: #6f6177;
+  font-size: 13px;
+  cursor: pointer;
+}
+.lf-recording-source button[aria-pressed='true'] {
+  background: #fffdf9;
+  color: #4b355c;
+  box-shadow: 0 1px 4px #38223d15;
+}
+.lf-recording-source small {
+  max-width: 470px;
+  color: #756b79;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.lf-analysis-engines {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 25px 0;
+}
+.lf-analysis-engines > section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 22px;
+  background: #fffcf7;
+  border: 1px solid #e2dbe5;
+  border-radius: 16px;
+  gap: 12px;
+}
+.lf-analysis-engines section > strong {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: #4c3b55;
+}
+.lf-analysis-engines section > p {
+  margin: 0;
+  font-size: 14px;
+}
+.lf-analysis-engines section > small {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #736979;
+}
+.lf-evidence-label {
+  background: #eee8f1;
+  border-radius: 20px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #695477;
+}
+.lf-prepare-recovery {
+  padding: 14px 18px;
+  background: #f3ede2;
+  border-radius: 12px;
+  margin-top: 18px;
+}
+.lf-prepare-recovery > p {
+  margin: 0 0 9px;
+  font-size: 13px;
+}
+.lf-key-choice {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.lf-key-choice select {
+  width: 100%;
+  min-height: 42px;
+  color: #51415c;
+  border: 1px solid #d8cddd;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fffcf8;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .lf-analysis-engines {
+    grid-template-columns: 1fr;
+  }
+  .lf-import-options label {
+    padding: 14px 10px;
+    gap: 10px;
+  }
+  .lf-recording-source button {
+    padding: 10px;
+    font-size: 12px;
+  }
+}
+.lf-input-heading,
+.lf-rhythm-topline,
+.lf-rhythm-topline > span,
+.lf-rhythm-actions,
+.lf-resume-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lf-device-label {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0 12px;
+  font-size: 13px;
+}
+.loop-app .lf-input-setup select,
+.loop-app .lf-rhythm select {
+  border: 1px solid #d3cad9;
+  background: #fffdf9;
+  border-radius: 9px;
+  padding: 10px 12px;
+  min-height: 44px;
+  color: #423849;
+  font-size: 14px;
+  max-width: 100%;
+}
+.lf-input-meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #e8e5e0;
+  margin: 16px 0 22px;
+}
+.lf-input-meter > span {
+  display: block;
+  height: 100%;
+  background: #65835c;
+  border-radius: inherit;
+  transition: width 90ms linear;
+}
+.lf-input-meter > .is-clipping {
+  background: #b44a32;
+}
+.lf-calibration-step {
+  margin-top: 22px;
+}
+.lf-input-setup .lf-calibration-step p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 9px 0 16px;
+}
+.lf-calibration-step progress {
+  width: 100%;
+  margin-top: 12px;
+  accent-color: #70598b;
+}
+.lf-tuning-strings {
+  display: flex;
+  gap: 6px;
+  margin-top: 15px;
+}
+.lf-tuning-strings button {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid #d9d0e1;
+  background: transparent;
+  border-radius: 10px;
+  color: #594669;
+}
+.lf-tuning-strings button[aria-pressed='true'] {
+  background: #e6ddef;
+  border-color: #70598b;
+}
+.lf-next-skill {
+  max-width: 510px;
+  margin: 24px auto;
+  padding: 24px;
+  border: 1px solid #d9d0e1;
+  border-radius: 20px;
+  background: #f0eaf5;
+}
+.lf-next-skill > strong {
+  font-size: 17px;
+}
+.lf-next-skill > p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 10px 0 20px;
+}
+.lf-finger-hint {
+  padding: 0 28px 22px;
+  color: #62586a;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+.lf-rhythm {
+  max-width: 1056px;
+  padding: 48px 32px 80px;
+  margin: 0 auto;
+}
+.lf-rhythm h1 {
+  font-family: var(--lj-serif);
+  font-weight: 400;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.2;
+  margin: 16px 0;
+  letter-spacing: -1px;
+}
+.lf-rhythm h1 em {
+  color: #70598b;
+}
+.lf-rhythm > p {
+  color: #69616e;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.lf-rhythm-panel {
+  margin: 28px 0;
+  padding: 28px;
+  border-radius: 24px;
+  background: #fffdf9;
+  border: 1px solid #e1dae4;
+}
+.lf-rhythm-topline {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #6c626f;
+}
+.lf-rhythm-topline label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lf-beat-clock {
+  text-align: center;
+  padding: 42px 0 32px;
+  display: grid;
+  gap: 8px;
+}
+.lf-beat-clock strong {
+  font-family: var(--lj-serif);
+  color: #70598b;
+  font-size: 66px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.lf-beat-clock > span {
+  color: #6c626f;
+  font-size: 14px;
+}
+.lf-rhythm-notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 8px;
+}
+.lf-rhythm-note {
+  display: grid;
+  text-align: center;
+  gap: 10px;
+  padding: 18px 8px;
+  border: 1px solid #e2dce6;
+  border-radius: 12px;
+  background: #f6f3f8;
+  transition: background 120ms;
+}
+.lf-rhythm-note > span {
+  font-size: 12px;
+  color: #706576;
+}
+.lf-rhythm-note > strong {
+  font-size: 23px;
+  font-weight: 500;
+}
+.lf-rhythm-note small {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.lf-rhythm-note.is-current {
+  outline: 2px solid #81649d;
+  outline-offset: 1px;
+}
+.lf-rhythm-note.on-time {
+  background: #e2ecdb;
+  border-color: #a4b696;
+  color: #3e5c32;
+}
+.lf-rhythm-note.early,
+.lf-rhythm-note.late {
+  background: #f5ead3;
+  color: #785727;
+}
+.lf-rhythm-note.wrong,
+.lf-rhythm-note.missed {
+  background: #f4e6e0;
+  color: #864a3e;
+}
+.lf-rhythm-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
+}
+.lf-rhythm-result {
+  text-align: center;
+  margin-top: 24px;
+}
+.lf-rhythm-result p,
+.lf-rhythm-settings p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6c626f;
+}
+.lf-rhythm-settings {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e2eb;
+  font-size: 13px;
+}
+.lf-rhythm-settings summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.lf-rhythm-settings label {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.lf-analysis-review {
+  display: flex;
+  gap: 22px;
+  padding: 28px;
+  margin: 26px 0 32px;
+  border: 1px solid #dbd1bc;
+  border-radius: 18px;
+  background: #f4efe3;
+}
+.lf-analysis-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #e9dfc8;
+  color: #826a40;
+}
+.lf-analysis-review h2 {
+  font-family: var(--lj-serif);
+  font-size: 29px;
+  margin: 10px 0;
+  font-weight: 400;
+}
+.lf-analysis-review p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #675e4f;
+  max-width: 800px;
+}
+.lf-analysis-facts {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.lf-analysis-facts > span {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: #71634c;
+}
+.lf-analysis-facts strong {
+  font-size: 23px;
+  font-weight: 500;
+  color: #4f4636;
+}
+.lf-review-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  padding: 16px;
+  background: #fffaf1;
+  border: 1px solid #dcd1bb;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.lf-review-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: #70598b;
+}
+.lf-analysis-review small {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #766d60;
+  display: block;
+}
+.lf-resume-note {
+  flex-wrap: wrap;
+  margin-top: 18px;
+  color: #6d597d;
+  font-size: 13px;
+}
+.lf-chord-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.lf-chord-sequence > span {
+  display: grid;
+  gap: 6px;
+  padding: 13px 18px;
+  background: #ece5f2;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 72px;
+}
+.lf-chord-sequence strong {
+  font-size: 20px;
+  font-weight: 500;
+  color: #654f7d;
+}
+.lf-chord-sequence small {
+  font-size: 12px;
+  color: #776587;
+}
+.lf-engraved-score {
+  color: #30302f;
+}
+.lf-save-warning {
+  text-align: center;
+  padding: 12px 24px;
+  color: #725427;
+  background: #f6ead1;
+  font-size: 14px;
+}
+.loop-app .lf-practice-title p,
+.loop-app .lf-feedback p,
+.loop-app .lf-target p,
+.loop-app .lf-celebration > p,
+.loop-app .lf-setup > p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.loop-app .lf-result-stats span {
+  font-size: 12px;
+  color: #776184;
+}
+.loop-app .lf-result-stats {
+  gap: 32px;
+}
+.lf-engraved-score svg {
+  display: block;
+  max-width: none;
+}
+.loop-app .lj-eyebrow,
+.loop-app .lf-header-song > span {
+  font-size: 11px;
+}
+.loop-app .lj-guide-tip,
+.loop-app .lf-setup-footnote,
+.loop-app .lf-note-rail small,
+.loop-app .lj-lesson-path > small,
+.loop-app .lf-status-copy {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.loop-app button:focus-visible,
+.loop-app select:focus-visible,
+.loop-app input:focus-visible,
+.loop-app summary:focus-visible {
+  outline: 3px solid #9a7eb3;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .lf-rhythm {
+    padding: 30px 18px 60px;
+  }
+  .lf-rhythm-panel {
+    padding: 20px 14px;
+  }
+  .lf-rhythm-topline {
+    gap: 18px;
+  }
+  .lf-rhythm-topline > span {
+    align-items: flex-start;
+    line-height: 1.5;
+  }
+  .lf-rhythm-notes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .lf-rhythm-note {
+    padding: 12px 4px;
+  }
+  .lf-rhythm-note > strong {
+    font-size: 20px;
+  }
+  .lf-rhythm-note > span,
+  .lf-rhythm-note small {
+    font-size: 11px;
+  }
+  .lf-rhythm-actions > button {
+    width: 100%;
+    justify-content: center;
+  }
+  .lf-input-setup {
+    padding: 20px;
+  }
+  .lf-analysis-review {
+    padding: 22px 18px;
+    display: block;
+  }
+  .lf-analysis-icon {
+    margin-bottom: 18px;
+  }
+  .lf-analysis-facts {
+    gap: 16px;
+  }
+  .lf-review-check {
+    padding: 12px;
+  }
+  .lf-finger-hint {
+    padding: 0 18px 18px;
+  }
+  .loop-app .lf-setup-checklist small {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .loop-app .lf-result-stats {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .loop-app .lf-result-stats > div {
+    flex: 1;
+    min-width: 100px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-input-meter > span,
+  .lf-rhythm-note {
+    transition: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .lf-beat-clock strong {
+    font-size: clamp(36px, 14vw, 60px);
+  }
+  .lf-rhythm.is-running {
+    padding-top: 16px;
+  }
+  .lf-rhythm.is-running > .lj-eyebrow,
+  .lf-rhythm.is-running > p,
+  .lf-rhythm.is-running .lf-rhythm-topline > span,
+  .lf-rhythm.is-running .lf-rhythm-settings {
+    display: none;
+  }
+  .lf-rhythm.is-running h1 {
+    font-size: 27px;
+    margin: 6px 0;
+  }
+  .lf-rhythm.is-running .lf-rhythm-panel {
+    margin-top: 18px;
+  }
+  .lf-rhythm.is-running .lf-beat-clock {
+    padding: 14px 0 18px;
+  }
+}
+.lf-harmony-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid #ded8e8;
+  border-radius: 12px;
+  background: #f4f0fa;
+  margin: 14px 0;
+  cursor: pointer;
+}
+.lf-harmony-choice input {
+  margin-top: 4px;
+  accent-color: #7860a5;
+}
+.lf-harmony-choice span,
+.lf-poly-note-list > div {
+  display: grid;
+  gap: 5px;
+}
+.lf-harmony-choice small {
+  line-height: 1.5;
+  color: #6e6878;
+}
+.lf-poly-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.lf-poly-heading h3,
+.lf-chord-workshop-invite h3 {
+  margin: 6px 0 12px;
+  font-family: Georgia, serif;
+  font-size: 27px;
+  font-weight: 400;
+}
+.lf-poly-guide > p {
+  color: #6e6878;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.lf-poly-attacks {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 14px 0;
+}
+.lf-poly-attacks button {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e1dce7;
+  border-radius: 10px;
+  background: #fffdf9;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: #46404d;
+}
+.lf-poly-attacks button[aria-pressed='true'] {
+  background: #eee7f8;
+  border-color: #8e77b7;
+}
+.lf-voicing {
+  max-width: 450px;
+  padding: 22px 18px;
+  margin: 12px auto;
+  border-radius: 14px;
+  background: #f8f5ef;
+}
+.lf-voicing > div {
+  display: flex;
+  align-items: center;
+  min-height: 35px;
+  gap: 12px;
+}
+.lf-voicing span {
+  width: 12px;
+  color: #6c6674;
+}
+.lf-voicing i {
+  height: 1px;
+  flex: 1;
+  background: #b7b0a7;
+}
+.lf-voicing strong {
+  text-align: center;
+  width: 28px;
+  color: #705697;
+}
+.lf-voicing small {
+  width: 42px;
+}
+.lf-poly-note-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+.lf-poly-note-list > div {
+  padding: 10px 12px;
+  border: 1px solid #e3dfe7;
+  border-radius: 9px;
+  font-size: 13px;
+}
+.lf-poly-note-list small {
+  color: #716b7a;
+}
+.lf-poly-note-list label {
+  display: grid;
+  gap: 7px;
+}
+.lf-poly-note-list button {
+  border: 0;
+  background: transparent;
+  color: #86585f;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.lf-poly-note-list select {
+  padding: 8px;
+  border: 1px solid #d5cbdc;
+  border-radius: 7px;
+  background: #fffefa;
+}
+.lf-chord-workshop-invite {
+  margin: 24px 0 4px;
+  padding: 25px;
+  border-radius: 16px;
+  background: #f0ebf6;
+  display: grid;
+  gap: 15px;
+}
+.lf-chord-workshop-invite p {
+  color: #6e6677;
+  line-height: 1.7;
+  margin: 0;
+}
+.lf-chord-workshop-invite .loop-button {
+  justify-self: start;
+}
+.lf-chord-workshop-invite small {
+  color: #6e6677;
+}
+.lf-chord-workshop {
+  max-width: 1060px;
+  margin: auto;
+  padding: 64px 28px;
+  text-align: center;
+}
+.lf-chord-workshop h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 400;
+  margin: 16px 0;
+}
+.lf-chord-workshop h1 em {
+  color: #827097;
+}
+.lf-chord-workshop > p {
+  max-width: 650px;
+  margin: 18px auto 30px;
+  color: #77717d;
+  line-height: 1.8;
+}
+.lf-chord-workshop-grid {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
+  text-align: left;
+}
+.lf-chord-shape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f0eaf5;
+  padding: 22px;
+  border-radius: 20px;
+  gap: 14px;
+}
+.lf-chord-shape small {
+  color: #77717d;
+  font-size: 11px;
+}
+.lf-chord-shape svg {
+  max-width: 185px;
+}
+.lf-chord-coach-card {
+  padding: 28px;
+  border: 1px solid #e5dee8;
+  border-radius: 20px;
+  background: #fffdf9;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lf-chord-coach-card h2 {
+  margin: 0;
+  font-size: 23px;
+}
+.lf-chord-coach-card p {
+  margin: 0;
+  line-height: 1.7;
+  color: #746c7a;
+}
+.lf-chord-coach-card .loop-fretboard {
+  width: 100%;
+  min-width: 420px;
+}
+.lf-chord-coach-card .loop-score-scroll {
+  overflow-x: auto;
+}
+.lf-chord-strings {
+  display: flex;
+  gap: 8px;
+}
+.lf-chord-strings span {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid #e2dce8;
+  border-radius: 50%;
+}
+.lf-chord-strings .is-current {
+  background: #e7dbf4;
+  border-color: #8b73ac;
+}
+@media (max-width: 650px) {
+  .lf-chord-workshop {
+    padding: 32px 18px;
+  }
+  .lf-chord-workshop-grid {
+    grid-template-columns: 1fr;
+  }
+  .lf-chord-shape {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr);
+    text-align: left;
+  }
+  .lf-chord-shape svg {
+    width: 100px;
+    grid-row: 1 / 3;
+  }
+  .lf-chord-shape strong {
+    align-self: end;
+  }
+  .lf-chord-shape small {
+    align-self: start;
+  }
+  .lf-chord-coach-card {
+    padding: 20px;
+  }
+  .lf-poly-heading .loop-button {
+    width: 100%;
+  }
+  .lf-chord-coach .lf-header {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+.lf-print-tones {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.lf-strum-check {
+  margin: 24px 0;
+  padding: 22px 0;
+  border-top: 1px solid var(--loop-line, #e3e0d7);
+  border-bottom: 1px solid var(--loop-line, #e3e0d7);
+}
+.lf-strum-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lf-strum-title h3 {
+  margin: 0;
+  font-size: 19px;
+}
+.lf-strum-check > small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.7;
+  margin-top: 16px;
+}
+.lf-strum-badge,
+.lf-strum-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 20px;
+  padding: 6px 10px;
+  background: #eeece6;
+  font-size: 12px;
+}
+.lf-strum-badge,
+.lf-strum-notes .is-heard {
+  color: #326049;
+  background: #e4f0e4;
+}
+.lf-strum-badge {
+  margin-bottom: 16px;
+}
+.lf-strum-live,
+.lf-strum-result {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  margin: 16px 0;
+  border-radius: 14px;
+  background: #f0edf7;
+}
+.lf-strum-live > span {
+  font-size: 13px;
+}
+.lf-strum-live.is-recording {
+  background: #e4f0e4;
+}
+.lf-strum-live progress {
+  width: 100%;
+  accent-color: #48705c;
+}
+.lf-strum-result.is-correct {
+  background: #e4f0e4;
+}
+.lf-strum-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lf-strum-result p {
+  margin: 0;
+  font-size: 13px;
+}
+.lf-strum-check .loop-button {
+  min-height: 44px;
+  font-size: 13px !important;
+}

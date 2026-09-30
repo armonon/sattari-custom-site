@@ -70,3 +70,45 @@ it('takes the collapsed phone menu out of the tab order and away from screen rea
     }));
   }
 });
+
+it('dismisses the menu with Escape and restores focus to its toggle', () => {
+  render(
+    <MemoryRouter>
+      <Navbar onCartClick={vi.fn()} />
+    </MemoryRouter>
+  );
+  const toggle = screen.getByRole('button', { name: 'Open menu' });
+  fireEvent.click(toggle);
+  screen.getByRole('link', { name: 'About', exact: true }).focus();
+  fireEvent.keyDown(document, { key: 'Escape' });
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(toggle).toHaveFocus();
+});
+
+it('dismisses the menu when a pointer lands outside the header', () => {
+  render(
+    <MemoryRouter>
+      <Navbar onCartClick={vi.fn()} />
+    </MemoryRouter>
+  );
+  const toggle = screen.getByRole('button', { name: 'Open menu' });
+  fireEvent.click(toggle);
+  fireEvent.pointerDown(document.body);
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+it.each([
+  ['/product/cymbal-felts', 'Shop'],
+  ['/SHOP/VIOLINS/', 'Shop'],
+  ['/stem-separator/', 'Sattari Hub'],
+  ['/services/instrument-repair-los-angeles', 'Local Services'],
+])('marks the parent navigation active on %s', (path, label) => {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Navbar onCartClick={vi.fn()} />
+    </MemoryRouter>
+  );
+  const nav = within(screen.getByRole('navigation', { name: 'Primary navigation' }));
+  expect(nav.getByRole('link', { name: label })).toHaveAttribute('aria-current', 'page');
+  expect(nav.getByRole('link', { name: 'Home', exact: true })).not.toHaveAttribute('aria-current');
+});

@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  CircleHelp,
   Disc3,
   Guitar,
   Headphones,
@@ -29,25 +28,39 @@ import {
   X,
 } from 'lucide-react';
 import { SEO } from '../utils/seo';
+import { PAGE_SEO } from '../data/siteSeo';
+import { LearnWordmark, LoopMark } from '../loop/Hardware';
 import {
   activeIndex,
   CHORD_NAMES,
-  chordMidis,
   chordShape,
   DEMO,
-  downloadLesson,
   formatTime,
   noteName,
   phrasesFor,
   positionForMidi,
-  STRING_NAMES,
-  TUNING,
 } from '../loop/music';
-import { ChordDiagram, Fretboard, StaffGuide, TabGuide } from '../loop/Guides';
+import { ChordDiagram, Fretboard, StaffGuide, SongStaffGuide, TabGuide } from '../loop/Guides';
 import { readLibrary, removeSong, saveSong } from '../loop/library';
 import useMicrophone from '../loop/useMicrophone';
 import useSongImport from '../loop/useSongImport';
+import LoopJourney from '../loop/LoopJourney';
+import { downloadPracticeGuide, midiGuide, polyphonicText } from '../loop/exportGuide';
+import { waitForScores } from '../loop/printGuide';
+import ImportSetup from '../loop/ImportSetup';
+import RecordingSource from '../loop/RecordingSource';
+import ScoreImport from '../loop/ScoreImportPanel';
 import './LoopPracticePage.css';
+import '../loop/Hardware.css';
+import { GuitarProfileProvider, useGuitarProfile } from '../loop/GuitarSetup';
+import {
+  openStrings,
+  profileLabel,
+  positionForProfile,
+  profileChord,
+  profileChordMidis,
+} from '../loop/guitarProfile';
+import '../loop/Learning.css';
 
 const NAV = [
   ['practice', 'Practice room', Guitar],
@@ -158,13 +171,36 @@ function useAudition() {
 }
 
 export default function LoopPracticePage() {
+  return (
+    <GuitarProfileProvider>
+      <LoopPracticeApp />
+    </GuitarProfileProvider>
+  );
+}
+
+function LoopPracticeApp() {
+  const { profile } = useGuitarProfile();
+  const tuning = openStrings(profile);
+  const [journey, setJourney] = useState('choose');
+  const [practiceProgress, setPracticeProgress] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('loop-practice-progress-v1') || '{}');
+      return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+    } catch {
+      return {};
+    }
+  });
   const [lesson, setLesson] = useState(DEMO);
   const [file, setFile] = useState(null);
   const [fileUrl, setFileUrl] = useState('');
+  const [practiceFile, setPracticeFile] = useState(null);
+  const [practiceUrl, setPracticeUrl] = useState('');
+  const [recordingSource, setRecordingSource] = useState('original');
   const [records, setRecords] = useState([]);
   const [nav, setNav] = useState('practice');
   const [view, setView] = useState('tab');
   const [modal, setModal] = useState(null);
+  const [importKind, setImportKind] = useState('audio');
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [selected, setSelected] = useState(0);
@@ -181,6 +217,40 @@ export default function LoopPracticePage() {
   const [chordFilter, setChordFilter] = useState('');
   const [tunerString, setTunerString] = useState(0);
   const [printReady, setPrintReady] = useState(false);
+  const printRoot = useRef(null);
+  useEffect(() => {
+    if (!printReady || !printRoot.current) return;
+    const controller = new AbortController();
+    const afterPrint = () => setPrintReady(false);
+    window.addEventListener('afterprint', afterPrint);
+    waitForScores(
+      printRoot.current,
+      phrasesFor(lesson).reduce(
+        (count, part) =>
+          count +
+          (part.notes.length ? 1 : 0) +
+          (lesson.polyphonicNotes?.some((n) => n.end > part.start && n.start < part.end) ? 1 : 0),
+        0
+      ),
+      controller.signal
+    )
+      .then(() => document.fonts?.ready)
+      .then(() => {
+        if (controller.signal.aborted) return;
+        setToast('');
+        window.print();
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          setToast(error.message);
+          setPrintReady(false);
+        }
+      });
+    return () => {
+      controller.abort();
+      window.removeEventListener('afterprint', afterPrint);
+    };
+  }, [printReady, lesson]);
   const audio = useRef(null),
     fileInput = useRef(null),
     saveQueue = useRef(Promise.resolve()),
@@ -190,24 +260,43 @@ export default function LoopPracticePage() {
   const audition = useAudition();
   const phrases = useMemo(() => phrasesFor(lesson), [lesson]);
   const phrase = phrases[Math.min(phraseIndex, phrases.length - 1)];
-  const currentNote = lesson.notes[selected];
+  const currentNote = useMemo(
+    () => (lesson.notes[selected] ? positionForProfile(lesson.notes[selected], profile) : null),
+    [lesson.notes, selected, profile]
+  );
   const chordIndex = activeIndex(lesson.chords, time);
   const currentChord = lesson.chords[chordIndex];
-  const sourceUrl = file ? fileUrl : DEMO.audioUrl;
+  const sourceUrl =
+    practiceFile && recordingSource === 'instruments'
+      ? practiceUrl
+      : file
+        ? fileUrl
+        : lesson.audioUrl;
+  const changeRecordingSource = (next) => {
+    if (next === recordingSource) return;
+    audio.current?.pause();
+    setPlaying(false);
+    setTime(0);
+    setRecordingSource(next);
+  };
   const isNotesView = view !== 'chords';
 
   const openLesson = useCallback(
-    (next, nextFile = null) => {
+    (next, nextFile = null, nextPracticeFile = null) => {
       audio.current?.pause();
       stopMicrophone();
       setLesson(next);
       setFile(nextFile);
+      setPracticeFile(nextPracticeFile);
+      setRecordingSource(nextPracticeFile ? 'instruments' : 'original');
       setTime(0);
       setSelected(0);
       setPhraseIndex(0);
       setHits([]);
       setPlaying(false);
       setNav('practice');
+      setJourney('overview');
+      setLoop(false);
       setEditing(false);
       setView(next.notes.length ? 'tab' : 'chords');
       lastHit.current = { midi: null, since: 0, awarded: null };
@@ -216,24 +305,39 @@ export default function LoopPracticePage() {
     [stopMicrophone]
   );
 
-  const importer = useSongImport(({ file: importedFile, lesson: importedLesson }) => {
-    openLesson(importedLesson, importedFile);
-    setModal(null);
-    const record = {
-      id: importedLesson.id,
-      lesson: importedLesson,
-      file: importedFile,
-      savedAt: Date.now(),
-    };
-    setRecords((prev) => [record, ...prev]);
-    void saveSong(record)
-      .then(() => setToast('Song saved on this device.'))
-      .catch(() =>
-        setToast(
-          'Your song is ready. Device storage is unavailable, so it will last for this session.'
-        )
-      );
-  });
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [journey]);
+
+  useEffect(() => {
+    if (modal === 'import') {
+      audio.current?.pause();
+      stopMicrophone();
+      setJourney((current) => (current === 'focus' ? 'overview' : current));
+    }
+  }, [modal, stopMicrophone]);
+
+  const importer = useSongImport(
+    ({ file: importedFile, practiceFile: preparedFile, lesson: importedLesson }) => {
+      openLesson(importedLesson, importedFile, preparedFile);
+      setModal(null);
+      const record = {
+        id: importedLesson.id,
+        lesson: importedLesson,
+        file: importedFile,
+        practiceFile: preparedFile,
+        savedAt: Date.now(),
+      };
+      setRecords((prev) => [record, ...prev]);
+      void saveSong(record)
+        .then(() => setToast('Song saved on this device.'))
+        .catch(() =>
+          setToast(
+            'Your song is ready. Device storage is unavailable, so it will last for this session.'
+          )
+        );
+    }
+  );
 
   useEffect(() => {
     let active = true;
@@ -247,6 +351,16 @@ export default function LoopPracticePage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!practiceFile) {
+      setPracticeUrl('');
+      return;
+    }
+    const url = URL.createObjectURL(practiceFile);
+    setPracticeUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [practiceFile]);
 
   useEffect(() => {
     if (!file) {
@@ -322,7 +436,13 @@ export default function LoopPracticePage() {
 
   useEffect(() => {
     const pitch = microphone.pitch;
-    if (microphone.status !== 'listening' || nav !== 'practice' || !isNotesView || !currentNote)
+    if (
+      journey !== 'studio' ||
+      microphone.status !== 'listening' ||
+      nav !== 'practice' ||
+      !isNotesView ||
+      !currentNote
+    )
       return;
     if (!pitch) {
       lastHit.current = { midi: null, since: 0, awarded: null };
@@ -354,6 +474,7 @@ export default function LoopPracticePage() {
     waitForMe,
     lesson.notes.length,
     selectNote,
+    journey,
   ]);
 
   const togglePlayback = async () => {
@@ -383,7 +504,7 @@ export default function LoopPracticePage() {
   const changeLesson = (next) => {
     setLesson(next);
     if (file) {
-      const record = { id: next.id, lesson: next, file, savedAt: Date.now() };
+      const record = { id: next.id, lesson: next, file, practiceFile, savedAt: Date.now() };
       setRecords((prev) => prev.map((r) => (r.id === next.id ? record : r)));
       saveQueue.current = saveQueue.current
         .catch(() => {})
@@ -402,8 +523,9 @@ export default function LoopPracticePage() {
     const dropped = event.dataTransfer.files?.[0];
     if (dropped) {
       audio.current?.pause();
+      setImportKind('audio');
       setModal('import');
-      void importer.importSong(dropped);
+      importer.selectFile(dropped);
     }
   };
 
@@ -412,6 +534,13 @@ export default function LoopPracticePage() {
     audio.current?.pause();
     microphone.stop();
     setEditing(false);
+  };
+
+  const goTo = (stage) => {
+    audio.current?.pause();
+    setPlaying(false);
+    microphone.stop();
+    setJourney(stage);
   };
 
   const pitch = microphone.pitch;
@@ -455,12 +584,7 @@ export default function LoopPracticePage() {
       }}
       onDrop={handleDrop}
     >
-      <SEO
-        title="Loop — Your Guitar Practice Studio"
-        description="Turn a recording into a guitar practice session. Explore chord charts, tablature and fretboard guides, loop a phrase and listen to your playing."
-        url="https://sattarimusic.com/loop"
-        noindex
-      />
+      <SEO {...PAGE_SEO.learn} />
       <input
         ref={fileInput}
         type="file"
@@ -471,8 +595,9 @@ export default function LoopPracticePage() {
           const next = e.target.files?.[0];
           e.target.value = '';
           if (next) {
+            setImportKind('audio');
             setModal('import');
-            void importer.importSong(next);
+            importer.selectFile(next);
           }
         }}
       />
@@ -492,780 +617,883 @@ export default function LoopPracticePage() {
         onError={() => setToast('This recording could not be loaded. Try another file.')}
       />
 
-      <aside className="loop-sidebar">
-        <Link className="loop-brand" to="/loop" aria-label="Loop practice studio">
-          <AudioLines size={29} strokeWidth={1.8} />
-          <span>
-            loop<span className="loop-brand-dot">.</span>
-          </span>
-        </Link>
-        <span className="loop-sidebar-eyebrow">A LITTLE EVERY DAY</span>
-        <nav aria-label="Loop navigation">
-          {NAV.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              type="button"
-              className={nav === id ? 'is-active' : ''}
-              onClick={() => changeNav(id)}
-              aria-current={nav === id ? 'page' : undefined}
-            >
-              <Icon size={18} strokeWidth={1.6} />
-              <span>{label}</span>
-              {nav === id && <i />}
-            </button>
-          ))}
-        </nav>
-        <div className="loop-sidebar-songs">
-          <div className="loop-sidebar-section">
-            <span>YOUR SONGS</span>
-            <button type="button" onClick={() => setModal('import')} aria-label="Add a song">
-              <Plus size={16} />
-            </button>
-          </div>
-          <button
-            className={`loop-saved-song${lesson.id === DEMO.id ? ' is-current' : ''}`}
-            type="button"
-            onClick={() => openLesson(DEMO)}
-          >
-            <span className="loop-mini-art">
-              <AudioLines size={17} />
-            </span>
-            <span>
-              <strong>Night shift</strong>
-              <small>Original lesson</small>
-            </span>
-          </button>
-          {records.slice(0, 3).map((record) => (
-            <button
-              className={`loop-saved-song${lesson.id === record.id ? ' is-current' : ''}`}
-              key={record.id}
-              type="button"
-              onClick={() => openLesson(record.lesson, record.file)}
-            >
-              <span className="loop-mini-art imported">
-                <Music2 size={16} />
-              </span>
-              <span>
-                <strong>{record.lesson.title}</strong>
-                <small>Saved on this device</small>
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="loop-sidebar-bottom">
-          <div className="loop-small-guitar">
-            <Guitar size={22} strokeWidth={1.4} />
-            <span>
-              Your guitar, your pace.<small>Make a little room for music.</small>
-            </span>
-          </div>
-          <Link to="/learn">
-            <ArrowLeft size={14} /> Sattari Music
-          </Link>
-        </div>
-      </aside>
+      {journey !== 'studio' && (
+        <LoopJourney
+          stage={journey}
+          lesson={lesson}
+          records={records}
+          sourceUrl={sourceUrl}
+          hasPreparedAudio={Boolean(practiceFile)}
+          recordingSource={recordingSource}
+          onRecordingSource={changeRecordingSource}
+          onEditLesson={changeLesson}
+          onRebuildOriginal={
+            file
+              ? () => {
+                  importer.selectFile(file);
+                  setModal('import');
+                }
+              : undefined
+          }
+          onChoose={openLesson}
+          onUpload={() => {
+            importer.clearError();
+            setModal('import');
+          }}
+          onBack={() => goTo('choose')}
+          onExitPractice={() => goTo('overview')}
+          onPractice={() => goTo('focus')}
+          onTool={(id) => {
+            changeNav(id);
+            goTo('studio');
+          }}
+          onStudio={() => {
+            changeNav('practice');
+            goTo('studio');
+            setLoop(true);
+          }}
+          onExport={() => setModal('export')}
+          playing={playing}
+          onPreview={() => {
+            setLoop(false);
+            void togglePlayback();
+          }}
+          progress={practiceProgress}
+          onComplete={(result) => {
+            const previous = practiceProgress[lesson.id];
+            const bestMatch =
+              previous?.fingerprint === result.fingerprint &&
+              previous?.total === result.total &&
+              Number.isFinite(previous.matched)
+                ? Math.max(previous.matched, result.matched)
+                : result.matched;
+            const next = { ...practiceProgress, [lesson.id]: { ...result, matched: bestMatch } };
+            setPracticeProgress(next);
+            try {
+              localStorage.setItem('loop-practice-progress-v1', JSON.stringify(next));
+            } catch {
+              setToast(
+                'Your progress is available for this session; device storage is unavailable.'
+              );
+            }
+          }}
+        />
+      )}
 
-      <div className="loop-workspace">
-        <header className="loop-topbar">
-          <div>
-            <span className="loop-breadcrumb">YOUR SPACE TO PLAY</span>
-            <span className="loop-topbar-location">{NAV.find((n) => n[0] === nav)?.[1]}</span>
-          </div>
-          <div className="loop-topbar-actions">
-            <span className="loop-local-label">
-              <span />
-              Audio stays on your device
-            </span>
+      {journey === 'studio' && (
+        <>
+          <aside className="loop-sidebar">
+            <button
+              className="loop-brand"
+              type="button"
+              onClick={() => goTo('choose')}
+              aria-label="Sattari Learn song library"
+            >
+              <LoopMark />
+              <LearnWordmark />
+            </button>
+            <span className="loop-sidebar-eyebrow">A LITTLE EVERY DAY</span>
             <button
               type="button"
-              className="loop-button loop-button-dark"
-              onClick={() => {
-                importer.clearError();
-                setModal('import');
-              }}
+              className="loop-journey-studio-back"
+              onClick={() => goTo('overview')}
             >
-              <Plus size={16} /> Add a song
+              <ArrowLeft size={14} />
+              Back to song overview
             </button>
-          </div>
-        </header>
-
-        {nav === 'practice' && (
-          <div className="loop-practice-content">
-            <div className="loop-intro">
-              <div>
-                <div className="loop-eyebrow">
-                  <span /> LET’S MAKE SOME MUSIC
-                </div>
-                <h1>
-                  A little closer to <em>playing it.</em>
-                </h1>
-                <p>Take it one phrase at a time. The rest will follow.</p>
+            <button
+              type="button"
+              className="loop-journey-studio-back"
+              onClick={() => goTo('choose')}
+            >
+              <Library size={14} />
+              Choose a song
+            </button>
+            <nav aria-label="Sattari Learn navigation">
+              {NAV.map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={nav === id ? 'is-active' : ''}
+                  onClick={() => changeNav(id)}
+                  aria-current={nav === id ? 'page' : undefined}
+                >
+                  <Icon size={18} strokeWidth={1.6} />
+                  <span>{label}</span>
+                  {nav === id && <i />}
+                </button>
+              ))}
+            </nav>
+            <div className="loop-sidebar-songs">
+              <div className="loop-sidebar-section">
+                <span>YOUR SONGS</span>
+                <button type="button" onClick={() => setModal('import')} aria-label="Add a song">
+                  <Plus size={16} />
+                </button>
               </div>
               <button
+                className={`loop-saved-song${lesson.id === DEMO.id ? ' is-current' : ''}`}
                 type="button"
-                className="loop-button loop-button-quiet"
-                onClick={() => setModal('export')}
+                onClick={() => openLesson(DEMO)}
               >
-                <ArrowDownToLine size={16} /> Practice sheet
-              </button>
-            </div>
-
-            <section className="loop-song-panel" aria-label="Current song">
-              <div className="loop-cover" aria-hidden="true">
-                <div className="loop-cover-rings" />
-                <span>
-                  LOOP
-                  <br />
-                  SESSIONS
+                <span className="loop-mini-art">
+                  <AudioLines size={17} />
                 </span>
-                <AudioLines size={42} strokeWidth={1} />
-                <small>VOL. 01</small>
-              </div>
-              <div className="loop-song-info">
-                <div className="loop-song-kicker">
-                  {lesson.source === 'demo'
-                    ? 'MADE FOR YOUR FIRST SESSION'
-                    : 'YOUR RECORDING · ESTIMATED ANALYSIS'}
-                </div>
-                <h2>{lesson.title}</h2>
-                <p>{lesson.artist}</p>
-                <div className="loop-song-tags">
-                  <span>
-                    <Guitar size={13} /> Guitar
+                <span>
+                  <strong>Night shift</strong>
+                  <small>Original lesson</small>
+                </span>
+              </button>
+              {records.slice(0, 3).map((record) => (
+                <button
+                  className={`loop-saved-song${lesson.id === record.id ? ' is-current' : ''}`}
+                  key={record.id}
+                  type="button"
+                  onClick={() => openLesson(record.lesson, record.file, record.practiceFile)}
+                >
+                  <span className="loop-mini-art imported">
+                    <Music2 size={16} />
                   </span>
                   <span>
-                    {lesson.bpm} BPM{lesson.source !== 'demo' ? ' est.' : ''}
+                    <strong>{record.lesson.title}</strong>
+                    <small>Saved on this device</small>
                   </span>
-                  <span>
-                    {lesson.key}
-                    {lesson.source !== 'demo' ? ' est.' : ''}
-                  </span>
-                  <span>Standard tuning</span>
-                </div>
+                </button>
+              ))}
+            </div>
+            <div className="loop-sidebar-bottom">
+              <div className="loop-small-guitar">
+                <Guitar size={22} strokeWidth={1.4} />
+                <span>
+                  Your guitar, your pace.<small>Make a little room for music.</small>
+                </span>
               </div>
-              <div className="loop-song-length">
-                <Disc3 size={20} strokeWidth={1.2} />
-                <span>{formatTime(lesson.duration)}</span>
-                <small>
-                  {lesson.source === 'demo'
-                    ? 'Original lesson'
-                    : `${lesson.notes.length} estimated notes`}
-                </small>
-              </div>
-            </section>
+              <Link to="/hub">
+                <ArrowLeft size={14} /> Sattari Hub
+              </Link>
+            </div>
+          </aside>
 
-            <div className="loop-session-grid">
-              <section className="loop-lesson-panel">
-                <div className="loop-lesson-toolbar">
-                  <div className="loop-guide-tabs" role="tablist" aria-label="Learning guide">
-                    {VIEWS.map(([id, label]) => (
-                      <button
-                        id={`loop-tab-${id}`}
-                        key={id}
-                        type="button"
-                        role="tab"
-                        aria-selected={view === id}
-                        aria-controls="loop-guide-panel"
-                        onClick={() => {
-                          setView(id);
-                          setEditing(false);
-                        }}
-                      >
-                        {label}
-                      </button>
-                    ))}
+          <div className="loop-workspace">
+            <header className="loop-topbar">
+              <div>
+                <span className="loop-breadcrumb">YOUR SPACE TO PLAY</span>
+                <span className="loop-topbar-location">{NAV.find((n) => n[0] === nav)?.[1]}</span>
+              </div>
+              <div className="loop-topbar-actions">
+                <span className="loop-local-label">
+                  <span />
+                  Audio stays on your device
+                </span>
+                <button
+                  type="button"
+                  className="loop-button loop-button-dark"
+                  onClick={() => {
+                    importer.clearError();
+                    setModal('import');
+                  }}
+                >
+                  <Plus size={16} /> Add a song
+                </button>
+              </div>
+            </header>
+
+            {nav === 'practice' && (
+              <div className="loop-practice-content">
+                <div className="loop-intro">
+                  <div>
+                    <div className="loop-eyebrow">
+                      <span /> LET’S MAKE SOME MUSIC
+                    </div>
+                    <h1>
+                      A little closer to <em>playing it.</em>
+                    </h1>
+                    <p>Take it one phrase at a time. The rest will follow.</p>
                   </div>
                   <button
-                    className={`loop-icon-button${editing ? ' is-active' : ''}`}
                     type="button"
-                    aria-label="Edit lesson notes and chords"
-                    aria-pressed={editing}
-                    onClick={() => setEditing(!editing)}
+                    className="loop-button loop-button-quiet"
+                    onClick={() => setModal('export')}
                   >
-                    <SlidersHorizontal size={17} />
+                    <ArrowDownToLine size={16} /> Practice sheet
                   </button>
                 </div>
-                <div className="loop-phrase-heading">
-                  <div>
-                    <span className="loop-eyebrow">
-                      {view === 'chords'
-                        ? lesson.source === 'demo'
-                          ? 'SUGGESTED ACCOMPANIMENT'
-                          : 'ESTIMATED CHORD CHANGES'
-                        : 'FIND YOUR FLOW'}
-                    </span>
-                    <h3>
-                      {view === 'chords'
-                        ? 'A few shapes. A whole song.'
-                        : `Phrase ${phraseIndex + 1}`}
-                      <span>
-                        {formatTime(phrase.start)} — {formatTime(phrase.end)}
-                      </span>
-                    </h3>
-                  </div>
-                  <div className="loop-phrase-pager">
-                    <button
-                      type="button"
-                      className="loop-icon-button"
-                      aria-label="Previous phrase"
-                      disabled={phraseIndex === 0}
-                      onClick={() => seek(phrases[phraseIndex - 1].start)}
-                    >
-                      <ChevronLeft size={17} />
-                    </button>
+
+                <section className="loop-song-panel" aria-label="Current song">
+                  <div className="loop-cover" aria-hidden="true">
+                    <div className="loop-cover-rings" />
                     <span>
-                      {phraseIndex + 1} / {phrases.length}
+                      SATTARI
+                      <br />
+                      SESSIONS
                     </span>
-                    <button
-                      type="button"
-                      className="loop-icon-button"
-                      aria-label="Next phrase"
-                      disabled={phraseIndex === phrases.length - 1}
-                      onClick={() => seek(phrases[phraseIndex + 1].start)}
-                    >
-                      <ChevronRight size={17} />
-                    </button>
+                    <AudioLines size={42} strokeWidth={1} />
+                    <small>VOL. 01</small>
                   </div>
-                </div>
-                <div id="loop-guide-panel" role="tabpanel" aria-labelledby={`loop-tab-${view}`}>
-                  {view === 'tab' && (
-                    <TabGuide notes={phrase.notes} active={selected} onSelect={selectNote} />
-                  )}
-                  {view === 'staff' && (
-                    <>
-                      <StaffGuide notes={phrase.notes} active={selected} bpm={lesson.bpm} />
-                      <p className="loop-guide-footnote">
-                        Guitar notation sounds one octave lower. Rhythm is rounded for practice.
-                      </p>
-                    </>
-                  )}
-                  {view === 'fretboard' && <Fretboard note={currentNote} />}
-                  {view === 'chords' && (
-                    <div className="loop-chord-grid">
-                      {lesson.chords
-                        .filter((c) => c.start < phrase.end && c.end > phrase.start)
-                        .map((c) => (
+                  <div className="loop-song-info">
+                    <div className="loop-song-kicker">
+                      {lesson.source === 'demo'
+                        ? 'MADE FOR YOUR FIRST SESSION'
+                        : 'YOUR RECORDING · ESTIMATED ANALYSIS'}
+                    </div>
+                    <h2>{lesson.title}</h2>
+                    <p>{lesson.artist}</p>
+                    <div className="loop-song-tags">
+                      <span>
+                        <Guitar size={13} /> Guitar
+                      </span>
+                      <span>
+                        {lesson.bpm} BPM{lesson.source !== 'demo' ? ' est.' : ''}
+                      </span>
+                      <span>
+                        {lesson.key}
+                        {lesson.source !== 'demo' ? ' est.' : ''}
+                      </span>
+                      <span>{profileLabel(profile)}</span>
+                    </div>
+                  </div>
+                  <div className="loop-song-length">
+                    <Disc3 size={20} strokeWidth={1.2} />
+                    <span>{formatTime(lesson.duration)}</span>
+                    <small>
+                      {lesson.source === 'demo'
+                        ? 'Original lesson'
+                        : `${lesson.notes.length} estimated notes`}
+                    </small>
+                  </div>
+                </section>
+
+                {practiceFile && (
+                  <RecordingSource source={recordingSource} onChange={changeRecordingSource} />
+                )}
+                <div className="loop-session-grid">
+                  <section className="loop-lesson-panel">
+                    <div className="loop-lesson-toolbar">
+                      <div className="loop-guide-tabs" role="tablist" aria-label="Learning guide">
+                        {VIEWS.map(([id, label]) => (
                           <button
+                            id={`loop-tab-${id}`}
+                            key={id}
                             type="button"
-                            key={c.start}
-                            className={`loop-chord-card${currentChord === c ? ' is-selected' : ''}`}
-                            aria-pressed={currentChord === c}
+                            role="tab"
+                            aria-selected={view === id}
+                            aria-controls="loop-guide-panel"
                             onClick={() => {
-                              audio.current?.pause();
-                              seek(c.start);
+                              setView(id);
+                              setEditing(false);
                             }}
                           >
-                            <div>
-                              <strong>{c.name}</strong>
-                              <span>{formatTime(c.start)}</span>
-                            </div>
-                            <ChordDiagram name={c.name} />
-                            <small>
-                              {chordShape(c.name)?.barre ? 'Barre shape' : 'Open shape'}
-                            </small>
+                            {label}
                           </button>
                         ))}
-                      {!lesson.chords.length && (
-                        <div className="loop-empty-notes">
-                          No chords could be estimated. Try a clearer recording.
+                      </div>
+                      <button
+                        className={`loop-icon-button${editing ? ' is-active' : ''}`}
+                        type="button"
+                        aria-label="Edit lesson notes and chords"
+                        aria-pressed={editing}
+                        onClick={() => setEditing(!editing)}
+                      >
+                        <SlidersHorizontal size={17} />
+                      </button>
+                    </div>
+                    <div className="loop-phrase-heading">
+                      <div>
+                        <span className="loop-eyebrow">
+                          {view === 'chords'
+                            ? lesson.source === 'demo'
+                              ? 'SUGGESTED ACCOMPANIMENT'
+                              : 'ESTIMATED CHORD CHANGES'
+                            : 'FIND YOUR FLOW'}
+                        </span>
+                        <h3>
+                          {view === 'chords'
+                            ? 'A few shapes. A whole song.'
+                            : `Phrase ${phraseIndex + 1}`}
+                          <span>
+                            {formatTime(phrase.start)} — {formatTime(phrase.end)}
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="loop-phrase-pager">
+                        <button
+                          type="button"
+                          className="loop-icon-button"
+                          aria-label="Previous phrase"
+                          disabled={phraseIndex === 0}
+                          onClick={() => seek(phrases[phraseIndex - 1].start)}
+                        >
+                          <ChevronLeft size={17} />
+                        </button>
+                        <span>
+                          {phraseIndex + 1} / {phrases.length}
+                        </span>
+                        <button
+                          type="button"
+                          className="loop-icon-button"
+                          aria-label="Next phrase"
+                          disabled={phraseIndex === phrases.length - 1}
+                          onClick={() => seek(phrases[phraseIndex + 1].start)}
+                        >
+                          <ChevronRight size={17} />
+                        </button>
+                      </div>
+                    </div>
+                    <div id="loop-guide-panel" role="tabpanel" aria-labelledby={`loop-tab-${view}`}>
+                      {view === 'tab' && (
+                        <TabGuide notes={phrase.notes} active={selected} onSelect={selectNote} />
+                      )}
+                      {view === 'staff' && (
+                        <>
+                          <SongStaffGuide lesson={lesson} phrase={phrase} active={selected} />
+                          <p className="loop-guide-footnote">
+                            Guitar notation sounds one octave lower. Rhythm is rounded for practice.
+                          </p>
+                        </>
+                      )}
+                      {view === 'fretboard' && <Fretboard note={currentNote} />}
+                      {view === 'chords' && (
+                        <div className="loop-chord-grid">
+                          {lesson.chords
+                            .filter((c) => c.start < phrase.end && c.end > phrase.start)
+                            .map((c) => (
+                              <button
+                                type="button"
+                                key={c.start}
+                                className={`loop-chord-card${currentChord === c ? ' is-selected' : ''}`}
+                                aria-pressed={currentChord === c}
+                                onClick={() => {
+                                  audio.current?.pause();
+                                  seek(c.start);
+                                }}
+                              >
+                                <div>
+                                  <strong>{c.name}</strong>
+                                  <span>{formatTime(c.start)}</span>
+                                </div>
+                                <ChordDiagram name={c.name} />
+                                <small>
+                                  {profileChord(c.name, profile)?.barre
+                                    ? 'Barre shape'
+                                    : 'Suggested fingering'}
+                                </small>
+                              </button>
+                            ))}
+                          {!lesson.chords.length && (
+                            <div className="loop-empty-notes">
+                              No chords could be estimated. Try a clearer recording.
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-                {editing && (
-                  <div className="loop-edit-panel">
-                    <label>
-                      Tempo (BPM)
-                      <input
-                        type="number"
-                        min="40"
-                        max="240"
-                        value={lesson.bpm}
-                        onChange={(e) => {
-                          const bpm = Number(e.target.value);
-                          if (bpm >= 40 && bpm <= 240) changeLesson({ ...lesson, bpm });
-                        }}
-                      />
-                    </label>
-                    {view === 'chords' && currentChord ? (
-                      <label>
-                        Chord at {formatTime(currentChord.start)}
-                        <select
-                          value={currentChord.name}
-                          onChange={(e) =>
-                            changeLesson({
-                              ...lesson,
-                              chords: lesson.chords.map((c, i) =>
-                                i === chordIndex ? { ...c, name: e.target.value, edited: true } : c
-                              ),
-                            })
-                          }
-                        >
-                          {CHORD_NAMES.map((n) => (
-                            <option key={n}>{n}</option>
-                          ))}
-                        </select>
-                      </label>
-                    ) : (
-                      currentNote && (
+                    {editing && (
+                      <div className="loop-edit-panel">
                         <label>
-                          Selected note
-                          <select
-                            value={currentNote.midi}
+                          Tempo (BPM)
+                          <input
+                            type="number"
+                            min="40"
+                            max="240"
+                            value={lesson.bpm}
                             onChange={(e) => {
-                              const midi = Number(e.target.value);
-                              changeLesson({
-                                ...lesson,
-                                notes: lesson.notes.map((n, i) =>
-                                  i === selected
-                                    ? { ...n, midi, ...positionForMidi(midi), edited: true }
-                                    : n
-                                ),
-                              });
+                              const bpm = Number(e.target.value);
+                              if (bpm >= 40 && bpm <= 240) changeLesson({ ...lesson, bpm });
                             }}
-                          >
-                            {Array.from({ length: 45 }, (_, i) => i + 40).map((midi) => (
-                              <option key={midi} value={midi}>
-                                {noteName(midi)}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </label>
-                      )
+                        {view === 'chords' && currentChord ? (
+                          <label>
+                            Chord at {formatTime(currentChord.start)}
+                            <select
+                              value={currentChord.name}
+                              onChange={(e) =>
+                                changeLesson({
+                                  ...lesson,
+                                  chords: lesson.chords.map((c, i) =>
+                                    i === chordIndex
+                                      ? { ...c, name: e.target.value, edited: true }
+                                      : c
+                                  ),
+                                })
+                              }
+                            >
+                              {CHORD_NAMES.map((n) => (
+                                <option key={n}>{n}</option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : (
+                          currentNote && (
+                            <label>
+                              Selected note
+                              <select
+                                value={currentNote.midi}
+                                onChange={(e) => {
+                                  const midi = Number(e.target.value);
+                                  changeLesson({
+                                    ...lesson,
+                                    notes: lesson.notes.map((n, i) =>
+                                      i === selected
+                                        ? { ...n, midi, ...positionForMidi(midi), edited: true }
+                                        : n
+                                    ),
+                                  });
+                                }}
+                              >
+                                {Array.from({ length: 45 }, (_, i) => i + 40).map((midi) => (
+                                  <option key={midi} value={midi}>
+                                    {noteName(midi)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          )
+                        )}
+                        <span>
+                          Edits update your practice guide. The recording keeps its original sound.
+                        </span>
+                      </div>
                     )}
-                    <span>
-                      Edits update your practice guide. The recording keeps its original sound.
-                    </span>
-                  </div>
-                )}
-                <div className="loop-guide-footer">
-                  <span>
-                    {view === 'chords'
-                      ? '○ Open string   × Don’t play   1–4 Fingers'
-                      : 'Standard tuning · E A D G B e'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void hear(
-                        view === 'chords'
-                          ? chordMidis(currentChord?.name)
+                    <div className="loop-guide-footer">
+                      <span>
+                        {view === 'chords'
+                          ? '○ Open string   × Don’t play   1–4 Fingers'
+                          : profileLabel(profile)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void hear(
+                            view === 'chords'
+                              ? profileChordMidis(currentChord?.name, profile)
+                              : currentNote
+                                ? [currentNote.midi]
+                                : []
+                          )
+                        }
+                      >
+                        <Volume2 size={14} /> Hear {view === 'chords' ? 'chord' : 'note'}
+                      </button>
+                    </div>
+                    <div className="loop-next-note">
+                      <span className="loop-note-badge">
+                        {view === 'chords'
+                          ? currentChord?.name || '—'
                           : currentNote
-                            ? [currentNote.midi]
-                            : []
-                      )
-                    }
-                  >
-                    <Volume2 size={14} /> Hear {view === 'chords' ? 'chord' : 'note'}
-                  </button>
-                </div>
-                <div className="loop-next-note">
-                  <span className="loop-note-badge">
-                    {view === 'chords'
-                      ? currentChord?.name || '—'
-                      : currentNote
-                        ? noteName(currentNote.midi).replace(/\d/, '')
-                        : '—'}
-                  </span>
-                  <div>
-                    <span className="loop-eyebrow">
-                      {view === 'chords' ? 'YOUR CHORD' : 'YOUR NEXT NOTE'}
-                    </span>
-                    <strong>
-                      {view === 'chords'
-                        ? chordShape(currentChord?.name)?.fullName || 'No chord detected'
-                        : currentNote
-                          ? `${currentNote.fret ? `Fret ${currentNote.fret}` : 'Open string'} · ${currentNote.string === 5 ? 'high E' : STRING_NAMES[currentNote.string]} string`
-                          : 'No clear notes detected'}
-                    </strong>
-                    <p>
-                      {view === 'chords'
-                        ? 'Place your fingers, then strum slowly. Let each note ring.'
-                        : currentNote?.fret
-                          ? 'Place your fingertip just behind the fret. Keep your hand relaxed.'
-                          : 'Let the open string ring. No finger needed.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="loop-icon-button"
-                    aria-label={view === 'chords' ? 'Next chord' : 'Next note'}
-                    disabled={
-                      view === 'chords'
-                        ? !currentChord || chordIndex === lesson.chords.length - 1
-                        : !currentNote || selected === lesson.notes.length - 1
-                    }
-                    onClick={() => {
-                      if (view === 'chords') {
-                        audio.current?.pause();
-                        seek(lesson.chords[chordIndex + 1].start);
-                      } else selectNote(selected + 1);
-                    }}
-                  >
-                    <ArrowRight size={19} />
-                  </button>
-                </div>
-              </section>
-
-              <aside className="loop-coach">
-                <div className="loop-coach-heading">
-                  <span className="loop-coach-icon">
-                    <Sparkles size={17} />
-                  </span>
-                  <span>IN YOUR CORNER</span>
-                  <span
-                    className={`loop-mic-dot${microphone.status === 'listening' ? ' is-on' : ''}`}
-                  />
-                </div>
-                <h3>{microphone.status === 'listening' ? 'I’m listening.' : 'Let’s hear you.'}</h3>
-                <p>A little guidance, right when you need it.</p>
-                <div
-                  className={`loop-listening-orb${microphone.status === 'listening' ? ' is-listening' : ''}`}
-                >
-                  <div>
-                    {pitch && microphone.status === 'listening' ? (
-                      <strong>{noteName(pitch.midi)}</strong>
-                    ) : (
-                      <AudioLines size={34} strokeWidth={1.3} />
-                    )}
-                  </div>
-                </div>
-                <div className="loop-coach-status" aria-live="polite">
-                  <strong>{feedback}</strong>
-                  <p>{feedbackDetail}</p>
-                </div>
-                <button
-                  type="button"
-                  className={`loop-button ${microphone.status === 'listening' ? 'loop-button-secondary' : 'loop-button-purple'}`}
-                  onClick={() =>
-                    microphone.status === 'off' ? void microphone.start() : microphone.stop()
-                  }
-                >
-                  <Mic size={16} />
-                  {microphone.status === 'requesting'
-                    ? 'Cancel microphone'
-                    : microphone.status === 'listening'
-                      ? 'Stop listening'
-                      : 'Start listening'}
-                </button>
-                {microphone.error && (
-                  <p className="loop-error" role="alert">
-                    {microphone.error}
-                  </p>
-                )}
-                <label className="loop-wait-option">
-                  <input
-                    type="checkbox"
-                    checked={waitForMe}
-                    onChange={(e) => setWaitForMe(e.target.checked)}
-                  />
-                  Wait for me<span>Advance on a correct note while playback is paused</span>
-                </label>
-                <div className="loop-coach-progress">
-                  <span>
-                    {hits.length
-                      ? `${hits.length} notes played correctly`
-                      : 'Every note is a little progress.'}
-                  </span>
-                  <div>
-                    <span
-                      style={{
-                        width: `${lesson.notes.length ? (hits.length / lesson.notes.length) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </aside>
-            </div>
-
-            <section className="loop-timeline">
-              <div className="loop-timeline-heading">
-                <h3>The whole picture</h3>
-                <span>{loop ? 'Looping selected phrase' : 'Playing through'}</span>
-              </div>
-              <Waveform
-                peaks={lesson.waveform}
-                current={time}
-                duration={lesson.duration}
-                onSeek={seek}
-              />
-              <div className="loop-phrase-chips">
-                {phrases.map((p, i) => (
-                  <button
-                    type="button"
-                    key={i}
-                    onClick={() => seek(p.start)}
-                    className={i === phraseIndex ? 'is-active' : ''}
-                    aria-pressed={i === phraseIndex}
-                  >
-                    <span>{String(i + 1).padStart(2, '0')}</span>Phrase {i + 1}
-                    <small>{formatTime(p.start)}</small>
-                  </button>
-                ))}
-              </div>
-            </section>
-            <div className="loop-bottom-hint">
-              <Headphones size={15} />
-              <span>
-                {lesson.source === 'demo'
-                  ? 'Headphones on. Shoulders down. You’ve got this.'
-                  : 'Estimated melody and harmony. Clean solo guitar gives the best results; use Edit to correct the guide.'}
-              </span>
-              <span>LOCAL FIRST · MADE FOR MUSIC</span>
-            </div>
-          </div>
-        )}
-
-        {nav === 'library' && (
-          <div className="loop-secondary-page">
-            <div className="loop-eyebrow">YOUR PERSONAL SONGBOOK</div>
-            <h1>
-              Music you want to <em>make yours.</em>
-            </h1>
-            <p>Your recordings and practice guides, saved in this browser.</p>
-            <div className="loop-library-grid">
-              <button type="button" className="loop-library-add" onClick={() => setModal('import')}>
-                <Plus size={28} />
-                <strong>Bring a song you love</strong>
-                <span>Drop an audio file to get started</span>
-              </button>
-              {[{ id: DEMO.id, lesson: DEMO }, ...records].map((r) => (
-                <div className="loop-library-card" key={r.id}>
-                  <div className="loop-library-art">
-                    <AudioLines size={58} strokeWidth={1} />
-                    <span>{r.lesson.source === 'demo' ? 'LOOP ORIGINAL' : 'YOUR RECORDING'}</span>
-                  </div>
-                  <h2>{r.lesson.title}</h2>
-                  <p>
-                    {r.lesson.bpm} BPM · {r.lesson.key} · {formatTime(r.lesson.duration)}
-                  </p>
-                  <div>
-                    <button
-                      type="button"
-                      className="loop-button loop-button-secondary"
-                      onClick={() => openLesson(r.lesson, r.file || null)}
-                    >
-                      <Play size={14} /> Open lesson
-                    </button>
-                    {r.file && (
+                            ? noteName(currentNote.midi).replace(/\d/, '')
+                            : '—'}
+                      </span>
+                      <div>
+                        <span className="loop-eyebrow">
+                          {view === 'chords' ? 'YOUR CHORD' : 'YOUR NEXT NOTE'}
+                        </span>
+                        <strong>
+                          {view === 'chords'
+                            ? chordShape(currentChord?.name)?.fullName || 'No chord detected'
+                            : currentNote
+                              ? `${currentNote.fret ? `Fret ${currentNote.fret}` : 'Open string'} · ${noteName(tuning[currentNote.string]).replace(/\d/g, '')} string`
+                              : 'No clear notes detected'}
+                        </strong>
+                        <p>
+                          {view === 'chords'
+                            ? 'Place your fingers, then strum slowly. Let each note ring.'
+                            : currentNote?.fret
+                              ? 'Place your fingertip just behind the fret. Keep your hand relaxed.'
+                              : 'Let the open string ring. No finger needed.'}
+                        </p>
+                      </div>
                       <button
                         type="button"
                         className="loop-icon-button"
-                        aria-label={`Remove ${r.lesson.title} from this browser`}
-                        onClick={async () => {
-                          try {
-                            await removeSong(r.id);
-                            setRecords((prev) => prev.filter((s) => s.id !== r.id));
-                            setToast('Removed from this browser. Your original file is unchanged.');
-                          } catch {
-                            setToast('Could not remove this song. Try again.');
-                          }
+                        aria-label={view === 'chords' ? 'Next chord' : 'Next note'}
+                        disabled={
+                          view === 'chords'
+                            ? !currentChord || chordIndex === lesson.chords.length - 1
+                            : !currentNote || selected === lesson.notes.length - 1
+                        }
+                        onClick={() => {
+                          if (view === 'chords') {
+                            audio.current?.pause();
+                            seek(lesson.chords[chordIndex + 1].start);
+                          } else selectNote(selected + 1);
                         }}
                       >
-                        <Trash2 size={17} />
+                        <ArrowRight size={19} />
                       </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                    </div>
+                  </section>
 
-        {nav === 'chord-library' && (
-          <div className="loop-secondary-page">
-            <div className="loop-eyebrow">A LANGUAGE AT YOUR FINGERTIPS</div>
-            <h1>
-              Find your next <em>chord.</em>
-            </h1>
-            <p>Finger numbers: 1 index, 2 middle, 3 ring, 4 little finger.</p>
-            <div className="loop-chord-library-layout">
-              <div>
-                <label className="loop-search-label">
-                  Find a chord
-                  <input
-                    type="search"
-                    placeholder="Try Em, G, or C#…"
-                    value={chordFilter}
-                    onChange={(e) => setChordFilter(e.target.value)}
-                  />
-                </label>
-                <div className="loop-chord-pills">
-                  {CHORD_NAMES.filter((n) =>
-                    n.toLowerCase().includes(chordFilter.toLowerCase())
-                  ).map((n) => (
+                  <aside className="loop-coach">
+                    <div className="loop-coach-heading">
+                      <span className="loop-coach-icon">
+                        <Sparkles size={17} />
+                      </span>
+                      <span>IN YOUR CORNER</span>
+                      <span
+                        className={`loop-mic-dot${microphone.status === 'listening' ? ' is-on' : ''}`}
+                      />
+                    </div>
+                    <h3>
+                      {microphone.status === 'listening' ? 'I’m listening.' : 'Let’s hear you.'}
+                    </h3>
+                    <p>A little guidance, right when you need it.</p>
+                    <div
+                      className={`loop-listening-orb${microphone.status === 'listening' ? ' is-listening' : ''}`}
+                    >
+                      <div>
+                        {pitch && microphone.status === 'listening' ? (
+                          <strong>{noteName(pitch.midi)}</strong>
+                        ) : (
+                          <AudioLines size={34} strokeWidth={1.3} />
+                        )}
+                      </div>
+                    </div>
+                    <div className="loop-coach-status" aria-live="polite">
+                      <strong>{feedback}</strong>
+                      <p>{feedbackDetail}</p>
+                    </div>
                     <button
                       type="button"
-                      key={n}
-                      aria-pressed={libraryChord === n}
-                      onClick={() => setLibraryChord(n)}
+                      className={`loop-button ${microphone.status === 'listening' ? 'loop-button-secondary' : 'loop-button-purple'}`}
+                      onClick={() =>
+                        microphone.status === 'off' ? void microphone.start() : microphone.stop()
+                      }
                     >
-                      {n}
+                      <Mic size={16} />
+                      {microphone.status === 'requesting'
+                        ? 'Cancel microphone'
+                        : microphone.status === 'listening'
+                          ? 'Stop listening'
+                          : 'Start listening'}
                     </button>
+                    {microphone.error && (
+                      <p className="loop-error" role="alert">
+                        {microphone.error}
+                      </p>
+                    )}
+                    <label className="loop-wait-option">
+                      <input
+                        type="checkbox"
+                        checked={waitForMe}
+                        onChange={(e) => setWaitForMe(e.target.checked)}
+                      />
+                      Wait for me<span>Advance on a correct note while playback is paused</span>
+                    </label>
+                    <div className="loop-coach-progress">
+                      <span>
+                        {hits.length
+                          ? `${hits.length} notes played correctly`
+                          : 'Every note is a little progress.'}
+                      </span>
+                      <div>
+                        <span
+                          style={{
+                            width: `${lesson.notes.length ? (hits.length / lesson.notes.length) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+
+                <section className="loop-timeline">
+                  <div className="loop-timeline-heading">
+                    <h3>The whole picture</h3>
+                    <span>{loop ? 'Looping selected phrase' : 'Playing through'}</span>
+                  </div>
+                  <Waveform
+                    peaks={lesson.waveform}
+                    current={time}
+                    duration={lesson.duration}
+                    onSeek={seek}
+                  />
+                  <div className="loop-phrase-chips">
+                    {phrases.map((p, i) => (
+                      <button
+                        type="button"
+                        key={i}
+                        onClick={() => seek(p.start)}
+                        className={i === phraseIndex ? 'is-active' : ''}
+                        aria-pressed={i === phraseIndex}
+                      >
+                        <span>{String(i + 1).padStart(2, '0')}</span>Phrase {i + 1}
+                        <small>{formatTime(p.start)}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+                <div className="loop-bottom-hint">
+                  <Headphones size={15} />
+                  <span>
+                    {lesson.source === 'demo'
+                      ? 'Headphones on. Shoulders down. You’ve got this.'
+                      : 'Estimated melody and harmony. Clean solo guitar gives the best results; use Edit to correct the guide.'}
+                  </span>
+                  <span>LOCAL FIRST · MADE FOR MUSIC</span>
+                </div>
+              </div>
+            )}
+
+            {nav === 'library' && (
+              <div className="loop-secondary-page">
+                <div className="loop-eyebrow">YOUR PERSONAL SONGBOOK</div>
+                <h1>
+                  Music you want to <em>make yours.</em>
+                </h1>
+                <p>Your recordings and practice guides, saved in this browser.</p>
+                <div className="loop-library-grid">
+                  <button
+                    type="button"
+                    className="loop-library-add"
+                    onClick={() => setModal('import')}
+                  >
+                    <Plus size={28} />
+                    <strong>Bring a song you love</strong>
+                    <span>Drop an audio file to get started</span>
+                  </button>
+                  {[{ id: DEMO.id, lesson: DEMO }, ...records].map((r) => (
+                    <div className="loop-library-card" key={r.id}>
+                      <div className="loop-library-art">
+                        <AudioLines size={58} strokeWidth={1} />
+                        <span>
+                          {r.lesson.source === 'demo' ? 'SATTARI ORIGINAL' : 'YOUR RECORDING'}
+                        </span>
+                      </div>
+                      <h2>{r.lesson.title}</h2>
+                      <p>
+                        {r.lesson.bpm} BPM · {r.lesson.key} · {formatTime(r.lesson.duration)}
+                      </p>
+                      <div>
+                        <button
+                          type="button"
+                          className="loop-button loop-button-secondary"
+                          onClick={() => openLesson(r.lesson, r.file || null, r.practiceFile)}
+                        >
+                          <Play size={14} /> Open lesson
+                        </button>
+                        {r.file && (
+                          <button
+                            type="button"
+                            className="loop-icon-button"
+                            aria-label={`Remove ${r.lesson.title} from this browser`}
+                            onClick={async () => {
+                              try {
+                                await removeSong(r.id);
+                                setRecords((prev) => prev.filter((s) => s.id !== r.id));
+                                setToast(
+                                  'Removed from this browser. Your original file is unchanged.'
+                                );
+                              } catch {
+                                setToast('Could not remove this song. Try again.');
+                              }
+                            }}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-              <section className="loop-library-chord-detail">
-                <h2>{chordShape(libraryChord).fullName}</h2>
-                <ChordDiagram name={libraryChord} />
-                <p>
-                  {chordShape(libraryChord).barre
-                    ? 'The connecting line is a barre: hold these strings with your index finger.'
-                    : '○ means open. × means leave that string out.'}
-                </p>
-                <button
-                  type="button"
-                  className="loop-button loop-button-purple"
-                  onClick={() => void hear(chordMidis(libraryChord))}
-                >
-                  <Volume2 size={16} /> Hear {libraryChord}
-                </button>
-              </section>
-            </div>
-          </div>
-        )}
+            )}
 
-        {nav === 'tuner' && (
-          <div className="loop-secondary-page loop-tuner-page">
-            <div className="loop-eyebrow">START WITH A GOOD SOUND</div>
-            <h1>
-              A moment to <em>tune in.</em>
-            </h1>
-            <p>Standard guitar tuning. Pick a string, then play it on its own.</p>
-            <div className="loop-tuning-strings">
-              {TUNING.map((midi, i) => (
-                <button
-                  type="button"
-                  key={i}
-                  onClick={() => setTunerString(i)}
-                  aria-pressed={tunerString === i}
-                >
-                  <small>{6 - i}</small>
-                  {noteName(midi)}
-                </button>
-              ))}
-            </div>
-            <section className="loop-tuner-display">
-              <span className="loop-eyebrow">
-                {microphone.status === 'listening'
-                  ? 'LISTENING TO YOUR GUITAR'
-                  : 'MICROPHONE IS OFF'}
-              </span>
-              <strong>{pitch ? noteName(pitch.midi) : noteName(TUNING[tunerString])}</strong>
-              <div className="loop-tuner-meter">
-                <span>♭</span>
-                <div>
-                  <i
-                    style={{
-                      left: `${pitch ? Math.max(2, Math.min(98, 50 + ((pitch.midi - TUNING[tunerString]) * 100 + pitch.cents) / 2)) : 50}%`,
-                    }}
-                  />
-                  <b />
+            {nav === 'chord-library' && (
+              <div className="loop-secondary-page">
+                <div className="loop-eyebrow">A LANGUAGE AT YOUR FINGERTIPS</div>
+                <h1>
+                  Find your next <em>chord.</em>
+                </h1>
+                <p>Finger numbers: 1 index, 2 middle, 3 ring, 4 little finger.</p>
+                <div className="loop-chord-library-layout">
+                  <div>
+                    <label className="loop-search-label">
+                      Find a chord
+                      <input
+                        type="search"
+                        placeholder="Try Em, G, or C#…"
+                        value={chordFilter}
+                        onChange={(e) => setChordFilter(e.target.value)}
+                      />
+                    </label>
+                    <div className="loop-chord-pills">
+                      {CHORD_NAMES.filter((n) =>
+                        n.toLowerCase().includes(chordFilter.toLowerCase())
+                      ).map((n) => (
+                        <button
+                          type="button"
+                          key={n}
+                          aria-pressed={libraryChord === n}
+                          onClick={() => setLibraryChord(n)}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <section className="loop-library-chord-detail">
+                    <h2>{chordShape(libraryChord).fullName}</h2>
+                    <ChordDiagram name={libraryChord} />
+                    <p>
+                      {profileChord(libraryChord, profile)?.barre
+                        ? 'The connecting line is a barre: hold these strings with your index finger.'
+                        : '○ means open. × means leave that string out.'}
+                    </p>
+                    <button
+                      type="button"
+                      className="loop-button loop-button-purple"
+                      onClick={() => void hear(profileChordMidis(libraryChord, profile))}
+                    >
+                      <Volume2 size={16} /> Hear {libraryChord}
+                    </button>
+                  </section>
                 </div>
-                <span>♯</span>
               </div>
-              <p aria-live="polite">
-                {pitch
-                  ? `${Math.round((pitch.midi - TUNING[tunerString]) * 100 + pitch.cents)} cents from ${noteName(TUNING[tunerString])} · ${pitch.frequency.toFixed(1)} Hz`
-                  : 'Play a steady, open string.'}
-              </p>
-              <div className="loop-tuner-actions">
-                <button
-                  type="button"
-                  className="loop-button loop-button-purple"
-                  onClick={() =>
-                    microphone.status === 'off' ? void microphone.start() : microphone.stop()
-                  }
-                >
-                  <Mic size={16} />
-                  {microphone.status === 'off'
-                    ? 'Start tuner'
-                    : microphone.status === 'requesting'
-                      ? 'Cancel'
-                      : 'Stop tuner'}
-                </button>
-                <button
-                  type="button"
-                  className="loop-button loop-button-secondary"
-                  onClick={() => void hear([TUNING[tunerString]])}
-                >
-                  <Volume2 size={16} /> Reference tone
-                </button>
-              </div>
-              {microphone.error && (
-                <p className="loop-error" role="alert">
-                  {microphone.error}
-                </p>
-              )}
-            </section>
-          </div>
-        )}
+            )}
 
-        {nav === 'practice' && (
-          <footer className="loop-player">
-            <div className="loop-player-left">
-              <button
-                type="button"
-                className="loop-play-button"
-                onClick={() => void togglePlayback()}
-                aria-label={playing ? 'Pause song' : 'Play song'}
-                disabled={!sourceUrl}
-              >
-                {playing ? (
-                  <Pause size={20} fill="currentColor" />
-                ) : (
-                  <Play size={20} fill="currentColor" />
-                )}
-              </button>
-              <div>
-                <strong>{playing ? 'You’re in the groove' : 'Ready when you are'}</strong>
-                <span>
-                  {formatTime(time)} <span>/ {formatTime(lesson.duration)}</span>
-                </span>
+            {nav === 'tuner' && (
+              <div className="loop-secondary-page loop-tuner-page">
+                <div className="loop-eyebrow">START WITH A GOOD SOUND</div>
+                <h1>
+                  A moment to <em>tune in.</em>
+                </h1>
+                <p>{profileLabel(profile)}. Pick a string, then play it on its own.</p>
+                <div className="loop-tuning-strings">
+                  {tuning.map((midi, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      onClick={() => setTunerString(i)}
+                      aria-pressed={tunerString === i}
+                    >
+                      <small>{6 - i}</small>
+                      {noteName(midi)}
+                    </button>
+                  ))}
+                </div>
+                <section className="loop-tuner-display">
+                  <span className="loop-eyebrow">
+                    {microphone.status === 'listening'
+                      ? 'LISTENING TO YOUR GUITAR'
+                      : 'MICROPHONE IS OFF'}
+                  </span>
+                  <strong>{pitch ? noteName(pitch.midi) : noteName(tuning[tunerString])}</strong>
+                  <div className="loop-tuner-meter">
+                    <span>♭</span>
+                    <div>
+                      <i
+                        style={{
+                          left: `${pitch ? Math.max(2, Math.min(98, 50 + ((pitch.midi - tuning[tunerString]) * 100 + pitch.cents) / 2)) : 50}%`,
+                        }}
+                      />
+                      <b />
+                    </div>
+                    <span>♯</span>
+                  </div>
+                  <p aria-live="polite">
+                    {pitch
+                      ? `${Math.round((pitch.midi - tuning[tunerString]) * 100 + pitch.cents)} cents from ${noteName(tuning[tunerString])} · ${pitch.frequency.toFixed(1)} Hz`
+                      : 'Play a steady, open string.'}
+                  </p>
+                  <div className="loop-tuner-actions">
+                    <button
+                      type="button"
+                      className="loop-button loop-button-purple"
+                      onClick={() =>
+                        microphone.status === 'off' ? void microphone.start() : microphone.stop()
+                      }
+                    >
+                      <Mic size={16} />
+                      {microphone.status === 'off'
+                        ? 'Start tuner'
+                        : microphone.status === 'requesting'
+                          ? 'Cancel'
+                          : 'Stop tuner'}
+                    </button>
+                    <button
+                      type="button"
+                      className="loop-button loop-button-secondary"
+                      onClick={() => void hear([tuning[tunerString]])}
+                    >
+                      <Volume2 size={16} /> Reference tone
+                    </button>
+                  </div>
+                  {microphone.error && (
+                    <p className="loop-error" role="alert">
+                      {microphone.error}
+                    </p>
+                  )}
+                </section>
               </div>
-            </div>
-            <div className="loop-player-middle">
-              <button
-                type="button"
-                className={`loop-loop-toggle${loop ? ' is-active' : ''}`}
-                aria-label="Loop phrase"
-                aria-pressed={loop}
-                onClick={() => setLoop(!loop)}
-              >
-                <Repeat2 size={17} />
-                <span>Loop phrase</span>
-              </button>
-              <div className="loop-speed">
-                <label htmlFor="loop-speed">
-                  Your pace <strong>{Math.round(speed * 100)}%</strong>
-                </label>
-                <input
-                  id="loop-speed"
-                  type="range"
-                  min="0.5"
-                  max="1.25"
-                  step="0.05"
-                  value={speed}
-                  onChange={(e) => setSpeed(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="loop-player-volume">
-              <Volume2 size={17} />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-                aria-label="Playback volume"
-              />
-            </div>
-          </footer>
-        )}
-      </div>
+            )}
+
+            {nav === 'practice' && (
+              <footer className="loop-player">
+                <div className="loop-player-left">
+                  <button
+                    type="button"
+                    className="loop-play-button"
+                    onClick={() => void togglePlayback()}
+                    aria-label={playing ? 'Pause song' : 'Play song'}
+                    disabled={!sourceUrl}
+                  >
+                    {playing ? (
+                      <Pause size={20} fill="currentColor" />
+                    ) : (
+                      <Play size={20} fill="currentColor" />
+                    )}
+                  </button>
+                  <div>
+                    <strong>{playing ? 'You’re in the groove' : 'Ready when you are'}</strong>
+                    <span>
+                      {formatTime(time)} <span>/ {formatTime(lesson.duration)}</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="loop-player-middle">
+                  <button
+                    type="button"
+                    className={`loop-loop-toggle${loop ? ' is-active' : ''}`}
+                    aria-label="Loop phrase"
+                    aria-pressed={loop}
+                    onClick={() => setLoop(!loop)}
+                  >
+                    <Repeat2 size={17} />
+                    <span>Loop phrase</span>
+                  </button>
+                  <div className="loop-speed">
+                    <label htmlFor="loop-speed">
+                      Your pace <strong>{Math.round(speed * 100)}%</strong>
+                    </label>
+                    <input
+                      id="loop-speed"
+                      type="range"
+                      min="0.5"
+                      max="1.25"
+                      step="0.05"
+                      value={speed}
+                      onChange={(e) => setSpeed(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <div className="loop-player-volume">
+                  <Volume2 size={17} />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={volume}
+                    onChange={(e) => setVolume(Number(e.target.value))}
+                    aria-label="Playback volume"
+                  />
+                </div>
+              </footer>
+            )}
+          </div>
+        </>
+      )}
 
       {modal === 'import' && (
         <Modal
@@ -1276,14 +1504,52 @@ export default function LoopPracticePage() {
           }}
         >
           <p className="loop-modal-copy">
-            Drop in a recording. We’ll find a starting point for your practice.
+            Choose your recording, prepare the sound, then check your guide.
           </p>
-          {importer.progress ? (
+          <div className="lc-import-tabs" aria-label="Import format">
+            <button
+              type="button"
+              aria-pressed={importKind === 'audio'}
+              disabled={!!importer.progress}
+              onClick={() => setImportKind('audio')}
+            >
+              Audio recording
+            </button>
+            <button
+              type="button"
+              aria-pressed={importKind === 'score'}
+              disabled={!!importer.progress}
+              onClick={() => setImportKind('score')}
+            >
+              Guitar Pro / MusicXML
+            </button>
+          </div>
+          {importKind === 'score' ? (
+            <ScoreImport
+              onImport={(record) => {
+                openLesson(record.lesson, record.file, record.practiceFile);
+                setModal(null);
+                const saved = { ...record, id: record.lesson.id, savedAt: Date.now() };
+                setRecords((previous) => [saved, ...previous]);
+                void saveSong(saved)
+                  .then(() => setToast('Score lesson saved on this device.'))
+                  .catch(() =>
+                    setToast('The score is ready for this visit; device storage is unavailable.')
+                  );
+              }}
+            />
+          ) : importer.progress ? (
             <div className="loop-import-progress">
               <LoaderCircle size={34} className="loop-spinner" />
-              <h3>{importer.progress.label}</h3>
-              <progress max="100" value={importer.progress.value} />
-              <p>Analyzing on your device. This can take a moment.</p>
+              <h3 role="status" aria-live="polite">
+                {importer.progress.label}
+              </h3>
+              <progress
+                aria-label="Preparing your practice guide"
+                max="100"
+                value={importer.progress.value ?? undefined}
+              />
+              <p>Working on this device. Keep this tab open; you can cancel at any time.</p>
               <button
                 type="button"
                 className="loop-button loop-button-secondary"
@@ -1294,25 +1560,7 @@ export default function LoopPracticePage() {
             </div>
           ) : (
             <>
-              <button
-                type="button"
-                className="loop-drop-zone"
-                onClick={() => fileInput.current?.click()}
-              >
-                <span>
-                  <Upload size={26} strokeWidth={1.4} />
-                </span>
-                <strong>Drop your song here</strong>
-                <span>or choose a file</span>
-                <small>MP3, WAV, M4A, OGG, FLAC · Up to 40 MB / 8 min</small>
-              </button>
-              <div className="loop-import-note">
-                <CircleHelp size={17} />
-                <p>
-                  Start with a clear guitar recording for the best notes and chords. Full-band
-                  recordings produce rough estimates you can edit.
-                </p>
-              </div>
+              <ImportSetup importer={importer} onChooseFile={() => fileInput.current?.click()} />
               <button
                 type="button"
                 className="loop-demo-link"
@@ -1341,7 +1589,9 @@ export default function LoopPracticePage() {
             className="loop-export-option"
             onClick={() => {
               const url = URL.createObjectURL(
-                new Blob([downloadLesson(lesson)], { type: 'text/plain;charset=utf-8' })
+                new Blob([downloadPracticeGuide(lesson, profile)], {
+                  type: 'text/plain;charset=utf-8',
+                })
               );
               const a = document.createElement('a');
               a.href = url;
@@ -1361,9 +1611,35 @@ export default function LoopPracticePage() {
             type="button"
             className="loop-export-option"
             onClick={() => {
+              const url = URL.createObjectURL(
+                new Blob([midiGuide(lesson)], { type: 'audio/midi' })
+              );
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `${lesson.title.replace(/[^a-z0-9-_ ]/gi, '') || 'loop'}-draft.mid`;
+              link.click();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }}
+          >
+            <Music2 size={21} />
+            <span>
+              <strong>Download MIDI notes</strong>
+              <small>
+                {lesson.polyphonicNotes
+                  ? 'Overlapping chord tones with original timing'
+                  : 'Melody notes with original timing'}{' '}
+                · editable in a music app
+              </small>
+            </span>
+            <ArrowRight size={17} />
+          </button>
+          <button
+            type="button"
+            className="loop-export-option"
+            onClick={() => {
               setPrintReady(true);
               setModal(null);
-              requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+              setToast('Preparing your complete practice sheet…');
             }}
           >
             <Music2 size={21} />
@@ -1393,13 +1669,17 @@ export default function LoopPracticePage() {
         </div>
       )}
       {printReady && (
-        <div className="loop-print-only">
+        <div className="loop-print-only" ref={printRoot}>
           <h1>{lesson.title}</h1>
           <p>
-            Loop practice sheet · {lesson.bpm} BPM · {lesson.key} · Standard tuning
+            Sattari Learn practice sheet · {lesson.bpm} BPM · {lesson.key} · {profileLabel(profile)}
           </p>
           {lesson.source !== 'demo' && (
-            <p>Estimated transcription. Review against the recording.</p>
+            <p>
+              {lesson.source === 'score'
+                ? 'Imported written score. Verify alignment against your recording.'
+                : 'Estimated transcription. Review against the recording.'}
+            </p>
           )}
           <div className="loop-print-chords">
             {[...new Set(lesson.chords.map((c) => c.name))].map((name) => (
@@ -1417,8 +1697,30 @@ export default function LoopPracticePage() {
               </h2>
               <StaffGuide notes={p.notes} active={-1} bpm={lesson.bpm} />
               <TabGuide notes={p.notes} active={-1} onSelect={() => {}} />
+              {lesson.polyphonicNotes?.some((n) => n.end > p.start && n.start < p.end) && (
+                <>
+                  <h3>Overlapping notes · approximate rhythm in 4/4</h3>
+                  <StaffGuide
+                    notes={lesson.polyphonicNotes
+                      .filter((n) => n.end > p.start && n.start < p.end)
+                      .map((n) => ({
+                        ...n,
+                        start: Math.max(n.start, p.start),
+                        end: Math.min(n.end, p.end),
+                      }))}
+                    bpm={lesson.bpm}
+                    polyphonic
+                  />
+                </>
+              )}
             </section>
           ))}
+          {lesson.polyphonicNotes && (
+            <section>
+              <h2>Chord-tone draft</h2>
+              <pre className="lf-print-tones">{polyphonicText(lesson, profile)}</pre>
+            </section>
+          )}
         </div>
       )}
     </div>

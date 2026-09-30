@@ -12,7 +12,7 @@ export default function Footer() {
           <p className="footer-copy">
             Instruments, cymbals, accessories, repairs, rentals, and lessons in Woodland Hills.
           </p>
-          <div className="footer-quick-links" aria-label="Footer quick links">
+          <nav className="footer-quick-links" aria-label="Footer quick links">
             <Link to="/about">About Sattari</Link>
             <Link to="/shop">Shop gear</Link>
             <Link to="/services">Book local support</Link>
@@ -20,7 +20,7 @@ export default function Footer() {
             <Link to="/guides">Music guides</Link>
             <Link to="/visit">Visit & contact</Link>
             <Link to="/privacy">Privacy choices</Link>
-          </div>
+          </nav>
           <nav className="footer-quick-links" aria-label="Music store service areas">
             <Link to="/woodland-hills-music-store">Woodland Hills</Link>
             <Link to="/encino-music-store">Encino</Link>

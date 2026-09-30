@@ -66,7 +66,11 @@ const directionsUrl =
   'https://www.google.com/maps/dir//SATTARI+Musical+Instruments,+4881+Topanga+Canyon+Blvd+%23202,+Woodland+Hills,+CA+91364';
 
 export default function ServicesPage() {
-  const [selectedService, setSelectedService] = useState(services[0]);
+  const [serviceValue, setServiceValue] = useState(services[0].value);
+  const selectedService = services.find(
+    (service) => service.value === (serviceValue === 'studio' ? 'rehearsal' : serviceValue)
+  );
+  const isBooking = ['studio', 'rehearsal'].includes(serviceValue);
 
   return (
     <section className="section page-header-offset services-shell">
@@ -140,7 +144,7 @@ export default function ServicesPage() {
             <div className="services-picker-list">
               {services.map((service) => {
                 const Icon = service.icon;
-                const isSelected = selectedService.value === service.value;
+                const isSelected = selectedService?.value === service.value;
 
                 return (
                   <button
@@ -148,7 +152,7 @@ export default function ServicesPage() {
                     type="button"
                     key={service.value}
                     aria-pressed={isSelected}
-                    onClick={() => setSelectedService(service)}
+                    onClick={() => setServiceValue(service.value)}
                   >
                     <span className="services-picker-icon" aria-hidden="true">
                       <Icon size={20} />
@@ -163,30 +167,32 @@ export default function ServicesPage() {
               })}
             </div>
 
-            <div className="services-selection" aria-live="polite">
-              <div className="services-selection-heading">
-                <div>
-                  <p className="card-kicker">{selectedService.kicker}</p>
-                  <h3>{selectedService.title}</h3>
+            {selectedService && (
+              <div className="services-selection" aria-live="polite">
+                <div className="services-selection-heading">
+                  <div>
+                    <p className="card-kicker">{selectedService.kicker}</p>
+                    <h3>{selectedService.title}</h3>
+                  </div>
+                  <Link
+                    to={selectedService.href}
+                    aria-label={`View ${selectedService.title} details`}
+                  >
+                    Details
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </Link>
                 </div>
-                <Link
-                  to={selectedService.href}
-                  aria-label={`View ${selectedService.title} details`}
-                >
-                  Details
-                  <ArrowUpRight size={16} aria-hidden="true" />
-                </Link>
+                <p>{selectedService.body}</p>
+                <ul>
+                  {selectedService.points.map((point) => (
+                    <li key={point}>
+                      <Check size={15} aria-hidden="true" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p>{selectedService.body}</p>
-              <ul>
-                {selectedService.points.map((point) => (
-                  <li key={point}>
-                    <Check size={15} aria-hidden="true" />
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
           </section>
 
           <section
@@ -200,10 +206,10 @@ export default function ServicesPage() {
               </span>
               <div>
                 <h2 id="service-request-title">
-                  {selectedService.value === 'rehearsal' ? 'Book a time' : 'Send your request'}
+                  {isBooking ? 'Book a time' : 'Send your request'}
                 </h2>
                 <p>
-                  {selectedService.value === 'rehearsal'
+                  {isBooking
                     ? 'Request first. Pay after approval.'
                     : 'Share the timing and a few useful details. No commitment required.'}
                 </p>
@@ -211,7 +217,8 @@ export default function ServicesPage() {
             </div>
             <ServiceInquiryForm
               compact
-              initialService={selectedService.value}
+              service={serviceValue}
+              onServiceChange={setServiceValue}
               source="Local services action page"
             />
           </section>

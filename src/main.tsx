@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import App, { preloadRoute, routePattern } from './App';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -11,6 +11,7 @@ import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';
 import './styles-nav-hub.css';
+import './styles-site-chrome.css';
 import { CartProvider } from './context/CartContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -40,6 +41,7 @@ function readInventorySnapshot() {
 }
 
 const root = document.getElementById('root')!;
+const router = createBrowserRouter([{ path: '*', element: <App /> }]);
 const app = (
   <React.StrictMode>
     <ErrorBoundary>
@@ -47,9 +49,7 @@ const app = (
         <ThemeProvider>
           <InventoryProvider initialInventory={readInventorySnapshot()}>
             <CartProvider>
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
+              <RouterProvider router={router} />
             </CartProvider>
           </InventoryProvider>
         </ThemeProvider>

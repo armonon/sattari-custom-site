@@ -31,6 +31,10 @@ it('offers four selected stems and disables separation until tracks exist', () =
   expect(screen.getByLabelText('All stems')).toBeChecked();
   expect(screen.getByRole('button', { name: 'Separate tracks' })).toBeDisabled();
   expect(screen.getAllByRole('checkbox')).toHaveLength(5);
+  expect(screen.getByRole('button', { name: 'Separate demo' })).toBeEnabled();
+  expect(screen.getByLabelText('Processing device')).toHaveValue('auto');
+  fireEvent.change(screen.getByLabelText('Processing device'), { target: { value: 'cpu' } });
+  expect(screen.getByLabelText('Processing device')).toHaveValue('cpu');
 });
 
 it('links to practical guides in new tabs without replacing the audio session', () => {

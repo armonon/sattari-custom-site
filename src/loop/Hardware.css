@@ -1,0 +1,1564 @@
+/* Sattari Learn: ceramic case, graphite display, signal orange.
+   Scoped to the learning workspace. */
+.loop-app {
+  --lp-bg: #efede6;
+  --lp-paper: #faf8f2;
+  --lp-ink: #292b28;
+  --lp-muted: #6e7168;
+  --lp-line: #d8d6cd;
+  --lp-purple: #c84620;
+  --lp-wash: #f4e5d9;
+  --lp-green: #547249;
+  --lh-orange: #d64b24;
+  --lh-display: #252b27;
+  --lh-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --lh-case-shadow: 0 2px 0 #c7c5ba, 0 8px 16px #292b2810, inset 0 1px 0 #ffffff;
+  background: radial-gradient(ellipse at 65% 0%, #faf9f3 0, transparent 60%), #efede6;
+  color: var(--lp-ink);
+}
+.loop-app .lj-journey,
+.loop-app .lf-session {
+  --lj-serif: 'Sora', 'Inter', sans-serif;
+  --lj-accent: #bb411f;
+}
+.loop-app .lj-header {
+  height: 94px;
+  max-width: 1400px;
+  padding: 0 4.5%;
+  border-bottom: 1px solid #d0d0c6;
+  box-shadow: 0 1px 0 #ffffffa0;
+}
+.loop-app .lj-brand {
+  position: relative;
+  gap: 10px;
+  padding-bottom: 0;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -2.6px;
+}
+.loop-app .lj-brand > .lh-mark {
+  color: var(--lh-orange);
+  width: 43px;
+}
+.loop-app .loop-brand-dot {
+  color: var(--lh-orange);
+}
+.loop-app .lh-brand-caption {
+  position: absolute;
+  bottom: 0;
+  left: 54px;
+  font-family: var(--lh-mono);
+  font-size: 8px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  font-weight: 400;
+  color: #676c62;
+}
+.loop-app .lj-steps {
+  padding: 9px 15px;
+  gap: 18px;
+  border: 1px solid #d9d8ce;
+  border-radius: 8px;
+  background: #e5e5dc;
+  box-shadow:
+    inset 0 1px 3px #373f3610,
+    0 1px 0 #fff9;
+}
+.loop-app .lj-steps > div {
+  color: #74796f;
+  font-size: 10px;
+}
+.loop-app .lj-steps > div > span {
+  border-radius: 4px;
+  border: 0;
+  background: #d7d9ce;
+  color: #646d5c;
+  font-family: var(--lh-mono);
+  font-size: 10px;
+  box-shadow: inset 0 1px 2px #464f4118;
+}
+.loop-app .lj-steps [aria-current='step'] {
+  color: #282e26;
+}
+.loop-app .lj-steps [aria-current='step'] > span {
+  color: #fff9ed;
+  background: #bc4522;
+  box-shadow:
+    0 1px 2px #90331630,
+    inset 0 1px 0 #ffb18170;
+}
+.loop-app .lj-steps .is-done > span {
+  background: #d2dec2;
+  color: #3b582d;
+}
+.loop-app .lj-tool-link {
+  min-height: 42px;
+  padding: 0 13px;
+  background: linear-gradient(#f8f7f0, #e6e5dc);
+  border: 1px solid #c6c7bc;
+  border-radius: 6px;
+  color: #474c41 !important;
+  box-shadow:
+    0 2px 0 #c9c9bf,
+    inset 0 1px 0 #fff;
+}
+.loop-app .lj-main {
+  max-width: 1360px;
+  padding: 0 5%;
+}
+.loop-app .lj-eyebrow {
+  color: #6c7364;
+  font-family: var(--lh-mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 400;
+}
+.loop-app .lj-eyebrow > span {
+  width: 6px;
+  height: 6px;
+  background: var(--lh-orange);
+  border-radius: 1px;
+  box-shadow: 0 0 0 3px #db542217;
+}
+.loop-app .lj-welcome {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 64px;
+  padding: 64px 0 55px;
+}
+.loop-app .lj-welcome h1 {
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-weight: 550;
+  font-size: clamp(38px, 4.3vw, 61px);
+  line-height: 1.13;
+  letter-spacing: -3.3px;
+  margin: 21px 0 25px;
+}
+.loop-app .lj-welcome h1 em {
+  color: #c14a28;
+  font-style: normal;
+  font-weight: 550;
+}
+.loop-app .lj-welcome-copy > p {
+  font-size: 13px;
+  color: #687064;
+  line-height: 1.9;
+}
+.loop-app .lh-welcome-actions {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 28px;
+}
+.loop-app .lh-welcome-actions > .loop-button {
+  min-height: 48px;
+  padding: 12px 19px;
+  font-size: 12px !important;
+}
+.loop-app .lh-upload-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  min-height: 44px;
+  color: #515c4e;
+  font-size: 12px;
+}
+.loop-app .lj-welcome-badges {
+  margin-top: 29px;
+  gap: 22px;
+  font-family: var(--lh-mono);
+  font-size: 9px;
+  color: #6c7566;
+}
+.loop-app .lj-welcome-badges svg {
+  color: #64745a;
+}
+.loop-app .loop-button {
+  min-height: 42px;
+  border-radius: 6px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.loop-app .loop-button-purple,
+.loop-app .lj-primary {
+  background: linear-gradient(#c44722, #b53b1d);
+  border: 1px solid #b63e1f;
+  border-top-color: #ec855b;
+  color: #fff9ee;
+  box-shadow:
+    0 3px 0 #97361c,
+    0 5px 8px #8b3a2018,
+    inset 0 1px 0 #ffa97565;
+}
+.loop-app .loop-button-secondary {
+  background: linear-gradient(#fffdf6, #eae9df);
+  border: 1px solid #cccfc0;
+  box-shadow:
+    0 2px 0 #c7cbbd,
+    inset 0 1px 0 #fff;
+}
+.loop-app .loop-button:active:not(:disabled),
+.loop-app .lj-tool-link:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #a0a694;
+}
+.loop-app button:focus-visible,
+.loop-app a:focus-visible,
+.loop-app input:focus-visible,
+.loop-app select:focus-visible {
+  outline: 3px solid #ae3917;
+  outline-offset: 4px;
+}
+
+/* A working first-phrase player, housed like a small desktop instrument. */
+.loop-app .lh-deck {
+  position: relative;
+  padding: 27px 27px 18px;
+  border: 1px solid #c5c5b8;
+  border-top-color: #fafaf3;
+  border-radius: 19px;
+  background: linear-gradient(130deg, #f8f7ed 0%, #e7e7d9 70%, #dedfd0);
+  box-shadow:
+    0 6px 0 #c5c8b8,
+    0 7px 0 #919982,
+    10px 24px 38px #38412e21,
+    inset 0 1px 0 #fff;
+  transform: rotate(-2deg);
+  color: #383f32;
+}
+.loop-app .lh-screw {
+  position: absolute;
+  top: 13px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a5a997 42%, #717965 43%, #717965 55%, #dbdecb 56%);
+  border: 1px solid #bec3ae;
+  box-shadow:
+    inset 0 1px 1px #5b634430,
+    0 1px 0 #fff9;
+}
+.loop-app .lh-screw-tl {
+  left: 13px;
+}
+.loop-app .lh-screw-tr {
+  right: 13px;
+}
+.loop-app .lh-deck-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.loop-app .lh-deck-top > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 550;
+  font-size: 12px;
+}
+.loop-app .lh-deck-top .lh-mark {
+  width: 26px;
+  height: 19px;
+}
+.loop-app .lh-model {
+  font: 9px var(--lh-mono);
+  letter-spacing: 1.3px;
+  color: #646d56;
+}
+.loop-app .lh-display {
+  padding: 16px 18px 12px;
+  border: 5px solid #383e33;
+  border-bottom-color: #555d48;
+  border-radius: 9px;
+  color: #dfebc9;
+  background: radial-gradient(ellipse at 10% 100%, #42513a4a, transparent 70%), #242c25;
+  box-shadow:
+    0 1px 0 #fffff4,
+    inset 0 3px 8px #101810,
+    0 0 0 1px #9ca38f;
+  font-family: var(--lh-mono);
+}
+.loop-app .lh-display-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: #b5c6a7;
+}
+.loop-app .lh-display-top > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.loop-app .lh-display-top i {
+  height: 5px;
+  width: 5px;
+  background: #7a866e;
+  border-radius: 50%;
+}
+.loop-app .lh-display-top i.is-on {
+  background: #d2f39b;
+  box-shadow: 0 0 7px #c4f28c8a;
+}
+.loop-app .lh-display-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0 12px;
+}
+.loop-app .lh-display-title h2 {
+  font:
+    400 25px 'Sora',
+    sans-serif;
+  letter-spacing: -1px;
+}
+.loop-app .lh-display-title > span {
+  font-size: 9px;
+  color: #b8c5ab;
+  border: 1px solid #596450;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+.loop-app .lh-mini-tab {
+  padding: 8px 0 6px;
+  border-top: 1px solid #72846539;
+  border-bottom: 1px solid #72846539;
+}
+.loop-app .lh-mini-string {
+  display: flex;
+  align-items: center;
+  height: 13px;
+  position: relative;
+  font-size: 9px;
+}
+.loop-app .lh-mini-string > span {
+  width: 14px;
+  color: #87977a;
+}
+.loop-app .lh-mini-string > i {
+  height: 1px;
+  flex: 1;
+  background: #6e7e5a50;
+}
+.loop-app .lh-mini-string > b {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 14px;
+  font-weight: 500;
+  font-size: 10px;
+  border-radius: 2px;
+  color: #dcebbd;
+}
+.loop-app .lh-mini-string > b:not(:empty) {
+  background: #252d25;
+}
+.loop-app .lh-mini-string > b.is-current:not(:empty) {
+  background: #df7249;
+  color: #1c211b;
+  box-shadow: 0 0 12px #e1744c55;
+}
+.loop-app .lh-display-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 11px;
+  gap: 10px;
+  font-size: 8px;
+  color: #a6b694;
+}
+.loop-app .lh-display-bottom > div {
+  display: flex;
+  gap: 4px;
+}
+.loop-app .lh-display-bottom i {
+  width: 4px;
+  height: 6px;
+  background: #56624b;
+  border-radius: 1px;
+}
+.loop-app .lh-display-bottom i.is-lit {
+  background: #dfeeb8;
+  box-shadow: 0 0 5px #d1edaf30;
+}
+.loop-app .lh-deck-controls {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 4px 18px;
+}
+.loop-app .lh-transport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 9px var(--lh-mono);
+  letter-spacing: 0.7px;
+}
+.loop-app .lh-play-key {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid #fafaf1;
+  border-bottom-color: #a3aa96;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fcfcf3, #daddcd);
+  color: #404b35;
+  box-shadow:
+    0 3px 0 #a3aa93,
+    0 5px 7px #38412a25,
+    inset 0 1px 0 white;
+}
+.loop-app .lh-play-key svg {
+  width: 20px;
+}
+.loop-app .lh-play-key:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #a3aa93;
+}
+.loop-app .lh-play-key[aria-pressed='true'] {
+  background: #d6ddc8;
+}
+.loop-app .lh-speed {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  font: 8px var(--lh-mono);
+  letter-spacing: 0.8px;
+}
+.loop-app .lh-dial {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 53px;
+  height: 53px;
+  border: 2px solid #b6bdab;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#3f4937 0 3deg, #667058 4deg 7deg);
+  box-shadow: 0 3px 3px #42503524;
+}
+.loop-app .lh-dial::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #657159;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #5b654e, #303c2a);
+  box-shadow: inset 0 1px 1px #889378;
+}
+.loop-app .lh-dial > i {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--dial-angle));
+}
+.loop-app .lh-dial > i::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: calc(50% - 1px);
+  height: 7px;
+  width: 2px;
+  background: #f17b49;
+  border-radius: 2px;
+}
+.loop-app .lh-dial b {
+  position: relative;
+  margin-top: 4px;
+  color: #f2f2df;
+  font: 11px var(--lh-mono);
+}
+.loop-app .lh-dial small {
+  font-size: 7px;
+}
+.loop-app .lh-speed input {
+  width: 62px;
+  height: 24px;
+  margin: 0;
+  accent-color: #b54423;
+  cursor: ew-resize;
+}
+.loop-app .lh-learn-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 113px;
+  min-height: 79px;
+  padding: 10px;
+  border-radius: 7px;
+  border: 1px solid #b84521;
+  border-top-color: #f28d65;
+  background: linear-gradient(130deg, #c34a23, #b7401f);
+  color: #fff7e5;
+  box-shadow:
+    0 4px 0 #a54020,
+    0 6px 10px #9c3a2120,
+    inset 0 1px 0 #ffa57670;
+  font-size: 10px;
+}
+.loop-app .lh-learn-key:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #a54020;
+}
+.loop-app .lh-deck-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid #c1c7b660;
+  font: 8px var(--lh-mono);
+  letter-spacing: 1.1px;
+  color: #7b826e;
+}
+.loop-app .lh-speaker {
+  width: 62px;
+  height: 18px;
+  background: radial-gradient(#737d61 1px, transparent 1.5px) 0 0 / 5px 5px;
+  opacity: 0.65;
+}
+.loop-app .lh-deck-bottom > i {
+  height: 7px;
+  width: 7px;
+  background: #72825d;
+  border-radius: 50%;
+  border: 1px solid #5c6a4c;
+  box-shadow:
+    inset 0 1px 2px #26341950,
+    0 1px 0 #fff9;
+}
+.loop-app .lh-preview-error {
+  margin-top: 12px;
+  color: #8f341b;
+  font-size: 11px;
+}
+
+/* The songbook: solid cartridges, restrained ink and a repeatable tape motif. */
+.loop-app .lj-songbook {
+  border-top: 1px solid #cdd0c1;
+  padding-top: 29px;
+  box-shadow: 0 -1px 0 #ffffff9e;
+}
+.loop-app #lj-songbook-title {
+  scroll-margin-top: 28px;
+}
+.loop-app .lj-section-heading h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -1px;
+}
+.loop-app .lj-collection-count {
+  font: 10px var(--lh-mono);
+  color: #717b65;
+}
+.loop-app .lj-library-controls {
+  margin: 22px 0 25px;
+}
+.loop-app .lj-filters {
+  gap: 3px;
+  border: 1px solid #cdd1c1;
+  border-radius: 6px;
+  padding: 4px;
+  background: #dfe3d6;
+  box-shadow: inset 0 1px 3px #4d604215;
+}
+.loop-app .lj-filters button {
+  border-radius: 3px;
+  color: #69755e;
+  padding: 8px 14px;
+  font-size: 11px;
+}
+.loop-app .lj-filters button[aria-pressed='true'] {
+  background: #fdfbf2;
+  color: #38432e;
+  border-color: #fdfdf3;
+  box-shadow: 0 1px 3px #33452c28;
+}
+.loop-app .lj-filters button > span {
+  background: #d4dcca;
+  color: #465638;
+}
+.loop-app .lj-search {
+  border-color: #cdd2c1;
+  border-radius: 5px;
+  background: #e9ecdf;
+  color: #738564;
+  box-shadow:
+    inset 0 2px 4px #42573510,
+    0 1px 0 #fff9;
+}
+.loop-app .lj-search input {
+  font: 11px var(--lh-mono);
+  width: 210px;
+  min-height: 38px;
+  color: #48533d;
+}
+.loop-app .lj-song-grid {
+  gap: 20px;
+}
+.loop-app .lj-song-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border: 1px solid #c9cfc0;
+  border-radius: 10px;
+  background: #f9f8ef;
+  box-shadow:
+    0 3px 0 #cbd1c1,
+    0 5px 8px #344c2310;
+}
+.loop-app .lj-song-card:hover {
+  transform: translateY(-5px) rotate(-0.4deg);
+  box-shadow:
+    0 5px 0 #c5cbb9,
+    0 14px 22px #344c2322;
+}
+.loop-app .lj-song-card-info {
+  flex: 1;
+  padding: 17px 18px 18px;
+  border-top: 1px solid #bec9b474;
+  box-shadow: inset 0 1px 0 #fffff1;
+}
+.loop-app .lj-song-category {
+  font: 8px var(--lh-mono);
+  letter-spacing: 1px;
+  color: #687a57;
+}
+.loop-app .lj-song-card h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.6px;
+  margin: 8px 0 6px;
+  color: #303b26;
+}
+.loop-app .lj-song-card p {
+  font-size: 11px;
+  color: #77826c;
+}
+.loop-app .lj-song-meta {
+  padding-top: 13px;
+  font: 9px var(--lh-mono);
+  color: #647453;
+  border-top-color: #d2d8c6;
+}
+.loop-app .lj-song-level {
+  bottom: 11px;
+  right: 12px;
+  border: 1px solid #ffffff40;
+  border-radius: 3px;
+  background: #fdfceddb;
+  color: #414b37;
+  font: 8px var(--lh-mono);
+  letter-spacing: 0.15px;
+  padding: 4px 7px;
+}
+.loop-app .lj-song-arrow {
+  top: 36px;
+  right: 12px;
+  height: 29px;
+  width: 29px;
+  border-radius: 4px;
+  background: #f4f7e5;
+  color: #485935;
+}
+.loop-app .lj-art {
+  --tape: #db7951;
+  --tape-ink: #63351e;
+  aspect-ratio: 1.65;
+  padding: 15px;
+  background: linear-gradient(135deg, #ffffff20, #00000009), var(--tape);
+  color: var(--tape-ink);
+  box-shadow: inset 0 1px 0 #ffffff50;
+}
+.loop-app .lj-art::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border: 1px solid currentColor;
+  opacity: 0.17;
+  border-radius: 5px;
+}
+.loop-app .lj-art::after {
+  content: '';
+  position: absolute;
+  bottom: 11px;
+  left: 16px;
+  width: 23px;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px);
+  opacity: 0.45;
+}
+.loop-app .lj-art-lavender {
+  --tape: #b9c7ae;
+  --tape-ink: #3d5030;
+}
+.loop-app .lj-art-sage {
+  --tape: #d6ce9d;
+  --tape-ink: #60582f;
+}
+.loop-app .lj-art-ink {
+  --tape: #414c42;
+  --tape-ink: #b5c9a3;
+}
+.loop-app .lj-art-sand {
+  --tape: #b8c9cd;
+  --tape-ink: #3d555d;
+}
+.loop-app .lj-art-edition {
+  font: 7px var(--lh-mono);
+  letter-spacing: 1px;
+}
+.loop-app .lj-art-caption {
+  position: absolute;
+  bottom: 11px;
+  left: 49px;
+  font: 6px var(--lh-mono);
+  letter-spacing: 0.6px;
+  max-width: 43%;
+}
+.loop-app .lh-tape-window {
+  position: absolute;
+  top: 48%;
+  left: 14%;
+  width: 72%;
+  height: 45%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 3px solid #131b1533;
+  border-bottom-color: #fff3;
+  border-radius: 6px;
+  background: #283328;
+  box-shadow: inset 0 2px 6px #0007;
+}
+.loop-app .lh-tape-window > i {
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 4px solid #a9b392;
+  outline: 1px solid #344631;
+  background: repeating-conic-gradient(#d6ddc0 0 28deg, #879775 28deg 60deg);
+  box-shadow: 0 0 0 5px #19261d;
+  position: relative;
+}
+.loop-app .lh-tape-window > i::after {
+  content: '';
+  position: absolute;
+  inset: 28%;
+  border: 2px solid #283c2c;
+  border-radius: 50%;
+  background: #1a2820;
+}
+.loop-app .lh-tape-window > span {
+  height: 35%;
+  width: 34%;
+  border-block: 1px solid #b5c49c75;
+  background: #67795725;
+}
+.loop-app .lj-upload-banner {
+  border: 1px dashed #a5b098;
+  border-radius: 9px;
+  background: #e5e9db;
+  color: #56684a;
+  box-shadow: inset 0 1px 5px #58744609;
+}
+.loop-app .lj-upload-icon {
+  background: #d5ddc9;
+  border: 1px solid #b7c4a5;
+  border-radius: 6px;
+  color: #5d754b;
+}
+.loop-app .lj-upload-banner strong {
+  color: #405735;
+}
+.loop-app .lj-upload-banner small {
+  color: #697c5b;
+}
+.loop-app .lj-upload-cta {
+  color: #405633;
+}
+.loop-app .lj-library-footer {
+  color: #78836c;
+  font: 8px var(--lh-mono);
+  letter-spacing: 0.7px;
+}
+
+/* Carry the same instrument into the guides and focused practice. */
+.loop-app .lj-back,
+.loop-app .lj-text-link {
+  color: #68765a;
+}
+.loop-app .lj-overview-hero {
+  padding: 34px 0 40px;
+}
+.loop-app .lj-overview-hero > .lj-art {
+  aspect-ratio: 1.22;
+  transform: rotate(-3deg);
+  border: 1px solid #a7b49a;
+  box-shadow:
+    0 5px 0 #94a583,
+    0 12px 22px #38452b1c;
+}
+.loop-app .lj-overview h1 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  letter-spacing: -2px;
+}
+.loop-app .lj-artist,
+.loop-app .lj-song-description {
+  color: #6e7c60;
+}
+.loop-app .lj-facts > span {
+  background: #e4e9d9;
+  border-color: #c7d0b7;
+  color: #5c724a;
+  font-family: var(--lh-mono);
+}
+.loop-app .lj-guide-preview,
+.loop-app .lf-playing-card,
+.loop-app .lf-chord-coach-card,
+.loop-app .lf-rhythm-panel {
+  background: #fafaf0;
+  border: 1px solid #c3ceb5;
+  border-radius: 12px;
+  box-shadow: var(--lh-case-shadow);
+}
+.loop-app .lj-panel-heading h2,
+.loop-app .lj-lesson-path h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+.loop-app .lj-guide-tabs {
+  gap: 3px;
+  background: #e8ebdf;
+  padding: 8px 16px;
+  border-block: 1px solid #d2dac5;
+}
+.loop-app .lj-guide-tabs button {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #697d56;
+  font-size: 11px;
+}
+.loop-app .lj-guide-tabs button[aria-selected='true'] {
+  background: #fafbf1;
+  color: #394f2a;
+  border-color: #d4ddc6;
+  box-shadow: 0 1px 2px #455d3124;
+}
+.loop-app .lj-preview-controls,
+.loop-app .lj-guide-tip {
+  color: #6e805d;
+}
+.loop-app .lj-preview-controls select,
+.loop-app .lf-listen-controls select {
+  color: #4a6337;
+  background: #eef1e4;
+  border-color: #c8d5b7;
+}
+.loop-app .lj-lesson-path {
+  background: #e1e7d4;
+  border: 1px solid #c4d0b2;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 #ffffff9c;
+}
+.loop-app .lj-lesson-path > .lj-eyebrow,
+.loop-app .lj-lesson-path p,
+.loop-app .lj-lesson-path li {
+  color: #667c54;
+}
+.loop-app .lj-lesson-path li svg {
+  color: #66854d;
+}
+.loop-app .lf-chord-workshop-invite {
+  border-color: #c0d0aa;
+  background: #e7eeda;
+}
+.loop-app .lf-session {
+  background: var(--lp-bg);
+}
+.loop-app .lf-header {
+  background: #e4e8da;
+  border-color: #c0cdb0;
+  box-shadow: 0 1px 0 #fffff1;
+}
+.loop-app .lf-header-song strong {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+}
+.loop-app .lf-header-song > span {
+  font-family: var(--lh-mono);
+  color: #6a8058;
+}
+.loop-app .lf-session h1 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  font-size: clamp(29px, 3.2vw, 43px);
+  letter-spacing: -1.9px;
+}
+.loop-app .lf-session h1 em {
+  color: #bc4725;
+  font-style: normal;
+}
+.loop-app .lf-guitar-orbit,
+.loop-app .lf-trophy {
+  background: #e1e8d5;
+  border: 1px solid #bacbab;
+  border-radius: 18px;
+  color: #557840;
+  box-shadow: var(--lh-case-shadow);
+}
+.loop-app .lf-guitar-orbit > span {
+  background: #eeeedd;
+  color: #cc532c;
+  border: 1px solid #c6c8ae;
+}
+.loop-app .lf-input-setup {
+  background: #f7f8ed;
+  border: 1px solid #bdcdb0;
+  border-radius: 12px;
+  box-shadow: var(--lh-case-shadow);
+}
+.loop-app .lf-device-label select {
+  background: #e3e9d7;
+  border-color: #bacbac;
+  color: #4d653c;
+  border-radius: 5px;
+}
+.loop-app .lf-input-meter {
+  background: #252f24;
+  border: 3px solid #68765a;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 3px #0004;
+}
+.loop-app .lf-input-meter > span {
+  background: repeating-linear-gradient(90deg, #bad994 0 7px, #6b885300 7px 10px);
+}
+.loop-app .lf-input-meter > span.is-clipping {
+  background: #d66037;
+}
+.loop-app .lf-tuning-strings button {
+  border-radius: 4px;
+  background: #e8edde;
+  border-color: #bbcbae;
+  color: #557040;
+}
+.loop-app .lf-tuning-strings button[aria-pressed='true'] {
+  background: #405933;
+  color: #eef5de;
+  border-color: #405933;
+}
+.loop-app .lf-chord-shape {
+  background: linear-gradient(135deg, #e8eddf, #d7e0c8);
+  border: 1px solid #c4d1b3;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 #fff;
+}
+.loop-app .lf-note-rail {
+  background: #e3e8d7;
+  border-bottom-color: #c3d0b3;
+}
+.loop-app .lf-note-rail > div {
+  border-radius: 6px;
+  border-color: #c5d2b8;
+  background: #f2f5e9;
+  color: #50683f;
+  box-shadow: 0 2px 0 #c8d2ba;
+}
+.loop-app .lf-note-rail > div.is-current {
+  background: #354930;
+  color: #e8f3d9;
+  border-color: #253622;
+  box-shadow: inset 0 2px 4px #1d2c1a;
+}
+.loop-app .lf-note-rail > div.is-current > span {
+  color: #e89764;
+}
+.loop-app .lf-note-rail > div.is-current small {
+  color: #bed1aa;
+}
+.loop-app .lf-target-note {
+  background: #303f2c;
+  color: #e4f0d3;
+  border-radius: 6px;
+  border: 3px solid #718463;
+  box-shadow: inset 0 2px 4px #172216;
+}
+.loop-app .lf-target-note > span {
+  color: #b4cb9e;
+  font-family: var(--lh-mono);
+}
+.loop-app .lf-target-note strong {
+  color: #e2efca;
+  font-family: var(--lh-mono);
+}
+.loop-app .lf-target-icon {
+  color: #5e7c48;
+  background: #e3e8d7;
+  border: 1px solid #c3ceb5;
+  border-radius: 8px;
+}
+.loop-app .lf-session-progress > div {
+  background: #cdd2c2;
+  box-shadow: inset 0 1px 2px #3f493329;
+}
+.loop-app .lf-session-progress > div > span {
+  background: #c74c28;
+}
+.loop-app .lf-session-progress > span,
+.loop-app .lf-mic-state,
+.loop-app .lf-setup > p,
+.loop-app .lf-practice-title p,
+.loop-app .lf-target p,
+.loop-app .lf-setup-checklist small {
+  color: #687064;
+}
+.loop-app .lf-setup-checklist {
+  background: #faf8f2;
+  border-color: #d1d4c7;
+  box-shadow: inset 0 1px 0 #fff;
+}
+.loop-app .lf-setup-checklist svg {
+  color: #64785a;
+}
+.loop-app .lf-setup-checklist strong,
+.loop-app .lf-feedback p,
+.loop-app .lf-resume-note {
+  color: #59664e;
+}
+.loop-app .lf-feedback {
+  background: #e7edde;
+  color: #516940;
+  border-color: #c6d5b7;
+  border-radius: 7px;
+}
+.loop-app .lf-feedback.is-correct,
+.loop-app .lf-strum-result.is-correct {
+  color: #345f2b;
+  background: #dcebd0;
+  border-color: #a6c08f;
+}
+.loop-app .lf-stage-label > span {
+  background: #e4e9d9;
+  color: #6b8157;
+  border-radius: 4px;
+  font: 10px var(--lh-mono);
+}
+.loop-app .lf-stage-label > span.is-active {
+  background: #dcdfcc;
+  color: #425833;
+  box-shadow: inset 0 1px 2px #62744825;
+}
+.loop-app .lf-strum-live,
+.loop-app .lf-strum-result {
+  background: #e3ebd5;
+  color: #435f31;
+  border: 1px solid #becfad;
+  border-radius: 7px;
+}
+.loop-app .lf-strum-live.is-recording {
+  background: #293d25;
+  color: #e6f1d6;
+}
+.loop-app .lf-beat-clock {
+  background: #2c3d27;
+  color: #e4efce;
+  border-radius: 8px;
+  padding: 18px;
+}
+.loop-app .loop-finger-dot {
+  fill: #c74c28;
+}
+.loop-app .loop-note-band {
+  fill: #f1ddcb;
+}
+.loop-app .loop-tab-number {
+  fill: #56634a;
+}
+.loop-app .loop-note-active .loop-tab-number {
+  fill: #fff8ed;
+}
+.loop-app .loop-note-picks > button,
+.loop-app .loop-note-picks > button > span {
+  color: #65715a;
+}
+.loop-app .loop-note-picks > button[aria-pressed='true'] {
+  color: #91381f;
+}
+.loop-app .loop-barre {
+  stroke: #c74c28;
+}
+.loop-app .loop-diagram-line {
+  stroke: #abb69b;
+}
+.loop-app .loop-diagram-label,
+.loop-app .loop-string-state {
+  fill: #64784f;
+}
+.loop-app .loop-fret-wood {
+  fill: #e3e5d4;
+}
+.loop-app .loop-fret-marker {
+  fill: #bdc5aa;
+}
+.loop-app .loop-modal {
+  background: #f2f3e7;
+  border: 1px solid #c5d0b7;
+  border-radius: 15px;
+  box-shadow:
+    0 8px 0 #aebba0,
+    0 35px 100px #22301945;
+}
+.loop-app .loop-modal-heading {
+  border-color: #cdd8bf;
+}
+.loop-app .loop-modal-heading h2 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  letter-spacing: -1px;
+}
+.loop-app .loop-modal-copy,
+.loop-app .loop-import-note,
+.loop-app .loop-import-progress,
+.loop-app .loop-demo-link {
+  color: #637058;
+}
+.loop-app .loop-drop-zone {
+  border-color: #9da991;
+  background: #e3e8d8;
+  box-shadow: inset 0 2px 5px #47563a12;
+}
+.loop-app .loop-drop-zone > span:first-child {
+  background: #d1dac3;
+  border: 1px solid #afbe9d;
+  border-radius: 8px;
+  color: #566c42;
+  box-shadow: inset 0 1px 0 #f9ffee;
+}
+.loop-app .loop-drop-zone strong {
+  color: #3b5030;
+}
+.loop-app .loop-drop-zone > span,
+.loop-app .loop-drop-zone small {
+  color: #647657;
+}
+.loop-app .lf-import-options label {
+  background: #edf2e3;
+  border-color: #cad8bb;
+  border-radius: 7px;
+}
+.loop-app .lf-import-options label.is-selected {
+  background: #e0e9d3;
+  border-color: #849d6d;
+}
+.loop-app .lf-import-options svg {
+  color: #647d50;
+}
+.loop-app .loop-sidebar {
+  background: #e2e7d7;
+  border-right-color: #bdcbb0;
+}
+.loop-app .loop-sidebar nav button.is-active {
+  background: #d3ddc4;
+  color: #3a572a;
+}
+.loop-app .loop-topbar,
+.loop-app .loop-player {
+  background: #e4e9d9;
+  border-color: #c0cfaf;
+}
+
+@media (max-width: 1050px) {
+  .loop-app .lj-welcome {
+    gap: 34px;
+  }
+  .loop-app .lj-welcome h1 {
+    font-size: 45px;
+    letter-spacing: -2.5px;
+  }
+  .loop-app .lh-deck {
+    padding: 24px 19px 16px;
+  }
+  .loop-app .lh-deck-controls {
+    gap: 14px;
+  }
+  .loop-app .lh-transport {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .loop-app .lh-learn-key {
+    width: 104px;
+  }
+  .loop-app .lj-steps {
+    gap: 9px;
+  }
+  .loop-app .lh-brand-caption {
+    font-size: 7px;
+  }
+  .loop-app .lj-song-grid {
+    gap: 13px;
+  }
+  .loop-app .lj-song-card h3 {
+    font-size: 16px;
+  }
+  .loop-app .lj-art-caption {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .loop-app .lj-header {
+    height: 83px;
+    padding: 0 24px;
+  }
+  .loop-app .lj-steps {
+    padding: 6px;
+    gap: 6px;
+  }
+  .loop-app .lj-steps > div > svg {
+    display: none;
+  }
+  .loop-app .lj-steps b {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .loop-app .lj-tool-link {
+    padding: 10px;
+  }
+  .loop-app .lj-tool-link > span {
+    display: none;
+  }
+  .loop-app .lj-main {
+    padding: 0 24px;
+  }
+  .loop-app .lj-welcome {
+    grid-template-columns: 1fr;
+    gap: 37px;
+    padding: 42px 0 45px;
+  }
+  .loop-app .lj-welcome h1 {
+    font-size: clamp(38px, 7vw, 54px);
+    letter-spacing: -2.6px;
+  }
+  .loop-app .lj-welcome-copy > p {
+    font-size: 13px;
+  }
+  .loop-app .lj-welcome-badges {
+    margin-top: 21px;
+  }
+  .loop-app .lh-deck {
+    width: min(100%, 510px);
+    justify-self: center;
+    transform: rotate(-1deg);
+    padding: 25px 23px 17px;
+  }
+  .loop-app .lh-transport {
+    flex-direction: row;
+  }
+  .loop-app .lh-learn-key {
+    width: 114px;
+  }
+  .loop-app .lj-section-heading h2 {
+    font-size: 23px;
+  }
+  .loop-app .lj-library-controls {
+    flex-wrap: wrap;
+    gap: 13px;
+  }
+  .loop-app .lj-search {
+    width: 100%;
+  }
+  .loop-app .lj-search input {
+    width: 100%;
+    min-height: 42px;
+  }
+  .loop-app .lj-filters {
+    flex: 1;
+    justify-content: space-between;
+  }
+  .loop-app .lj-filters button {
+    font-size: 11px;
+  }
+  .loop-app .lj-song-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .loop-app .lj-song-card-info {
+    padding: 14px;
+  }
+  .loop-app .lj-song-card h3 {
+    font-size: 17px;
+    min-height: 2.5em;
+  }
+  .loop-app .lj-art {
+    aspect-ratio: 1.5;
+    padding: 12px;
+  }
+  .loop-app .lj-art-edition {
+    font-size: 6px;
+  }
+  .loop-app .lj-song-meta {
+    gap: 9px;
+    font-size: 8px;
+  }
+  .loop-app .lj-overview-hero {
+    padding: 30px 0;
+  }
+  .loop-app .lj-overview h1 {
+    font-size: 35px;
+  }
+  .loop-app .lj-guide-tabs {
+    padding: 7px;
+    gap: 1px;
+  }
+  .loop-app .lj-guide-tabs button {
+    padding: 10px 8px;
+    font-size: 10px;
+  }
+  .loop-app .lf-session h1 {
+    letter-spacing: -1.3px;
+  }
+  .loop-app .lj-library-footer {
+    line-height: 1.7;
+    gap: 15px;
+  }
+}
+@media (max-width: 420px) {
+  .loop-app .lj-main {
+    padding: 0 20px;
+  }
+  .loop-app .lj-header {
+    padding: 0 19px;
+  }
+  .loop-app .lj-brand {
+    font-size: 32px;
+    gap: 7px;
+    letter-spacing: -2px;
+  }
+  .loop-app .lj-brand > .lh-mark {
+    width: 34px;
+  }
+  .loop-app .lh-brand-caption {
+    left: 42px;
+    font-size: 6px;
+  }
+  .loop-app .lj-welcome h1 {
+    font-size: 38px;
+    letter-spacing: -2.4px;
+  }
+  .loop-app .lh-welcome-actions {
+    gap: 16px;
+  }
+  .loop-app .lh-welcome-actions > .loop-button {
+    padding-inline: 12px;
+    font-size: 11px !important;
+  }
+  .loop-app .lh-upload-link {
+    font-size: 11px;
+  }
+  .loop-app .lh-deck {
+    padding: 24px 17px 16px;
+  }
+  .loop-app .lh-display {
+    padding: 13px 12px 11px;
+  }
+  .loop-app .lh-display-top {
+    font-size: 7px;
+  }
+  .loop-app .lh-display-title h2 {
+    font-size: 23px;
+  }
+  .loop-app .lh-display-bottom {
+    font-size: 7px;
+  }
+  .loop-app .lh-transport {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .loop-app .lh-deck-controls {
+    padding: 21px 3px 15px;
+    gap: 14px;
+  }
+  .loop-app .lh-learn-key {
+    width: 99px;
+  }
+  .loop-app .lj-song-grid {
+    gap: 13px;
+  }
+  .loop-app .lj-song-card-info {
+    padding: 13px 10px;
+  }
+  .loop-app .lj-song-card h3 {
+    font-size: 14px;
+    letter-spacing: -0.4px;
+    min-height: 2.5em;
+  }
+  .loop-app .lj-song-card p {
+    font-size: 10px;
+    line-height: 1.5;
+    min-height: 30px;
+  }
+  .loop-app .lj-art-edition {
+    font-size: 5px;
+    letter-spacing: 0.5px;
+  }
+  .loop-app .lh-tape-window {
+    padding: 6px 8px;
+    left: 12%;
+    width: 76%;
+  }
+  .loop-app .lh-tape-window > i {
+    border-width: 3px;
+    box-shadow: 0 0 0 3px #19261d;
+  }
+  .loop-app .lj-song-level {
+    font-size: 6px;
+    bottom: 8px;
+    right: 9px;
+    padding: 3px 4px;
+  }
+  .loop-app .lj-art::after {
+    width: 15px;
+    bottom: 8px;
+    left: 13px;
+  }
+  .loop-app .lj-song-meta {
+    font-size: 7px;
+    gap: 7px;
+  }
+  .loop-app .lj-song-meta svg {
+    width: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .loop-app .lh-deck {
+    min-width: 0;
+  }
+  .loop-app .lh-display-title h2 {
+    font-size: 20px;
+  }
+  .loop-app .lh-display-title > span {
+    font-size: 8px;
+    padding: 4px;
+  }
+  .loop-app .lh-deck-controls {
+    gap: 10px;
+  }
+  .loop-app .lh-play-key {
+    width: 52px;
+    height: 52px;
+  }
+  .loop-app .lh-learn-key {
+    width: 88px;
+  }
+  .loop-app .lh-display-bottom {
+    gap: 6px;
+    font-size: 6px;
+  }
+  .loop-app .lh-display-bottom > div {
+    gap: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loop-app .lj-song-card,
+  .loop-app .loop-button,
+  .loop-app .lh-dial > i {
+    transition: none !important;
+  }
+  .loop-app .lj-song-card:hover {
+    transform: none;
+  }
+}
+@media print {
+  .loop-app {
+    background: white;
+    color: black;
+  }
+  .loop-app .lh-deck {
+    display: none;
+  }
+}
+
+/* A Sattari signature on the instrument-inspired workspace. */
+.loop-app .sl-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1;
+}
+.loop-app .sl-wordmark small {
+  font: 9px var(--lh-mono);
+  letter-spacing: 2.3px;
+  color: #63695e;
+  padding-left: 2px;
+}
+.loop-app .sl-wordmark strong {
+  font-size: 34px;
+  font-weight: 650;
+  letter-spacing: -2px;
+}
+.loop-app .loop-sidebar .loop-brand {
+  border: 0;
+  padding: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.loop-app .sl-header-tools {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.loop-app .sl-hub-link {
+  text-decoration: none;
+}
+@media (max-width: 760px) {
+  .loop-app .lj-header {
+    gap: 10px;
+  }
+  .loop-app .sl-header-tools {
+    gap: 6px;
+  }
+  .loop-app .sl-wordmark strong {
+    font-size: 28px;
+  }
+  .loop-app .sl-wordmark small {
+    font-size: 8px;
+    letter-spacing: 1.8px;
+  }
+}
+@media (max-width: 360px) {
+  .loop-app .lj-header {
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+  .loop-app .lj-steps {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}

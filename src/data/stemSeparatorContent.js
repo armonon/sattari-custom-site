@@ -120,7 +120,7 @@ export const separatorGuides = [
         title: 'Read the full song before the individual parts',
         paragraphs: [
           'The full mix gives the analyzer more harmonic and rhythmic context than a sparse vocal or bass line. Begin with its estimated key and BPM, then compare the selected stem results. A different stem estimate is not proof that the musicians are playing in different keys or at different speeds.',
-          'Musical analysis samples up to three 20-second windows, not every note in the track. A key change, a tempo change or an unusual introduction can fall outside those windows. The report cannot map every section or replace careful listening.',
+          'Sattari AutoKey scans the full audio for an overall key; it does not map key changes. Tempo analysis samples up to three 20-second windows, so tempo changes can fall outside those windows. The report cannot map every section or replace careful listening.',
         ],
       },
       {
@@ -233,7 +233,7 @@ export const separatorQuestions = [
   {
     question: 'Why do the song and its stems show different key or BPM estimates?',
     answer:
-      'Individual parts contain less context. Sparse notes, relative major/minor ambiguity and half-time or double-time pulses can change the estimate. Musical analysis samples up to three 20-second windows and is not a full transcription or tempo map. Drum stems are not assigned a key.',
+      'Individual parts contain less context. Sparse notes, relative major/minor ambiguity and half-time or double-time pulses can change the estimate. Sattari AutoKey scans the whole stem; tempo samples up to three 20-second windows. Neither is a full transcription or section map. Drum stems are not assigned a key.',
   },
   {
     question: 'Are my songs uploaded or my stems saved automatically?',

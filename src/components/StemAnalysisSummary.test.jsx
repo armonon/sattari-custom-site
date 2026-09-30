@@ -53,3 +53,41 @@ it('handles missing and unavailable optional metadata', () => {
   rerender(<StemAnalysisSummary analysis={{ status: 'unavailable' }} />);
   expect(screen.getByText('Song analysis: musical analysis unavailable.')).toBeInTheDocument();
 });
+
+it('explains short-clip limits alongside the estimate without opening details', () => {
+  const { container } = render(
+    <StemAnalysisSummary
+      analysis={{
+        ...analysis,
+        key: null,
+        bpm: null,
+        keyReason: 'short',
+        tempoReason: 'short',
+      }}
+    />
+  );
+  expect(container.querySelector('.separator-musical-stats')).toHaveTextContent(
+    'At least 3 seconds of audio is needed for a musical estimate.'
+  );
+  expect(container.querySelector('details')).not.toHaveAttribute('open');
+});
+
+it('identifies AutoKey, its full-audio scan and raw margin without a percentage claim', () => {
+  render(
+    <StemAnalysisSummary
+      analysis={{
+        ...analysis,
+        keyEngine: 'sattari-autokey',
+        keyAnalyzedSeconds: 80,
+        keyConfidence: 0.07219,
+        keyAlternative: 'C major',
+      }}
+    />
+  );
+  expect(screen.getByText('AutoKey estimate')).toBeInTheDocument();
+  expect(screen.getByText('Sattari AutoKey')).toBeInTheDocument();
+  expect(screen.getByText('80s / full audio')).toBeInTheDocument();
+  expect(screen.getByText('0.072')).toBeInTheDocument();
+  expect(screen.getByText('C major')).toBeInTheDocument();
+  expect(screen.getByText(/not a probability/)).toBeInTheDocument();
+});

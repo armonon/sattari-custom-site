@@ -16,6 +16,11 @@
   NODE_VERSION = "22"
 
 [[redirects]]
+  from = "/loop"
+  to = "/learn"
+  status = 301
+
+[[redirects]]
   from = "/buy"
   to = "/shop"
   status = 301

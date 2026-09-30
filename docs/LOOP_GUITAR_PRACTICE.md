@@ -1,32 +1,67 @@
-# Loop guitar practice — first working version
+# Loop guitar practice
 
-Open `/loop` on the Vite dev server. The existing `/learn` page links to it.
-The original lesson is immediately playable; no API key or account is required.
+Open `/learn` on the Vite dev server. This is the replacement Sattari Learn experience; `/loop` redirects here. No account or API key is required. The library contains three short arrangements of public-domain classics, the original Night shift lesson, a 12-step original beginner path ending in the complete 16-bar First light song, and recordings saved in this browser. The new exercises have synchronized synthetic audio and written teaching guidance; human teacher review is still pending.
 
-## What works
+## Learning flow
 
-- Drag in an audio file, or select one in **Add a song**. Decoding and analysis stay in the browser. Imports are limited to 40 MB and eight minutes.
-- Estimated tempo, key, per-bar major/minor chords, and monophonic note events run in a cancellable worker. Review estimates against the recording.
-- Synchronized tablature, a fretboard guide, approximate guitar staff notation, and chord diagrams. Correct notes, chords, and practice tempo with the edit control.
-- Pitch-preserving playback speed, phrase loops, seeking, individual note/chord reference tones, and printable/text practice sheets.
-- Imported audio and edited lessons persist in IndexedDB on the current browser. Storage failure is reported; the current session remains usable.
-- A 24-chord library with open and barre shapes, and a microphone tuner for standard guitar tuning.
-- Microphone feedback compares absolute note pitch and tuning, rather than just membership in a key. “Wait for me” advances on a stable matching note while playback is paused. Permission is requested only after the user clicks. Cancellation, unmount, backgrounding and disconnected inputs release the microphone.
+1. Choose a song or stage an upload (up to 40 MB / eight minutes). Choose solo guitar or full-band preparation, then build the guide. Full-band preparation reduces vocals, bass and drums locally. It explains the first-use 172 MB model download before starting.
+2. Read the overview, hear the melody and explore tabs, engraved sheet music, chord diagrams, the phrase’s chord sequence and fretboard positions.
+3. For an upload, inspect the draft before enabling practice. The report shows note/chord estimates and the proportion of audio covered by note estimates. This coverage is not a transcription-accuracy percentage. Review approval is invalidated by a musical edit.
+4. Choose an audio input, calibrate room noise, then check an open string against the tuner. The input meter exposes quiet or clipping signals. Capture starts only after an explicit action; changing from self-guided practice also goes through this setup.
+5. Hear a slowed phrase, then find each note at your own pace. Pitch feedback requires the correct octave, tuning within 35 cents and 180 ms of stability. A new pluck or release rearms repeated pitches. Fingering tips accompany the string/fret guide.
+6. Try the phrase in time: four-beat count-in, scheduled metronome, 50/75/100% speed, and separate feedback for correct/on-time, early, late, wrong and missed notes. Use headphones so the metronome does not enter the microphone. An optional input-delay adjustment accounts for consistently late hardware paths.
+7. Save a timing attempt, repeat the phrase or continue. Results separate explored notes, microphone pitch matches and notes played on time. Review returns to a phrase without complete pitch/timing evidence. No-mic exploration never earns microphone matches.
 
-## Accuracy boundaries
+## Musical and technical details
 
-This is a working DSP baseline, not a full-band AI transcription model. It works best on clear, single-note guitar. Dense recordings, distorted chords, bends, slides and fast phrases can be wrong or omitted. Staff rhythms are rounded to a small set of practice durations. Fingering is suggested, not inferred from a player's hands. Chords are estimated on a fixed bar grid using the estimated tempo; recordings with tempo changes or pickup bars need correction.
+- Authored phrases follow melodic boundaries. Note events store exact `beatStart` / `beatDuration` independently of their shorter audio envelopes. Audio and targets share those same events.
+- `score.js` creates bars, dotted values, rests, ties and natural cancellations. `StaffNotation.jsx` lazily loads VexFlow 4.2.5, with bundled glyph outlines and no external font download. Guitar is written one octave above sounding pitch. Imported notation uses an estimated sixteenth-note grid in assumed 4/4.
+- Checkpoints save on changes to stage, phrase, note, matches, rhythm results and speed. They use a versioned localStorage key and musical fingerprint; changing the lesson invalidates stale progress. Corrupt records are ignored. If storage fails, an in-memory fallback preserves the current visit and the UI explains the limitation. Completed summary scores also carry the fingerprint.
+- Microphone processing uses recent input energy, an adaptive calibrated gate, YIN pitch estimates and attack identifiers. Capture is released on exit, unmount, backgrounding or device disconnection. A late permission grant after cancellation is immediately released.
+- Rhythm uses an AudioContext clock mapped to `performance.now()`, output latency where exposed, and debounced attack timestamps. A single attack cannot claim two targets. Closing or backgrounding the session cancels the metronome; reconnecting requires a fresh count-in. Onsets require two consistent pitch observations. Sustained note lengths are not scored.
+- Upload analysis remains local in cancellable workers. Sattari AutoKey estimates key from the original recording, including an alternative and section disagreement. Auto Pitch's pinned CREPE-tiny model estimates individual notes; an explicitly labeled YIN fallback is available if the model fails. Quiet input has an adaptive amplitude floor. Flat chroma, lone tones and ambiguous major/minor candidates produce no chord rather than an arbitrary guess. See [engine provenance and qualification](LOOP_AUTOKEY.md).
+- Original and prepared recordings and edited lessons are stored together in IndexedDB. A/B controls choose the original or instrumental part for playback and practice. The full studio retains looping, pitch-preserving playback, note/chord edits, reference tones, tuner, 96 chord diagrams and printable/text sheets. MIDI export preserves detected note timing and overlapping chord tones. Printing waits for the notation to render.
+- The optional **Include chords & overlapping notes** path adds a pinned Basic Pitch model, editable chord-tone groups, simultaneous fingering suggestions and a draft score with per-note ties. A separate chord workshop checks each sounding string with the existing microphone pitch gate, then offers an experimental 2.5-second whole-shape recording check. Chord-only imports can enter this workshop after review. See [polyphonic evidence and limits](LOOP_POLYPHONIC.md).
 
-Live whole-chord recognition, timing/latency scoring, source separation, alternate tunings and cloud sync are not implemented. No fake chord or timing scores are displayed. The original demo's chord progression is suggested accompaniment; its WAV contains the melody.
+## Accuracy boundaries and release evidence
 
-The next audio milestone should compare a source-separation plus polyphonic transcription model against human-verified guitar parts, and preserve confidence and editable corrections in this same lesson format.
+Full-band preparation separates an instrumental stem, **not a guitar-only part**. Other instruments and separation artifacts can remain. An unprepared mix may follow a bass or vocal. Distortion, fast passages, bends and slides may be misread or omitted. The default melody path uses coarse triad estimates; the optional experimental polyphonic path names supported seventh, suspended and power chords from detected note evidence on a beat grid. Missing or extra pitches can still produce incorrect names. Accompaniment for authored lessons is suggested. The starter recordings contain synthesized melody examples.
 
-## Files and checks
+Continuous live scoring measures individual pitch and note-start timing. The separate whole-chord check uses a short recording to confirm detected pitches ringing together; it does not measure strumming rhythm, tuning, physical technique, expressiveness or note length. The input-delay setting is a manual adjustment, not measured end-to-end latency. Bluetooth and speaker bleed can affect timing. Cloud synchronization is not implemented.
 
-`src/pages/LoopPracticePage.jsx` and its CSS own the workspace. `src/loop/` contains the lesson model, diagrams, audio analysis, microphone lifecycle, import worker and IndexedDB storage.
+## Personal learning features
 
-The original 32-note demo is generated deterministically by `node scripts/create-loop-demo.mjs`; it uses no third-party recording.
+- **Teach me this part:** the song overview selects an inclusive phrase range and melody or chord-shape practice. Imports must pass the existing review gate. A passage has its own checkpoint identity and cannot earn full-song completion.
+- **Essentials / full arrangement:** Essentials retains alternate melody events and phrase endpoints at their original times, with a synthesized example containing only those notes. It is explicitly a reduced-note exercise, not a claim to reproduce a commercial arrangement. Full mode uses all selected notes and the recording reference.
+- **Adaptive drills:** a saved rhythm attempt can isolate up to three notes around a missed transition, slow them to 50%, reconnect the full phrase after a clean pass, and work up to 100%. Drill results stay separate from the full phrase. No detected attacks or clipping marks an attempt unconfirmed; it does not adapt the plan or earn timing credit. Partial detection failures can still look like missed notes and require real-player qualification.
+- **Hand demonstrations:** optional SVG fretting/picking guides follow the highlighted note and mirror handedness. They show one possible placement and basic downstroke, not measured technique. A teacher video can be attached locally per phrase (80 MB limit), aligned by a start offset, and drive note highlighting from playback time. No filmed teacher-video catalog is bundled.
+- **Written score import:** pinned `@coderline/alphatab` 1.8.3 parses Guitar Pro 3–8 and MusicXML in a disposable worker. Select a track/staff, enter an audio start offset and constant tempo, and optionally attach audio; otherwise Loop synthesizes a reference. Ties are joined, simultaneous pitches are preserved in the chord-tone guide, and melody practice uses the highest note at each attack. This version accepts 4/4, steady-tempo excerpts only (8 MB, 256 measures, 12,000 notes, eight minutes). Repeats play once in written order; expressive techniques require the source score. Node tests exercise real MusicXML and a Guitar Pro archive round trip.
+- **Record & compare:** from phrase review, explicitly connect the microphone, count in for three seconds, and capture a PCM WAV take (up to 60 seconds). Compare native audio playback with the example at the selected speed. Up to ten takes per passage save locally in IndexedDB with timestamps and setup fingerprints; takes can be deleted. They earn no automatic score. Cancel, navigation and tab hiding release capture, including a late permission grant.
+- **Daily session:** the library offers warm-up, targeted passage and familiar phrase steps, approximately five minutes at the learner's pace. Validated local history selects a weak passage; stale or unconfirmed attempts are ignored. Reviewed uploads are eligible. Daily exercises do not count as completing the whole song.
+- **Guitar setup:** saved handedness, standard / Drop D / DADGAD tuning and capo 0–7 drive the tuner, melody positions, chord diagrams, chord microphone targets, simultaneous voicings and text/print guides. Sounding pitches remain unchanged; fret numbers are relative to the capo. Unreachable notes and unsupported chord shapes are flagged. Alternate-tuning fingerings are suggestions, not teacher-approved arrangements.
 
-Run focused tests with `npx vitest run src/loop src/pages/LoopPracticePage.test.jsx --maxWorkers=1`. They cover pitch and octave detection, silence/noise rejection, repeated-note transcription, all 24 chord voicings, the shipped WAV, microphone permission/cancellation, import cancellation and guide editing.
+All practice history and media remain on this browser/device. Clearing site data removes them. These capabilities are implemented and covered by model/component tests; real-guitar microphone accuracy and teacher-video content remain separate release work.
 
-The route is lazy loaded and included as a non-indexable prerender target. The existing storefront and learning workspace remain available.
+Automated checks cover synthesis/lesson alignment, guitar note and octave detection, quiet input, noise, repeated notes, ambiguous chords, exact rhythmic values, phrase boundaries, ties/rests/accidentals, one-to-one timing scores, checkpoint invalidation and storage failure, microphone calibration/device lifecycle, import cancellation, review gating, navigation, resumes and honest completion. Microphone tests feed generated PCM through a simulated audio context; component tests feed timestamped pitch observations. These do not establish real-guitar recognition accuracy.
+
+Before assigning a production-quality rating, run real-player sessions with acoustic and electric guitars, built-in microphones and interfaces, quiet and noisy rooms, and wired/Bluetooth headphones. Record false accepts/rejects, onset timing error, calibration failures and whether a first-time player can finish a phrase unaided. Full-song transcription needs a separate benchmark against human-verified parts before it can be represented as automatic teaching material.
+
+## Development
+
+- `src/pages/LoopPracticePage.jsx`: navigation, saved recordings, full studio.
+- `src/loop/LoopJourney.jsx`: library and overview.
+- `FocusedPractice.jsx`, `MicrophoneSetup.jsx`, `RhythmPractice.jsx`: guided lesson stages.
+- `music.js`, `catalog.js`, `score.js`, `progress.js`, `rhythm.js`, `signal.js`: music, persistence and grading models.
+- `node scripts/create-loop-demo.mjs`: regenerate all 16 starter and beginner-course WAVs.
+- `npx vitest run src/loop src/pages/LoopPracticePage.test.jsx --pool=threads --maxWorkers=1`: focused suite.
+- `npm run type-check` and `npm run build`: compile and prerender checks.
+
+The `/learn` route is lazy loaded, prerendered and indexable with a canonical Learn URL. It mounts fresh to restore browser-local guitar settings without hydration mismatches. The former Learn analysis/arranger page is no longer routed or bundled. The Learn header links back to the Hub; the storefront navigation is omitted in the focused workspace. Existing `loop-*` storage keys are retained to preserve lessons and progress. Netlify permanently redirects `/loop` to `/learn`.
+
+## Beginner path, review, and portable saves
+
+- The 12-step path teaches open strings, fretted notes, repeated attacks, string changes, rests, note lengths, Em/G shapes and a complete original song. Each lesson has prerequisites, an objective, a concrete playing tip and a recovery hint. Course milestones count full microphone pitch evidence with the matching guitar setup; exploration and stale checkpoints do not count as verified milestones.
+- The recording review compares a phrase from the source with a synthesized version of its estimated melody. It flags weak detector signals, very short notes, large pitch jumps and longer gaps as review prompts, not accuracy probabilities. Learners can correct a melody pitch or omit a note. Edits invalidate the existing practice approval. Original audio and the separate overlapping-note guide are retained.
+- Learn backups use a bounded binary manifest plus original media bytes (.sattarilearn), not an archive requiring decompression. Media integrity uses the existing chunked SHA-256 tree hash. A restore verifies every asset and validates lesson bounds and allowed settings before writing. Per-database merges are atomic and never replace existing IDs; checkpoints and guitar settings keep current values, while missing summary entries and history can merge. Cross-database storage failure reports the completed counts and can be retried. Limits: 512 MiB media, 8 MiB manifest, 500 imported lessons and 2,000 media entries. Cloud synchronization remains unimplemented.
+- Personal check-ins and the practice journal remain local. The downloadable report includes browser information, guitar setup, detected timing results and explicitly entered feedback, with no source recordings, media or full note fingerprints. Nothing is automatically submitted.
+- See [private beta test kit](LEARN_BETA_TEST_KIT.md) for physical-player validation and filming requirements. Passing synthetic/reference and software checks does not establish microphone accuracy or learning outcomes.

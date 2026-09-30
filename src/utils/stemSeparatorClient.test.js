@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StemSeparatorClient } from './stemSeparatorClient';
 
 const audio = () => ({ left: new Float32Array(20), right: new Float32Array(20), channels: 1 });
@@ -7,6 +7,7 @@ const setup = () => {
   const create = vi.fn(() => worker);
   return { worker, create, client: new StemSeparatorClient(create) };
 };
+afterEach(() => vi.useRealTimers());
 
 describe('separation worker lifecycle', () => {
   it('transfers input, forwards actual progress, returns outputs, and reuses the worker', async () => {
@@ -16,10 +17,10 @@ describe('separation worker lifecycle', () => {
     const input = audio(),
       onAnalysis = vi.fn();
     const promise = client.separate(input, ['other'], signal, onProgress, onAnalysis);
-    expect(worker.postMessage).toHaveBeenCalledWith({ ...input, stems: ['other'] }, [
-      input.left.buffer,
-      input.right.buffer,
-    ]);
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      { ...input, stems: ['other'], cpuOnly: false },
+      [input.left.buffer, input.right.buffer]
+    );
     worker.onmessage({ data: { type: 'progress', progress: 0.5 } });
     expect(onProgress).toHaveBeenCalledWith({ type: 'progress', progress: 0.5 });
     worker.onmessage({ data: { type: 'analysis', analysis: { key: 'A minor', bpm: 120 } } });
@@ -64,5 +65,39 @@ describe('separation worker lifecycle', () => {
     const result = client.separate(audio(), ['vocals'], new AbortController().signal);
     client.dispose();
     await expect(result).rejects.toMatchObject({ name: 'AbortError' });
+  });
+  it('times out an unresponsive worker, releases it, and allows retry', async () => {
+    vi.useFakeTimers();
+    const { client, worker } = setup();
+    const failed = expect(
+      client.separate(audio(), ['bass'], new AbortController().signal)
+    ).rejects.toThrow('stopped responding');
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    await failed;
+    expect(worker.terminate).toHaveBeenCalledOnce();
+    const retry = client.separate(
+      audio(),
+      ['bass'],
+      new AbortController().signal,
+      undefined,
+      undefined,
+      true
+    );
+    expect(worker.postMessage.mock.lastCall[0].cpuOnly).toBe(true);
+    worker.onmessage({ data: { type: 'result', outputs: [] } });
+    await retry;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('handles a worker that cannot be created or cannot deserialize a result', async () => {
+    const client = new StemSeparatorClient(() => {
+      throw new Error('Blocked');
+    });
+    await expect(client.separate(audio(), ['bass'], new AbortController().signal)).rejects.toThrow(
+      'could not start'
+    );
+    const { client: working, worker } = setup();
+    const result = working.separate(audio(), ['bass'], new AbortController().signal);
+    worker.onmessageerror();
+    await expect(result).rejects.toThrow('could not return');
   });
 });

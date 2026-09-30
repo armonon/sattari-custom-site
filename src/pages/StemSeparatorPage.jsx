@@ -26,6 +26,7 @@ import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import { separatorGuides } from '../data/stemSeparatorContent';
 import useStemSeparator from '../hooks/useStemSeparator';
 import ToolReferenceLink from '../components/ToolReferenceLink';
+import SeparatorNavigationGuard from '../components/SeparatorNavigationGuard';
 import StemAnalysisSummary from '../components/StemAnalysisSummary';
 import { trackSiteEvent } from '../utils/siteMeasurement';
 import { AUDIO_ACCEPT, formatDuration, safeTrackName, STEMS } from '../utils/stemSeparator';
@@ -108,6 +109,30 @@ function StemOutput({ output }) {
   );
 }
 
+function ProcessingProgress({ job }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const tick = () => setElapsed(Math.floor((Date.now() - job.startedAt) / 1000));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [job.startedAt]);
+  return (
+    <div className="separator-track-progress" role="status">
+      <div>
+        <span>{job.message}</span>
+        {job.progress !== null && <span>{Math.round(job.progress * 100)}%</span>}
+      </div>
+      <progress
+        max="1"
+        value={job.progress === null ? undefined : job.progress}
+        aria-label={`${job.file.name} progress`}
+      />
+      <small aria-live="off">Elapsed {formatDuration(elapsed)}</small>
+    </div>
+  );
+}
+
 export default function StemSeparatorPage() {
   const {
     jobs,
@@ -115,6 +140,10 @@ export default function StemSeparatorPage() {
     setSelected,
     running,
     errors,
+    cpuOnly,
+    setCpuOnly,
+    loadingDemo,
+    loadDemo,
     addFiles,
     remove,
     clearFinished,
@@ -130,7 +159,7 @@ export default function StemSeparatorPage() {
   const links = useRef(new Set());
   const ready = jobs.filter((job) => job.status === 'done');
   const pending = jobs.filter((job) => job.status !== 'done');
-  const locked = running || packing;
+  const locked = running || loadingDemo || packing;
 
   useEffect(() => {
     all.current.indeterminate = selected.length > 0 && selected.length < STEMS.length;
@@ -197,6 +226,7 @@ export default function StemSeparatorPage() {
 
   return (
     <>
+      <SeparatorNavigationGuard when={locked || ready.length > 0} />
       <SEO {...PAGE_SEO.separator} />
       <StructuredData
         data={musicToolSchema('separator', [
@@ -277,6 +307,17 @@ export default function StemSeparatorPage() {
                   })}
                 </div>
               </fieldset>
+              <label className="separator-device">
+                Processing device
+                <select
+                  value={cpuOnly ? 'cpu' : 'auto'}
+                  disabled={locked}
+                  onChange={(event) => setCpuOnly(event.target.value === 'cpu')}
+                >
+                  <option value="auto">Automatic</option>
+                  <option value="cpu">CPU compatibility mode</option>
+                </select>
+              </label>
               <dl className="separator-specs">
                 <div>
                   <dt>Engine</dt>
@@ -332,14 +373,24 @@ export default function StemSeparatorPage() {
                   <p>WAV, MP3, FLAC, M4A, AAC, OGG</p>
                   <small>Up to 20 tracks · 100 MB / 10 min each</small>
                 </div>
-                <button
-                  type="button"
-                  className="separator-button"
-                  disabled={locked}
-                  onClick={() => picker.current.click()}
-                >
-                  <Plus size={17} /> Choose audio
-                </button>
+                <div className="separator-upload-actions">
+                  <button
+                    type="button"
+                    className="separator-button"
+                    disabled={locked}
+                    onClick={() => picker.current.click()}
+                  >
+                    <Plus size={17} /> Choose audio
+                  </button>
+                  <button
+                    type="button"
+                    className="separator-text-button"
+                    disabled={locked || !selected.length}
+                    onClick={loadDemo}
+                  >
+                    <AudioLines size={15} /> Separate demo
+                  </button>
+                </div>
                 <input
                   ref={picker}
                   type="file"
@@ -438,21 +489,7 @@ export default function StemSeparatorPage() {
                           <X size={16} />
                         </button>
                       </div>
-                      {job.status === 'processing' && (
-                        <div className="separator-track-progress" role="status">
-                          <div>
-                            <span>{job.message}</span>
-                            {job.progress !== null && (
-                              <span>{Math.round(job.progress * 100)}%</span>
-                            )}
-                          </div>
-                          <progress
-                            max="1"
-                            value={job.progress === null ? undefined : job.progress}
-                            aria-label={`${job.file.name} progress`}
-                          />
-                        </div>
-                      )}
+                      {job.status === 'processing' && <ProcessingProgress job={job} />}
                       {job.status === 'error' && (
                         <p className="separator-track-error" role="alert">
                           {job.message}
@@ -523,9 +560,9 @@ export default function StemSeparatorPage() {
                     <button className="separator-button" onClick={() => archive.current?.abort()}>
                       <Square size={14} /> Cancel ZIP
                     </button>
-                  ) : running ? (
+                  ) : running || loadingDemo ? (
                     <button className="separator-button" onClick={cancel}>
-                      <Square size={14} /> Stop batch
+                      <Square size={14} /> {running ? 'Stop batch' : 'Cancel demo'}
                     </button>
                   ) : (
                     <button

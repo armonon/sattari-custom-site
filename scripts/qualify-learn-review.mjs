@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
+// Kept at this path for the Studio release runner; exercises the replacement Learn.
 const base = process.env.LEARN_QA_URL || 'http://127.0.0.1:5190';
 if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) {
   throw new Error('Learn review qualification must run locally.');
@@ -14,122 +15,61 @@ const browser = await chromium.launch({
   args: ['--mute-audio'],
 });
 try {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 1440]) {
     const context = await browser.newContext({
       viewport: { width, height: 1000 },
       reducedMotion: 'reduce',
     });
-    await context.addInitScript(() => {
-      localStorage.setItem('sattari-measurement-v1', 'denied');
-      window.qaTaps = [];
-      const connect = AudioNode.prototype.connect;
-      AudioNode.prototype.connect = function (destination, ...args) {
-        if (destination instanceof AudioDestinationNode) {
-          const analyser = this.context.createAnalyser();
-          connect.call(this, analyser);
-          window.qaTaps.push(analyser);
-        }
-        return connect.call(this, destination, ...args);
-      };
-    });
     const page = await context.newPage();
     page.setDefaultTimeout(60000);
     const errors = [];
-    page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(`${base}/learn`);
-    await page.getByRole('tab', { name: 'Practice', exact: true }).click();
-    await page.getByRole('button', { name: 'Bass', exact: true }).click();
-    await page.getByRole('button', { name: 'Start Play the roots', exact: true }).click();
-    await page.getByRole('heading', { name: 'Play the roots', exact: true }).waitFor();
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto(`${base}/loop`);
+    await page.waitForURL('**/learn');
+    await page.getByRole('button', { name: 'Sattari Learn song library' }).waitFor();
+    assert.equal(await page.getByRole('main').count(), 1);
+    assert.equal(await page.locator('.nav-wrap').count(), 0);
     assert.equal(
-      await page.getByRole('tab', { name: 'Bass', exact: true }).getAttribute('aria-selected'),
-      'true'
+      await page.locator('link[rel="canonical"]').getAttribute('href'),
+      'https://sattarimusic.com/learn'
     );
-    await page.getByRole('button', { name: 'Play arrangement', exact: true }).click();
-    await page.getByRole('button', { name: 'Pause arrangement', exact: true }).waitFor();
-    await page.waitForFunction(() => {
-      const audible = window.qaTaps.filter((tap) => {
-        const samples = new Float32Array(tap.fftSize);
-        tap.getFloatTimeDomainData(samples);
-        return samples.some((sample) => Math.abs(sample) > 0.001);
-      });
-      window.qaPracticeContexts = [...new Set(audible.map((tap) => tap.context))];
-      return window.qaPracticeContexts.length > 0;
-    });
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
+      false
+    );
+    await page.screenshot({ path: `${output}/library-${width}.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Learn Ode to Joy', exact: true }).click();
+    await page.getByRole('tab', { name: 'Chord charts', exact: true }).click();
+    await page.getByRole('img', { name: /C major. Frets/ }).waitFor();
+    await page.getByRole('button', { name: 'Listen to the melody' }).click();
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('audio')].some(
+        (audio) => !audio.paused && audio.currentTime > 0.1
+      )
+    );
+    await page.getByRole('button', { name: 'Practice this song', exact: true }).click();
+    await page.getByRole('button', { name: 'Enable microphone', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Explore without a microphone', exact: true }).click();
+    await page.getByRole('button', { name: 'Hear this phrase', exact: true }).waitFor();
+    assert.equal(await page.getByRole('main').count(), 1);
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
       false
     );
     await page.screenshot({ path: `${output}/practice-${width}.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Mark practiced', exact: true }).click();
-    await page.getByRole('heading', { name: 'Practice marked complete' }).waitFor();
-    await page.waitForFunction(
-      () =>
-        window.qaPracticeContexts.length > 0 &&
-        window.qaPracticeContexts.every((ctx) => ctx.state === 'closed')
-    );
-    await page.getByRole('button', { name: 'Next exercise', exact: true }).click();
-    await page.getByRole('heading', { name: 'Lead the changes', exact: true }).waitFor();
-    assert.equal(
-      await page.getByRole('button', { name: 'Play arrangement', exact: true }).count(),
-      1
-    );
+    await page.getByRole('button', { name: 'Exit practice', exact: true }).click();
+    await page.getByRole('heading', { name: 'Ode to Joy', exact: true }).waitFor();
+    await page.getByRole('link', { name: 'Back to Sattari Hub', exact: true }).click();
+    await page.waitForURL('**/hub');
     assert.deepEqual(errors, []);
     console.log(
-      `PASS ${width}px: exercise opens, actual audible PCM, completion stops audio, next exercise, no overflow`
+      `PASS ${width}px: Learn redirect, song guides, reference playback, focused practice, Hub navigation and no overflow`
     );
     await context.close();
   }
-
   const context = await browser.newContext();
   const page = await context.newPage();
   page.setDefaultTimeout(60000);
-  await context.route(/\/src\/utils\/audioAnalysis(?:\.js)?(?:\?.*)?$/, (route) =>
-    route.fulfill({
-      contentType: 'application/javascript',
-      body: `export const detectPitch = () => null;
-      export const analyzeAudioFile = () => new Promise(resolve => {
-        window.qaFinishAnalysis = () => resolve({ key: 'D minor' });
-      });`,
-    })
-  );
-  await page.goto(`${base}/learn`);
-  const buffer = await readFile(
-    new URL('../public/audio/sattari-practice-demo.wav', import.meta.url)
-  );
-  const input = page.locator('input[type=file]').first();
-  await input.setInputFiles({ name: 'first.wav', mimeType: 'audio/wav', buffer });
-  await page.getByRole('button', { name: 'Analyze & teach', exact: true }).click();
-  await page.waitForFunction(() => typeof window.qaFinishAnalysis === 'function');
-  await input.setInputFiles({ name: 'second.wav', mimeType: 'audio/wav', buffer });
-  await page.evaluate(() => window.qaFinishAnalysis());
-  assert.equal(await page.getByText('D minor', { exact: true }).count(), 0);
-  assert.match(await page.locator('.learn-track-copy').innerText(), /second/);
-  await page.getByRole('button', { name: 'Analyze & teach', exact: true }).waitFor();
-  console.log('PASS stale analysis does not replace the new source');
-
-  await page.getByRole('tab', { name: 'Challenge', exact: true }).click();
-  await page.evaluate(() => {
-    window.qaContext = new AudioContext();
-    window.qaStream = window.qaContext.createMediaStreamDestination().stream;
-    navigator.mediaDevices.getUserMedia = () =>
-      new Promise((resolve) => {
-        window.qaGrantPermission = () => resolve(window.qaStream);
-      });
-  });
-  await page.getByRole('button', { name: /Microphone Start live pitch detection/ }).click();
-  await page.waitForFunction(() => typeof window.qaGrantPermission === 'function');
-  await page.getByRole('link', { name: 'Hub', exact: true }).click();
-  await page.waitForURL('**/hub');
-  await page.evaluate(() => window.qaGrantPermission());
-  await page.waitForFunction(() =>
-    window.qaStream.getTracks().every((track) => track.readyState === 'ended')
-  );
-  await page.evaluate(() => window.qaContext.close());
-  console.log(
-    'PASS late permission grant stops its synthetic stream after navigation; no real microphone used'
-  );
-  await context.unrouteAll();
   await page.goto(`${base}/studio`);
   await page.locator('#studio-workspace').waitFor({ timeout: 120000 });
   assert.equal(await page.getByRole('main').count(), 1);

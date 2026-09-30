@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
-  Headphones,
   Library,
   Radio,
   SlidersHorizontal,
@@ -12,7 +11,6 @@ import {
   Store,
   Users,
 } from 'lucide-react';
-import HubListeningDesk from '../components/HubListeningDesk';
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
 import '../styles-hub.css';
@@ -34,13 +32,13 @@ const workspaces = [
     id: 'learn',
     name: 'Sattari Learn',
     category: 'Practice',
-    detail: 'Song analysis & instrument practice',
+    detail: 'Guided guitar lessons & live feedback',
     path: '/learn',
-    image: '/images/tools/learn.jpg',
-    alt: 'Sattari Learn showing a song map and estimated key and tempo',
+    image: '/images/tools/learn-guitar.jpg',
+    alt: 'Sattari Learn song library and interactive guitar practice player',
     icon: BookOpen,
     status: 'Practice lab',
-    tools: ['Key & tempo', 'Chords', 'Rhythm'],
+    tools: ['Tabs & chords', 'Guided practice', 'Live feedback'],
   },
   {
     id: 'stem-separator',
@@ -94,9 +92,6 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>A place for your next session.</p>
-              <a href="#hub-listening-desk" className="hub-text-link">
-                <Headphones size={16} /> Listening desk <ArrowRight size={15} />
-              </a>
             </div>
           </header>
 
@@ -144,8 +139,6 @@ export default function SattariHubPage() {
               )}
             </div>
           </section>
-
-          <HubListeningDesk />
 
           <section className="hub-reading" aria-labelledby="hub-reading-title">
             <div className="hub-section-heading">

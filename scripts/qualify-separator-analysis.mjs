@@ -20,12 +20,12 @@ try {
   });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(`${base}/stem-separator`);
-  await page.getByLabel('Add audio tracks').setInputFiles('public/audio/sattari-practice-demo.wav');
-  await page.getByRole('button', { name: 'Separate 1 track', exact: true }).click();
+  await page.goto(`${base}/stem-separator`, { timeout: 120000 });
+  await page.getByLabel('Processing device').selectOption('cpu');
+  await page.getByRole('button', { name: 'Separate demo', exact: true }).click();
   await page
     .getByRole('region', { name: 'Song analysis', exact: true })
-    .waitFor({ timeout: 30000 });
+    .waitFor({ timeout: 120000 });
   console.log('Song analysis arrived before separation finished.');
   assert.equal(await page.locator('.separator-track.is-processing').count(), 1);
   const deadline = Date.now() + 12 * 60 * 1000;
@@ -69,7 +69,13 @@ try {
     .click();
   const report = JSON.parse(await readFile(await (await download).path(), 'utf8'));
   assert.equal(report.song.bpm, 120);
+  assert.equal(report.song.keyEngine, 'sattari-autokey');
+  assert.equal(report.song.keyAnalyzedSeconds, 8);
+  assert.equal(report.song.key, 'C major');
+  assert.equal(report.song.keyAlternative, 'A minor');
+  assert(report.song.keyConfidence >= 0 && report.song.keyConfidence <= 1);
   assert.equal(report.stems.length, 4);
+  for (const stem of report.stems) assert.equal(stem.analysis.keyEngine, 'sattari-autokey');
   assert.equal(report.stems.find((stem) => stem.id === 'drums').analysis.key, null);
   console.log(JSON.stringify(report, null, 2));
   const zipDownload = page.waitForEvent('download');

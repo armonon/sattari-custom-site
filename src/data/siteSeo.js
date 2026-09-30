@@ -122,13 +122,13 @@ export const PAGE_SEO = {
     imageHeight: 1080,
   },
   learn: {
-    title: 'Song Key, Chords & Rhythm Practice | Sattari Learn',
+    title: 'Learn Guitar, One Song at a Time | Sattari Learn',
     description:
-      'Explore song key, chord and tempo estimates with Sattari Learn. Build piano, guitar, bass and drum practice around your own audio in the browser.',
+      'Learn guitar with guided songs, chord charts, tablature, sheet music and microphone feedback. Import your own audio or score and practice one phrase at a time.',
     url: `${SITE_ORIGIN}/learn`,
-    image: '/images/tools/learn.jpg',
-    imageWidth: 1240,
-    imageHeight: 523,
+    image: '/images/tools/learn-guitar.jpg',
+    imageWidth: 1280,
+    imageHeight: 900,
   },
 };
 

@@ -266,6 +266,10 @@ describe('SattariStudioPage', () => {
     );
     const navigation = screen.getByRole('navigation', { name: 'STEMDECK workspaces' });
     const brand = screen.getByRole('heading', { name: 'STEMDECK', level: 1 });
+    expect(screen.getByRole('link', { name: 'Back to Sattari Hub' })).toHaveAttribute(
+      'href',
+      '/hub'
+    );
     expect(brand).toHaveClass('sd-product-brand');
     expect(navigation.closest('header')).toBe(brand.closest('header'));
     expect(navigation.querySelector('.sd-action-label')).toBeNull();

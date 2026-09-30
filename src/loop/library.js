@@ -48,3 +48,27 @@ export function saveSong(record) {
 export function removeSong(id) {
   return transaction('readwrite', (store) => store.delete(id));
 }
+
+export async function mergeSongs(records) {
+  const db = await openLibrary();
+  try {
+    return await new Promise((resolve, reject) => {
+      const added = [],
+        tx = db.transaction('songs', 'readwrite'),
+        store = tx.objectStore('songs');
+      for (const record of records) {
+        const request = store.get(record.id);
+        request.onsuccess = () => {
+          if (!request.result) {
+            store.add(record);
+            added.push(record.id);
+          }
+        };
+      }
+      tx.oncomplete = () => resolve(added);
+      tx.onerror = tx.onabort = () => reject(tx.error || new Error('Restore interrupted.'));
+    });
+  } finally {
+    db.close();
+  }
+}

@@ -221,8 +221,8 @@ export function ToolDetailsPage() {
         <img
           src={tool.screenshot}
           alt={`${tool.name} running in a web browser`}
-          width="1280"
-          height="800"
+          width={tool.screenshotWidth || 1280}
+          height={tool.screenshotHeight || 800}
         />
         <figcaption>{tool.screenshotCaption}</figcaption>
       </figure>
@@ -235,19 +235,22 @@ export function ToolDetailsPage() {
         ))}
       </dl>
       <section className="resource-section resource-demo">
-        <h2>Try the same audio</h2>
+        <h2>{tool.demoTitle || 'Try the same audio'}</h2>
         <p>
-          An original eight-second synthesized A minor groove at 120 BPM: bass, chords and
-          percussion, with no vocals. Free to download and use for practice. This is a workflow
-          demonstration, not a commercial-song benchmark.
+          {tool.demoDescription ||
+            'An original eight-second synthesized A minor groove at 120 BPM: bass, chords and percussion, with no vocals. Free to download and use for practice. This is a workflow demonstration, not a commercial-song benchmark.'}
         </p>
         <audio
           controls
           preload="none"
-          src="/audio/sattari-practice-demo.wav"
-          aria-label="Original Sattari practice demo"
+          src={tool.demoAudio || '/audio/sattari-practice-demo.wav'}
+          aria-label={tool.demoLabel || 'Original Sattari practice demo'}
         />
-        <a className="resource-link" href="/audio/sattari-practice-demo.wav" download>
+        <a
+          className="resource-link"
+          href={tool.demoAudio || '/audio/sattari-practice-demo.wav'}
+          download
+        >
           <Download size={18} />
           Download demo WAV
         </a>
@@ -396,9 +399,10 @@ export function PrivacyPage() {
           information associated with that download.
         </p>
         <p>
-          Studio uses local browser storage for projects and audio assets. Learn can pass local
-          assets to Studio. Stem Separator results last only for the current page session. Download
-          backups; clearing browser data can remove local projects.
+          Studio stores projects and audio assets in your browser. Learn stores imported lessons,
+          guitar settings, practice history, recorded takes and attached lesson videos locally. Stem
+          Separator results last only for the current page session. Download backups; clearing
+          browser data can remove local projects, lessons and recordings.
         </p>
       </section>
       <section className="resource-section">

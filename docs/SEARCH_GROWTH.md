@@ -41,8 +41,9 @@ Remaining account work:
    import or Bing's ownership flow. Submit the sitemap and review crawl/indexing
    health, then AI Performance when data is available. Import requires the owner's
    account authorization; no credentials or ownership tokens were invented.
-3. Have the current Google Business Profile owner confirm the real shop hours and
-   services. Studio hours must not become the shop's opening-hours claim.
+3. Have the current Google Business Profile owner apply the confirmed
+   appointment-only shop policy and review services. Do not publish fixed shop
+   hours or substitute the studio schedule for shop opening hours.
 4. Check hosting firewall logs/settings for actual crawler-IP access without
    disabling general security protections. CLI publishing access alone does not
    establish this dashboard check.
@@ -110,7 +111,8 @@ Source of truth: `src/data/siteSeo.js`.
 - One address: 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364.
 - Public shop telephone: (424) 465-3020.
 - Areas served: Woodland Hills, Encino, Calabasas, Los Angeles, San Fernando Valley.
-- Shop hours: not yet owner-confirmed; ask customers to contact the shop.
+- Shop visits: by appointment only, confirmed by the owner September 28, 2026.
+  Public wording: "By appointment only. Call to arrange your visit."
 - Studio/rehearsal: daily 6 PM-midnight, Los Angeles time, by confirmed booking.
 
 The owner's booking-alert email and two mobile numbers remain server-side and
@@ -128,16 +130,18 @@ owner only as `in...@...`; no ownership request or duplicate listing was created
 Ready for the current Business Profile owner:
 
 - Keep the existing name, address, telephone and `https://sattarimusic.com/`.
-- Confirm and add actual shop opening hours; do not use the studio schedule.
+- Keep fixed shop opening hours unset for the appointment-only store. Use the
+  appointment-required attribute if available; do not use the studio schedule.
 - Review services for instrument repair/setup, instrument rentals, lessons/classes,
   and studio/rehearsal inquiries. Only add services currently offered.
 - Add current shop/interior/instrument photos, not software screenshots.
-- Suggested description: "SATTARI Musical Instruments is a music store in
+- Suggested description: "SATTARI Musical Instruments is an appointment-only music store in
   Woodland Hills serving musicians in Encino, Calabasas, Los Angeles and the
   San Fernando Valley. Shop instruments, cymbals, drumsticks and accessories,
   or contact us about instrument repairs, setups, rentals, music lessons and
   studio or rehearsal space. Visit our website for the current catalog,
-  local service inquiries and Sattari's browser-based music tools."
+  local service inquiries and Sattari's browser-based music tools. Call to arrange
+  your shop visit."
 
 ## Search Console and Hosting Audit
 
@@ -264,8 +268,10 @@ routes have live canonical HTML and sitemap coverage. Production rejects
 cross-origin/malformed metrics. No synthetic analytics events were recorded.
 All 167 tests in the 16 focused server/measurement suites passed after the runtime
 fix; focused ESLint also passed. Studio booking remains disabled pending working
-email/SMS providers. Google verification, Business Profile owner access, confirmed
-shop hours and the authenticated hosting firewall review remain outstanding.
+email/SMS providers. At that release, Google verification, Business Profile owner
+access, shop visit details and the authenticated hosting firewall review were
+outstanding. See Business Identity and Search Console and Hosting Audit above for
+the current appointment-only policy and completed Google ownership verification.
 
 ```sh
 npm run build

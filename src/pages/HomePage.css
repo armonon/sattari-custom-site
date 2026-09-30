@@ -13,56 +13,6 @@
   --home-muted: #5b6870;
   --home-line: #d7dfe3;
 }
-.is-home .nav-wrap {
-  background: var(--home-bg);
-  border-color: var(--home-line);
-  color: var(--home-ink);
-  box-shadow: none;
-}
-.is-home .nav-chrome::after {
-  display: none;
-}
-.is-home .nav-inner {
-  width: min(1320px, calc(100% - 64px));
-}
-.is-home .brand-copy {
-  display: none;
-}
-.is-home .nav-logo-frame {
-  box-shadow: none;
-  background: transparent;
-  border-radius: 4px;
-}
-.is-home .nav-hub-button,
-.is-home .nav-hub-button:hover {
-  background: #245be7;
-  color: #fff;
-  border-color: #245be7;
-  box-shadow: none;
-}
-.is-home .nav-link:not(.nav-hub-button) {
-  color: var(--home-ink);
-  box-shadow: none;
-}
-.is-home .nav-link-active:not(.nav-hub-button) {
-  background: var(--home-paper);
-  border-color: var(--home-line);
-}
-.is-home .footer {
-  background: var(--home-bg);
-  color: var(--home-ink);
-  border-color: var(--home-line);
-}
-.is-home .footer-copy {
-  color: var(--home-muted);
-}
-.is-home .footer-quick-links a {
-  background: transparent;
-  border-color: var(--home-line);
-  color: var(--home-ink);
-  box-shadow: none;
-  border-radius: 4px;
-}
 .home-page {
   color: var(--home-ink);
   background: var(--home-bg);
@@ -673,9 +623,6 @@
 @media (max-width: 760px) {
   .home-width {
     width: calc(100% - 36px);
-  }
-  .is-home .nav-inner {
-    width: calc(100% - 32px);
   }
   .home-hero {
     height: min(650px, calc(100svh - 140px));

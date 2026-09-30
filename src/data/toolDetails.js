@@ -22,7 +22,7 @@ export const toolDetails = {
       ],
       [
         'Musical analysis',
-        'On-device key and pulse estimates for the song and selected stems, prominent pitch classes, duration, sample peak and RMS levels. Download an analysis JSON report separately or in the ZIP. Musical estimates sample up to three 20-second sections; levels cover the full audio.',
+        'On-device Sattari AutoKey and pulse estimates for the song and selected stems, prominent pitch classes, duration, sample peak and RMS levels. Download an analysis JSON report separately or in the ZIP. AutoKey and levels cover the full audio; note summaries, tonal-evidence checks and tempo sample up to three 20-second sections.',
       ],
       [
         'Limits',
@@ -122,51 +122,62 @@ export const toolDetails = {
     path: '/learn',
     status: 'Preview',
     description:
-      'Explore what Sattari Learn can estimate from audio: key, tempo and representative chords, with practice ideas, a rhythm test, microphone and MIDI feedback.',
+      'Learn guitar with a guided song library, audio and score imports, chord charts, tablature, sheet music and microphone feedback.',
     summary:
-      'Turn a local audio file into a starting point for practice: tempo and key estimates, representative chords, exercises and playable accompaniment.',
-    screenshot: '/images/tools/learn.jpg',
+      'Pick a song, get to know the notes and chords, then practice one phrase at a time. Build confidence with slower examples, visual finger guides and a daily session.',
+    screenshot: '/images/tools/learn-guitar.jpg',
     screenshotCaption:
-      'Actual Learn analysis of the original demo. The reference run estimated C major and 117 BPM for an A minor, 120 BPM source: a concrete reminder to verify estimates by ear.',
+      'The Sattari Learn song library and practice player. Starter lessons use short authored arrangements; uploaded audio produces an editable guide to review before practicing.',
+    screenshotWidth: 1280,
+    screenshotHeight: 900,
     facts: [
       [
         'Input',
-        'One local audio file at a time, using your browser audio decoder. PCM WAV is a useful fallback when another codec fails. Streaming links are not supported.',
+        'Choose a starter lesson, upload an audio file, or import a Guitar Pro or MusicXML score. Audio imports support files up to 40 MB and eight minutes. Streaming-service links are not supported.',
       ],
       [
-        'Analysis',
-        'Estimated key and tempo, a waveform, section suggestions and four representative chord regions. Practice suggestions cover piano, guitar, bass and drums.',
+        'Song guides',
+        'Explore chord charts, tablature, standard notation and animated finger guides. Audio analysis estimates key, tempo and notes; listen and correct the guide before practicing. Score imports currently support constant tempo and 4/4.',
       ],
       [
         'Practice',
-        'Synthesized bass, drum and chord patterns in Arrange; tap-spacing feedback in Challenge; single-note microphone pitch and MIDI note feedback when supported.',
+        'Select a passage, slow it down, choose essentials or full notes, and work through pitch and rhythm exercises. A 12-step beginner path, daily sessions, suggested drills and local recorded takes help you revisit difficult phrases.',
+      ],
+      [
+        'Guitar setup',
+        'Choose right- or left-handed diagrams, standard, Drop D or DADGAD tuning, and a capo position. Suggested positions should always be checked for comfortable playability.',
       ],
       [
         'Browser',
-        'JavaScript and Web Audio required. A current desktop browser is the recommended starting point. Microphone permission requires HTTPS; Web MIDI requires browser support and a connected MIDI device.',
+        'JavaScript and Web Audio are required. Microphone feedback requires permission and HTTPS or localhost. Start in a current desktop browser with headphones and a quiet room.',
       ],
       [
         'Privacy',
-        'Song analysis and microphone pitch detection run locally. Audio is not sent to a transcription server. Send to Studio stores the source and music map in local browser storage.',
+        'Audio analysis and microphone processing run on your device. Optional analysis models are downloaded when selected. Recordings and attached lesson videos stay in local browser storage.',
       ],
       [
         'Price',
-        'The current Learn preview is free to use without signing in. It is not a paid course or a teacher booking.',
+        'The current Learn preview is free to use without signing in. It is separate from booking a lesson with a teacher.',
       ],
       [
         'Storage',
-        'Analysis is held for the current page session. Sending to Studio can retain local assets; it does not create an online backup.',
+        'Imported lessons, guitar settings, practice history and saved takes remain in this browser. Download a Learn backup to keep them or restore on another device. Restores add missing entries and keep existing data. There is no automatic cloud sync.',
       ],
       [
         'Limitations',
-        'Not a note-for-note transcription, automatic guitar tablature, complete curriculum or performance examiner. Four-region chords can miss changes. Quiet, monophonic notes work best for microphone pitch detection. Large files can exceed available memory.',
+        'A finished mix can confuse note and chord estimates and cannot reliably isolate guitar alone. Single-note feedback works best on clear, steady notes. Whole-chord checking is experimental; feedback is a practice aid, not a complete performance assessment.',
       ],
     ],
+    demoTitle: 'Try a starter lesson',
+    demoDescription:
+      'An authored guitar arrangement of Ode to Joy at 88 BPM, with synthesized reference audio. The lesson notes, tabs and practice targets come from the same arrangement.',
+    demoAudio: '/audio/loop-ode-to-joy.wav',
+    demoLabel: 'Sattari Learn Ode to Joy reference',
     demo: [
-      'Download the original demo below and add it to Learn.',
-      'Choose Analyze & teach and wait for the local analysis.',
-      'Compare the estimates with the demo notes: A minor accompaniment at 120 BPM. Tempo may be interpreted at half or double time. Try Bass practice or Arrange next.',
+      'Open Learn and choose Ode to Joy from the song library.',
+      'Explore the notes, chord charts and finger guides. Select a short passage and choose an easier version if you need one.',
+      'Choose Practice this song. Follow microphone setup for live feedback, or explore without a microphone. Hear the phrase, play slowly, then try it in time.',
     ],
-    guides: ['practice-bass-with-isolated-stems', 'how-to-separate-vocals-drums-bass'],
+    guides: ['learn-guitar-from-a-song', 'how-to-separate-vocals-drums-bass'],
   },
 };

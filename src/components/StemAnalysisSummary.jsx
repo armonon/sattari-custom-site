@@ -31,7 +31,8 @@ export default function StemAnalysisSummary({
       <dl className="separator-musical-stats">
         <div>
           <dt>
-            <Music2 size={13} /> Estimated key
+            <Music2 size={13} />{' '}
+            {analysis.keyEngine === 'sattari-autokey' ? 'AutoKey estimate' : 'Estimated key'}
           </dt>
           <dd>
             {analysis.key ||
@@ -40,6 +41,7 @@ export default function StemAnalysisSummary({
           {analysis.key && (
             <small>{analysis.keyEvidence === 'tentative' ? 'Tentative' : 'Tonal match'}</small>
           )}
+          {!analysis.key && analysis.keyReason && <small>{keyNotes[analysis.keyReason]}</small>}
         </div>
         <div>
           <dt>
@@ -59,6 +61,9 @@ export default function StemAnalysisSummary({
             <small>
               {analysis.tempoEvidence === 'tentative' ? 'Tentative' : 'Consistent pulse'}
             </small>
+          )}
+          {analysis.bpm === null && (
+            <small>{tempoNotes[analysis.tempoReason] || keyNotes[analysis.tempoReason]}</small>
           )}
         </div>
         <div className="separator-note-stat">
@@ -92,21 +97,49 @@ export default function StemAnalysisSummary({
             <dd>{level(analysis.rmsDb)}</dd>
           </div>
           <div>
-            <dt>Musical sample</dt>
+            <dt>Notes / tempo sample</dt>
             <dd>
               {analysis.analyzedSeconds}s / {analysis.windows.length}{' '}
               {analysis.windows.length === 1 ? 'section' : 'sections'}
             </dd>
           </div>
+          {analysis.keyEngine === 'sattari-autokey' && (
+            <>
+              <div>
+                <dt>Key engine</dt>
+                <dd>Sattari AutoKey</dd>
+              </div>
+              <div>
+                <dt>Key scan</dt>
+                <dd>
+                  {analysis.keyAnalyzedSeconds > 0
+                    ? `${analysis.keyAnalyzedSeconds}s / full audio`
+                    : 'Not analysed'}
+                </dd>
+              </div>
+              {analysis.key && Number.isFinite(analysis.keyConfidence) && (
+                <div>
+                  <dt>Key match margin</dt>
+                  <dd>{analysis.keyConfidence.toFixed(3)}</dd>
+                </div>
+              )}
+              {analysis.key && analysis.keyAlternative && (
+                <div>
+                  <dt>Alternative key</dt>
+                  <dd>{analysis.keyAlternative}</dd>
+                </div>
+              )}
+            </>
+          )}
         </dl>
-        {analysis.keyReason && <p>{keyNotes[analysis.keyReason]}</p>}
-        {tempoNotes[analysis.tempoReason] && <p>{tempoNotes[analysis.tempoReason]}</p>}
         <p>
           Key and pulse are estimates, not a transcription. Notes are pitch classes, not a melody or
           chord progression.
           {compact
             ? ' Sparse stems may suggest a different key or a half/double-time pulse; this does not mean the song changed tempo.'
-            : ' Relative major/minor keys and half/double-time tempos can be ambiguous. Short excerpts may miss key or tempo changes.'}
+            : ' Relative major/minor keys and half/double-time tempos can be ambiguous. A whole-song key does not describe every section.'}
+          {analysis.keyEngine === 'sattari-autokey' &&
+            ' AutoKey is the browser port of our song-key engine. Its match margin is the difference between the top two key scores, not a probability; below 0.100 is tentative.'}
         </p>
       </details>
     </section>

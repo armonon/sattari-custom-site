@@ -4,6 +4,9 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Prepare the score parser before its first worker import, avoiding a dev
+  // dependency reload in the middle of the user's file selection.
+  optimizeDeps: { include: ['@coderline/alphatab'] },
   // Strips the Sentry SDK's debug logging from production bundles.
   define: { __SENTRY_DEBUG__: false },
   resolve: {

@@ -645,17 +645,7 @@
   .hub-heading h1 {
     font-size: 32px;
   }
-  .hub-heading-aside > p {
-    display: none;
-  }
   .hub-heading-aside {
-    padding-top: 7px;
-  }
-  .hub-heading-aside a {
-    font-size: 11px;
-    gap: 6px;
-  }
-  .hub-heading-aside a > svg:last-child {
     display: none;
   }
   .hub-workspace-grid {
@@ -738,9 +728,6 @@
   .hub-heading {
     flex-direction: column;
     gap: 10px;
-  }
-  .hub-heading-aside {
-    padding-top: 0;
   }
   .hub-tool-name h3 {
     font-size: 20px;

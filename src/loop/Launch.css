@@ -1,0 +1,238 @@
+/* Learn's supporting tools share the ceramic surface and restrained hardware cues. */
+.loop-app .lc-course,
+.loop-app .lc-brief,
+.loop-app .lc-backup,
+.loop-app .lc-journal,
+.loop-app .lc-audit,
+.loop-app .lc-check-in {
+  border: 1px solid var(--lp-line);
+  background: var(--lp-paper);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 2px 0 #d6d5c9;
+  text-align: left;
+}
+.loop-app .lc-course-heading,
+.loop-app .lc-brief {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 28px;
+  align-items: center;
+}
+.loop-app .lc-course h2,
+.loop-app .lc-brief h2 {
+  font-size: 24px;
+  letter-spacing: -0.7px;
+  margin: 10px 0;
+  line-height: 1.2;
+}
+.loop-app .lc-course p,
+.loop-app .lc-brief p,
+.loop-app .lc-backup p,
+.loop-app .lc-journal p,
+.loop-app .lc-audit p,
+.loop-app .lc-check-in p {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #687064;
+  max-width: 75ch;
+}
+.loop-app .lc-course small,
+.loop-app .lc-brief small,
+.loop-app .lc-audit small {
+  display: block;
+  color: #6e7168;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.loop-app .lc-course summary,
+.loop-app .lc-backup summary,
+.loop-app .lc-journal summary,
+.loop-app .lc-audit summary,
+.loop-app .lc-check-in summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.loop-app .lc-backup summary svg {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.loop-app .lc-course ol {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28px;
+}
+.loop-app .lc-course li {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--lp-line);
+  padding: 18px 0;
+}
+.loop-app .lc-course h3 {
+  font-size: 14px;
+  margin: 0;
+}
+.loop-app .lc-course li p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+.loop-app .lc-course-number {
+  font: 12px var(--lh-mono);
+  color: var(--lp-purple);
+}
+.loop-app .lc-course li.is-reached .lc-course-number {
+  color: var(--lp-green);
+}
+.loop-app .lc-course-progress {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px 0;
+  font: 10px var(--lh-mono);
+  color: #687064;
+}
+.loop-app .lc-course-progress progress {
+  width: 140px;
+  height: 6px;
+  accent-color: var(--lp-purple);
+}
+.loop-app .lc-course > small {
+  margin-top: 18px;
+}
+.loop-app .lc-brief {
+  grid-template-columns: 1.1fr 1fr;
+  align-items: start;
+}
+.loop-app .lc-brief h3 {
+  font-size: 14px;
+}
+.loop-app .lc-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.loop-app .lc-file-button {
+  position: relative;
+  cursor: pointer;
+}
+.loop-app .lc-file-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.loop-app .lc-file-button:focus-within {
+  outline: 2px solid var(--lp-purple);
+  outline-offset: 3px;
+}
+.loop-app .lc-backup-review {
+  padding: 18px;
+  background: #efeee4;
+  border-radius: 8px;
+}
+.loop-app .lc-note-correction {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+.loop-app .lc-note-correction small {
+  grid-column: 1/-1;
+}
+.loop-app .lc-audit label,
+.loop-app .lc-check-in label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  margin: 14px 0;
+}
+.loop-app .lc-audit select,
+.loop-app .lc-check-in select,
+.loop-app .lc-check-in textarea {
+  max-width: 100%;
+  min-width: 0;
+  padding: 10px;
+  background: #fffdf6;
+  border: 1px solid var(--lp-line);
+  border-radius: 6px;
+  color: var(--lp-ink);
+  font: inherit;
+}
+.loop-app .lc-audit li {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7c4a31;
+}
+.loop-app .lc-journal ol {
+  padding-left: 20px;
+}
+.loop-app .lc-journal li {
+  padding: 12px 0;
+  border-top: 1px solid var(--lp-line);
+  font-size: 12px;
+}
+.loop-app .lc-journal li span,
+.loop-app .lc-journal li small {
+  display: block;
+  margin-top: 6px;
+  color: #687064;
+}
+.loop-app .lc-check-in {
+  width: 100%;
+  max-width: 700px;
+  margin-inline: auto;
+}
+.loop-app .lc-audit audio {
+  display: none;
+}
+@media (max-width: 760px) {
+  .loop-app .lc-course-heading,
+  .loop-app .lc-brief,
+  .loop-app .lc-course ol {
+    grid-template-columns: 1fr;
+  }
+  .loop-app .lc-course-heading {
+    gap: 12px;
+  }
+  .loop-app .lc-course,
+  .loop-app .lc-brief,
+  .loop-app .lc-backup,
+  .loop-app .lc-journal,
+  .loop-app .lc-audit,
+  .loop-app .lc-check-in {
+    padding: 18px;
+  }
+  .loop-app .lc-course h2 {
+    font-size: 22px;
+  }
+  .loop-app .lc-course-progress {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .loop-app .lc-note-correction {
+    grid-template-columns: 1fr;
+  }
+  .loop-app .lj-filters {
+    flex-wrap: wrap;
+  }
+}
+@media print {
+  .loop-app .lc-backup,
+  .loop-app .lc-journal,
+  .loop-app .lc-check-in {
+    display: none;
+  }
+}

@@ -169,6 +169,9 @@ export function SettingsPopover({
       <button type="button" onClick={onReset}>
         Reset session
       </button>
+      <a href="/studio-install.html" target="_blank" rel="noopener noreferrer">
+        Install on iPhone, iPad or Mac
+      </a>
     </aside>
   );
 }

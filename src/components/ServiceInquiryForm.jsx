@@ -1,6 +1,6 @@
 // ServiceInquiryForm.jsx
 import { captureException } from '../utils/monitoring';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StudioBookingForm from './StudioBookingForm';
 import { trackSiteEvent } from '../utils/siteMeasurement';
 
@@ -27,6 +27,8 @@ const HONEYPOT_STYLE = {
 
 export default function ServiceInquiryForm({
   initialService = '',
+  service: controlledService = undefined,
+  onServiceChange = undefined,
   source = 'Website service form',
   compact = false,
 }) {
@@ -41,20 +43,51 @@ export default function ServiceInquiryForm({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const service = controlledService ?? form.service;
+  const confirmationRef = useRef(null);
+  const serviceSelectRef = useRef(null);
+  const focusFormRef = useRef(false);
+  const submissionVersion = useRef(0);
 
   useEffect(() => {
+    if (controlledService !== undefined) return;
     setForm((current) =>
       current.service === initialService ? current : { ...current, service: initialService }
     );
-  }, [initialService]);
+  }, [initialService, controlledService]);
+
+  useEffect(() => {
+    setSubmitted(false);
+    setSubmitting(false);
+    setError('');
+    // An earlier service's response must not replace this service's form.
+    return () => {
+      submissionVersion.current += 1;
+    };
+  }, [service]);
+
+  useEffect(() => {
+    if (submitted) confirmationRef.current?.focus();
+    else if (focusFormRef.current) {
+      serviceSelectRef.current?.focus();
+      focusFormRef.current = false;
+    }
+  }, [submitted]);
 
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === 'service') {
+      onServiceChange?.(value);
+      if (controlledService !== undefined) return;
+    }
     setForm((f) => ({ ...f, [name]: value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submitting) return;
+    const version = ++submissionVersion.current;
+    const inquiry = { ...form, service };
     setSubmitting(true);
     setError('');
 
@@ -62,7 +95,7 @@ export default function ServiceInquiryForm({
       const body = new URLSearchParams({
         'form-name': 'service-inquiry',
         source,
-        ...form,
+        ...inquiry,
       });
 
       const response = await fetch('/', {
@@ -79,7 +112,7 @@ export default function ServiceInquiryForm({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ ...form, source }),
+          body: JSON.stringify({ ...inquiry, source }),
         });
         const fallbackResult = await fallbackResponse.json().catch(() => ({}));
 
@@ -94,7 +127,7 @@ export default function ServiceInquiryForm({
               netlifyFormsStatus: String(response.status),
               fallbackStatus: String(fallbackResponse.status),
             },
-            extra: { source, service: form.service },
+            extra: { source, service },
           });
           responseError.sentryCaptured = true;
 
@@ -102,27 +135,29 @@ export default function ServiceInquiryForm({
         }
       }
 
-      setSubmitted(true);
+      if (version === submissionVersion.current) setSubmitted(true);
       trackSiteEvent('inquiry_sent');
     } catch (submitError) {
       if (!submitError.sentryCaptured) {
         captureException(submitError, {
           tags: { feature: 'service-inquiry' },
-          extra: { source, service: form.service },
+          extra: { source, service },
         });
       }
-      setError(submitError.message || 'Unable to send your inquiry right now.');
+      if (version === submissionVersion.current) {
+        setError(submitError.message || 'Unable to send your inquiry right now.');
+      }
     } finally {
-      setSubmitting(false);
+      if (version === submissionVersion.current) setSubmitting(false);
     }
   }
 
-  if (['studio', 'rehearsal'].includes(form.service)) {
+  if (['studio', 'rehearsal'].includes(service)) {
     return (
       <div className="service-form-glass">
         <label>
           <span>Service Type</span>
-          <select name="service" value={form.service} onChange={handleChange}>
+          <select ref={serviceSelectRef} name="service" value={service} onChange={handleChange}>
             {SERVICE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -131,7 +166,7 @@ export default function ServiceInquiryForm({
           </select>
         </label>
         <StudioBookingForm
-          initialPurpose={form.service === 'studio' ? 'Recording' : 'Rehearsal'}
+          initialPurpose={service === 'studio' ? 'Recording' : 'Rehearsal'}
           initialContact={form}
           onContactChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))}
         />
@@ -142,9 +177,29 @@ export default function ServiceInquiryForm({
   if (submitted) {
     return (
       <div className="service-form-glass">
-        <p className="card-kicker">Inquiry sent</p>
-        <h3>Thank you!</h3>
-        <p>We’ve received your request and we’ll follow up soon with the next steps.</p>
+        <div
+          ref={confirmationRef}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          tabIndex={-1}
+        >
+          <p className="card-kicker">Inquiry sent</p>
+          <h3>Thank you!</h3>
+          <p>We’ve received your request and we’ll follow up soon with the next steps.</p>
+        </div>
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={() => {
+            focusFormRef.current = true;
+            setForm((current) => ({ ...current, details: '', 'bot-field': '' }));
+            setSubmitted(false);
+            setError('');
+          }}
+        >
+          Start another request
+        </button>
       </div>
     );
   }
@@ -171,7 +226,13 @@ export default function ServiceInquiryForm({
       <div className="service-form-row">
         <label>
           <span>Service Type</span>
-          <select name="service" value={form.service} onChange={handleChange} required>
+          <select
+            ref={serviceSelectRef}
+            name="service"
+            value={service}
+            onChange={handleChange}
+            required
+          >
             <option value="" disabled>
               Select a service
             </option>

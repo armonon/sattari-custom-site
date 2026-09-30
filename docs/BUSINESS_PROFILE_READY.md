@@ -12,19 +12,24 @@ a duplicate. Search Console verification does not grant Business Profile access.
 - Address: 4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364.
 - Public telephone: (424) 465-3020.
 - Website: https://sattarimusic.com/
-- Store hours: awaiting owner confirmation, including appointment-only days.
+- Store visits: by appointment only, confirmed by the owner September 28, 2026.
+  Public wording: "By appointment only. Call to arrange your visit."
+- Do not publish fixed shop opening hours. Google's business-hours guidance
+  specifically excludes businesses that operate only by appointment. Use the
+  no-main-hours setting and an appointment-required attribute if available in
+  the existing profile. Do not mark the business closed or open 24 hours.
 - Studio hours are separate: daily 6 PM to midnight by confirmed arrangement.
   Do not substitute these for shop hours.
 
 ## Description
 
-SATTARI Musical Instruments is a music store in Woodland Hills serving musicians
+SATTARI Musical Instruments is an appointment-only music store in Woodland Hills serving musicians
 from Encino, Calabasas and across Los Angeles. Explore cymbals, drumsticks,
 percussion, violins, guitars, basses and everyday accessories. Ask about instrument
 repairs, tuning and setup, short-term rentals, music lessons, and studio or
 rehearsal space. Whether you are choosing your first instrument or getting ready
-for a session, contact our Woodland Hills shop for availability and practical
-support. Our website also offers Sattari Studio, Learn and Stem Separator for
+for a session, call to arrange your visit and confirm availability. Our website
+also offers Sattari Studio, Learn and Stem Separator for
 making music and practicing in your browser.
 
 ## Categories And Services
@@ -79,7 +84,8 @@ guarantees an item is in the physical shop.
 - Use the real logo. Avoid old promotional graphics with outdated contact details.
 - Suggested update: "Choosing your next instrument? Browse Sattari's cymbals,
   drumsticks, violins, guitars and accessories, then contact our Woodland Hills
-  shop with questions about availability or setup." Link the Learn more action
+  shop with questions about availability or setup. Store visits are by appointment
+  only; call to arrange a time." Link the Learn more action
   to https://sattarimusic.com/shop when the owner dashboard is available.
 - Ask customers neutrally for an honest review after a real purchase or service:
   "Thank you for visiting Sattari. Would you share an honest review of your
@@ -100,6 +106,8 @@ guarantees an item is in the physical shop.
 ## Publication Record
 
 - September 28: manager access checked; zero businesses in the current account.
-- Pending: owner-account access, actual store hours, category/service review and
+- September 28: owner confirmed that the store is appointment-only; fixed public
+  shop hours are not needed. The studio schedule remains separate.
+- Pending: owner-account access, category/service review and
   submission. No duplicate listing, ownership request or public suggested edit
   was created.

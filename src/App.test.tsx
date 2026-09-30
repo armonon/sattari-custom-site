@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { hydrateRoot, type Root } from 'react-dom/client';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
-import { MemoryRouter, StaticRouter, useNavigate } from 'react-router-dom';
+import { MemoryRouter, StaticRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App, { preloadRoute } from './App';
 import { CartProvider } from './context/CartContext';
@@ -25,8 +25,10 @@ function jsonResponse(body: unknown) {
 }
 
 let navigate: ReturnType<typeof useNavigate>;
+let currentPath = '';
 function NavigateHandle() {
   navigate = useNavigate();
+  currentPath = useLocation().pathname;
   return null;
 }
 
@@ -152,7 +154,7 @@ describe('cart drawer', () => {
       JSON.stringify([{ slug: 'cymbal-felts', size: null, color: null, quantity: 1 }])
     );
     renderApp('/page-that-does-not-exist');
-    fireEvent.click(await screen.findByRole('button', { name: /Open cart with 1 items/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Open cart with 1 item/ }));
     const dialog = screen.getByRole('dialog', { name: 'Shopping cart' });
     const remove = within(dialog).getByRole('button', { name: 'Remove Cymbal Felts from cart' });
 
@@ -185,6 +187,78 @@ describe('route error boundary', () => {
   }, 30000);
 });
 
+describe('Sattari Learn replacement', () => {
+  it.each(['/learn', '/loop'])(
+    'opens the guided song journey through %s and retains saved guitar setup',
+    async (path) => {
+      expect(await preloadRoute('/learn')).toEqual({ hydrate: false });
+      localStorage.setItem(
+        'loop-guitar-profile-v1',
+        JSON.stringify({ handedness: 'left', tuning: 'dropD', capo: 2 })
+      );
+      await act(async () => {
+        renderApp(path);
+      });
+
+      expect(
+        await screen.findByRole('button', { name: 'Sattari Learn song library' })
+      ).toBeInTheDocument();
+      expect(currentPath).toBe('/learn');
+      expect(screen.getAllByRole('main')).toHaveLength(1);
+      expect(
+        screen.getByRole('heading', { name: /Your favorite song\.\s*In your hands\./ })
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Back to Sattari Hub' })).toHaveAttribute(
+        'href',
+        '/hub'
+      );
+      expect(
+        screen.queryByRole('navigation', { name: 'Primary navigation' })
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Analyze & teach' })).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Learn Ode to Joy' }));
+      expect(
+        screen.getByText('Your guitar · Drop D tuning · capo 2 · left-handed')
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Practice this song' }));
+      expect(screen.getByRole('button', { name: 'Enable microphone' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Explore without a microphone' }));
+      expect(screen.getByRole('button', { name: 'Hear this phrase' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Exit practice' }));
+      expect(screen.getByRole('heading', { name: 'Ode to Joy' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('link', { name: 'Back to Sattari Hub' }));
+      expect(currentPath).toBe('/hub');
+      await act(async () => {
+        await preloadRoute('/hub');
+      });
+    },
+    120000
+  );
+});
+
+it.each(['/learn/', '/LEARN'])(
+  'keeps workspace chrome consistent at %s',
+  async (path) => {
+    await preloadRoute('/learn');
+    renderApp(path);
+    expect(
+      await screen.findByRole('button', { name: 'Sattari Learn song library' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('navigation', { name: 'Primary navigation' })
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('.site-shell > .footer')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Open shop assistant: find a product or service' })
+    ).not.toBeInTheDocument();
+    const skip = screen.getByRole('link', { name: 'Skip to content' });
+    fireEvent.click(skip);
+    expect(screen.getByRole('main')).toHaveFocus();
+  },
+  30000
+);
+
 describe('hydrating prerendered pages', () => {
   const HYDRATION_WARNING = /did not match|hydrat|server HTML|server rendered/i;
 
@@ -216,7 +290,6 @@ describe('hydrating prerendered pages', () => {
     ['/shop', '/shop'],
     ['/product/miami-electric-violin', '/product/miami-electric-violin'],
     ['/cart', '/cart'],
-    ['/learn', '/learn'],
     // Prerendered without the query string Stripe adds.
     ['/checkout/success', '/checkout/success?session_id=cs_test_1'],
   ])(
