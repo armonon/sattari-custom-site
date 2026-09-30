@@ -5,7 +5,7 @@ import {
   BUSINESS,
   absoluteUrl,
   breadcrumbSchema,
-  businessSchema,
+  organizationSchema,
   websiteSchema,
 } from '../data/siteSeo';
 import { musicGuides } from '../data/musicGuides';
@@ -144,8 +144,12 @@ export function GuideArticle() {
           image: absoluteUrl(guide.image),
           mainEntityOfPage: absoluteUrl(guidePath(guide)),
           isPartOf: { '@id': websiteSchema['@id'] },
-          author: { '@id': businessSchema['@id'], name: BUSINESS.name, url: absoluteUrl('/about') },
-          publisher: { '@id': businessSchema['@id'] },
+          author: {
+            '@id': organizationSchema['@id'],
+            name: BUSINESS.name,
+            url: absoluteUrl('/about'),
+          },
+          publisher: { '@id': organizationSchema['@id'] },
         }}
       />
       <p className="resource-byline">

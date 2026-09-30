@@ -27,8 +27,8 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { SEO } from '../utils/seo';
-import { PAGE_SEO } from '../data/siteSeo';
+import { SEO, StructuredData } from '../utils/seo';
+import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import { LearnWordmark, LoopMark } from '../loop/Hardware';
 import {
   activeIndex,
@@ -585,6 +585,14 @@ function LoopPracticeApp() {
       onDrop={handleDrop}
     >
       <SEO {...PAGE_SEO.learn} />
+      <StructuredData
+        data={musicToolSchema('learn', [
+          'Beginner guitar lessons',
+          'Guided song practice',
+          'Guitar tablature and chord charts',
+          'Microphone pitch feedback',
+        ])}
+      />
       <input
         ref={fileInput}
         type="file"

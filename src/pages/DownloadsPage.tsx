@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import AudioAlphaSignup from '@components/AudioAlphaSignup';
 import OptimizedProductImage from '@components/OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
-import { businessSchema } from '../data/siteSeo';
+import { PAGE_SEO, organizationSchema, websiteSchema } from '../data/siteSeo';
 
 /**
  * Sattari Audio Suite — the whole thing on one tab: what it is, the product
@@ -195,18 +195,11 @@ function BuildCard({ build }: { build: Build }) {
 }
 
 export default function DownloadsPage() {
-  const url = 'https://sattarimusic.com/downloads';
+  const { url } = PAGE_SEO.downloads;
 
   return (
     <section className="section page-header-offset suite-page">
-      <SEO
-        title="Sattari Audio Suite — Alpha Downloads for Mac"
-        description="Download the Sattari Audio Suite alpha for macOS: Mix, Vocal, Create and Stack racks, Auto Pitch and Compass. Free alpha builds with SHA-256 checksums."
-        url={url}
-        image="/sattari site/audio-suite/mix.png"
-        imageWidth={1080}
-        imageHeight={660}
-      />
+      <SEO {...PAGE_SEO.downloads} />
       {/* A page about the suite rather than SoftwareApplication markup: Google
           only accepts app markup with ratings or reviews, and an alpha has
           none (they must never be made up), so the app item was invalid. */}
@@ -216,9 +209,9 @@ export default function DownloadsPage() {
           '@type': 'WebPage',
           '@id': `${url}#webpage`,
           url,
-          name: 'Sattari Audio Suite — Alpha Downloads for Mac',
-          description:
-            'Free alpha builds of the Sattari Audio Suite for macOS, with SHA-256 checksums.',
+          name: PAGE_SEO.downloads.title,
+          description: PAGE_SEO.downloads.description,
+          isPartOf: { '@id': websiteSchema['@id'] },
           isAccessibleForFree: true,
           about: {
             '@type': 'Thing',
@@ -226,7 +219,7 @@ export default function DownloadsPage() {
             description:
               'Connected Mac music products sharing one musical session context. Audio Unit, VST3 and standalone; alpha 0.1.0 for macOS.',
           },
-          publisher: { '@id': businessSchema['@id'] },
+          publisher: { '@id': organizationSchema['@id'] },
         }}
       />
 

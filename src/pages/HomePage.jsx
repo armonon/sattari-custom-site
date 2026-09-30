@@ -90,7 +90,7 @@ const tools = [
   {
     name: 'Studio',
     category: 'Make something',
-    detail: 'Your decks. Your mix. Your next idea.',
+    detail: 'Create and remix in your browser music studio.',
     path: '/studio',
     image: '/images/tools/studio.jpg',
     alt: 'Sattari Studio with four decks and audio loaded',
@@ -101,7 +101,7 @@ const tools = [
   {
     name: 'Learn',
     category: 'Find your rhythm',
-    detail: 'Turn the music you love into practice.',
+    detail: 'Learn guitar with songs, chords and guided practice.',
     path: '/learn',
     image: '/images/tools/learn-guitar.jpg',
     alt: 'Sattari Learn song library and interactive guitar practice player',
@@ -112,7 +112,7 @@ const tools = [
   {
     name: 'Stem Separator',
     category: 'Listen closer',
-    detail: 'Vocals, drums, bass. A song, opened up.',
+    detail: 'Separate vocals, drums, bass and instruments.',
     path: '/stem-separator',
     image: '/images/tools/separator.jpg',
     alt: 'Stem Separator with completed drum and bass outputs',
@@ -155,7 +155,7 @@ export default function HomePage() {
           <div className="home-width home-hero-inner">
             <div className="home-hero-copy">
               <p className="home-eyebrow">
-                <span className="home-location-dot" /> Woodland Hills, California
+                <span className="home-location-dot" /> For musicians worldwide
               </p>
               <h1 id="home-title">
                 Sattari<span>Music.</span>
@@ -166,8 +166,8 @@ export default function HomePage() {
                 All yours to play.
               </p>
               <p className="home-hero-description">
-                Instruments to fall for. People to play with.
-                <br className="home-desktop-break" /> A whole new space to create.
+                Learn guitar. Find your instrument. Create music.
+                <br className="home-desktop-break" /> California roots. Worldwide sound.
               </p>
               <div className="home-hero-actions">
                 <Link to="/shop" className="home-button home-button-blue">
@@ -343,7 +343,7 @@ export default function HomePage() {
                   Sattari Hub<span>.</span>
                 </h2>
                 <p className="home-section-description">
-                  Make a mix. Find a bassline. Learn something new.
+                  Learn guitar online, create a mix, separate a song or explore music software.
                 </p>
               </div>
               <Link to="/hub" className="home-button home-button-light">

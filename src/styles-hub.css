@@ -640,13 +640,15 @@
   }
   .hub-heading {
     align-items: start;
+    flex-direction: column;
+    gap: 16px;
     padding-block: 26px;
   }
   .hub-heading h1 {
     font-size: 32px;
   }
   .hub-heading-aside {
-    display: none;
+    justify-items: start;
   }
   .hub-workspace-grid {
     grid-template-columns: 1fr;

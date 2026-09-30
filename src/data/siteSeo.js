@@ -32,6 +32,23 @@ export function canonicalUrl(value = '/') {
   return absoluteUrl(path);
 }
 
+// The music company publishes the online tools; the MusicStore is its local shop.
+// A worldwide digital audience does not imply worldwide shipping or repair service.
+export const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': `${SITE_ORIGIN}/#organization`,
+  name: BUSINESS.name,
+  alternateName: ['Sattari', BUSINESS.alternateName],
+  url: `${SITE_ORIGIN}/`,
+  logo: absoluteUrl('/sattari site/sattari logo.png'),
+  telephone: BUSINESS.telephone,
+  address: BUSINESS.address,
+  sameAs: ['https://www.instagram.com/sattari.music/'],
+  description:
+    'Sattari Music is a California-based music company for musicians worldwide: instruments, online guitar learning, browser music creation and downloadable audio software, with local instrument services in Woodland Hills.',
+};
+
 export const businessSchema = {
   '@context': 'https://schema.org',
   '@type': 'MusicStore',
@@ -42,6 +59,7 @@ export const businessSchema = {
   telephone: BUSINESS.telephone,
   address: BUSINESS.address,
   areaServed: BUSINESS.areas,
+  parentOrganization: { '@id': organizationSchema['@id'] },
   hasMap: BUSINESS.directions,
   logo: absoluteUrl('/sattari site/sattari logo.png'),
   image: absoluteUrl('/sattari site/sattari logo.png'),
@@ -56,30 +74,33 @@ export const websiteSchema = {
   '@id': `${SITE_ORIGIN}/#website`,
   url: `${SITE_ORIGIN}/`,
   name: BUSINESS.name,
+  alternateName: 'Sattari',
   inLanguage: 'en-US',
-  publisher: { '@id': businessSchema['@id'] },
+  description:
+    'Learn guitar, shop musical instruments, create music, separate stems and download Sattari audio software. Local repairs and musician services in Woodland Hills, California.',
+  publisher: { '@id': organizationSchema['@id'] },
 };
 
 export const PAGE_SEO = {
   home: {
-    title: 'Woodland Hills Music Store & Drum Shop',
+    title: 'Learn, Shop & Create Music',
     description:
-      'Shop cymbals, drumsticks, violins and guitars at Sattari Music in Woodland Hills. Instrument repairs, lessons and rehearsal space near Encino and Calabasas.',
+      'Learn guitar, buy instruments, create music and download audio software with Sattari. Online music tools worldwide; repairs in Woodland Hills, Los Angeles.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
     imageWidth: 1536,
     imageHeight: 1024,
   },
   about: {
-    title: 'About Us | Woodland Hills Music Store',
+    title: 'Our Story | Instruments, Music & Software',
     description:
-      'Meet Sattari Music and founder Mohammad Sattari. Instruments, craftsmanship and musician support in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
+      'Meet Sattari Music and founder Mohammad Sattari. A California music company connecting instruments, online learning, music creation and local repair services.',
     url: `${SITE_ORIGIN}/about`,
   },
   shop: {
-    title: 'Musical Instruments for Sale | Woodland Hills',
+    title: 'Buy Musical Instruments & Accessories Online',
     description:
-      'Browse cymbals, drumsticks, acoustic and electric violins, guitars and bass. Shop Sattari online or ask our Woodland Hills music store about your next instrument.',
+      'Buy cymbals, drumsticks, acoustic and electric violins, guitars, bass and music accessories online. Sattari instruments with support from Woodland Hills, California.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
@@ -95,9 +116,9 @@ export const PAGE_SEO = {
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
   },
   hub: {
-    title: 'Online Music Tools | Separate, Learn & Create',
+    title: 'Online Music Tools | Learn, Create & Separate',
     description:
-      'Explore Sattari Stem Separator, Studio and Learn: separate vocals, drums and bass, create music in your browser, and analyze songs for practice.',
+      'Learn guitar, create music in StemDeck, separate vocals and instruments, or explore Mac audio plugins. Sattari Hub connects your next practice and production session.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,
@@ -113,7 +134,7 @@ export const PAGE_SEO = {
     imageHeight: 1131,
   },
   studio: {
-    title: 'StemDeck Online | Browser Music Studio',
+    title: 'Online Music Studio & Browser DAW | StemDeck',
     description:
       'Create and remix with StemDeck in Sattari Studio. A browser DAW with deck mixing, audio recording, MIDI instruments, an arranger and WAV export.',
     url: `${SITE_ORIGIN}/studio`,
@@ -122,13 +143,22 @@ export const PAGE_SEO = {
     imageHeight: 1080,
   },
   learn: {
-    title: 'Learn Guitar, One Song at a Time | Sattari Learn',
+    title: 'Learn Guitar Online | Songs, Tabs & Practice',
     description:
-      'Learn guitar with guided songs, chord charts, tablature, sheet music and microphone feedback. Import your own audio or score and practice one phrase at a time.',
+      'Learn guitar online with beginner lessons, guided songs, chords, tabs and microphone feedback. Practice one phrase at a time with Sattari Learn.',
     url: `${SITE_ORIGIN}/learn`,
     image: '/images/tools/learn-guitar.jpg',
     imageWidth: 1280,
     imageHeight: 900,
+  },
+  downloads: {
+    title: 'Free Music Software for Mac | AU & VST3 Plugins',
+    description:
+      'Download free Sattari Audio Suite alpha builds for Mac: AU, VST3 and standalone music tools, Auto Pitch, mixing effects and instruments. Includes SHA-256 checksums.',
+    url: `${SITE_ORIGIN}/downloads`,
+    image: '/sattari site/audio-suite/mix.png',
+    imageWidth: 1080,
+    imageHeight: 660,
   },
 };
 
@@ -185,31 +215,31 @@ export const CATEGORY_LOCAL_HELP = {
 
 export const CATEGORY_SEO = {
   cymbals: {
-    title: 'Cymbals & Hi-Hats for Sale | Woodland Hills',
+    title: 'Shop Cymbals, Hi-Hats, Splashes & Effects Online',
     description:
-      'Compare Sattari Pirouz cymbals, hi-hats, splashes and effects. Shop online with drum gear and setup support from our Woodland Hills music store.',
+      'Explore Sattari Pirouz cymbals, hi-hats, splashes and effects cymbals. Shop drum gear online and ask our California team for help choosing your next sound.',
   },
   sticks: {
-    title: 'Drumsticks & Bundles | Woodland Hills Drum Gear',
+    title: 'Buy Drumsticks Online | Hickory, Maple & Bundles',
     description:
-      'Shop hickory and maple drumsticks, 5A and 7A options, nylon tips and bundles. Practice and gig essentials from Sattari Music in Woodland Hills, Los Angeles.',
+      'Shop Sattari hickory and maple drumsticks, 5A and 7A options, nylon tips and bundles. Find your next pair for practice, rehearsals and live performance.',
   },
   essentials: {
-    title: 'Practice Pads & Drum Accessories | Los Angeles',
+    title: 'Drum Practice Pads, Bags & Music Accessories',
     description:
       'Find drum practice pads, cymbal felts, stick bags and percussion accessories. Browse Sattari online or ask our Woodland Hills team what fits your setup.',
   },
   // The one violins page in search results: /shop/violins-los-angeles
   // canonicalizes here.
   violins: {
-    title: 'Violins for Sale | Woodland Hills, Los Angeles',
+    title: 'Buy Violins Online | Acoustic, Electric & Silent',
     description:
-      'Compare acoustic, electric and silent violins, plus strings and rosin. Sattari Music in Woodland Hills offers violin setup and repair support near Encino.',
+      'Compare Sattari acoustic, electric and silent violins, plus violin strings, rosin and accessories. Shop online with guidance from our Woodland Hills team.',
   },
   'guitar-bass': {
-    title: 'Guitars & Bass for Sale | Woodland Hills',
+    title: 'Buy Guitars & Bass Online | Electric & Acoustic',
     description:
-      'Shop electric, steel-string and nylon-string guitars, bass and accessories. Ask Sattari in Woodland Hills about setup and repair support near Calabasas.',
+      'Explore Sattari electric, steel-string and nylon-string guitars, bass and accessories. Shop online or ask our California team about fit and setup.',
   },
   all: {
     title: 'All Instruments & Accessories | Sattari Catalog',
@@ -254,7 +284,7 @@ export function musicToolSchema(key, features) {
     keywords: features.join(', '),
     primaryImageOfPage: {
       '@type': 'ImageObject',
-      url: absoluteUrl(`/images/tools/${key}.jpg`),
+      url: absoluteUrl(page.image),
     },
     about: {
       '@type': 'Thing',
@@ -262,6 +292,6 @@ export function musicToolSchema(key, features) {
       description: 'Runs in the web browser. JavaScript and Web Audio support required.',
     },
     significantLink: absoluteUrl(`/tools/${key === 'separator' ? 'stem-separator' : key}`),
-    publisher: { '@id': businessSchema['@id'] },
+    publisher: { '@id': organizationSchema['@id'] },
   };
 }

@@ -14,6 +14,7 @@ import {
   businessSchema,
   canonicalUrl,
   musicToolSchema,
+  organizationSchema,
   websiteSchema,
 } from '../data/siteSeo';
 
@@ -30,17 +31,41 @@ function headFor(element) {
 }
 
 describe('search metadata', () => {
-  it('defines one shared business and website identity on every route', () => {
+  it('connects the worldwide music company, local store and website without conflating them', () => {
     const head = headFor(<OrganizationSchema />);
     const doc = new DOMParser().parseFromString(head.script.toString(), 'text/html');
     const entities = [...doc.querySelectorAll('script')].map((node) =>
       JSON.parse(node.textContent)
     );
-    expect(entities).toEqual([businessSchema, websiteSchema]);
-    expect(websiteSchema.publisher['@id']).toBe(businessSchema['@id']);
+    expect(entities).toEqual([organizationSchema, businessSchema, websiteSchema]);
+    expect(organizationSchema['@type']).toBe('Organization');
+    expect(organizationSchema.description).toContain('musicians worldwide');
+    expect(businessSchema.parentOrganization['@id']).toBe(organizationSchema['@id']);
+    expect(businessSchema.areaServed).toEqual(BUSINESS.areas);
+    expect(websiteSchema.publisher['@id']).toBe(organizationSchema['@id']);
+    expect(websiteSchema.alternateName).toBe('Sattari');
     expect(websiteSchema).not.toHaveProperty('potentialAction');
     for (const key of ['separator', 'learn', 'studio']) {
       expect(musicToolSchema(key, []).isPartOf['@id']).toBe(websiteSchema['@id']);
+      expect(musicToolSchema(key, []).publisher['@id']).toBe(organizationSchema['@id']);
+      expect(musicToolSchema(key, []).primaryImageOfPage.url).toBe(
+        absoluteUrl(PAGE_SEO[key].image)
+      );
+    }
+  });
+
+  it('targets distinct online music needs while keeping repair search local and downloads accurate', () => {
+    expect(PAGE_SEO.home.title).toBe('Learn, Shop & Create Music');
+    expect(PAGE_SEO.home.description).toContain('worldwide');
+    expect(PAGE_SEO.shop.title).toMatch(/Buy.*Online/);
+    expect(PAGE_SEO.learn.title).toContain('Learn Guitar Online');
+    expect(PAGE_SEO.studio.title).toContain('Browser DAW');
+    expect(PAGE_SEO.downloads.title).toContain('Music Software for Mac');
+    expect(PAGE_SEO.downloads.description).toMatch(/alpha.*AU, VST3/);
+    expect(PAGE_SEO.repair.title).toContain('Los Angeles');
+    expect(PAGE_SEO.repair.description).toContain('Woodland Hills');
+    for (const page of [...Object.values(PAGE_SEO), ...Object.values(CATEGORY_SEO)]) {
+      expect(page.description).not.toMatch(/worldwide shipping|global delivery|Windows/i);
     }
   });
 
@@ -112,7 +137,7 @@ describe('search metadata', () => {
     expect(businessSchema.description).toContain('Appointment-only');
     expect(BUSINESS.shopHoursNote).toBe('By appointment only. Call to arrange your visit.');
     expect(BUSINESS.studioHoursNote).toBe('Every day, 6 PM to midnight (Los Angeles time).');
-    expect(musicToolSchema('separator', []).publisher['@id']).toBe(businessSchema['@id']);
+    expect(musicToolSchema('separator', []).publisher['@id']).toBe(organizationSchema['@id']);
   });
 
   it('shares a 1200×630 card, with its size, when a page has no image of its own', () => {

@@ -84,11 +84,41 @@ for (const url of urls) {
       assert.equal(data.address.addressLocality, 'Woodland Hills');
   }
   const businesses = entities.filter((item) => item['@id'] === `${origin}/#business`);
+  const organizations = entities.filter((item) => item['@id'] === `${origin}/#organization`);
   const websites = entities.filter((item) => item['@id'] === `${origin}/#website`);
+  assert.equal(organizations.length, 1, `${path}: expected one shared company identity`);
   assert.equal(businesses.length, 1, `${path}: expected one shared business identity`);
   assert.equal(websites.length, 1, `${path}: expected one shared website identity`);
-  assert.equal(websites[0].publisher['@id'], businesses[0]['@id']);
+  assert.equal(organizations[0]['@type'], 'Organization');
+  assert.equal(businesses[0].parentOrganization['@id'], organizations[0]['@id']);
+  assert.equal(websites[0].publisher['@id'], organizations[0]['@id']);
   assert.equal(websites[0].name, businesses[0].name);
+  assert.equal(websites[0].name, organizations[0].name);
+  if (path === '/') {
+    assert.match(doc.querySelector('.home-hero-copy').textContent, /musicians worldwide/i);
+    for (const destination of ['/shop', '/learn', '/studio', '/downloads', '/services']) {
+      assert.ok(doc.querySelector(`a[href="${destination}"]`), `Home must link to ${destination}`);
+    }
+  }
+  if (['/learn', '/studio', '/stem-separator'].includes(path)) {
+    const page = entities.find((item) => item['@id'] === `${url}#webpage`);
+    assert.equal(page?.publisher?.['@id'], organizations[0]['@id']);
+    assert.equal(
+      page?.primaryImageOfPage?.url,
+      doc.querySelector('meta[property="og:image"]').content
+    );
+  }
+  if (path === '/downloads') {
+    assert.match(doc.title, /Music Software for Mac/);
+    const page = entities.find((item) => item['@id'] === `${url}#webpage`);
+    assert.equal(page?.description, description);
+    assert.equal(page?.publisher?.['@id'], organizations[0]['@id']);
+    const downloads = [...doc.querySelectorAll('.suite-build-actions a[download]')];
+    assert.ok(downloads.length >= 3, 'Software page must link to actual downloadable builds');
+    for (const download of downloads) {
+      await access(`dist${decodeURI(new URL(download.href).pathname)}`);
+    }
+  }
   if (path.startsWith('/guides/')) {
     const article = entities.find((item) => item['@type'] === 'Article');
     assert.equal(article?.mainEntityOfPage, url, `${path}: article canonical`);

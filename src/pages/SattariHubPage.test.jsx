@@ -23,6 +23,10 @@ it('launches all three real workspaces and their reference pages', () => {
     ).toHaveAttribute('href', `/tools${route}`);
   }
   expect(screen.getAllByRole('img')).toHaveLength(3);
+  expect(screen.getByRole('link', { name: 'Music software for Mac' })).toHaveAttribute(
+    'href',
+    '/downloads'
+  );
 });
 
 it('links to published guides and keeps future projects out of the live tool list', () => {

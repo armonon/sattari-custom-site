@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
+  Download,
   Library,
   Radio,
   SlidersHorizontal,
@@ -20,7 +21,7 @@ const workspaces = [
     id: 'studio',
     name: 'Sattari Studio',
     category: 'Create',
-    detail: 'Mixing, performance & arrangement',
+    detail: 'Browser DAW, mixing & arrangement',
     path: '/studio',
     image: '/images/tools/studio.jpg',
     alt: 'Four-deck Sattari Studio workspace with audio loaded',
@@ -91,7 +92,10 @@ export default function SattariHubPage() {
               </h1>
             </div>
             <div className="hub-heading-aside">
-              <p>A place for your next session.</p>
+              <p>Learn guitar. Create music. Explore sound.</p>
+              <Link to="/downloads" className="hub-text-link">
+                <Download size={16} aria-hidden="true" /> Music software for Mac
+              </Link>
             </div>
           </header>
 

@@ -1,6 +1,12 @@
 import { Helmet } from 'react-helmet-async';
 import { FC, ReactNode } from 'react';
-import { absoluteUrl, businessSchema, canonicalUrl, websiteSchema } from '../data/siteSeo';
+import {
+  absoluteUrl,
+  businessSchema,
+  canonicalUrl,
+  organizationSchema,
+  websiteSchema,
+} from '../data/siteSeo';
 
 // The share card for pages without an image of their own: 1200×630 is what
 // Facebook, LinkedIn and X's large card expect (the old default, the 529×143
@@ -124,6 +130,7 @@ export const StructuredData: FC<StructuredDataProps> = ({ data }) => (
 // Organization Schema
 export const OrganizationSchema = () => (
   <>
+    <StructuredData data={organizationSchema} />
     <StructuredData data={businessSchema} />
     <StructuredData data={websiteSchema} />
   </>

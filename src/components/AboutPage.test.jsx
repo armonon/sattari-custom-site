@@ -33,7 +33,14 @@ it.each(['/about'])('preserves the original content at %s with About metadata', 
       'https://sattarimusic.com/about'
     )
   );
-  expect(document.title).toBe('About Us | Woodland Hills Music Store | Sattari Music');
+  expect(document.title).toBe('Our Story | Instruments, Music & Software | Sattari Music');
+  expect(
+    screen.getByText(/Sattari is a music company for musicians worldwide/)
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Download music software' })).toHaveAttribute(
+    'href',
+    '/downloads'
+  );
   // Structured data may arrive as several blocks, each an entity or a @graph.
   const entities = [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(
     (node) => {
@@ -43,7 +50,11 @@ it.each(['/about'])('preserves the original content at %s with About metadata', 
   );
   expect(entities).toEqual(
     expect.arrayContaining([
-      expect.objectContaining({ '@type': 'AboutPage', url: 'https://sattarimusic.com/about' }),
+      expect.objectContaining({
+        '@type': 'AboutPage',
+        url: 'https://sattarimusic.com/about',
+        about: { '@id': 'https://sattarimusic.com/#organization' },
+      }),
     ])
   );
 });
@@ -63,6 +74,10 @@ it('links to About in navigation and footer and closes the mobile menu after nav
   expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
   expect(nav.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
   expect(screen.getByRole('link', { name: 'About Sattari' })).toHaveAttribute('href', '/about');
+  expect(screen.getByRole('link', { name: 'Music software downloads' })).toHaveAttribute(
+    'href',
+    '/downloads'
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
   expect(screen.getByRole('button', { name: 'Close menu' })).toHaveAttribute(
     'aria-expanded',

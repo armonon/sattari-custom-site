@@ -43,6 +43,19 @@ it('keeps the three main Hub destinations on the homepage', () => {
   expect(screen.getByRole('link', { name: 'Enter the Hub' })).toHaveAttribute('href', '/hub');
 });
 
+it('introduces a worldwide music company without advertising worldwide shipping', () => {
+  const { container } = renderHome();
+  expect(screen.getByText('For musicians worldwide')).toBeInTheDocument();
+  expect(container.querySelector('.home-hero-description')).toHaveTextContent(
+    'Learn guitar. Find your instrument. Create music.'
+  );
+  expect(container.textContent).not.toMatch(/worldwide shipping|global delivery/i);
+  expect(screen.getByRole('link', { name: /Instrument repair/ })).toHaveAttribute(
+    'href',
+    '/services/instrument-repair-los-angeles'
+  );
+});
+
 it('lets visitors call to arrange an appointment without implying shop opening hours', () => {
   renderHome();
   expect(

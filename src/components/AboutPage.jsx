@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import AboutSection from './AboutSection';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
-import { PAGE_SEO, SITE_ORIGIN } from '../data/siteSeo';
+import { PAGE_SEO, SITE_ORIGIN, organizationSchema } from '../data/siteSeo';
 
 export default function AboutPage() {
   return (
@@ -15,7 +15,7 @@ export default function AboutPage() {
           '@id': `${PAGE_SEO.about.url}#page`,
           name: 'About Sattari Music',
           url: PAGE_SEO.about.url,
-          about: { '@id': `${SITE_ORIGIN}/#business` },
+          about: { '@id': organizationSchema['@id'] },
           isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
         }}
       />
@@ -23,16 +23,17 @@ export default function AboutPage() {
         <div className="container hero-grid hero-premium-grid">
           <div className="hero-copy-panel">
             <div className="hero-kicker-row">
-              <p className="eyebrow">Music store in Woodland Hills, Los Angeles</p>
+              <p className="eyebrow">California roots. Musicians worldwide.</p>
               <Link to="/services" className="hero-status-pill hero-status-pill-link">
                 California-crafted support
               </Link>
             </div>
             <h1>About Sattari Music</h1>
             <p className="hero-copy">
-              Handcrafted cymbals and drums, violins, guitars, bass, and the accessories that
-              complete your setup — plus local repairs, rentals, lessons, and studio time in
-              Woodland Hills, serving Encino, Calabasas, and the San Fernando Valley.
+              Sattari is a music company for musicians worldwide. Buy instruments, learn guitar
+              online, create music in Sattari Studio, separate stems and download audio software.
+              Our appointment-only Woodland Hills shop brings it together with instrument repair,
+              rentals, lessons and rehearsal space for Encino, Calabasas and Los Angeles.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">
@@ -49,6 +50,9 @@ export default function AboutPage() {
               <Link to="/shop/violins">Violins</Link>
               <Link to="/shop/guitar-bass">Guitar &amp; Bass</Link>
               <Link to="/shop/essentials">Practice essentials</Link>
+              <Link to="/learn">Learn guitar online</Link>
+              <Link to="/studio">Create music</Link>
+              <Link to="/downloads">Download music software</Link>
             </div>
           </div>
 
