@@ -24,7 +24,6 @@ import {
   RepairPage,
   SattariHubPage,
   SattariLearnPage,
-  LoopPracticePage,
   SattariStudioPage,
   StemSeparatorPage,
   ServicesPage,
@@ -69,8 +68,8 @@ const ROUTES: RouteDefinition[] = [
   { path: '/shop', page: ShopPage },
   { path: '/buy', redirect: '/shop' },
   { path: '/hub', page: SattariHubPage },
-  { path: '/learn', page: SattariLearnPage },
-  { path: '/loop', page: LoopPracticePage, hydrate: false },
+  { path: '/learn', page: SattariLearnPage, hydrate: false },
+  { path: '/loop', redirect: '/learn' },
   // Restores its panels from localStorage while rendering.
   { path: '/studio', page: SattariStudioPage, hydrate: false },
   { path: '/stem-separator', page: StemSeparatorPage },
@@ -247,11 +246,13 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/', '/studio', '/loop', '/stem-separator'].includes(location.pathname) && (
+      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(location.pathname) && (
         <BackgroundMedia />
       )}
 
-      {!['/studio', '/loop'].includes(location.pathname) && <Navbar onCartClick={openCart} />}
+      {!['/studio', '/learn', '/loop'].includes(location.pathname) && (
+        <Navbar onCartClick={openCart} />
+      )}
 
       {/* Cart Drawer */}
       <div
@@ -300,7 +301,7 @@ const App: FC = () => {
       </main>
 
       {!isAudioWorkspace && <Footer />}
-      {location.pathname !== '/loop' && <SiteMeasurement />}
+      {!['/learn', '/loop'].includes(location.pathname) && <SiteMeasurement />}
       {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
     </div>
   );

@@ -31,7 +31,7 @@ export function getPrerenderRoutes(inventory) {
     ['/services', 'src/components/ServicesPage.jsx'],
     ['/services/instrument-repair-los-angeles', 'src/components/RepairPage.tsx'],
     ['/hub', 'src/pages/SattariHubPage.jsx'],
-    ['/learn', 'src/pages/SattariLearnPage.jsx'],
+    ['/learn', 'src/pages/LoopPracticePage.jsx'],
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
     ['/downloads', 'src/pages/DownloadsPage.tsx'],
@@ -60,7 +60,6 @@ export function getPrerenderRoutes(inventory) {
       })),
     ...[
       ['/cart', 'src/pages/CartPage.tsx'],
-      ['/loop', 'src/pages/LoopPracticePage.jsx'],
       ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],
       ['/checkout/success', 'src/pages/CheckoutStatus.jsx'],
       ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],

@@ -1,10 +1,10 @@
 // YIN's cumulative mean normalized difference picks the first plausible period,
 // rather than the strongest correlation at an integer multiple of that period.
-export function detectFundamental(samples, rate, minHz = 70, maxHz = 1320) {
+export function detectFundamental(samples, rate, minHz = 70, maxHz = 1320, rmsFloor = 0.008) {
   let energy = 0;
   for (let i = 0; i < samples.length; i++) energy += samples[i] * samples[i];
   const rms = Math.sqrt(energy / samples.length);
-  if (!Number.isFinite(rms) || rms < 0.008) return null;
+  if (!Number.isFinite(rms) || rms < rmsFloor) return null;
   const maxTau = Math.min(Math.ceil(rate / minHz), Math.floor(samples.length / 2) - 1);
   const minTau = Math.max(2, Math.floor(rate / maxHz));
   if (maxTau <= minTau) return null;

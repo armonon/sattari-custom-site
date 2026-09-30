@@ -1,7 +1,9 @@
 export const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 export const TUNING = [40, 45, 50, 55, 59, 64];
 export const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'e'];
-export const CHORD_NAMES = NOTE_NAMES.flatMap((root) => [root, `${root}m`]);
+export const CHORD_NAMES = NOTE_NAMES.flatMap((root) =>
+  ['', 'm', '7', 'maj7', 'm7', 'sus2', 'sus4', '5'].map((suffix) => root + suffix)
+);
 
 export function noteName(midi) {
   return `${NOTE_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
@@ -37,16 +39,63 @@ const OPEN_CHORDS = {
   G: { frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3] },
   A: { frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0] },
   Am: { frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0] },
+  Cmaj7: { frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0] },
+  A7: { frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 1, 0, 2, 0] },
+  Am7: { frets: [-1, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0] },
+  E7: { frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0] },
+  Em7: { frets: [0, 2, 0, 0, 0, 0], fingers: [0, 2, 0, 0, 0, 0] },
+  D7: { frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3] },
+  Dsus2: { frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 0, 1, 3, 0] },
+  Dsus4: { frets: [-1, -1, 0, 2, 3, 3], fingers: [0, 0, 0, 1, 3, 4] },
 };
 
 export function chordShape(name) {
   if (!CHORD_NAMES.includes(name)) return null;
-  const minor = name.endsWith('m');
-  const root = NOTE_NAMES.indexOf(name.replace(/m$/, ''));
-  const fullName = `${NOTE_NAMES[root]} ${minor ? 'minor' : 'major'}`;
+  const [, rootName, suffix] = name.match(/^([A-G]#?)(.*)$/);
+  const minor = suffix === 'm';
+  const root = NOTE_NAMES.indexOf(rootName);
+  const fullName = `${rootName} ${{ '': 'major', m: 'minor', 7: 'dominant seventh', maj7: 'major seventh', m7: 'minor seventh', sus2: 'suspended second', sus4: 'suspended fourth', 5: 'power chord' }[suffix]}`;
   if (OPEN_CHORDS[name]) return { ...OPEN_CHORDS[name], name, fullName, startFret: 1 };
   const eFret = (root - 4 + 12) % 12;
   const aFret = (root - 9 + 12) % 12;
+  if (!['', 'm'].includes(suffix)) {
+    const patterns = {
+      7: [
+        [0, 2, 0, 1, 0, 0],
+        [1, 3, 1, 2, 1, 1],
+      ],
+      maj7: [
+        [0, 2, 1, 1, 0, 0],
+        [1, 4, 2, 3, 1, 1],
+      ],
+      m7: [
+        [0, 2, 0, 0, 0, 0],
+        [1, 3, 1, 1, 1, 1],
+      ],
+      sus2: [
+        [-1, 0, 2, 2, 0, 0],
+        [0, 1, 3, 4, 1, 1],
+      ],
+      sus4: [
+        [0, 2, 2, 2, 0, 0],
+        [1, 2, 3, 4, 1, 1],
+      ],
+      5: [
+        [0, 2, 2, -1, -1, -1],
+        [1, 3, 4, 0, 0, 0],
+      ],
+    };
+    const base = suffix === 'sus2' ? aFret : eFret;
+    const [frets, fingers] = patterns[suffix];
+    return {
+      name,
+      fullName,
+      startFret: Math.max(1, base),
+      ...(base && suffix !== '5' ? { barre: [suffix === 'sus2' ? 1 : 0, 5, base] } : {}),
+      frets: frets.map((f) => (f < 0 ? -1 : f + base)),
+      fingers: fingers.map((f, i) => (frets[i] + base === 0 ? 0 : f)),
+    };
+  }
   if (aFret > 0 && aFret < eFret) {
     return {
       name,
@@ -81,8 +130,10 @@ const melody = [
 ];
 export const DEMO = {
   id: 'night-shift',
+  meter: 4,
+  phraseStarts: [0, 8, 16, 24],
   title: 'Night shift',
-  artist: 'An original Loop lesson',
+  artist: 'An original Sattari Learn lesson',
   source: 'demo',
   audioUrl: '/audio/loop-night-shift.wav',
   bpm: 84,
@@ -91,6 +142,8 @@ export const DEMO = {
   notes: melody
     .map((midi, i) => ({
       midi,
+      beatStart: i,
+      beatDuration: 1,
       start: i * beat,
       end: (i + 0.88) * beat,
       confidence: 1,
@@ -118,12 +171,18 @@ export function phrasesFor(lesson) {
       end: Math.min((i + 1) * 12, lesson.duration),
       notes: [],
     }));
-  return Array.from({ length: Math.ceil(notes.length / 8) }, (_, i) => {
-    const group = notes.slice(i * 8, i * 8 + 8);
+  // Authored melodies use musical boundaries. Imports use short practice chunks;
+  // an estimated beat grid must not masquerade as an authored phrase structure.
+  const starts =
+    lesson.phraseStarts?.filter((index) => index < notes.length) ||
+    Array.from({ length: Math.ceil(notes.length / 8) }, (_, i) => i * 8);
+  return starts.map((offset, i) => {
+    const next = starts[i + 1] ?? notes.length;
+    const group = notes.slice(offset, next);
     return {
-      start: i === 0 ? 0 : group[0].start,
-      end: notes[(i + 1) * 8]?.start ?? lesson.duration,
-      notes: group.map((note, j) => ({ ...note, index: i * 8 + j })),
+      start: i === 0 ? lesson.practiceStart || 0 : group[0].start,
+      end: notes[next]?.start ?? lesson.duration,
+      notes: group.map((note, j) => ({ ...note, index: offset + j })),
     };
   });
 }
@@ -140,21 +199,27 @@ export function activeIndex(items, time) {
   return lo;
 }
 
-export function downloadLesson(lesson) {
+export function downloadLesson(lesson, setup = {}) {
+  const strings = setup.strings || STRING_NAMES;
+  const shapeFor = setup.shapeFor || chordShape;
   const rows = [
-    'LOOP — ' + lesson.title,
-    'Standard tuning: E A D G B e',
+    'SATTARI LEARN — ' + lesson.title,
+    setup.label || 'Standard tuning: E A D G B e',
     `${lesson.bpm} BPM · ${lesson.key}`,
     lesson.source === 'demo'
-      ? 'Original practice lesson'
-      : 'Estimated transcription — review against the recording.',
+      ? lesson.category === 'classic'
+        ? 'Sattari teaching arrangement — suggested chord accompaniment'
+        : 'Original practice lesson'
+      : lesson.source === 'score'
+        ? 'Imported written score — verify alignment with your recording.'
+        : 'Estimated transcription — review against the recording.',
     '',
     'CHORD CHART',
   ];
   lesson.chords.forEach((c) => {
-    const shape = chordShape(c.name);
+    const shape = shapeFor(c.name);
     rows.push(
-      `${formatTime(c.start)}–${formatTime(c.end)}  ${c.name.padEnd(4)}  ${shape.frets.map((f) => (f < 0 ? 'x' : f)).join(' ')}  (low E → high e)`
+      `${formatTime(c.start)}–${formatTime(c.end)}  ${c.name.padEnd(4)}  ${shape ? shape.frets.map((f) => (f < 0 ? 'x' : f)).join(' ') : 'No comfortable shape for this setup'}  (string 6 → string 1)`
     );
   });
   rows.push('', 'TABLATURE — times shown above each note');
@@ -162,7 +227,7 @@ export function downloadLesson(lesson) {
     rows.push('', '  ' + phrase.notes.map((n) => formatTime(n.start).padStart(6)).join(''));
     for (let s = 5; s >= 0; s--)
       rows.push(
-        `${STRING_NAMES[s]}|` +
+        `${strings[s]}|` +
           phrase.notes
             .map((n) =>
               n.string === s ? String(n.fret).padStart(3, '-').padEnd(6, '-') : '------'
@@ -171,5 +236,9 @@ export function downloadLesson(lesson) {
           '|'
       );
   }
+  if (lesson.notes.some((n) => n.unplayable))
+    rows.push(
+      'Some pitches cannot be played with this setup and are omitted from the tab. Change your capo or tuning.'
+    );
   return rows.join('\n');
 }

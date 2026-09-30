@@ -1,0 +1,333 @@
+.loop-app .lc-panel,
+.loop-app .lc-daily {
+  border: 1px solid #c9cebd;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8f7ed, #ebeedf);
+  box-shadow: var(--lh-case-shadow);
+  padding: 25px;
+  margin: 25px 0;
+}
+.loop-app .lc-panel h2,
+.loop-app .lc-daily h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.7px;
+  margin: 7px 0 10px;
+}
+.loop-app .lc-panel p,
+.loop-app .lc-daily p,
+.loop-app .lc-hands p,
+.loop-app .lc-record p,
+.loop-app .lc-profile p,
+.loop-app .lc-score-import p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #5c6752;
+  margin: 10px 0 17px;
+}
+.loop-app .lc-daily {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  align-items: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+.loop-app .lc-daily p {
+  margin-bottom: 0;
+}
+.loop-app .lc-daily ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 2.1;
+  color: #59684c;
+}
+.loop-app .lc-daily small {
+  display: block;
+  max-width: 200px;
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #69715e;
+}
+.loop-app .lc-profile {
+  margin: 18px 0 28px;
+  padding: 16px 18px;
+  background: #e7e9dd;
+  border: 1px solid #cdd1c1;
+  border-radius: 7px;
+}
+.loop-app .lc-profile summary,
+.loop-app .lc-hands summary,
+.loop-app .lc-record summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 550;
+  color: #435136;
+  min-height: 26px;
+}
+.loop-app .lc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 15px;
+  margin: 20px 0;
+}
+.loop-app .lc-fields label {
+  display: grid;
+  gap: 7px;
+  flex: 1;
+  min-width: 145px;
+  font-size: 11px;
+  color: #606d52;
+}
+.loop-app .lc-fields select,
+.loop-app .lc-fields input,
+.loop-app .lc-teacher-video input {
+  width: 100%;
+  border: 1px solid #bcc5ac;
+  border-radius: 5px;
+  color: #3c492f;
+  background: #fafbf3;
+  min-height: 42px;
+  padding: 8px 10px;
+  font:
+    12px 'Inter',
+    sans-serif;
+}
+.loop-app .lc-warning {
+  color: #963d23 !important;
+  background: #f7e9dc;
+  border: 1px solid #dec5ae;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 13px;
+}
+.loop-app .lc-session-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 14px 20px;
+  background: #dfe5d2;
+  border-bottom: 1px solid #c9d0bc;
+  font-size: 12px;
+  color: #4b5a3e;
+}
+.loop-app .lc-session-strip > span {
+  font: 9px var(--lh-mono);
+  letter-spacing: 1px;
+}
+.loop-app .lc-hands,
+.loop-app .lc-record {
+  padding: 17px;
+  margin: 18px 0;
+  border: 1px solid #d1d6c4;
+  border-radius: 8px;
+  background: #f1f3e7;
+  text-align: left;
+}
+.loop-app .lc-hand-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  margin: 20px 0;
+}
+.loop-app .lc-hand-grid > div {
+  min-width: 0;
+}
+.loop-app .lc-hand-grid svg {
+  display: block;
+  width: 100%;
+  height: 220px;
+  color: #566349;
+  margin-top: 10px;
+}
+.loop-app .lc-hand-grid p {
+  font-size: 12px;
+}
+.loop-app .lc-hands small,
+.loop-app .lc-score-import small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #6c7760;
+}
+.loop-app .lc-file {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px dashed #a9b69a;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #526346;
+}
+.loop-app .lc-file input {
+  max-width: 100%;
+  color: #526346;
+  font-size: 11px;
+}
+.loop-app .lc-file input::file-selector-button {
+  padding: 9px 12px;
+  color: #425337;
+  background: #e6ecd9;
+  border: 1px solid #b6c5a4;
+  border-radius: 4px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+.loop-app .lc-teacher-video video {
+  width: 100%;
+  max-height: 330px;
+  background: #252b27;
+  border-radius: 7px;
+}
+.loop-app .lc-teacher-video label {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  margin: 15px 0;
+}
+.loop-app .lc-take {
+  display: grid;
+  gap: 10px;
+  padding: 17px 0;
+  border-top: 1px solid #cdd6bf;
+}
+.loop-app .lc-take strong,
+.loop-app .lc-example strong {
+  font-size: 12px;
+  color: #445537;
+}
+.loop-app .lc-take small {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+  color: #708061;
+}
+.loop-app .lc-take audio,
+.loop-app .lc-example audio,
+.loop-app .lc-score-import audio {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin: 12px 0;
+}
+.loop-app .lc-coach-suggestion {
+  background: #e2e9d6;
+  border: 1px solid #becdad;
+  border-radius: 9px;
+  padding: 24px;
+  margin: 22px 0;
+}
+.loop-app .lc-coach-suggestion p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 10px 0 18px;
+  color: #546644;
+}
+.loop-app .lc-adaptive {
+  max-width: 1050px;
+  margin: auto;
+  padding: 15px 25px 40px;
+}
+.loop-app .lc-adaptive .lf-rhythm {
+  padding-inline: 0;
+}
+.loop-app .lc-import-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #ccd1bf;
+  background: #e1e6d5;
+  border-radius: 6px;
+}
+.loop-app .lc-import-tabs button {
+  flex: 1;
+  padding: 11px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #5c6b50;
+  background: transparent;
+}
+.loop-app .lc-import-tabs button[aria-pressed='true'] {
+  background: #fcfaf1;
+  border-color: #c6cfb8;
+  box-shadow: 0 2px 2px #3c4d2720;
+  color: #384a2b;
+}
+.loop-app .lc-score-import .loop-score-scroll {
+  max-width: 100%;
+}
+.loop-app .lc-score-import .loop-tab-score {
+  height: 155px;
+}
+.loop-app details:focus-within {
+  outline-color: #ae3917;
+}
+@media (max-width: 900px) {
+  .loop-app .lc-daily {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .loop-app .lc-daily > div:last-child {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .loop-app .lc-daily small {
+    margin: 0;
+  }
+}
+@media (max-width: 540px) {
+  .loop-app .lc-daily {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    margin-top: 22px;
+    gap: 13px;
+  }
+  .loop-app .lc-daily h2 {
+    font-size: 21px;
+  }
+  .loop-app .lc-daily > div:last-child {
+    display: block;
+  }
+  .loop-app .lc-daily small {
+    margin-top: 12px;
+    max-width: none;
+  }
+  .loop-app .lc-panel {
+    padding: 20px;
+  }
+  .loop-app .lc-fields {
+    gap: 12px;
+  }
+  .loop-app .lc-fields label {
+    min-width: 120px;
+  }
+  .loop-app .lc-hand-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .loop-app .lc-hand-grid svg {
+    height: 190px;
+  }
+  .loop-app .lc-session-strip {
+    gap: 6px;
+    text-align: center;
+  }
+  .loop-app .lc-adaptive {
+    padding-inline: 15px;
+  }
+  .loop-app .lc-profile summary {
+    line-height: 1.7;
+  }
+}

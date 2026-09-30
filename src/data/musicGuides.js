@@ -58,10 +58,10 @@ export const musicGuides = [
     description:
       'Build a focused bass practice session from isolated stems: hear the line, match the rhythm, loop a phrase and play with a backing track without bass.',
     answer:
-      'Separate the bass and drums, learn a short phrase by ear, and compare it with the full mix. Then mute the bass and play over the remaining stems. Use Learn for key and tempo suggestions, not as a note-for-note transcription.',
-    image: '/images/tools/learn.jpg',
-    imageAlt: 'Sattari Learn with a song map, estimated key, tempo and practice controls',
-    action: { label: 'Open Sattari Learn', path: '/learn' },
+      'Separate the bass and drums, learn a short phrase by ear, and compare it with the full mix. Then mute the bass and play over the remaining stems. Use Studio to align the stems and build your practice backing track.',
+    image: '/images/tools/studio.jpg',
+    imageAlt: 'Sattari Studio with audio loaded across four decks',
+    action: { label: 'Open Sattari Studio', path: '/studio' },
     sections: [
       {
         title: 'Prepare one musical phrase',
@@ -80,18 +80,17 @@ export const musicGuides = [
         ],
       },
       {
-        title: 'Use Learn as a starting point',
+        title: 'Build a backing track in Studio',
         paragraphs: [
-          'Add the full mix to Learn and select Analyze & teach. The analysis estimates tempo, key and a representative four-region chord progression. Choose Practice, then Bass, for root-note and phrasing exercises based on that estimate.',
-          'The displayed chords are not a synchronized chord chart or bass transcription. A relative major/minor ambiguity, an unusual tuning or a busy arrangement can confuse analysis. Verify the home note with your instrument and change your practice approach when the estimate disagrees with what you hear.',
-          'The Arrange view provides synthesized drums, bass and chords for a separate practice pattern. This is accompaniment you edit, not a recreation of the original player. The starter progression is clearly labeled and is not an analysis of your song.',
+          'Import the separated stems into Studio and align their starts. Keep the bass available as a reference, then mute it when you are ready to play the part yourself.',
+          'Work on a short phrase you can repeat comfortably. Compare the isolated bass with the full mix: separation can soften attacks or leave sounds from other instruments.',
         ],
       },
       {
-        title: 'Check timing and pitch without chasing a score',
+        title: 'Listen for timing and note length',
         paragraphs: [
-          'The Challenge view measures the spacing of your taps against the current tempo. Try steady quarter notes, then repeat after listening to the drummer. A timing score is feedback about taps, not a grade for a whole musical performance.',
-          'Microphone pitch detection works best on one steady note in a quiet room. Headphones reduce backing-track leakage. MIDI feedback requires a compatible browser and connected controller. An in-key indication is not proof that you played the right chord tone or the correct bass line.',
+          'Count the beat before playing. Listen for where each note starts, how long it lasts, and the silence before the next note. Repeat slowly until those details feel consistent.',
+          'Record a short take with your preferred recorder and compare it with the reference. Choose one detail to improve on the next pass. Sattari Learn currently focuses on guided guitar practice; this bass workflow uses your ears and the isolated stems.',
         ],
       },
     ],
@@ -100,6 +99,48 @@ export const musicGuides = [
       '/tools/studio',
       '/guides/find-song-key-and-bpm',
       '/guides/how-to-separate-vocals-drums-bass',
+    ],
+  },
+  {
+    slug: 'learn-guitar-from-a-song',
+    title: 'How to learn a guitar song, one phrase at a time',
+    category: 'Practice',
+    description:
+      'Pick a song in Sattari Learn, explore tabs and chord charts, and practice short phrases with visual guides and microphone feedback.',
+    answer:
+      'Choose a starter song or import your own audio or score. Review the guide, select a short passage, then enter focused practice. Hear the phrase, find the notes slowly, and build up to playing in time.',
+    image: '/images/tools/learn-guitar.jpg',
+    imageAlt: 'Sattari Learn song library and interactive guitar practice player',
+    action: { label: 'Open Sattari Learn', path: '/learn' },
+    sections: [
+      {
+        title: 'Start with a song and a playable guide',
+        paragraphs: [
+          'Start with the 12-step beginner path, which builds from one open string to a complete original song. The library also contains short authored classic arrangements. For your own music, import a local audio file or a Guitar Pro or MusicXML score. An uploaded recording produces estimates: listen to the source and correct uncertain notes or chords before beginning practice.',
+          'Set your guitar tuning, capo and handedness. Explore the tablature, chord charts, notation and finger guides, then choose the passage you want to work on.',
+        ],
+      },
+      {
+        title: 'Make one phrase comfortable',
+        steps: [
+          'Choose Practice this song and follow the microphone setup, or explore without a microphone.',
+          'Hear the phrase at a slower speed. Try the essentials version when the full set of notes feels too much.',
+          'Find each note slowly, then try the rhythm in time. Use headphones so the reference audio does not confuse microphone feedback.',
+          'Return to a difficult passage, try a suggested drill, or record a short take for comparison. The daily session gives you three focused exercises.',
+        ],
+      },
+      {
+        title: 'Use feedback alongside your ears',
+        paragraphs: [
+          'Microphone feedback works best with clear individual notes in a quiet room. Whole-chord checking is experimental, and a noisy recording or dense mix can produce mistaken estimates. Listen to the reference and use the visual guide together.',
+          'Lessons, guitar settings, history and saved takes stay in this browser. Download a Learn backup from the song library to preserve lessons, progress, takes and videos. Restore the file on another device to add missing entries while keeping that device’s existing work. Clearing browser storage removes local saves.',
+        ],
+      },
+    ],
+    related: [
+      '/tools/learn',
+      '/guides/how-to-separate-vocals-drums-bass',
+      '/services/music-lessons-los-angeles',
     ],
   },
   ...separatorGuides,

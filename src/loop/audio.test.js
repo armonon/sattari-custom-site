@@ -1,10 +1,9 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   chordMidis,
   chordShape,
-  CHORD_NAMES,
   DEMO,
   downloadLesson,
   NOTE_NAMES,
@@ -14,6 +13,28 @@ import {
 } from './music';
 import { detectFundamental } from './pitch';
 import { analyzeSong, estimateChordFromChroma, transcribeMelody } from './analyze';
+import { CLASSICS } from './catalog';
+
+vi.setConfig({ testTimeout: 60000 });
+
+describe('starter song arrangements', () => {
+  it.each(CLASSICS)(
+    '$title has synchronized audio, playable notes and full chord coverage',
+    (lesson) => {
+      const bytes = readFileSync(`public${lesson.audioUrl}`);
+      const duration = (bytes.length - 44) / 2 / bytes.readUInt32LE(24);
+      expect(duration).toBeCloseTo(lesson.duration, 3);
+      expect(lesson.chords[0].start).toBe(0);
+      expect(lesson.chords.at(-1).end).toBeCloseTo(lesson.duration, 3);
+      for (const note of lesson.notes) {
+        expect(TUNING[note.string] + note.fret).toBe(note.midi);
+        expect(note.fret).toBeLessThanOrEqual(4);
+        expect(note.end).toBeGreaterThan(note.start);
+        expect(note.end).toBeLessThanOrEqual(lesson.duration);
+      }
+    }
+  );
+});
 
 function tone(midi, duration = 0.5, rate = 8000, harmonics = false) {
   const hz = 440 * 2 ** ((midi - 69) / 12);
@@ -90,17 +111,20 @@ describe('local transcription', () => {
 });
 
 describe('guitar guides', () => {
-  it.each(CHORD_NAMES)('%s fingering contains only the named chord tones', (name) => {
-    const root = NOTE_NAMES.indexOf(name.replace(/m$/, ''));
-    const pcs = [root, (root + (name.endsWith('m') ? 3 : 4)) % 12, (root + 7) % 12];
-    const pitches = chordMidis(name).map((n) => n % 12);
-    expect(pitches.every((pc) => pcs.includes(pc))).toBe(true);
-    expect(pcs.every((pc) => pitches.includes(pc))).toBe(true);
-    const shape = chordShape(name);
-    shape.frets
-      .filter((f) => f > 0)
-      .forEach((f) => expect(f).toBeGreaterThanOrEqual(shape.startFret));
-  });
+  it.each(NOTE_NAMES.flatMap((root) => [root, `${root}m`]))(
+    '%s triad fingering contains only the named chord tones',
+    (name) => {
+      const root = NOTE_NAMES.indexOf(name.replace(/m$/, ''));
+      const pcs = [root, (root + (name.endsWith('m') ? 3 : 4)) % 12, (root + 7) % 12];
+      const pitches = chordMidis(name).map((n) => n % 12);
+      expect(pitches.every((pc) => pcs.includes(pc))).toBe(true);
+      expect(pcs.every((pc) => pitches.includes(pc))).toBe(true);
+      const shape = chordShape(name);
+      shape.frets
+        .filter((f) => f > 0)
+        .forEach((f) => expect(f).toBeGreaterThanOrEqual(shape.startFret));
+    }
+  );
   it('maps every supported note to a real fret', () => {
     for (let midi = 40; midi <= 84; midi++) {
       const p = positionForMidi(midi);

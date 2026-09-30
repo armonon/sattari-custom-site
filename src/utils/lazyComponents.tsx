@@ -122,8 +122,8 @@ export const StudioBookingStatus = lazyPage(() => import('@pages/StudioBookingSt
 export const RepairPage = lazyPage(() => import('@components/RepairPage'));
 export const LocalSeoPage = lazyPage(() => import('@components/LocalSeoPage'));
 export const DownloadsPage = lazyPage(() => import('@pages/DownloadsPage'));
-export const SattariLearnPage = lazyPage(() => import('@pages/SattariLearnPage'));
-export const LoopPracticePage = lazyPage(() => import('@pages/LoopPracticePage'));
+// The guided guitar workspace replaces the former analysis/arranger Learn page.
+export const SattariLearnPage = lazyPage(() => import('@pages/LoopPracticePage'));
 export const SattariStudioPage = lazyPage(() => import('@pages/SattariStudioPage'));
 export const SattariHubPage = lazyPage(() => import('@pages/SattariHubPage'));
 export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage'));
