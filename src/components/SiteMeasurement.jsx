@@ -52,6 +52,11 @@ export default function SiteMeasurement() {
       if (link.href.startsWith('tel:')) trackSiteEvent('contact_click');
       if (link.href.startsWith('https://www.google.com/maps/dir'))
         trackSiteEvent('directions_click');
+      if (link.hasAttribute('download')) {
+        const url = new URL(link.href);
+        if (url.origin === window.location.origin && url.pathname.startsWith('/downloads/'))
+          trackSiteEvent('software_download');
+      }
     };
     document.addEventListener('click', clicked);
     return () => document.removeEventListener('click', clicked);

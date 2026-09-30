@@ -97,6 +97,7 @@ export const musicGuides = [
     related: [
       '/tools/learn',
       '/tools/studio',
+      '/product/five-string-bass-guitar',
       '/guides/find-song-key-and-bpm',
       '/guides/how-to-separate-vocals-drums-bass',
     ],
@@ -139,6 +140,7 @@ export const musicGuides = [
     ],
     related: [
       '/tools/learn',
+      '/product/classic-nylon-string-guitar',
       '/guides/how-to-separate-vocals-drums-bass',
       '/services/music-lessons-los-angeles',
     ],
@@ -243,6 +245,11 @@ export const musicGuides = [
         url: 'https://ae.zildjian.com/wp-content/uploads/Zildjian_Drum_Method_Lesson_11.pdf',
       },
     ],
-    related: ['/shop/cymbals', '/services/music-lessons-los-angeles', '/visit'],
+    related: [
+      '/shop/cymbals',
+      '/product/sattari-effect-cymbal',
+      '/services/music-lessons-los-angeles',
+      '/visit',
+    ],
   },
 ];

@@ -14,14 +14,16 @@ import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data
 import NotFoundPage from '../components/NotFoundPage';
 import QuantityInput from '../components/QuantityInput';
 import { MAX_LINE_QUANTITY } from '../utils/cartCatalog';
+import { FLAT_SHIPPING_CENTS } from '../data/shipping';
 import '../styles-products-premium.css';
 
-const detailHighlights = {
-  cymbals: ['Handcrafted character', 'Musical attack and sustain', 'Ready for studio or stage'],
-  sticks: ['Consistent balance', 'Built for repeat sessions', 'Reliable feel across dynamics'],
-  essentials: ['Portable and practical', 'Easy everyday setup', 'Made to keep you playing'],
-  violins: ['Hand-carved tonewoods', 'Workshop-fitted and tuned', 'California made'],
-  'guitar-bass': ['Set up and ready to play', 'Ships from California', 'Electric or acoustic'],
+const buyingGuides = {
+  cymbals: { path: '/guides/choose-your-first-cymbals', label: 'Choosing your first cymbals' },
+  violins: {
+    path: '/guides/instrument-repairs-near-encino',
+    label: 'Instrument repairs and setup',
+  },
+  'guitar-bass': { path: '/guides/learn-guitar-from-a-song', label: 'Learn guitar from a song' },
 };
 
 // Each product gets its own selections: a size, color or photo index carried
@@ -129,6 +131,13 @@ function ProductDetailView({ slug }) {
   const mainImage = galleryImages.length ? galleryImages[photoIndex] : detailImage;
   const productUrl = `https://sattarimusic.com/product/${product.slug}`;
   const searchDescription = `${product.name}. ${product.description}`;
+  const guide =
+    product.slug === 'five-string-bass-guitar'
+      ? {
+          path: '/guides/practice-bass-with-isolated-stems',
+          label: 'Practice bass with isolated stems',
+        }
+      : buyingGuides[product.category];
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -136,7 +145,7 @@ function ProductDetailView({ slug }) {
     sku: product.slug,
     url: productUrl,
     description: product.description,
-    image: detailImage ? [absoluteUrl(detailImage)] : undefined,
+    image: [...new Set([detailImage, ...galleryImages].filter(Boolean))].map(absoluteUrl),
     brand: {
       '@type': 'Brand',
       name: 'Sattari Music',
@@ -245,15 +254,11 @@ function ProductDetailView({ slug }) {
               ))}
             </div>
           )}
-          <div className="product-benefit-grid" aria-label="Product benefits">
-            {/* Employees can set a category, so this lookup can miss. Falling
-                back keeps an added product's page from crashing outright. */}
-            {(detailHighlights[product.category] || detailHighlights.essentials).map((point) => (
-              <div className="product-benefit" key={point}>
-                {point}
-              </div>
-            ))}
-          </div>
+          {guide && (
+            <Link className="btn-details" to={guide.path}>
+              {guide.label}
+            </Link>
+          )}
         </div>
         <div className="product-detail-content-card product-detail-content-column">
           <div className="product-hero-meta">
@@ -271,10 +276,6 @@ function ProductDetailView({ slug }) {
             </Link>
           </div>
           <h1>{product.name}</h1>
-          <p className="product-card-copy product-card-copy-detail">
-            Dial in a premium setup with handcrafted Sattari gear designed to feel dependable from
-            the first hit.
-          </p>
           {product.sizes ? (
             <>
               <div className="control-group">
@@ -395,8 +396,11 @@ function ProductDetailView({ slug }) {
             </p>
           ) : null}
           <p className="product-shipping-note">
-            Secure Stripe checkout, quick confirmation, and easy follow-up if you need help choosing
-            sizes.
+            Online checkout ships to the United States and Canada. Standard shipping is{' '}
+            {formatPrice(FLAT_SHIPPING_CENTS / 100)} per order. Review your total at checkout. For
+            delivery timing, returns or product fit,{' '}
+            <a href={BUSINESS.phoneHref}>call {BUSINESS.phoneDisplay}</a> before ordering.{' '}
+            <Link to="/visit">Woodland Hills visits are by appointment.</Link>
           </p>
           {product.name === 'Sattari Hand Crafted Cymbals' ? (
             <div className="product-description-section">

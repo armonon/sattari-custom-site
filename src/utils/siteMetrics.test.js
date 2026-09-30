@@ -47,4 +47,17 @@ describe('privacy-bounded metrics', () => {
     expect(validMetric({ ...metric, source: 'https://chatgpt.com' })).toBe(false);
     expect(validMetric(null)).toBe(false);
   });
+  it.each(['practice_started', 'practice_completed', 'software_download'])(
+    'accepts the coarse %s event without musical or file data',
+    (event) => {
+      const metric = {
+        source: 'direct',
+        page: event === 'software_download' ? 'downloads' : 'learn',
+        event,
+      };
+      expect(validMetric(metric)).toBe(true);
+      expect(validMetric({ ...metric, score: 80 })).toBe(false);
+      expect(validMetric({ ...metric, filename: 'my-song.wav' })).toBe(false);
+    }
+  );
 });

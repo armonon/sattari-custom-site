@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('public crawl policy', () => {
+  it('redirects the legacy About URL still appearing in search to its current equivalent', () => {
+    const config = readFileSync(new URL('../netlify.toml', import.meta.url), 'utf8');
+    expect(config).toMatch(/from = "\/about-3"\s+to = "\/about"\s+status = 301/);
+  });
   const robots = readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8')
     .split('\n')
     .map((line) => line.trim())

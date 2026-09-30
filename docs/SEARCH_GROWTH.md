@@ -1,6 +1,66 @@
 # Search and AI Discovery
 
-## Current Audit: September 28, 2026
+## Current Audit: September 30, 2026
+
+Search Console was inspected directly in the signed-in owner account. The
+URL-prefix property `https://sattarimusic.com/` is accessible and verified.
+
+- Sitemap: Success, submitted September 28, last read September 29, 74 discovered
+  pages. Discovery is not the same as indexing. The latest build has 75 URLs.
+- Web performance: 4 clicks, 149 impressions, 2.7% CTR, average position 8.2.
+  The selected three-month report currently contains September 22-28 data only.
+  This is a small baseline, not enough to infer stable keyword winners.
+- Google's separate **Generative AI features (Beta)** report is now available:
+  17 total impressions. The homepage has 13 page impressions and the shop 3;
+  other listed pages have 1 each. Do not sum page counts into a new total or
+  interpret impressions as visits, purchases or endorsements.
+- Page indexing still says "Processing data". No indexed-page count or
+  canonical audit has been established from that report yet.
+- Core Web Vitals: insufficient real-user data on both mobile and desktop.
+  This is not a passing performance grade.
+- The historical `/about-3` URL has search impressions but returned HTTP 404.
+  A permanent redirect to `/about` is included in this update.
+
+Implemented in this change:
+
+- Eight catalog entries now expose specifications sourced from their existing
+  descriptions. No invented cymbal alloy, diameter, SKU identifier or origin.
+- Product pages no longer apply violin construction and manufacturing claims
+  to rosin, strings or pickups. Structured data includes the visible photo
+  gallery. Shipping copy reflects the checkout's US/Canada destinations and
+  shared $7.95 rate; returns and delivery estimates are not invented.
+- Separation and bass-practice guides now contain the original synthetic demo
+  and actual HTDemucs estimates, with limitations and links into the tools.
+  Relevant guides and products link to each other.
+- The current Learn route now mounts the existing consent controls. Analysis,
+  practice and software-download-click counts are distinct; cancellation and
+  duplicate late worker messages do not count as analysis failures.
+- Client metrics now reject arbitrary event names and replace unrecognized
+  stored referral labels before transmission. The server's existing three-field
+  allowlist, browser privacy signals and production-host restrictions remain.
+
+Still requires owner/account input:
+
+1. Confirm bundle contents, unlisted cymbal specifications and real stock counts.
+2. Supply actual return/exchange/warranty terms and delivery expectations before
+   publishing policies or submitting merchant feeds. Do not manufacture a
+   no-return policy, GTIN/MPN or `identifier_exists=false` to satisfy a checker.
+3. Confirm Merchant Center access and any associated account owner. Search
+   Console points to Merchant Center, but signing in opens the new-business
+   onboarding screen rather than a store dashboard. Owner approval to prepare
+   an account has been requested; no account or terms acceptance was completed.
+   Product approval, free-listing eligibility and an active feed are unverified.
+4. Business Profile edits need the account that manages the existing listing.
+   Keep the appointment-only policy; do not create a duplicate listing.
+5. Bing setup needs account authorization. No new account, terms acceptance or
+   Search Console permission grant has been performed in this update.
+
+Judge the next complete 28-day period against this baseline. Use the separate
+Google AI report for its own impressions, and the opt-in first-party report for
+recognized referral actions. The latter cannot distinguish Google AI clicks from
+other Google referrals. No ranking or AI-citation guarantee is implied.
+
+## Previous Audit: September 28, 2026
 
 Local changes are not published yet. The owner confirmed in this task that Google
 Search Console is verified; Bing Webmaster Tools is not yet verified. This updates
@@ -233,6 +293,8 @@ Events:
 | separator_completed / separator_failed | Per-track result or failure, not a batch count |
 | stem_download | A WAV/ZIP download was initiated, not confirmation that the user saved it |
 | learn_started / learn_completed / learn_failed | Local song analysis lifecycle |
+| practice_started / practice_completed | Entered/finished a focused practice session, once per opened session; not a verified skill or score |
+| software_download | Clicked a same-site software download link, not a verified download or installation |
 | studio_imported | An audio file was successfully loaded into a deck lane |
 | studio_exported | A portable project download was initiated |
 

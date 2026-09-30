@@ -26,6 +26,11 @@
   status = 301
 
 [[redirects]]
+  from = "/about-3"
+  to = "/about"
+  status = 301
+
+[[redirects]]
   from = "/audio-suite"
   to = "/downloads"
   status = 301

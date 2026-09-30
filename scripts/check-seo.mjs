@@ -94,6 +94,25 @@ for (const url of urls) {
   assert.equal(websites[0].publisher['@id'], organizations[0]['@id']);
   assert.equal(websites[0].name, businesses[0].name);
   assert.equal(websites[0].name, organizations[0].name);
+  if (path.startsWith('/product/')) {
+    const product = entities.find((item) => item['@type'] === 'Product');
+    assert.ok(product, `${path}: missing product structured data`);
+    assert.equal(product.url, url);
+    const images = [...doc.querySelectorAll('.product-gallery-thumb img')].map(
+      (image) => image.src
+    );
+    for (const image of images)
+      assert.ok(product.image.includes(image), `${path}: missing gallery image in schema`);
+    assert.equal(
+      new Set(product.image).size,
+      product.image.length,
+      `${path}: duplicate product images`
+    );
+    assert.ok(
+      doc.querySelector('.product-shipping-note')?.textContent.includes('United States and Canada')
+    );
+    assert.ok(!doc.querySelector('.product-detail-shell').textContent.includes('California made'));
+  }
   if (path === '/') {
     assert.match(doc.querySelector('.home-hero-copy').textContent, /musicians worldwide/i);
     for (const destination of ['/shop', '/learn', '/studio', '/downloads', '/services']) {

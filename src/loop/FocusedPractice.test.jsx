@@ -5,6 +5,8 @@ import { DEMO } from './music';
 import { GuitarProfileProvider } from './GuitarSetup';
 import { readHistory } from './practicePlan';
 import { lessonFingerprint } from './progress';
+import { trackSiteEvent } from '../utils/siteMeasurement';
+vi.mock('../utils/siteMeasurement', () => ({ trackSiteEvent: vi.fn() }));
 
 const { microphone } = vi.hoisted(() => ({
   microphone: {
@@ -24,6 +26,7 @@ const lesson = {
 };
 
 beforeEach(() => {
+  trackSiteEvent.mockClear();
   localStorage.clear();
   microphone.status = 'off';
   microphone.pitch = null;
@@ -66,6 +69,7 @@ it('keeps source-song history valid when the guitar setup changes fingering', as
     lessonId: short.id,
     fingerprint: lessonFingerprint(short),
   });
+  expect(trackSiteEvent.mock.calls).toEqual([['practice_started'], ['practice_completed']]);
 });
 
 it('keeps self-guided completion separate from microphone matches and completes multiple phrases', () => {
@@ -207,6 +211,7 @@ it('keeps the current note when switching from self-guided practice into microph
   fireEvent.click(screen.getByRole('button', { name: 'Start with a clear signal' }));
   expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
   expect(screen.getByRole('status')).toHaveTextContent('Hearing E2. Aim for E4.');
+  expect(trackSiteEvent.mock.calls).toEqual([['practice_started']]);
 });
 
 it('opens rhythm practice without requesting a microphone until the learner chooses to connect', () => {

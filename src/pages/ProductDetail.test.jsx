@@ -42,6 +42,47 @@ function storedCart() {
 
 const mainImage = (container) => container.querySelector('.product-detail-image img');
 
+it('shows rosin facts without inheriting violin construction or origin claims', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('sattari-rosin');
+  await screen.findByRole('heading', { level: 1, name: 'Rosin' });
+  expect(screen.getByText('Use: violin, viola and cello bows')).toBeInTheDocument();
+  expect(screen.getByText('Formula: low dust')).toBeInTheDocument();
+  expect(screen.queryByText('California made')).not.toBeInTheDocument();
+  expect(screen.queryByText('Hand-carved tonewoods')).not.toBeInTheDocument();
+  expect(screen.queryByText(/from the first hit/)).not.toBeInTheDocument();
+  expect(screen.getByText(/United States and Canada/)).toHaveTextContent('$7.95 per order');
+  expect(screen.getByRole('link', { name: /visits are by appointment/ })).toHaveAttribute(
+    'href',
+    '/visit'
+  );
+});
+
+it('exposes item-specific violin specifications and all real gallery images to search', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('brescia-acoustic-violin');
+  await screen.findByRole('heading', { level: 1, name: /BRESCIA/ });
+  expect(screen.getByText('Size: 4/4 (full size)')).toBeInTheDocument();
+  expect(screen.getByText('Fingerboard and pegs: redwood')).toBeInTheDocument();
+  let product;
+  await waitFor(() => {
+    product = [...document.head.querySelectorAll('script[type="application/ld+json"]')]
+      .map((node) => JSON.parse(node.textContent))
+      .find((data) => data['@type'] === 'Product');
+    expect(product?.name).toMatch(/BRESCIA/);
+  });
+  expect(product.image).toHaveLength(10);
+  expect(new Set(product.image).size).toBe(10);
+  expect(product.image.every((image) => image.startsWith('https://sattarimusic.com/'))).toBe(true);
+  expect(product.offers.price).toBe(160);
+});
+
 afterEach(() => {
   localStorage.clear();
   vi.unstubAllGlobals();

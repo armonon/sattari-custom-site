@@ -11,6 +11,7 @@ import {
 import { musicGuides } from '../data/musicGuides';
 import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails } from '../data/toolDetails';
+import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
 import './MusicResources.css';
@@ -20,8 +21,11 @@ const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => `/tools${item.path}` === path);
+  const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
-    guide?.title || (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
+    guide?.title ||
+    product?.name ||
+    (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
 }
 function Page({
@@ -75,6 +79,41 @@ function Related({ paths }) {
         </Link>
       ))}
     </nav>
+  );
+}
+
+function StemAudioExample({ includeOriginal = true }) {
+  const examples = [
+    ...(includeOriginal
+      ? [{ label: 'Original mix', path: '/audio/sattari-practice-demo.wav' }]
+      : []),
+    { label: 'Bass estimate', path: '/audio/sattari-demo-bass.wav' },
+    { label: 'Drum estimate', path: '/audio/sattari-demo-drums.wav' },
+  ];
+  return (
+    <section className="resource-section resource-demo" aria-labelledby="stem-example-title">
+      <h2 id="stem-example-title">Hear the actual separated results</h2>
+      <p>
+        An original eight-second synthesized groove in A minor at 120 BPM, with no vocals. The bass
+        and drums below are unedited HTDemucs estimates, not the clean synthesis sources. Listen for
+        leakage, the start of each note and how long it rings out. This short example demonstrates
+        the workflow, not the quality you can expect from every song.
+      </p>
+      {examples.map(({ label, path }) => (
+        <div key={path}>
+          <h3>{label}</h3>
+          <audio controls preload="none" src={path} aria-label={label} />
+          <a className="resource-link" download href={path}>
+            <Download size={16} aria-hidden="true" /> Download {label.toLowerCase()} WAV
+          </a>
+        </div>
+      ))}
+      <p>
+        Count four steady beats, then try matching the bass note lengths. Import these WAVs into{' '}
+        <Link to="/studio">Sattari Studio</Link> to hear them together, or{' '}
+        <Link to="/stem-separator">separate your own recording</Link>.
+      </p>
+    </section>
   );
 }
 
@@ -189,6 +228,9 @@ export function GuideArticle() {
             )}
           </section>
         ))}
+        {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
+          slug
+        ) && <StemAudioExample />}
         {guide.sources && (
           <section className="resource-section">
             <h2>Further reading</h2>
@@ -272,31 +314,7 @@ export function ToolDetailsPage() {
         </p>
         <Link to="/privacy">Audio privacy and measurement choices</Link>
       </section>
-      {key === 'stem-separator' && (
-        <section className="resource-section resource-demo">
-          <h2>Hear the actual separated results</h2>
-          <p>
-            These are the unedited bass and drum estimates returned by HTDemucs for the demo above.
-            They are not the clean synthesis sources. Compare leakage, attack and note length with
-            the original; this sample contains no vocals.
-          </p>
-          {['bass', 'drums'].map((stem) => (
-            <div key={stem}>
-              <h3>{stem === 'bass' ? 'Bass stem' : 'Drum stem'}</h3>
-              <audio
-                controls
-                preload="none"
-                src={`/audio/sattari-demo-${stem}.wav`}
-                aria-label={`Separated ${stem} demo`}
-              />
-              <a className="resource-link" download href={`/audio/sattari-demo-${stem}.wav`}>
-                <Download size={16} />
-                Download {stem} result
-              </a>
-            </div>
-          ))}
-        </section>
-      )}
+      {key === 'stem-separator' && <StemAudioExample includeOriginal={false} />}
       {key === 'stem-separator' && (
         <section
           className="resource-section resource-questions"
@@ -413,9 +431,11 @@ export function PrivacyPage() {
         <h2>Optional site measurement</h2>
         <p>
           With your permission, we count page groups, recognized referral sources and actions such
-          as a completed inquiry, analysis or separation. We do not add visitor IDs or store raw
-          referring URLs, query strings, IP addresses, contact fields or audio in these aggregate
-          reports. Counts are not unique visitors or verified sales.
+          as a completed inquiry, analysis, separation, practice session or software download click.
+          A practice completion is not a verified musical skill; a download click is not a verified
+          download or installation. We do not add visitor IDs or store raw referring URLs, query
+          strings, IP addresses, contact fields or audio in these aggregate reports. Counts are not
+          unique visitors or verified sales.
         </p>
         <p>
           Measurement is off until you allow it. We respect Global Privacy Control and Do Not Track.

@@ -309,7 +309,7 @@ const App: FC = () => {
       </main>
 
       {!isAudioWorkspace && <Footer />}
-      {!['/learn', '/loop'].includes(pagePath) && <SiteMeasurement />}
+      <SiteMeasurement />
       {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
     </div>
   );

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StemSeparatorClient } from '../utils/stemSeparatorClient';
 import { analysisMono, validateSongFile } from './importAudio';
 import { keyResample } from './autoKey';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 
 function dispose(job) {
   if (job) job.finished = true;
@@ -40,6 +41,7 @@ export default function useSongImport(onReady) {
       const token = sequence.current;
       const task = { controller: new AbortController() };
       job.current = task;
+      trackSiteEvent('learn_started');
       const separated = preparation === 'instruments';
       setProgress({ value: 2, label: 'Reading your song' });
       try {
@@ -109,8 +111,9 @@ export default function useSongImport(onReady) {
           if (job.current === task) job.current = null;
         };
         const expire = () => {
-          if (token !== sequence.current) return;
+          if (token !== sequence.current || task.finished) return;
           finish();
+          trackSiteEvent('learn_failed');
           setProgress(null);
           setError('Analysis took too long. Try a shorter clip.');
         };
@@ -133,6 +136,7 @@ export default function useSongImport(onReady) {
           finish();
           setProgress(null);
           if (data.error) {
+            trackSiteEvent('learn_failed');
             setError(data.error);
             return;
           }
@@ -143,11 +147,13 @@ export default function useSongImport(onReady) {
             artist: 'Your local recording',
           };
           setSelectedFile(null);
+          trackSiteEvent('learn_completed');
           onReadyRef.current({ file, practiceFile, lesson });
         };
         worker.onerror = () => {
-          if (token !== sequence.current) return;
+          if (token !== sequence.current || task.finished) return;
           finish();
+          trackSiteEvent('learn_failed');
           setProgress(null);
           setError('The analysis could not finish. Try another audio file.');
         };
@@ -164,8 +170,9 @@ export default function useSongImport(onReady) {
           [samples.buffer, ...(keySamples ? [keySamples.buffer] : [])]
         );
       } catch (cause) {
-        if (token !== sequence.current) return;
+        if (token !== sequence.current || task.finished) return;
         dispose(task);
+        trackSiteEvent('learn_failed');
         job.current = null;
         setProgress(null);
         setError(

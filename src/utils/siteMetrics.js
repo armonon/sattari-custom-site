@@ -11,6 +11,9 @@ export const METRIC_EVENTS = [
   'learn_started',
   'learn_completed',
   'learn_failed',
+  'practice_started',
+  'practice_completed',
+  'software_download',
   'studio_imported',
   'studio_exported',
 ];

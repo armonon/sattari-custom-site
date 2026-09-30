@@ -31,6 +31,7 @@ import RecordCompare from './RecordCompare';
 import { PracticeCheckIn } from './PracticeJournal';
 import AdaptiveDrill from './AdaptiveDrill';
 import { adaptiveSuggestion, logPractice } from './practicePlan';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 
 export default function FocusedPractice({
   lesson: sourceLesson,
@@ -88,6 +89,7 @@ export default function FocusedPractice({
   const session = useRef(null);
   const gate = useRef(emptyPitchGate());
   const settleUntil = useRef(0);
+  const counted = useRef({ started: false, completed: false });
   const setupReturn = useRef(
     checkpoint?.stage === 'play'
       ? 'play'
@@ -116,6 +118,10 @@ export default function FocusedPractice({
   }, [lesson, stage, phraseIndex, position, matched, rhythm, speed]);
 
   const enterLesson = (withoutMic = false) => {
+    if (!counted.current.started) {
+      trackSiteEvent('practice_started');
+      counted.current.started = true;
+    }
     if (withoutMic) mic.stop();
     setManual(withoutMic);
     settleUntil.current = performance.now() + 500;
@@ -250,6 +256,10 @@ export default function FocusedPractice({
     else setPosition((i) => i + 1);
   };
   const finish = () => {
+    if (!counted.current.completed) {
+      trackSiteEvent('practice_completed');
+      counted.current.completed = true;
+    }
     stopAudio();
     mic.stop();
     logPractice(lesson, {

@@ -177,7 +177,13 @@ export const products = [
       '/sattari site/violins/chiara-electric-8.jpg',
       '/sattari site/violins/chiara-electric-9.jpg',
     ],
-    specs: [],
+    specs: [
+      'Size: 4/4 (full size)',
+      'Top: hand-carved solid spruce',
+      'Back and sides: solid maple',
+      'Controls: volume and tone; output jack for an amplifier',
+      'Included: Brazilwood horsehair bow, foam hard case, chinrest, bridge, rosin and 9V battery',
+    ],
   },
   {
     id: 'miami-electric-violin',
@@ -206,7 +212,14 @@ export const products = [
       { name: 'White', hex: '#f5f5f2' },
       { name: 'Blue', hex: '#1f49d2' },
     ],
-    specs: [],
+    specs: [
+      'Size: 4/4 (full size)',
+      'Connections: 1/4-inch amplifier jack and 3.5 mm headphone jack',
+      'Pickup: piezo, mounted under a maple bridge',
+      'Body, neck and scroll: maple; pegs, fingerboard and chinrest: ebony',
+      'Controls: reverb on/off, volume and aux; 9V battery panel',
+      'Included: strings, Brazilwood horsehair bow, rosin, triangular foam case, cable and headphones',
+    ],
   },
   {
     id: 'brescia-acoustic-violin',
@@ -229,7 +242,14 @@ export const products = [
       '/sattari site/violins/brescia-acoustic-9.jpg',
       '/sattari site/violins/brescia-acoustic-10.jpg',
     ],
-    specs: [],
+    specs: [
+      'Size: 4/4 (full size)',
+      'Back, ribs and neck: maple',
+      'Fingerboard and pegs: redwood',
+      'Tailpiece: composite with built-in tuners',
+      'Included: strings, Brazilwood horsehair bow, rosin and triangular foam case',
+      'Setup: individually workshop-fitted and tuned in California',
+    ],
   },
   {
     id: 'five-string-bass-guitar',
@@ -265,7 +285,13 @@ export const products = [
       '/sattari site/guitars/nylon-guitar-6.jpg',
       '/sattari site/guitars/nylon-guitar-7.jpg',
     ],
-    specs: [],
+    specs: [
+      'Instrument: nylon-string classical guitar',
+      'Overall size: 40 inches',
+      'Top: spruce',
+      'Back and sides: sapele',
+      'Bridge and fingerboard: rosewood',
+    ],
   },
   {
     id: 'violin-strings',
@@ -280,7 +306,7 @@ export const products = [
       '/sattari site/violins/violin-strings-2.jpg',
       '/sattari site/violins/violin-strings-3.jpg',
     ],
-    specs: [],
+    specs: ['Fit: 4/4 and 3/4 violins', 'String ends: ball end'],
   },
   {
     id: 'sattari-darbuka',
@@ -392,7 +418,14 @@ export const products = [
       '/sattari site/violins/matilde-electric-5.jpg',
       '/sattari site/violins/matilde-electric-6.jpg',
     ],
-    specs: [],
+    specs: [
+      'Size: 4/4 electric/silent violin',
+      'Body: hand-carved solid maple',
+      'Fingerboard, pegs, chinrest and tailpiece: ebony',
+      'Fine tuners: four detachable, nickel-plated tuners',
+      'Power: 9V battery',
+      'Included: hard case, Brazilwood horsehair bow, rosin, bridge, aux cable and headphones',
+    ],
   },
   {
     id: 'violin-pickup-bridge',
@@ -426,7 +459,11 @@ export const products = [
       '/sattari site/violins/rosin-3.jpg',
       '/sattari site/violins/rosin-4.jpg',
     ],
-    specs: [],
+    specs: [
+      'Use: violin, viola and cello bows',
+      'Formula: low dust',
+      'Packaging: protective cloth wrap and crush-proof box',
+    ],
   },
   {
     id: 'wireless-transmitter-receiver',
@@ -444,7 +481,7 @@ export const products = [
       '/sattari site/accessories/wireless-transmitter-4.jpg',
       '/sattari site/accessories/wireless-transmitter-5.jpg',
     ],
-    specs: [],
+    specs: ['Included: one transmitter, one receiver, USB charger and case'],
   },
   {
     id: 'drum-stick-bag',

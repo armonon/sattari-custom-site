@@ -204,6 +204,9 @@ describe('Sattari Learn replacement', () => {
         await screen.findByRole('button', { name: 'Sattari Learn song library' })
       ).toBeInTheDocument();
       expect(currentPath).toBe('/learn');
+      expect(
+        screen.getByRole('complementary', { name: 'Optional measurement' })
+      ).toBeInTheDocument();
       expect(screen.getAllByRole('main')).toHaveLength(1);
       expect(
         screen.getByRole('heading', { name: /Your favorite song\.\s*In your hands\./ })

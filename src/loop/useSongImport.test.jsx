@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import useSongImport from './useSongImport';
+import { trackSiteEvent } from '../utils/siteMeasurement';
+vi.mock('../utils/siteMeasurement', () => ({ trackSiteEvent: vi.fn() }));
 
 const separator = vi.hoisted(() => ({ separate: vi.fn(), dispose: vi.fn() }));
 vi.mock('../utils/stemSeparatorClient', () => ({
@@ -58,6 +60,7 @@ it('does not start a worker if an in-flight decode is cancelled', async () => {
   expect(Worker).not.toHaveBeenCalled();
   expect(ready).not.toHaveBeenCalled();
   expect(result.current.progress).toBeNull();
+  expect(trackSiteEvent.mock.calls).toEqual([['learn_started']]);
 });
 
 it('terminates work and ignores a late worker result after cancellation', async () => {
@@ -101,6 +104,7 @@ it('rejects oversized inputs before decoding', async () => {
     await result.current.importSong({ ...file, size: 41 * 1024 * 1024 });
   });
   expect(decode).not.toHaveBeenCalled();
+  expect(trackSiteEvent).not.toHaveBeenCalled();
   expect(result.current.error).toMatch(/40 MB/);
 });
 
@@ -172,6 +176,9 @@ it('analyzes the instrumental stem while keeping the original for key and playba
       lesson: expect.objectContaining({ title: 'guitar' }),
     })
   );
+  expect(trackSiteEvent.mock.calls).toEqual([['learn_started'], ['learn_completed']]);
+  act(() => workers[0].onerror());
+  expect(trackSiteEvent).toHaveBeenCalledTimes(2);
 });
 
 it('cancels an active separator and ignores a late result', async () => {
@@ -228,4 +235,6 @@ it('times out an unresponsive analysis worker and ignores its late result', asyn
   expect(ready).not.toHaveBeenCalled();
   expect(result.current.error).toMatch(/too long/);
   expect(workers[0].terminate).toHaveBeenCalledOnce();
+  act(() => workers[0].onerror());
+  expect(trackSiteEvent.mock.calls).toEqual([['learn_started'], ['learn_failed']]);
 });

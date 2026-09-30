@@ -1,4 +1,4 @@
-import { metricPage, referralSource } from './siteMetrics';
+import { METRIC_SOURCES, metricPage, referralSource, validMetric } from './siteMetrics';
 const PREFERENCE = 'sattari-measurement-v1';
 const SOURCE = 'sattari-referral-v1';
 let lastPage = '';
@@ -45,15 +45,17 @@ export function trackSiteEvent(event) {
       lastPageAt = now;
     }
     let source = sessionStorage.getItem(SOURCE);
-    if (!source) {
+    if (!METRIC_SOURCES.includes(source)) {
       source = referralSource(document.referrer, window.location.search, window.location.origin);
       sessionStorage.setItem(SOURCE, source);
     }
+    const metric = { event, page, source };
+    if (!validMetric(metric)) return;
     emitted += 1;
     void fetch('/api/site-event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, page, source }),
+      body: JSON.stringify(metric),
       keepalive: true,
       credentials: 'omit',
       referrerPolicy: 'no-referrer',

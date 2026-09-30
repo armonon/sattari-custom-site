@@ -88,3 +88,29 @@ it('analytics failure cannot break the tool', () => {
   fetch.mockRejectedValue(new Error('Offline'));
   expect(() => trackSiteEvent('learn_completed')).not.toThrow();
 });
+it.each(['practice_started', 'practice_completed', 'software_download'])(
+  'gates %s behind consent',
+  (event) => {
+    trackSiteEvent(event);
+    expect(fetch).not.toHaveBeenCalled();
+    setMeasurementPreference(true);
+    trackSiteEvent(event);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+      event,
+      page: 'learn',
+      source: 'chatgpt',
+    });
+  }
+);
+it('rejects arbitrary event names and replaces non-allowlisted stored referral data', () => {
+  setMeasurementPreference(true);
+  sessionStorage.setItem('sattari-referral-v1', 'https://private.example/song.wav');
+  trackSiteEvent('song-title.wav');
+  expect(fetch).not.toHaveBeenCalled();
+  trackSiteEvent('practice_started');
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    event: 'practice_started',
+    page: 'learn',
+    source: 'chatgpt',
+  });
+});
