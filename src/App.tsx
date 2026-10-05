@@ -34,6 +34,9 @@ import {
   ToolDetailsPage,
   VisitPage,
   PrivacyPage,
+  CanvasPage,
+  PocketPage,
+  PressPage,
   type PreloadablePage,
 } from '@utils/lazyComponents';
 
@@ -73,6 +76,10 @@ const ROUTES: RouteDefinition[] = [
   // Restores its panels from localStorage while rendering.
   { path: '/studio', page: SattariStudioPage, hydrate: false },
   { path: '/stem-separator', page: StemSeparatorPage },
+  // Wave-2 alpha tools.
+  { path: '/studio/canvas', page: CanvasPage },
+  { path: '/studio/pocket', page: PocketPage },
+  { path: '/press', page: PressPage },
   // The Audio Suite and its downloads are one page, on /downloads.
   { path: '/downloads', page: DownloadsPage },
   { path: '/audio-suite', redirect: '/downloads' },
@@ -135,6 +142,9 @@ export async function preloadRoute(pathname: string): Promise<{ hydrate: boolean
   return { hydrate: route.hydrate !== false };
 }
 
+// Wave-2 alpha tools: tool pages without the footer or shop assistant.
+const LAB_PATHS = ['/studio/canvas', '/studio/pocket', '/press'];
+
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -160,9 +170,9 @@ const App: FC = () => {
   const pagePath = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const isAudioWorkspace = ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(
-    pagePath
-  );
+  const isAudioWorkspace =
+    ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath) ||
+    LAB_PATHS.includes(pagePath);
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
@@ -256,9 +266,8 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
-        <BackgroundMedia />
-      )}
+      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) &&
+        !LAB_PATHS.includes(pagePath) && <BackgroundMedia />}
 
       {!['/studio', '/learn', '/loop'].includes(pagePath) && <Navbar onCartClick={openCart} />}
 

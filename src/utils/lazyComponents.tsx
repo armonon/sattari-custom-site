@@ -132,6 +132,10 @@ export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'Gui
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');
 export const VisitPage = lazyPage(() => import('@pages/MusicResources'), 'VisitPage');
 export const PrivacyPage = lazyPage(() => import('@pages/MusicResources'), 'PrivacyPage');
+// Wave-2 alpha tools (src/labs).
+export const CanvasPage = lazyPage(() => import('@/labs/canvas/CanvasPage'));
+export const PocketPage = lazyPage(() => import('@/labs/pocket/PocketPage'));
+export const PressPage = lazyPage(() => import('@/labs/press/PressPage'));
 
 // Fallback loading component
 export const PageLoader = () => (

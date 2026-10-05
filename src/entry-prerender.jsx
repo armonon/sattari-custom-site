@@ -65,6 +65,10 @@ export function getPrerenderRoutes(inventory) {
       ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],
       ['/instagram/callback', 'src/pages/InstagramCallback.jsx'],
       ['/404', 'src/components/NotFoundPage.tsx'],
+      // Wave-2 alpha tools: public but noindex until the owner decides.
+      ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
+      ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],
+      ['/press', 'src/labs/press/PressPage.jsx'],
     ].map(([path, entry]) => ({ path, entry, indexable: false })),
   ];
 }
