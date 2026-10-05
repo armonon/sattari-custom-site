@@ -26,6 +26,9 @@ import {
   SattariLearnPage,
   SattariStudioPage,
   StemSeparatorPage,
+  SplitPage,
+  KeyBpmPage,
+  VoxPage,
   ServicesPage,
   StudioBookingStatus,
   ShopPage,
@@ -111,6 +114,10 @@ const ROUTES: RouteDefinition[] = [
   localPage('/services/instrument-repair-woodland-hills', 'repair-woodland-hills'),
   localPage('/services/instrument-repair-calabasas', 'repair-calabasas'),
   { path: '/stem-seperator', redirect: '/stem-separator' },
+  // Studio alpha labs: Split, Key & BPM, Vox (src/labs).
+  { path: '/studio/split', page: SplitPage },
+  { path: '/studio/keybpm', page: KeyBpmPage },
+  { path: '/studio/vox', page: VoxPage },
 ];
 
 // Matched exactly as <Routes> ranks them, including the catch-all.
@@ -160,9 +167,10 @@ const App: FC = () => {
   const pagePath = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const isAudioWorkspace = ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(
-    pagePath
-  );
+  // /studio/<lab> pages are Studio alpha labs (Split, Key & BPM, Vox, ...).
+  const isStudioLab = pagePath.startsWith('/studio/');
+  const isAudioWorkspace =
+    isStudioLab || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
@@ -256,9 +264,10 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
-        <BackgroundMedia />
-      )}
+      {!isStudioLab &&
+        !['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
+          <BackgroundMedia />
+        )}
 
       {!['/studio', '/learn', '/loop'].includes(pagePath) && <Navbar onCartClick={openCart} />}
 

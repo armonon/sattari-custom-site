@@ -58,3 +58,21 @@ it('omits the listening desk, demo player and header shortcut', () => {
   ).toBeNull();
   expect(container.querySelector('.hub-workspaces').nextElementSibling).toHaveClass('hub-reading');
 });
+
+it('lists the Studio alpha labs', () => {
+  render(
+    <MemoryRouter>
+      <SattariHubPage />
+    </MemoryRouter>
+  );
+  for (const [name, route] of [
+    ['Split', '/studio/split'],
+    ['Key & BPM', '/studio/keybpm'],
+    ['Vox', '/studio/vox'],
+  ]) {
+    expect(screen.getByRole('link', { name: new RegExp(`^Alpha\\s*${name}`) })).toHaveAttribute(
+      'href',
+      route
+    );
+  }
+});

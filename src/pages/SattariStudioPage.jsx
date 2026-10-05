@@ -11,6 +11,7 @@ import { useMasterControls } from '../studio/hooks/useMasterControls';
 import { useMidi } from '../studio/hooks/useMidi';
 import { usePads } from '../studio/hooks/usePads';
 import { useStudioEngine } from '../studio/hooks/useStudioEngine';
+import { useStemHandoff } from '../studio/hooks/useStemHandoff';
 import { useInputSource, useInspector } from '../studio/hooks/useShellPanels';
 import { useStudioKeyboard } from '../studio/hooks/useStudioKeyboard';
 import { createStudioActivity } from '../studio/session/studioActivity';
@@ -96,6 +97,8 @@ export default function SattariStudioPage() {
     setActiveView,
     setNotice,
   });
+  // Stems sent from the Split lab (/studio/split) land in the first free deck.
+  useStemHandoff({ ready: session.ready, decks, deckOps, actions, setActiveView, setNotice });
   const pads = usePads({ engine, session, activity, setNotice });
   const midi = useMidi({ triggerPad: pads.triggerPad, padCount: state.pads.length, setNotice });
   const master = useMasterControls({ engine, session, setNotice });

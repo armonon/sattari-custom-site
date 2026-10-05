@@ -744,3 +744,12 @@
     scroll-behavior: auto !important;
   }
 }
+/* Studio labs (alpha) */
+.hub-studio-labs .hub-reading-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .hub-studio-labs .hub-reading-grid {
+    grid-template-columns: 1fr;
+  }
+}

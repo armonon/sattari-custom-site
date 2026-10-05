@@ -5,6 +5,7 @@ import {
   AudioLines,
   BookOpen,
   Download,
+  FlaskConical,
   Library,
   Radio,
   SlidersHorizontal,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
+import { LAB_TOOLS } from '../labs/audio/audioLabTools';
 import '../styles-hub.css';
 
 const workspaces = [
@@ -141,6 +143,27 @@ export default function SattariHubPage() {
                   </article>
                 )
               )}
+            </div>
+          </section>
+
+          <section className="hub-reading hub-studio-labs" aria-labelledby="hub-studio-labs-title">
+            <div className="hub-section-heading">
+              <h2 id="hub-studio-labs-title">
+                <FlaskConical size={18} aria-hidden="true" /> Studio labs
+              </h2>
+              <span>Alpha · runs on your device</span>
+            </div>
+            <div className="hub-reading-grid">
+              {LAB_TOOLS.map(({ id, name, path, blurb }) => (
+                <Link key={id} to={path} className="hub-reading-link">
+                  <span className="hub-eyebrow">Alpha</span>
+                  <h3>
+                    {name}
+                    <ArrowUpRight size={20} aria-hidden="true" />
+                  </h3>
+                  <p>{blurb}</p>
+                </Link>
+              ))}
             </div>
           </section>
 
