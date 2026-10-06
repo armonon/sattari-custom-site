@@ -7,6 +7,7 @@
 // CHROME_PATH points Playwright at a local Chrome/Chromium binary.
 import assert from 'node:assert/strict';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { gunzipSync, strFromU8, unzipSync } from 'fflate';
 import { chromium } from 'playwright';
@@ -113,7 +114,15 @@ try {
 
   // StemDeck: a full mix and a drum stem on Deck A.
   const mix = await testTrack('Groove Test.wav', 55);
-  const drums = await testTrack('Groove Test drums.wav', 90);
+  // The stem as MP3 (when ffmpeg is installed) exercises the decode-to-WAV path.
+  let drums = await testTrack('Groove Test drums.wav', 90);
+  try {
+    const mp3 = drums.replace(/\.wav$/, '.mp3');
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', drums, mp3]);
+    drums = mp3;
+  } catch {
+    console.log('ffmpeg not found: the drum stem stays WAV');
+  }
   await page.goto(`${base}/studio`, { waitUntil: 'networkidle' });
   await page
     .getByRole('navigation', { name: 'STEMDECK workspaces' })
@@ -154,6 +163,10 @@ try {
   assert.deepEqual(results.stemdeck.tracks, ['Drums', 'Full mix'], 'StemDeck tracks');
   assert.ok(Number(results.stemdeck.tempo) > 0, 'StemDeck tempo');
   assert.equal(results.stemdeck.clips, 2);
+  assert.deepEqual(
+    results.stemdeck.wavs.map((path) => path.split('/').pop()),
+    ['01 Drums.wav', '02 Full mix.wav']
+  );
   await context.close();
 } finally {
   await browser.close();
