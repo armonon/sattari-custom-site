@@ -28,13 +28,13 @@ function attempt(body, ip = '203.0.113.5', init = {}) {
   );
 }
 
-const wrong = (ip, device) => attempt({ staff: 'sattaristudio', password: 'guess', device }, ip);
-const right = (ip, device) => attempt({ staff: 'SattariStudio', password: PASSWORD, device }, ip);
+const wrong = (ip, device) => attempt({ staff: 'teststaffer', password: 'guess', device }, ip);
+const right = (ip, device) => attempt({ staff: 'TestStaffer', password: PASSWORD, device }, ip);
 
 beforeEach(() => {
   resetBlobs();
   vi.clearAllMocks();
-  process.env.STAFF_USERNAME = 'sattaristudio';
+  process.env.STAFF_USERNAME = 'teststaffer';
   process.env.STAFF_PASSWORD_SALT = 'salt';
   process.env.STAFF_PASSWORD_HASH = hashPassword(PASSWORD, 'salt');
   process.env.STAFF_SESSION_SECRET = 'secret';
@@ -59,10 +59,10 @@ describe('signing in', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ staff: 'SattariStudio', expiresInHours: 12 });
+    expect(body).toMatchObject({ staff: 'TestStaffer', expiresInHours: 12 });
     await expect(
       requireStaff({ headers: { authorization: `Bearer ${body.token}` } })
-    ).resolves.toMatchObject({ staff: 'SattariStudio' });
+    ).resolves.toMatchObject({ staff: 'TestStaffer' });
   });
 
   it('issues tokens that survive an earlier "sign out everywhere"', async () => {
@@ -189,7 +189,7 @@ describe('sign-in logs', () => {
     expect(lines).toContain('"usernameMatched":false');
     expect(lines).toContain('"ipHash"');
     expect(lines).not.toContain('my-actual-password');
-    expect(lines).not.toContain('SattariStudio');
+    expect(lines).not.toContain('TestStaffer');
     expect(lines).not.toContain('203.0.113.9');
   });
 });

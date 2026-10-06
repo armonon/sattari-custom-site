@@ -30,7 +30,7 @@ function request(token) {
 
 beforeEach(() => {
   resetBlobs();
-  process.env.STAFF_USERNAME = 'sattaristudio';
+  process.env.STAFF_USERNAME = 'teststaffer';
   process.env.STAFF_PASSWORD_SALT = SALT;
   process.env.STAFF_PASSWORD_HASH = hashPassword(PASSWORD, SALT);
   process.env.STAFF_SESSION_SECRET = 'test-secret-key';
@@ -45,11 +45,11 @@ afterEach(() => {
 
 describe('username checking', () => {
   it('accepts the configured username', () => {
-    expect(checkUsername('sattaristudio')).toBe(true);
+    expect(checkUsername('teststaffer')).toBe(true);
   });
 
   it('ignores case and surrounding whitespace', () => {
-    expect(checkUsername('  SattariStudio ')).toBe(true);
+    expect(checkUsername('  TestStaffer ')).toBe(true);
   });
 
   it('rejects anything else', () => {
@@ -61,7 +61,7 @@ describe('username checking', () => {
 
   it('refuses when no username is configured', () => {
     delete process.env.STAFF_USERNAME;
-    expect(checkUsername('sattaristudio')).toBe(false);
+    expect(checkUsername('teststaffer')).toBe(false);
     expect(isConfigured()).toBe(false);
   });
 });

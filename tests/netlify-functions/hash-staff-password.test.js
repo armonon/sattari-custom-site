@@ -16,7 +16,7 @@ function run(args, input) {
 
 describe('scripts/hash-staff-password.mjs', () => {
   it('reads a piped password and prints a hash of it, not the password', () => {
-    const result = run(['sattaristudio'], 'correct-horse-battery\n');
+    const result = run(['teststaffer'], 'correct-horse-battery\n');
 
     expect(result.status).toBe(0);
     const salt = /STAFF_PASSWORD_SALT\n([a-f0-9]{32})/.exec(result.stdout)[1];
@@ -27,7 +27,7 @@ describe('scripts/hash-staff-password.mjs', () => {
 
   // An argument lands in the shell history and the process list.
   it('refuses a password given on the command line', () => {
-    const result = run(['sattaristudio', 'correct-horse-battery'], '');
+    const result = run(['teststaffer', 'correct-horse-battery'], '');
 
     expect(result.status).toBe(1);
     expect(result.stderr).toMatch(/shell history/);
@@ -35,7 +35,7 @@ describe('scripts/hash-staff-password.mjs', () => {
   });
 
   it('refuses an empty password', () => {
-    const result = run(['sattaristudio'], '');
+    const result = run(['teststaffer'], '');
 
     expect(result.status).toBe(1);
     expect(result.stdout).toBe('');
