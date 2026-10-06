@@ -253,7 +253,8 @@ try {
     await page.screenshot({ path: `${out}/split-empty.png`, fullPage: true });
     const started = Date.now();
     await page.getByRole('button', { name: /8-second demo/ }).click();
-    await page.getByRole('status').first().waitFor({ timeout: 60000 });
+    // The page also has an empty live region, so wait for the one with progress text.
+    await page.getByRole('status').filter({ hasText: /\S/ }).first().waitFor({ timeout: 60000 });
     await page.screenshot({ path: `${out}/split-progress.png`, fullPage: true });
     await page.getByRole('button', { name: 'Open in StemDeck' }).waitFor({ timeout: 15 * 60000 });
     report.splitSeconds = Math.round((Date.now() - started) / 1000);
