@@ -24,6 +24,7 @@ export class StemSeparatorClient {
     }
     return new Promise((resolve, reject) => {
       let settled = false;
+      let started = false;
       let timer;
       const finish = (error, result) => {
         if (settled) return;
@@ -44,16 +45,19 @@ export class StemSeparatorClient {
           () =>
             finish(
               new Error(
-                'The separation engine stopped responding. Try CPU mode or a shorter track.'
+                started
+                  ? 'The separation engine stopped responding. Try CPU mode or a shorter track.'
+                  : 'The separation worker could not start. Reload and check your connection.'
               )
             ),
-          5 * 60 * 1000
+          started ? 5 * 60 * 1000 : 45000
         );
       };
       this.pending = { abort };
       signal.addEventListener('abort', abort, { once: true });
       this.worker.onmessage = ({ data }) => {
         if (settled) return;
+        started = true;
         touch();
         if (data.type === 'progress') onProgress(data);
         else if (data.type === 'analysis') onAnalysis(data.analysis);
@@ -73,6 +77,7 @@ export class StemSeparatorClient {
           new Error('The audio worker could not return its result. Retry with a shorter track.')
         );
       touch();
+      onProgress({ message: 'Starting audio worker', progress: null });
       try {
         this.worker.postMessage(
           {

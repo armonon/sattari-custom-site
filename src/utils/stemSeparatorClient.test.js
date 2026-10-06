@@ -46,7 +46,8 @@ describe('separation worker lifecycle', () => {
     worker.onmessage({ data: { type: 'progress', progress: 1 } });
     worker.onmessage({ data: { type: 'analysis', analysis: {} } });
     expect(worker.terminate).toHaveBeenCalledTimes(1);
-    expect(progress).not.toHaveBeenCalled();
+    expect(progress).toHaveBeenCalledTimes(1);
+    expect(progress).toHaveBeenCalledWith({ message: 'Starting audio worker', progress: null });
     expect(analysis).not.toHaveBeenCalled();
     expect(client.worker).toBeNull();
   });
@@ -72,6 +73,7 @@ describe('separation worker lifecycle', () => {
     const failed = expect(
       client.separate(audio(), ['bass'], new AbortController().signal)
     ).rejects.toThrow('stopped responding');
+    worker.onmessage({ data: { type: 'progress', message: 'Downloading model' } });
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     await failed;
     expect(worker.terminate).toHaveBeenCalledOnce();
@@ -86,6 +88,17 @@ describe('separation worker lifecycle', () => {
     expect(worker.postMessage.mock.lastCall[0].cpuOnly).toBe(true);
     worker.onmessage({ data: { type: 'result', outputs: [] } });
     await retry;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('reports a blocked worker startup within 45 seconds', async () => {
+    vi.useFakeTimers();
+    const { client, worker } = setup();
+    const rejected = expect(
+      client.separate(audio(), ['bass'], new AbortController().signal)
+    ).rejects.toThrow('could not start');
+    await vi.advanceTimersByTimeAsync(45000);
+    await rejected;
+    expect(worker.terminate).toHaveBeenCalledOnce();
     expect(vi.getTimerCount()).toBe(0);
   });
   it('handles a worker that cannot be created or cannot deserialize a result', async () => {

@@ -5,6 +5,7 @@ export const STEMS = [
   { id: 'other', label: 'Instruments', color: '#93d2ad' },
 ];
 export const SAMPLE_RATE = 44100;
+export const DECODE_TIMEOUT_MS = 60000;
 export const LIMITS = {
   tracks: 20,
   fileBytes: 100 * 1024 ** 2,
@@ -91,9 +92,42 @@ export async function decodeTrack(file, signal) {
   const decoder = new Decoder(2, 1, SAMPLE_RATE);
   let buffer;
   try {
-    buffer = await decoder.decodeAudioData(await file.arrayBuffer());
-  } catch {
-    throw new Error('This file could not be decoded. Try a WAV, MP3, or FLAC export.');
+    // Web Audio decoding cannot itself be cancelled. Settle our job promptly
+    // and ignore its late result so Stop and retry never remain locked.
+    buffer = await new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (error, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+        if (error) reject(error);
+        else resolve(value);
+      };
+      const abort = () => finish(signal.reason ?? new DOMException('Cancelled', 'AbortError'));
+      const timer = setTimeout(
+        () => finish(new Error('Audio reading timed out. Try a shorter WAV file.')),
+        DECODE_TIMEOUT_MS
+      );
+      signal.addEventListener('abort', abort, { once: true });
+      Promise.resolve()
+        .then(() => file.arrayBuffer())
+        .then((bytes) => {
+          if (settled) return;
+          signal.throwIfAborted();
+          return decoder.decodeAudioData(bytes);
+        })
+        .then(
+          (value) => finish(null, value),
+          (error) => finish(error)
+        );
+    });
+  } catch (error) {
+    signal.throwIfAborted();
+    if (error?.message?.includes('timed out')) throw error;
+    throw new Error('This file could not be decoded. Try a WAV, MP3, or FLAC export.', {
+      cause: error,
+    });
   }
   signal.throwIfAborted();
   if (!buffer.length || buffer.duration > LIMITS.seconds)

@@ -1,12 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   decodeTrack,
+  DECODE_TIMEOUT_MS,
   LIMITS,
   safeTrackName,
   selectedStemIds,
   validateFiles,
   waveformPeaks,
 } from './stemSeparator';
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 const file = (name = 'mix.wav', size = 100, type = 'audio/wav') => ({
   name,
@@ -98,5 +103,34 @@ describe('stem separator inputs', () => {
       name: 'AbortError',
     });
     expect(arrayBuffer).not.toHaveBeenCalled();
+  });
+  it('Stop settles a decoder that never returns, and removes its timer', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'OfflineAudioContext',
+      class {
+        decodeAudioData() {
+          return new Promise(() => {});
+        }
+      }
+    );
+    const controller = new AbortController();
+    const rejection = expect(
+      decodeTrack({ arrayBuffer: async () => new ArrayBuffer(1) }, controller.signal)
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    await vi.advanceTimersByTimeAsync(1);
+    controller.abort();
+    await rejection;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('bounds file reading and reports timeout instead of waiting forever', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('OfflineAudioContext', class {});
+    const rejection = expect(
+      decodeTrack({ arrayBuffer: () => new Promise(() => {}) }, new AbortController().signal)
+    ).rejects.toThrow('timed out');
+    await vi.advanceTimersByTimeAsync(DECODE_TIMEOUT_MS);
+    await rejection;
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
