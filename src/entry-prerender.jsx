@@ -61,6 +61,10 @@ export function getPrerenderRoutes(inventory) {
     ...[
       ['/cart', 'src/pages/CartPage.tsx'],
       ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],
+      // Studio alpha labs: prerendered so they are real pages, noindex while alpha.
+      ['/studio/split', 'src/labs/split/SplitPage.jsx'],
+      ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],
+      ['/studio/vox', 'src/labs/vox/VoxPage.jsx'],
       ['/checkout/success', 'src/pages/CheckoutStatus.jsx'],
       ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],
       ['/instagram/callback', 'src/pages/InstagramCallback.jsx'],

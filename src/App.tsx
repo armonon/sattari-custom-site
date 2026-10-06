@@ -26,6 +26,9 @@ import {
   SattariLearnPage,
   SattariStudioPage,
   StemSeparatorPage,
+  SplitPage,
+  KeyBpmPage,
+  VoxPage,
   ServicesPage,
   StudioBookingStatus,
   ShopPage,
@@ -118,6 +121,10 @@ const ROUTES: RouteDefinition[] = [
   localPage('/services/instrument-repair-woodland-hills', 'repair-woodland-hills'),
   localPage('/services/instrument-repair-calabasas', 'repair-calabasas'),
   { path: '/stem-seperator', redirect: '/stem-separator' },
+  // Studio alpha labs: Split, Key & BPM, Vox (src/labs).
+  { path: '/studio/split', page: SplitPage },
+  { path: '/studio/keybpm', page: KeyBpmPage },
+  { path: '/studio/vox', page: VoxPage },
 ];
 
 // Matched exactly as <Routes> ranks them, including the catch-all.
@@ -142,8 +149,8 @@ export async function preloadRoute(pathname: string): Promise<{ hydrate: boolean
   return { hydrate: route.hydrate !== false };
 }
 
-// Wave-2 alpha tools: tool pages without the footer or shop assistant.
-const LAB_PATHS = ['/studio/canvas', '/studio/pocket', '/press'];
+// Wave-2 alpha tools outside /studio/: tool pages without the footer or shop assistant.
+const LAB_PATHS = ['/press'];
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -170,9 +177,10 @@ const App: FC = () => {
   const pagePath = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  // Alpha lab tools: /studio/<lab> (Split, Key & BPM, Vox, Canvas, Pocket) and /press.
+  const isLabPage = pagePath.startsWith('/studio/') || LAB_PATHS.includes(pagePath);
   const isAudioWorkspace =
-    ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath) ||
-    LAB_PATHS.includes(pagePath);
+    isLabPage || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
@@ -266,8 +274,9 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) &&
-        !LAB_PATHS.includes(pagePath) && <BackgroundMedia />}
+      {!isLabPage && !['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
+        <BackgroundMedia />
+      )}
 
       {!['/studio', '/learn', '/loop'].includes(pagePath) && <Navbar onCartClick={openCart} />}
 

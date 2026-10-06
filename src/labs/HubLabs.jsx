@@ -1,7 +1,15 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, FlaskConical } from 'lucide-react';
 import { LAB_APPS } from './labsSeo';
+import { LAB_TOOLS } from './audio/audioLabTools';
 import './hubLabs.css';
+
+// One list for every wave-2 alpha tool: the audio labs (Split, Key & BPM, Vox)
+// first, then Canvas, Pocket and Press.
+const HUB_LABS = [
+  ...LAB_TOOLS.map(({ id, name, path, blurb }) => ({ id, name, path, detail: blurb })),
+  ...LAB_APPS,
+];
 
 /** Hub listing for the wave-2 alpha tools. */
 export default function HubLabs() {
@@ -14,7 +22,7 @@ export default function HubLabs() {
         <span>Alpha tools</span>
       </div>
       <div className="hub-labs-grid">
-        {LAB_APPS.map(({ id, name, path, detail }) => (
+        {HUB_LABS.map(({ id, name, path, detail }) => (
           <Link key={id} to={path} className="hub-reading-link">
             <span className="hub-eyebrow">Alpha</span>
             <h3>
