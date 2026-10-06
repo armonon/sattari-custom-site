@@ -21,4 +21,19 @@ export const LAB_TOOLS = [
     seoTitle: 'Vox: Free Vocal Pitch Correction & Harmony Online',
     blurb: 'Record or drop a vocal, tune it to the key, add a harmony, export WAV.',
   },
+  {
+    id: 'lyric',
+    name: 'Lyric',
+    path: '/studio/lyric',
+    seoTitle: 'Lyric: Free Lyric Video Maker with On-Device Alignment',
+    blurb: 'Drop a song and paste lyrics, align words on-device, animate and export MP4.',
+  },
+  {
+    id: 'clean',
+    name: 'Clean',
+    path: '/studio/clean',
+    seoTitle: 'Clean: One-Click Voice Cleanup, Denoise & Loudness',
+    blurb:
+      'Clean up a voice recording on-device: denoise, de-ess, compress and match loudness in one click.',
+  },
 ];

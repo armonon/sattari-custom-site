@@ -131,6 +131,8 @@ export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage
 export const SplitPage = lazyPage(() => import('../labs/split/SplitPage'));
 export const KeyBpmPage = lazyPage(() => import('../labs/keybpm/KeyBpmPage'));
 export const VoxPage = lazyPage(() => import('../labs/vox/VoxPage'));
+export const LyricPage = lazyPage(() => import('../labs/lyric/LyricPage'));
+export const CleanPage = lazyPage(() => import('../labs/clean/CleanPage'));
 export const GuideIndex = lazyPage(() => import('@pages/MusicResources'), 'GuideIndex');
 export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'GuideArticle');
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');

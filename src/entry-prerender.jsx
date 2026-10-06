@@ -42,6 +42,9 @@ export function getPrerenderRoutes(inventory) {
     ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
     ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],
     ['/press', 'src/labs/press/PressPage.jsx'],
+    // Wave-3 music tools.
+    ['/studio/lyric', 'src/labs/lyric/LyricPage.jsx'],
+    ['/studio/clean', 'src/labs/clean/CleanPage.jsx'],
     ...localPages
       .filter((page) => !page.canonicalUrl)
       .map((page) => [new URL(page.url).pathname, LOCAL_SEO_ENTRY]),

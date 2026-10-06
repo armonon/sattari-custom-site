@@ -20,6 +20,11 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
     },
   },
+  // Lyric's transcription worker lazily `import()`s @huggingface/transformers
+  // so the Whisper model is only fetched once a visitor clicks "Align
+  // lyrics"; that code-split requires an ES module worker bundle (Rollup
+  // rejects code-splitting under the default iife/umd worker format).
+  worker: { format: 'es' },
   build: {
     manifest: true,
     outDir: 'dist',
