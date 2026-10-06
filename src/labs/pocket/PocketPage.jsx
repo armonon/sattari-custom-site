@@ -5,6 +5,7 @@ import {
   Download,
   Eraser,
   FileArchive,
+  FileMusic,
   Play,
   Save,
   Send,
@@ -240,6 +241,35 @@ export default function PocketPage() {
       setStatus({ text: `Saved ${result.stems.length} stems and the mix in one ZIP.` });
     } catch (error) {
       setStatus({ text: error.message, error: true });
+    }
+  };
+
+  const exportAbleton = async () => {
+    try {
+      const result = await render('ableton');
+      const { exportForAbleton, warpModeFor } = await import('../../utils/abletonExport');
+      const colors = Object.fromEntries(ALL_TRACKS.map((track) => [track.id, track.color]));
+      const pack = await exportForAbleton({
+        title: pattern.name || 'Pocket',
+        bpm: pattern.bpm,
+        source: { app: 'Pocket' },
+        stems: [
+          ...result.stems.map((stem) => ({
+            name: stem.label,
+            color: colors[stem.id],
+            warpMode: warpModeFor(stem.id === 'bass' ? 'bass' : 'drums'),
+            buffer: stem.buffer,
+          })),
+          { name: 'Pocket mix', buffer: result.mix, muted: true, warpMode: warpModeFor('drums') },
+        ],
+        notes: [
+          `${bars} bar${bars > 1 ? 's' : ''} at ${pattern.bpm} BPM${pattern.swing ? `, ${Math.round(pattern.swing * 100)}% swing (baked into the audio)` : ''}. Loop the clips in Live to repeat the pattern.`,
+        ],
+      });
+      downloadBlob(pack.blob, pack.fileName);
+      setStatus({ text: `Saved ${pack.fileName}: ${result.stems.length} stems and a Live Set.` });
+    } catch (error) {
+      setStatus({ text: `Ableton export failed: ${error.message}`, error: true });
     }
   };
 
@@ -552,6 +582,15 @@ export default function PocketPage() {
               onClick={exportStems}
             >
               <FileArchive size={16} aria-hidden="true" /> Stems (ZIP)
+            </button>
+            <button
+              type="button"
+              className="lab-button"
+              disabled={Boolean(busy)}
+              onClick={exportAbleton}
+              title="Stems as WAV plus an Ableton Live Set with one track per sound, at this tempo"
+            >
+              <FileMusic size={16} aria-hidden="true" /> Export for Ableton
             </button>
             <button
               type="button"

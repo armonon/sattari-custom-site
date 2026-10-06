@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   AudioLines,
   Download,
+  FileMusic,
   LoaderCircle,
   RotateCcw,
   SlidersHorizontal,
@@ -100,6 +101,36 @@ export default function SplitPage() {
   };
 
   const analysis = job?.analysis?.status === 'ready' ? job.analysis : null;
+
+  const [abletonBusy, setAbletonBusy] = useState(false);
+  const exportAbleton = async () => {
+    setAbletonBusy(true);
+    setZipError('');
+    try {
+      const { exportForAbleton, warpModeFor } = await import('../../utils/abletonExport');
+      const byId = new Map(job.outputs.map((output) => [output.id, output]));
+      const pack = await exportForAbleton({
+        title: safeTrackName(job.file.name),
+        bpm: analysis?.bpm ?? null,
+        source: { app: 'Split', tempoIsEstimate: true },
+        stems: [
+          ...STEMS.filter((stem) => byId.has(stem.id)).map((stem) => ({
+            name: stem.label,
+            color: stem.color,
+            warpMode: warpModeFor(stem.id),
+            blob: byId.get(stem.id).blob,
+          })),
+          // The original, muted, for A/B against the stems.
+          { name: 'Original mix', blob: job.file, muted: true, warpMode: warpModeFor('mix') },
+        ],
+      });
+      downloadBlob(pack.blob, pack.fileName);
+    } catch (error) {
+      setZipError(`Ableton export failed: ${error.message}`);
+    } finally {
+      setAbletonBusy(false);
+    }
+  };
 
   return (
     <AudioLabShell
@@ -239,6 +270,20 @@ export default function SplitPage() {
                     )}{' '}
                     All stems (ZIP)
                   </button>
+                  <button
+                    type="button"
+                    className="alab-button"
+                    disabled={abletonBusy}
+                    onClick={() => void exportAbleton()}
+                    title="A ZIP with the stems as WAV files and an Ableton Live Set (.als) with one track per stem at the detected tempo"
+                  >
+                    {abletonBusy ? (
+                      <LoaderCircle className="alab-spin" size={16} aria-hidden="true" />
+                    ) : (
+                      <FileMusic size={16} aria-hidden="true" />
+                    )}{' '}
+                    Export for Ableton
+                  </button>
                   <a
                     className="alab-text-button"
                     href="/stem-separator-credits.txt"
@@ -255,7 +300,9 @@ export default function SplitPage() {
                 )}
                 <p className="alab-note">
                   Open in StemDeck loads the original and the four stems into the first empty deck,
-                  with the full mix turned down. WAVs are 32-bit float, 44.1 kHz.
+                  with the full mix turned down. WAVs are 32-bit float, 44.1 kHz. Export for Ableton
+                  adds a Live Set (Live 12) with each stem on its own track at bar 1, warped at the
+                  detected tempo{analysis?.bpm ? ` (${analysis.bpm} BPM)` : ''}.
                 </p>
               </>
             )}
