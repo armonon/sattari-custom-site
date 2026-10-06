@@ -158,7 +158,7 @@ export default function KeyBpmPage() {
       title="Key & BPM"
       eyebrow="Sattari Studio lab"
       summary="Drop a folder of tracks and get the key, Camelot code and tempo of each, measured in your browser with Sattari AutoKey. Export everything as CSV for your DJ crates."
-      description="Detect the musical key, Camelot code and BPM of many tracks at once in your browser, then export a CSV. Alpha."
+      description="Detect the musical key, Camelot code and BPM of many tracks at once in your browser, then export a CSV."
       limits={LIMITS}
     >
       <div className="alab-workspace">

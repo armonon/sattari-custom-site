@@ -74,10 +74,10 @@ async function open(path, width) {
     false,
     `${path} @${width}: horizontal overflow`
   );
-  assert.match(
+  assert.doesNotMatch(
     await page.locator('meta[name="robots"]').getAttribute('content'),
     /noindex/,
-    `${path}: alpha tools stay noindex`
+    `${path}: tool pages are indexable`
   );
   return { context, page, errors };
 }

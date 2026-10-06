@@ -248,7 +248,7 @@ export default function VoxPage() {
       title="Vox"
       eyebrow="Sattari Studio lab"
       summary="Record or drop a vocal, let Vox find the key, then pull every note to the scale with as much or as little strength as you like. Add a third or fifth harmony and export WAV."
-      description="Record or drop a vocal, detect its key, pitch-correct it to the scale with a strength control, add a harmony and export WAV in your browser. Alpha."
+      description="Record or drop a vocal, detect its key, pitch-correct it to the scale with a strength control, add a harmony and export WAV in your browser."
       limits={LIMITS}
     >
       <div className="alab-workspace">

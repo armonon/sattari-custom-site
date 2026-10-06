@@ -50,9 +50,9 @@ describe.each([
   });
 });
 
-it('keeps the alpha tools out of search until the owner decides', () => {
+it('makes the alpha tools indexable with search-length descriptions', () => {
   for (const seo of Object.values(LAB_SEO)) {
-    expect(seo.noindex).toBe(true);
+    expect(seo.noindex).toBeUndefined();
     expect(seo.description.length).toBeLessThanOrEqual(180);
   }
 });

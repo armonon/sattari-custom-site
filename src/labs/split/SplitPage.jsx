@@ -107,7 +107,7 @@ export default function SplitPage() {
       title="Split"
       eyebrow="Sattari Studio lab"
       summary="Drop a song and split it into vocals, drums, bass and instruments with the HTDemucs model running in your browser. Mute the vocals, solo the bass, download WAV stems or open them straight in StemDeck."
-      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in StemDeck. Alpha."
+      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in StemDeck."
       limits={LIMITS}
     >
       <div className="alab-workspace">
@@ -261,6 +261,13 @@ export default function SplitPage() {
             )}
           </section>
         )}
+        <p className="alab-note">
+          Model: HTDemucs by Meta (MIT License), ONNX conversion by demucs-web (MIT), fetched from
+          Hugging Face at a pinned revision and SHA-256 checked before use.{' '}
+          <a href="/stem-separator-credits.txt" target="_blank" rel="noreferrer">
+            Credits and licenses
+          </a>
+        </p>
       </div>
     </AudioLabShell>
   );

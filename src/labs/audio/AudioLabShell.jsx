@@ -19,12 +19,7 @@ export default function AudioLabShell({
   const current = LAB_TOOLS.find((item) => item.id === tool);
   return (
     <>
-      <SEO
-        title={`${title} alpha · Sattari Studio lab`}
-        description={description}
-        url={`${ORIGIN}${current.path}`}
-        noindex
-      />
+      <SEO title={current.seoTitle} description={description} url={`${ORIGIN}${current.path}`} />
       <div className="alab-page" data-lab={tool}>
         <div className="alab-shell">
           <nav className="alab-breadcrumb" aria-label="Breadcrumb">

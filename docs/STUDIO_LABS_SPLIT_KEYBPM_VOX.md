@@ -1,9 +1,9 @@
 # Studio labs: Split, Key & BPM, Vox (alpha)
 
 Three single-purpose tools under the Studio, all running in the browser. Each
-page is labelled **Alpha**, lists its limits on the page, and is prerendered but
-`noindex` (not in the sitemap) until the owner approves it. Listed on the Hub
-under "Studio labs".
+page is labelled **Alpha**, lists its limits on the page, and is prerendered,
+indexable and in the sitemap (owner-approved 2026-10-05). Listed on the Hub
+under "Labs" with Canvas, Pocket and Press.
 
 | Route            | What it does                                                                                                                    | Engine                                                                                                                                  |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -59,3 +59,25 @@ and a fake-microphone recording loads; Split runs real HTDemucs on the demo,
 plays the stems, exports an exact-length WAV, and **Open in StemDeck** fills
 Deck A. It also checks 390 px layouts for overflow. Run tests on Node 22 (see
 `.nvmrc`): Node 26's global `localStorage` breaks unrelated jsdom suites.
+
+## Split model hosting (decided 2026-10-05)
+
+The HTDemucs ONNX model (`htdemucs_embedded.onnx`, 180,534,758 bytes, MIT) stays
+on Hugging Face (`timcsy/demucs-web-onnx`, pinned revision
+`92e33df61cfc9eb820272aaa62d2ef6dcf4d950d`) instead of being self-hosted on
+Netlify:
+
+- It cannot live in this repo: GitHub rejects files over 100 MB, so a
+  Netlify-hosted copy would have to be fetched at build time anyway.
+- Netlify meters bandwidth at 20 credits/GB on the account's credit plan:
+  ~3.6 credits per first-time Split/Stem Separator user, so ~830 new users
+  would use the whole 3,000-credit month and start paid auto top-ups.
+  Hugging Face serves it free, with CORS.
+- The risk self-hosting would remove is already covered: the URL is pinned to
+  an immutable revision, and `src/utils/stemSeparatorModel.js` checks the exact
+  byte count and SHA-256 before use, so a changed or tampered file is rejected.
+
+If the repo ever disappears, put the same file (same SHA-256) on a CORS-enabled
+bucket (e.g. Cloudflare R2, no egress fees) and change `MODEL_URL`. The license
+notice is `public/stem-separator-credits.txt`, linked from /studio/split
+and /stem-separator.

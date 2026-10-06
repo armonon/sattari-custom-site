@@ -35,6 +35,13 @@ export function getPrerenderRoutes(inventory) {
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
     ['/downloads', 'src/pages/DownloadsPage.tsx'],
+    // Wave-2 music tools (alpha label on the page, indexable like any tool).
+    ['/studio/split', 'src/labs/split/SplitPage.jsx'],
+    ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],
+    ['/studio/vox', 'src/labs/vox/VoxPage.jsx'],
+    ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
+    ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],
+    ['/press', 'src/labs/press/PressPage.jsx'],
     ...localPages
       .filter((page) => !page.canonicalUrl)
       .map((page) => [new URL(page.url).pathname, LOCAL_SEO_ENTRY]),
@@ -61,18 +68,10 @@ export function getPrerenderRoutes(inventory) {
     ...[
       ['/cart', 'src/pages/CartPage.tsx'],
       ['/studio-booking', 'src/pages/StudioBookingStatus.jsx'],
-      // Studio alpha labs: prerendered so they are real pages, noindex while alpha.
-      ['/studio/split', 'src/labs/split/SplitPage.jsx'],
-      ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],
-      ['/studio/vox', 'src/labs/vox/VoxPage.jsx'],
       ['/checkout/success', 'src/pages/CheckoutStatus.jsx'],
       ['/checkout/cancel', 'src/pages/CheckoutStatus.jsx'],
       ['/instagram/callback', 'src/pages/InstagramCallback.jsx'],
       ['/404', 'src/components/NotFoundPage.tsx'],
-      // Wave-2 alpha tools: public but noindex until the owner decides.
-      ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
-      ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],
-      ['/press', 'src/labs/press/PressPage.jsx'],
     ].map(([path, entry]) => ({ path, entry, indexable: false })),
   ];
 }
