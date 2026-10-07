@@ -16,6 +16,8 @@ if (!base) {
   base = 'http://localhost:5399'; // the Locker allowlists localhost, not 127.0.0.1
 }
 const log = (line) => console.log(`  ✓ ${line}`);
+// Same site as thecreatingco.com → hidden bridge iframe; anything else → popup handoff.
+const expectedMode = /(^|\.)thecreatingco\.com$/.test(new URL(base).hostname) ? 'bridge' : 'popup';
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROME_PATH || undefined,
@@ -77,11 +79,11 @@ try {
     });
     assert.equal(script.app, app, `${path} data-app`);
     assert.equal(script.count, 1);
-    assert.equal(script.mode, 'popup', 'localhost/sattarimusic.com use the popup handoff');
+    assert.equal(script.mode, expectedMode, `${path} Locker mode`);
     await page.close();
   }
   log(
-    `menu renders on ${PAGES.length} tool pages with the right data-app, no layout shift, Locker mode popup`
+    `menu renders on ${PAGES.length} tool pages with the right data-app, no layout shift, Locker mode ${expectedMode}`
   );
 
   for (const path of ['/', '/hub', '/shop']) {
@@ -114,7 +116,7 @@ try {
     .catch(async (error) => {
       throw new Error(`${error.message}\nOffer says: ${await offer.textContent()}`);
     });
-  log(`Pocket WAV "${savedName}" → Save to Locker → saved (popup handoff)`);
+  log(`Pocket WAV "${savedName}" → Save to Locker → saved (${expectedMode})`);
 
   // The file is in the Locker on thecreatingco.com (first-party storage).
   const locker = await context.newPage();
@@ -126,7 +128,7 @@ try {
   assert.equal(entry.app, 'pocket');
   log(`thecreatingco.com/locker lists it (app "${entry.app}", ${entry.size} bytes)`);
 
-  // 3. onOpen: open that file in Split with ?tcc-open= (no opener → kit's "Open file" prompt).
+  // 3. onOpen: open that file in Split with ?tcc-open= (popup mode without an opener → the kit's "Open file" prompt).
   const split = await context.newPage();
   watch(split);
   await split.goto(`${base}/studio/split?tcc-open=${encodeURIComponent(entry.id)}`, {
