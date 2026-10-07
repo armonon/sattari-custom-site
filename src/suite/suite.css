@@ -1,10 +1,15 @@
 /* Reserve the suite menu's box before suite.js upgrades the element (no layout shift). */
-tcc-suite-menu.tcc-suite-menu-slot {
+tcc-suite-menu {
   display: inline-block;
   flex: none;
   width: 36px;
   height: 36px;
   vertical-align: middle;
+}
+.tcc-suite-menu-wrap {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
 }
 
 .tcc-locker-offer {
@@ -78,5 +83,19 @@ tcc-suite-menu.tcc-suite-menu-slot {
 @keyframes tcc-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* StemDeck command bar: title row on wide screens, actions row on phones. */
+.sd-suite-menu-compact {
+  display: none;
+}
+@media (max-width: 640px) {
+  .sd-title-block .sd-suite-menu {
+    display: none;
+  }
+  .sd-suite-menu-compact {
+    display: inline-flex;
+    align-self: center;
   }
 }

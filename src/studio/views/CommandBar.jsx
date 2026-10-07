@@ -219,6 +219,8 @@ export default function CommandBar({
           icon={Settings}
           label="Settings"
         />
+        {/* Phones: the title row has no room, so the suite menu sits here instead. */}
+        <SuiteMenu className="sd-suite-menu-compact" />
       </div>
     </header>
   );

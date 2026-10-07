@@ -18,7 +18,13 @@ import './suite.css';
 export function SuiteMenu({ className = '' }) {
   const { pathname } = useLocation();
   useSuiteKit(suiteAppFor(pathname));
-  return <tcc-suite-menu className={`tcc-suite-menu-slot ${className}`.trim()} />;
+  // React 18 does not turn className into class on custom elements, so the
+  // wrapper carries any page-specific class and suite.css sizes the element.
+  return (
+    <span className={`tcc-suite-menu-wrap ${className}`.trim()}>
+      <tcc-suite-menu />
+    </span>
+  );
 }
 
 /**
