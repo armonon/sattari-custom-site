@@ -19,6 +19,7 @@ import {
   normalizeDraft,
   safeUrl,
 } from './pressHtml';
+import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const PHOTO_MAX = 900;
 
@@ -152,6 +153,11 @@ export default function PressPage() {
   const set = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const setContact = (key, value) =>
     setDraft((current) => ({ ...current, contact: { ...current.contact, [key]: value } }));
+
+  // A photo sent from the Locker or another suite app (?tcc-open=).
+  useLockerOpen('press', (entry) => {
+    if (/^image\//.test(entry.type || '')) void onPhoto(entryFile(entry));
+  });
 
   const onPhoto = async (file) => {
     if (!file) return;

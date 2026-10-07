@@ -5,6 +5,7 @@ import { formatTime, LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
 import { decodeTrack, SAMPLE_RATE } from '../../utils/stemSeparator';
 import { KEYBPM_MAX_BYTES, KEYBPM_MAX_FILES, resultRow, resultsCsv } from './keyBpm';
+import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
   'Key is one global estimate per track (Sattari AutoKey). Key changes, modal or atonal music are not reported separately.',
@@ -141,6 +142,8 @@ export default function KeyBpmPage() {
     publish([...rowsRef.current, ...added]);
     void runQueue();
   };
+  // Audio sent from the Locker or another suite app (?tcc-open=).
+  useLockerOpen('key-bpm', (entry) => addFiles([entryFile(entry)]));
 
   const stop = () => {
     controller.current?.abort();

@@ -9,6 +9,9 @@ import NotFoundPage from '@components/NotFoundPage';
 import RouteErrorBoundary from '@components/RouteErrorBoundary';
 import ScrollManager from '@components/ScrollManager';
 import SiteMeasurement from './components/SiteMeasurement';
+import { StudioAppStatus } from './pwa/StudioPwaUi';
+import { LockerOffer } from './suite/SuiteUi';
+import { suiteAppFor } from './suite/suiteKit';
 import { OrganizationSchema, SEO } from '@utils/seo';
 import {
   Category,
@@ -149,6 +152,10 @@ export async function preloadRoute(pathname: string): Promise<{ hydrate: boolean
   return { hydrate: route.hydrate !== false };
 }
 
+// The installable studio apps (StemDeck and the Sattari tools): the pages the
+// studio service worker serves offline (src/pwa/studio-sw.js).
+const STUDIO_APP_PAGE = /^\/studio(\/(split|keybpm|vox|canvas|pocket))?$/;
+
 // Wave-2 alpha tools outside /studio/: tool pages without the footer or shop assistant.
 const LAB_PATHS = ['/press'];
 
@@ -255,6 +262,8 @@ const App: FC = () => {
     <div className={`site-shell${pagePath === '/' ? ' is-home' : ''}`}>
       <OrganizationSchema />
       <ScrollManager />
+      {STUDIO_APP_PAGE.test(pagePath) && <StudioAppStatus />}
+      {suiteAppFor(pagePath) && <LockerOffer />}
       {pagePath !== '/studio' && (
         <a
           className="site-skip-link"

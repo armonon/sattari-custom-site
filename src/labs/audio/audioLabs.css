@@ -68,6 +68,24 @@
   padding: 22px 0;
   border-bottom: 1px solid var(--alab-line);
 }
+.alab-breadcrumb-end {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+.alab-install {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--alab-line);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
 .alab-breadcrumb a {
   display: inline-flex;
   align-items: center;
@@ -653,4 +671,12 @@
     grid-column: 1 / -1;
     grid-row: 3;
   }
+}
+
+.alab-offline h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 15px;
 }

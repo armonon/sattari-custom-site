@@ -5,6 +5,7 @@ import { downloadBlob, safeFileName } from '../files';
 import { analyseBuffer, demoView, featuresAt, loopView } from './canvasFeatures';
 import { drawFrame, PALETTES, SCENES } from './canvasScenes';
 import { browserFormats, EXPORT_SIZES, LOOP_LENGTHS, recorderMimeType } from './canvasExport';
+import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const PREVIEW = { width: 720, height: 1280 };
 const MAX_AUDIO_BYTES = 200 * 1024 * 1024;
@@ -185,6 +186,13 @@ export default function CanvasPage() {
   );
 
   useEffect(() => () => cover && URL.revokeObjectURL(cover.url), [cover]);
+
+  // Audio or cover art sent from the Locker or another suite app (?tcc-open=).
+  useLockerOpen('canvas', (entry) => {
+    const file = entryFile(entry);
+    if (/^image\//.test(file.type)) void onCover(file);
+    else void onAudio(file);
+  });
 
   const onAudio = async (file) => {
     if (!file) return;

@@ -1,4 +1,5 @@
 import { wavBytes } from '../../utils/arrangementExport';
+import { offerToLocker } from '../../suite/suiteKit';
 
 export const LAB_RATE = 44100;
 
@@ -41,6 +42,7 @@ export async function decodeMono(blob, rate = LAB_RATE) {
 }
 
 export function downloadBlob(blob, name) {
+  offerToLocker(blob, name);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

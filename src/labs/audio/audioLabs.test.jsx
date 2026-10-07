@@ -7,6 +7,8 @@ import VoxPage from '../vox/VoxPage';
 import { LAB_TOOLS } from './audioLabTools';
 
 vi.mock('../../utils/seo', () => ({ SEO: () => null }));
+vi.mock('../../pwa/SattariAppMetadata', () => ({ default: () => null }));
+vi.mock('../split/SplitOffline', () => ({ default: () => null }));
 
 class FakeWorker {
   postMessage() {}

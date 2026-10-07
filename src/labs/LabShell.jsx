@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, ShieldCheck } from 'lucide-react';
 import { SEO } from '../utils/seo';
 import { LAB_SEO } from './labsSeo';
+import SattariAppMetadata from '../pwa/SattariAppMetadata';
+import { InstallAppButton } from '../pwa/StudioPwaUi';
+import { SuiteMenu } from '../suite/SuiteUi';
 import './labs.css';
 
 /**
@@ -12,15 +15,23 @@ export default function LabShell({ lab, name, tagline, limitations, className = 
   return (
     <>
       <SEO {...LAB_SEO[lab]} />
+      {/* Press lives at /press, outside the installable app's /studio/ scope. */}
+      {lab !== 'press' && <SattariAppMetadata />}
       <section className={`lab-page lab-${lab} ${className}`.trim()}>
         <div className="lab-shell">
           <nav className="lab-breadcrumb" aria-label="Music tools">
             <Link to="/hub">
               <ArrowLeft size={15} aria-hidden="true" /> Sattari Hub
             </Link>
-            <Link to="/studio">
-              Open StemDeck <ArrowUpRight size={15} aria-hidden="true" />
-            </Link>
+            <span className="lab-breadcrumb-end">
+              <Link to="/studio">
+                Open StemDeck <ArrowUpRight size={15} aria-hidden="true" />
+              </Link>
+              {lab !== 'press' && (
+                <InstallAppButton className="lab-install">Install Sattari app</InstallAppButton>
+              )}
+              <SuiteMenu />
+            </span>
           </nav>
           <header className="lab-heading">
             <div>

@@ -10,6 +10,7 @@ import { DRAFT_KEY } from './press/pressHtml';
 import { LAB_SEO } from './labsSeo';
 
 vi.mock('../utils/seo', () => ({ SEO: () => null }));
+vi.mock('../pwa/SattariAppMetadata', () => ({ default: () => null }));
 
 const page = (Component) => (
   <MemoryRouter>

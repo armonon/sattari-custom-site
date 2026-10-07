@@ -14,11 +14,13 @@ import {
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop, LabWaveform } from '../audio/AudioLabParts';
 import StemMixer from './StemMixer';
+import SplitOffline from './SplitOffline';
 import useStemSeparator from '../../hooks/useStemSeparator';
 import { safeTrackName, STEMS } from '../../utils/stemSeparator';
 import { createStemArchive } from '../../utils/stemSeparatorDownload';
 import { downloadBlob } from '../audio/audioLabFiles';
 import { offerStemHandoff } from '../../studio/stemHandoff';
+import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
   'Quality is HTDemucs-class, not studio grade: expect some bleed between stems and artifacts on dense mixes.',
@@ -45,6 +47,9 @@ export default function SplitPage() {
     jobs.forEach((item) => remove(item.id));
     addFiles([files[0]]);
   };
+
+  // A song sent from the Locker or another suite app (?tcc-open=) is queued like a dropped file.
+  useLockerOpen('split', (entry) => choose([entryFile(entry)]));
 
   const lanes = useMemo(() => {
     if (job?.status !== 'done') return null;
@@ -315,6 +320,7 @@ export default function SplitPage() {
             Credits and licenses
           </a>
         </p>
+        <SplitOffline disabled={locked} />
       </div>
     </AudioLabShell>
   );

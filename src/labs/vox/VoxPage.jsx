@@ -13,6 +13,7 @@ import {
 } from '../audio/audioLabFiles';
 import useVoxRecorder from './useVoxRecorder';
 import { hzToMidi, keyLabel, NOTE_NAMES, scalePitchClasses, VOX_MAX_SECONDS } from './voxDsp';
+import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
   'One clean, solo (monophonic) voice. Backing tracks, reverb-heavy or polyphonic audio confuse the pitch tracker.',
@@ -187,6 +188,11 @@ export default function VoxPage() {
     },
     [stopPlayback]
   );
+  // A vocal sent from the Locker or another suite app (?tcc-open=).
+  useLockerOpen('vox', (entry) => {
+    if (isAudioFile(entryFile(entry))) void loadTake(entry.blob, entry.name);
+    else setError(`${entry.name} is not an audio file.`);
+  });
 
   const recorder = useVoxRecorder((blob) => void loadTake(blob, 'vox-recording'));
 

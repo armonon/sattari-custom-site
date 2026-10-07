@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, FlaskConical, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { SEO } from '../../utils/seo';
 import { LAB_TOOLS } from './audioLabTools';
+import SattariAppMetadata from '../../pwa/SattariAppMetadata';
+import { InstallAppButton } from '../../pwa/StudioPwaUi';
+import { SuiteMenu } from '../../suite/SuiteUi';
 import './audioLabs.css';
 
 const ORIGIN = 'https://sattarimusic.com';
@@ -20,15 +23,20 @@ export default function AudioLabShell({
   return (
     <>
       <SEO title={current.seoTitle} description={description} url={`${ORIGIN}${current.path}`} />
+      <SattariAppMetadata />
       <div className="alab-page" data-lab={tool}>
         <div className="alab-shell">
           <nav className="alab-breadcrumb" aria-label="Breadcrumb">
             <Link to="/hub">
               <ArrowLeft size={14} aria-hidden="true" /> Sattari Hub
             </Link>
-            <Link to="/studio">
-              <SlidersHorizontal size={14} aria-hidden="true" /> Open StemDeck
-            </Link>
+            <span className="alab-breadcrumb-end">
+              <Link to="/studio">
+                <SlidersHorizontal size={14} aria-hidden="true" /> Open StemDeck
+              </Link>
+              <InstallAppButton className="alab-install">Install Sattari app</InstallAppButton>
+              <SuiteMenu />
+            </span>
           </nav>
           <header className="alab-heading">
             <div>

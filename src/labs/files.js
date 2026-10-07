@@ -1,5 +1,8 @@
+import { offerToLocker } from '../suite/suiteKit';
+
 /** Saves a Blob through a temporary link. */
 export function downloadBlob(blob, filename) {
+  offerToLocker(blob, filename);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
