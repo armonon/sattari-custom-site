@@ -35,10 +35,15 @@ export const products = [
     slug: 'pirouz-series-cymbals',
     category: 'cymbals',
     description:
-      'Sattari Hand Crafted Cymbals are renowned for their exceptional quality and craftsmanship in the world of drumming. These cymbals are meticulously handcrafted with precision and care, resulting in a unique sound and character that drummers love. The Sattari brand takes great pride in its dedication to creating cymbals that meet the highest standards of musicianship. Each cymbal is carefully forged by skilled artisans who understand the intricacies of cymbal making. They use traditional techniques combined with modern innovations to produce cymbals that are both versatile and expressive.',
+      'A handcrafted crash cymbal from the Sattari Pirouz Series — forged for drummers who want a cymbal with character, not just volume. Warm attack, medium sustain, and a controlled decay that cuts through a mix without overpowering it. Built and finished by hand in small batches, so each one carries a slightly different voice. A strong choice for rock, jazz, and studio work.',
     price: 80.0,
     image: '/sattari site/crash.png',
-    specs: [],
+    specs: [
+      'Type: crash cymbal',
+      'Series: Pirouz',
+      'Construction: handcrafted, hand-hammered and lathed',
+      'Finish: hand-buffed traditional finish',
+    ],
   },
   {
     id: 'pirouz-series-splash',
@@ -46,10 +51,15 @@ export const products = [
     slug: 'pirouz-series-splash',
     category: 'cymbals',
     description:
-      'Sattari Hand Crafted Cymbals are renowned for their exceptional quality and craftsmanship in the world of drumming. These cymbals are meticulously handcrafted with precision and care, resulting in a unique sound and character that drummers love. The Sattari brand takes great pride in its dedication to creating cymbals that meet the highest standards of musicianship. Each cymbal is carefully forged by skilled artisans who understand the intricacies of cymbal making. They use traditional techniques combined with modern innovations to produce cymbals that are both versatile and expressive. Percussionists can also use these splashes.',
+      'The Pirouz Series Splash is a handcrafted accent cymbal built for quick, articulate response. Fast attack and short sustain make it ideal for punctuating fills, ghost notes, and anything that calls for a sharp accent without lingering overtones. Pairs naturally with the Pirouz crash for a matched set.',
     price: 45.0,
     image: '/sattari site/crash.png',
-    specs: [],
+    specs: [
+      'Type: splash cymbal',
+      'Series: Pirouz',
+      'Construction: handcrafted, hand-hammered and lathed',
+      'Character: fast attack, short sustain',
+    ],
   },
   {
     id: '4-pair-drumsticks-free-bag',
@@ -68,10 +78,15 @@ export const products = [
     slug: 'classic-american-hickory-a7',
     category: 'sticks',
     description:
-      'A7 drumsticks made from premium American Hickory wood. SATTARI line combines tradition with quality to BANG! With bold designs, our drumsticks are turned from premium American Hickory wood—a dense wood with little flex for a more pronounced sound. Highly durable and designed for intensified cymbal response.',
+      'A7 drumsticks turned from American hickory — a dense, durable hardwood with excellent rebound and low flex. The 7A taper is slimmer and lighter than a 5A, making it a popular choice for jazz, lighter rock, and drummers who want better control and less fatigue over a long set. Sharp cymbal definition without excessive volume.',
     price: 7.0,
     image: '/sattari site/sticks.png',
-    specs: [],
+    specs: [
+      'Size: 7A',
+      'Wood: American hickory',
+      'Tip: wood tip',
+      'Best for: jazz, lighter playing styles, high cymbal definition',
+    ],
   },
   {
     id: 'classic-american-hickory-a5',
@@ -79,10 +94,15 @@ export const products = [
     slug: 'classic-american-hickory-a5',
     category: 'sticks',
     description:
-      'A5 drumsticks made from premium American Hickory wood. SATTARI line combines tradition with quality to BANG! With bold designs, our drumsticks are turned from premium American Hickory wood—a dense wood with little flex for a more pronounced sound. Highly durable and designed for intensified cymbal response.',
+      'A5 drumsticks turned from American hickory — the most versatile and widely used size in drumming. Balanced weight and length make these suitable across rock, pop, funk, and everything in between. American hickory absorbs shock well, which means less fatigue and a more consistent feel through long sessions. A dependable all-around choice.',
     price: 7.0,
     image: '/sattari site/sticks.png',
-    specs: [],
+    specs: [
+      'Size: 5A',
+      'Wood: American hickory',
+      'Tip: wood tip',
+      'Best for: rock, pop, funk, all-around use',
+    ],
   },
   {
     id: 'classic-maple-5a-nylon-tip',
@@ -90,10 +110,15 @@ export const products = [
     slug: 'classic-maple-5a-nylon-tip',
     category: 'sticks',
     description:
-      '5A drumsticks with nylon tips made from premium North American maple wood. SATTARI line combines tradition with fun colors to BANG! With bold designs, our drumsticks are turned from premium North American maple wood—a dense wood with little flex for a more pronounced sound. Highly durable and designed for intensified cymbal response.',
+      'Maple 5A drumsticks with nylon tips. Maple is lighter than hickory, which makes these sticks faster and easier to play at higher tempos — and the nylon tip adds a brighter, more articulate response on cymbals compared to a wood tip. A favourite for drummers who want quick movement and crisp ride/hi-hat definition. Available in color finishes.',
     price: 7.99,
     image: '/sattari site/sticks.png',
-    specs: [],
+    specs: [
+      'Size: 5A',
+      'Wood: North American maple',
+      'Tip: nylon',
+      'Best for: fast playing, bright cymbal response, jazz and pop',
+    ],
   },
   {
     id: 'cymbal-felts',
@@ -101,7 +126,7 @@ export const products = [
     slug: 'cymbal-felts',
     category: 'essentials',
     description:
-      'SATTARI Cymbal Felts in an all new stunning red. Protect your cymbals and improve tone.',
+      'SATTARI cymbal felts in a distinctive red finish — the felt washers that sit between your cymbal and the stand wing nut, protecting the bell and letting the cymbal move freely. Worn felts muffle sustain and can crack a cymbal over time; fresh ones restore the natural swing. A simple upgrade most drummers forget until something breaks.',
     price: 6.99,
     image: '/sattari site/drums/cymbal-felts.jpg',
     gallery: [
@@ -109,7 +134,11 @@ export const products = [
       '/sattari site/drums/cymbal-felts-2.jpg',
       '/sattari site/drums/cymbal-felts-3.jpg',
     ],
-    specs: [],
+    specs: [
+      'Color: red',
+      'Use: cymbal stand felts (between cymbal and wing nut)',
+      'Fits: standard cymbal stands',
+    ],
   },
   {
     id: 'sattari-effect-cymbal',
@@ -117,14 +146,19 @@ export const products = [
     slug: 'sattari-effect-cymbal',
     category: 'cymbals',
     description:
-      'Sattari Hand Crafted Cymbals are renowned for their exceptional quality and craftsmanship in the world of drumming. These cymbals are meticulously handcrafted with precision and care, resulting in a unique sound and character that drummers love. The Sattari brand takes great pride in its dedication to creating cymbals that meet the highest standards of musicianship. Each cymbal is carefully forged by skilled artisans who understand the intricacies of cymbal making. They use traditional techniques combined with modern innovations to produce cymbals that are both versatile and expressive.',
+      'A handcrafted Sattari effect cymbal designed to add texture and color to your kit. Available in three sizes — 15", 16", and 17" — so you can dial in the amount of cut and sustain that fits your setup. Aggressive attack with a trashy, raw character that sits well alongside crashes and rides without competing with them. A natural choice for drummers looking to add something unexpected.',
     sizes: [
       { size: '15"', price: 100 },
       { size: '16"', price: 90 },
       { size: '17"', price: 80 },
     ],
     image: '/sattari site/efx.png',
-    specs: [],
+    specs: [
+      'Type: effect cymbal',
+      'Sizes available: 15", 16" and 17"',
+      'Construction: handcrafted, hand-hammered',
+      'Character: aggressive attack, raw trashy sustain',
+    ],
   },
   {
     id: 'sattari-hand-crafted-hi-hat',
@@ -132,10 +166,15 @@ export const products = [
     slug: 'sattari-hand-crafted-hi-hat',
     category: 'cymbals',
     description:
-      "Sattari Hand Crafted Hi-Hat's are renowned for their exceptional quality and craftsmanship in the world of drumming. These cymbals are meticulously handcrafted with precision and care, resulting in a unique sound and character that drummers love. The Sattari brand takes great pride in its dedication to creating cymbals that meet the highest standards of musicianship. Each cymbal is carefully forged by skilled artisans who understand the intricacies of cymbal making. They use traditional techniques combined with modern innovations to produce cymbals that are both versatile and expressive.",
+      'Pirouz Series hi-hats, handcrafted to deliver a tight, cutting chick and a rich, washy open sound. The matched pair is balanced for consistent feel whether you are playing closed, half-open, or riding the edge. At home in jazz, rock, and studio sessions — responsive at low volume, assertive when pushed.',
     price: 130.0,
     image: '/sattari site/hihat.png',
-    specs: [],
+    specs: [
+      'Type: hi-hat pair (top and bottom)',
+      'Series: Pirouz',
+      'Construction: handcrafted, hand-hammered and lathed',
+      'Sold as: matched pair',
+    ],
   },
   {
     id: 'cremona-handmade-acoustic-violin',
@@ -155,7 +194,12 @@ export const products = [
       '/sattari site/violins/cremona-acoustic-6.jpg',
       '/sattari site/violins/cremona-acoustic-7.jpg',
     ],
-    specs: [],
+    specs: [
+      'Size: 4/4 (full size)',
+      'Construction: hand-carved and shaped',
+      'Finish: hand-applied varnish',
+      'Setup: individually workshop-fitted in California',
+    ],
   },
   {
     id: 'chiara-wooden-electric-violin',
@@ -257,7 +301,7 @@ export const products = [
     slug: 'five-string-bass-guitar',
     category: 'guitar-bass',
     description:
-      'Five-string electric bass — an excellent wooden instrument with a glossy finish. Available in store.',
+      'A five-string electric bass with a glossy finish, built for players who need the extended low B string for drop tunings, extended-range playing, or added versatility in the studio. Full-bodied tone with comfortable action, set up and shipped from California. A solid instrument at an accessible price point for intermediate players or anyone adding a second bass to their rig.',
     price: 280.0,
     image: '/sattari site/guitars/bass-guitar.jpg',
     gallery: [
@@ -265,7 +309,11 @@ export const products = [
       '/sattari site/guitars/bass-guitar-2.jpg',
       '/sattari site/guitars/bass-guitar-3.jpg',
     ],
-    specs: [],
+    specs: [
+      'Strings: 5 (BEADG)',
+      'Finish: gloss',
+      'Setup: individually set up and shipped from California',
+    ],
   },
   {
     id: 'classic-nylon-string-guitar',
@@ -322,7 +370,11 @@ export const products = [
       '/sattari site/drums/darbuka-2.jpg',
       '/sattari site/drums/darbuka-3.jpg',
     ],
-    specs: [],
+    specs: [
+      'Type: goblet hand drum (darbuka / dumbek)',
+      'Weight: lightweight',
+      'Head: synthetic, tuned for a clear, tight sound',
+    ],
   },
   {
     id: 'sattari-practice-pad-12',
@@ -346,7 +398,12 @@ export const products = [
       { name: 'Grey', hex: '#808080' },
       { name: 'Green', hex: '#2e7d32' },
     ],
-    specs: [],
+    specs: [
+      'Diameter: 12 inches',
+      'Surface: rubber practice pad',
+      'Non-slip base: works on carpet, table, lap or inside a snare basket',
+      'Colors: black, grey, green',
+    ],
   },
   {
     id: 'sattari-practice-pad-8',
@@ -371,7 +428,12 @@ export const products = [
       { name: 'Green', hex: '#2e7d32' },
       { name: 'Blue', hex: '#1f49d2' },
     ],
-    specs: [],
+    specs: [
+      'Diameter: 8 inches',
+      'Surface: rubber practice pad',
+      'Non-slip base: works on carpet, table, lap or inside a snare basket',
+      'Colors: grey, green, blue',
+    ],
   },
   {
     id: 'flame-stratocaster-electric-guitar',
@@ -379,10 +441,14 @@ export const products = [
     slug: 'flame-stratocaster-electric-guitar',
     category: 'guitar-bass',
     description:
-      'Sattari guitars pair exceptional sound and craftsmanship with elegant, visually stunning designs — from exotic wood finishes to intricate inlays and bindings. A range of models and customizable options lets you choose the features that best suit your playing style.',
+      'A Stratocaster-style electric guitar with a figured flame maple top — the kind of visual that usually costs twice the price. Versatile single-coil tone that handles clean playing, light overdrive, and everything between. Set up and shipped from California. An accessible entry point for players who want a real electric without compromising on looks.',
     price: 150.0,
     image: '/sattari site/guitars/flame-stratocaster.jpg',
-    specs: [],
+    specs: [
+      'Body style: Stratocaster',
+      'Top: figured flame maple',
+      'Setup: individually set up and shipped from California',
+    ],
   },
   {
     id: 'steel-string-acoustic-guitar',
@@ -390,7 +456,7 @@ export const products = [
     slug: 'steel-string-acoustic-guitar',
     category: 'guitar-bass',
     description:
-      'A steel-string acoustic guitar with a warm, resonant voice for practice, songwriting, and the stage. Available in store or ships from California.',
+      'A steel-string acoustic guitar built for practice, songwriting, and performing. Warm, balanced tone with enough projection to fill a room unplugged. A reliable instrument for beginners working through their first songs and intermediate players who want a dependable acoustic on hand. Set up and ships from California.',
     price: 200.0,
     image: '/sattari site/guitars/steel-acoustic.jpg',
     gallery: [
@@ -399,7 +465,11 @@ export const products = [
       '/sattari site/guitars/steel-acoustic-3.jpg',
       '/sattari site/guitars/steel-acoustic-4.jpg',
     ],
-    specs: [],
+    specs: [
+      'Strings: steel',
+      'Sound: warm, balanced acoustic projection',
+      'Setup: individually set up and shipped from California',
+    ],
   },
   {
     id: 'matilde-electric-violin',
@@ -433,7 +503,7 @@ export const products = [
     slug: 'violin-pickup-bridge',
     category: 'violins',
     description:
-      'A violin pickup with bridge for amplifying your acoustic violin on stage or in the studio. Ships from California.',
+      'A piezo pickup mounted in a replacement bridge — the simplest way to amplify an acoustic violin without permanent modification. Plug directly into an amp, PA, or audio interface for live performance or studio recording. Ships with the bridge pre-fitted and ready to install. Ships from California.',
     price: 25.0,
     image: '/sattari site/violins/violin-pickup.jpg',
     gallery: [
@@ -442,7 +512,12 @@ export const products = [
       '/sattari site/violins/violin-pickup-3.jpg',
       '/sattari site/violins/violin-pickup-4.jpg',
     ],
-    specs: [],
+    specs: [
+      'Pickup type: piezo',
+      'Mounting: integrated bridge (pre-fitted)',
+      'Output: standard 1/4-inch jack',
+      'Installation: no permanent modification required',
+    ],
   },
   {
     id: 'sattari-rosin',
@@ -489,14 +564,18 @@ export const products = [
     slug: 'drum-stick-bag',
     category: 'essentials',
     description:
-      'A compact drumstick bag that fits four pairs of sticks. Buy four pairs and get one bag free. Available in black.',
+      'A compact drumstick bag that clips to your hi-hat stand or snare rim — keeping your sticks, brushes, and mallets close during a set. Fits up to four pairs. Available in black. Buy four pairs of sticks and get one free.',
     price: 5.99,
     image: '/sattari site/accessories/drum-stick-bag.jpg',
     gallery: [
       '/sattari site/accessories/drum-stick-bag.jpg',
       '/sattari site/accessories/drum-stick-bag-2.jpg',
     ],
-    specs: [],
+    specs: [
+      'Capacity: up to 4 pairs of sticks',
+      'Color: black',
+      'Mount: clips to hi-hat stand or snare rim',
+    ],
   },
 ];
 
