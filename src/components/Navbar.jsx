@@ -9,6 +9,9 @@ const links = [
   { to: '/about', label: 'About' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
+  // The plugin catalogue at /downloads is a static site deployed next to this
+  // app, so this link loads it from the server instead of routing in the SPA.
+  { to: '/downloads', label: 'Downloads', reloadDocument: true },
 ];
 
 export default function Navbar({ onCartClick }) {
@@ -126,6 +129,7 @@ export default function Navbar({ onCartClick }) {
               <Link
                 key={link.to}
                 to={link.to}
+                reloadDocument={link.reloadDocument}
                 aria-current={current ? 'page' : undefined}
                 className={current ? 'nav-link nav-link-active' : 'nav-link'}
               >
