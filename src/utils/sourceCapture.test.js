@@ -133,6 +133,34 @@ it('reports storage failure without claiming a completed source take', async () 
   expect(result.error).toBe('quota full');
   expect(result.tracks).toHaveLength(0);
 });
+it('keeps blank browser quota errors visible and stops accepting chunks', async () => {
+  putAudioAsset.mockRejectedValueOnce(new DOMException('', 'QuotaExceededError'));
+  const capture = new SourceCapture();
+  await capture.start(
+    {
+      audioWorklet: { addModule: vi.fn(async () => {}) },
+      currentTime: 0,
+      sampleRate: 48000,
+      destination: {},
+    },
+    [{ name: 'A', nodes: [{}] }],
+    vi.fn(),
+    vi.fn()
+  );
+  node.port.onmessage({
+    data: { channels: [[new Float32Array(128), new Float32Array(128)]], start: 0, length: 128 },
+  });
+  const result = await capture.stop();
+  expect(result.error).toMatch(/storage|quota/i);
+  expect(result.error).toMatch(/recover|saved/i);
+  const calls = putAudioAsset.mock.calls.length;
+  node.port.onmessage({
+    data: { channels: [[new Float32Array(128), new Float32Array(128)]], start: 128, length: 128 },
+  });
+  await capture.pending;
+  expect(putAudioAsset).toHaveBeenCalledTimes(calls);
+  expect(result.tracks).toHaveLength(0);
+});
 it('uses the owning audio-context factory for wrapped worklet contexts', async () => {
   const rawContext = {
     audioWorklet: { addModule: vi.fn(async () => {}) },

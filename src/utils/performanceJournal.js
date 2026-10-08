@@ -263,7 +263,9 @@ export class PerformanceJournal {
     });
   }
   fail(error) {
-    this.error = error.message;
+    this.error =
+      error?.message ||
+      'Event journal storage is full or unavailable. Pending events remain in memory; stop and save a portable backup.';
     this.onError(this.error);
   }
   async flush() {

@@ -89,3 +89,20 @@ it('skips timer flushes while storage is busy instead of growing a promise backl
   await pending;
   await journal.finish();
 });
+
+it('reports a blank browser quota exception and retains pending events for retry', async () => {
+  vi.useFakeTimers();
+  const store = backend(),
+    onError = vi.fn(),
+    journal = new PerformanceJournal({ store, onError });
+  await journal.start();
+  journal.append({ time: 0, type: 'initialState', args: [{}] });
+  store.commit.mockRejectedValueOnce(new DOMException('', 'QuotaExceededError'));
+  await expect(journal.flush()).rejects.toMatchObject({ name: 'QuotaExceededError' });
+  expect(journal.error).toMatch(/storage|quota/i);
+  expect(onError).toHaveBeenCalledWith(journal.error);
+  expect(journal.pending).toHaveLength(1);
+  await journal.finish();
+  expect(store.events.size).toBe(1);
+  expect(journal.error).toBeNull();
+});
