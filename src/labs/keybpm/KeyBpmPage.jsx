@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, LoaderCircle, Square, Trash2 } from 'lucide-react';
+import { Download, FolderOpen, LoaderCircle, Save, Square, Trash2 } from 'lucide-react';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
 import { decodeTrack, SAMPLE_RATE } from '../../utils/stemSeparator';
-import { KEYBPM_MAX_BYTES, KEYBPM_MAX_FILES, resultRow, resultsCsv } from './keyBpm';
+import {
+  KEYBPM_MAX_BYTES,
+  KEYBPM_MAX_FILES,
+  isDuplicateTrack,
+  resultRow,
+  resultsCsv,
+} from './keyBpm';
+import { createKeyBpmReport, parseKeyBpmReport, KEYBPM_REPORT_MAX_BYTES } from './keyBpmReport';
 import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
   'Key is one global estimate per track (Sattari AutoKey). Key changes, modal or atonal music are not reported separately.',
   'BPM can land on half or double time. "Rough" means the strict estimator declined and a single 60-second pass was used, folded into 70–180 BPM.',
   'Up to 10 minutes and 200 MB per file, mono or stereo, in formats your browser can decode.',
-  'Results live only in this tab. Export the CSV before leaving.',
+  'Save a report to reopen measured results after closing this tab, or export CSV. Reports contain no audio; choose source files to analyze again.',
   'Fixture-tested, not benchmarked on a labelled music corpus yet: treat values as starting points.',
 ];
 
@@ -61,6 +68,11 @@ export default function KeyBpmPage() {
   const [errors, setErrors] = useState([]);
   const [running, setRunning] = useState(false);
   const [sort, setSort] = useState('added');
+  const [checking, setChecking] = useState(false);
+  const imports = useRef(Promise.resolve());
+  const pendingImports = useRef(0);
+  const reportPicker = useRef(null);
+  const readingReport = useRef(false);
   const rowsRef = useRef([]);
   const worker = useRef(null);
   const controller = useRef(null);
@@ -101,7 +113,8 @@ export default function KeyBpmPage() {
             audio,
             abort.signal
           );
-          update(row.id, { status: 'done', result: resultRow(row.file.name, analysis, rough) });
+          const result = resultRow(row.file.name, analysis, rough);
+          update(row.id, { status: result.status, result, measuredAt: new Date().toISOString() });
         } catch (error) {
           if (abort.signal.aborted) {
             update(row.id, { status: 'queued' });
@@ -111,6 +124,7 @@ export default function KeyBpmPage() {
           worker.current = null;
           update(row.id, {
             status: 'error',
+            measuredAt: new Date().toISOString(),
             result: { file: row.file.name, status: 'error', note: error.message },
           });
         }
@@ -122,25 +136,49 @@ export default function KeyBpmPage() {
   };
 
   const addFiles = (files) => {
-    const issues = [];
-    const seen = new Set(rowsRef.current.map((row) => `${row.file.name}:${row.file.size}`));
-    const added = [];
-    for (const file of files) {
-      const key = `${file.name}:${file.size}`;
-      if (!isAudioFile(file)) issues.push(`${file.name}: not an audio file.`);
-      else if (file.size > KEYBPM_MAX_BYTES) issues.push(`${file.name}: larger than 200 MB.`);
-      else if (seen.has(key)) issues.push(`${file.name}: already in the list.`);
-      else if (rowsRef.current.length + added.length >= KEYBPM_MAX_FILES)
-        issues.push(`${file.name}: the list holds up to ${KEYBPM_MAX_FILES} tracks.`);
-      else {
-        seen.add(key);
-        added.push({ id: crypto.randomUUID(), file, status: 'queued', result: null });
-      }
-    }
-    setErrors(issues);
-    if (!added.length) return;
-    publish([...rowsRef.current, ...added]);
-    void runQueue();
+    pendingImports.current++;
+    setChecking(true);
+    imports.current = imports.current
+      .then(async () => {
+        const issues = [],
+          added = [];
+        for (const file of files) {
+          if (!mounted.current) return;
+          if (!isAudioFile(file)) issues.push(`${file.name}: not an audio file.`);
+          else if (file.size > KEYBPM_MAX_BYTES) issues.push(`${file.name}: larger than 200 MB.`);
+          else if (rowsRef.current.length + added.length >= KEYBPM_MAX_FILES)
+            issues.push(`${file.name}: the list holds up to ${KEYBPM_MAX_FILES} tracks.`);
+          else {
+            try {
+              if (
+                await isDuplicateTrack(
+                  file,
+                  [...rowsRef.current, ...added].map((row) => row.file)
+                )
+              )
+                issues.push(`${file.name}: identical audio is already in the list.`);
+              else added.push({ id: crypto.randomUUID(), file, status: 'queued', result: null });
+            } catch {
+              issues.push(`${file.name}: could not read this file. Choose it again.`);
+            }
+          }
+        }
+        if (!mounted.current) return;
+        // Another intake path may have opened a report while a fingerprint was
+        // being read. Recheck against the current list before this atomic publish.
+        const available = Math.max(0, KEYBPM_MAX_FILES - rowsRef.current.length);
+        for (const row of added.splice(available))
+          issues.push(`${row.file.name}: the list holds up to ${KEYBPM_MAX_FILES} tracks.`);
+        setErrors(issues);
+        if (added.length) {
+          publish([...rowsRef.current, ...added]);
+          void runQueue();
+        }
+      })
+      .finally(() => {
+        pendingImports.current--;
+        if (mounted.current) setChecking(pendingImports.current > 0 || readingReport.current);
+      });
   };
   // Audio sent from the Locker or another suite app (?tcc-open=).
   useLockerOpen('key-bpm', (entry) => addFiles([entryFile(entry)]));
@@ -149,6 +187,51 @@ export default function KeyBpmPage() {
     controller.current?.abort();
     worker.current?.terminate();
     worker.current = null;
+  };
+
+  const openReport = async (file) => {
+    if (!file || running || checking) return;
+    readingReport.current = true;
+    setChecking(true);
+    try {
+      if (file.size > KEYBPM_REPORT_MAX_BYTES)
+        throw new Error('Report exceeds the 2 MB limit. Existing tracks were not changed.');
+      const report = parseKeyBpmReport(await file.text());
+      if (rowsRef.current.length + report.tracks.length > KEYBPM_MAX_FILES)
+        throw new Error(
+          'Opening this report would exceed 200 tracks. Export current work and clear the list first.'
+        );
+      if (!mounted.current) return;
+      const restored = report.tracks.map((track) => ({
+        id: crypto.randomUUID(),
+        file: track.source,
+        result: track.result,
+        status: track.result.status,
+        measuredAt: track.measuredAt,
+        fromReport: true,
+      }));
+      publish([...rowsRef.current, ...restored]);
+      setErrors([]);
+    } catch (error) {
+      if (mounted.current)
+        setErrors([error.message || 'Report could not be read. Existing tracks were not changed.']);
+    } finally {
+      readingReport.current = false;
+      if (mounted.current) setChecking(pendingImports.current > 0);
+    }
+  };
+  const saveReport = () => {
+    try {
+      downloadBlob(
+        new Blob([createKeyBpmReport(rowsRef.current.filter((row) => row.result))], {
+          type: 'application/json',
+        }),
+        'sattari-key-bpm.keybpm.json'
+      );
+      setErrors([]);
+    } catch (error) {
+      setErrors([error.message]);
+    }
   };
 
   const done = rows.filter((row) => row.result);
@@ -169,6 +252,7 @@ export default function KeyBpmPage() {
           title="Add tracks"
           hint="Drop many files at once · WAV, MP3, FLAC, M4A, OGG · up to 10 min each"
           multiple
+          disabled={checking}
           onFiles={addFiles}
         />
         {errors.length > 0 && (
@@ -179,11 +263,28 @@ export default function KeyBpmPage() {
             {errors.length > 6 && <p>…and {errors.length - 6} more.</p>}
           </div>
         )}
+        <p className="alab-note">
+          Save a report to reopen completed measurements. Source audio is not included. Opening a
+          report adds its results to this list.
+        </p>
+        <input
+          ref={reportPicker}
+          type="file"
+          className="alab-file-input"
+          accept=".json,application/json"
+          aria-label="Open analysis report"
+          disabled={running || checking}
+          onChange={(event) => {
+            void openReport(event.target.files[0]);
+            event.target.value = '';
+          }}
+        />
         <div className="alab-toolbar">
           <h2>
             Tracks <span>{rows.length}</span>
           </h2>
           <div className="alab-toolbar-actions">
+            {checking && <span role="status">Checking files…</span>}
             {running ? (
               <span className="alab-status" role="status">
                 <LoaderCircle className="alab-spin" size={15} aria-hidden="true" /> Analyzing{' '}
@@ -210,6 +311,22 @@ export default function KeyBpmPage() {
             </label>
             <button
               type="button"
+              className="alab-text-button"
+              disabled={running || checking}
+              onClick={() => reportPicker.current?.click()}
+            >
+              <FolderOpen size={16} aria-hidden="true" /> Open report
+            </button>
+            <button
+              type="button"
+              className="alab-button"
+              disabled={!done.length}
+              onClick={saveReport}
+            >
+              <Save size={16} aria-hidden="true" /> Save report
+            </button>
+            <button
+              type="button"
               className="alab-button"
               disabled={!done.length}
               onClick={() =>
@@ -226,7 +343,7 @@ export default function KeyBpmPage() {
             <button
               type="button"
               className="alab-text-button"
-              disabled={running || !rows.length}
+              disabled={running || checking || !rows.length}
               onClick={() => publish([])}
             >
               <Trash2 size={14} aria-hidden="true" /> Clear
@@ -236,7 +353,23 @@ export default function KeyBpmPage() {
         {rows.length === 0 ? (
           <p className="alab-empty">No tracks yet. Results appear here as each file is measured.</p>
         ) : (
-          <div className="alab-table-wrap">
+          <div
+            className="alab-table-wrap"
+            role="region"
+            aria-label="Track analysis results"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (
+                event.target !== event.currentTarget ||
+                !['ArrowLeft', 'ArrowRight'].includes(event.key)
+              )
+                return;
+              const region = event.currentTarget;
+              if (region.scrollWidth <= region.clientWidth) return;
+              event.preventDefault();
+              region.scrollBy({ left: event.key === 'ArrowRight' ? 80 : -80 });
+            }}
+          >
             <table className="alab-table">
               <thead>
                 <tr>
@@ -250,10 +383,13 @@ export default function KeyBpmPage() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map(({ id, file, status, result }) => (
+                {sorted.map(({ id, file, status, result, fromReport }) => (
                   <tr key={id} data-status={status}>
                     <th scope="row" title={file.name}>
                       {file.name}
+                      {fromReport && (
+                        <small className="alab-flag">Report · audio not included</small>
+                      )}
                     </th>
                     {status === 'done' ? (
                       <>

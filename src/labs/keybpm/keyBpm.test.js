@@ -1,7 +1,15 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { analyzeStemAudio } from '../../utils/stemMusicalAnalysis';
-import { camelot, csvCell, keyParts, resultRow, resultsCsv, roughTempo } from './keyBpm';
+import {
+  camelot,
+  csvCell,
+  keyParts,
+  resultRow,
+  resultsCsv,
+  roughTempo,
+  isDuplicateTrack,
+} from './keyBpm';
 
 const rate = 44100;
 
@@ -104,5 +112,28 @@ describe('rough tempo', () => {
   it('declines silence', () => {
     const silence = new Float32Array(rate * 10);
     expect(roughTempo(silence, silence, rate)).toBeNull();
+  });
+});
+
+describe('track identity', () => {
+  it('accepts different audio with the same filename and byte length', async () => {
+    const a = new File(['abcd'], 'mix.wav'),
+      b = new File(['wxyz'], 'mix.wav');
+    expect(await isDuplicateTrack(b, [a])).toBe(false);
+    expect(await isDuplicateTrack(new File(['abcd'], 'mix.wav'), [a])).toBe(true);
+  });
+  it('does not turn a failed read into a duplicate or permanently cache it', async () => {
+    const existing = new File(['abcd'], 'mix.wav');
+    let reads = 0;
+    const file = {
+      name: 'mix.wav',
+      size: 4,
+      arrayBuffer: async () => {
+        if (++reads === 1) throw Error('denied');
+        return new TextEncoder().encode('abcd').buffer;
+      },
+    };
+    await expect(isDuplicateTrack(file, [existing])).rejects.toThrow('denied');
+    expect(await isDuplicateTrack(file, [existing])).toBe(true);
   });
 });
