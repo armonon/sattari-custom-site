@@ -182,7 +182,7 @@ export const products = [
     slug: 'cremona-handmade-acoustic-violin',
     category: 'violins',
     description:
-      'Introducing the all-new SATTARI fully handmade violin. This model is hand-carved, shaped, and treated with our finest varnishes — a quality instrument at sound pricing.',
+      'The Cremona is SATTARI\'s fully handmade acoustic violin — hand-carved, shaped, and finished with fine traditional varnishes, each one treated as its own instrument rather than a production unit. Full-size (4/4), individually workshop-fitted and tuned at SATTARI Musical Instruments in California before it ships. A step up from factory instruments at an honest price — for students taking the next serious step and adults who want a real acoustic violin without paying for a collector\'s piece.',
     price: 250.0,
     image: '/sattari site/violins/cremona-acoustic.jpg',
     gallery: [
@@ -321,7 +321,7 @@ export const products = [
     slug: 'classic-nylon-string-guitar',
     category: 'guitar-bass',
     description:
-      'A 40-inch classical guitar with a spruce top, sapele back and sides, and a rosewood bridge and fingerboard.',
+      'A 40-inch classical guitar with a spruce top for warm, resonant projection and sapele back and sides for balanced, nuanced tone. Nylon strings are gentler on fingertips than steel — the natural choice for beginners, classical music, fingerstyle, and Latin guitar styles. Rosewood bridge and fingerboard for smooth playability. Set up and shipped from California.',
     price: 280.0,
     image: '/sattari site/guitars/nylon-guitar.jpg',
     gallery: [
@@ -346,7 +346,8 @@ export const products = [
     name: 'Violin Strings',
     slug: 'violin-strings',
     category: 'violins',
-    description: 'Ball-end violin strings that fit both 4/4 and 3/4 violins.',
+    description:
+      'Replacement violin strings with ball ends, compatible with both 4/4 and 3/4 violins. A fresh set restores brightness, improves intonation, and makes the instrument easier and more rewarding to play — old strings lose tension and go false over time. Straightforward to install and a reliable option for students and teachers who need dependable replacements on hand.',
     price: 10.0,
     image: '/sattari site/violins/violin-strings.jpg',
     gallery: [
@@ -546,7 +547,7 @@ export const products = [
     slug: 'wireless-transmitter-receiver',
     category: 'essentials',
     description:
-      'The SATTARI wireless transmitter/receiver system frees you from cables on stage. Includes one transmitter, one receiver, and a USB charger with case.',
+      'A compact wireless transmitter/receiver system that cuts the cable between your instrument and amp on stage. Plug the transmitter into your instrument, the receiver into your amp or pedalboard, and move freely without tripping over leads or limiting your position. USB rechargeable. Includes one transmitter, one receiver, USB charger, and case.',
     price: 39.99,
     image: '/sattari site/accessories/wireless-transmitter.jpg',
     gallery: [
