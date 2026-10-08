@@ -102,6 +102,7 @@ const steps = [
   ['tempo', ['scripts/qualify-tempo.mjs']],
   ['build', ['node_modules/vite/bin/vite.js', 'build']],
   ['prerender', ['scripts/prerender.mjs']],
+  ['service-worker', ['scripts/build-studio-sw.mjs']],
   ['seo', ['scripts/check-seo.mjs']],
   ['browser', ['scripts/run-studio-browser-qa.mjs']],
   ['soak', ['scripts/run-windowed-soak.mjs']],
