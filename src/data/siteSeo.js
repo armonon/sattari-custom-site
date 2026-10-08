@@ -185,7 +185,7 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Complete your practice setup',
     copy: 'Check pad dimensions, accessory compatibility and what is included before ordering. Need help with a part or setup issue? Send the instrument model and a description to our Woodland Hills team.',
     links: [
-      { label: 'How to tune a snare drum', to: '/guides/how-to-tune-a-snare-drum' },
+      { label: 'How to choose a practice drum pad', to: '/guides/choose-a-practice-drum-pad' },
       { label: 'Local drum shop', to: '/woodland-hills-drum-shop' },
       { label: 'Repair and setup inquiries', to: '/services/instrument-repair-los-angeles' },
     ],
