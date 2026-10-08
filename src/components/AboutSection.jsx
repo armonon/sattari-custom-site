@@ -9,14 +9,16 @@ export function FounderIntro({ className = 'section section-contrast' }) {
           <p className="eyebrow">About Sattari Music</p>
           <h2>Founded by Mohammad Sattari</h2>
           <p>
-            Based in Woodland Hills, California, Sattari Music is led by Mohammad Sattari—a
-            professional drummer with over 30 years of international performance experience. Our
-            mission is to serve drummers and musicians with curated gear, expert repairs, and a
-            passion for the craft.
+            Mohammad Sattari is a professional drummer with over 30 years of international
+            performance experience, based in Woodland Hills, California. Sattari Music grew from
+            that background: instruments hand-selected and sold directly, online tools built for
+            practice and production, and an appointment-only shop in Woodland Hills for players in
+            the San Fernando Valley who need repair, setup, rentals or lesson space.
           </p>
           <p>
-            Whether you’re a touring artist or a local student, you’ll find a home for your sound
-            and your instrument here.
+            The catalog covers cymbals, drumsticks, violins, guitars and accessories. The online
+            side includes a stem separator, a browser DAW, guitar lessons and free Mac audio
+            plugins—all built and maintained in California.
           </p>
         </div>
         <div className="about-row-portrait">
