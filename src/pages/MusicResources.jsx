@@ -121,7 +121,7 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Make karaoke and drumless tracks, practice bass, find song key and BPM, or plan an instrument repair. Practical music guides from Sattari Music."
+      description="Practical music guides from Sattari Music: choose a violin or drumsticks, tune a snare drum, care for your instrument, separate stems, make karaoke tracks, and more."
     >
       <p className="resource-lead">Good questions. More music.</p>
       <div className="guide-list">
