@@ -252,4 +252,171 @@ export const musicGuides = [
       '/visit',
     ],
   },
+  {
+    slug: 'when-does-my-guitar-need-a-setup',
+    title: 'When does a guitar need a professional setup?',
+    category: 'Guitar care',
+    description:
+      'Spot the signs your guitar needs a professional setup: fret buzz, high action, tuning drift and intonation problems. What a setup fixes, how often to get one, and what to tell the shop.',
+    answer:
+      'A guitar typically needs a setup when it buzzes or feels stiff to play, when frets feel sharp on the edges, when it drifts out of tune after every song, or when notes at the 12th fret are noticeably sharp or flat compared to the open string. A professional setup adjusts neck relief, action, nut and saddle height, and intonation — all together, which is why individual adjustments often cause new problems.',
+    image: '/sattari site/guitars/steel-acoustic.jpg',
+    imageAlt: 'Steel string acoustic guitar on a stand',
+    action: {
+      label: 'Request a guitar setup',
+      path: '/services/instrument-repair-los-angeles#repair-inquiry',
+    },
+    sections: [
+      {
+        title: 'Signs your guitar needs attention',
+        paragraphs: [
+          'Fret buzz is the most common one — a sitar-like rattle on certain frets, or everywhere below the 5th fret. Some buzz is normal under hard attack, but if it happens at normal playing volume and affects tone, the neck relief, nut, or saddle height is off.',
+          'High action makes fretting uncomfortable and causes fatigue, especially on acoustic guitars that have not been adjusted since they left the factory. Low action causes buzz. Both can exist on the same guitar at different string heights.',
+          'Intonation drift means the guitar sounds in tune on open strings and at the 5th fret but goes noticeably sharp or flat higher up the neck. This is the saddle position. No amount of tuning fixes it without adjusting the intonation.',
+          'Seasonal changes in humidity cause wood to expand and contract, which moves the neck. A guitar that was fine in summer may buzz or play stiff in winter. Climate-sensitive instruments benefit from a setup check after major weather changes.',
+        ],
+      },
+      {
+        title: 'What a setup actually adjusts',
+        paragraphs: [
+          'Neck relief is the slight forward bow in the neck, controlled by the truss rod. It affects how much room the strings have to vibrate at the lower frets. Too straight causes buzz; too much bow raises the middle of the neck uncomfortably.',
+          'Action at the nut affects open-string feel and first-position chords. Action at the saddle affects the upper frets. The two interact, so changing one without checking the other is rarely a complete solution.',
+          'Intonation means adjusting the saddle position so the string is effectively the right length at pitch. On acoustics this is cut into the saddle; on electrics, each saddle is individually adjusted. A guitar with poor intonation cannot be played fully in tune, regardless of how carefully you tune the open strings.',
+        ],
+      },
+      {
+        title: 'How often does a guitar need a setup?',
+        steps: [
+          'After every string change on an acoustic, at minimum check that the action has not moved noticeably and the guitar is still intonating well.',
+          'Annually is a reasonable default for a guitar that is played regularly, even if nothing feels wrong. Small adjustments made early prevent larger problems later.',
+          'After traveling between climates or storing the instrument through a season, check the neck relief before playing hard. A few minutes with a ruler or a tech is faster than undoing a cough that developed over months.',
+          'After any impact, hard fall or neck symptom — buzzing that appeared overnight, notes that go dead, binding in the nut slots — bring it in before playing the issue deeper.',
+        ],
+      },
+      {
+        title: 'What to tell the shop',
+        paragraphs: [
+          'Describe the specific symptom: which frets buzz, at what playing volume, whether it affects all strings or one in particular. Mention the string gauge you use, because setup height depends on string tension. Mention any recent changes — new strings, travel, a fall.',
+          'If you have a playing style preference, say so. A setup for low-action fast electric playing is different from one optimized for heavier acoustic strumming. A tech who knows how you play can calibrate toward it rather than guessing.',
+        ],
+      },
+    ],
+    related: [
+      '/services/instrument-repair-los-angeles',
+      '/product/classic-nylon-string-guitar',
+      '/product/steel-string-acoustic-guitar',
+      '/shop/guitar-bass',
+    ],
+  },
+  {
+    slug: 'how-to-tune-a-snare-drum',
+    title: 'How to tune a snare drum',
+    category: 'Drums',
+    description:
+      'Tune a snare drum for a clear, focused sound. Learn even lug tension, the star pattern, and when dull or ringy tone is a tuning problem versus a worn head.',
+    answer:
+      'Finger-tighten all lugs evenly, then use a drum key to add tension in a star pattern — tuning opposite lugs together in small increments. Tap one inch from each lug and listen for pitch consistency. When all lugs ring at the same pitch, the head is even. A focused crack means even tension at the right pitch range; a dull thud or uncontrolled ring usually means uneven lugs or a worn head.',
+    image: '/sattari site/drums/practice-pad-12.jpg',
+    imageAlt: 'Sattari practice pad and drumsticks on a stand',
+    action: {
+      label: 'Ask about drum tuning',
+      path: '/services/instrument-repair-los-angeles#repair-inquiry',
+    },
+    sections: [
+      {
+        title: 'Start with even tension',
+        paragraphs: [
+          'Release all tension from the head first. Press gently on the center to seat the head, then finger-tighten all lugs until you feel light resistance. This is your baseline. No lug should be tighter than any other before you begin tuning.',
+          'Use the star pattern: tighten lug 1, then the lug directly across from it, then move to the next pair at 90 degrees, and repeat. Never tighten adjacent lugs in sequence — you create uneven tension that takes longer to chase out.',
+        ],
+      },
+      {
+        title: 'Match pitch by ear at each lug',
+        steps: [
+          'Tap the head firmly about one inch from each tension rod, moving around the drum. Listen to the pitch at each point.',
+          'Tighten lugs that are lower in pitch, in small increments. A quarter-turn at a time is plenty. Return to the opposite lug before making another adjustment.',
+          'Continue around the drum until all lugs produce the same pitch. At that point the head is even, regardless of what overall tension you choose.',
+          'Adjust the overall tension to the pitch and feel you want. A higher pitch gives a shorter, crisper crack. A lower pitch gives a deeper, fuller sound with more sustain.',
+        ],
+      },
+      {
+        title: 'Tune the bottom head separately',
+        paragraphs: [
+          'The resonant (bottom) head affects the snare response and the overall sustain. A looser bottom head gives more snare buzz and a longer tone. A tighter bottom head gives a drier, more controlled crack.',
+          'Tune the bottom head the same way: even tension first, star pattern second, pitch matching around each lug. Make small changes and listen after each adjustment. The interaction between the two heads changes the tone of both, so expect to go back and forth a few times.',
+        ],
+      },
+      {
+        title: 'When tuning does not fix the problem',
+        paragraphs: [
+          'If the drum sounds dull even at even, correct tension, the head may be worn or dented. A cracked or significantly dented head should be replaced before tuning further.',
+          'If the drum has an uncontrolled overtone that cannot be dialed out, check whether the bearing edge — the rim of the shell that the head sits on — is level and undamaged. A damaged bearing edge cannot be fixed by tuning. Bring the drum in for an inspection if the problem persists after careful, even tuning.',
+        ],
+      },
+    ],
+    related: [
+      '/product/sattari-practice-pad-12',
+      '/product/classic-american-hickory-a5',
+      '/product/classic-american-hickory-a7',
+      '/services/instrument-repair-los-angeles',
+    ],
+  },
+  {
+    slug: 'beginner-violin-care',
+    title: 'Violin care and maintenance for beginners',
+    category: 'Strings',
+    description:
+      'Keep your violin playing well: how to rosinate the bow, wipe down after playing, store the instrument safely, spot when strings need changing, and when to visit a shop.',
+    answer:
+      'After every session, wipe rosin dust from the strings, top of the instrument, and the stick of the bow with a soft dry cloth. Store the violin in a closed case away from direct heat, sunlight, and sudden humidity changes. Rosinate the bow before each practice session — four to six slow, even strokes across a fresh cake of rosin is usually enough.',
+    image: '/sattari site/violins/rosin.jpg',
+    imageAlt: 'Sattari rosin in a cloth wrap',
+    action: { label: 'Shop violin accessories', path: '/shop/violins' },
+    sections: [
+      {
+        title: 'After every session',
+        steps: [
+          'Loosen the bow hair a little before storing — not completely slack, but noticeably less taut than playing tension. Fully tensioned bow hair can warp the stick over time.',
+          'Wipe rosin dust from the strings with a soft, dry cloth. Wipe the area of the top between the bridge and the end of the fingerboard. Rosin builds up on the varnish and is harder to remove the longer it sits.',
+          'Wipe the bow stick, avoiding the hair. Use a separate cloth from the one you use on the instrument body.',
+          'Place the violin in its case and close the latches. Do not leave it on a chair, stand, or music stand when you are not playing.',
+        ],
+      },
+      {
+        title: 'Rosin and the bow',
+        paragraphs: [
+          'New bow hair or hair that has been washed needs rosin before it will produce any sound. Apply four to six slow, even strokes across a fresh cake of rosin, then play a few long bows to set it. Only then add more in light passes as needed.',
+          'Too much rosin makes the sound scratchy and leaves heavy white dust on everything. Too little makes the bow slip silently across the string. A consistent tone with a light residue on the strings after playing means the amount is about right.',
+          'If the rosin surface becomes shiny or glassy, score it gently with a fingernail or a key before applying. A glossy surface does not grip the bow hair.',
+        ],
+      },
+      {
+        title: 'Storage and climate',
+        paragraphs: [
+          'Violins are sensitive to humidity. Wood expands in humid conditions and contracts in dry ones. Very dry air — especially heated indoor air in winter — causes seams to open, and can crack the top or back. A hard case provides a more stable environment than a soft bag. Some players use a small case humidifier in dry months.',
+          'Keep the instrument away from direct sunlight, car interiors in summer, and radiators or heating vents. A temperature that is comfortable to sit in is generally fine for the instrument. Rapid changes — cold car to warm room — are harder on the instrument than a stable temperature at either end.',
+        ],
+      },
+      {
+        title: 'Strings, bridge, and when to visit a shop',
+        paragraphs: [
+          'Strings lose their brightness and responsiveness over time, even without breaking. A set that has been played daily for a year is probably ready to be replaced. Strings that feel rough, produce a dull or unclear tone, or are visibly corroded or fraying should be changed. Change one string at a time so the bridge and soundpost remain under tension.',
+          'Check that the bridge is standing straight — it should be perpendicular to the top, with the flat side facing the tailpiece. Seasonal tuning changes can pull the bridge out of position gradually. Never force it; if it has moved significantly, bring the violin to a shop to have it set correctly.',
+          'Pegs that slip or stick, a buzz that no amount of careful playing fixes, an open seam, or a crack anywhere on the body all need a professional repair. Minor adjustments that seem small — a loose peg, a low bridge — have real consequences for playability and can escalate if left.',
+        ],
+      },
+    ],
+    sources: [
+      {
+        label: 'Thomann: violin care and maintenance guide',
+        url: 'https://www.thomann.de/gb/onlineresources/violin_care.htm',
+      },
+    ],
+    related: [
+      '/product/sattari-rosin',
+      '/product/violin-strings',
+      '/shop/violins',
+      '/services/instrument-repair-los-angeles',
+    ],
+  },
 ];
