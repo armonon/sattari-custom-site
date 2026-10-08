@@ -570,4 +570,57 @@ export const musicGuides = [
       '/woodland-hills-drum-shop',
     ],
   },
+  {
+    slug: 'choose-a-beginner-acoustic-guitar',
+    title: 'How to choose a beginner acoustic guitar',
+    category: 'Guitar',
+    description:
+      'What to look for in your first acoustic guitar — steel-string vs classical nylon, body size, and what to expect from a well-set-up beginner instrument.',
+    answer:
+      'A full-size steel-string acoustic is the right starting guitar for most beginners. Nylon-string classical guitars suit fingerstyle, classical technique, and younger players. The two feel and sound different — choosing between them depends on the style of music you want to play, not just budget.',
+    image: '/sattari site/guitars/steel-acoustic.jpg',
+    imageAlt: 'Sattari steel-string acoustic guitar',
+    action: { label: 'Shop guitars', path: '/shop/guitar-bass' },
+    sections: [
+      {
+        title: 'Steel-string acoustic vs classical nylon',
+        paragraphs: [
+          'Steel-string acoustics have a brighter, louder sound and are the standard choice for folk, pop, country, blues, and singer-songwriter music. The strings have higher tension against your fingertips, which means a small amount of discomfort for the first few weeks as you build calluses — that goes away.',
+          'Classical nylon-string guitars have lower-tension strings that are softer on fingertips, which makes them slightly more comfortable for complete beginners. They produce a warmer, rounder tone. Nylon-string technique uses classical hand position and fingerpicking — it is the right choice for anyone learning classical music, flamenco, or Latin guitar styles.',
+          'The key question is what music you want to play. If your goal is to strum chords to singer-songwriter songs, get a steel-string. If you are drawn to classical or fingerstyle music, start with a nylon. Do not choose one hoping to easily switch later — the technique and feel are different enough that the choice matters.',
+        ],
+      },
+      {
+        title: 'Body size and playability',
+        paragraphs: [
+          'Full-size acoustic guitars (also called dreadnought or orchestra body) are the standard for adults. They produce more volume and bass response than smaller bodies. If you are an adult of average build, start with a full-size — the size difference between models is smaller in practice than it looks in photos.',
+          'Smaller bodies (concert, auditorium) are easier to hold and slightly more comfortable for players with shorter arms or smaller frames. They produce a balanced midrange tone with less bass boom. A reasonable choice if full-size feels physically awkward, but not necessary for most beginners.',
+          'Action — the height of the strings above the fretboard — matters more than body size for playability. A guitar with high action is harder to press and causes unnecessary soreness. A well-set-up guitar makes learning significantly easier. If you are buying online, choose a brand that sets up instruments before shipping.',
+        ],
+      },
+      {
+        title: 'What to look for in a first guitar',
+        paragraphs: [
+          'The most important thing is that the guitar is properly set up. A cheap guitar with good action is easier to learn on than an expensive guitar with high strings. If a guitar arrives with strings too high to comfortably press in the first few frets, take it to a tech for a basic setup before you spend weeks struggling against the instrument.',
+          'For the body, a spruce top produces a bright, articulate sound that improves over time with regular playing. Solid-top guitars develop tone as the wood responds to use; laminate tops do not change as much. For a first guitar, laminate is fine — the difference matters more once you are developing a more refined ear.',
+          'Check that the neck is straight and the tuning pegs hold pitch. A guitar that will not stay in tune makes it nearly impossible to develop a good ear and becomes genuinely discouraging. Tune up before every practice session regardless.',
+        ],
+      },
+      {
+        title: 'Electric vs acoustic for beginners',
+        paragraphs: [
+          'Acoustic guitars require no amp or cables and are ready to play anywhere. They build finger strength faster because of slightly higher string resistance. The main drawback is that practicing in an apartment or shared space is louder.',
+          'Electric guitars are quieter unplugged and easier to press physically — lighter strings and lower action. The trade-off is the cost and complexity of adding an amp. A practice amp is fine for getting started, but it is another purchase and another cable to manage.',
+          'For most beginners without a specific reason to go electric, start acoustic. You can always add an electric later. Learning on acoustic builds technique that transfers cleanly to electric; the reverse is less reliable.',
+        ],
+      },
+    ],
+    related: [
+      '/product/steel-string-acoustic-guitar',
+      '/product/classic-nylon-string-guitar',
+      '/product/flame-stratocaster-electric-guitar',
+      '/guides/when-does-my-guitar-need-a-setup',
+      '/services/guitar-setup-los-angeles',
+    ],
+  },
 ];
