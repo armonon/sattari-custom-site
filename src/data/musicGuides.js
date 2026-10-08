@@ -517,4 +517,57 @@ export const musicGuides = [
       '/product/sattari-practice-pad-8',
     ],
   },
+  {
+    slug: 'choose-a-practice-drum-pad',
+    title: 'How to choose a practice drum pad',
+    category: 'Drums',
+    description:
+      'What to look for in your first practice pad — 8-inch vs 12-inch, rubber surface, rebound feel, and what else you need to start.',
+    answer:
+      'An 8-inch rubber practice pad is the standard starting point: quiet enough to use at home, light enough to carry, and sufficient for developing a consistent stroke. Move up to a 12-inch pad when you want more playing surface, a closer snare feel, or plan to share it with a teacher.',
+    image: '/sattari site/drums/practice-pad-8.jpg',
+    imageAlt: 'Sattari 8-inch drummer practice pad',
+    action: { label: 'Shop practice pads', path: '/shop/essentials' },
+    sections: [
+      {
+        title: '8-inch vs 12-inch: which size to start with',
+        paragraphs: [
+          'An 8-inch pad fits in a bag, costs less, and takes up almost no space on a desk or table — it is the practical choice for a student who needs to practice away from a kit. The playing surface is smaller, so technique and stick placement have to be precise. That constraint is a feature: it builds accuracy.',
+          'A 12-inch pad gives you more room to move around the surface and feels noticeably closer to a real snare drum head in diameter. It is a better choice if you are practicing rudiments that cross the center of the drum, if a teacher will share the pad with you in a lesson, or if you want the experience to map more directly to sitting behind a kit.',
+          'Most beginners do not need both. Start with the 8-inch, practice consistently for a few months, and only move to the 12-inch once the size starts limiting your work.',
+        ],
+      },
+      {
+        title: 'Surface feel and rebound',
+        paragraphs: [
+          'Rubber practice pads give consistent rebound and are quieter than foam. The rebound is slightly bouncier than a real drum head, which means strokes that feel good on the pad will need some adjustment when you move to an acoustic kit. That is normal — the pad is for developing control, not reproducing an exact drum feel.',
+          'Gum rubber surfaces are the most common and durable option. Some pads include a second surface with a different feel or a quieter response. For most beginners, a standard rubber surface is all you need.',
+          'Avoid pads that feel unusually hard or that do not give any rebound. Dead surfaces slow down development by forcing you to muscle strokes rather than using the stick\'s natural bounce.',
+        ],
+      },
+      {
+        title: 'Portability and where you will practice',
+        paragraphs: [
+          'If you practice at a desk or table, a non-slip base keeps the pad in place without a stand. Most 8-inch pads include one. Check that the base is wide enough that the pad does not tip when you strike near the edge.',
+          'If you plan to practice standing up or at drum-kit height, you need a snare stand to mount the pad — or a pad that includes legs. Practicing at the right height builds posture habits that transfer directly to the kit. Practicing hunched over a table does not.',
+          'For travel, an 8-inch pad fits in most drum bags or a backpack without special cases. A 12-inch pad usually needs its own bag or a larger stick bag with a pad pocket.',
+        ],
+      },
+      {
+        title: 'What else you need to start',
+        paragraphs: [
+          'You need sticks. For most beginners, 5A hickory is the right starting pair — a balanced weight for practice across most styles. Pick up two pairs so you have a spare.',
+          'A metronome or a drum machine track is as important as the pad itself. Consistent tempo is the skill that separates a drummer who sounds good from one who does not. A free app works; the goal is to have something that keeps time while you practice.',
+          'A snare stand is optional at first unless you want to practice standing up. If you eventually plan to practice rolls and rudiments for more than 20 minutes at a stretch, standing at proper height makes a real difference in how long you can go without discomfort.',
+        ],
+      },
+    ],
+    related: [
+      '/product/sattari-practice-pad-8',
+      '/product/sattari-practice-pad-12',
+      '/guides/drumsticks-for-beginners',
+      '/shop/essentials',
+      '/woodland-hills-drum-shop',
+    ],
+  },
 ];
