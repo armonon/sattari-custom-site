@@ -202,6 +202,7 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Guitar and bass support in Woodland Hills',
     copy: "Compare each instrument's specifications, then ask about fit, feel or setup before arranging a visit. We also take string, tuning and playability inquiries for instruments you already own.",
     links: [
+      { label: 'When does a guitar need a professional setup?', to: '/guides/when-does-my-guitar-need-a-setup' },
       { label: 'Guitar and bass setup', to: '/services/guitar-setup-los-angeles' },
       { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
     ],
