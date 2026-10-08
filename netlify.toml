@@ -32,18 +32,34 @@
 
 [[redirects]]
   from = "/audio-suite"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/audio-suite/downloads"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/audio"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Retired alpha packages are preserved outside the publish directory.
+[[redirects]]
+  from = "/downloads"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/downloads/*"
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/services/music-classes-los-angeles"

@@ -257,7 +257,7 @@ export const musicGuides = [
     title: 'When does a guitar need a professional setup?',
     category: 'Guitar care',
     description:
-      'Spot the signs your guitar needs a professional setup: fret buzz, high action, tuning drift and intonation problems. What a setup fixes, how often to get one, and what to tell the shop.',
+      'Spot signs your guitar needs a setup: fret buzz, high action, tuning drift and intonation problems. Learn what a setup fixes, how often to get one, and what to tell the shop.',
     answer:
       'A guitar typically needs a setup when it buzzes or feels stiff to play, when frets feel sharp on the edges, when it drifts out of tune after every song, or when notes at the 12th fret are noticeably sharp or flat compared to the open string. A professional setup adjusts neck relief, action, nut and saddle height, and intonation — all together, which is why individual adjustments often cause new problems.',
     image: '/sattari site/guitars/steel-acoustic.jpg',
@@ -542,7 +542,7 @@ export const musicGuides = [
         paragraphs: [
           'Rubber practice pads give consistent rebound and are quieter than foam. The rebound is slightly bouncier than a real drum head, which means strokes that feel good on the pad will need some adjustment when you move to an acoustic kit. That is normal — the pad is for developing control, not reproducing an exact drum feel.',
           'Gum rubber surfaces are the most common and durable option. Some pads include a second surface with a different feel or a quieter response. For most beginners, a standard rubber surface is all you need.',
-          'Avoid pads that feel unusually hard or that do not give any rebound. Dead surfaces slow down development by forcing you to muscle strokes rather than using the stick\'s natural bounce.',
+          "Avoid pads that feel unusually hard or that do not give any rebound. Dead surfaces slow down development by forcing you to muscle strokes rather than using the stick's natural bounce.",
         ],
       },
       {

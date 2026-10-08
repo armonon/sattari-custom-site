@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
-  Download,
   Library,
   Radio,
   SlidersHorizontal,
@@ -93,9 +92,6 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>Learn guitar. Create music. Explore sound.</p>
-              <Link to="/downloads" className="hub-text-link">
-                <Download size={16} aria-hidden="true" /> Music software for Mac
-              </Link>
             </div>
           </header>
 

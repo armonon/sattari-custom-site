@@ -13,7 +13,6 @@ import { OrganizationSchema, SEO } from '@utils/seo';
 import {
   Category,
   CartPage,
-  DownloadsPage,
   CheckoutStatus,
   HomePage,
   AboutPage,
@@ -73,11 +72,6 @@ const ROUTES: RouteDefinition[] = [
   // Restores its panels from localStorage while rendering.
   { path: '/studio', page: SattariStudioPage, hydrate: false },
   { path: '/stem-separator', page: StemSeparatorPage },
-  // The Audio Suite and its downloads are one page, on /downloads.
-  { path: '/downloads', page: DownloadsPage },
-  { path: '/audio-suite', redirect: '/downloads' },
-  { path: '/audio-suite/downloads', redirect: '/downloads' },
-  { path: '/audio', redirect: '/downloads' },
   localPage('/woodland-hills-drum-shop', 'woodland-drums'),
   localPage('/encino-violin-shop', 'encino-violins'),
   localPage('/services/violin-repair-los-angeles', 'violin-repair'),

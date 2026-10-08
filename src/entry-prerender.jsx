@@ -34,7 +34,6 @@ export function getPrerenderRoutes(inventory) {
     ['/learn', 'src/pages/LoopPracticePage.jsx'],
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
-    ['/downloads', 'src/pages/DownloadsPage.tsx'],
     ...localPages
       .filter((page) => !page.canonicalUrl)
       .map((page) => [new URL(page.url).pathname, LOCAL_SEO_ENTRY]),

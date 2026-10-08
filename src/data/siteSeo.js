@@ -46,7 +46,7 @@ export const organizationSchema = {
   address: BUSINESS.address,
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Sattari Music is a California-based music company for musicians worldwide: instruments, online guitar learning, browser music creation and downloadable audio software, with local instrument services in Woodland Hills.',
+    'Sattari Music is a California-based music company for musicians worldwide: instruments, online guitar learning and browser music creation, with local instrument services in Woodland Hills.',
 };
 
 export const businessSchema = {
@@ -151,15 +151,6 @@ export const PAGE_SEO = {
     imageWidth: 1280,
     imageHeight: 900,
   },
-  downloads: {
-    title: 'Free Music Software for Mac | AU & VST3 Plugins',
-    description:
-      'Download free Sattari Audio Suite alpha builds for Mac: AU, VST3 and standalone music tools, Auto Pitch, mixing effects and instruments. Includes SHA-256 checksums.',
-    url: `${SITE_ORIGIN}/downloads`,
-    image: '/sattari site/audio-suite/mix.png',
-    imageWidth: 1080,
-    imageHeight: 660,
-  },
 };
 
 export const CATEGORY_LOCAL_HELP = {
@@ -194,7 +185,10 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Violin guidance near Encino',
     copy: "Shopping for your first violin or comparing acoustic and electric models? Start with your teacher's size requirements, playing goals and budget. Our shop is in Woodland Hills and serves Encino musicians.",
     links: [
-      { label: 'How to choose a violin for beginners', to: '/guides/choose-a-violin-for-beginners' },
+      {
+        label: 'How to choose a violin for beginners',
+        to: '/guides/choose-a-violin-for-beginners',
+      },
       { label: 'Choosing a violin near Encino', to: '/encino-violin-shop' },
       { label: 'Violin repair and setup', to: '/services/violin-repair-los-angeles' },
     ],
@@ -203,7 +197,10 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Guitar and bass support in Woodland Hills',
     copy: "Compare each instrument's specifications, then ask about fit, feel or setup before arranging a visit. We also take string, tuning and playability inquiries for instruments you already own.",
     links: [
-      { label: 'How to choose a beginner acoustic guitar', to: '/guides/choose-a-beginner-acoustic-guitar' },
+      {
+        label: 'How to choose a beginner acoustic guitar',
+        to: '/guides/choose-a-beginner-acoustic-guitar',
+      },
       { label: 'Guitar and bass setup', to: '/services/guitar-setup-los-angeles' },
       { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
     ],
