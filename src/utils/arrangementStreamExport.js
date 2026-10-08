@@ -169,7 +169,7 @@ async function openDiskFile(extension, createWorker) {
 export async function createExportSink(
   expectedBytes,
   extension = 'wav',
-  { createWorker = exportWorker } = {}
+  { createWorker = exportWorker, allowMemoryFallback = true } = {}
 ) {
   if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0)
     throw new Error('Invalid export size.');
@@ -188,7 +188,8 @@ export async function createExportSink(
     } catch (error) {
       // Private windows and older browsers may refuse temporary disk access;
       // short exports still work in memory.
-      if (expectedBytes <= MEMORY_FALLBACK) return memorySink(expectedBytes, extension);
+      if (allowMemoryFallback && expectedBytes <= MEMORY_FALLBACK)
+        return memorySink(expectedBytes, extension);
       throw new Error(
         'This browser refused temporary disk space for the export (private windows often do). Use a regular window or export a shorter range.',
         { cause: error }
@@ -216,6 +217,10 @@ export async function createExportSink(
       },
     };
   }
+  if (!allowMemoryFallback)
+    throw new Error(
+      'This project needs temporary disk storage to restore audio safely. Use a regular window in a current browser and free disk space. The current session was not replaced.'
+    );
   return memorySink(expectedBytes, extension);
 }
 export async function clearExportFile(file) {
