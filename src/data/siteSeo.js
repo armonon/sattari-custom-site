@@ -167,6 +167,7 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Choose cymbals with local support',
     copy: 'A hi-hat, crash and splash have different jobs in a kit. Share your playing style and current setup with our Woodland Hills team before choosing your next cymbal.',
     links: [
+      { label: 'How to choose your first cymbals', to: '/guides/choose-your-first-cymbals' },
       { label: 'Woodland Hills drum shop', to: '/woodland-hills-drum-shop' },
       { label: 'Instrument repair and tuning', to: '/services/instrument-repair-los-angeles' },
     ],
@@ -175,6 +176,7 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Find your next pair of sticks',
     copy: 'Compare wood, tip and size on each listing. Our Woodland Hills shop can help with questions about sticks for practice, rehearsals and your current kit.',
     links: [
+      { label: 'Drumstick guide for beginners', to: '/guides/drumsticks-for-beginners' },
       { label: 'Drum gear in Woodland Hills', to: '/woodland-hills-drum-shop' },
       { label: 'Practice pads and accessories', to: '/shop/essentials' },
     ],
@@ -191,6 +193,7 @@ export const CATEGORY_LOCAL_HELP = {
     title: 'Violin guidance near Encino',
     copy: "Shopping for your first violin or comparing acoustic and electric models? Start with your teacher's size requirements, playing goals and budget. Our shop is in Woodland Hills and serves Encino musicians.",
     links: [
+      { label: 'How to choose a violin for beginners', to: '/guides/choose-a-violin-for-beginners' },
       { label: 'Choosing a violin near Encino', to: '/encino-violin-shop' },
       { label: 'Violin repair and setup', to: '/services/violin-repair-los-angeles' },
     ],
