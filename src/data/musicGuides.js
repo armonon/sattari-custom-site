@@ -623,4 +623,59 @@ export const musicGuides = [
       '/services/guitar-setup-los-angeles',
     ],
   },
+  {
+    slug: 'how-to-care-for-a-guitar',
+    title: 'How to care for a guitar',
+    category: 'Guitar care',
+    description:
+      'A practical guide to keeping your guitar playing well — cleaning strings and fretboard, humidity and storage, and when to take it in for a setup.',
+    answer:
+      'Wipe down your strings after every session, keep the guitar away from extreme heat and humidity swings, and store it in a case or on a stand away from direct sunlight. Do this consistently and your guitar will stay in good playing condition for years.',
+    image: '/sattari site/guitars/steel-acoustic.jpg',
+    imageAlt: 'Sattari steel-string acoustic guitar',
+    action: { label: 'Guitar setup and repair', path: '/services/guitar-setup-los-angeles' },
+    sections: [
+      {
+        title: 'Clean strings and fretboard regularly',
+        paragraphs: [
+          'Wipe your strings down after every time you play. Use a dry cloth or a string cleaning cloth — run it under and over each string to remove oils, sweat and debris. Strings that are not cleaned corrode faster, lose tone faster, and feel rough under your fingers. Cleaning adds weeks or months to their life.',
+          'The fretboard also collects oils and grime over time. For rosewood and ebony fretboards (unfinished, porous wood), use a dry or lightly dampened cloth. Every several months, or when the wood looks dry, condition the fretboard with a small amount of lemon oil or fretboard conditioner. Apply, let it soak for a few minutes, then wipe off the excess.',
+          'Maple fretboards are typically finished and sealed — clean with a dry or barely damp cloth only. Do not use oil on a finished fretboard.',
+          'Wipe down the body and neck with a soft cloth after playing. Guitar polish is optional for finished bodies (gloss or satin). Avoid polish on natural or oiled finishes, and keep any cleaning product away from the fretboard.',
+        ],
+      },
+      {
+        title: 'Humidity and storage',
+        paragraphs: [
+          'Wood reacts to humidity. Acoustic guitars are particularly sensitive: too dry and the wood shrinks, causing sharp fret ends, cracking, and raised seams; too wet and the top swells, raising action and muffling tone. The target range for most acoustic guitars is 45–55% relative humidity.',
+          'In dry climates or during winter (when indoor heating dries the air), store your guitar in a case with a soundhole humidifier. These are inexpensive and prevent the most common humidity-related damage. Check and refill the humidifier every week or two.',
+          'Electric guitars and basses are less sensitive to humidity than acoustics because they have no hollow body to swell or contract — but they are still affected at extremes. The same general guidance applies: avoid leaving them in very dry or very damp environments for extended periods.',
+          'Never leave a guitar in a car, especially in summer. Interior car temperatures can reach extreme highs quickly, causing finish checking, glue failure, and neck issues in a single afternoon.',
+        ],
+      },
+      {
+        title: 'Strings: when to change them',
+        paragraphs: [
+          'Change your strings when they sound dull, feel rough, or will not stay in tune. How often depends on how much you play and whether you clean them after each session. For daily players, every 4–8 weeks is common. For occasional players, every 3–6 months. The tone difference between fresh strings and old ones is significant — new strings restore brightness and improve intonation.',
+          'For acoustic guitars, light gauge strings (0.012–0.053) are easiest on the fingers and suitable for most playing styles. Medium gauge strings produce more volume and projection but require more finger pressure. Electric strings are lighter — 0.009 or 0.010 gauge is standard for most players.',
+          'When you change strings, clean the fretboard at the same time. It is the most convenient opportunity since the strings are off.',
+        ],
+      },
+      {
+        title: 'When to take the guitar in',
+        paragraphs: [
+          'Some issues require a tech rather than at-home maintenance. A professional setup adjusts neck relief, saddle height, nut slots, and intonation — all things that affect how the guitar plays and feels, and none of which can be fixed with a cloth or string change.',
+          'Take it in when: the action is too high or too low, the neck has a noticeable bow, the guitar will not intonate correctly (strings fret sharp or flat as you move up the neck), frets are uneven, or anything structural looks wrong — cracks at the bridge, lifting seams, a loose brace.',
+          'A setup typically takes one to a few days and makes a noticeable difference in playability. Most guitars benefit from a setup after purchase and again after any significant change in climate or string gauge.',
+        ],
+      },
+    ],
+    related: [
+      '/guides/when-does-my-guitar-need-a-setup',
+      '/product/steel-string-acoustic-guitar',
+      '/product/flame-stratocaster-electric-guitar',
+      '/services/guitar-setup-los-angeles',
+      '/services/instrument-repair-los-angeles',
+    ],
+  },
 ];
