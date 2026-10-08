@@ -77,6 +77,22 @@ button.addEventListener('click', async () => {
       for (let i = 0; i < 6; i++) { const nameLength = view.getUint16(offset + 26, true), extraLength = view.getUint16(offset + 28, true), extra = offset + 30 + nameLength, size = Number(view.getBigUint64(extra + 4, true)), start = extra + extraLength; const pcmLength = view.getUint32(start + 40, true); assert(length == null || length === pcmLength, 'unaligned stem lengths'); length = pcmLength; offset = start + size + 24; }
       await clearExportFile(archive);
     });
+    await test('exact integer-frame renders and stem ZIP survive fractional-second roundoff', async () => {
+      const snapshot = structuredClone(project); snapshot.tracks[0].clips[0].start = 0;
+      // Both counts round slightly down when converted frames -> seconds -> frames.
+      for (const frames of [27, 779448]) {
+        const channels = await engine.renderSection(snapshot, { limiter: false }, null, 0, frames);
+        assert(channels.every(channel => channel.length === frames), `short render: expected ${frames}, got ${channels[0].length}`);
+        const range = { start: 0, end: frames / 48000 };
+        const master = await engine.export(snapshot, { limiter: false }, false, () => {}, () => false, range);
+        const bytes = await master.arrayBuffer(), header = new DataView(bytes);
+        assert(header.getUint32(40, true) === frames * 6 && bytes.byteLength === 44 + frames * 6, 'WAV header/payload mismatch');
+        await clearExportFile(master);
+        const archive = await engine.export(snapshot, { limiter: false }, true, () => {}, () => false, range);
+        assert(archive.size > frames * 6, 'missing actual stem payload');
+        await clearExportFile(archive);
+      }
+    });
     await test('printed references bypass repeated processing but follow master level', async () => {
       const reference = structuredClone(project); reference.tracks[0].role = 'reference';
       const full = await engine.render(reference, { level: 100, compression: true, processing: { low: 10, high: -10 } });
