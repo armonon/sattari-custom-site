@@ -363,7 +363,7 @@ export const products = [
     slug: 'sattari-darbuka',
     category: 'essentials',
     description:
-      'A lightweight, clear, and tight-sounding hand drum — known in some parts of the world as the dumbek. Perfect for parties, live events, and family gatherings, and a wonderful gift for any musician.',
+      'A goblet-shaped hand drum — widely known as the doumbek or darbuka in North African, Middle Eastern, and Mediterranean music traditions. Lightweight body with a synthetic head tuned for a clear, cutting sound. Loud for its size: the high tek and deep doum tones carry well in group settings, drum circles, and open performances. A natural choice for percussionists adding a hand drum to their setup, and accessible enough for a curious beginner.',
     price: 69.99,
     image: '/sattari site/drums/darbuka.jpg',
     gallery: [
@@ -383,7 +383,7 @@ export const products = [
     slug: 'sattari-practice-pad-12',
     category: 'essentials',
     description:
-      'A 12-inch SATTARI practice pad — the best substitute for acoustic drums. Work on rudiments and paradiddles or play along to the beats you enjoy without disturbing anyone. Portable and quiet; works on any surface including carpet, table, lap, or inside a standard snare basket.',
+      'A 12-inch rubber practice pad — the same diameter as a standard snare drum, making it the closest desk-safe substitute for playing on a real head. Work through rudiments, paradiddles, and pattern work in near silence. Non-slip base works on any surface; fits inside a standard snare basket if you want to practice at kit height. Available in black, grey, and green.',
     price: 25.0,
     image: '/sattari site/drums/practice-pad-12.jpg',
     gallery: [
@@ -412,7 +412,7 @@ export const products = [
     slug: 'sattari-practice-pad-8',
     category: 'essentials',
     description:
-      'An 8-inch SATTARI practice pad — the best substitute for acoustic drums. Work on rudiments and paradiddles or play along to the beats you enjoy without disturbing anyone. Portable and quiet; works on any surface including carpet, table, lap, or inside a standard snare basket.',
+      'An 8-inch rubber practice pad — compact enough to fit in a stick bag or backpack, quiet enough to use at a desk or table, and the right starting size for most beginners building stroke consistency and rudiment speed. Non-slip base holds it in place on any surface. A natural first pad before moving to a full kit. Available in grey and green.',
     price: 15.0,
     image: '/sattari site/drums/practice-pad-8.jpg',
     gallery: [
