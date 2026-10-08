@@ -419,4 +419,102 @@ export const musicGuides = [
       '/services/instrument-repair-los-angeles',
     ],
   },
+  {
+    slug: 'choose-a-violin-for-beginners',
+    title: 'How to choose a violin for beginners',
+    category: 'Strings',
+    description:
+      'What to look for when buying a first violin — size, acoustic vs electric, what should be included, and red flags that signal a poor instrument.',
+    answer:
+      'For most beginners, a full-size (4/4) acoustic violin with a bow, case, and rosin included is the right starting point. Size matters most: an instrument that is too large causes strain and slows progress. Ask your teacher to confirm the size before buying.',
+    image: '/sattari site/violins/brescia-acoustic.jpg',
+    imageAlt: 'Sattari Brescia acoustic violin',
+    action: { label: 'Shop violins', path: '/shop/violins' },
+    sections: [
+      {
+        title: 'Get the right size first',
+        paragraphs: [
+          'Adult players and most teenagers use a full-size (4/4) violin. Younger children and smaller players may need a 3/4 or smaller instrument. The right way to check is with the player present: hold the violin in rest position under the chin, extend the arm along the neck, and see whether the fingers can reach and curl around the scroll without strain. If you cannot measure in person, ask the teacher for a size recommendation before purchasing.',
+          'Playing a violin that is too large causes tension in the shoulder, arm, and wrist, and makes shifting and bowing harder to learn. An instrument that is slightly too small is also limiting. Getting the size right matters more than any other specification at the beginner level.',
+        ],
+      },
+      {
+        title: 'Acoustic, electric, or silent?',
+        paragraphs: [
+          'An acoustic violin needs no power source and produces sound naturally through the body. It is the standard choice for lessons, classical training, and players who want an instrument with an organic, resonant tone. Acoustic violins require a practice environment where some sound is acceptable.',
+          'An electric or silent violin uses a piezo pickup and produces very little acoustic sound on its own. Connect headphones for private practice or plug into an amp to perform. Silent violins are practical for apartments or shared spaces. An acoustic violin is the better starting point for most students; a silent model is a good second instrument or the right choice where volume is a real concern.',
+        ],
+      },
+      {
+        title: 'What a beginner violin should include',
+        paragraphs: [
+          'A violin sold as a beginner instrument should include a bow, a case, and rosin. These are not optional: you cannot play without a bow, and a bow cannot grip the strings without rosin. A case protects the instrument during transport and storage. Verify that all three are part of what you are buying before assuming they are included.',
+          'The bow matters more than many beginners expect. A warped or low-quality bow is difficult to control and obscures whether the player is making progress. Check that the bow is straight by sighting down the length of the stick and that the hair is in good condition.',
+        ],
+      },
+      {
+        title: 'Signs of a well-made instrument and red flags to avoid',
+        paragraphs: [
+          'A good beginner violin is individually set up before it ships: the bridge is correctly fitted and positioned, the nut slots are cut to the right depth, and the strings are at a comfortable height. An instrument that is poorly set up is harder to play and will not hold tune reliably. Ask explicitly whether the instrument has been set up.',
+          'Red flags include pegs that slip immediately, an open seam on the body, visible cracks, a bridge that tilts forward or backward, or strings so high off the fingerboard that the fingers cannot press them down comfortably. These problems are fixable but add cost and time. A workshop-fitted instrument from a reputable seller avoids most of them before the player even picks it up.',
+        ],
+      },
+    ],
+    related: [
+      '/product/brescia-acoustic-violin',
+      '/product/chiara-wooden-electric-violin',
+      '/product/violin-strings',
+      '/encino-violin-shop',
+      '/services/instrument-repair-los-angeles',
+    ],
+  },
+  {
+    slug: 'drumsticks-for-beginners',
+    title: 'What drumsticks should a beginner use?',
+    category: 'Drums',
+    description:
+      'A practical guide to choosing your first pair of drumsticks — size, wood type, and tip material explained, without the jargon.',
+    answer:
+      '5A hickory drumsticks are the standard starting point for beginners. The 5A size is versatile, comfortable for most hand sizes, and works well across rock, pop, and practice sessions. Hickory absorbs shock well, which reduces fatigue.',
+    image: '/sattari site/sticks.png',
+    imageAlt: 'Sattari drumsticks',
+    action: { label: 'Shop drumsticks', path: '/shop/sticks' },
+    sections: [
+      {
+        title: 'Why stick size matters',
+        paragraphs: [
+          'Drumstick sizes are named with a number and a letter — 5A, 7A, 2B, and so on. The number refers roughly to how many sticks fit within a certain diameter (lower numbers = thicker sticks). The letter indicates the original intended use: A for orchestra, B for band, S for street. In practice, the number is what matters most.',
+          '5A is the most widely used size and the best starting point for most beginners. It is balanced, comfortable for a range of hand sizes, and versatile enough to cover most playing situations. 7A is thinner and lighter — popular for jazz and lighter playing, but can feel fragile for hard practice. Thicker sizes like 2B are designed for volume and power, not for developing technique.',
+        ],
+      },
+      {
+        title: 'Hickory vs maple',
+        paragraphs: [
+          'Most drumsticks are made from hickory or maple. Hickory is denser and heavier, absorbs shock well, and gives the player more feedback from the drumhead. Hickory sticks are durable and forgiving — a good choice for beginners who are still developing control.',
+          'Maple is lighter than hickory, which makes it faster and easier to play for extended periods. The reduced weight also means less rebound from the head. Maple sticks are popular with jazz drummers and players who value speed over power. Either wood works for a beginner; hickory is the more common starting recommendation.',
+        ],
+      },
+      {
+        title: 'Wood tips vs nylon tips',
+        paragraphs: [
+          'A wood tip gives a warm, full sound on cymbals and a natural feel on drums. A nylon tip is brighter and more articulate on cymbals — it catches the surface more precisely, which is useful when cymbal definition matters. Nylon tips are also more durable; they do not chip the way wood tips can.',
+          'For practice pads and in-room practice, there is no meaningful difference. For playing with a kit and cymbals, nylon tips give a brighter, more defined sound on ride and hi-hat. Wood tips blend more naturally into a mix. Neither is wrong — it depends on the sound you prefer and the music you are playing.',
+        ],
+      },
+      {
+        title: 'When to move to a different size',
+        paragraphs: [
+          'Stick with the same size long enough to develop consistency. Switching sticks too early makes it harder to build a reliable stroke. Most beginners should use the same pair for at least several months before experimenting with a different size or material.',
+          'Consider moving to a heavier stick if you are playing louder music and want more weight behind each stroke. Consider moving lighter if fatigue is limiting your practice time. The right stick is the one that lets you play longer with better control — not the one endorsed by your favourite drummer.',
+        ],
+      },
+    ],
+    related: [
+      '/product/classic-american-hickory-a5',
+      '/product/classic-american-hickory-a7',
+      '/product/classic-maple-5a-nylon-tip',
+      '/shop/sticks',
+      '/product/sattari-practice-pad-8',
+    ],
+  },
 ];
