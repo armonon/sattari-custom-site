@@ -20,7 +20,8 @@
     "test:tempo-qualification": "node scripts/qualify-tempo.mjs",
     "test:studio-audio": "node scripts/run-studio-audio-qa.mjs",
     "test:studio-release": "node scripts/studio-release-gate.mjs",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "postinstall": "node scripts/apply-audio-cycle-precheck.mjs"
   },
   "dependencies": {
     "@coderline/alphatab": "1.8.3",

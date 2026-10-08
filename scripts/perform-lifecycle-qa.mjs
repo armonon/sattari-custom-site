@@ -143,7 +143,8 @@ try {
       .click();
     await page.getByRole('button', { name: 'Play Deck ' + id, exact: true }).click();
   }
-  await pause(1200);
+  // Exercise multiple decoded source windows, not just the initial lookahead.
+  await pause(12000);
   await page
     .getByRole('article', { name: 'Deck D', exact: true })
     .getByRole('button', { name: 'Mute BAS', exact: true })
@@ -154,6 +155,7 @@ try {
     .getByRole('article', { name: 'Deck D', exact: true })
     .getByRole('button', { name: 'Mute BAS', exact: true })
     .click();
+  report.perform = { pass: true, unexpectedlyStoppedDecks: [] };
   for (const id of ['A', 'B', 'C', 'D']) {
     await page
       .locator('[aria-label="Performance scenes"]')
@@ -163,7 +165,9 @@ try {
     if (await stop.isVisible()) await stop.click();
     else {
       assert(await page.getByRole('button', { name: 'Play Deck ' + id, exact: true }).isVisible());
-      report.steps.push('Deck ' + id + ' reached its natural end before final pause');
+      report.perform.pass = false;
+      report.perform.unexpectedlyStoppedDecks.push(id);
+      report.steps.push('Deck ' + id + ' was already stopped before final pause; cause unverified');
     }
   }
   await page.getByRole('button', { name: 'Stop recording live set', exact: true }).click();
@@ -236,7 +240,7 @@ try {
     pass: report.printedTrackCount > 0,
     status:
       replayStatus.match(
-        /Edited performance printed[^\n]*|Audio scheduling[^\n]*|Replay finished[^\n]*/
+        /Edited performance printed[^\n]*|Audio scheduling[^\n]*|Source audio[^\n]*|Replay finished[^\n]*/
       )?.[0] || 'See replay-status.txt',
   };
   assert.deepEqual(
@@ -350,7 +354,7 @@ try {
   report.capturedActionTypes = [...new Set(before.arranger.captures[0].events.map((e) => e.type))];
   report.scope =
     'Actual synthetic four-deck capture/arrange/edit/undo/save/full browser restart/export subset; physical/full musical qualification excluded';
-  report.pass = report.replay.pass;
+  report.pass = report.perform.pass && report.replay.pass;
   if (!report.pass) process.exitCode = 1;
 } catch (error) {
   report.error = String(error.stack);
