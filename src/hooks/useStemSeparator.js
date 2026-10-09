@@ -9,6 +9,11 @@ import {
 } from '../utils/stemSeparator';
 import { StemSeparatorClient } from '../utils/stemSeparatorClient';
 import { trackSiteEvent } from '../utils/siteMeasurement';
+import {
+  deleteSplitSession,
+  loadSplitSessions,
+  saveSplitSession,
+} from '../utils/splitSessionStore';
 
 const release = (job) => job.outputs?.forEach(({ url }) => URL.revokeObjectURL(url));
 
@@ -19,21 +24,79 @@ export default function useStemSeparator() {
   const [errors, setErrors] = useState([]);
   const [cpuOnly, setCpuOnly] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
+  const [storageWarning, setStorageWarning] = useState('');
   const demo = useRef(null);
   const queue = useRef([]);
+  const userChangedQueue = useRef(false);
+  const replaceStoredOnRestore = useRef(false);
   const active = useRef(null);
   const client = useRef(null);
   const mounted = useRef(true);
+  const persistenceTimer = useRef(null);
 
-  const publish = (next) => {
+  const flushSave = (snapshot) => {
+    snapshot.forEach((job) => {
+      saveSplitSession(job).catch(() => {
+        if (mounted.current)
+          setStorageWarning(
+            'Results are available in this tab, but browser storage could not save them. Download the WAVs before leaving.'
+          );
+      });
+    });
+  };
+  const publish = (next, immediate = false) => {
+    const nextIds = new Set(next.map((job) => job.id));
+    queue.current
+      .filter((job) => !nextIds.has(job.id))
+      .forEach((job) => {
+        deleteSplitSession(job.id).catch(() => {
+          if (mounted.current)
+            setStorageWarning('A previous result could not be removed from browser storage.');
+        });
+      });
     queue.current = next;
     if (mounted.current) setJobs(next);
+    clearTimeout(persistenceTimer.current);
+    if (immediate) flushSave(next);
+    else persistenceTimer.current = setTimeout(() => flushSave(queue.current), 350);
   };
   const update = (id, patch) =>
-    publish(queue.current.map((job) => (job.id === id ? { ...job, ...patch } : job)));
+    publish(
+      queue.current.map((job) => (job.id === id ? { ...job, ...patch } : job)),
+      ['done', 'error', 'cancelled'].includes(patch.status)
+    );
 
   useEffect(() => {
     mounted.current = true;
+    let activeEffect = true;
+    loadSplitSessions()
+      .then(({ sessions, warnings }) => {
+        if (warnings.length && activeEffect)
+          setStorageWarning(
+            `${warnings.length} saved Split session(s) could not be restored. The records remain untouched.`
+          );
+        if (!activeEffect || userChangedQueue.current) {
+          sessions.forEach(release);
+          if (activeEffect && replaceStoredOnRestore.current)
+            sessions.forEach(({ id }) =>
+              deleteSplitSession(id).catch(() => {
+                if (mounted.current)
+                  setStorageWarning(
+                    'A replaced session could not be removed from browser storage.'
+                  );
+              })
+            );
+          return;
+        }
+        queue.current = sessions;
+        setJobs(queue.current);
+      })
+      .catch(() => {
+        if (activeEffect)
+          setStorageWarning(
+            'Saved Split storage could not be opened. Current results remain available in this tab.'
+          );
+      });
     const warn = (event) => {
       if (active.current || queue.current.some((job) => job.status === 'done')) {
         event.preventDefault();
@@ -42,6 +105,8 @@ export default function useStemSeparator() {
     };
     window.addEventListener('beforeunload', warn);
     return () => {
+      activeEffect = false;
+      clearTimeout(persistenceTimer.current);
       mounted.current = false;
       active.current?.abort();
       demo.current?.abort();
@@ -63,18 +128,29 @@ export default function useStemSeparator() {
       outputs: [],
       progress: null,
     }));
-    publish([...queue.current, ...added]);
+    if (added.length) userChangedQueue.current = true;
+    publish([...queue.current, ...added], true);
     return added;
   };
 
   const remove = (id) => {
     if (active.current) return;
+    userChangedQueue.current = true;
     queue.current.filter((job) => job.id === id).forEach(release);
     publish(queue.current.filter((job) => job.id !== id));
   };
 
+  const clearAll = () => {
+    if (active.current) return;
+    userChangedQueue.current = true;
+    replaceStoredOnRestore.current = true;
+    queue.current.forEach(release);
+    publish([]);
+  };
+
   const clearFinished = () => {
     if (active.current) return;
+    userChangedQueue.current = true;
     queue.current.filter((job) => job.status === 'done').forEach(release);
     publish(queue.current.filter((job) => job.status !== 'done'));
   };
@@ -190,10 +266,12 @@ export default function useStemSeparator() {
     addFiles,
     remove,
     clearFinished,
+    clearAll,
     run,
     cancel: () => {
       demo.current?.abort();
       active.current?.abort();
     },
+    storageWarning,
   };
 }
