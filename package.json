@@ -15,7 +15,7 @@
     "test:seo": "node scripts/check-seo.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest --run --passWithNoTests",
+    "test": "node scripts/run-vitest.mjs",
     "test:meter-qualification": "node scripts/qualify-loudness.mjs",
     "test:tempo-qualification": "node scripts/qualify-tempo.mjs",
     "test:studio-audio": "node scripts/run-studio-audio-qa.mjs",
