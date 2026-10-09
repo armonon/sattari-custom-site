@@ -3,7 +3,13 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import useStemSeparator from './useStemSeparator';
 import { decodeTrack } from '../utils/stemSeparator';
 
-const { separate, dispose } = vi.hoisted(() => ({ separate: vi.fn(), dispose: vi.fn() }));
+const { separate, dispose, loadSessions, saveSession, deleteSession } = vi.hoisted(() => ({
+  separate: vi.fn(),
+  dispose: vi.fn(),
+  loadSessions: vi.fn(),
+  saveSession: vi.fn(),
+  deleteSession: vi.fn(),
+}));
 vi.mock('../utils/stemSeparatorClient', () => ({
   StemSeparatorClient: class {
     separate(...args) {
@@ -17,6 +23,11 @@ vi.mock('../utils/stemSeparatorClient', () => ({
 vi.mock('../utils/stemSeparator', async () => ({
   ...(await vi.importActual('../utils/stemSeparator')),
   decodeTrack: vi.fn(),
+}));
+vi.mock('../utils/splitSessionStore', () => ({
+  loadSplitSessions: loadSessions,
+  saveSplitSession: saveSession,
+  deleteSplitSession: deleteSession,
 }));
 
 const file = (name) => new File(['test'], name, { type: 'audio/wav' });
@@ -38,6 +49,9 @@ beforeEach(() => {
     peaks: [],
   });
   separate.mockImplementation(async (_audio, stems) => outputs(stems));
+  loadSessions.mockResolvedValue({ sessions: [], warnings: [] });
+  saveSession.mockResolvedValue(undefined);
+  deleteSession.mockResolvedValue(undefined);
 });
 afterEach(() => {
   cleanup();
@@ -58,6 +72,93 @@ it('processes every file with a snapshot of the selected stems', async () => {
   expect(result.current.jobs[0].outputs.map((output) => output.id)).toEqual(['bass', 'other']);
   expect(result.current.jobs[0].outputs[1].name).toBe('one-instruments.wav');
   expect(result.current.running).toBe(false);
+});
+
+it('restores saved results and keeps interrupted sources available for retry', async () => {
+  const source = file('recover.wav');
+  loadSessions.mockResolvedValueOnce({
+    sessions: [
+      {
+        id: 'done',
+        file: source,
+        status: 'done',
+        outputs: [{ id: 'bass', blob: new Blob(['wav']), url: 'blob:restored' }],
+        updatedAt: 1,
+      },
+      {
+        id: 'interrupted',
+        file: source,
+        status: 'cancelled',
+        message: 'Interrupted. Retry when ready.',
+        outputs: [],
+        updatedAt: 2,
+      },
+    ],
+    warnings: [],
+  });
+  const { result } = renderHook(useStemSeparator);
+  await waitFor(() => expect(result.current.jobs).toHaveLength(2));
+  expect(result.current.jobs[0].outputs[0].url).toBe('blob:restored');
+  expect(result.current.jobs[1]).toMatchObject({
+    status: 'cancelled',
+    message: 'Interrupted. Retry when ready.',
+  });
+});
+
+it('does not restore old sessions after the user creates and removes a new queue', async () => {
+  let resolveLoad;
+  loadSessions.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveLoad = resolve;
+    })
+  );
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('temporary.wav')]));
+  const temporaryId = result.current.jobs[0].id;
+  act(() => result.current.remove(temporaryId));
+  await act(async () => {
+    resolveLoad({
+      sessions: [{ id: 'old', file: file('old.wav'), status: 'done', outputs: [], updatedAt: 1 }],
+      warnings: [],
+    });
+    await Promise.resolve();
+  });
+  expect(result.current.jobs).toEqual([]);
+});
+
+it('deletes valid saved sessions replaced before restoration completes', async () => {
+  let resolveLoad;
+  loadSessions.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveLoad = resolve;
+    })
+  );
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.clearAll());
+  await act(async () => {
+    resolveLoad({
+      sessions: [{ id: 'replaced', file: file('old.wav'), outputs: [] }],
+      warnings: [],
+    });
+    await Promise.resolve();
+  });
+  await waitFor(() => expect(deleteSession).toHaveBeenCalledWith('replaced'));
+  expect(result.current.jobs).toEqual([]);
+});
+
+it('persists successful audio outputs in the local session store', async () => {
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('saved.wav')]));
+  await act(async () => result.current.run());
+  expect(saveSession).toHaveBeenCalledWith(
+    expect.objectContaining({
+      file: expect.objectContaining({ name: 'saved.wav' }),
+      status: 'done',
+      outputs: expect.arrayContaining([
+        expect.objectContaining({ blob: expect.any(Blob), name: 'saved-vocals.wav' }),
+      ]),
+    })
+  );
 });
 
 it('continues after a bad file and retries only that file', async () => {

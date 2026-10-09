@@ -28,13 +28,24 @@ const LIMITS = [
   'First run downloads a 172 MB model from Hugging Face (cached afterwards). Desktop Chrome/Edge with WebGPU is fastest; CPU mode can take several minutes per song.',
   'One song at a time, up to 10 minutes and 100 MB. Phones and tablets are untested.',
   'Use it on your own tracks or for practice; you are responsible for having the rights to what you separate.',
-  'Results are not saved: download the WAVs or send them to StemDeck before leaving the page.',
+  'Sessions are saved only in this browser when storage is available. Use one Split tab at a time. Sessions remain until you replace the song or clear browser site data; storage quota or eviction can prevent recovery, so download important WAVs as a backup.',
 ];
 
 export default function SplitPage() {
   const separator = useStemSeparator();
-  const { jobs, running, errors, cpuOnly, setCpuOnly, loadingDemo, addFiles, remove, run, cancel } =
-    separator;
+  const {
+    jobs,
+    running,
+    errors,
+    cpuOnly,
+    setCpuOnly,
+    loadingDemo,
+    addFiles,
+    run,
+    cancel,
+    storageWarning,
+    clearAll,
+  } = separator;
   const navigate = useNavigate();
   const [zipping, setZipping] = useState(false);
   const [zipError, setZipError] = useState('');
@@ -44,7 +55,7 @@ export default function SplitPage() {
 
   const choose = (files) => {
     if (locked || !files.length) return;
-    jobs.forEach((item) => remove(item.id));
+    clearAll();
     addFiles([files[0]]);
   };
 
@@ -158,7 +169,7 @@ export default function SplitPage() {
             className="alab-text-button"
             disabled={locked}
             onClick={() => {
-              jobs.forEach((item) => remove(item.id));
+              clearAll();
               void separator.loadDemo();
             }}
           >
@@ -171,6 +182,11 @@ export default function SplitPage() {
               <p key={error}>{error}</p>
             ))}
           </div>
+        )}
+        {storageWarning && (
+          <p className="alab-bad" role="alert">
+            {storageWarning}
+          </p>
         )}
 
         {job && (
