@@ -534,3 +534,55 @@
 .sd-session-shell .sd-session-inspector {
   top: var(--session-command-height, 106px);
 }
+
+/* Narrower laptop / zoomed layouts need space for deck identity, tempo/key,
+   and live sync controls instead of forcing all three into one header row. */
+@media (max-width: 1199px) {
+  .sd-session-shell .sd-focused-deck .sd-deck-identity {
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: 23px 24px;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-identity .sd-deck-title {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-meta {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .sd-session-shell .sd-focused-deck .sd-deck-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 6px;
+    height: auto;
+    min-height: 0;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-identity {
+    width: 100%;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 28px 26px;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-live-actions {
+    grid-column: 1;
+    justify-content: flex-end;
+  }
+}
+
+/* Keep status feedback in the shell flow instead of covering the bottom of a
+   scrollable deck, where the fader and cue controls live. */
+.sd-session-shell .sd-notice {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  margin: 6px 0 0;
+  border: 1px solid #ffffff14;
+  border-radius: 8px;
+}
