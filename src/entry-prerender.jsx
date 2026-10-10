@@ -34,7 +34,6 @@ export function getPrerenderRoutes(inventory) {
     ['/learn', 'src/pages/LoopPracticePage.jsx'],
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
-    ['/downloads', 'src/pages/DownloadsPage.tsx'],
     // Wave-2 music tools (alpha label on the page, indexable like any tool).
     ['/studio/split', 'src/labs/split/SplitPage.jsx'],
     ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],

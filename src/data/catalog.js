@@ -182,7 +182,7 @@ export const products = [
     slug: 'cremona-handmade-acoustic-violin',
     category: 'violins',
     description:
-      'The Cremona is SATTARI\'s fully handmade acoustic violin — hand-carved, shaped, and finished with fine traditional varnishes, each one treated as its own instrument rather than a production unit. Full-size (4/4), individually workshop-fitted and tuned at SATTARI Musical Instruments in California before it ships. A step up from factory instruments at an honest price — for students taking the next serious step and adults who want a real acoustic violin without paying for a collector\'s piece.',
+      "The Cremona is SATTARI's fully handmade acoustic violin — hand-carved, shaped, and finished with fine traditional varnishes, each one treated as its own instrument rather than a production unit. Full-size (4/4), individually workshop-fitted and tuned at SATTARI Musical Instruments in California before it ships. A step up from factory instruments at an honest price — for students taking the next serious step and adults who want a real acoustic violin without paying for a collector's piece.",
     price: 250.0,
     image: '/sattari site/violins/cremona-acoustic.jpg',
     gallery: [

@@ -10,15 +10,14 @@ export default function Footer() {
             {BUSINESS.name}
           </Link>
           <p className="footer-copy">
-            Instruments, online guitar learning and music software for musicians worldwide. Repairs,
-            rentals and lessons in Woodland Hills, California.
+            Instruments and online music tools for musicians worldwide. Repairs, rentals and lessons
+            in Woodland Hills, California.
           </p>
           <nav className="footer-quick-links" aria-label="Footer quick links">
             <Link to="/about">About Sattari</Link>
             <Link to="/shop">Shop gear</Link>
             <Link to="/services">Book local support</Link>
             <Link to="/hub">Enter Sattari Hub</Link>
-            <Link to="/downloads">Music software downloads</Link>
             <Link to="/guides">Music guides</Link>
             <Link to="/visit">Visit & contact</Link>
             <Link to="/privacy">Privacy choices</Link>

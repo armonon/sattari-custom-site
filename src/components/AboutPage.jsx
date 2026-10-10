@@ -31,9 +31,9 @@ export default function AboutPage() {
             <h1>About Sattari Music</h1>
             <p className="hero-copy">
               Sattari is a music company for musicians worldwide. Buy instruments, learn guitar
-              online, create music in Sattari Studio, separate stems and download audio software.
-              Our appointment-only Woodland Hills shop brings it together with instrument repair,
-              rentals, lessons and rehearsal space for Encino, Calabasas and Los Angeles.
+              online, create music in Sattari Studio, and separate stems. Our appointment-only
+              Woodland Hills shop brings it together with instrument repair, rentals, lessons and
+              rehearsal space for Encino, Calabasas and Los Angeles.
             </p>
             <div className="hero-actions">
               <Link to="/shop" className="button button-solid">
@@ -52,7 +52,6 @@ export default function AboutPage() {
               <Link to="/shop/essentials">Practice essentials</Link>
               <Link to="/learn">Learn guitar online</Link>
               <Link to="/studio">Create music</Link>
-              <Link to="/downloads">Download music software</Link>
             </div>
           </div>
 

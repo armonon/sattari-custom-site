@@ -37,7 +37,6 @@ for (const path of paths) {
 }
 for (const [path, target] of [
   ['/buy', '/shop'],
-  ['/audio-suite', '/downloads'],
   ['/services/music-classes-los-angeles', '/services/music-lessons-los-angeles'],
   ['/services/drum-repair-los-angeles', '/services/instrument-repair-los-angeles'],
   ['/stem-seperator', '/stem-separator'],
