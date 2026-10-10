@@ -11,8 +11,20 @@ document.querySelector('#run').onclick = async () => {
   try {
     const reports = [];
     for (const keyLock of [false, true]) {
-      let engine;
-      const audio = await Tone.Offline(async context => {
+      const previous = Tone.getContext();
+      const context = new Tone.OfflineContext(2, 16, 48000);
+      const clockChecks = [];
+      let engine, audio;
+      // Tone.Offline restores the global context before its asynchronous clock
+      // renders. Engine transport methods use Tone.now(), so keep this offline
+      // context active through every tempo, seek and key-lock callback.
+      const at = (seconds, action) => context.setTimeout(() => {
+        clockChecks.push({at: context.now(), sameContext: Tone.getContext() === context,
+          clockError: Math.abs(Tone.now() - context.now())});
+        action();
+      }, seconds);
+      try {
+        Tone.setContext(context);
         engine = new StudioAudioEngine({monitor:false,recorder:false,metering:false});
         engine.unlock = async () => {};
         const merger = context.rawContext.createChannelMerger(2);
@@ -32,21 +44,25 @@ document.querySelector('#run').onclick = async () => {
         }
         engine.setProjectTempo(120);
         engine.setDeckSync('B',true,{bpm:100},{id:'A',bpm:120});
-        context.setTimeout(()=>{
+        at(6.1, ()=>{
           engine.setProjectTempo(124);
           engine.setPlaybackRate('A',124/120);
           engine.setPlaybackRate('B',124/100);
-        },6.1);
-        context.setTimeout(()=>{
+        });
+        at(10.1, ()=>{
           for(const [id,bpm] of [['A',120],['B',100]])
             engine.seekDeck(id,engine.getDeckPosition(id)+4*60/bpm);
-        },10.1);
+        });
         if(keyLock) {
-          context.setTimeout(()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,false); },12.1);
-          context.setTimeout(()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,true); },13.1);
+          at(12.1, ()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,false); });
+          at(13.1, ()=>{ for(const id of ['A','B'])engine.setDeckKeyLock(id,true); });
         }
-      },16,2,48000);
-      engine.dispose();
+        audio = await context.render();
+      } finally {
+        engine?.dispose();
+        Tone.setContext(previous);
+        context.dispose();
+      }
       const peaks = channel => {
         const pcm=audio.getChannelData(channel), list=[];
         for(let i=48000;i<pcm.length-4800;i++) {
@@ -61,8 +77,8 @@ document.querySelector('#run').onclick = async () => {
       const a=peaks(0),b=peaks(1);
       const errors=a.map(t=>Math.min(...b.map(u=>Math.abs(t-u)))*1000);
       const maxMs=Math.max(...errors);
-      reports.push({keyLock,transientsA:a.length,transientsB:b.length,maxPairMs:maxMs,
-        pass:a.length>=25 && b.length>=25 && maxMs<20});
+      reports.push({keyLock,clockChecks,transientsA:a.length,transientsB:b.length,maxPairMs:maxMs,
+        pass:clockChecks.length === (keyLock ? 4 : 2) && clockChecks.every(c=>c.sameContext && c.clockError===0) && a.length>=25 && b.length>=25 && maxMs<20});
     }
     result.textContent=JSON.stringify({pass:reports.every(r=>r.pass),reports},null,2);
   } catch(error) { result.textContent='FAIL '+error.stack; }
