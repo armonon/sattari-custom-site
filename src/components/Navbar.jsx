@@ -9,9 +9,6 @@ const links = [
   { to: '/about', label: 'About' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
-  // The plugin catalogue at /downloads is a static site deployed next to this
-  // app, so this link loads it from the server instead of routing in the SPA.
-  { to: '/downloads', label: 'Downloads', reloadDocument: true },
 ];
 
 export default function Navbar({ onCartClick }) {

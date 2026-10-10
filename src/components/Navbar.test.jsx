@@ -12,6 +12,11 @@ it('preserves the logo artwork dimensions and links the brand to Home', () => {
       <Navbar onCartClick={vi.fn()} />
     </MemoryRouter>
   );
+  expect(screen.queryByRole('link', { name: 'Downloads', hidden: true })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Sattari Hub', hidden: true })).toHaveAttribute(
+    'href',
+    '/hub'
+  );
   const logo = screen.getByRole('img', { name: 'Sattari Music Logo' });
   expect(logo).toHaveAttribute('width', '529');
   expect(logo).toHaveAttribute('height', '143');
