@@ -94,6 +94,19 @@ describe('signing in', () => {
 });
 
 describe('guess limiting', () => {
+  it('starts a fresh global allowance at the next fixed window', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_791_392_399_999);
+    try {
+      for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.3.${i}`);
+      expect((await right('192.0.2.14')).status).toBe(429);
+
+      clock.mockReturnValue(1_791_392_400_001);
+      expect((await right('192.0.2.14')).status).toBe(200);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('locks an address after the threshold and says when to retry', async () => {
     for (let i = 0; i < THROTTLE_SETTINGS.LOCK_AFTER_ATTEMPTS; i += 1) {
       expect((await wrong()).status).toBe(401);
@@ -166,11 +179,16 @@ describe('device tokens', () => {
   });
 
   it('stops exempting every device after "sign out everywhere"', async () => {
-    const { deviceToken } = await (await right('198.51.100.1')).json();
-    await revokeAllSessions({});
-    for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.2.${i}`);
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_791_392_400_000);
+    try {
+      const { deviceToken } = await (await right('198.51.100.1')).json();
+      await revokeAllSessions({});
+      for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.2.${i}`);
 
-    expect((await right('192.0.2.13', deviceToken)).status).toBe(429);
+      expect((await right('192.0.2.13', deviceToken)).status).toBe(429);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   it('ignores a forged or tampered device token', async () => {
