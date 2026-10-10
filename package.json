@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@coderline/alphatab": "1.8.3",
+    "@huggingface/transformers": "^4.3.0",
     "@netlify/blobs": "10.7.13",
     "@sentry/react": "^11.1.0",
     "cors": "^2.8.6",
@@ -34,6 +35,7 @@
     "fflate": "0.8.3",
     "lucide-react": "^0.468.0",
     "mediabunny": "1.59.1",
+    "mp4-muxer": "^5.2.2",
     "onnxruntime-web": "1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

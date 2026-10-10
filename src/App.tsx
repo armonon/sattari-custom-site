@@ -32,6 +32,8 @@ import {
   SplitPage,
   KeyBpmPage,
   VoxPage,
+  LyricPage,
+  CleanPage,
   ServicesPage,
   StudioBookingStatus,
   ShopPage,
@@ -128,6 +130,9 @@ const ROUTES: RouteDefinition[] = [
   { path: '/studio/split', page: SplitPage },
   { path: '/studio/keybpm', page: KeyBpmPage },
   { path: '/studio/vox', page: VoxPage },
+  // Wave-3 alpha tools.
+  { path: '/studio/lyric', page: LyricPage },
+  { path: '/studio/clean', page: CleanPage },
 ];
 
 // Matched exactly as <Routes> ranks them, including the catch-all.
