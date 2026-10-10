@@ -1,0 +1,833 @@
+{
+  "repository": "armonon/sattari-custom-site",
+  "main_at_start": "85cb19baf71a2acd3456fda24623fee0d8548870",
+  "remote_branches_scanned": 30,
+  "explicit_agent_authored_commits": 91,
+  "agent_commits": [
+    {
+      "sha": "d178c70038a0df5249978ea39e5e7f4898d03587",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-09T10:22:37-07:00",
+      "subject": "fix(stemdeck): improve narrow performance workspace layout"
+    },
+    {
+      "sha": "a9e9d977e409c56e3b1f2d636ea9291034848645",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-09T10:10:03-07:00",
+      "subject": "test: isolate Vitest from Node web storage"
+    },
+    {
+      "sha": "6265c325014d92430f9b7b9b2b8ccbc6f0821149",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-09T07:45:08-07:00",
+      "subject": "test(stemdeck): pin revocation throttle window clock"
+    },
+    {
+      "sha": "e3f01236571f0cf7a3bc013537aefcc08cba24bd",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-09T03:19:18-07:00",
+      "subject": "Add local Split session recovery checkpoint"
+    },
+    {
+      "sha": "77b80506a33aec941eeafbf4652aea32a5f28199",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-08T09:25:11-07:00",
+      "subject": "Patch audited transitive dependencies"
+    },
+    {
+      "sha": "9ae0bcca59484b8df6361ee98f32ba856a14949f",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-08T09:19:58-07:00",
+      "subject": "Retire public alpha download surface on current site"
+    },
+    {
+      "sha": "b26c03be150e9ebb4dfcfa489bb57e62802011ec",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-08T02:15:54-07:00",
+      "subject": "test(stemdeck): checkpoint mixer reconstruction support"
+    },
+    {
+      "sha": "6bad0edaf198d80d44c9aa02c3e65970fe7d9148",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T22:50:47-07:00",
+      "subject": "fix(stemdeck): detach and verify portable archive audio before restore"
+    },
+    {
+      "sha": "c15bb06a87b150a966e8c563457de4f2786ba141",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T21:12:04-07:00",
+      "subject": "fix(stemdeck): bound acyclic audio graph cycle checks"
+    },
+    {
+      "sha": "af10e31c9df8f1363d3945e3b1d39518cd858009",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T20:37:34-07:00",
+      "subject": "fix: preserve full capture timing and exact export frame counts"
+    },
+    {
+      "sha": "e547d7d4eef74d533795cea493a426b091b92d2a",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:32:25-07:00",
+      "subject": "feat: preserve Key and BPM measurements in validated portable reports"
+    },
+    {
+      "sha": "8e28ea4138027131b014f6b1f62ea44d09a85e66",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:29:47-07:00",
+      "subject": "fix: preserve Pocket patterns on storage and capacity failures"
+    },
+    {
+      "sha": "f3f0e77f8e36854033034293172ea6d5b46d6327",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:09:18-07:00",
+      "subject": "fix: preserve actionable recording errors under storage exhaustion"
+    },
+    {
+      "sha": "dab0dda829ffc436987773d650abbe0232f4a0ec",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:32:25-07:00",
+      "subject": "feat: preserve Key and BPM measurements in validated portable reports"
+    },
+    {
+      "sha": "4bd196d65c7fd56f5de038179978e3eae47ab6b7",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:29:47-07:00",
+      "subject": "fix: preserve Pocket patterns on storage and capacity failures"
+    },
+    {
+      "sha": "f6f061c6e463a552c287e883cbd7fc9bb3e0867e",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T19:09:18-07:00",
+      "subject": "fix: preserve actionable recording errors under storage exhaustion"
+    },
+    {
+      "sha": "1569ef377f6d3e079936116b1d8e5c4fe7586f48",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T18:15:27-07:00",
+      "subject": "fix: include service worker in frozen release qualification build"
+    },
+    {
+      "sha": "85cb19baf71a2acd3456fda24623fee0d8548870",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:42:29-07:00",
+      "subject": "content(guides): add guitar care and maintenance guide"
+    },
+    {
+      "sha": "a9a77e6ad21245a99c83b592ed2fb8a660e71a37",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:42:29-07:00",
+      "subject": "content(guides): add guitar care and maintenance guide"
+    },
+    {
+      "sha": "ec6adadcfd89977f043036710b6549ad62905759",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:37:30-07:00",
+      "subject": "content(guides): add beginner acoustic guitar guide; update guitar-bass category link"
+    },
+    {
+      "sha": "9055f678458dbb9198679019783e218dd0beccdc",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:37:30-07:00",
+      "subject": "content(guides): add beginner acoustic guitar guide; update guitar-bass category link"
+    },
+    {
+      "sha": "a9d1e83921086f27c08a7599edda23aab5e6fac1",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:35:13-07:00",
+      "subject": "content(catalog): improve descriptions for darbuka, 8\" and 12\" practice pads"
+    },
+    {
+      "sha": "682515f24afea84b4ac8964d7b219e412a6a7582",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:35:13-07:00",
+      "subject": "content(catalog): improve descriptions for darbuka, 8\" and 12\" practice pads"
+    },
+    {
+      "sha": "53d86259f56e3924430ece102612727dee8804e4",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:33:59-07:00",
+      "subject": "seo: swap essentials guide link to practice pad guide"
+    },
+    {
+      "sha": "1abad5b6a9c330da01583b895c17f2aab12740a9",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:33:59-07:00",
+      "subject": "seo: swap essentials guide link to practice pad guide"
+    },
+    {
+      "sha": "ea24df3f4cecbd4eded240c319bb500826df64ba",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:33:45-07:00",
+      "subject": "content(guides): add practice drum pad buying guide"
+    },
+    {
+      "sha": "10528b4390c77feea84e4defd0856f81d2ad0edd",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:33:45-07:00",
+      "subject": "content(guides): add practice drum pad buying guide"
+    },
+    {
+      "sha": "8744a5b0321d45d10602ae7252a274849402756a",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:30:34-07:00",
+      "subject": "content(about): rewrite founder intro with specific product and service detail"
+    },
+    {
+      "sha": "d944c6edab108aa5b4f07c1d7c613980fea9aa39",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:30:34-07:00",
+      "subject": "content(about): rewrite founder intro with specific product and service detail"
+    },
+    {
+      "sha": "f6950e72a09a2bf702f39974c6cd0de9f861db9d",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:29:52-07:00",
+      "subject": "seo: add snare tuning guide link to essentials category help"
+    },
+    {
+      "sha": "170615d75131daffcb5c97f7576926c5b67e00a9",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:29:32-07:00",
+      "subject": "seo: add snare tuning guide link to essentials category help"
+    },
+    {
+      "sha": "586fb9adab7de2ae39955cf6adfff61dbb6314a3",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:28:43-07:00",
+      "subject": "seo: add guitar setup guide link to guitar-bass category help"
+    },
+    {
+      "sha": "c651fd9bd94c4c1507bc6e621f8dd31e93ffdb31",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:28:43-07:00",
+      "subject": "seo: add guitar setup guide link to guitar-bass category help"
+    },
+    {
+      "sha": "5e11d96c9344f33127f4ed1cd9800515bb036819",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:24:41-07:00",
+      "subject": "content(shop): link category pages to relevant guides"
+    },
+    {
+      "sha": "c4f8afafa3e74158857215dae0ad7b79427a83ae",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:24:41-07:00",
+      "subject": "content(shop): link category pages to relevant guides"
+    },
+    {
+      "sha": "e144e6198f349847a44feb50dd70224c9269b6c6",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:21:22-07:00",
+      "subject": "seo(guides): update /guides index meta description to reflect broader content"
+    },
+    {
+      "sha": "0428834bffd52d3774f015269b031ef9ad643a60",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:21:22-07:00",
+      "subject": "seo(guides): update /guides index meta description to reflect broader content"
+    },
+    {
+      "sha": "06a8c53e5d93451db83cae9740c395095d3cbc97",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:17:27-07:00",
+      "subject": "content(guides): add violin-for-beginners and drumsticks-for-beginners guides"
+    },
+    {
+      "sha": "416ad833eabc90a882fa19f689df8c3faeca4a0d",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:17:27-07:00",
+      "subject": "content(guides): add violin-for-beginners and drumsticks-for-beginners guides"
+    },
+    {
+      "sha": "8c1806992b3a82c3133ac9deba9d4cc2a9c8430b",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:16:09-07:00",
+      "subject": "content(catalog): improve Cremona, nylon guitar, violin strings, wireless transmitter descriptions"
+    },
+    {
+      "sha": "025d2cb3565a1b1bae8beed142e0e230e64e7faa",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:16:09-07:00",
+      "subject": "content(catalog): improve Cremona, nylon guitar, violin strings, wireless transmitter descriptions"
+    },
+    {
+      "sha": "278e0874a69b8c0ea531fc5ff1ec66acc30a2e4b",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:06:48-07:00",
+      "subject": "fix: patch dependency advisories blocking release checks"
+    },
+    {
+      "sha": "a4dab47baaf9991d90ab0ccbecd718503157dd47",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:06:21-07:00",
+      "subject": "add 3 new guides: guitar setup, drum tuning, violin care"
+    },
+    {
+      "sha": "1a0f2902e9f2a32d248f1c9d39a00f8b14636a98",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T17:06:21-07:00",
+      "subject": "add 3 new guides: guitar setup, drum tuning, violin care"
+    },
+    {
+      "sha": "47006d5fb84059be6a04f71c7b493f6fba8b684d",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T16:58:34-07:00",
+      "subject": "improve product descriptions and add specs across all catalog items"
+    },
+    {
+      "sha": "ee9f86c1a33c8ef0cf09b9828a2726417f2844d6",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-07T16:58:34-07:00",
+      "subject": "improve product descriptions and add specs across all catalog items"
+    },
+    {
+      "sha": "8c06f816e47bc2405e20f8941e19a4697d5c7c3f",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T20:51:18-07:00",
+      "subject": "test(suite): expect bridge mode on *.thecreatingco.com, popup elsewhere"
+    },
+    {
+      "sha": "c184db893327285e8c0d81e845f97d926ae657c8",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T20:37:12-07:00",
+      "subject": "fix(suite): size the menu by tag (React 18 custom elements), phone placement in StemDeck"
+    },
+    {
+      "sha": "92842c725505407b05e3677ac2901ccd05a0085c",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T20:32:32-07:00",
+      "subject": "feat(suite): thecreateco menu and Locker in StemDeck and the Sattari tools"
+    },
+    {
+      "sha": "20936fd206be2e95001507c820dd559de14b25c5",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T20:32:32-07:00",
+      "subject": "feat(pwa): installable, offline StemDeck and Sattari tools"
+    },
+    {
+      "sha": "a577a8e8afaa0d352faf1a7fb9c049f6cd0ffae0",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T20:32:17-07:00",
+      "subject": "fix(nav): bring the live Downloads link and /downloads reload into source"
+    },
+    {
+      "sha": "0990499caae585008de3406ae9e57ddbbbb184d8",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T14:49:59-07:00",
+      "subject": "test(ableton): cover the MP3 decode path in the browser check"
+    },
+    {
+      "sha": "c0b0b38d7e4aca9ed9bf2d146d894bb3c1437e59",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T14:48:59-07:00",
+      "subject": "feat(ableton): Export for Ableton from StemDeck, Split and Pocket"
+    },
+    {
+      "sha": "702a6f940d4c0f022f39330dff9e8fd349186c6f",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-06T07:27:14-07:00",
+      "subject": "feat(labs): wire Lyric and Clean into routes and the Labs list"
+    },
+    {
+      "sha": "b2a7bfcba6b3bf31fa5a1088ba3cb2c4d91a6cf1",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T23:13:19-07:00",
+      "subject": "sync: add live-only /downloads/plugins and /audio-plugins micro-site to git"
+    },
+    {
+      "sha": "77150f24f2eb214338c66d9e064fd4781a5ced30",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T22:45:58-07:00",
+      "subject": "fix(qualify-studio-labs): wait for the status region with progress text"
+    },
+    {
+      "sha": "c5895ea2d04bec3af9587dd0ea553493fa836003",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T18:13:09-07:00",
+      "subject": "test(staff): use a made-up staff username in tests"
+    },
+    {
+      "sha": "272f320e381a744b60d850ee2d7c1e66c377b043",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T18:11:11-07:00",
+      "subject": "feat(labs): index the six music tools, add them to the sitemap, show Split's model license"
+    },
+    {
+      "sha": "960eba83d6e605e005e00ed3b4bcb3d32944c73e",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T18:04:27-07:00",
+      "subject": "Merge wave2/sattari-split-keybpm-vox; one Labs list with all six tools on /hub"
+    },
+    {
+      "sha": "caabef99c429f732676eb7d46143f595ddbfabca",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T16:30:07-07:00",
+      "subject": "feat(labs): Split, Key & BPM and Vox studio alpha tools"
+    },
+    {
+      "sha": "4d766e6f998b4243d66e1c978ae300ec71536d6e",
+      "author": "AGENT SATTARI",
+      "date": "2026-10-05T16:23:41-07:00",
+      "subject": "feat(labs): Canvas, Pocket and Press alpha tools"
+    },
+    {
+      "sha": "fec21b4e5807c670887c099aac58e48a8852ee31",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-25T08:35:48-07:00",
+      "subject": "Hide retired public surfaces"
+    },
+    {
+      "sha": "c605d0eaaf449854ef196da38a14a7b502b9df9e",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-04T13:32:47-07:00",
+      "subject": "Add NOW profile editor save flow"
+    },
+    {
+      "sha": "4624ba573d1b2ce26746870ac32a914690a04b8c",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-04T13:23:50-07:00",
+      "subject": "Add NOW global profile save backend"
+    },
+    {
+      "sha": "8f3d6ecb0e51322ae062948874a7d1a681e0aeda",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-04T11:55:20-07:00",
+      "subject": "Add NOW Market staged journey smoke"
+    },
+    {
+      "sha": "bc21102cdc0d50682a191f1c4b0251340a638912",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-03T07:26:47-07:00",
+      "subject": "Remove public alpha download surfaces locally"
+    },
+    {
+      "sha": "0cd3139cead0d4aa7f29fd5c0f92b1df63a45a66",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-02T17:41:44-07:00",
+      "subject": "Add NOW profile system v0"
+    },
+    {
+      "sha": "f59111ae0dc7294387ee5abce376f1e10b960696",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-02T17:30:42-07:00",
+      "subject": "Add realtime Auto Pitch download"
+    },
+    {
+      "sha": "4b2e23d205286d5ec9f49bea2ef9e3e986101b5d",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-02T13:25:37-07:00",
+      "subject": "Recover public surface guardrails locally"
+    },
+    {
+      "sha": "696223a33113e008b23a0c04a93bdd2bdff93551",
+      "author": "AGENT SATTARI",
+      "date": "2026-06-02T07:59:10-07:00",
+      "subject": "Add suite installer downloads"
+    },
+    {
+      "sha": "574ad69dd2871f27e6670e48bcfa7527452f963b",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-30T09:23:25-07:00",
+      "subject": "Fix downloads page formatting lint"
+    },
+    {
+      "sha": "db87d7d235806115d4fd9de3ce50f1dc9322174c",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-30T08:27:06-07:00",
+      "subject": "Update Sattari workflow for Node 24 action runtime"
+    },
+    {
+      "sha": "fd2f6b9c2365ce09fda5c166fe329f4632ca0708",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-30T09:23:25-07:00",
+      "subject": "Fix downloads page formatting lint"
+    },
+    {
+      "sha": "5fa72e02b623effacabc3b0539ad897ea5f5fd87",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-30T08:27:06-07:00",
+      "subject": "Update Sattari workflow for Node 24 action runtime"
+    },
+    {
+      "sha": "0663867a1055a29191572fad03419e7418ce02a2",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-28T10:29:11-07:00",
+      "subject": "Add plugin suite downloader page"
+    },
+    {
+      "sha": "e5e7c4b8b618b005a74a98d7f10a8c54e1ebbb19",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-20T12:16:48-07:00",
+      "subject": "Add Sattari Market concept route"
+    },
+    {
+      "sha": "f5824e704271ee1ce7e232c4fb9ba33ae191d88f",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-19T18:38:03-07:00",
+      "subject": "Harden cart checkout flow"
+    },
+    {
+      "sha": "16ad3c2a2fc06fdec7a6c337387eced4dec2ee4e",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-19T18:00:32-07:00",
+      "subject": "Store service inquiries without email dependency"
+    },
+    {
+      "sha": "f60532152714e458981380c745305448289f58dd",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-19T17:56:53-07:00",
+      "subject": "Use Netlify Forms for service inquiries"
+    },
+    {
+      "sha": "c164a07814f0a407293c17bf4894da858336d794",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-19T17:05:54-07:00",
+      "subject": "Keep service inquiry tests out of function bundle"
+    },
+    {
+      "sha": "f2965d91e135a44d85a54f900fe99ade0b99d30d",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-18T23:24:28-07:00",
+      "subject": "Hardening service inquiry email handling"
+    },
+    {
+      "sha": "fc27aebc642e2f60448b9dcddd3f319488325216",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-18T14:40:10-07:00",
+      "subject": "Add buy page redirect"
+    },
+    {
+      "sha": "e942e49de6d4d5a7d9291e801d0565ebe8d01587",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-15T13:34:54-07:00",
+      "subject": "Expand local SEO landing pages"
+    },
+    {
+      "sha": "fde5e448e4c2f221fb9014a3f2cc486c1ed2cb0c",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-15T13:07:54-07:00",
+      "subject": "Broaden repairs to all instruments"
+    },
+    {
+      "sha": "38b94b8fe8567da19a46731c0f4092fd5ce1df5c",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-15T12:52:46-07:00",
+      "subject": "Add repair service landing page"
+    },
+    {
+      "sha": "76997ba304736a936e3725e2f64d7eff5ce864f3",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-15T10:57:05-07:00",
+      "subject": "Format Sattari Radio page"
+    },
+    {
+      "sha": "770a87e8283da426757a2f56d922bfc60e42d0de",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-15T10:55:50-07:00",
+      "subject": "Add Sattari Radio MVP page"
+    },
+    {
+      "sha": "463e5ea997e304d6cc1415cbe3567d4a4af0bae4",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-13T17:29:18-07:00",
+      "subject": "Avoid artifact name conflicts in CI"
+    },
+    {
+      "sha": "ba721fc5d08a372ad066dad9568cad4d9ff605a3",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-13T17:28:24-07:00",
+      "subject": "Use supported Node versions in CI"
+    },
+    {
+      "sha": "ec6e9a0afb12632d92f645d7c04cbff6dc127ddc",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-13T17:27:23-07:00",
+      "subject": "Update GitHub artifact upload action"
+    },
+    {
+      "sha": "c4029c6407088ddc870353b5708f6154b81cf338",
+      "author": "AGENT SATTARI",
+      "date": "2026-05-13T07:23:52-07:00",
+      "subject": "Polish mobile storefront experience"
+    }
+  ],
+  "pull_requests": [
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "core-lab/stemdeck-responsive-20261009",
+      "number": 38,
+      "sha": "d178c70038a0df5249978ea39e5e7f4898d03587",
+      "title": "fix(stemdeck): improve narrow performance workspace layout",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "core-lab/stemdeck-throttle-clock-20261009",
+      "number": 37,
+      "sha": "6265c325014d92430f9b7b9b2b8ccbc6f0821149",
+      "title": "test(stemdeck): stabilize revocation throttle window timing",
+      "disposition": "integrated"
+    },
+    {
+      "base": "main",
+      "head": "joey/public-alpha-download-cleanup-2026-10-08",
+      "number": 36,
+      "sha": "77b80506a33aec941eeafbf4652aea32a5f28199",
+      "title": "Retire public alpha downloads on current Sattari site",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-archive-webkit-20261008",
+      "head": "core-lab/stemdeck-support-mixer-20261008",
+      "number": 35,
+      "sha": "b26c03be150e9ebb4dfcfa489bb57e62802011ec",
+      "title": "test(stemdeck): checkpoint mixer reconstruction support",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-lifecycle-20261007",
+      "head": "core-lab/stemdeck-archive-webkit-20261008",
+      "number": 34,
+      "sha": "6bad0edaf198d80d44c9aa02c3e65970fe7d9148",
+      "title": "fix(stemdeck): preserve WebKit portable archive audio bytes",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-recovery-20261007",
+      "head": "core-lab/stemdeck-lifecycle-20261007",
+      "number": 33,
+      "sha": "af10e31c9df8f1363d3945e3b1d39518cd858009",
+      "title": "fix: preserve full captured timelines and exact export frames",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "release18/sattari-integrated-20261007",
+      "number": 32,
+      "sha": "e547d7d4eef74d533795cea493a426b091b92d2a",
+      "title": "release: integrate reviewed StemDeck Pocket and Key BPM repairs",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "release18/key-bpm-20261007",
+      "number": 31,
+      "sha": "dab0dda829ffc436987773d650abbe0232f4a0ec",
+      "title": "feat: save and reopen Key and BPM analysis reports safely",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "fix/pocket-persistence-20261007",
+      "number": 30,
+      "sha": "4bd196d65c7fd56f5de038179978e3eae47ab6b7",
+      "title": "fix: preserve Pocket patterns on storage and capacity failures",
+      "disposition": "integrated"
+    },
+    {
+      "base": "core-lab/stemdeck-security-20261007",
+      "head": "core-lab/stemdeck-recovery-20261007",
+      "number": 29,
+      "sha": "f6f061c6e463a552c287e883cbd7fc9bb3e0867e",
+      "title": "fix: preserve recording recovery errors under storage exhaustion",
+      "disposition": "integrated"
+    },
+    {
+      "base": "wave4/sattari-suite",
+      "head": "core-lab/stemdeck-security-20261007",
+      "number": 28,
+      "sha": "1569ef377f6d3e079936116b1d8e5c4fe7586f48",
+      "title": "fix: patch StemDeck dependency security advisories",
+      "disposition": "integrated"
+    },
+    {
+      "base": "main",
+      "head": "wave4/sattari-suite",
+      "number": 27,
+      "sha": "ee9f86c1a33c8ef0cf09b9828a2726417f2844d6",
+      "title": "Wave 4: Export for Ableton, installable/offline StemDeck + Sattari tools, suite menu + Locker",
+      "disposition": "integrated"
+    },
+    {
+      "base": "wave2/sattari-all",
+      "head": "fix/split-audio-recovery",
+      "number": 26,
+      "sha": "bf3c138b96e2dbf10a99de6ba2de51bc580c8d9b",
+      "title": "Fix Split cancellation and stalled audio startup",
+      "disposition": "integrated"
+    },
+    {
+      "base": "wave2/sattari-all",
+      "head": "wave3/sattari-lyric-clean",
+      "number": 25,
+      "sha": "702a6f940d4c0f022f39330dff9e8fd349186c6f",
+      "title": "Wave 3: Lyric (lyric video maker) and Clean (voice cleanup), wired into routes + Labs",
+      "disposition": "integrated"
+    },
+    {
+      "base": "main",
+      "head": "sync/live-downloads-microsite",
+      "number": 24,
+      "sha": "b2a7bfcba6b3bf31fa5a1088ba3cb2c4d91a6cf1",
+      "title": "sync: live downloads micro-site into git",
+      "disposition": "retired: obsolete native alpha download microsite; source remains recoverable from its branch, cleanup PR36 integrated"
+    },
+    {
+      "base": "main",
+      "head": "wave2/sattari-all",
+      "number": 23,
+      "sha": "77150f24f2eb214338c66d9e064fd4781a5ced30",
+      "title": "Wave 2: ship Split, Key & BPM, Vox, Canvas, Pocket, Press (supersedes #21, #22)",
+      "disposition": "integrated"
+    },
+    {
+      "base": "main",
+      "head": "joey/current-main-public-surface-cleanup-2026-06-03",
+      "number": 3,
+      "sha": "c605d0eaaf449854ef196da38a14a7b502b9df9e",
+      "title": "Add NOW profile editor and save flow",
+      "disposition": "retired: main deliberately removed NOW Market/Profile platform in e80a55e; current community profile system supersedes it"
+    },
+    {
+      "base": "main",
+      "head": "joey/actions-node24-runtime-2026-05-30",
+      "number": 2,
+      "sha": "fd2f6b9c2365ce09fda5c166fe329f4632ca0708",
+      "title": "Update workflow for Node 24 action runtime",
+      "disposition": "superseded: main already has newer Node22/24 frozen-source qualification and action runtime updates"
+    }
+  ],
+  "branches": [
+    {
+      "ref": "origin",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/codex/split-session-20261009",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-archive-webkit-20261008",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-audit-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-lifecycle-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-recovery-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-responsive-20261009",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-security-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-support-mixer-20261008",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/core-lab/stemdeck-throttle-clock-20261009",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/diagnostics/master-gain-20260929",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/fix/pocket-persistence-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/fix/split-audio-recovery",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/inventory-tracking",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/joey/actions-node24-runtime-2026-05-30",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/joey/current-main-public-surface-cleanup-2026-06-03",
+      "patches_not_in_integration": [
+        "bc21102cdc0d50682a191f1c4b0251340a638912",
+        "8f3d6ecb0e51322ae062948874a7d1a681e0aeda",
+        "4624ba573d1b2ce26746870ac32a914690a04b8c",
+        "c605d0eaaf449854ef196da38a14a7b502b9df9e"
+      ]
+    },
+    {
+      "ref": "origin/joey/public-alpha-download-cleanup-2026-10-08",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/joey/public-surface-local-recovery-2026-06-02",
+      "patches_not_in_integration": [
+        "4b2e23d205286d5ec9f49bea2ef9e3e986101b5d",
+        "fec21b4e5807c670887c099aac58e48a8852ee31"
+      ]
+    },
+    {
+      "ref": "origin/joey/service-inquiry-hardening-20260518",
+      "patches_not_in_integration": [
+        "f2965d91e135a44d85a54f900fe99ade0b99d30d",
+        "c164a07814f0a407293c17bf4894da858336d794"
+      ]
+    },
+    {
+      "ref": "origin/main",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/polish/mobile-interactive-site",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/release/stemdeck-session-integrity-candidate-20260925",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/release18/key-bpm-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/release18/sattari-integrated-20261007",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/sync/live-downloads-microsite",
+      "patches_not_in_integration": ["b2a7bfcba6b3bf31fa5a1088ba3cb2c4d91a6cf1"]
+    },
+    {
+      "ref": "origin/wave2/sattari-all",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/wave2/sattari-canvas-pocket-press",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/wave2/sattari-split-keybpm-vox",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/wave3/sattari-lyric-clean",
+      "patches_not_in_integration": []
+    },
+    {
+      "ref": "origin/wave4/sattari-suite",
+      "patches_not_in_integration": []
+    }
+  ]
+}

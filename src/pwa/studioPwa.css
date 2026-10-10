@@ -1,0 +1,28 @@
+.studio-pwa-toast {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px 10px 14px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 12px;
+  background: #15171b;
+  color: #f1f2f4;
+  font: 500 13px/1.4 system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.studio-pwa-toast button {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: #76e5d3;
+  color: #101114;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}

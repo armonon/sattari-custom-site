@@ -121,17 +121,26 @@ export const ServicesPage = lazyPage(() => import('@components/ServicesPage'));
 export const StudioBookingStatus = lazyPage(() => import('@pages/StudioBookingStatus'));
 export const RepairPage = lazyPage(() => import('@components/RepairPage'));
 export const LocalSeoPage = lazyPage(() => import('@components/LocalSeoPage'));
-export const DownloadsPage = lazyPage(() => import('@pages/DownloadsPage'));
 // The guided guitar workspace replaces the former analysis/arranger Learn page.
 export const SattariLearnPage = lazyPage(() => import('@pages/LoopPracticePage'));
 export const SattariStudioPage = lazyPage(() => import('@pages/SattariStudioPage'));
 export const SattariHubPage = lazyPage(() => import('@pages/SattariHubPage'));
 export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage'));
+// Studio alpha labs (wave 2): /studio/split, /studio/keybpm, /studio/vox.
+export const SplitPage = lazyPage(() => import('../labs/split/SplitPage'));
+export const KeyBpmPage = lazyPage(() => import('../labs/keybpm/KeyBpmPage'));
+export const VoxPage = lazyPage(() => import('../labs/vox/VoxPage'));
+export const LyricPage = lazyPage(() => import('../labs/lyric/LyricPage'));
+export const CleanPage = lazyPage(() => import('../labs/clean/CleanPage'));
 export const GuideIndex = lazyPage(() => import('@pages/MusicResources'), 'GuideIndex');
 export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'GuideArticle');
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');
 export const VisitPage = lazyPage(() => import('@pages/MusicResources'), 'VisitPage');
 export const PrivacyPage = lazyPage(() => import('@pages/MusicResources'), 'PrivacyPage');
+// Wave-2 alpha tools (src/labs).
+export const CanvasPage = lazyPage(() => import('@/labs/canvas/CanvasPage'));
+export const PocketPage = lazyPage(() => import('@/labs/pocket/PocketPage'));
+export const PressPage = lazyPage(() => import('@/labs/press/PressPage'));
 
 // Fallback loading component
 export const PageLoader = () => (

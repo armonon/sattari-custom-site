@@ -54,14 +54,13 @@ describe('search metadata', () => {
     }
   });
 
-  it('targets distinct online music needs while keeping repair search local and downloads accurate', () => {
+  it('targets distinct online music needs while keeping repair search local', () => {
     expect(PAGE_SEO.home.title).toBe('Learn, Shop & Create Music');
     expect(PAGE_SEO.home.description).toContain('worldwide');
     expect(PAGE_SEO.shop.title).toMatch(/Buy.*Online/);
     expect(PAGE_SEO.learn.title).toContain('Learn Guitar Online');
     expect(PAGE_SEO.studio.title).toContain('Browser DAW');
-    expect(PAGE_SEO.downloads.title).toContain('Music Software for Mac');
-    expect(PAGE_SEO.downloads.description).toMatch(/alpha.*AU, VST3/);
+    expect(PAGE_SEO).not.toHaveProperty('downloads');
     expect(PAGE_SEO.repair.title).toContain('Los Angeles');
     expect(PAGE_SEO.repair.description).toContain('Woodland Hills');
     for (const page of [...Object.values(PAGE_SEO), ...Object.values(CATEGORY_SEO)]) {

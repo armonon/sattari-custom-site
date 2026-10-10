@@ -1,0 +1,22 @@
+name: Audio Diagnostics
+on:
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.x'
+          cache: npm
+      - run: npm ci
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: node node_modules/vitest/vitest.mjs run src/utils/loudnessDSP.test.js src/utils/performancePlayer.test.js src/utils/preparedTransport.test.js src/utils/windowedSource.test.js --maxWorkers=1
+      - run: node scripts/diagnose-master-gain.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: master-gain-diagnostic
+          path: /tmp/master-gain-diagnostic.json

@@ -1496,7 +1496,12 @@ export class ArrangementEngine {
     await this.prepare(selection, true, { start: from, end });
     if (!selection.tracks.some((track) => track.clips.length))
       return [new Float32Array(frameCount), new Float32Array(frameCount)];
-    const offline = new Tone.OfflineContext(2, duration, sampleRate);
+    // Native length is an integer frame count. Tone's seconds constructor can
+    // round (frames / rate) * rate slightly down, losing a sample and breaking
+    // WAV payload / aligned ZIP entry sizes. Do not pad or relax those checks.
+    const offline = new Tone.OfflineContext(
+      new OfflineAudioContext(2, frameCount + preFrames, sampleRate)
+    );
     let graph, returns;
     try {
       const master = masterGraph(offline, settings, offline.rawContext.destination, {

@@ -1,0 +1,682 @@
+/* Sattari Studio labs (Split, Key & BPM, Vox). Same palette and rhythm as the
+   Stem Separator and Hub pages, with a day theme. */
+.alab-page {
+  --alab-bg: #111213;
+  --alab-panel: #191b1d;
+  --alab-raised: #232628;
+  --alab-line: #34383b;
+  --alab-text: #f3f5f4;
+  --alab-muted: #a4acae;
+  --alab-accent: #b9e7c8;
+  --alab-accent-ink: #102018;
+  --alab-bad: #ffb4a8;
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 88px);
+  background: var(--alab-bg);
+  color: var(--alab-text);
+  padding: 0 24px 72px;
+  color-scheme: dark;
+  font-family: Inter, sans-serif;
+  letter-spacing: 0;
+}
+[data-theme='day'] .alab-page {
+  --alab-bg: #f4f6f5;
+  --alab-panel: #ffffff;
+  --alab-raised: #eef1ef;
+  --alab-line: #d4dcd7;
+  --alab-text: #19221e;
+  --alab-muted: #58655f;
+  --alab-accent: #216a52;
+  --alab-accent-ink: #ffffff;
+  --alab-bad: #a3271a;
+  color-scheme: light;
+}
+.alab-page * {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+.alab-page :is(h1, h2, h3, p, ul) {
+  margin: 0;
+  color: inherit;
+}
+.alab-page a {
+  color: inherit;
+}
+.alab-page :is(button, select, input) {
+  font: inherit;
+}
+.alab-page button {
+  cursor: pointer;
+}
+.alab-page button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.alab-page :is(a, button, input, select, summary):focus-visible {
+  outline: 2px solid var(--alab-accent);
+  outline-offset: 3px;
+}
+.alab-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.alab-breadcrumb {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--alab-line);
+}
+.alab-breadcrumb-end {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+.alab-install {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--alab-line);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.alab-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 12px;
+  color: var(--alab-muted);
+  text-decoration: none;
+}
+.alab-breadcrumb a:hover {
+  color: var(--alab-text);
+}
+.alab-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 34px 0 26px;
+}
+.alab-eyebrow {
+  margin-bottom: 8px !important;
+  font-size: 11px;
+  color: var(--alab-muted);
+  text-transform: uppercase;
+}
+.alab-heading h1 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+.alab-alpha {
+  font-size: 10px;
+  line-height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--alab-accent);
+  border-radius: 4px;
+  color: var(--alab-accent);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.alab-summary {
+  max-width: 720px;
+  margin-top: 12px !important;
+  color: var(--alab-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.alab-private {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  color: var(--alab-accent);
+  font-size: 12px;
+}
+.alab-workspace {
+  display: grid;
+  gap: 18px;
+}
+.alab-input-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 2fr;
+  gap: 18px;
+}
+.alab-card,
+.alab-drop {
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+  background: var(--alab-panel);
+  padding: 20px;
+}
+.alab-card {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.alab-card h2,
+.alab-toolbar h2 {
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alab-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.alab-card-head > div:first-child {
+  min-width: 0;
+}
+.alab-record {
+  align-content: start;
+}
+.alab-drop {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-style: dashed;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.alab-drop.is-dragging {
+  border-color: var(--alab-accent);
+  background: var(--alab-raised);
+}
+.alab-drop.is-locked {
+  opacity: 0.6;
+}
+.alab-drop-mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--alab-raised);
+  color: var(--alab-accent);
+}
+.alab-drop-copy {
+  flex: 1 1 220px;
+}
+.alab-drop-copy h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+.alab-drop-copy p {
+  margin-top: 4px !important;
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.alab-drop-actions,
+.alab-toolbar-actions,
+.alab-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.alab-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.alab-button,
+.alab-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-decoration: none;
+}
+.alab-button {
+  border: 1px solid var(--alab-line);
+  background: var(--alab-raised);
+  color: var(--alab-text);
+}
+.alab-button:hover:not(:disabled) {
+  border-color: var(--alab-muted);
+}
+.alab-primary {
+  border-color: var(--alab-accent);
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+  font-weight: 600;
+}
+.alab-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.alab-danger {
+  border-color: #e0786a;
+  background: #e0786a;
+  color: #1d0d0a;
+  font-weight: 600;
+}
+.alab-text-button {
+  border: 0;
+  background: transparent;
+  color: var(--alab-muted);
+}
+.alab-text-button:hover:not(:disabled) {
+  color: var(--alab-text);
+}
+.alab-inline-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.alab-page select {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: var(--alab-raised);
+  color: var(--alab-text);
+}
+.alab-error {
+  border: 1px solid var(--alab-bad);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: var(--alab-bad);
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+}
+.alab-bad {
+  color: var(--alab-bad);
+  font-size: 13px;
+}
+.alab-note {
+  color: var(--alab-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.alab-empty {
+  padding: 28px;
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+  color: var(--alab-muted);
+  text-align: center;
+  font-size: 14px;
+}
+.alab-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.alab-toolbar h2 span {
+  margin-left: 6px;
+  color: var(--alab-muted);
+  font-weight: 400;
+}
+.alab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.alab-spin {
+  animation: alab-spin 1s linear infinite;
+}
+@keyframes alab-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alab-spin {
+    animation: none;
+  }
+}
+.alab-progress {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--alab-muted);
+}
+.alab-progress > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.alab-progress span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.alab-progress progress {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--alab-accent);
+}
+.alab-waveform {
+  display: block;
+  width: 100%;
+  color: var(--alab-muted);
+}
+.alab-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+}
+.alab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.alab-table :is(th, td) {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--alab-line);
+  text-align: left;
+  vertical-align: top;
+}
+.alab-table thead th {
+  background: var(--alab-panel);
+  color: var(--alab-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.alab-table tbody th {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.alab-table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+.alab-table .alab-note {
+  min-width: 200px;
+}
+.alab-flag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--alab-line);
+  border-radius: 4px;
+  color: var(--alab-muted);
+  font-size: 11px;
+}
+.alab-mixer {
+  display: grid;
+  gap: 12px;
+}
+.alab-transport {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+.alab-transport input[type='range'],
+.alab-lane input[type='range'],
+.alab-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--alab-accent);
+}
+.alab-play {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+}
+.alab-time {
+  color: var(--alab-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.alab-lanes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.alab-lane {
+  display: grid;
+  grid-template-columns: 110px auto 1fr 110px 36px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--alab-line);
+  border-left: 3px solid var(--lane-color);
+  border-radius: 6px;
+  background: var(--alab-raised);
+}
+.alab-lane .alab-waveform {
+  color: var(--lane-color);
+}
+.alab-lane-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.alab-lane-buttons {
+  display: flex;
+  gap: 6px;
+}
+.alab-lane-buttons button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--alab-muted);
+}
+.alab-lane-buttons button.is-on {
+  border-color: var(--lane-color);
+  background: var(--lane-color);
+  color: #111;
+}
+.alab-icon-link {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  color: var(--alab-muted);
+}
+.alab-icon-link:hover {
+  color: var(--alab-text);
+  background: var(--alab-panel);
+}
+.alab-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.alab-controls fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.alab-controls legend,
+.alab-slider > span {
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--alab-muted);
+  text-transform: uppercase;
+}
+.alab-slider {
+  display: grid;
+  gap: 6px;
+}
+.alab-slider > span {
+  display: flex;
+  justify-content: space-between;
+}
+.alab-slider output {
+  color: var(--alab-text);
+  text-transform: none;
+}
+.alab-pair {
+  display: flex;
+  gap: 8px;
+}
+.alab-segmented {
+  display: flex;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.alab-segmented label {
+  flex: 1;
+  padding: 8px 6px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--alab-muted);
+  cursor: pointer;
+}
+.alab-segmented label + label {
+  border-left: 1px solid var(--alab-line);
+}
+.alab-segmented label.is-on {
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+  font-weight: 600;
+}
+.alab-segmented input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.alab-segmented label:focus-within {
+  outline: 2px solid var(--alab-accent);
+  outline-offset: -2px;
+}
+.alab-pitch-graph {
+  display: block;
+  width: 100%;
+  height: 180px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: var(--alab-bg);
+}
+.alab-meter {
+  width: 100%;
+  height: 8px;
+}
+.alab-limits {
+  margin-top: 34px;
+  padding: 18px 20px;
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+}
+.alab-limits h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+.alab-limits ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+  color: var(--alab-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.alab-siblings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.alab-siblings a {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+  text-decoration: none;
+}
+.alab-siblings a:hover {
+  border-color: var(--alab-muted);
+}
+.alab-siblings a.is-current {
+  border-color: var(--alab-accent);
+}
+.alab-siblings strong {
+  font-size: 14px;
+}
+.alab-siblings span {
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .alab-page {
+    padding: 0 14px 56px;
+  }
+  .alab-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .alab-heading h1 {
+    font-size: 26px;
+  }
+  .alab-input-row {
+    grid-template-columns: 1fr;
+  }
+  .alab-lane {
+    grid-template-columns: 1fr auto 36px;
+  }
+  .alab-lane .alab-waveform {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .alab-lane input[type='range'] {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}
+
+.alab-offline h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 15px;
+}

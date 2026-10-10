@@ -66,7 +66,9 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # A whole-site deployment would discard the live additive runtime/assets.
+    # Keep qualification running; only enable this job after documented parity.
+    if: vars.SATTARI_FULL_DEPLOY_ALLOWED == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
       - uses: actions/checkout@v6

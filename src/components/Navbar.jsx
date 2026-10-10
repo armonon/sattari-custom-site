@@ -19,7 +19,9 @@ export default function Navbar({ onCartClick }) {
   const headerRef = useRef(null);
   const menuButtonRef = useRef(null);
   const path = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
-  const inHub = ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(path);
+  const inHub =
+    path.startsWith('/studio/') ||
+    ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(path);
   const inShop = path === '/shop' || path.startsWith('/shop/') || path.startsWith('/product/');
 
   // Every navigation gets a new key, including tapping the link for the page
@@ -124,6 +126,7 @@ export default function Navbar({ onCartClick }) {
               <Link
                 key={link.to}
                 to={link.to}
+                reloadDocument={link.reloadDocument}
                 aria-current={current ? 'page' : undefined}
                 className={current ? 'nav-link nav-link-active' : 'nav-link'}
               >

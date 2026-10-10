@@ -28,13 +28,13 @@ function attempt(body, ip = '203.0.113.5', init = {}) {
   );
 }
 
-const wrong = (ip, device) => attempt({ staff: 'sattaristudio', password: 'guess', device }, ip);
-const right = (ip, device) => attempt({ staff: 'SattariStudio', password: PASSWORD, device }, ip);
+const wrong = (ip, device) => attempt({ staff: 'teststaffer', password: 'guess', device }, ip);
+const right = (ip, device) => attempt({ staff: 'TestStaffer', password: PASSWORD, device }, ip);
 
 beforeEach(() => {
   resetBlobs();
   vi.clearAllMocks();
-  process.env.STAFF_USERNAME = 'sattaristudio';
+  process.env.STAFF_USERNAME = 'teststaffer';
   process.env.STAFF_PASSWORD_SALT = 'salt';
   process.env.STAFF_PASSWORD_HASH = hashPassword(PASSWORD, 'salt');
   process.env.STAFF_SESSION_SECRET = 'secret';
@@ -59,10 +59,10 @@ describe('signing in', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ staff: 'SattariStudio', expiresInHours: 12 });
+    expect(body).toMatchObject({ staff: 'TestStaffer', expiresInHours: 12 });
     await expect(
       requireStaff({ headers: { authorization: `Bearer ${body.token}` } })
-    ).resolves.toMatchObject({ staff: 'SattariStudio' });
+    ).resolves.toMatchObject({ staff: 'TestStaffer' });
   });
 
   it('issues tokens that survive an earlier "sign out everywhere"', async () => {
@@ -94,6 +94,19 @@ describe('signing in', () => {
 });
 
 describe('guess limiting', () => {
+  it('starts a fresh global allowance at the next fixed window', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_791_392_399_999);
+    try {
+      for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.3.${i}`);
+      expect((await right('192.0.2.14')).status).toBe(429);
+
+      clock.mockReturnValue(1_791_392_400_001);
+      expect((await right('192.0.2.14')).status).toBe(200);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('locks an address after the threshold and says when to retry', async () => {
     for (let i = 0; i < THROTTLE_SETTINGS.LOCK_AFTER_ATTEMPTS; i += 1) {
       expect((await wrong()).status).toBe(401);
@@ -166,11 +179,16 @@ describe('device tokens', () => {
   });
 
   it('stops exempting every device after "sign out everywhere"', async () => {
-    const { deviceToken } = await (await right('198.51.100.1')).json();
-    await revokeAllSessions({});
-    for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.2.${i}`);
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_791_392_400_000);
+    try {
+      const { deviceToken } = await (await right('198.51.100.1')).json();
+      await revokeAllSessions({});
+      for (let i = 0; i < THROTTLE_SETTINGS.GLOBAL_LIMIT; i += 1) await wrong(`10.9.2.${i}`);
 
-    expect((await right('192.0.2.13', deviceToken)).status).toBe(429);
+      expect((await right('192.0.2.13', deviceToken)).status).toBe(429);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   it('ignores a forged or tampered device token', async () => {
@@ -189,7 +207,7 @@ describe('sign-in logs', () => {
     expect(lines).toContain('"usernameMatched":false');
     expect(lines).toContain('"ipHash"');
     expect(lines).not.toContain('my-actual-password');
-    expect(lines).not.toContain('SattariStudio');
+    expect(lines).not.toContain('TestStaffer');
     expect(lines).not.toContain('203.0.113.9');
   });
 });

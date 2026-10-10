@@ -7,6 +7,8 @@ const state = vi.hoisted(() => ({
   decode: true,
   visited: vi.fn(),
   duration: 7200,
+  metadata: null,
+  compute: vi.fn(),
 }));
 const make = (channels, length, sampleRate) => {
   const pcm = Array.from({ length: channels }, () => new Float32Array(length));
@@ -26,6 +28,10 @@ vi.mock('mediabunny', () => ({
       };
     }
     async getDurationFromMetadata() {
+      return state.metadata ?? state.duration;
+    }
+    async computeDuration() {
+      state.compute();
       return state.duration;
     }
     dispose() {
@@ -45,6 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.decode = true;
   state.duration = 7200;
+  state.metadata = null;
   releaseDecodedSongs();
 });
 
@@ -161,4 +168,36 @@ describe('browsers without WebCodecs audio (Safari before 26)', () => {
       decodeCompressedWindow(raw, new Blob(['encoded']), 0, 1, 1e6, { cacheKey: 'bad' })
     ).resolves.toMatchObject({ offset: 0 });
   });
+});
+
+it('reads a late window after positive stale recording metadata without whole-song decode', async () => {
+  state.metadata = 0.312;
+  state.duration = 15;
+  const raw = { createBuffer: vi.fn(make), decodeAudioData: vi.fn() };
+  const result = await decodeCompressedWindow(
+    raw,
+    new Blob(['fragmented recording']),
+    10.25,
+    10.5,
+    16000
+  );
+  expect(result.buffer.length).toBe(2001);
+  expect(result.buffer.getChannelData(0)[0]).toBe(0.25);
+  expect(raw.decodeAudioData).not.toHaveBeenCalled();
+});
+it('does not admit an oversized whole-song fallback using its short first-fragment metadata', async () => {
+  state.decode = false;
+  state.metadata = 0.312;
+  const raw = { sampleRate: 48000, createBuffer: vi.fn(make), decodeAudioData: vi.fn() };
+  await expect(
+    decodeCompressedWindow(raw, new Blob(['fragmented recording']), 10, 11, 16000)
+  ).rejects.toThrow('codec');
+  expect(raw.decodeAudioData).not.toHaveBeenCalled();
+});
+it('reuses precise timing for successive windows of one immutable Blob', async () => {
+  const raw = { createBuffer: vi.fn(make) },
+    blob = new Blob(['encoded']);
+  await decodeCompressedWindow(raw, blob, 10.1, 10.2, 16000);
+  await decodeCompressedWindow(raw, blob, 10.3, 10.4, 16000);
+  expect(state.compute).toHaveBeenCalledOnce();
 });

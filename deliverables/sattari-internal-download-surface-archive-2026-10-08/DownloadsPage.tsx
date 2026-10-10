@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AudioAlphaSignup from '@components/AudioAlphaSignup';
 import OptimizedProductImage from '@components/OptimizedProductImage';
@@ -194,8 +195,22 @@ function BuildCard({ build }: { build: Build }) {
   );
 }
 
+/** The path this document was first loaded at, before any client-side routing. */
+function documentEntryPath() {
+  const entry = performance.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming;
+  return new URL(entry?.name || window.location.href).pathname.replace(/\/+$/, '') || '/';
+}
+
 export default function DownloadsPage() {
   const { url } = PAGE_SEO.downloads;
+
+  // On sattarimusic.com, /downloads is the static plugin catalogue
+  // (public/downloads/plugins), deployed next to this app. Reaching it by an
+  // in-app link must load that page from the server. When the server itself
+  // served this app for /downloads (dev, previews), stay and show this page.
+  useEffect(() => {
+    if (documentEntryPath() !== '/downloads') window.location.reload();
+  }, []);
 
   return (
     <section className="section page-header-offset suite-page">

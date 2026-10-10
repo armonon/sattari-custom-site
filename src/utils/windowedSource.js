@@ -1,5 +1,6 @@
 import { decodeSourceWindow } from './arrangementSourceWindow';
 import { mp3Gapless } from './mp3Gapless';
+import { audioPacketDuration } from './audioPacketDuration';
 import { wavBytes } from './arrangementExport';
 import { describeAiff } from './aiffWindow';
 import { decodedSongDuration } from './compressedAudioWindow';
@@ -36,14 +37,12 @@ export async function describeAudioSource(blob) {
     const sampleRate = await track.getSampleRate();
     const channels = await track.getNumberOfChannels();
     const padding = await mp3Gapless(blob);
-    const metadataDuration = await input.getDurationFromMetadata([track]);
-    // Missing container duration is not missing audio. Scan packet timing with
-    // the same bounded encoded cache; never fall back to decoding the whole song.
+    // Container metadata is only an estimate: fragmented MediaRecorder M4A can
+    // report its first fragment's positive duration, silently truncating a take.
+    // Derive the real end from packet timing using the bounded encoded cache;
+    // this does not decode or allocate a whole song's PCM.
     const duration =
-      (Number.isFinite(metadataDuration) && metadataDuration > 0
-        ? metadataDuration
-        : await input.computeDuration([track])) -
-      (padding?.trimFrames || 0) / sampleRate;
+      (await audioPacketDuration(blob, input, track)) - (padding?.trimFrames || 0) / sampleRate;
     if (
       !Number.isFinite(duration) ||
       duration <= 0 ||

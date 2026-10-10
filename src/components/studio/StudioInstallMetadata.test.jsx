@@ -17,7 +17,7 @@ describe('StemDeck installation metadata', () => {
     );
     expect(
       document.querySelector('meta[name="apple-mobile-web-app-title"]')?.getAttribute('content')
-    ).toBe('STEMDECK');
+    ).toBe('StemDeck');
     view.unmount();
     await waitFor(() => expect(document.querySelector('link[rel="manifest"]')).toBeNull());
   });

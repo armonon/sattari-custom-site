@@ -23,10 +23,7 @@ it('launches all three real workspaces and their reference pages', () => {
     ).toHaveAttribute('href', `/tools${route}`);
   }
   expect(screen.getAllByRole('img')).toHaveLength(3);
-  expect(screen.getByRole('link', { name: 'Music software for Mac' })).toHaveAttribute(
-    'href',
-    '/downloads'
-  );
+  expect(screen.queryByRole('link', { name: 'Music software for Mac' })).not.toBeInTheDocument();
 });
 
 it('links to published guides and keeps future projects out of the live tool list', () => {
@@ -57,4 +54,22 @@ it('omits the listening desk, demo player and header shortcut', () => {
     container.querySelector('audio, #hub-listening-desk, a[href="#hub-listening-desk"]')
   ).toBeNull();
   expect(container.querySelector('.hub-workspaces').nextElementSibling).toHaveClass('hub-reading');
+});
+
+it('lists the Studio alpha labs', () => {
+  render(
+    <MemoryRouter>
+      <SattariHubPage />
+    </MemoryRouter>
+  );
+  for (const [name, route] of [
+    ['Split', '/studio/split'],
+    ['Key & BPM', '/studio/keybpm'],
+    ['Vox', '/studio/vox'],
+  ]) {
+    expect(screen.getByRole('link', { name: new RegExp(`^Alpha\\s*${name}`) })).toHaveAttribute(
+      'href',
+      route
+    );
+  }
 });

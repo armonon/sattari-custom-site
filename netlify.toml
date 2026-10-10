@@ -32,18 +32,34 @@
 
 [[redirects]]
   from = "/audio-suite"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/audio-suite/downloads"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/audio"
-  to = "/downloads"
-  status = 301
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Retired alpha packages are preserved outside the publish directory.
+[[redirects]]
+  from = "/downloads"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/downloads/*"
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[redirects]]
   from = "/services/music-classes-los-angeles"
@@ -67,6 +83,8 @@
 # function the strongly consistent Blobs reads stock and bookings rely on;
 # see server/blobs.js.
 
+# thecreatingco.com is the suite kit (menu + Locker) used by the studio apps:
+# its script, its Locker bridge iframe and its registry fetch (src/suite).
 # Site-wide security headers. The full Content-Security-Policy ships in
 # report-only mode first: browsers log what it would block (DevTools console)
 # without blocking anything, so a missed third party cannot break checkout.
@@ -82,7 +100,7 @@
     X-Frame-Options = "SAMEORIGIN"
     Content-Security-Policy = "frame-ancestors 'self'"
     Permissions-Policy = "camera=(), geolocation=(), payment=(), usb=(), microphone=(self), midi=(self)"
-    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'sha256-8EcVp8/rZS/V1u4IjoMzdQxQA8+pQuBvF5vSFQ1DlE0=' 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U=' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data: https://*.sentry.io https://huggingface.co https://*.huggingface.co https://*.hf.co; worker-src 'self' blob:; frame-src https://www.google.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; manifest-src 'self'"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'sha256-8EcVp8/rZS/V1u4IjoMzdQxQA8+pQuBvF5vSFQ1DlE0=' 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U=' 'wasm-unsafe-eval' https://thecreatingco.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data: https://*.sentry.io https://huggingface.co https://*.huggingface.co https://*.hf.co https://thecreatingco.com; worker-src 'self' blob:; frame-src https://www.google.com https://thecreatingco.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; manifest-src 'self'"
 
 [[headers]]
   for = "/studio-booking"
@@ -114,6 +132,15 @@
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
     Content-Security-Policy = "default-src 'self'; script-src 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"
+
+# The studio apps' service worker (src/pwa/studio-sw.js, scope /studio) must
+# never be served stale from a cache: browsers check it on every studio visit,
+# which is how updates and the kill switch (scripts/kill-switch-studio-sw.js)
+# reach installed copies. See docs/STUDIO_PWA.md.
+[[headers]]
+  for = "/studio-sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
 
 # Products added by staff after a build still need the live catalog lookup.
 [[redirects]]

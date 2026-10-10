@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
-  Download,
   Library,
   Radio,
   SlidersHorizontal,
@@ -15,6 +14,7 @@ import {
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
 import '../styles-hub.css';
+import HubLabs from '../labs/HubLabs';
 
 const workspaces = [
   {
@@ -93,9 +93,6 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>Learn guitar. Create music. Explore sound.</p>
-              <Link to="/downloads" className="hub-text-link">
-                <Download size={16} aria-hidden="true" /> Music software for Mac
-              </Link>
             </div>
           </header>
 
@@ -166,6 +163,8 @@ export default function SattariHubPage() {
               ))}
             </div>
           </section>
+
+          <HubLabs />
 
           <section className="hub-horizon" aria-labelledby="hub-horizon-title">
             <div className="hub-section-heading">

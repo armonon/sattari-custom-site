@@ -38,9 +38,9 @@ export function withCapturedTake(project, { blob, sourceTracks, capture, referen
         ),
       },
     ],
-    captures: captured.captures.map((item) =>
-      item.assetId === capture.assetId ? { ...item, duration: reference.duration } : item
-    ),
+    // Events and source chunks share the engine's capture clock. A compressed
+    // reference has its own encoder timing and must never resize that history.
+    captures: captured.captures,
   };
 }
 

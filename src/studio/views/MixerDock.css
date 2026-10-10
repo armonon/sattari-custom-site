@@ -893,13 +893,3 @@
 .sd-session-shell .sd-command-bar .sd-view-nav button.sd-view-nav-toggle.is-active svg {
   color: #62f5c8;
 }
-
-/* Keep the dock's bottom row above a visible status notice. */
-.sd-studio-next .sd-app-frame:has(> .sd-notice[data-visible='true']) > .sd-mixer-dock {
-  margin-bottom: 22px;
-}
-
-/* Content at the end of a workspace scrolls clear of a visible status notice. */
-.sd-studio-next .sd-app-frame:has(> .sd-notice[data-visible='true']) > .sd-workspace {
-  padding-bottom: 22px;
-}

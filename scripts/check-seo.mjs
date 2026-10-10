@@ -8,6 +8,9 @@ const sitemap = new JSDOM(await readFile('dist/sitemap.xml', 'utf8'), {
 });
 const urls = [...sitemap.window.document.querySelectorAll('loc')].map((node) => node.textContent);
 assert.equal(new Set(urls).size, urls.length, 'Duplicate sitemap URL');
+assert.ok(!urls.includes(`${origin}/downloads`), 'Retired alpha page must not be indexed');
+await assert.rejects(access('dist/downloads'), { code: 'ENOENT' });
+await assert.rejects(access('dist/downloads.html'), { code: 'ENOENT' });
 const titles = new Set();
 const descriptions = new Set();
 const localTargets = [
@@ -115,7 +118,7 @@ for (const url of urls) {
   }
   if (path === '/') {
     assert.match(doc.querySelector('.home-hero-copy').textContent, /musicians worldwide/i);
-    for (const destination of ['/shop', '/learn', '/studio', '/downloads', '/services']) {
+    for (const destination of ['/shop', '/learn', '/studio', '/services']) {
       assert.ok(doc.querySelector(`a[href="${destination}"]`), `Home must link to ${destination}`);
     }
   }
@@ -126,17 +129,6 @@ for (const url of urls) {
       page?.primaryImageOfPage?.url,
       doc.querySelector('meta[property="og:image"]').content
     );
-  }
-  if (path === '/downloads') {
-    assert.match(doc.title, /Music Software for Mac/);
-    const page = entities.find((item) => item['@id'] === `${url}#webpage`);
-    assert.equal(page?.description, description);
-    assert.equal(page?.publisher?.['@id'], organizations[0]['@id']);
-    const downloads = [...doc.querySelectorAll('.suite-build-actions a[download]')];
-    assert.ok(downloads.length >= 3, 'Software page must link to actual downloadable builds');
-    for (const download of downloads) {
-      await access(`dist${decodeURI(new URL(download.href).pathname)}`);
-    }
   }
   if (path.startsWith('/guides/')) {
     const article = entities.find((item) => item['@type'] === 'Article');

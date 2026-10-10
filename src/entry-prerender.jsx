@@ -34,7 +34,16 @@ export function getPrerenderRoutes(inventory) {
     ['/learn', 'src/pages/LoopPracticePage.jsx'],
     ['/studio', 'src/pages/SattariStudioPage.jsx'],
     ['/stem-separator', 'src/pages/StemSeparatorPage.jsx'],
-    ['/downloads', 'src/pages/DownloadsPage.tsx'],
+    // Wave-2 music tools (alpha label on the page, indexable like any tool).
+    ['/studio/split', 'src/labs/split/SplitPage.jsx'],
+    ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],
+    ['/studio/vox', 'src/labs/vox/VoxPage.jsx'],
+    ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
+    ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],
+    ['/press', 'src/labs/press/PressPage.jsx'],
+    // Wave-3 music tools.
+    ['/studio/lyric', 'src/labs/lyric/LyricPage.jsx'],
+    ['/studio/clean', 'src/labs/clean/CleanPage.jsx'],
     ...localPages
       .filter((page) => !page.canonicalUrl)
       .map((page) => [new URL(page.url).pathname, LOCAL_SEO_ENTRY]),

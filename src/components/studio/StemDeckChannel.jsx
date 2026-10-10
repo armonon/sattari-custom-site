@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { ChevronDown, Link2, Pause, Play, Scissors, Upload } from 'lucide-react';
+import { ChevronDown, Download, Link2, Pause, Play, Scissors, Upload } from 'lucide-react';
 import { useDeckMeter, useDeckPosition, useTransport } from '../../studio/transport/transportStore';
 
 export const TOOL_TABS = ['CUES', 'LOOP', 'STEMS', 'FX'];
@@ -469,8 +469,10 @@ function SourceTools({
   onRequestStemSet,
   onExtractMidi,
   onExtractDrums,
+  onExportAbleton,
   onLaneChange,
 }) {
+  const hasAudio = Object.values(deck.lanes).some((lane) => lane.status === 'ready');
   return (
     <div className="sd-tool-content sd-source-tools">
       <button type="button" onClick={() => onRequestLane('fullMix')}>
@@ -504,6 +506,14 @@ function SourceTools({
       </button>
       <button type="button" onClick={onExtractDrums} disabled={!deck.duration}>
         Drum sketch
+      </button>
+      <button
+        type="button"
+        onClick={onExportAbleton}
+        disabled={!hasAudio || !onExportAbleton}
+        title="Export this deck for Ableton Live: its stems as WAV files and a Live Set at the deck's tempo"
+      >
+        <Download size={12} /> Ableton
       </button>
     </div>
   );
@@ -559,6 +569,7 @@ export const StemDeckChannel = memo(function StemDeckChannel({
   onStemFxChange,
   onExtractMidi,
   onExtractDrums,
+  onExportAbleton,
 }) {
   const transport = useTransport();
   const getPosition = () => transport.getPosition(deck.id);
@@ -767,6 +778,7 @@ export const StemDeckChannel = memo(function StemDeckChannel({
         onRequestStemSet={() => inputsRef.current.stemSet?.click()}
         onExtractMidi={onExtractMidi}
         onExtractDrums={onExtractDrums}
+        onExportAbleton={onExportAbleton}
       />
 
       <footer className="sd-deck-status">

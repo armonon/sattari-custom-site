@@ -343,7 +343,7 @@ export default function HomePage() {
                   Sattari Hub<span>.</span>
                 </h2>
                 <p className="home-section-description">
-                  Learn guitar online, create a mix, separate a song or explore music software.
+                  Learn guitar online, create a mix, or separate a song.
                 </p>
               </div>
               <Link to="/hub" className="home-button home-button-light">

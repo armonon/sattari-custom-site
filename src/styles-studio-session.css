@@ -534,3 +534,64 @@
 .sd-session-shell .sd-session-inspector {
   top: var(--session-command-height, 106px);
 }
+
+/* Narrower laptop / zoomed layouts need space for deck identity, tempo/key,
+   and live sync controls instead of forcing all three into one header row. */
+@media (max-width: 1199px) {
+  .sd-session-shell .sd-focused-deck .sd-deck-identity {
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: 23px 24px;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-identity .sd-deck-title {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-meta {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .sd-session-shell .sd-focused-deck .sd-deck-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 6px;
+    height: auto;
+    min-height: 0;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-identity {
+    width: 100%;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 28px 26px;
+  }
+
+  .sd-session-shell .sd-focused-deck .sd-deck-live-actions {
+    grid-column: 1;
+    justify-content: flex-end;
+  }
+}
+
+/* Reserve a compact footer row for status feedback. It stays clear of deck
+   controls without pushing the timeline down when a session is imported. */
+.sd-session-shell .sd-notice[data-visible='true'] {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  order: 10;
+  display: block;
+  padding: 0;
+  margin: 6px 0 0;
+  max-height: 40%;
+  overflow: auto;
+  border: 1px solid #ffffff14;
+  border-radius: 8px;
+}
+
+.sd-session-shell .sd-app-frame:has(> .sd-notice[data-visible='true']) {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
