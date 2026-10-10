@@ -28,9 +28,12 @@ import {
   LIMITS,
   listSaved,
   normalizePattern,
+  readDraft,
+  saveDraft,
   savePattern,
   SCALES,
   starterPattern,
+  storageBackup,
   stepDuration,
   STEPS,
   stepTime,
@@ -38,7 +41,6 @@ import {
 import { renderLoop, scheduleStep } from './pocketSynth';
 
 const LOOKAHEAD_SECONDS = 0.12;
-const DRAFT_KEY = 'sattari-pocket-draft-v1';
 
 const LIMITATIONS = [
   'One 16-step bar per pattern, one bass voice and six drum sounds. No song mode or chaining yet.',
@@ -59,6 +61,8 @@ function storage() {
 export default function PocketPage() {
   const [pattern, setPattern] = useState(starterPattern);
   const [saved, setSaved] = useState([]);
+  const [libraryError, setLibraryError] = useState('');
+  const [draftError, setDraftError] = useState('');
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(-1);
   const [page, setPage] = useState(0);
@@ -83,21 +87,26 @@ export default function PocketPage() {
   // Restore after mount (not during render) so the prerendered page hydrates.
   useEffect(() => {
     const store = storage();
-    setSaved(listSaved(store));
     try {
-      const draft = store?.getItem(DRAFT_KEY);
-      if (draft) setPattern(normalizePattern(JSON.parse(draft)));
-    } catch {
-      /* ignore a broken draft */
+      setSaved(listSaved(store));
+    } catch (error) {
+      setLibraryError(error.message);
+    }
+    try {
+      const draft = readDraft(store);
+      if (draft) setPattern(draft);
+    } catch (error) {
+      setDraftError(error.message);
     }
   }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        storage()?.setItem(DRAFT_KEY, JSON.stringify(pattern));
-      } catch {
-        /* storage full or blocked: saving drafts is best effort */
+        saveDraft(storage(), pattern);
+        setDraftError('');
+      } catch (error) {
+        setDraftError(`Draft not saved: ${error.message} Keep this tab open or export your audio.`);
       }
     }, 300);
     return () => clearTimeout(timer);
@@ -306,9 +315,37 @@ export default function PocketPage() {
     }
     try {
       setSaved(savePattern(store, pattern));
+      setLibraryError('');
       setStatus({ text: `Saved “${pattern.name}” in this browser.` });
     } catch (error) {
+      setLibraryError(error.message);
       setStatus({ text: `Could not save: ${error.message}`, error: true });
+    }
+  };
+
+  const removeSaved = (name) => {
+    try {
+      setSaved(deleteSaved(storage(), name));
+      setLibraryError('');
+      setStatus({ text: `Deleted saved pattern “${name}”. The current pattern is unchanged.` });
+    } catch (error) {
+      setLibraryError(error.message);
+      setStatus({ text: `Could not delete: ${error.message}`, error: true });
+    }
+  };
+
+  const backupStorage = () => {
+    try {
+      const backup = storageBackup(storage());
+      downloadBlob(
+        new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }),
+        'pocket-storage-backup.json'
+      );
+      setStatus({
+        text: 'Recovery backup download requested. It keeps the original stored text; it is not an editable-pattern import file.',
+      });
+    } catch (error) {
+      setStatus({ text: `Could not read recovery backup: ${error.message}`, error: true });
     }
   };
 
@@ -495,6 +532,25 @@ export default function PocketPage() {
       <div className="lab-workspace">
         <div className="lab-panel">
           <h2>Pattern</h2>
+          {libraryError && (
+            <p className="lab-status is-error" role="alert">
+              {libraryError}
+            </p>
+          )}
+          {draftError && (
+            <p className="lab-status is-error" role="alert">
+              {draftError}
+            </p>
+          )}
+          {(libraryError || draftError) && (
+            <button type="button" className="lab-button" onClick={backupStorage}>
+              <Download size={16} aria-hidden="true" /> Download stored-data recovery backup
+            </button>
+          )}
+          <p>
+            Save updates the same name. New names use one of 40 slots; older patterns are never
+            removed automatically.
+          </p>
           <label className="lab-field">
             <span>Name</span>
             <input
@@ -541,7 +597,7 @@ export default function PocketPage() {
                     type="button"
                     className="press-remove"
                     aria-label={`Delete ${item.name}`}
-                    onClick={() => setSaved(deleteSaved(storage(), item.name))}
+                    onClick={() => removeSaved(item.name)}
                   >
                     <Trash2 size={15} aria-hidden="true" />
                   </button>

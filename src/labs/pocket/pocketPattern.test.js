@@ -14,6 +14,11 @@ import {
   STEPS,
   stepTime,
   STORAGE_KEY,
+  DRAFT_KEY,
+  MAX_SAVED,
+  readDraft,
+  saveDraft,
+  storageBackup,
 } from './pocketPattern';
 
 function memoryStorage() {
@@ -101,11 +106,151 @@ describe('saved patterns', () => {
     expect(deleteSaved(storage, 'One').map((item) => item.name)).toEqual(['Two']);
   });
 
-  it('treats corrupt storage as empty', () => {
+  it('refuses a 41st name without deleting any saved pattern; existing names remain editable', () => {
     const storage = memoryStorage();
-    storage.setItem(STORAGE_KEY, '{not json');
-    expect(listSaved(storage)).toEqual([]);
-    expect(listSaved(null)).toEqual([]);
+    for (let i = 0; i < MAX_SAVED; i++)
+      savePattern(storage, { ...starterPattern(), name: `Beat ${i}` });
+    const before = storage.getItem(STORAGE_KEY);
+    expect(() => savePattern(storage, { ...starterPattern(), name: 'New beat' })).toThrow(
+      /slots are full/
+    );
+    expect(storage.getItem(STORAGE_KEY)).toBe(before);
+    const saved = savePattern(storage, { ...starterPattern(), name: 'Beat 0', bpm: 135 });
+    expect(saved).toHaveLength(MAX_SAVED);
+    expect(saved[0].name).toBe('Beat 0');
+    expect(saved[0].bpm).toBe(135);
+    expect(new Set(saved.map((item) => item.name)).size).toBe(MAX_SAVED);
+    deleteSaved(storage, 'Beat 1');
+    expect(savePattern(storage, { ...starterPattern(), name: 'New beat' })).toHaveLength(MAX_SAVED);
+  });
+
+  it.each(['{not json', '', '{}', 'null', '[null]', '[5]', '[{"name":"future","version":2}]'])(
+    'preserves malformed or unsupported saved bytes %s during every mutation',
+    (bytes) => {
+      const storage = memoryStorage();
+      storage.setItem(STORAGE_KEY, bytes);
+      expect(() => listSaved(storage)).toThrow();
+      expect(() => savePattern(storage, starterPattern())).toThrow();
+      expect(() => deleteSaved(storage, 'One')).toThrow();
+      expect(storage.getItem(STORAGE_KEY)).toBe(bytes);
+    }
+  );
+
+  it('refuses ambiguous duplicate names without removing either record', () => {
+    const storage = memoryStorage(),
+      bytes = JSON.stringify([
+        { ...starterPattern(), name: 'Same' },
+        { ...starterPattern(), name: 'Same', bpm: 125 },
+      ]);
+    storage.setItem(STORAGE_KEY, bytes);
+    expect(() => savePattern(storage, starterPattern())).toThrow(/unsupported/);
+    expect(() => deleteSaved(storage, 'Same')).toThrow(/unsupported/);
+    expect(storage.getItem(STORAGE_KEY)).toBe(bytes);
+  });
+
+  it('preserves untouched stored fields and libraries larger than the current capacity', () => {
+    const storage = memoryStorage(),
+      previous = Array.from({ length: MAX_SAVED + 2 }, (_, i) => ({
+        ...starterPattern(),
+        name: `Legacy ${i}`,
+        annotation: { important: i },
+      }));
+    storage.setItem(STORAGE_KEY, JSON.stringify(previous));
+    savePattern(storage, { ...starterPattern(), name: 'Legacy 0', bpm: 135 });
+    expect(JSON.parse(storage.getItem(STORAGE_KEY)).slice(1)).toEqual(previous.slice(1));
+    expect(() => savePattern(storage, { ...starterPattern(), name: 'Extra' })).toThrow(/full/);
+  });
+
+  it('does not write after a failed read and preserves the last save on quota failure', () => {
+    let writes = 0;
+    const denied = {
+      getItem: () => {
+        throw new Error('Denied read');
+      },
+      setItem: () => {
+        writes++;
+      },
+    };
+    expect(() => savePattern(denied, starterPattern())).toThrow(/Denied read/);
+    expect(() => deleteSaved(denied, 'One')).toThrow(/Denied read/);
+    expect(writes).toBe(0);
+    const storage = memoryStorage();
+    savePattern(storage, starterPattern());
+    const before = storage.getItem(STORAGE_KEY);
+    storage.setItem = () => {
+      throw new Error('QuotaExceededError');
+    };
+    expect(() => savePattern(storage, { ...starterPattern(), name: 'Later' })).toThrow(/Quota/);
+    expect(() => deleteSaved(storage, 'Starter groove')).toThrow(/Quota/);
+    expect(storage.getItem(STORAGE_KEY)).toBe(before);
+    expect(() => listSaved(null)).toThrow(/blocks local storage/);
+  });
+
+  it.each([
+    ['missing drums', { ...starterPattern(), drums: null }],
+    ['truncated bass', { ...starterPattern(), bass: [0, null] }],
+    [
+      'invalid step',
+      { ...starterPattern(), drums: { ...starterPattern().drums, kick: Array(16).fill(1) } },
+    ],
+    ['missing mixer', { ...starterPattern(), volume: {} }],
+    ['invalid tempo', { ...starterPattern(), bpm: '92' }],
+    ['normalized-name alias', { ...starterPattern(), name: 'x'.repeat(61) }],
+  ])(
+    'preserves semantically malformed %s bytes before draft, save and delete mutations',
+    (_label, pattern) => {
+      const storage = memoryStorage(),
+        raw = JSON.stringify(pattern);
+      storage.setItem(DRAFT_KEY, raw);
+      storage.setItem(STORAGE_KEY, `[${raw}]`);
+      expect(() => readDraft(storage)).toThrow(/unsupported/);
+      expect(() => saveDraft(storage, starterPattern())).toThrow(/unsupported/);
+      expect(() => savePattern(storage, starterPattern())).toThrow(/unsupported/);
+      expect(() => deleteSaved(storage, pattern.name)).toThrow(/unsupported/);
+      expect(storage.getItem(DRAFT_KEY)).toBe(raw);
+      expect(storage.getItem(STORAGE_KEY)).toBe(`[${raw}]`);
+      expect(storageBackup(storage)).toEqual({
+        format: 'pocket-storage-backup',
+        version: 1,
+        library: `[${raw}]`,
+        draft: raw,
+      });
+    }
+  );
+
+  it('accepts complete legacy unversioned patterns and preserves additional stored fields on update', () => {
+    const storage = memoryStorage(),
+      prior = {
+        ...starterPattern(),
+        note: 'retain me',
+        drums: { ...starterPattern().drums, annotation: 'retain nested data' },
+      };
+    delete prior.version;
+    storage.setItem(DRAFT_KEY, JSON.stringify(prior));
+    storage.setItem(STORAGE_KEY, JSON.stringify([prior]));
+    expect(readDraft(storage)).toEqual(starterPattern());
+    saveDraft(storage, { ...starterPattern(), bpm: 110 });
+    savePattern(storage, { ...starterPattern(), bpm: 110 });
+    for (const updated of [
+      JSON.parse(storage.getItem(DRAFT_KEY)),
+      JSON.parse(storage.getItem(STORAGE_KEY))[0],
+    ]) {
+      expect(updated.note).toBe('retain me');
+      expect(updated.drums.annotation).toBe('retain nested data');
+      expect(updated.bpm).toBe(110);
+    }
+  });
+
+  it('restores a valid draft and leaves corrupt or newer drafts untouched', () => {
+    const storage = memoryStorage();
+    expect(readDraft(storage)).toBeNull();
+    saveDraft(storage, starterPattern());
+    expect(readDraft(storage)).toEqual(starterPattern());
+    for (const bytes of ['{broken draft', 'null', '[]', '{"name":"future","version":2}']) {
+      storage.setItem(DRAFT_KEY, bytes);
+      expect(() => saveDraft(storage, emptyPattern())).toThrow();
+      expect(storage.getItem(DRAFT_KEY)).toBe(bytes);
+    }
   });
 });
 

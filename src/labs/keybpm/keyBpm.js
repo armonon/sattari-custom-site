@@ -6,6 +6,34 @@ const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 export const KEYBPM_MAX_FILES = 200;
 export const KEYBPM_MAX_BYTES = 200 * 1024 ** 2;
 
+// Names and byte lengths are not content identity (e.g. exports from two folders).
+// Only hash candidates that otherwise look alike; cache by File identity for
+// repeated selections within this tab. Failed reads are not cached as duplicates.
+const fingerprints = new WeakMap();
+async function fingerprint(file) {
+  if (!fingerprints.has(file)) {
+    const pending = file
+      .arrayBuffer()
+      .then((bytes) => crypto.subtle.digest('SHA-256', bytes))
+      .then((bytes) => Array.from(new Uint8Array(bytes)).join(','));
+    fingerprints.set(file, pending);
+    pending.catch(() => fingerprints.delete(file));
+  }
+  return fingerprints.get(file);
+}
+export async function isDuplicateTrack(file, files) {
+  const candidates = files.filter(
+    (other) =>
+      typeof other.arrayBuffer === 'function' &&
+      other.name === file.name &&
+      other.size === file.size
+  );
+  if (!candidates.length) return false;
+  const digest = await fingerprint(file);
+  for (const candidate of candidates) if (digest === (await fingerprint(candidate))) return true;
+  return false;
+}
+
 export function keyParts(key) {
   const match = /^([A-G][#♯b♭]?)\s+(major|minor)$/.exec(String(key || '').trim());
   if (!match) return null;

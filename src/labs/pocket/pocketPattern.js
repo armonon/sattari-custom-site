@@ -141,28 +141,147 @@ export function trackHasNotes(pattern, id) {
 
 // ---- saved patterns (localStorage) ----
 
-export function listSaved(storage) {
+function readStored(storage, key, fallback) {
+  if (!storage)
+    throw new Error('This browser blocks local storage. Existing patterns are unchanged.');
+  const raw = storage.getItem(key);
+  if (raw === null) return fallback;
   try {
-    const parsed = JSON.parse(storage?.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed.map(normalizePattern) : [];
+    return JSON.parse(raw);
   } catch {
-    return [];
+    throw new Error('Saved Pocket data could not be read. It has not been replaced.');
   }
 }
 
-/** Saves by name (replacing a pattern with the same name), newest first. */
+function isStoredPattern(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  // Explicit legacy support: a missing version is accepted only with the complete
+  // v1 musical shape. Normalization is not evidence that stored notes are intact.
+  if (value.version !== undefined && value.version !== 1) return false;
+  if (typeof value.name !== 'string' || !value.name || value.name.length > 60) return false;
+  const inRange = (n, limits) =>
+    typeof n === 'number' && Number.isFinite(n) && n >= limits[0] && n <= limits[1];
+  if (
+    !Number.isInteger(value.bpm) ||
+    !inRange(value.bpm, LIMITS.bpm) ||
+    !Number.isInteger(value.key) ||
+    !inRange(value.key, [0, 11]) ||
+    !inRange(value.swing, LIMITS.swing) ||
+    !inRange(value.cutoff, LIMITS.cutoff) ||
+    !Object.hasOwn(SCALES, value.scale)
+  )
+    return false;
+  if (
+    !DRUM_TRACKS.every(
+      ({ id }) =>
+        Array.isArray(value.drums?.[id]) &&
+        value.drums[id].length === STEPS &&
+        value.drums[id].every((step) => typeof step === 'boolean')
+    )
+  )
+    return false;
+  if (
+    !Array.isArray(value.bass) ||
+    value.bass.length !== STEPS ||
+    !value.bass.every(
+      (row) => row === null || (Number.isInteger(row) && row >= 0 && row < BASS_ROWS)
+    )
+  )
+    return false;
+  return ALL_TRACKS.every(
+    ({ id }) => inRange(value.volume?.[id], LIMITS.volume) && typeof value.muted?.[id] === 'boolean'
+  );
+}
+
+function retainPatternFields(previous, clean) {
+  return {
+    ...previous,
+    ...clean,
+    drums: { ...previous?.drums, ...clean.drums },
+    volume: { ...previous?.volume, ...clean.volume },
+    muted: { ...previous?.muted, ...clean.muted },
+  };
+}
+
+function readSaved(storage) {
+  const parsed = readStored(storage, STORAGE_KEY, []);
+  if (
+    !Array.isArray(parsed) ||
+    !parsed.every(isStoredPattern) ||
+    new Set(parsed.map((item) => item.name)).size !== parsed.length
+  ) {
+    throw new Error('Saved Pocket data has an unsupported format. It has not been replaced.');
+  }
+  return parsed;
+}
+
+export function listSaved(storage) {
+  return readSaved(storage).map(normalizePattern);
+}
+
+/** Replacing the same name is explicit; new names never evict older work. */
 export function savePattern(storage, pattern) {
   const clean = normalizePattern(pattern);
-  const others = listSaved(storage).filter((item) => item.name !== clean.name);
-  const next = [clean, ...others].slice(0, MAX_SAVED);
+  const previous = readSaved(storage);
+  const replacing = previous.some((item) => item.name === clean.name);
+  if (!replacing && previous.length >= MAX_SAVED) {
+    throw new Error(
+      `All ${MAX_SAVED} saved-pattern slots are full. Load and update an existing name, or deliberately delete a saved pattern first. Nothing was removed.`
+    );
+  }
+  // Preserve untouched records verbatim, including fields a future reader may use.
+  const next = [
+    retainPatternFields(
+      previous.find((item) => item.name === clean.name),
+      clean
+    ),
+    ...previous.filter((item) => item.name !== clean.name),
+  ];
   storage.setItem(STORAGE_KEY, JSON.stringify(next));
-  return next;
+  return next.map(normalizePattern);
 }
 
 export function deleteSaved(storage, name) {
-  const next = listSaved(storage).filter((item) => item.name !== name);
+  const previous = readSaved(storage);
+  const next = previous.filter((item) => item.name !== name);
   storage.setItem(STORAGE_KEY, JSON.stringify(next));
-  return next;
+  return next.map(normalizePattern);
+}
+
+export const DRAFT_KEY = 'sattari-pocket-draft-v1';
+
+function readStoredDraft(storage) {
+  const draft = readStored(storage, DRAFT_KEY, undefined);
+  if (draft === undefined) return null;
+  if (!isStoredPattern(draft)) {
+    throw new Error('The Pocket draft has an unsupported format. It has not been replaced.');
+  }
+  return draft;
+}
+
+export function readDraft(storage) {
+  const draft = readStoredDraft(storage);
+  return draft === null ? null : normalizePattern(draft);
+}
+
+export function saveDraft(storage, pattern) {
+  // A corrupt or newer-format draft is recoverable data, not an empty slot.
+  const previous = readStoredDraft(storage);
+  storage.setItem(
+    DRAFT_KEY,
+    JSON.stringify(retainPatternFields(previous, normalizePattern(pattern)))
+  );
+}
+
+/** Exact raw bytes for recovery, not a promise of automatic editable import. */
+export function storageBackup(storage) {
+  if (!storage) throw new Error('This browser blocks access to stored Pocket data.');
+  return {
+    format: 'pocket-storage-backup',
+    version: 1,
+    library: storage.getItem(STORAGE_KEY),
+    draft: storage.getItem(DRAFT_KEY),
+  };
 }
 
 /**

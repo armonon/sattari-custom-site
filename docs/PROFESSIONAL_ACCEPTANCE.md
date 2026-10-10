@@ -13,6 +13,28 @@ The final run passed all individual test stages, including 766 tests and a
 source fingerprint. A stable-tree release gate and physical qualification remain
 required. This is not a certified release snapshot.
 
+## October 7 process-recovery addition
+
+`scripts/run-process-recovery-qa.mjs` runs against an isolated local Vite origin
+and creates its own temporary browser profile. It generates its own audio, kills
+the actual Chromium process during capture, reopens the same profile, and checks
+last-good project equality, committed audio SHA-256 hashes, event-journal recovery
+and portable backup readability. CDP applies actual browser quota denial (no
+storage API mocks); save/import rejection must preserve the last-good project,
+and capture must stop with an actionable recording-health error while committed
+chunks stay readable. Chromium may cache quota grants for roughly 30 seconds;
+this check allows 65 seconds for failure to reach the capture pipeline. It does
+not exhaust the host disk.
+
+Run an isolated `npm run dev -- --host 127.0.0.1 --port 4291 --strictPort`, then
+`node scripts/run-process-recovery-qa.mjs http://127.0.0.1:4291`.
+`CHROMIUM_EXECUTABLE` selects an installed Chromium; `STUDIO_RECOVERY_REPORT`
+selects the JSON evidence destination. Otherwise use the Playwright-installed
+browser and `/tmp/stemdeck-process-recovery.json`. Evidence includes exact browser
+version; pin it and record source commit when qualifying a release candidate.
+No physical devices, Safari/mobile qualification, sudden-power-loss guarantee,
+in-flight-save transaction kill or full Project A sign-off is implied.
+
 ## One action-support inventory
 
 `src/utils/performanceSupport.js` is canonical for the five stage statuses,

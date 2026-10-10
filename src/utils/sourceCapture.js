@@ -115,7 +115,9 @@ export class SourceCapture {
       this.pending = this.pending
         .then(() => this.storeChunk(data))
         .catch((error) => {
-          this.error = error.message;
+          this.error =
+            error?.message ||
+            'Source capture storage is full or unavailable. Completed chunks are recoverable; stop and save a portable backup.';
           this.node?.port.postMessage('stop');
         })
         .finally(() => {

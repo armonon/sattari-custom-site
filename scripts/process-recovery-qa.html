@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Isolated process recovery QA</title>
+  <p>Automation only. Generated signals, isolated profile, no physical inputs or speakers.</p>
+  <script type="module">
+    import * as Tone from 'tone';
+    import { StudioAudioEngine } from '/src/utils/studioAudioEngine.js';
+    import { persistentSession } from '/src/utils/sessionPersistence.js';
+    import { journalStore } from '/src/utils/performanceJournal.js';
+    import { recoverSourceCaptures } from '/src/utils/sourceCapture.js';
+    import { getAudioAsset, putAudioAsset } from '/src/utils/audioProjectStore.js';
+    import { writeProjectArchive, readProjectArchive } from '/src/utils/projectArchive.js';
+    import { emptyArrangement, audioTrack, audioClip } from '/src/utils/arrangementModel.js';
+    import { wavBytes } from '/src/utils/arrangementExport.js';
+    const assert = (value, message) => {
+      if (!value) throw Error(message);
+    };
+    const session = persistentSession({ loadLegacy: () => null });
+    const hash = async (blob) =>
+      [...new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))]
+        .map((v) => v.toString(16).padStart(2, '0'))
+        .join('');
+    let engine;
+    window.qa = {
+      async start() {
+        await Tone.start();
+        engine = new StudioAudioEngine({ monitor: false });
+        const raw = engine.getAudioContext().rawContext;
+        const buffer = raw.createBuffer(1, 48000, 48000);
+        for (let i = 0; i < buffer.length; i++)
+          buffer.getChannelData(0)[i] = 0.05 * Math.sin((i * 2 * Math.PI * 220) / 48000);
+        const asset = await putAudioAsset(new Blob([wavBytes(buffer)], { type: 'audio/wav' }), {
+          name: 'Generated recovery sine.wav',
+        });
+        const track = audioTrack('Recovery track');
+        track.clips = [audioClip(asset.id, asset.name, 1, 0)];
+        const project = {
+          sessionName: 'Last good recovery project',
+          decks: [],
+          arranger: { ...emptyArrangement(), tracks: [track] },
+        };
+        await session.load();
+        await session.save(project);
+        const oscillator = raw.createOscillator(),
+          gain = raw.createGain();
+        gain.gain.value = 0.03;
+        oscillator.connect(gain);
+        Tone.connect(gain, engine.master);
+        oscillator.start();
+        await engine.startRecording({ longSession: true });
+        engine.capturePerformanceEvent('initialState', [
+          { dspVersion: 2, decks: [], masterLevel: 100 },
+        ]);
+        setInterval(() => engine.setMasterLevel(80), 100);
+        return {
+          project,
+          assetId: asset.id,
+          assetHash: await hash((await getAudioAsset(asset.id)).blob),
+        };
+      },
+      async resumeCapture() {
+        await Tone.start();
+        engine = new StudioAudioEngine({ monitor: false });
+        const raw = engine.getAudioContext().rawContext;
+        const oscillator = raw.createOscillator(),
+          gain = raw.createGain();
+        gain.gain.value = 0.03;
+        oscillator.connect(gain);
+        Tone.connect(gain, engine.master);
+        oscillator.start();
+        await engine.startRecording({ longSession: true });
+        engine.capturePerformanceEvent('initialState', [
+          { dspVersion: 2, decks: [], masterLevel: 100 },
+        ]);
+      },
+      captureState: () => ({
+        finished: engine.sourceCapture?.finished,
+        error: engine.sourceCapture?.error,
+        health: engine.getRecordingHealth(),
+      }),
+      health: () => engine.getRecordingHealth(),
+      async checkpoint() {
+        await engine.performanceJournal.flush();
+        const captures = await recoverSourceCaptures(),
+          take = await journalStore.recover();
+        const assets = [];
+        for (const capture of captures)
+          for (const track of capture.tracks)
+            for (const clip of track.clips)
+              assets.push({
+                id: clip.assetId,
+                hash: await hash((await getAudioAsset(clip.assetId)).blob),
+              });
+        assert(assets.length > 0, 'No durable generated audio before crash');
+        return {
+          assets,
+          takes: take.map((t) => ({ id: t.id, events: t.events.length })),
+          health: engine.getRecordingHealth(),
+        };
+      },
+      async recover(expected) {
+        const project = await session.load();
+        assert(
+          JSON.stringify(project) === JSON.stringify(expected.project),
+          'Last good project changed after process kill'
+        );
+        assert(
+          (await hash((await getAudioAsset(expected.assetId)).blob)) === expected.assetHash,
+          'Saved source PCM changed'
+        );
+        for (const asset of expected.checkpoint.assets)
+          assert(
+            (await hash((await getAudioAsset(asset.id)).blob)) === asset.hash,
+            `Capture asset missing/changed: ${asset.id}`
+          );
+        const takes = await journalStore.recover();
+        for (const take of expected.checkpoint.takes)
+          assert(
+            takes.find((t) => t.id === take.id)?.events.length >= take.events,
+            'Committed journal events lost'
+          );
+        const archive = await writeProjectArchive(project, [expected.assetId]),
+          reopened = await readProjectArchive(archive);
+        assert(
+          reopened.sessionName === project.sessionName && reopened.assets.length === 1,
+          'Portable backup did not reopen'
+        );
+        return {
+          projectExact: true,
+          assetsExact: expected.checkpoint.assets.length + 1,
+          journalEvents: takes.map((t) => t.events.length),
+          portableBytes: archive.size,
+        };
+      },
+      async recoveredQuotaCapture() {
+        const id = engine.sourceCapture.id;
+        const recovered = (await recoverSourceCaptures()).find((take) => take.id === id);
+        assert(recovered, 'No recoverable quota-interrupted take');
+        const clips = recovered.tracks.flatMap((track) => track.clips);
+        assert(clips.length > 0, 'Completed quota-interrupted audio chunks missing');
+        const hashes = [];
+        for (const clip of clips) {
+          const asset = await getAudioAsset(clip.assetId);
+          assert(asset?.blob?.size > 44, 'Recovered quota chunk audio missing');
+          hashes.push({ id: asset.id, hash: await hash(asset.blob) });
+        }
+        return { captureId: id, completedClips: clips.length, assets: hashes };
+      },
+      async quota(expected) {
+        let saveError, assetError;
+        const project = await session.load();
+        try {
+          await session.save({
+            ...project,
+            sessionName: 'MUST NOT REPLACE',
+            quotaPayload: 'x'.repeat(2 * 1024 * 1024),
+          });
+        } catch (e) {
+          saveError = { name: e.name, message: e.message };
+        }
+        try {
+          await putAudioAsset(new Blob([new Uint8Array(2 * 1024 * 1024)]), {
+            name: 'Rejected quota asset',
+          });
+        } catch (e) {
+          assetError = { name: e.name, message: e.message };
+        }
+        assert(
+          saveError?.name === 'QuotaExceededError',
+          `Session quota did not reject: ${JSON.stringify(saveError)}`
+        );
+        assert(
+          assetError?.name === 'QuotaExceededError',
+          `Asset quota did not reject: ${JSON.stringify(assetError)}`
+        );
+        const recovered = await this.recover(expected);
+        return { saveError, assetError, ...recovered };
+      },
+    };
+  </script>
+</html>
