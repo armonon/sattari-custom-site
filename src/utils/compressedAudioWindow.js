@@ -3,6 +3,7 @@
 // Browsers without WebCodecs audio decoding (Safari before 26) fall back to one
 // bounded whole-song decodeAudioData, the way short sources always load.
 import { mp3Gapless } from './mp3Gapless.js';
+import { audioPacketDuration } from './audioPacketDuration.js';
 
 // Decoded songs kept for the fallback, least recently used first. Streaming
 // windows are served from these copies; a song larger than the whole budget is
@@ -73,7 +74,8 @@ function windowFrom(raw, song, start, end, budget) {
 }
 
 async function fallbackWindow(raw, blob, input, track, start, end, budget, options) {
-  const duration = track ? await input.getDurationFromMetadata([track]).catch(() => null) : null;
+  // A first-fragment duration cannot safely size a whole-song allocation.
+  const duration = track ? await audioPacketDuration(blob, input, track) : null;
   const channels = (track && (await track.getNumberOfChannels().catch(() => 2))) || 2;
   // Decoded float PCM at the context rate; unknown lengths assume a typical
   // compression ratio (a 128 kbps MP3 decodes to about 24 times its size).
@@ -114,9 +116,8 @@ export async function decodeCompressedWindow(raw, blob, start, end, budget, opti
     const gapless = await mp3Gapless(blob);
     if (options.signal?.aborted) throw new Error('Source decoding cancelled.');
     const priming = gapless?.startFrames ?? 0;
-    const metadataDuration = await input.getDurationFromMetadata([track]);
     const duration =
-      metadataDuration == null ? null : metadataDuration - (gapless?.trimFrames ?? 0) / rate;
+      (await audioPacketDuration(blob, input, track)) - (gapless?.trimFrames ?? 0) / rate;
     const first = Math.floor(start * rate);
     const last = Math.ceil(Math.min(end, duration ?? end) * rate) + 1;
     const frames = last - first;

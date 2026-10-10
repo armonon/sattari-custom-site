@@ -48,12 +48,23 @@ it('scans packet timing when container duration is missing, without whole-Blob d
   expect(state.compute).toHaveBeenCalledOnce();
   expect(state.dispose).toHaveBeenCalled();
 });
-it('avoids scanning when duration metadata is valid and rejects invalid scanned timing', async () => {
-  state.metadata = 12;
+it('uses actual packet timing even when a fragmented recording has positive stale metadata', async () => {
+  state.metadata = 0.3115416667;
+  state.duration = 14.9446041667;
   state.compute.mockClear();
-  expect((await describeAudioSource(new Blob(['data']))).duration).toBe(12);
-  expect(state.compute).not.toHaveBeenCalled();
-  state.metadata = null;
+  expect((await describeAudioSource(new Blob(['data']))).duration).toBe(14.9446041667);
+  expect(state.compute).toHaveBeenCalledOnce();
+});
+it('rejects invalid packet timing rather than silently trusting approximate metadata', async () => {
+  state.metadata = 12;
   state.duration = Infinity;
   await expect(describeAudioSource(new Blob(['data']))).rejects.toThrow('incomplete timing');
+});
+
+it('does not retain a failed timing probe for the same immutable source', async () => {
+  const blob = new Blob(['retry']);
+  state.duration = Infinity;
+  await expect(describeAudioSource(blob)).rejects.toThrow('incomplete timing');
+  state.duration = 15;
+  expect((await describeAudioSource(blob)).duration).toBe(15);
 });

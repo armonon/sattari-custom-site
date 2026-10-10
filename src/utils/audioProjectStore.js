@@ -1,4 +1,5 @@
 import { validateArrangement } from './arrangementModel';
+import { hashLibraryAudio } from './libraryFiles';
 
 const DATABASE_NAME = 'sattari-audio-workspace-v1';
 const DATABASE_VERSION = 1;
@@ -70,6 +71,8 @@ async function sameBytes(a, b) {
       a.slice(at, at + COMPARE_CHUNK).arrayBuffer(),
       b.slice(at, at + COMPARE_CHUNK).arrayBuffer(),
     ]);
+    const expected = Math.min(COMPARE_CHUNK, a.size - at);
+    if (x.byteLength !== expected || y.byteLength !== expected) return false;
     const left = new Uint8Array(x),
       right = new Uint8Array(y);
     for (let index = 0; index < left.length; index += 1)
@@ -197,7 +200,7 @@ export async function exportAudioAssets(ids) {
   return records;
 }
 
-export async function importAudioAssets(records = []) {
+export async function importAudioAssets(records = [], { verifyHashes = false } = {}) {
   if (!Array.isArray(records)) throw new Error('Project audio assets must be a list.');
   void requestPersistentStorage();
   const idMap = new Map();
@@ -241,6 +244,21 @@ export async function importAudioAssets(records = []) {
     await runTransaction('readwrite', (store) => {
       for (const record of fresh) store.put(record);
     });
+  if (verifyHashes) {
+    try {
+      for (const record of records) {
+        const restored = await getAudioAsset(idMap.get(record.id));
+        if (!restored?.blob || record.hash !== (await hashLibraryAudio(restored.blob)))
+          throw new Error(
+            'Restored project audio failed verification. The current session was not replaced.'
+          );
+      }
+    } catch (error) {
+      // Never delete reused assets or replace the session on a failed restore.
+      await deleteAudioAssets(fresh.map((record) => record.id));
+      throw error;
+    }
+  }
   return idMap;
 }
 

@@ -179,3 +179,20 @@ describe('Safari before 26 (no createWritable)', () => {
     await expect(createExportSink(512 * 1024 * 1024)).rejects.toThrow(/private windows/);
   });
 });
+
+it('never falls back to memory when the caller requires independent disk files', async () => {
+  vi.stubGlobal('navigator', {});
+  await expect(createExportSink(3, 'wav', { allowMemoryFallback: false })).rejects.toThrow(
+    /temporary disk/
+  );
+  vi.stubGlobal('navigator', {
+    storage: {
+      getDirectory: async () => {
+        throw new Error('denied');
+      },
+    },
+  });
+  await expect(createExportSink(3, 'wav', { allowMemoryFallback: false })).rejects.toThrow(
+    /refused temporary disk/
+  );
+});

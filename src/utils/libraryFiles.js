@@ -15,10 +15,11 @@ export async function hashLibraryAudio(blob) {
     throw new Error('Secure audio import is unavailable. Use HTTPS or localhost.');
   const parts = [];
   for (let offset = 0; offset < blob.size; offset += 1048576) {
-    const digest = await crypto.subtle.digest(
-      'SHA-256',
-      new Uint8Array(await readBlob(blob.slice(offset, offset + 1048576)))
-    );
+    const expected = Math.min(1048576, blob.size - offset);
+    const bytes = await readBlob(blob.slice(offset, offset + expected));
+    if (bytes.byteLength !== expected)
+      throw new Error('Audio storage returned an invalid byte range.');
+    const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
     parts.push(...new Uint8Array(digest));
   }
   const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(parts));

@@ -9,6 +9,7 @@ import {
 } from '../../utils/audioProjectStore';
 import { migrateArrangement, repairArrangement } from '../../utils/arrangementModel';
 import { clearExportFile } from '../../utils/arrangementStreamExport';
+import { importArchiveAudioAssets } from '../../utils/importArchiveAudioAssets';
 import { deferredSessionSave } from '../../utils/deferredSessionSave';
 import { readProjectArchive, writeProjectArchive } from '../../utils/projectArchive';
 import { persistentSession } from '../../utils/sessionPersistence';
@@ -414,7 +415,11 @@ export function useStudioSession({
         )
           return;
         setNotice('Opening project and restoring audio…');
-        relinkManifestAssets(manifest, await importAudioAssets(manifest.assets || []));
+        const importAssets =
+          manifest.schema === 'SattariStudio.project.v6'
+            ? importArchiveAudioAssets
+            : importAudioAssets;
+        relinkManifestAssets(manifest, await importAssets(manifest.assets || []));
         releaseSession();
         await applySession(snapshotFromManifest(manifest));
         setNotice(
