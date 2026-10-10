@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import SplitPage from '../split/SplitPage';
@@ -22,13 +22,15 @@ describe.each([
   ['Key & BPM', KeyBpmPage, /Add tracks/, /half or double time/],
   ['Vox', VoxPage, /Record a take/, /monophonic/],
 ])('%s lab', (title, Page, control, limitation) => {
-  it('is labelled alpha, states its limits and links the other labs', () => {
+  it('is labelled alpha, states its limits and links the other labs', async () => {
     vi.stubGlobal('Worker', FakeWorker);
-    render(
-      <MemoryRouter>
-        <Page />
-      </MemoryRouter>
-    );
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <Page />
+        </MemoryRouter>
+      );
+    });
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(title);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Alpha');
     expect(screen.getAllByText(control).length).toBeGreaterThan(0);
