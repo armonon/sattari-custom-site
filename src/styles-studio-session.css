@@ -575,14 +575,23 @@
   }
 }
 
-/* Keep status feedback in the shell flow instead of covering the bottom of a
-   scrollable deck, where the fader and cue controls live. */
-.sd-session-shell .sd-notice {
+/* Reserve a compact footer row for status feedback. It stays clear of deck
+   controls without pushing the timeline down when a session is imported. */
+.sd-session-shell .sd-notice[data-visible='true'] {
   position: relative;
   inset: auto;
   z-index: auto;
   flex: 0 0 auto;
+  order: 10;
+  display: block;
+  padding: 0;
   margin: 6px 0 0;
+  max-height: 40%;
+  overflow: auto;
   border: 1px solid #ffffff14;
   border-radius: 8px;
+}
+
+.sd-session-shell .sd-app-frame:has(> .sd-notice[data-visible='true']) {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

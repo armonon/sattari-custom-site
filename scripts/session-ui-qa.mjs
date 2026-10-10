@@ -136,6 +136,12 @@ try {
         page.getByRole('region', { name: 'Arrangement timeline', exact: true })
       );
       row.workspace = await geometry(page.locator('#studio-workspace'));
+      row.notice = await geometry(page.locator('.sd-notice > summary'));
+      assert.ok(row.notice.visibleHeight >= 28, 'session status stays readable');
+      assert.ok(
+        row.notice.top >= row.workspace.top + row.workspace.visibleHeight,
+        'session status occupies its own row without covering workspace controls'
+      );
       if (viewport.width <= 700) {
         row.trackHeader = await geometry(page.locator('.ae-track-head').first());
         assert.ok(row.trackHeader.height <= 160, 'compact track header preserves timeline density');
