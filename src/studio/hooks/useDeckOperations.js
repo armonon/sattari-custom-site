@@ -8,6 +8,7 @@ import {
   nearestSemitoneShift,
 } from '../session/sessionModel';
 import { createDeckLoading } from './deckLoading';
+import { downloadBlob } from '../downloads';
 import { useLatest } from './useLatest';
 
 /**
@@ -311,6 +312,21 @@ export function useDeckOperations({
       );
     };
 
+    const exportAbleton = async (deckId) => {
+      const deck = current().decks.find((item) => item.id === deckId);
+      setNotice(`Preparing Deck ${deckId} for Ableton…`);
+      try {
+        const { exportDeckForAbleton } = await import('../abletonDeckExport');
+        const pack = await exportDeckForAbleton(deck);
+        downloadBlob(pack.blob, pack.fileName, 60000);
+        setNotice(
+          `Exported ${pack.fileName}: unzip it and open ${pack.setName} in Ableton Live 12.`
+        );
+      } catch (error) {
+        setNotice(`Ableton export failed: ${error.message}`);
+      }
+    };
+
     const syncAll = () => {
       const { decks, masterDeckId } = current();
       const reference = decks.find((item) => item.id === masterDeckId);
@@ -425,6 +441,7 @@ export function useDeckOperations({
       setDeckLoop,
       beatJump,
       extractPattern,
+      exportAbleton,
       syncAll,
       syncKey,
       toggleAllKeyLock,
@@ -467,6 +484,7 @@ export function useDeckOperations({
             onStemFxChange: (stemId, updates) => operations.changeStemFx(id, stemId, updates),
             onExtractMidi: () => operations.extractPattern(id, 'midi'),
             onExtractDrums: () => operations.extractPattern(id, 'drums'),
+            onExportAbleton: () => operations.exportAbleton(id),
           },
         ])
       ),

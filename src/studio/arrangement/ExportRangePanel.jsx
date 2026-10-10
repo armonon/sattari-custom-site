@@ -1,7 +1,9 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { savedExportFiles, clearExportFile } from '../../utils/arrangementStreamExport';
+import { offerToLocker } from '../../suite/suiteKit';
 
 export function downloadExport(file, name) {
+  offerToLocker(file, name);
   const url = URL.createObjectURL(file),
     anchor = document.createElement('a');
   anchor.href = url;

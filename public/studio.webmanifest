@@ -1,25 +1,18 @@
 {
   "id": "/studio",
-  "name": "STEMDECK",
-  "short_name": "STEMDECK",
-  "description": "Perform, capture and arrange with StemDeck. Internet required to open; export projects to keep backups.",
+  "name": "StemDeck",
+  "short_name": "StemDeck",
+  "description": "Perform, capture and arrange with StemDeck by Sattari. Works offline after the first visit; your projects stay on this device.",
   "start_url": "/studio?installed=1",
   "scope": "/studio",
   "display": "standalone",
   "background_color": "#101114",
   "theme_color": "#101114",
+  "categories": ["music"],
   "icons": [
-    {
-      "src": "/images/stemdeck/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/images/stemdeck/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "/images/stemdeck/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/stemdeck/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/stemdeck/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/images/stemdeck/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

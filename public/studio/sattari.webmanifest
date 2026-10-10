@@ -1,0 +1,25 @@
+{
+  "id": "/studio/sattari",
+  "name": "Sattari",
+  "short_name": "Sattari",
+  "description": "Sattari's music tools: Split, Key & BPM, Vox, Canvas and Pocket. Works offline after the first visit (Split needs its model saved for offline first).",
+  "start_url": "/studio/split?installed=1",
+  "scope": "/studio/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "categories": ["music"],
+  "icons": [
+    { "src": "/images/sattari-app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/sattari-app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/sattari-app/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/images/sattari-app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Split", "description": "Split a song into stems", "url": "/studio/split" },
+    { "name": "Key & BPM", "description": "Find a song's key and tempo", "url": "/studio/keybpm" },
+    { "name": "Vox", "description": "Tune and harmonize a vocal", "url": "/studio/vox" },
+    { "name": "Canvas", "description": "Make a looping visual for a track", "url": "/studio/canvas" },
+    { "name": "Pocket", "description": "Sketch a beat", "url": "/studio/pocket" }
+  ]
+}

@@ -165,7 +165,12 @@ export default function useStemSeparator() {
       ]);
       if (job) await run(job.id);
     } catch (error) {
-      if (!controller.signal.aborted && mounted.current) setErrors([error.message]);
+      if (!controller.signal.aborted && mounted.current)
+        setErrors([
+          error instanceof TypeError
+            ? 'The demo song needs an internet connection. Offline, add a song from this device.'
+            : error.message,
+        ]);
     } finally {
       demo.current = null;
       if (mounted.current) setLoadingDemo(false);

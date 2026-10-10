@@ -15,6 +15,7 @@ import {
 import StudioAction from '../../components/studio/StudioAction';
 import SessionOutputStatus from '../../components/studio/SessionOutputStatus';
 import { clampNumber } from '../session/sessionModel';
+import { SuiteMenu } from '../../suite/SuiteUi';
 
 const VIEWS = [
   ['library', 'Library', Folder],
@@ -167,6 +168,7 @@ export default function CommandBar({
           <i className={restored ? 'is-ready' : ''} />
           {restored ? 'Local session' : 'Restoring…'}
         </small>
+        <SuiteMenu className="sd-suite-menu" />
       </div>
       <div className="sd-system-actions" role="group" aria-label="Session actions">
         <button
@@ -217,6 +219,8 @@ export default function CommandBar({
           icon={Settings}
           label="Settings"
         />
+        {/* Phones: the title row has no room, so the suite menu sits here instead. */}
+        <SuiteMenu className="sd-suite-menu-compact" />
       </div>
     </header>
   );

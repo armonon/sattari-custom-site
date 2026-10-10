@@ -18,10 +18,11 @@ describe('Apple distribution contracts (not device qualification)', () => {
       expect(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`).toBe(icon.sizes);
     }
   });
-  it('does not promise native iOS downloads or offline/background audio', () => {
+  it('does not promise native iOS downloads or background audio; offline is first-visit only', () => {
     const guide = read('public/studio-install.html').replace(/\s+/g, ' ');
     expect(guide).toContain('no public TestFlight build');
-    expect(guide).toContain('Internet is required');
+    // The studio service worker (src/pwa/studio-sw.js) makes it open offline after one online visit.
+    expect(guide).toContain('works offline after the first visit');
     expect(guide).toContain('No background-recording guarantee');
     expect(guide).toContain('not automatically synced');
     expect(guide).not.toContain('.ipa');

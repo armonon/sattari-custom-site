@@ -1,0 +1,101 @@
+/* Reserve the suite menu's box before suite.js upgrades the element (no layout shift). */
+tcc-suite-menu {
+  display: inline-block;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  vertical-align: middle;
+}
+.tcc-suite-menu-wrap {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.tcc-locker-offer {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 2147482000;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px 10px;
+  width: min(420px, calc(100vw - 24px));
+  padding: 10px 10px 10px 14px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 12px;
+  background: #15171b;
+  color: #f1f2f4;
+  font: 500 13px/1.4 system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+.tcc-locker-offer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tcc-locker-offer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block !important;
+}
+.tcc-locker-offer a {
+  color: #76e5d3;
+}
+.tcc-locker-offer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: #76e5d3;
+  color: #101114;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tcc-locker-offer button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.tcc-locker-offer .tcc-locker-offer-close {
+  grid-column: 3;
+  padding: 6px;
+  background: transparent;
+  color: #a4a9b3;
+}
+.tcc-locker-offer small {
+  grid-column: 1 / -1;
+  color: #a4a9b3;
+  font-size: 11px;
+}
+.tcc-locker-offer > span:first-child:last-of-type {
+  grid-column: 1 / 3;
+}
+.tcc-spin {
+  animation: tcc-spin 1s linear infinite;
+}
+@keyframes tcc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* StemDeck command bar: title row on wide screens, actions row on phones. */
+.sd-suite-menu-compact {
+  display: none;
+}
+@media (max-width: 640px) {
+  .sd-title-block .sd-suite-menu {
+    display: none;
+  }
+  .sd-suite-menu-compact {
+    display: inline-flex;
+    align-self: center;
+  }
+}

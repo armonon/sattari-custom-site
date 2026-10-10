@@ -40,7 +40,7 @@ function loadPage() {
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 async function signIn(password = 'pw') {
-  document.getElementById('staff').value = 'sattaristudio';
+  document.getElementById('staff').value = 'teststaffer';
   document.getElementById('password').value = password;
   document.getElementById('login-form').dispatchEvent(new Event('submit', { cancelable: true }));
   for (let i = 0; i < 5; i += 1) await settle();
@@ -83,11 +83,11 @@ describe('staff page sign-in', () => {
         logins.push(JSON.parse(options.body));
         return reply(200, {
           token: 'session-token',
-          staff: 'sattaristudio',
+          staff: 'teststaffer',
           deviceToken: 'dev1.x.y',
         });
       },
-      'GET /api/staff/stock': () => reply(200, { staff: 'sattaristudio', items: [] }),
+      'GET /api/staff/stock': () => reply(200, { staff: 'teststaffer', items: [] }),
     });
     loadPage();
 
@@ -104,8 +104,8 @@ describe('staff page sign-out', () => {
   async function signedIn(logout) {
     route({
       'POST /api/staff/login': () =>
-        reply(200, { token: 'session-token', staff: 'sattaristudio', deviceToken: 'dev1.x.y' }),
-      'GET /api/staff/stock': () => reply(200, { staff: 'sattaristudio', items: [] }),
+        reply(200, { token: 'session-token', staff: 'teststaffer', deviceToken: 'dev1.x.y' }),
+      'GET /api/staff/stock': () => reply(200, { staff: 'teststaffer', items: [] }),
       'POST /api/staff/logout': logout,
     });
     loadPage();
@@ -145,8 +145,8 @@ describe('staff page sign-out', () => {
 describe('staff page panels', () => {
   const signedInRoutes = {
     'POST /api/staff/login': () =>
-      reply(200, { token: 'session-token', staff: 'sattaristudio', deviceToken: 'dev1.x.y' }),
-    'GET /api/staff/stock': () => reply(200, { staff: 'sattaristudio', items: [] }),
+      reply(200, { token: 'session-token', staff: 'teststaffer', deviceToken: 'dev1.x.y' }),
+    'GET /api/staff/stock': () => reply(200, { staff: 'teststaffer', items: [] }),
   };
 
   async function openTab(name) {

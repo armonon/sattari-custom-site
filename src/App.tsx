@@ -9,6 +9,9 @@ import NotFoundPage from '@components/NotFoundPage';
 import RouteErrorBoundary from '@components/RouteErrorBoundary';
 import ScrollManager from '@components/ScrollManager';
 import SiteMeasurement from './components/SiteMeasurement';
+import { StudioAppStatus } from './pwa/StudioPwaUi';
+import { LockerOffer } from './suite/SuiteUi';
+import { suiteAppFor } from './suite/suiteKit';
 import { OrganizationSchema, SEO } from '@utils/seo';
 import {
   Category,
@@ -26,6 +29,9 @@ import {
   SattariLearnPage,
   SattariStudioPage,
   StemSeparatorPage,
+  SplitPage,
+  KeyBpmPage,
+  VoxPage,
   ServicesPage,
   StudioBookingStatus,
   ShopPage,
@@ -34,6 +40,9 @@ import {
   ToolDetailsPage,
   VisitPage,
   PrivacyPage,
+  CanvasPage,
+  PocketPage,
+  PressPage,
   type PreloadablePage,
 } from '@utils/lazyComponents';
 
@@ -73,6 +82,10 @@ const ROUTES: RouteDefinition[] = [
   // Restores its panels from localStorage while rendering.
   { path: '/studio', page: SattariStudioPage, hydrate: false },
   { path: '/stem-separator', page: StemSeparatorPage },
+  // Wave-2 alpha tools.
+  { path: '/studio/canvas', page: CanvasPage },
+  { path: '/studio/pocket', page: PocketPage },
+  { path: '/press', page: PressPage },
   // The Audio Suite and its downloads are one page, on /downloads.
   { path: '/downloads', page: DownloadsPage },
   { path: '/audio-suite', redirect: '/downloads' },
@@ -111,6 +124,10 @@ const ROUTES: RouteDefinition[] = [
   localPage('/services/instrument-repair-woodland-hills', 'repair-woodland-hills'),
   localPage('/services/instrument-repair-calabasas', 'repair-calabasas'),
   { path: '/stem-seperator', redirect: '/stem-separator' },
+  // Studio alpha labs: Split, Key & BPM, Vox (src/labs).
+  { path: '/studio/split', page: SplitPage },
+  { path: '/studio/keybpm', page: KeyBpmPage },
+  { path: '/studio/vox', page: VoxPage },
 ];
 
 // Matched exactly as <Routes> ranks them, including the catch-all.
@@ -134,6 +151,13 @@ export async function preloadRoute(pathname: string): Promise<{ hydrate: boolean
   await route.page.preload();
   return { hydrate: route.hydrate !== false };
 }
+
+// The installable studio apps (StemDeck and the Sattari tools): the pages the
+// studio service worker serves offline (src/pwa/studio-sw.js).
+const STUDIO_APP_PAGE = /^\/studio(\/(split|keybpm|vox|canvas|pocket))?$/;
+
+// Wave-2 alpha tools outside /studio/: tool pages without the footer or shop assistant.
+const LAB_PATHS = ['/press'];
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -160,9 +184,10 @@ const App: FC = () => {
   const pagePath = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const isAudioWorkspace = ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(
-    pagePath
-  );
+  // Alpha lab tools: /studio/<lab> (Split, Key & BPM, Vox, Canvas, Pocket) and /press.
+  const isLabPage = pagePath.startsWith('/studio/') || LAB_PATHS.includes(pagePath);
+  const isAudioWorkspace =
+    isLabPage || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
@@ -237,6 +262,8 @@ const App: FC = () => {
     <div className={`site-shell${pagePath === '/' ? ' is-home' : ''}`}>
       <OrganizationSchema />
       <ScrollManager />
+      {STUDIO_APP_PAGE.test(pagePath) && <StudioAppStatus />}
+      {suiteAppFor(pagePath) && <LockerOffer />}
       {pagePath !== '/studio' && (
         <a
           className="site-skip-link"
@@ -256,7 +283,7 @@ const App: FC = () => {
           noindex
         />
       )}
-      {!['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
+      {!isLabPage && !['/', '/studio', '/learn', '/loop', '/stem-separator'].includes(pagePath) && (
         <BackgroundMedia />
       )}
 

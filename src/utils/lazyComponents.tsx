@@ -127,11 +127,19 @@ export const SattariLearnPage = lazyPage(() => import('@pages/LoopPracticePage')
 export const SattariStudioPage = lazyPage(() => import('@pages/SattariStudioPage'));
 export const SattariHubPage = lazyPage(() => import('@pages/SattariHubPage'));
 export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage'));
+// Studio alpha labs (wave 2): /studio/split, /studio/keybpm, /studio/vox.
+export const SplitPage = lazyPage(() => import('../labs/split/SplitPage'));
+export const KeyBpmPage = lazyPage(() => import('../labs/keybpm/KeyBpmPage'));
+export const VoxPage = lazyPage(() => import('../labs/vox/VoxPage'));
 export const GuideIndex = lazyPage(() => import('@pages/MusicResources'), 'GuideIndex');
 export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'GuideArticle');
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');
 export const VisitPage = lazyPage(() => import('@pages/MusicResources'), 'VisitPage');
 export const PrivacyPage = lazyPage(() => import('@pages/MusicResources'), 'PrivacyPage');
+// Wave-2 alpha tools (src/labs).
+export const CanvasPage = lazyPage(() => import('@/labs/canvas/CanvasPage'));
+export const PocketPage = lazyPage(() => import('@/labs/pocket/PocketPage'));
+export const PressPage = lazyPage(() => import('@/labs/press/PressPage'));
 
 // Fallback loading component
 export const PageLoader = () => (

@@ -15,6 +15,7 @@ import {
 import { SEO } from '../utils/seo';
 import { PAGE_SEO } from '../data/siteSeo';
 import '../styles-hub.css';
+import HubLabs from '../labs/HubLabs';
 
 const workspaces = [
   {
@@ -166,6 +167,8 @@ export default function SattariHubPage() {
               ))}
             </div>
           </section>
+
+          <HubLabs />
 
           <section className="hub-horizon" aria-labelledby="hub-horizon-title">
             <div className="hub-section-heading">

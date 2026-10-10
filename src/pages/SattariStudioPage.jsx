@@ -11,6 +11,8 @@ import { useMasterControls } from '../studio/hooks/useMasterControls';
 import { useMidi } from '../studio/hooks/useMidi';
 import { usePads } from '../studio/hooks/usePads';
 import { useStudioEngine } from '../studio/hooks/useStudioEngine';
+import { useStemDeckLockerOpen } from '../studio/hooks/useLockerOpen';
+import { useStemHandoff } from '../studio/hooks/useStemHandoff';
 import { useInputSource, useInspector } from '../studio/hooks/useShellPanels';
 import { useStudioKeyboard } from '../studio/hooks/useStudioKeyboard';
 import { createStudioActivity } from '../studio/session/studioActivity';
@@ -93,6 +95,17 @@ export default function SattariStudioPage() {
     activity,
     transport,
     activeView,
+    setActiveView,
+    setNotice,
+  });
+  // Stems sent from the Split lab (/studio/split) land in the first free deck.
+  useStemHandoff({ ready: session.ready, decks, deckOps, actions, setActiveView, setNotice });
+  // Audio sent from the Locker or another suite app (?tcc-open=) lands the same way.
+  useStemDeckLockerOpen({
+    ready: session.ready,
+    decks,
+    deckOps,
+    actions,
     setActiveView,
     setNotice,
   });

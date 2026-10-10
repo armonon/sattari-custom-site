@@ -63,7 +63,7 @@ function claims(overrides = {}) {
 
 beforeEach(() => {
   resetBlobs();
-  process.env.STAFF_USERNAME = 'sattaristudio';
+  process.env.STAFF_USERNAME = 'teststaffer';
   process.env.STAFF_PASSWORD_SALT = 'salt';
   process.env.STAFF_PASSWORD_HASH = 'hash';
   process.env.STAFF_SESSION_SECRET = 'secret';
