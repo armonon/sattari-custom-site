@@ -6,6 +6,9 @@ function line(start, end, words) {
 }
 
 describe('linesToLrc', () => {
+  it('carries rounded hundredths into the next minute', () => {
+    expect(linesToLrc([line(59.999, 61, ['boundary'])])).toBe('[01:00.00]boundary');
+  });
   it('formats a single line as [mm:ss.xx]text', () => {
     const lines = [line(65.5, 68, ['Hello', 'world'])];
     expect(linesToLrc(lines)).toBe('[01:05.50]Hello world');
@@ -27,6 +30,13 @@ describe('linesToLrc', () => {
 });
 
 describe('linesToSrt', () => {
+  it.each([
+    [7.999999999999999, '00:00:08,000'],
+    [59.9996, '00:01:00,000'],
+    [3599.9996, '01:00:00,000'],
+  ])('carries rounded milliseconds at %s seconds', (time, timestamp) => {
+    expect(linesToSrt([line(time, time, ['boundary'])])).toBe(`1\n${timestamp} --> ${timestamp}\nboundary\n`);
+  });
   it('formats a single cue with a 1-indexed number and HH:MM:SS,mmm timestamps', () => {
     const lines = [line(1.5, 3.25, ['Hello', 'world'])];
     expect(linesToSrt(lines)).toBe('1\n00:00:01,500 --> 00:00:03,250\nHello world\n');
