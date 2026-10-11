@@ -4,7 +4,9 @@
 // installed -- never has to load for the LRC/SRT/format-selection unit tests.
 import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
 
-const VIDEO_CODEC = 'avc1.42001f'; // H.264 Constrained Baseline, broadly decodable
+// Level 3.1 accommodates 720p; portrait/landscape/square 1080p needs level 4.0.
+const VIDEO_CODEC_720 = 'avc1.42001f';
+const VIDEO_CODEC_1080 = 'avc1.420028';
 const AUDIO_CODEC = 'mp4a.40.2'; // AAC-LC
 const VIDEO_BITRATE = 8_000_000;
 const AUDIO_BITRATE = 192_000;
@@ -30,6 +32,19 @@ export async function encodeLyricMp4({
   const width = canvas.width;
   const height = canvas.height;
   const ctx = canvas.getContext('2d');
+  const macroblocks = Math.ceil(width / 16) * Math.ceil(height / 16);
+  const videoConfig = {
+    codec: macroblocks > 3600 ? VIDEO_CODEC_1080 : VIDEO_CODEC_720,
+    width,
+    height,
+    bitrate: VIDEO_BITRATE,
+    framerate: fps,
+  };
+  const support = await VideoEncoder.isConfigSupported(videoConfig);
+  if (!support.supported)
+    throw new Error(
+      `This browser cannot encode ${width}×${height} H.264 video. Try another size or browser.`
+    );
 
   const muxer = new Muxer({
     target: new ArrayBufferTarget(),
@@ -44,85 +59,102 @@ export async function encodeLyricMp4({
     fastStart: 'in-memory',
   });
 
-  const videoEncoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (error) => {
-      throw error;
-    },
-  });
-  videoEncoder.configure({
-    codec: VIDEO_CODEC,
-    width,
-    height,
-    bitrate: VIDEO_BITRATE,
-    framerate: fps,
-  });
-
+  let videoEncoder = null;
   let audioEncoder = null;
-  if (audioBuffer) {
-    audioEncoder = new AudioEncoder({
-      output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
-      error: (error) => {
-        throw error;
-      },
+  let encoderError = null;
+  let wakeVideo = null;
+  const onError = (error) => {
+    encoderError = error;
+    wakeVideo?.();
+  };
+  try {
+    videoEncoder = new VideoEncoder({
+      output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+      error: onError,
     });
-    audioEncoder.configure({
-      codec: AUDIO_CODEC,
-      numberOfChannels: audioBuffer.numberOfChannels,
-      sampleRate: audioBuffer.sampleRate,
-      bitrate: AUDIO_BITRATE,
-    });
-  }
+    videoEncoder.configure(videoConfig);
 
-  const totalFrames = Math.max(1, Math.round(durationSeconds * fps));
-  const frameDurationUs = Math.round(1_000_000 / fps);
-  const keyframeEveryNFrames = Math.max(1, Math.round(fps * KEYFRAME_INTERVAL_SECONDS));
-  for (let i = 0; i < totalFrames; i++) {
-    drawFrame(ctx, i / fps, width, height);
-    const frame = new VideoFrame(canvas, {
-      timestamp: i * frameDurationUs,
-      duration: frameDurationUs,
-    });
-    videoEncoder.encode(frame, { keyFrame: i % keyframeEveryNFrames === 0 });
-    frame.close();
-    onProgress({ phase: 'video', progress: (i + 1) / totalFrames });
-    // Basic backpressure: if the encoder's internal queue is backing up,
-    // wait for it to drain before producing more frames.
-    if (videoEncoder.encodeQueueSize > 4) {
-      await new Promise((resolve) => {
-        videoEncoder.ondequeue = resolve;
+    if (audioBuffer) {
+      audioEncoder = new AudioEncoder({
+        output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
+        error: onError,
       });
-    }
-  }
-  await videoEncoder.flush();
-  videoEncoder.close();
-
-  if (audioEncoder && audioBuffer) {
-    const chunkFrames = Math.round(audioBuffer.sampleRate * AUDIO_CHUNK_SECONDS);
-    const channels = audioBuffer.numberOfChannels;
-    const channelData = Array.from({ length: channels }, (_, c) => audioBuffer.getChannelData(c));
-    for (let start = 0; start < audioBuffer.length; start += chunkFrames) {
-      const length = Math.min(chunkFrames, audioBuffer.length - start);
-      const interleaved = new Float32Array(length * channels);
-      for (let c = 0; c < channels; c++) {
-        for (let i = 0; i < length; i++) interleaved[i * channels + c] = channelData[c][start + i];
-      }
-      const audioData = new AudioData({
-        format: 'f32',
+      audioEncoder.configure({
+        codec: AUDIO_CODEC,
+        numberOfChannels: audioBuffer.numberOfChannels,
         sampleRate: audioBuffer.sampleRate,
-        numberOfFrames: length,
-        numberOfChannels: channels,
-        timestamp: Math.round((start / audioBuffer.sampleRate) * 1_000_000),
-        data: interleaved,
+        bitrate: AUDIO_BITRATE,
       });
-      audioEncoder.encode(audioData);
-      audioData.close();
-      onProgress({ phase: 'audio', progress: Math.min(1, (start + length) / audioBuffer.length) });
     }
-    await audioEncoder.flush();
-    audioEncoder.close();
-  }
 
-  muxer.finalize();
-  return new Blob([muxer.target.buffer], { type: 'video/mp4' });
+    const totalFrames = Math.max(1, Math.round(durationSeconds * fps));
+    const frameDurationUs = Math.round(1_000_000 / fps);
+    const keyframeEveryNFrames = Math.max(1, Math.round(fps * KEYFRAME_INTERVAL_SECONDS));
+    for (let i = 0; i < totalFrames; i++) {
+      if (encoderError) throw encoderError;
+      drawFrame(ctx, i / fps, width, height);
+      const frame = new VideoFrame(canvas, {
+        timestamp: i * frameDurationUs,
+        duration: frameDurationUs,
+      });
+      try {
+        videoEncoder.encode(frame, { keyFrame: i % keyframeEveryNFrames === 0 });
+      } finally {
+        frame.close();
+      }
+      onProgress({ phase: 'video', progress: (i + 1) / totalFrames });
+      // Basic backpressure: if the encoder's internal queue is backing up,
+      // wait for it to drain before producing more frames.
+      if (videoEncoder.encodeQueueSize > 4) {
+        await new Promise((resolve) => {
+          wakeVideo = resolve;
+          videoEncoder.ondequeue = resolve;
+        });
+        wakeVideo = null;
+        if (encoderError) throw encoderError;
+      }
+    }
+    await videoEncoder.flush();
+    if (encoderError) throw encoderError;
+
+    if (audioEncoder && audioBuffer) {
+      const chunkFrames = Math.round(audioBuffer.sampleRate * AUDIO_CHUNK_SECONDS);
+      const channels = audioBuffer.numberOfChannels;
+      const channelData = Array.from({ length: channels }, (_, c) => audioBuffer.getChannelData(c));
+      for (let start = 0; start < audioBuffer.length; start += chunkFrames) {
+        const length = Math.min(chunkFrames, audioBuffer.length - start);
+        const interleaved = new Float32Array(length * channels);
+        for (let c = 0; c < channels; c++) {
+          for (let i = 0; i < length; i++)
+            interleaved[i * channels + c] = channelData[c][start + i];
+        }
+        const audioData = new AudioData({
+          format: 'f32',
+          sampleRate: audioBuffer.sampleRate,
+          numberOfFrames: length,
+          numberOfChannels: channels,
+          timestamp: Math.round((start / audioBuffer.sampleRate) * 1_000_000),
+          data: interleaved,
+        });
+        if (encoderError) throw encoderError;
+        try {
+          audioEncoder.encode(audioData);
+        } finally {
+          audioData.close();
+        }
+        onProgress({
+          phase: 'audio',
+          progress: Math.min(1, (start + length) / audioBuffer.length),
+        });
+      }
+      await audioEncoder.flush();
+      if (encoderError) throw encoderError;
+    }
+
+    muxer.finalize();
+    return new Blob([muxer.target.buffer], { type: 'video/mp4' });
+  } finally {
+    if (videoEncoder && videoEncoder.state !== 'closed') videoEncoder.close();
+    if (audioEncoder && audioEncoder.state !== 'closed') audioEncoder.close();
+  }
 }

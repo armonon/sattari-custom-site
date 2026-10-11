@@ -27,21 +27,20 @@ export function linesToLrc(lines) {
     .slice()
     .sort((a, b) => a.start - b.start)
     .map((line) => {
-      const totalSeconds = Math.max(0, line.start || 0);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds - minutes * 60;
-      const secondsText = seconds.toFixed(2).padStart(5, '0');
-      return `[${pad(minutes)}:${secondsText}]${lineText(line)}`;
+      const hundredths = Math.round(Math.max(0, line.start || 0) * 100);
+      const minutes = Math.floor(hundredths / 6000);
+      const seconds = Math.floor((hundredths % 6000) / 100);
+      return `[${pad(minutes)}:${pad(seconds)}.${pad(hundredths % 100)}]${lineText(line)}`;
     })
     .join('\n');
 }
 
 function srtTimestamp(totalSeconds) {
-  const clamped = Math.max(0, totalSeconds || 0);
-  const hours = Math.floor(clamped / 3600);
-  const minutes = Math.floor((clamped % 3600) / 60);
-  const seconds = Math.floor(clamped % 60);
-  const millis = Math.round((clamped - Math.floor(clamped)) * 1000);
+  const rounded = Math.round(Math.max(0, totalSeconds || 0) * 1000);
+  const hours = Math.floor(rounded / 3600000);
+  const minutes = Math.floor((rounded % 3600000) / 60000);
+  const seconds = Math.floor((rounded % 60000) / 1000);
+  const millis = rounded % 1000;
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)},${pad(millis, 3)}`;
 }
 

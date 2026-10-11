@@ -38,6 +38,7 @@ export class LyricWhisperClient {
         if (settled) return;
         settled = true;
         signal?.removeEventListener('abort', onAbort);
+        this.dispose();
         if (error) reject(error);
         else resolve(result);
       };
@@ -54,7 +55,11 @@ export class LyricWhisperClient {
       };
       this.worker.onerror = (event) =>
         finish(new Error(event.message || 'Transcription worker crashed.'));
-      this.worker.postMessage({ type: 'transcribe', id, samples, rate });
+      try {
+        this.worker.postMessage({ type: 'transcribe', id, samples, rate });
+      } catch (error) {
+        finish(error);
+      }
     });
   }
 

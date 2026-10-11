@@ -100,15 +100,26 @@ export default function LyricPage() {
   const choose = async (files) => {
     if (!files?.length || decoding) return;
     const picked = files[0];
+    alignAbortRef.current?.abort();
+    audioRef.current?.pause();
     setDecodeError('');
+    setAlignError('');
     setDecoding(true);
     setLines(null);
-    setFile(picked);
+    setSelected(null);
+    setCurrentTime(0);
+    setPlaying(false);
+    setFile(null);
+    setMono(null);
+    setAudioBuffer(null);
+    setPeaks(null);
+    setAudioUrl(null);
     try {
       const [monoResult, buffer] = await Promise.all([
         decodeMono(picked),
         decodeAudioBuffer(picked),
       ]);
+      setFile(picked);
       setMono(monoResult);
       setAudioBuffer(buffer);
       setPeaks(peaksOf(monoResult.samples));
@@ -173,6 +184,7 @@ export default function LyricPage() {
           }
         }
       );
+      controller.signal.throwIfAborted();
       setAlignMessage('Matching lyrics to the vocal...');
       const asrWords = normalizeAsrWords(rawChunks);
       const lyricTokens = tokenizeLyrics(lyricText);
@@ -385,6 +397,7 @@ export default function LyricPage() {
             <section className="alab-card" aria-label="Lyrics">
               <h2>Paste lyrics</h2>
               <textarea
+                aria-label="Lyrics"
                 className="lyric-textarea"
                 value={lyricText}
                 onChange={(event) => setLyricText(event.target.value)}
@@ -457,7 +470,12 @@ export default function LyricPage() {
                     className="lyric-preview-canvas"
                   />
                   <div className="alab-transport">
-                    <button type="button" className="alab-play" onClick={togglePlay}>
+                    <button
+                      type="button"
+                      className="alab-play"
+                      aria-label={playing ? 'Pause song' : 'Play song'}
+                      onClick={togglePlay}
+                    >
                       {playing ? (
                         <Pause size={18} aria-hidden="true" />
                       ) : (
@@ -466,6 +484,7 @@ export default function LyricPage() {
                     </button>
                     <input
                       type="range"
+                      aria-label="Song position"
                       min="0"
                       max={mono.duration || 0}
                       step="0.01"

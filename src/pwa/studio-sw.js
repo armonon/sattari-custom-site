@@ -160,14 +160,18 @@ async function asset(request) {
 
 function suiteScript(request, event) {
   const cachePromise = caches.open(SUITE_CACHE);
-  const network = fetch(request, { cache: 'no-cache' })
-    .then(async (response) => {
-      const cache = await cachePromise;
-      if (response.ok) await cache.put(request, response.clone()).catch(() => {});
-      return response;
-    });
+  const network = fetch(request, { cache: 'no-cache' }).then(async (response) => {
+    const cache = await cachePromise;
+    if (response.ok) await cache.put(request, response.clone()).catch(() => {});
+    return response;
+  });
   // Register before yielding so a cached response cannot end the refresh task.
-  event.waitUntil(network.then(() => {}, () => {}));
+  event.waitUntil(
+    network.then(
+      () => {},
+      () => {}
+    )
+  );
   return cachePromise.then(async (cache) => {
     const cached = await cache.match(request);
     return cached || network.catch(() => Response.error());
