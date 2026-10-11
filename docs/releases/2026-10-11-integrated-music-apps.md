@@ -18,3 +18,11 @@ Validation:
 Evidence: `/Users/lillypad/Projects/remaining-app-releases-20261011`. Runtime values stayed in memory and Netlify; they were not included in evidence or committed.
 
 Native Modular installers remain separately gated on Windows/AU/DAW/signing qualification. This hosted release does not certify native audio delivery or physical-device performance.
+
+## Latest Canvas and worker updates
+
+PR 40's Canvas MP4 duration and shared-suite cache refresh fixes are now included in deployment `6acbb1371e087b8582bf072f`. Application source is the qualified integration tree at `005ebf8` (the only new application changes are PR 40's five files).
+
+All 29 focused Canvas/export/service-worker cases pass, production compilation/prerender/worker generation pass, and real desktop/390px UI exports produce MP4 with 120 frames and 3.999965-second duration for a four-second silent loop, with no page errors. The same export passed on the published StemDeck custom domain. Optional audio slicing is unit-tested; this browser run does not claim a paid service, physical device or DAW qualification.
+
+The final update retains the 24 qualified backend digests, existing production runtime bindings, all scheduled jobs, edge bundle and storefront. The previous missing-archive deployment blocker from PR 40 has been resolved with the exact archives packaged during this release.
