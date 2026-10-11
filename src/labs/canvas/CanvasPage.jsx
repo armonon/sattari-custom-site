@@ -11,7 +11,7 @@ const PREVIEW = { width: 720, height: 1280 };
 const MAX_AUDIO_BYTES = 200 * 1024 * 1024;
 
 const LIMITATIONS = [
-  'Recording runs in real time: an 8 second loop takes 8 seconds, and the tab must stay visible while it records.',
+  'MP4 uses a fixed frame timeline. WebM records in real time; keep the tab visible while recording.',
   'MP4 export depends on your browser (recent Chrome, Edge and Safari). Firefox records WebM only; Spotify Canvas needs MP4, so convert WebM files first.',
   'The loop restarts with the audio. Pick a loop start on a downbeat for the cleanest seam; there is no crossfade yet.',
   'Kick detection is a simple low-band onset detector. Busy bass lines or very soft kicks can be missed or double-counted.',
@@ -254,6 +254,31 @@ export default function CanvasPage() {
     if (!format || !canvas) return;
     const size = EXPORT_SIZES.find((item) => item.id === sizeId) || EXPORT_SIZES[0];
     const seconds = settings.current.view.length;
+    if (format.ext === 'mp4') {
+      setRecording({ seconds, elapsed: 0 });
+      stopPlayback();
+      try {
+        if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' ||
+          (includeAudio && (typeof AudioEncoder === 'undefined' || typeof AudioData === 'undefined'))) {
+          throw new Error('This browser cannot render MP4 with a fixed timeline. Choose WebM or use a recent Chrome or Edge.');
+        }
+        setStatus({ text: `Rendering ${seconds} s at ${size.label}.` });
+        const { encodeCanvasMp4 } = await import('./canvasExportMp4');
+        const blob = await encodeCanvasMp4({
+          size, settings: settings.current, start,
+          buffer: includeAudio ? track?.buffer : undefined,
+          context: includeAudio ? ensureContext() : undefined,
+          onProgress: ({ progress }) => setRecording({ seconds, elapsed: seconds * progress }),
+        });
+        downloadBlob(blob, `${safeFileName(title, 'canvas')}-${size.width}x${size.height}-${seconds}s.mp4`);
+        setStatus({ text: `Saved a ${seconds} s ${format.label} loop (${(blob.size / 1e6).toFixed(1)} MB).` });
+      } catch (error) {
+        setStatus({ text: `Export failed: ${error.message || error}`, error: true });
+      } finally {
+        setRecording(null);
+      }
+      return;
+    }
     const stream = canvas.captureStream(30);
     let destination = null;
     try {
