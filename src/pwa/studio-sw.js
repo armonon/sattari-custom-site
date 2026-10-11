@@ -36,7 +36,7 @@ const PRECACHE = /* __PRECACHE__ */ [];
 const SPLIT_RUNTIME = /* __SPLIT_RUNTIME__ */ [];
 
 const SHELL_CACHE = `sattari-studio-shell-${BUILD}`;
-const SUITE_CACHE = 'sattari-studio-suite-v1';
+const SUITE_CACHE = 'sattari-studio-suite-v2';
 const SPLIT_CACHE = 'sattari-split-offline-v1';
 const APP_PAGE = /^\/studio(?:\/(?:split|keybpm|vox|canvas|pocket))?\/?$/;
 const SUITE_PREFIX = 'https://thecreatingco.com/suite/v1/';
@@ -158,17 +158,20 @@ async function asset(request) {
   return cached || fetch(request);
 }
 
-async function suiteScript(request) {
-  const cache = await caches.open(SUITE_CACHE);
-  const cached = await cache.match(request);
-  const network = fetch(request)
-    .then((response) => {
-      // The page loads it in CORS mode; only a complete, readable copy is kept.
-      if (response.ok) cache.put(request, response.clone());
+function suiteScript(request, event) {
+  const cachePromise = caches.open(SUITE_CACHE);
+  const network = fetch(request, { cache: 'no-cache' })
+    .then(async (response) => {
+      const cache = await cachePromise;
+      if (response.ok) await cache.put(request, response.clone()).catch(() => {});
       return response;
-    })
-    .catch(() => cached || Response.error());
-  return cached || network;
+    });
+  // Register before yielding so a cached response cannot end the refresh task.
+  event.waitUntil(network.then(() => {}, () => {}));
+  return cachePromise.then(async (cache) => {
+    const cached = await cache.match(request);
+    return cached || network.catch(() => Response.error());
+  });
 }
 
 self.addEventListener('fetch', (event) => {
@@ -178,7 +181,7 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== self.location.origin) {
     if (request.url.startsWith(SUITE_PREFIX) && url.pathname.endsWith('.js'))
-      event.respondWith(suiteScript(request));
+      event.respondWith(suiteScript(request, event));
     return;
   }
 
