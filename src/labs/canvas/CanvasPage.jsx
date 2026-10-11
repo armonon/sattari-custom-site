@@ -258,20 +258,33 @@ export default function CanvasPage() {
       setRecording({ seconds, elapsed: 0 });
       stopPlayback();
       try {
-        if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' ||
-          (includeAudio && (typeof AudioEncoder === 'undefined' || typeof AudioData === 'undefined'))) {
-          throw new Error('This browser cannot render MP4 with a fixed timeline. Choose WebM or use a recent Chrome or Edge.');
+        if (
+          typeof VideoEncoder === 'undefined' ||
+          typeof VideoFrame === 'undefined' ||
+          (includeAudio &&
+            (typeof AudioEncoder === 'undefined' || typeof AudioData === 'undefined'))
+        ) {
+          throw new Error(
+            'This browser cannot render MP4 with a fixed timeline. Choose WebM or use a recent Chrome or Edge.'
+          );
         }
         setStatus({ text: `Rendering ${seconds} s at ${size.label}.` });
         const { encodeCanvasMp4 } = await import('./canvasExportMp4');
         const blob = await encodeCanvasMp4({
-          size, settings: settings.current, start,
+          size,
+          settings: settings.current,
+          start,
           buffer: includeAudio ? track?.buffer : undefined,
           context: includeAudio ? ensureContext() : undefined,
           onProgress: ({ progress }) => setRecording({ seconds, elapsed: seconds * progress }),
         });
-        downloadBlob(blob, `${safeFileName(title, 'canvas')}-${size.width}x${size.height}-${seconds}s.mp4`);
-        setStatus({ text: `Saved a ${seconds} s ${format.label} loop (${(blob.size / 1e6).toFixed(1)} MB).` });
+        downloadBlob(
+          blob,
+          `${safeFileName(title, 'canvas')}-${size.width}x${size.height}-${seconds}s.mp4`
+        );
+        setStatus({
+          text: `Saved a ${seconds} s ${format.label} loop (${(blob.size / 1e6).toFixed(1)} MB).`,
+        });
       } catch (error) {
         setStatus({ text: `Export failed: ${error.message || error}`, error: true });
       } finally {
