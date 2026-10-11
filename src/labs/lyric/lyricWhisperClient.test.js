@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { LyricWhisperClient } from './lyricWhisperClient';
 
 function fixture(postError) {
-  const worker = { postMessage: vi.fn(() => { if (postError) throw postError; }), terminate: vi.fn() };
+  const worker = {
+    postMessage: vi.fn(() => {
+      if (postError) throw postError;
+    }),
+    terminate: vi.fn(),
+  };
   const client = new LyricWhisperClient(() => worker);
   const controller = new AbortController();
   const promise = client.transcribe(new Float32Array(8), 16000, controller.signal);

@@ -470,7 +470,12 @@ export default function LyricPage() {
                     className="lyric-preview-canvas"
                   />
                   <div className="alab-transport">
-                    <button type="button" className="alab-play" aria-label={playing ? 'Pause song' : 'Play song'} onClick={togglePlay}>
+                    <button
+                      type="button"
+                      className="alab-play"
+                      aria-label={playing ? 'Pause song' : 'Play song'}
+                      onClick={togglePlay}
+                    >
                       {playing ? (
                         <Pause size={18} aria-hidden="true" />
                       ) : (

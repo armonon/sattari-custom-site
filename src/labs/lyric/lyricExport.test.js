@@ -35,7 +35,9 @@ describe('linesToSrt', () => {
     [59.9996, '00:01:00,000'],
     [3599.9996, '01:00:00,000'],
   ])('carries rounded milliseconds at %s seconds', (time, timestamp) => {
-    expect(linesToSrt([line(time, time, ['boundary'])])).toBe(`1\n${timestamp} --> ${timestamp}\nboundary\n`);
+    expect(linesToSrt([line(time, time, ['boundary'])])).toBe(
+      `1\n${timestamp} --> ${timestamp}\nboundary\n`
+    );
   });
   it('formats a single cue with a 1-indexed number and HH:MM:SS,mmm timestamps', () => {
     const lines = [line(1.5, 3.25, ['Hello', 'world'])];
