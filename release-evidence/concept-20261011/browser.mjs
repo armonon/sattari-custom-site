@@ -123,6 +123,10 @@ try {
     )
   );
   console.log('PASS');
+} catch(error) {
+  await p.screenshot({path:out+'failure.png',fullPage:true});
+  console.log((await p.locator('body').innerText()).slice(0,7000));
+  throw error;
 } finally {
   await b.close();
 }
