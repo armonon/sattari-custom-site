@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useReducer } from 'react';
 import { Download, LoaderCircle, Mic, Play, Square } from 'lucide-react';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop, LabWaveform } from '../audio/AudioLabParts';
@@ -11,6 +11,8 @@ import {
   peaksOf,
   wavBlob,
 } from '../audio/audioLabFiles';
+import { DEFAULT_SETTINGS, settingsHistory, validateSettings } from './voxSettings';
+import './workspace.css';
 import useVoxRecorder from './useVoxRecorder';
 import { hzToMidi, keyLabel, NOTE_NAMES, scalePitchClasses, VOX_MAX_SECONDS } from './voxDsp';
 import { entryFile, useLockerOpen } from '../../suite/suiteKit';
@@ -23,7 +25,7 @@ const LIMITS = [
   'Key detection reads the notes you sang and can pick the relative major/minor; check it and override if needed.',
 ];
 
-const STRENGTH_DEFAULT = 0.8;
+
 
 function createWorker() {
   return new Worker(new URL('./vox.worker.js', import.meta.url), { type: 'module' });
@@ -95,11 +97,14 @@ export default function VoxPage() {
   const [analysis, setAnalysis] = useState(null);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
-  const [keyChoice, setKeyChoice] = useState({ root: 0, mode: 'major' });
-  const [strength, setStrength] = useState(STRENGTH_DEFAULT);
-  const [speedMs, setSpeedMs] = useState(40);
-  const [harmony, setHarmony] = useState('none');
-  const [harmonyGain, setHarmonyGain] = useState(0.6);
+  const [history, dispatch] = useReducer(settingsHistory, {past:[],present:DEFAULT_SETTINGS,future:[]});
+  const {keyChoice,strength,speedMs,harmony,harmonyGain} = history.present;
+  const settingsPicker = useRef(null);
+  const setKeyChoice = value => dispatch({type:'edit',patch:{keyChoice:typeof value === 'function' ? value(keyChoice) : value}});
+  const setStrength = strength => dispatch({type:'edit',patch:{strength}});
+  const setSpeedMs = speedMs => dispatch({type:'edit',patch:{speedMs}});
+  const setHarmony = harmony => dispatch({type:'edit',patch:{harmony}});
+  const setHarmonyGain = harmonyGain => dispatch({type:'edit',patch:{harmonyGain}});
   const [render, setRender] = useState(null);
   const [rendering, setRendering] = useState(false);
   const [playing, setPlaying] = useState(null);
@@ -118,7 +123,7 @@ export default function VoxPage() {
       if (data.type === 'loaded') {
         setProgress(null);
         setAnalysis(data);
-        if (data.key.valid) setKeyChoice({ root: data.key.root, mode: data.key.mode });
+        dispatch({type:'reset',value:{...DEFAULT_SETTINGS,keyChoice:data.key.valid ? {root:data.key.root,mode:data.key.mode} : DEFAULT_SETTINGS.keyChoice}});
       }
       if (data.type === 'rendered' && data.serial === serial.current) {
         setRender(data);
@@ -206,6 +211,7 @@ export default function VoxPage() {
         type: 'render',
         id: take.id,
         serial: serial.current,
+        settingsSignature: JSON.stringify(history.present),
         options: {
           root: keyChoice.root,
           mode: keyChoice.mode,
@@ -245,6 +251,8 @@ export default function VoxPage() {
   const exportWav = (samples, suffix) =>
     downloadBlob(wavBlob([samples], LAB_RATE), `${baseName(take.name)}-${suffix}.wav`);
 
+  const settingsSignature = JSON.stringify(history.present);
+  const renderReady = render?.settingsSignature === settingsSignature;
   const detected = analysis?.key;
   const busy = progress !== null || recorder.status !== 'idle';
 
@@ -253,11 +261,12 @@ export default function VoxPage() {
       tool="vox"
       title="Vox"
       eyebrow="Sattari Studio lab"
-      summary="Record or drop a vocal, let Vox find the key, then pull every note to the scale with as much or as little strength as you like. Add a third or fifth harmony and export WAV."
+      summary="Your voice. A new dimension. Tune a take, shape its glide and add a harmony."
       description="Record or drop a vocal, detect its key, pitch-correct it to the scale with a strength control, add a harmony and export WAV in your browser."
       limits={LIMITS}
     >
       <div className="alab-workspace">
+        <details className="vox-source" open={!take}><summary>Record or replace your take</summary>
         <div className="alab-input-row">
           <section className="alab-card alab-record" aria-label="Record">
             <h2>Record</h2>
@@ -304,6 +313,7 @@ export default function VoxPage() {
             }}
           />
         </div>
+        </details>
         {error && (
           <div className="alab-error" role="alert">
             <p>{error}</p>
@@ -311,7 +321,7 @@ export default function VoxPage() {
         )}
 
         {take && (
-          <section className="alab-card" aria-label="Take">
+          <section className="alab-card vox-editor" aria-label="Take">
             <div className="alab-card-head">
               <div>
                 <h2 title={take.name}>{take.name}</h2>
@@ -321,7 +331,15 @@ export default function VoxPage() {
                 </p>
               </div>
             </div>
-            <LabWaveform peaks={take.peaks} color="#e998bc" />
+            <div className="vox-history">
+              <button className="alab-button" disabled={!history.past.length} onClick={()=>dispatch({type:'undo'})}>Undo edit</button>
+              <button className="alab-button" disabled={!history.future.length} onClick={()=>dispatch({type:'redo'})}>Redo edit</button>
+              <button className="alab-button" onClick={()=>downloadBlob(new Blob([JSON.stringify({format:'vox-settings',version:1,settings:history.present})],{type:'application/json'}),'vox-settings.json')}>Save settings</button>
+              <button className="alab-button" onClick={()=>settingsPicker.current?.click()}>Open settings</button>
+              <input ref={settingsPicker} type="file" accept=".json" hidden aria-label="Open Vox settings" onChange={async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>10000)throw Error('Settings file is too large.');const data=JSON.parse(await file.text());if(data.format!=='vox-settings'||data.version!==1)throw Error('Unsupported settings file.');const settings=validateSettings(data.settings);dispatch({type:'edit',patch:settings});setError('');}catch(problem){setError(problem.message);}}}/>
+              <span className="alab-note">Settings only · keep your original audio.</span>
+            </div>
+            <LabWaveform peaks={take.peaks} color="#f3a482" height={64} />
             {progress !== null && (
               <div className="alab-progress" role="status">
                 <div>
@@ -450,7 +468,7 @@ export default function VoxPage() {
                       <button
                         type="button"
                         className="alab-button alab-primary"
-                        disabled={!render}
+                        disabled={!renderReady || rendering}
                         onClick={() => void play('tuned')}
                       >
                         <Play size={16} aria-hidden="true" /> Play tuned
@@ -472,7 +490,7 @@ export default function VoxPage() {
                   <button
                     type="button"
                     className="alab-button"
-                    disabled={!render}
+                    disabled={!renderReady || rendering}
                     onClick={() => exportWav(render.mix, 'vox-tuned')}
                   >
                     <Download size={16} aria-hidden="true" /> Export WAV
@@ -482,6 +500,7 @@ export default function VoxPage() {
                       <button
                         type="button"
                         className="alab-text-button"
+                        disabled={!renderReady || rendering}
                         onClick={() => exportWav(render.lead, 'vox-lead')}
                       >
                         Lead only
@@ -489,6 +508,7 @@ export default function VoxPage() {
                       <button
                         type="button"
                         className="alab-text-button"
+                        disabled={!renderReady || rendering}
                         onClick={() => exportWav(render.harmony, 'vox-harmony')}
                       >
                         Harmony only
