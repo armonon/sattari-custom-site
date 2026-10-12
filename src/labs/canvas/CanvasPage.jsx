@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { Download, Image as ImageIcon, Music, Pause, Play, Video } from 'lucide-react';
+import {DEFAULT_SETTINGS,settingsHistory,validateSettings} from './canvasSettings';
+import SceneBrowser from './SceneBrowser';
+import './workspace.css';
 import LabShell from '../LabShell';
 import { downloadBlob, safeFileName } from '../files';
 import { analyseBuffer, demoView, featuresAt, loopView } from './canvasFeatures';
-import { drawFrame, PALETTES, SCENES } from './canvasScenes';
+import { drawFrame, PALETTES } from './canvasScenes';
 import { browserFormats, EXPORT_SIZES, LOOP_LENGTHS, recorderMimeType } from './canvasExport';
 import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
@@ -44,19 +47,22 @@ export default function CanvasPage() {
   const clock = useRef({ origin: 0 });
   const settings = useRef(null);
 
+  const [history, dispatch] = useReducer(settingsHistory,{past:[],present:DEFAULT_SETTINGS,future:[]});
+  const settingsPicker=useRef(null);
+  const {scene,paletteId,colors,reactivity,loopStart,loopLength,title,artist,sizeId,variant}=history.present;
+  const setScene = value => dispatch({type:'edit',patch:current=>({scene:typeof value==='function'?value(current.scene):value})});
+  const setPaletteId = value => dispatch({type:'edit',patch:current=>({paletteId:typeof value==='function'?value(current.paletteId):value})});
+  const setColors = value => dispatch({type:'edit',patch:current=>({colors:typeof value==='function'?value(current.colors):value})});
+  const setReactivity = value => dispatch({type:'edit',patch:current=>({reactivity:typeof value==='function'?value(current.reactivity):value})});
+  const setLoopStart = value => dispatch({type:'edit',patch:current=>({loopStart:typeof value==='function'?value(current.loopStart):value})});
+  const setLoopLength = value => dispatch({type:'edit',patch:current=>({loopLength:typeof value==='function'?value(current.loopLength):value})});
+  const setTitle = value => dispatch({type:'edit',patch:current=>({title:typeof value==='function'?value(current.title):value})});
+  const setArtist = value => dispatch({type:'edit',patch:current=>({artist:typeof value==='function'?value(current.artist):value})});
+  const setSizeId = value => dispatch({type:'edit',patch:current=>({sizeId:typeof value==='function'?value(current.sizeId):value})});
+  const setVariant = value => dispatch({type:'edit',patch:current=>({variant:typeof value==='function'?value(current.variant):value})});
   const [track, setTrack] = useState(null);
   const [cover, setCover] = useState(null);
-  const [scene, setScene] = useState('pulse');
-  const [paletteId, setPaletteId] = useState('golden');
-  const [colors, setColors] = useState(PALETTES[1].colors);
-  const [reactivity, setReactivity] = useState(0.8);
-  const [loopStart, setLoopStart] = useState(0);
-  const [loopLength, setLoopLength] = useState(8);
-  const [title, setTitle] = useState('');
-  const [artist, setArtist] = useState('');
-  const [sizeId, setSizeId] = useState('720');
   const [formats, setFormats] = useState(null);
-  const [variant, setVariant] = useState(0);
   const [formatId, setFormatId] = useState('');
   const [includeAudio, setIncludeAudio] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -235,8 +241,7 @@ export default function CanvasPage() {
   };
 
   const choosePalette = (palette) => {
-    setPaletteId(palette.id);
-    setColors(palette.colors);
+    dispatch({type:'edit',patch:{paletteId:palette.id,colors:palette.colors}});
   };
 
   const setColor = (index, value) =>
@@ -359,9 +364,18 @@ export default function CanvasPage() {
       tagline="Drop a track and cover art. Get a looping, audio-reactive 9:16 video for Spotify Canvas, Reels and TikTok."
       limitations={LIMITATIONS}
     >
+      <div className="canvas-history">
+        <button className="lab-button" disabled={!history.past.length||Boolean(recording)} onClick={()=>dispatch({type:'undo'})}>Undo edit</button>
+        <button className="lab-button" disabled={!history.future.length||Boolean(recording)} onClick={()=>dispatch({type:'redo'})}>Redo edit</button>
+        <button className="lab-button" disabled={Boolean(recording)} onClick={()=>downloadBlob(new Blob([JSON.stringify({format:'canvas-settings',version:1,settings:history.present})],{type:'application/json'}),'canvas-settings.json')}>Save settings</button>
+        <button className="lab-button" disabled={Boolean(recording)} onClick={()=>settingsPicker.current?.click()}>Open settings</button>
+        <input ref={settingsPicker} type="file" accept=".json" hidden aria-label="Open Canvas settings" onChange={async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{if(f.size>10000)throw Error('Settings file is too large.');const d=JSON.parse(await f.text());if(d.format!=='canvas-settings'||d.version!==1)throw Error('Unsupported settings file.');dispatch({type:'edit',patch:validateSettings(d.settings)});setStatus({text:'Settings restored. Audio and cover art are loaded separately.'});}catch(err){setStatus({text:err.message,error:true});}}}/>
+        <small>Settings only · keep your audio and artwork.</small>
+      </div>
       <div className="lab-workspace">
-        <div className="lab-panel" aria-label="Canvas settings" role="group">
-          <h2>1. Sources</h2>
+        <SceneBrowser scene={scene} colors={colors} onChange={setScene} disabled={Boolean(recording)}/>
+        <div className="lab-panel canvas-inspector" aria-label="Canvas settings" role="group">
+          <h2>Sources</h2>
           <label className="lab-drop">
             <Music size={20} aria-hidden="true" />
             <strong>{track ? track.name : 'Drop a track'}</strong>
@@ -387,21 +401,10 @@ export default function CanvasPage() {
             />
           </label>
 
-          <h2>2. Look</h2>
+          <h2>Visual</h2>
           <div className="lab-field">
             <span>Scene</span>
             <div className="lab-segment" role="group" aria-label="Scene">
-              {SCENES.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  title={item.detail}
-                  aria-pressed={scene === item.id}
-                  onClick={() => setScene(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
               <button
                 type="button"
                 title="Cycle through variations of this scene"
@@ -476,7 +479,7 @@ export default function CanvasPage() {
             </label>
           </div>
 
-          <h2>3. Loop</h2>
+          <h2>Loop</h2>
           <div className="lab-field">
             <span>Length</span>
             <div className="lab-segment" role="group" aria-label="Loop length">
