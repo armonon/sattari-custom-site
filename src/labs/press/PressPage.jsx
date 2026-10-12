@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useReducer } from 'react';
 import {
   Download,
   FileJson,
@@ -9,6 +9,8 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
+import {pressHistory} from './pressHistory';
+import './workspace.css';
 import LabShell from '../LabShell';
 import { downloadBlob, safeFileName } from '../files';
 import {
@@ -117,7 +119,10 @@ function ListEditor({ items, onChange, fields, addLabel, max, describe }) {
 }
 
 export default function PressPage() {
-  const [draft, setDraft] = useState(exampleDraft);
+  const [history,dispatch]=useReducer(pressHistory,null,()=>({past:[],present:exampleDraft(),future:[]}));
+  const draft=history.present;
+  const setDraft=value=>dispatch({type:'edit',value});
+  const [section,setSection]=useState('bio');
   const [html, setHtml] = useState(() => buildPressHtml(exampleDraft()));
   const [status, setStatus] = useState({ text: '' });
   const frame = useRef(null);
@@ -126,7 +131,7 @@ export default function PressPage() {
   useEffect(() => {
     try {
       const saved = storage()?.getItem(DRAFT_KEY);
-      if (saved) setDraft(normalizeDraft(JSON.parse(saved)));
+      if (saved) dispatch({type:'reset',value:normalizeDraft(JSON.parse(saved))});
     } catch {
       /* ignore a broken draft */
     }
@@ -194,7 +199,10 @@ export default function PressPage() {
   const openDraftFile = async (file) => {
     if (!file) return;
     try {
-      setDraft(normalizeDraft(JSON.parse(await file.text())));
+      if(file.size>5*1024*1024)throw Error('Draft too large');
+      const data=JSON.parse(await file.text());
+      if(!data||data.version!==1||typeof data.name!=='string'||typeof data.bio!=='string'||!Array.isArray(data.links)||!Array.isArray(data.tracks))throw Error('Not a Press draft');
+      setDraft(normalizeDraft(data));
       setStatus({ text: `Opened ${file.name}.` });
     } catch {
       setStatus({ text: 'That file is not a Press draft.', error: true });
@@ -215,9 +223,10 @@ export default function PressPage() {
       limitations={LIMITATIONS}
       className="lab-press"
     >
+      <div className="press-editor-toolbar"><nav aria-label="Press kit sections">{[['bio','Bio & photo'],['music','Music & links'],['contact','Press & contact'],['style','Style']].map(([id,label])=><button type="button" key={id} aria-pressed={section===id} onClick={()=>setSection(id)}>{label}</button>)}</nav><div><button className="lab-button" disabled={!history.past.length} onClick={()=>dispatch({type:'undo'})}>Undo edit</button><button className="lab-button" disabled={!history.future.length} onClick={()=>dispatch({type:'redo'})}>Redo edit</button></div></div>
       <div className="lab-workspace">
         <div className="lab-panel" role="group" aria-label="Press kit details">
-          <h2>Artist</h2>
+          <section hidden={section!=='bio'} className="press-editor-section"><h2>Tell your story.</h2>
           <label className="lab-field">
             <span>Artist or band name</span>
             <input
@@ -274,12 +283,12 @@ export default function PressPage() {
             <textarea
               value={draft.bio}
               maxLength={5000}
-              rows={6}
+              rows={12}
               onChange={(event) => set('bio', event.target.value)}
             />
           </label>
 
-          <h2>Links</h2>
+          </section><section hidden={section!=='music'} className="press-editor-section"><h2>Links</h2>
           <ListEditor
             items={draft.links}
             onChange={(value) => set('links', value)}
@@ -316,7 +325,7 @@ export default function PressPage() {
             </ul>
           )}
 
-          <h2>Press quotes</h2>
+          </section><section hidden={section!=='contact'} className="press-editor-section"><h2>Press quotes</h2>
           <ListEditor
             items={draft.quotes}
             onChange={(value) => set('quotes', value)}
@@ -348,7 +357,7 @@ export default function PressPage() {
             ))}
           </div>
 
-          <h2>Style</h2>
+          </section><section hidden={section!=='style'} className="press-editor-section"><h2>Style</h2>
           <div className="lab-row">
             <div className="lab-segment" role="group" aria-label="Layout">
               {[
@@ -389,6 +398,7 @@ export default function PressPage() {
               />
             </label>
           </div>
+          </section>
         </div>
 
         <div className="press-preview">
@@ -416,6 +426,7 @@ export default function PressPage() {
                 type="file"
                 accept="application/json,.json"
                 hidden
+                aria-label="Open draft file"
                 onChange={(event) => openDraftFile(event.target.files?.[0])}
               />
             </label>
