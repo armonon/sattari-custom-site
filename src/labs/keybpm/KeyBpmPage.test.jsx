@@ -54,7 +54,7 @@ it('reports unavailable analysis as an error instead of a completed measurement'
   await waitFor(() =>
     expect(screen.getByText('Analysis unavailable for this file.')).toBeInTheDocument()
   );
-  const row = screen.getByText('bad-pcm.wav').closest('tr');
+  const row = screen.getByText('bad-pcm.wav').closest('article');
   expect(row.dataset.status).toBe('error');
   expect(row).not.toHaveTextContent('undefined dB RMS');
 });
@@ -90,7 +90,7 @@ it('keeps report import and overlapping suite intake atomic within the200-track 
     read(createKeyBpmReport(rows, when));
   });
   await waitFor(() => expect(screen.queryByText('Checking files…')).not.toBeInTheDocument());
-  expect(document.querySelectorAll('tbody tr')).toHaveLength(200);
+  expect(document.querySelectorAll('.keybpm-track')).toHaveLength(200);
   expect(screen.getByRole('alert')).toHaveTextContent('200 tracks');
   expect(screen.queryByText('new.wav')).not.toBeInTheDocument();
 });

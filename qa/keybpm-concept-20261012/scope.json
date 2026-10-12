@@ -1,0 +1,13 @@
+{
+  "implemented": [
+    "Searchable track cards and expanded analysis",
+    "Playback of source audio with object URL cleanup",
+    "Measurements-only report and CSV export preserved"
+  ],
+  "remaining": [
+    "Waveform visualization and harmonic wheel",
+    "Manual tempo overrides with history",
+    "Persistent library and playlists"
+  ],
+  "qualification": "First concept slice; not full concept completion"
+}
