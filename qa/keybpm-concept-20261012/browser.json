@@ -1,0 +1,14 @@
+{
+  "analysis": true,
+  "playback": true,
+  "reportReopen": true,
+  "csv": true,
+  "search": true,
+  "widths": [
+    1440,
+    1024,
+    390,
+    320
+  ],
+  "pageErrors": []
+}

@@ -1,0 +1,15 @@
+{
+  "stepEditing": true,
+  "undoRedo": true,
+  "playablePads": true,
+  "playback": true,
+  "savedPatternReopen": true,
+  "wavAndStems": true,
+  "widths": [
+    1440,
+    1024,
+    390,
+    320
+  ],
+  "pageErrors": []
+}

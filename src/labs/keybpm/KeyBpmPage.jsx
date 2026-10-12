@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FolderOpen, LoaderCircle, Save, Square, Trash2 } from 'lucide-react';
 import AudioLabShell from '../audio/AudioLabShell';
-import { formatTime, LabDrop } from '../audio/AudioLabParts';
+import { LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
 import { decodeTrack, SAMPLE_RATE } from '../../utils/stemSeparator';
 import {
@@ -12,6 +12,8 @@ import {
   resultsCsv,
 } from './keyBpm';
 import { createKeyBpmReport, parseKeyBpmReport, KEYBPM_REPORT_MAX_BYTES } from './keyBpmReport';
+import TrackResults from './TrackResults';
+import './workspace.css';
 import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
@@ -67,6 +69,7 @@ export default function KeyBpmPage() {
   const [rows, setRows] = useState([]);
   const [errors, setErrors] = useState([]);
   const [running, setRunning] = useState(false);
+  const [query, setQuery] = useState('');
   const [sort, setSort] = useState('added');
   const [checking, setChecking] = useState(false);
   const imports = useRef(Promise.resolve());
@@ -235,7 +238,7 @@ export default function KeyBpmPage() {
   };
 
   const done = rows.filter((row) => row.result);
-  const sorted = useMemo(() => [...rows].sort(SORTS[sort]), [rows, sort]);
+  const sorted = useMemo(() => rows.filter(row => `${row.file.name} ${row.result?.key || ''} ${row.result?.camelot || ''}`.toLowerCase().includes(query.trim().toLowerCase())).sort(SORTS[sort]), [rows, sort, query]);
   const remaining = rows.filter((row) => row.status === 'queued' || row.status === 'analyzing');
 
   return (
@@ -243,11 +246,12 @@ export default function KeyBpmPage() {
       tool="keybpm"
       title="Key & BPM"
       eyebrow="Sattari Studio lab"
-      summary="Drop a folder of tracks and get the key, Camelot code and tempo of each, measured in your browser with Sattari AutoKey. Export everything as CSV for your DJ crates."
+      summary="Find the key. Feel the tempo. Analyze your tracks, compare the results and build your next set."
       description="Detect the musical key, Camelot code and BPM of many tracks at once in your browser, then export a CSV."
       limits={LIMITS}
     >
       <div className="alab-workspace">
+        <details className="keybpm-import" open={!rows.length}><summary>Add tracks</summary>
         <LabDrop
           title="Add tracks"
           hint="Drop many files at once · WAV, MP3, FLAC, M4A, OGG · up to 10 min each"
@@ -255,6 +259,7 @@ export default function KeyBpmPage() {
           disabled={checking}
           onFiles={addFiles}
         />
+        </details>
         {errors.length > 0 && (
           <div className="alab-error" role="alert">
             {errors.slice(0, 6).map((error) => (
@@ -350,92 +355,10 @@ export default function KeyBpmPage() {
             </button>
           </div>
         </div>
-        {rows.length === 0 ? (
-          <p className="alab-empty">No tracks yet. Results appear here as each file is measured.</p>
-        ) : (
-          <div
-            className="alab-table-wrap"
-            role="region"
-            aria-label="Track analysis results"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (
-                event.target !== event.currentTarget ||
-                !['ArrowLeft', 'ArrowRight'].includes(event.key)
-              )
-                return;
-              const region = event.currentTarget;
-              if (region.scrollWidth <= region.clientWidth) return;
-              event.preventDefault();
-              region.scrollBy({ left: event.key === 'ArrowRight' ? 80 : -80 });
-            }}
-          >
-            <table className="alab-table">
-              <thead>
-                <tr>
-                  <th scope="col">Track</th>
-                  <th scope="col">Length</th>
-                  <th scope="col">Key</th>
-                  <th scope="col">Camelot</th>
-                  <th scope="col">BPM</th>
-                  <th scope="col">Level</th>
-                  <th scope="col">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map(({ id, file, status, result, fromReport }) => (
-                  <tr key={id} data-status={status}>
-                    <th scope="row" title={file.name}>
-                      {file.name}
-                      {fromReport && (
-                        <small className="alab-flag">Report · audio not included</small>
-                      )}
-                    </th>
-                    {status === 'done' ? (
-                      <>
-                        <td>{formatTime(result.duration)}</td>
-                        <td>
-                          {result.key || '—'}
-                          {result.key && result.keyEvidence === 'tentative' && (
-                            <small
-                              className="alab-flag"
-                              title={`Alternative: ${result.alternative}`}
-                            >
-                              tentative
-                            </small>
-                          )}
-                        </td>
-                        <td>{result.camelot || '—'}</td>
-                        <td>
-                          {result.bpm ?? '—'}
-                          {result.bpm !== null && result.tempoEvidence !== 'supported' && (
-                            <small className="alab-flag">{result.tempoEvidence}</small>
-                          )}
-                        </td>
-                        <td>{result.rmsDb === null ? '—' : `${result.rmsDb} dB RMS`}</td>
-                        <td className="alab-note">
-                          {result.alternative && `Alt. ${result.alternative}. `}
-                          {result.note}
-                        </td>
-                      </>
-                    ) : (
-                      <td colSpan={6} className="alab-note">
-                        {status === 'queued' && 'Waiting'}
-                        {status === 'analyzing' && (
-                          <span className="alab-status">
-                            <LoaderCircle className="alab-spin" size={14} aria-hidden="true" />{' '}
-                            Measuring…
-                          </span>
-                        )}
-                        {status === 'error' && <span className="alab-bad">{result?.note}</span>}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <label className="keybpm-search">Search tracks
+          <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Track name, key or Camelot code" />
+        </label>
+        <TrackResults rows={sorted} hasTracks={rows.length > 0} />
       </div>
     </AudioLabShell>
   );

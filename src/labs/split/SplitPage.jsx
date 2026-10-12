@@ -15,6 +15,7 @@ import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop, LabWaveform } from '../audio/AudioLabParts';
 import StemMixer from './StemMixer';
 import SplitOffline from './SplitOffline';
+import './workspace.css';
 import useStemSeparator from '../../hooks/useStemSeparator';
 import { safeTrackName, STEMS } from '../../utils/stemSeparator';
 import { createStemArchive } from '../../utils/stemSeparatorDownload';
@@ -153,11 +154,12 @@ export default function SplitPage() {
       tool="split"
       title="Split"
       eyebrow="Sattari Studio lab"
-      summary="Drop a song and split it into vocals, drums, bass and instruments with the HTDemucs model running in your browser. Mute the vocals, solo the bass, download WAV stems or open them straight in StemDeck."
+      summary="One track. Every part. Separate vocals, drums, bass and instruments, then make the mix yours."
       description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in StemDeck."
       limits={LIMITS}
     >
       <div className="alab-workspace">
+        <details className="split-source-picker" open={!job}><summary>{job ? "Replace track or try a demo" : "Choose your starting point"}</summary>
         <LabDrop
           title={job ? 'Choose another song' : 'Add a song'}
           hint="WAV, MP3, FLAC, M4A, OGG · one song · up to 10 min"
@@ -176,6 +178,7 @@ export default function SplitPage() {
             <AudioLines size={15} aria-hidden="true" /> Try the 8-second demo
           </button>
         </LabDrop>
+        </details>
         {errors.length > 0 && (
           <div className="alab-error" role="alert">
             {errors.map((error) => (

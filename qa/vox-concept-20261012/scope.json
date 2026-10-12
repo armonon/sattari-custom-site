@@ -1,0 +1,23 @@
+{
+  "implemented": [
+    "Dark peach pitch editor with responsive control column",
+    "Undoable key, strength, glide and harmony settings",
+    "Validated portable settings JSON (audio separate)",
+    "Only current-settings renders can play/export"
+  ],
+  "verified": [
+    "13 settings/history and DSP tests",
+    "Build and TypeScript",
+    "4-second voiced fixture through pitch tracking and harmony DSP",
+    "24-bit mono 44.1kHz WAV, duration 4 seconds",
+    "Browser checks at 1440, 1024, 390, 320 pixels"
+  ],
+  "remaining": [
+    "Phrase selection and per-note painting",
+    "Multiple harmony lanes",
+    "Full take project with embedded audio",
+    "Playback seeking and synchronized playhead",
+    "Formant and timing editing"
+  ],
+  "qualification": "First concept slice, not full concept completion"
+}

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import DeckOverview from './DeckOverview';
 import { Plus } from 'lucide-react';
 import { StemDeckChannel } from '../../components/studio/StemDeckChannel';
 import { CrossfaderOptions, SyncButtons } from './PerformTools';
@@ -75,6 +77,7 @@ export default function DecksView({
   onLoadLane,
   children,
 }) {
+  const [overview, setOverview] = useState(true);
   const performanceDecks = [
     focusedDeck,
     ...loadedDecks.filter((deck) => deck.id !== focusedDeck.id),
@@ -127,8 +130,28 @@ export default function DecksView({
           </button>
         </div>
       </div>
+      {loadedDecks.length > 0 && (
+        <div className="sd-deck-view-switch" aria-label="Deck layout">
+          <button type="button" aria-pressed={overview} onClick={() => setOverview(true)}>
+            All four decks
+          </button>
+          <button type="button" aria-pressed={!overview} onClick={() => setOverview(false)}>
+            Detailed controls
+          </button>
+          <span>Load individual stems to mix each part.</span>
+        </div>
+      )}
       <section className="sd-performance-stage" aria-label="Performance sources">
-        {loadedDecks.length ? (
+        {loadedDecks.length && overview ? (
+          <DeckOverview
+            decks={decks}
+            deckHandlers={deckHandlers}
+            onDetails={(id) => {
+              onFocusDeck(id);
+              setOverview(false);
+            }}
+          />
+        ) : loadedDecks.length ? (
           <div className="sd-focused-deck">
             <div className="sd-decks-grid" data-deck-count={performanceDecks.length}>
               {performanceDecks.map((deck) => (

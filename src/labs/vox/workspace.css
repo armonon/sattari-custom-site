@@ -1,0 +1,11 @@
+.alab-page[data-lab='vox'],[data-theme='day'] .alab-page[data-lab='vox']{--alab-bg:#10151a;--alab-panel:#191f27;--alab-raised:#242b35;--alab-line:#343b46;--alab-text:#f4f1ee;--alab-muted:#abb0bc;--alab-accent:#f3a482;--alab-accent-ink:#261d19;--alab-bad:#ff929d;color-scheme:dark;}
+[data-lab='vox'] .alab-shell{max-width:1500px;}[data-lab='vox'] .alab-heading h1{letter-spacing:-.04em;}
+.vox-source{border:1px solid var(--alab-line);border-radius:12px;background:var(--alab-panel);}.vox-source summary{padding:16px 20px;cursor:pointer;font-weight:600;}.vox-source>.alab-input-row{padding:0 16px 16px;}
+.vox-editor{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;}
+.vox-editor>.alab-card-head,.vox-history{grid-column:1/-1;}.vox-history{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}.vox-history .alab-note{margin-left:auto;}
+.vox-editor>.alab-controls{grid-column:2;grid-row:3/6;display:flex;flex-direction:column;gap:22px;border-left:1px solid var(--alab-line);padding:0 0 0 20px;margin:0;}
+.vox-editor>.alab-pitch-graph{grid-column:1;grid-row:3;min-height:320px;border:1px solid var(--alab-line);border-radius:8px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#ffffff08 calc(10% - 1px),#ffffff08 10%);}
+.vox-editor>.alab-waveform{grid-column:1;grid-row:4;}.vox-editor>.alab-actions{grid-column:1;grid-row:5;border-top:1px solid var(--alab-line);padding-top:16px;}.vox-editor>.alab-progress{grid-column:1;grid-row:3;}
+[data-lab='vox'] .alab-card{border-radius:12px;}[data-lab='vox'] .alab-segmented{flex-wrap:wrap;}[data-lab='vox'] .alab-slider input{accent-color:var(--alab-accent);}
+@media(max-width:900px){.vox-editor{grid-template-columns:minmax(0,1fr);}.vox-editor>.alab-controls{grid-column:1;grid-row:6;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-left:0;border-top:1px solid var(--alab-line);padding:20px 0 0;}.vox-editor>.alab-pitch-graph{min-height:240px;}}
+@media(max-width:540px){.alab-page[data-lab='vox']{padding-left:12px;padding-right:12px;}.vox-editor{padding:14px;}.vox-editor>.alab-controls{grid-template-columns:1fr;}.vox-history .alab-note{margin:0;width:100%;}.vox-editor>.alab-pitch-graph{min-height:180px;}}

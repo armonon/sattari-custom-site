@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, Headphones, LoaderCircle, Pause, Play, VolumeX } from 'lucide-react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { Download, Headphones, LoaderCircle, Pause, Play, VolumeX, Mic, Drum, Guitar, AudioLines, Undo2, Redo2, RotateCcw } from 'lucide-react';
+import { mixHistory, initialMix } from './mixHistory';
 import { formatTime, LabWaveform } from '../audio/AudioLabParts';
 
 /**
@@ -18,11 +19,8 @@ export default function StemMixer({ lanes }) {
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [mix, setMix] = useState(() =>
-    Object.fromEntries(
-      lanes.map((lane) => [lane.id, { muted: Boolean(lane.muted), solo: false, level: 1 }])
-    )
-  );
+  const [history, dispatch] = useReducer(mixHistory, lanes, value => ({ past: [], present: initialMix(value), future: [] }));
+  const mix = history.present;
 
   useEffect(() => {
     let cancelled = false;
@@ -151,11 +149,17 @@ export default function StemMixer({ lanes }) {
   };
 
   const change = (id, patch) =>
-    setMix((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
+    dispatch({type: "edit", value: {...mix, [id]: {...mix[id], ...patch}}});
   const progress = duration ? position / duration : 0;
 
   return (
     <section className="alab-mixer" aria-label="Stem preview">
+      <div className="split-mix-history">
+        <span>Shape the mix <small>Mute, solo, or balance each part.</small></span>
+        <button type="button" className="alab-text-button" disabled={!history.past.length} onClick={()=>dispatch({type:"undo"})} aria-label="Undo mix edit"><Undo2 size={16}/></button>
+        <button type="button" className="alab-text-button" disabled={!history.future.length} onClick={()=>dispatch({type:"redo"})} aria-label="Redo mix edit"><Redo2 size={16}/></button>
+        <button type="button" className="alab-text-button" onClick={()=>dispatch({type:"edit",value:initialMix(lanes)})}><RotateCcw size={14}/>Reset mix</button>
+      </div>
       <div className="alab-transport">
         <button
           type="button"
@@ -190,9 +194,10 @@ export default function StemMixer({ lanes }) {
       <ul className="alab-lanes">
         {lanes.map((lane) => {
           const settings = mix[lane.id];
+          const Icon = { vocals: Mic, drums: Drum, bass: Guitar }[lane.id] || AudioLines;
           return (
             <li key={lane.id} className="alab-lane" style={{ '--lane-color': lane.color }}>
-              <span className="alab-lane-name">{lane.label}</span>
+              <span className="alab-lane-name"><Icon size={22} aria-hidden="true"/><span>{lane.label}<small>{lane.id === "original" ? "Compare your source" : {vocals:"Voice",drums:"Rhythm",bass:"Low end",other:"Everything else"}[lane.id]}</small></span></span>
               <div className="alab-lane-buttons">
                 <button
                   type="button"
@@ -215,7 +220,7 @@ export default function StemMixer({ lanes }) {
                   <Headphones size={15} aria-hidden="true" />
                 </button>
               </div>
-              <LabWaveform peaks={lane.peaks} color={lane.color} progress={progress} />
+              <LabWaveform peaks={lane.peaks} color={lane.color} progress={progress} height={66} />
               <input
                 type="range"
                 min="0"
