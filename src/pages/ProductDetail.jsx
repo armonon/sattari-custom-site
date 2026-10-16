@@ -151,10 +151,35 @@ function ProductDetailView({ slug }) {
       name: 'Sattari Music',
     },
     category: product.category,
+    mpn: product.mpn || product.slug,
+    // Only real identifiers and genuine customer reviews belong here; the
+    // catalog supplies them per product, and none are invented.
+    ...(product.gtin ? { gtin: product.gtin } : {}),
+    ...(product.rating?.count > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating.value,
+            reviewCount: product.rating.count,
+          },
+        }
+      : {}),
+    ...(product.reviews?.length
+      ? {
+          review: product.reviews.map((entry) => ({
+            '@type': 'Review',
+            author: { '@type': 'Person', name: entry.author },
+            datePublished: entry.date,
+            reviewRating: { '@type': 'Rating', ratingValue: entry.rating, bestRating: 5 },
+            reviewBody: entry.body,
+          })),
+        }
+      : {}),
     offers: product.sizes?.length
       ? product.sizes.map((option) => ({
           '@type': 'Offer',
           priceCurrency: 'USD',
+          itemCondition: 'https://schema.org/NewCondition',
           price: option.price,
           // Per size, so Google does not keep advertising a sold-out variant.
           availability: isVariantSoldOut(product.slug, option.size, color)
@@ -167,6 +192,7 @@ function ProductDetailView({ slug }) {
       : {
           '@type': 'Offer',
           priceCurrency: 'USD',
+          itemCondition: 'https://schema.org/NewCondition',
           price: unitPrice,
           availability,
           url: productUrl,
