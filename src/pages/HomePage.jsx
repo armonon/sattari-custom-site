@@ -166,7 +166,7 @@ export default function HomePage() {
                 All yours to play.
               </p>
               <p className="home-hero-description">
-                Learn guitar. Find your instrument. Create music.
+                Shop violins, drums &amp; guitars. Learn. Create music.
                 <br className="home-desktop-break" /> California roots. Worldwide sound.
               </p>
               <div className="home-hero-actions">

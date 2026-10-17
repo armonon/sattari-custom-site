@@ -83,9 +83,9 @@ export const websiteSchema = {
 
 export const PAGE_SEO = {
   home: {
-    title: 'Learn, Shop & Create Music',
+    title: 'Buy Violins, Drums, Cymbals & Guitars Online',
     description:
-      'Learn guitar, buy instruments, create music and download audio software with Sattari. Online music tools worldwide; repairs in Woodland Hills, Los Angeles.',
+      'Shop Sattari violins, cymbals, drumsticks and guitars, with online tools for musicians worldwide, plus repair, lessons and rentals in Woodland Hills, Los Angeles.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
     imageWidth: 1536,

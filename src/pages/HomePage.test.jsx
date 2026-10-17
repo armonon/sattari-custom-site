@@ -47,7 +47,7 @@ it('introduces a worldwide music company without advertising worldwide shipping'
   const { container } = renderHome();
   expect(screen.getByText('For musicians worldwide')).toBeInTheDocument();
   expect(container.querySelector('.home-hero-description')).toHaveTextContent(
-    'Learn guitar. Find your instrument. Create music.'
+    'Shop violins, drums & guitars. Learn. Create music.'
   );
   expect(container.textContent).not.toMatch(/worldwide shipping|global delivery/i);
   expect(screen.getByRole('link', { name: /Instrument repair/ })).toHaveAttribute(

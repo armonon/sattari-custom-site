@@ -678,4 +678,150 @@ export const musicGuides = [
       '/services/instrument-repair-los-angeles',
     ],
   },
+
+  {
+    slug: 'acoustic-vs-electric-violin',
+    title: 'Acoustic vs electric violin: which should you buy?',
+    category: 'Strings',
+    description:
+      'How acoustic and electric violins differ in sound, volume, practice options and price, and which one suits a student, a gigging player or an apartment.',
+    answer:
+      'Choose an acoustic violin if you want the natural, resonant tone used in lessons and classical playing. Choose an electric violin if you need to practice quietly with headphones, play through an amp or pedals, or perform on a loud stage. Many players eventually own both.',
+    image: '/sattari site/violins/chiara-electric.jpg',
+    imageAlt: 'Sattari Chiara wooden electric violin',
+    action: { label: 'Shop violins', path: '/shop/violins' },
+    sections: [
+      {
+        title: 'How they sound',
+        paragraphs: [
+          'An acoustic violin makes its sound through a hollow body that resonates with the strings, so the tone changes with the room, the bow and the player. It is the reference sound for classical, folk and most teaching.',
+          'An electric violin has a slim or solid body and a pickup under the bridge. The pickup turns string vibration into an electrical signal, so the sound you hear comes from headphones or an amplifier. That makes it easy to add reverb, distortion or loops, but the tone is shaped by the amp and effects rather than by the body.',
+        ],
+      },
+      {
+        title: 'Volume and where you practice',
+        paragraphs: [
+          'Acoustic violins are loud at close range and cannot be muted completely. A practice mute helps, but it changes the feel and tone. If you share walls or practice late, an electric violin with headphones is the more practical choice.',
+          'Electric violins still make a faint acoustic sound without power, but it is quiet enough to practice beside other people in most homes.',
+        ],
+      },
+      {
+        title: 'Which is better for a beginner?',
+        paragraphs: [
+          'Most teachers recommend starting on an acoustic violin because lessons, ensembles and exams assume one, and the feedback from the instrument helps develop intonation and bow control. Confirm with your teacher before buying.',
+          'An electric model is a sensible first instrument when quiet practice is the main concern, or when the goal is playing in a band rather than classical lessons.',
+        ],
+      },
+      {
+        title: 'Cost, setup and what else you need',
+        paragraphs: [
+          'Electric violins need a cable and either headphones or an amp, which adds to the total. Both types need a bow and rosin. Whichever you pick, have it set up before you start: the bridge, nut slots and string height decide how easy it is to play.',
+          'If you are unsure, visit the shop in Woodland Hills by appointment to compare an acoustic and an electric violin side by side.',
+        ],
+      },
+    ],
+    related: [
+      '/guides/choose-a-violin-for-beginners',
+      '/product/brescia-acoustic-violin',
+      '/product/chiara-wooden-electric-violin',
+      '/product/violin-pickup-bridge',
+      '/encino-violin-shop',
+    ],
+  },
+  {
+    slug: 'nylon-vs-steel-string-guitar',
+    title: 'Nylon vs steel-string guitar: which to learn on',
+    category: 'Strings',
+    description:
+      'The difference between nylon-string classical guitars and steel-string acoustics: feel, sound, neck width, music styles and which suits a beginner.',
+    answer:
+      'A nylon-string guitar has softer strings that are gentler on beginners’ fingers and a warm, mellow tone for classical, flamenco and folk. A steel-string guitar is brighter and louder and suits pop, rock, country and singer-songwriter styles. Pick the one that matches the music you want to play.',
+    image: '/sattari site/guitars/nylon-guitar.jpg',
+    imageAlt: 'Sattari classic nylon-string guitar',
+    action: { label: 'Shop guitars', path: '/shop/guitar-bass' },
+    sections: [
+      {
+        title: 'Feel under the fingers',
+        paragraphs: [
+          'Nylon strings are lower in tension and softer, so pressing them down is easier on new fingertips. Steel strings are thinner and tighter and can be sore for the first few weeks until calluses form.',
+          'Nylon-string necks are usually wider and flatter, which gives room for classical fingerstyle but can feel like a stretch for small hands or players used to chords on a narrower neck.',
+        ],
+      },
+      {
+        title: 'Sound and music styles',
+        paragraphs: [
+          'Nylon strings sound warm and rounded. They are the standard for classical and flamenco and work well for bossa nova, folk and gentle fingerpicking.',
+          'Steel strings sound bright and ring longer. They suit strummed pop, rock, country, blues and most singer-songwriter music, and they project more in a group.',
+        ],
+      },
+      {
+        title: 'Which should a beginner choose?',
+        paragraphs: [
+          'Choose by the music you want to play. If you want to strum songs from the radio, a steel-string acoustic is the direct route. If you are drawn to classical or fingerstyle, or you want the gentlest start, choose nylon.',
+          'Skills carry over between the two, so the choice is not permanent. The main adjustments are string tension and neck width.',
+        ],
+      },
+      {
+        title: 'Never mix string types',
+        paragraphs: [
+          'Do not put steel strings on a guitar built for nylon. A classical guitar is braced for low tension, and steel strings can warp the neck or lift the bridge. Always check which strings your guitar was made for.',
+          'A professional setup after purchase improves playability on either type. See our guitar setup service in Woodland Hills if the action feels high.',
+        ],
+      },
+    ],
+    related: [
+      '/guides/choose-a-beginner-acoustic-guitar',
+      '/product/classic-nylon-string-guitar',
+      '/product/steel-string-acoustic-guitar',
+      '/guides/when-does-my-guitar-need-a-setup',
+      '/services/guitar-setup-los-angeles',
+    ],
+  },
+  {
+    slug: 'how-to-change-violin-strings',
+    title: 'How to change violin strings (without breaking the bridge)',
+    category: 'Strings',
+    description:
+      'Step-by-step violin string changes: change one at a time, keep the bridge upright, lubricate the nut slots, and when to bring the violin to a luthier.',
+    answer:
+      'Change one string at a time so the bridge and soundpost stay in place. Loosen the old string, fit the new one through the tailpiece and peg, wind it neatly, tune up slowly, and check that the bridge stays upright. Strings need replacing when they sound dull, false or look frayed.',
+    image: '/sattari site/violins/violin-strings.jpg',
+    imageAlt: 'Set of Sattari violin strings',
+    action: { label: 'Shop violin strings', path: '/product/violin-strings' },
+    sections: [
+      {
+        title: 'Know when to change strings',
+        paragraphs: [
+          'Replace strings when they sound dull, will not stay in tune, or sound slightly false even when tuned correctly. Visible fraying or an unwinding outer layer means a string should go immediately. Regular players commonly change a set every few months.',
+        ],
+      },
+      {
+        title: 'Change one string at a time',
+        paragraphs: [
+          'Never remove all the strings at once. The bridge is held in place only by string tension, and the soundpost inside the body can fall if tension is released completely. Work on one string, tune it, then move to the next.',
+          'Loosen the old string at the peg, unhook it from the tailpiece, and fit the new one. Thread it through the peg hole, wind towards the pegbox wall so the coils sit neatly without overlapping, and bring it up to pitch gradually.',
+        ],
+      },
+      {
+        title: 'Protect the bridge and nut',
+        paragraphs: [
+          'As you tighten, the bridge tends to lean toward the fingerboard. Check from the side and, if needed, gently ease it back until it stands upright. A leaning bridge can warp or crack.',
+          'A little pencil graphite in the bridge and nut grooves helps the string slide instead of catching. Use pegs lightly: push inward while turning so they grip without being forced.',
+        ],
+      },
+      {
+        title: 'When to bring it to a luthier',
+        paragraphs: [
+          'If a peg slips or sticks, the bridge keeps tilting, or the soundpost has fallen (a rattle from inside the body), stop and have it looked at. These are quick repairs for a workshop but easy to worsen at home. Our Woodland Hills shop handles violin repair and setup by appointment.',
+        ],
+      },
+    ],
+    related: [
+      '/guides/beginner-violin-care',
+      '/product/violin-strings',
+      '/product/sattari-rosin',
+      '/services/violin-repair-los-angeles',
+      '/encino-violin-shop',
+    ],
+  },
 ];
