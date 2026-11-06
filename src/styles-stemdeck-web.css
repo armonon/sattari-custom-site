@@ -609,6 +609,49 @@
   width: 100%;
   min-width: 0;
 }
+.sd-source-mode {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.sd-source-mode button.is-active {
+  border-color: var(--sd-accent);
+  background: color-mix(in srgb, var(--sd-accent) 18%, var(--sd-raised));
+  color: var(--sd-text);
+}
+.sd-source-tools .sd-separate-action {
+  grid-column: span 2;
+  border-color: rgb(85 229 208 / 42%);
+  color: var(--sd-mint, #55e5d0);
+}
+.sd-separation-status {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(70px, 0.7fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 7px;
+  border: 1px solid rgb(85 229 208 / 25%);
+  border-radius: 6px;
+  background: rgb(85 229 208 / 7%);
+  color: var(--sd-muted);
+  font-size: 7px;
+}
+.sd-separation-status span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sd-separation-status progress {
+  width: 100%;
+  accent-color: var(--sd-mint, #55e5d0);
+}
+.sd-separation-status.is-error {
+  border-color: rgb(255 90 96 / 38%);
+  color: #ff9296;
+}
 
 .sd-deck-status {
   align-items: center;

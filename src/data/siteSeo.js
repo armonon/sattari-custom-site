@@ -118,7 +118,7 @@ export const PAGE_SEO = {
   hub: {
     title: 'Online Music Tools | Learn, Create & Separate',
     description:
-      'Learn guitar, create music in StemDeck, separate vocals and instruments, or explore Mac audio plugins. Sattari Hub connects your next practice and production session.',
+      'Learn guitar, create in Sattari Songboard, separate vocals and instruments, or explore Mac audio plugins. Sattari Hub connects your next music session.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,
@@ -134,9 +134,9 @@ export const PAGE_SEO = {
     imageHeight: 1131,
   },
   studio: {
-    title: 'Online Music Studio & Browser DAW | StemDeck',
+    title: 'Sattari Songboard | Online Music Studio & Browser DAW',
     description:
-      'Create and remix with StemDeck in Sattari Studio. A browser DAW with deck mixing, audio recording, MIDI instruments, an arranger and WAV export.',
+      'Create and remix with Sattari Songboard in your browser: four decks, instant-access stem controls, recording, MIDI instruments, arrangement and WAV export.',
     url: `${SITE_ORIGIN}/studio`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,

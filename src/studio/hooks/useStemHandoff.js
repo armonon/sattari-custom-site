@@ -24,7 +24,7 @@ export function useStemHandoff({ ready, decks, deckOps, actions, setActiveView, 
     const deck = current.find(deckIsFree);
     if (!deck) {
       notify(
-        'All four decks are in use, so the Split stems were not loaded. Clear a deck and use Open in StemDeck again, or import the downloaded WAVs.'
+        'All four decks are in use, so the Split stems were not loaded. Clear a deck and use Open in Songboard again, or import the downloaded WAVs.'
       );
       return;
     }
@@ -36,10 +36,10 @@ export function useStemHandoff({ ready, decks, deckOps, actions, setActiveView, 
       for (const { laneId, file } of handoff.stems) {
         if (await ops.loadLane(deck.id, laneId, file)) loaded += 1;
       }
-      if (loaded) ops.changeLane(deck.id, 'fullMix', { level: 0 });
+      if (loaded) ops.changeSourceMode(deck.id, 'stems');
       notify(
         loaded === handoff.stems.length
-          ? `${handoff.title}: ${loaded} Split stems are ready in Deck ${deck.id}. The full mix is turned down; raise MIX to hear it.`
+          ? `${handoff.title}: ${loaded} Split stems are ready in Deck ${deck.id}. Switch between Original and Stems at any time.`
           : `${handoff.title}: ${loaded} of ${handoff.stems.length} stems loaded into Deck ${deck.id}. Import the missing WAVs from your downloads.`
       );
     })();

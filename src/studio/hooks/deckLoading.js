@@ -162,8 +162,13 @@ export function createDeckLoading({
     if (!audioFiles.length) return;
     setNotice(`Importing ${Math.min(audioFiles.length, 4)} separated stems into Deck ${deckId}...`);
     let imported = 0;
+    const importedLaneIds = [];
     for (const [index, file] of audioFiles.slice(0, 4).entries()) {
-      if (await loadLane(deckId, stemIdForFile(file, index), file)) imported += 1;
+      const laneId = stemIdForFile(file, index);
+      if (await loadLane(deckId, laneId, file)) {
+        imported += 1;
+        importedLaneIds.push(laneId);
+      }
     }
     if (imported === Math.min(audioFiles.length, 4)) {
       setNotice(`Stem set ready in Deck ${deckId}. Browser mode imported your separated files.`);
@@ -172,6 +177,7 @@ export function createDeckLoading({
         `Imported ${imported} of ${Math.min(audioFiles.length, 4)} stems into Deck ${deckId}. Some files failed; retry the missing stems.`
       );
     }
+    return { count: imported, laneIds: importedLaneIds };
   };
 
   const importDeckSet = async (files) => {

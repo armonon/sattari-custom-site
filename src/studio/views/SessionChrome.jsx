@@ -14,7 +14,7 @@ import { PanelLayoutActions } from '../../components/studio/StudioPanel';
 import ToolReferenceLink from '../../components/ToolReferenceLink';
 import { InstallAppButton } from '../../pwa/StudioPwaUi';
 
-export const READY_NOTICE = 'STEMDECK browser engine ready.';
+export const READY_NOTICE = 'Sattari Songboard browser engine ready.';
 
 const VIEW_TITLES = {
   decks: 'Perform',
@@ -170,7 +170,7 @@ export function SettingsPopover({
       <button type="button" onClick={onReset}>
         Reset session
       </button>
-      <InstallAppButton>Install StemDeck</InstallAppButton>
+      <InstallAppButton>Install Songboard</InstallAppButton>
       <a href="/studio-install.html" target="_blank" rel="noopener noreferrer">
         Install on iPhone, iPad or Mac
       </a>

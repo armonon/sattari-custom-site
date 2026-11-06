@@ -69,16 +69,16 @@ export const toolDetails = {
     path: '/studio',
     status: 'Alpha',
     description:
-      'Evaluate the StemDeck browser workspace: four decks, arrangements, instruments and recording. See real screenshots, supported audio, storage and limitations.',
+      'Evaluate the Sattari Songboard browser workspace: four decks, integrated stem separation, arrangements, instruments and recording.',
     summary:
-      'A browser-based StemDeck workspace for four-deck mixing, audio and instrument arrangements, live input, and exports.',
+      'A browser-based Sattari Songboard workspace for four-deck mixing, four-stem separation, audio and instrument arrangements, live input, and exports.',
     screenshot: '/images/tools/studio.jpg',
     screenshotCaption:
       'Actual Sattari Studio browser workspace with the original demo loaded. No desktop-app mockup.',
     facts: [
       [
         'Input',
-        'Local audio files supported by your browser decoder. PCM WAV is the simplest interchange option. Import stem files into lanes; use the separate Stem Separator for AI extraction.',
+        'Local audio files supported by your browser decoder. PCM WAV is the simplest interchange option. Separate vocals, drums, bass and music directly inside a deck, or import prepared stems.',
       ],
       [
         'Output',
@@ -102,7 +102,7 @@ export const toolDetails = {
       ],
       [
         'Limitations',
-        'This is a browser port, not a guarantee of native StemDeck feature parity. It does not host arbitrary VST/AU plugins or provide cloud collaboration. Long sessions depend on memory, available storage and device performance.',
+        'This is the Songboard web port, not a guarantee of native-app feature parity. It does not host arbitrary VST/AU plugins or provide cloud collaboration. Long sessions and stem separation depend on memory, available storage and device performance.',
       ],
       [
         'Musical estimates',

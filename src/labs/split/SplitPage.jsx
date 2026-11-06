@@ -153,8 +153,8 @@ export default function SplitPage() {
       tool="split"
       title="Split"
       eyebrow="Sattari Studio lab"
-      summary="Drop a song and split it into vocals, drums, bass and instruments with the HTDemucs model running in your browser. Mute the vocals, solo the bass, download WAV stems or open them straight in StemDeck."
-      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in StemDeck."
+      summary="Drop a song and split it into vocals, drums, bass and instruments with the HTDemucs model running in your browser. Mute the vocals, solo the bass, download WAV stems or open them straight in Songboard."
+      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in Songboard."
       limits={LIMITS}
     >
       <div className="alab-workspace">
@@ -276,7 +276,7 @@ export default function SplitPage() {
                     className="alab-button alab-primary"
                     onClick={openInStemDeck}
                   >
-                    <SlidersHorizontal size={16} aria-hidden="true" /> Open in StemDeck
+                    <SlidersHorizontal size={16} aria-hidden="true" /> Open in Songboard
                   </button>
                   <button
                     type="button"
@@ -320,7 +320,7 @@ export default function SplitPage() {
                   </p>
                 )}
                 <p className="alab-note">
-                  Open in StemDeck loads the original and the four stems into the first empty deck,
+                  Open in Songboard loads the original and the four stems into the first empty deck,
                   with the full mix turned down. WAVs are 32-bit float, 44.1 kHz. Export for Ableton
                   adds a Live Set (Live 12) with each stem on its own track at bar 1, warped at the
                   detected tempo{analysis?.bpm ? ` (${analysis.bpm} BPM)` : ''}.

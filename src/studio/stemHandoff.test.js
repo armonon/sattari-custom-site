@@ -37,7 +37,7 @@ describe('Split → StemDeck handoff', () => {
         { id: 'other', file: file('o.wav') },
       ],
     });
-    const deckOps = { loadLane: vi.fn().mockResolvedValue(true), changeLane: vi.fn() };
+    const deckOps = { loadLane: vi.fn().mockResolvedValue(true), changeSourceMode: vi.fn() };
     const actions = { setFocusedDeckId: vi.fn() };
     const setNotice = vi.fn();
     const setActiveView = vi.fn();
@@ -52,14 +52,14 @@ describe('Split → StemDeck handoff', () => {
     const { rerender } = renderHook((current) => useStemHandoff(current), { initialProps: props });
     expect(deckOps.loadLane).not.toHaveBeenCalled();
     rerender({ ...props, ready: true });
-    await waitFor(() => expect(deckOps.changeLane).toHaveBeenCalled());
+    await waitFor(() => expect(deckOps.changeSourceMode).toHaveBeenCalled());
     expect(deckOps.loadLane.mock.calls.map(([deck, lane]) => `${deck}:${lane}`)).toEqual([
       'B:fullMix',
       'B:vocals',
       'B:music',
     ]);
     expect(deckOps.loadLane.mock.calls[0][2]).toBe(mix);
-    expect(deckOps.changeLane).toHaveBeenCalledWith('B', 'fullMix', { level: 0 });
+    expect(deckOps.changeSourceMode).toHaveBeenCalledWith('B', 'stems');
     expect(actions.setFocusedDeckId).toHaveBeenCalledWith('B');
     expect(setActiveView).toHaveBeenCalledWith('decks');
     expect(setNotice).toHaveBeenLastCalledWith(
