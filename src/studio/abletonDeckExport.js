@@ -36,10 +36,10 @@ export async function exportDeckForAbleton(deck) {
   }
   const detected = Number(deck.analysis?.bpm);
   return exportForAbleton({
-    title: deck.title && deck.title !== 'Empty deck' ? deck.title : `StemDeck Deck ${deck.id}`,
+    title: deck.title && deck.title !== 'Empty deck' ? deck.title : `Songboard Deck ${deck.id}`,
     bpm: deck.bpm,
     source: {
-      app: 'StemDeck',
+      app: 'Sattari Songboard',
       // Detected unless someone typed a tempo into the deck.
       tempoIsEstimate: Number.isFinite(detected) && Math.abs(detected - deck.bpm) < 0.01,
     },

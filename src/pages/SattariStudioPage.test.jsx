@@ -227,7 +227,7 @@ import { HEADPHONES_KEY } from '../studio/mixer/useHeadphones';
 const scoped = (role, name) => within(screen.getByRole(role, { name }));
 const sessionActions = () => scoped('group', 'Session actions');
 const globalTransport = () => scoped('group', 'Global transport');
-const workspaces = () => scoped('navigation', 'STEMDECK workspaces');
+const workspaces = () => scoped('navigation', 'Sattari Songboard workspaces');
 const arrangeActions = () => scoped('group', 'Arrangement actions');
 const editTools = () => scoped('group', 'Editing and export tools');
 const deckCard = (id) => scoped('article', `Deck ${id}`);
@@ -264,8 +264,8 @@ describe('SattariStudioPage', () => {
         </MemoryRouter>
       </HelmetProvider>
     );
-    const navigation = screen.getByRole('navigation', { name: 'STEMDECK workspaces' });
-    const brand = screen.getByRole('heading', { name: 'STEMDECK', level: 1 });
+    const navigation = screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' });
+    const brand = screen.getByRole('heading', { name: 'SATTARI SONGBOARD', level: 1 });
     expect(screen.getByRole('link', { name: 'Back to Sattari Hub' })).toHaveAttribute(
       'href',
       '/hub'
@@ -773,7 +773,9 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
 
-    expect(screen.getByRole('heading', { name: 'STEMDECK', level: 1 })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'SATTARI SONGBOARD', level: 1 })
+    ).toBeInTheDocument();
     expect(screen.queryAllByRole('article')).toHaveLength(0);
     expect(screen.getByRole('button', { name: /Add source/i })).toBeInTheDocument();
     expect(screen.getByText('Your next set starts here.')).toBeInTheDocument();
@@ -926,7 +928,9 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
     await screen.findByText('Local session');
-    const navigation = within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' }));
+    const navigation = within(
+      screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' })
+    );
     fireEvent.click(navigation.getByRole('button', { name: 'Library', exact: true }));
     expect(screen.queryByRole('region', { name: 'Master output status' })).not.toBeInTheDocument();
     const summary = screen.getByText('Current session audio & recordings');
@@ -1105,14 +1109,14 @@ describe('SattariStudioPage', () => {
     };
     const view = (name) =>
       fireEvent.click(
-        within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' })).getByRole(
+        within(screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' })).getByRole(
           'button',
           { name, exact: true }
         )
       );
     const openMixer = () =>
       fireEvent.click(
-        within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' })).getByRole(
+        within(screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' })).getByRole(
           'button',
           { name: 'Mixer', exact: true }
         )
@@ -1475,7 +1479,7 @@ describe('SattariStudioPage', () => {
 
     describe('mixer dock', () => {
       const toggle = () =>
-        within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' })).getByRole(
+        within(screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' })).getByRole(
           'button',
           { name: 'Mixer', exact: true }
         );
@@ -1637,10 +1641,9 @@ describe('SattariStudioPage', () => {
         );
         expect(editorCalls('openDevices')).toEqual([['openDevices', trackId]]);
         expect(
-          within(screen.getByRole('navigation', { name: 'STEMDECK workspaces' })).getByRole(
-            'button',
-            { name: 'Arrange', exact: true }
-          )
+          within(
+            screen.getByRole('navigation', { name: 'Sattari Songboard workspaces' })
+          ).getByRole('button', { name: 'Arrange', exact: true })
         ).toHaveAttribute('aria-current', 'page');
       });
     });

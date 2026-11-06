@@ -12,7 +12,7 @@ export const LAB_SEO = {
   pocket: {
     title: 'Pocket: Online Beat Maker & Loop Sketchpad',
     description:
-      'Sketch a beat on your phone: step sequencer, synthesized drums, bass line, swing. Export the loop as WAV or stems and open them in StemDeck.',
+      'Sketch a beat on your phone: step sequencer, synthesized drums, bass line, swing. Export the loop as WAV or stems and open them in Songboard.',
     url: `${SITE_ORIGIN}/studio/pocket`,
   },
   press: {

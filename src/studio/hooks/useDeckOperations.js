@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { migrateArrangement } from '../../utils/arrangementModel';
 import { SEND_BUSES } from '../mixer/mixerModel';
 import {
@@ -10,6 +10,7 @@ import {
 import { createDeckLoading } from './deckLoading';
 import { downloadBlob } from '../downloads';
 import { useLatest } from './useLatest';
+import { separateDeckAsset } from './deckSeparation';
 
 /**
  * Deck loading, transport, cue, loop and sync operations. Every operation is
@@ -37,6 +38,8 @@ export function useDeckOperations({
     arrangerPlaying: arranger.arrangerPlaying,
   });
   const transportPending = useRef(false);
+  const separationJob = useRef(null);
+  const [separationByDeck, setSeparationByDeck] = useState({});
 
   const operations = useMemo(() => {
     const { updateDeck, setDecks, setMasterBpm, setMasterDeckId, setCrossfader } = actions;
@@ -139,6 +142,92 @@ export function useDeckOperations({
       updateDeck(deckId, (deck) => ({
         lanes: { ...deck.lanes, [laneId]: { ...deck.lanes[laneId], ...updates } },
       }));
+    };
+
+    const changeSourceMode = (deckId, sourceMode, newlyReadyStemIds = []) => {
+      const deck = current().decks.find((item) => item.id === deckId);
+      if (!deck) return;
+      const stemIds = ['drums', 'bass', 'music', 'vocals'];
+      const readyStems = stemIds.filter(
+        (id) => deck.lanes[id].status === 'ready' || newlyReadyStemIds.includes(id)
+      );
+      if (sourceMode === 'stems' && !readyStems.length) {
+        setNotice(`Separate or import stems for Deck ${deckId} first.`);
+        return;
+      }
+
+      if (sourceMode === 'original') {
+        const stemMuteMemory = Object.fromEntries(
+          stemIds.map((id) => [id, !!deck.lanes[id].muted])
+        );
+        updateDeck(deckId, { sourceMode, stemMuteMemory });
+        changeLane(deckId, 'fullMix', { muted: false });
+        readyStems.forEach((id) => changeLane(deckId, id, { muted: true }));
+      } else {
+        updateDeck(deckId, { sourceMode });
+        changeLane(deckId, 'fullMix', { muted: true });
+        readyStems.forEach((id) => changeLane(deckId, id, { muted: !!deck.stemMuteMemory?.[id] }));
+      }
+      setNotice(`Deck ${deckId}: ${sourceMode === 'original' ? 'Original' : 'Stems'} mode.`);
+    };
+
+    const loadStemSet = async (deckId, files) => {
+      const result = await loading.loadStemSet(deckId, files);
+      if (result?.count) changeSourceMode(deckId, 'stems', result.laneIds);
+      return result?.count || 0;
+    };
+
+    const separateDeck = async (deckId) => {
+      if (separationJob.current) {
+        setNotice(
+          separationJob.current.deckId === deckId
+            ? `Deck ${deckId} separation is already running.`
+            : `Finish or cancel Deck ${separationJob.current.deckId} separation first.`
+        );
+        return;
+      }
+      const deck = current().decks.find((item) => item.id === deckId);
+      const controller = new AbortController();
+      separationJob.current = { deckId, controller };
+      const publish = (state) =>
+        setSeparationByDeck((currentState) => ({ ...currentState, [deckId]: state }));
+      publish({ status: 'processing', message: 'Preparing separation', progress: null });
+      setNotice(`Deck ${deckId}: preparing four-stem separation…`);
+      try {
+        const files = await separateDeckAsset({
+          deck,
+          signal: controller.signal,
+          onProgress: ({ message, progress }) => {
+            publish({ status: 'processing', message, progress });
+            setNotice(
+              `Deck ${deckId}: ${message}${progress == null ? '' : ` · ${Math.round(progress * 100)}%`}`
+            );
+          },
+        });
+        controller.signal.throwIfAborted();
+        const imported = await loadStemSet(deckId, files);
+        if (imported !== 4) throw new Error(`Only ${imported || 0} of 4 stems loaded.`);
+        publish({ status: 'ready', message: 'Four stems ready', progress: 1 });
+        setNotice(`Deck ${deckId}: vocals, drums, bass and music are ready.`);
+      } catch (error) {
+        const cancelled = controller.signal.aborted || error?.name === 'AbortError';
+        publish({
+          status: cancelled ? 'cancelled' : 'error',
+          message: cancelled ? 'Separation cancelled' : error.message,
+          progress: null,
+        });
+        setNotice(
+          cancelled
+            ? `Deck ${deckId}: separation cancelled. The original is unchanged.`
+            : `Deck ${deckId}: ${error.message}`
+        );
+      } finally {
+        if (separationJob.current?.controller === controller) separationJob.current = null;
+      }
+    };
+
+    const cancelSeparation = (deckId) => {
+      if (separationJob.current?.deckId === deckId) separationJob.current.controller.abort();
     };
 
     const changeStemFx = (deckId, stemId, updates) => {
@@ -429,8 +518,12 @@ export function useDeckOperations({
 
     return {
       ...loading,
+      loadStemSet,
       changeDeck,
       changeLane,
+      changeSourceMode,
+      separateDeck,
+      cancelSeparation,
       changeStemFx,
       toggleDeck,
       cueDeck,
@@ -471,6 +564,10 @@ export function useDeckOperations({
           {
             onLoadLane: (laneId, file) => operations.loadLane(id, laneId, file),
             onLoadStemSet: (files) => operations.loadStemSet(id, files),
+            onSourceMode: (mode) => operations.changeSourceMode(id, mode),
+            onSeparate: () => operations.separateDeck(id),
+            onCancelSeparation: () => operations.cancelSeparation(id),
+            separation: separationByDeck[id] || null,
             onDeckChange: (updates) => operations.changeDeck(id, updates),
             onLaneChange: (laneId, updates) => operations.changeLane(id, laneId, updates),
             onTogglePlay: () => operations.toggleDeck(id),
@@ -488,7 +585,7 @@ export function useDeckOperations({
           },
         ])
       ),
-    [operations]
+    [operations, separationByDeck]
   );
 
   // Push deck mix, sync and tempo-follow state to the engine. The view is a
@@ -520,6 +617,13 @@ export function useDeckOperations({
 
   // AutoMix must not keep moving the crossfader after the page unmounts.
   useEffect(() => () => window.clearInterval(activity.automix), [activity]);
+
+  useEffect(
+    () => () => {
+      separationJob.current?.controller.abort();
+    },
+    []
+  );
 
   return { ...operations, deckHandlers };
 }

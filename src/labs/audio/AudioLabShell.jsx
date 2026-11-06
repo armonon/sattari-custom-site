@@ -32,7 +32,7 @@ export default function AudioLabShell({
             </Link>
             <span className="alab-breadcrumb-end">
               <Link to="/studio">
-                <SlidersHorizontal size={14} aria-hidden="true" /> Open StemDeck
+                <SlidersHorizontal size={14} aria-hidden="true" /> Open Songboard
               </Link>
               <InstallAppButton className="alab-install">Install Sattari app</InstallAppButton>
               <SuiteMenu />

@@ -66,7 +66,7 @@ export default function CommandBar({
 
   return (
     <header className="sd-command-bar" ref={barRef}>
-      <nav className="sd-view-nav" aria-label="STEMDECK workspaces">
+      <nav className="sd-view-nav" aria-label="Sattari Songboard workspaces">
         {VIEWS.map(([value, label, Icon]) => (
           <button
             type="button"
@@ -163,7 +163,7 @@ export default function CommandBar({
         >
           <ArrowLeft size={18} aria-hidden="true" />
         </a>
-        <h1 className="sd-product-brand">STEMDECK</h1>
+        <h1 className="sd-product-brand">SATTARI SONGBOARD</h1>
         <small>
           <i className={restored ? 'is-ready' : ''} />
           {restored ? 'Local session' : 'Restoring…'}

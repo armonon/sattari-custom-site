@@ -1630,7 +1630,7 @@ export class ArrangementEngine {
       }
       if (zip) {
         const readme = new TextEncoder().encode(
-          'StemDeck: aligned 48 kHz / 24-bit PCM stereo track stems. Post track gain, pan, fades and clip automation; PRE master processing. No per-track normalization or AI separation. ZIP64 supports large archives; WAV files larger than 4 GiB use RF64. Keep the export cache until your download has completed.'
+          'Sattari Songboard: aligned 48 kHz / 24-bit PCM stereo track stems. Post track gain, pan, fades and clip automation; PRE master processing. No per-track normalization or AI separation. ZIP64 supports large archives; WAV files larger than 4 GiB use RF64. Keep the export cache until your download has completed.'
         );
         await zip.begin('README.txt', readme.length);
         await zip.data(readme);

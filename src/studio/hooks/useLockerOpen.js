@@ -27,7 +27,7 @@ export function useStemDeckLockerOpen({
     if (isAudio(entry)) setPending(entryFile(entry));
     else
       latest.current.setNotice(
-        `${entry.name} is not audio, so StemDeck cannot open it. Send a WAV, MP3, M4A or FLAC.`
+        `${entry.name} is not audio, so Songboard cannot open it. Send a WAV, MP3, M4A or FLAC.`
       );
   });
 

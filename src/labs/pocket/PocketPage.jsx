@@ -46,7 +46,7 @@ const LIMITATIONS = [
   'One 16-step bar per pattern, one bass voice and six drum sounds. No song mode or chaining yet.',
   'Sounds are simple Web Audio synthesis, not sampled kits; they are meant for sketching, not final mixes.',
   'Patterns are saved in this browser only (localStorage). Clearing site data deletes them.',
-  'Send to StemDeck adds the WAVs to the StemDeck Library in this browser. Drag them onto decks or the arranger from there; it does not build a StemDeck project for you.',
+  'Send to Songboard adds the WAVs to the Songboard Library in this browser. Drag them onto decks or the arranger from there; it does not build a Songboard project for you.',
   'Phones may need the silent switch off to hear Web Audio, and timing can drift if the tab goes to the background.',
 ];
 
@@ -297,10 +297,10 @@ export default function PocketPage() {
       }
       setSent(true);
       setStatus({
-        text: `Added ${result.stems.length + 1} files to the StemDeck Library under “${folder}”.`,
+        text: `Added ${result.stems.length + 1} files to the Songboard Library under “${folder}”.`,
       });
     } catch (error) {
-      setStatus({ text: `Could not add to StemDeck: ${error.message}`, error: true });
+      setStatus({ text: `Could not add to Songboard: ${error.message}`, error: true });
     }
   };
 
@@ -654,12 +654,12 @@ export default function PocketPage() {
               disabled={Boolean(busy)}
               onClick={sendToStemDeck}
             >
-              <Send size={16} aria-hidden="true" /> Send to StemDeck
+              <Send size={16} aria-hidden="true" /> Send to Songboard
             </button>
           </div>
           {sent && (
             <Link to="/studio" className="lab-button">
-              Open StemDeck Library <ArrowUpRight size={16} aria-hidden="true" />
+              Open Songboard Library <ArrowUpRight size={16} aria-hidden="true" />
             </Link>
           )}
           <p className={`lab-status${status.error ? ' is-error' : ''}`} role="status">

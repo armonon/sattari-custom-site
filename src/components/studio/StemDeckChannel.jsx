@@ -467,14 +467,58 @@ function SourceTools({
   deck,
   onRequestLane,
   onRequestStemSet,
+  onSourceMode,
+  onSeparate,
+  onCancelSeparation,
+  separation,
   onExtractMidi,
   onExtractDrums,
   onExportAbleton,
   onLaneChange,
 }) {
   const hasAudio = Object.values(deck.lanes).some((lane) => lane.status === 'ready');
+  const hasOriginal = deck.lanes.fullMix.status === 'ready';
+  const hasStems = STEM_IDS.some((id) => deck.lanes[id].status === 'ready');
+  const separating = separation?.status === 'processing';
   return (
     <div className="sd-tool-content sd-source-tools">
+      <div className="sd-source-mode" role="group" aria-label={`Deck ${deck.id} source mode`}>
+        <button
+          type="button"
+          className={deck.sourceMode === 'original' ? 'is-active' : ''}
+          aria-pressed={deck.sourceMode === 'original'}
+          disabled={!hasOriginal}
+          onClick={() => onSourceMode('original')}
+        >
+          Original
+        </button>
+        <button
+          type="button"
+          className={deck.sourceMode === 'stems' ? 'is-active' : ''}
+          aria-pressed={deck.sourceMode === 'stems'}
+          disabled={!hasStems}
+          onClick={() => onSourceMode('stems')}
+        >
+          Stems
+        </button>
+      </div>
+      <button
+        type="button"
+        className="sd-separate-action"
+        disabled={!hasOriginal && !separating}
+        onClick={separating ? onCancelSeparation : onSeparate}
+        title="Run four-stem HTDemucs separation locally in this browser"
+      >
+        {separating ? 'Cancel split' : hasStems ? 'Separate again' : 'Separate 4 stems'}
+      </button>
+      {separation ? (
+        <div className={`sd-separation-status is-${separation.status}`} role="status">
+          <span>{separation.message}</span>
+          {separation.progress != null ? (
+            <progress max="1" value={separation.progress} aria-label="Stem separation progress" />
+          ) : null}
+        </div>
+      ) : null}
       <button type="button" onClick={() => onRequestLane('fullMix')}>
         <Upload size={12} /> Load
       </button>
@@ -557,6 +601,10 @@ export const StemDeckChannel = memo(function StemDeckChannel({
   deck,
   onLoadLane,
   onLoadStemSet,
+  onSourceMode,
+  onSeparate,
+  onCancelSeparation,
+  separation,
   onDeckChange,
   onLaneChange,
   onTogglePlay,
@@ -776,6 +824,10 @@ export const StemDeckChannel = memo(function StemDeckChannel({
         onLaneChange={onLaneChange}
         onRequestLane={requestLane}
         onRequestStemSet={() => inputsRef.current.stemSet?.click()}
+        onSourceMode={onSourceMode}
+        onSeparate={onSeparate}
+        onCancelSeparation={onCancelSeparation}
+        separation={separation}
         onExtractMidi={onExtractMidi}
         onExtractDrums={onExtractDrums}
         onExportAbleton={onExportAbleton}

@@ -25,7 +25,7 @@ export default function LabShell({ lab, name, tagline, limitations, className = 
             </Link>
             <span className="lab-breadcrumb-end">
               <Link to="/studio">
-                Open StemDeck <ArrowUpRight size={15} aria-hidden="true" />
+                Open Songboard <ArrowUpRight size={15} aria-hidden="true" />
               </Link>
               {lab !== 'press' && (
                 <InstallAppButton className="lab-install">Install Sattari app</InstallAppButton>

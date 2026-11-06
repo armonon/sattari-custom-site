@@ -113,6 +113,8 @@ function createDeck(seed) {
     tempoInterpretation: 'Straight',
     syncMode: 'BPM',
     activeToolTab: 'CUES',
+    sourceMode: 'original',
+    stemMuteMemory: Object.fromEntries(STEM_IDS.map((stemId) => [stemId, false])),
     hotCues: Array(8).fill(null),
     introEnd: null,
     outroStart: null,
@@ -191,6 +193,7 @@ function normalizeArrangement(saved, duration = 0) {
 export function normalizeDeck(saved, index) {
   const base = createDeck(DECK_SEEDS[index]);
   if (!saved) return base;
+  const hasSavedStems = STEM_IDS.some((stemId) => saved.lanes?.[stemId]?.assetId);
   return {
     ...base,
     ...saved,
@@ -205,6 +208,15 @@ export function normalizeDeck(saved, index) {
           ? 'STEMS'
           : saved.activeToolTab || base.activeToolTab,
     sourceKeyName: saved.sourceKeyName || saved.keyName || base.sourceKeyName,
+    sourceMode:
+      saved.sourceMode === 'original' || saved.sourceMode === 'stems'
+        ? saved.sourceMode
+        : hasSavedStems
+          ? 'stems'
+          : 'original',
+    stemMuteMemory: Object.fromEntries(
+      STEM_IDS.map((stemId) => [stemId, !!saved.stemMuteMemory?.[stemId]])
+    ),
     eq: { ...base.eq, ...saved.eq },
     fx: { ...base.fx, ...saved.fx },
     sends: normalizeSends(saved.sends),

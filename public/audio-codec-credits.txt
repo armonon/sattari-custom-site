@@ -1,4 +1,4 @@
-StemDeck compressed-audio windowing uses Mediabunny 1.59.1.
+Sattari Songboard compressed-audio windowing uses Mediabunny 1.59.1.
 Project and source: https://github.com/Vanilagy/mediabunny
 License: Mozilla Public License 2.0 (MPL-2.0).
 Mediabunny source files are used unmodified; the release's npm package provides
