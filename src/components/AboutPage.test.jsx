@@ -33,7 +33,7 @@ it.each(['/about'])('preserves the original content at %s with About metadata', 
       'https://sattarimusic.com/about'
     )
   );
-  expect(document.title).toBe('Our Story | Instruments, Music & Software | Sattari Music');
+  expect(document.title).toBe('Our Story | Instruments, Repairs & Music Tools | Sattari Music');
   expect(
     screen.getByText(/Sattari is a music company for musicians worldwide/)
   ).toBeInTheDocument();

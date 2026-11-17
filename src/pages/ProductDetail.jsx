@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   formatPrice,
@@ -13,8 +13,11 @@ import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data/siteSeo';
 import NotFoundPage from '../components/NotFoundPage';
 import QuantityInput from '../components/QuantityInput';
+import ProductBuyingHelp from '../components/ProductBuyingHelp';
+import { relatedCatalogProducts } from '../data/catalogMerchandising';
 import { MAX_LINE_QUANTITY } from '../utils/cartCatalog';
 import { FLAT_SHIPPING_CENTS } from '../data/shipping';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 import '../styles-products-premium.css';
 
 const buyingGuides = {
@@ -49,18 +52,16 @@ function ProductDetailView({ slug }) {
   const [limitMessage, setLimitMessage] = useState('');
   const [retrying, setRetrying] = useState(false);
   const { addToCart, cartItems } = useCart();
+  const measuredProduct = useRef(false);
 
-  // Related items: same category first, then fill from the rest of the catalog.
-  const related = useMemo(() => {
-    if (!product) return [];
-    const sameCategory = products.filter(
-      (p) => p.category === product.category && p.slug !== product.slug
-    );
-    const others = products.filter(
-      (p) => p.category !== product.category && p.slug !== product.slug
-    );
-    return [...sameCategory, ...others].slice(0, 4);
-  }, [product, products]);
+  useEffect(() => {
+    if (product && status === 'ready' && !measuredProduct.current) {
+      measuredProduct.current = true;
+      trackSiteEvent('product_view');
+    }
+  }, [product, status]);
+
+  const related = useMemo(() => relatedCatalogProducts(product, products), [product, products]);
 
   if (!product) {
     // A product an employee added lives in the catalog layer, which arrives a
@@ -193,6 +194,7 @@ function ProductDetailView({ slug }) {
       return;
     }
     addToCart({ slug: product.slug, size, color, quantity: adding });
+    trackSiteEvent('cart_add');
     setLimitMessage(adding < quantity ? `Added ${adding}. ${limit}` : '');
     setAddedMessage('Added to cart.');
     window.setTimeout(() => setAddedMessage(''), 2200);
@@ -422,11 +424,12 @@ function ProductDetailView({ slug }) {
           )}
         </div>
       </div>
+      <ProductBuyingHelp product={product} />
       {related.length > 0 ? (
         <div className="container related-products">
           <div className="related-products-header">
             <p className="card-kicker">More from Sattari</p>
-            <h2>You might also like</h2>
+            <h2>Explore related gear</h2>
           </div>
           <div className="product-grid related-grid">
             {related.map((item) => {

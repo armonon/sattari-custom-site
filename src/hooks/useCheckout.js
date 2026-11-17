@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { trackSiteEvent } from '../utils/siteMeasurement';
 import { useCart } from '../context/CartContext';
 import {
   COLOR_REQUIRED,
@@ -154,6 +155,7 @@ export function useCheckout() {
       if (typeof session.id === 'string') rememberSession(session.id);
       // Stays in flight while the browser leaves for Stripe: re-enabling the
       // button here is exactly what allowed a second session.
+      trackSiteEvent('checkout_started');
       redirectToCheckoutUrl(session.url);
     } catch (error) {
       inFlight.current = false;

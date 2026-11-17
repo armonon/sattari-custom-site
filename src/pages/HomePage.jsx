@@ -21,6 +21,7 @@ import { BUSINESS, PAGE_SEO } from '../data/siteSeo';
 import { bookingPrice, money } from '../utils/studioBooking';
 import { SEO } from '../utils/seo';
 import './HomePage.css';
+import '../components/StringsDiscovery.css';
 
 const categories = [
   {
@@ -46,7 +47,7 @@ const categories = [
   },
   {
     name: 'Guitar & bass',
-    note: 'Six strings. Or four.',
+    note: 'Electric, acoustic, classical & bass.',
     path: '/shop/guitar-bass',
     image: '/sattari site/guitars/flame-stratocaster.jpg',
     color: '#bce2c8',
@@ -155,28 +156,34 @@ export default function HomePage() {
           <div className="home-width home-hero-inner">
             <div className="home-hero-copy">
               <p className="home-eyebrow">
-                <span className="home-location-dot" /> For musicians worldwide
+                <span className="home-location-dot" /> Woodland Hills shop · Music tools worldwide
               </p>
               <h1 id="home-title">
                 Sattari<span>Music.</span>
               </h1>
               <p className="home-hero-tagline">
-                A world of sound.
+                Find your instrument.
                 <br />
-                All yours to play.
+                Keep it playing.
               </p>
               <p className="home-hero-description">
-                Learn guitar. Find your instrument. Create music.
-                <br className="home-desktop-break" /> California roots. Worldwide sound.
+                Shop guitars, violins, cymbals and accessories.
+                <br className="home-desktop-break" /> Repairs and setups in Woodland Hills by
+                appointment.
               </p>
               <div className="home-hero-actions">
                 <Link to="/shop" className="home-button home-button-blue">
-                  Find your sound <ArrowUpRight size={18} />
+                  Shop instruments <ArrowUpRight size={18} />
                 </Link>
-                <a href="#home-hub" className="home-text-link">
-                  Explore the Hub <ArrowDown size={17} />
-                </a>
+                <Link to="/services/instrument-repair-los-angeles" className="home-text-link">
+                  Request a repair <Wrench size={17} />
+                </Link>
               </div>
+              <p className="home-hero-contact">
+                <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
+                <Link to="/visit">Arrange a Woodland Hills visit</Link>
+                <a href="#home-hub">Explore free music tools</a>
+              </p>
             </div>
             <span className="home-hero-edition">
               Independent spirit.
@@ -260,6 +267,20 @@ export default function HomePage() {
                 Online, or in person <MapPin size={14} />
               </Link>
             </div>
+            <section className="strings-discovery" aria-labelledby="home-strings-title">
+              <h2 id="home-strings-title">Fresh strings. A better-feeling instrument.</h2>
+              <p>
+                Looking for guitar strings in Woodland Hills? Ask about electric, acoustic and
+                classical guitar strings, or browse our violin strings. Tell us your instrument and
+                tuning so we can confirm the right fit and current availability.
+              </p>
+              <nav aria-label="Strings and restringing">
+                <Link to="/guitar-strings-woodland-hills">Guitar strings</Link>
+                <Link to="/violin-strings-woodland-hills">Violin strings</Link>
+                <Link to="/services/guitar-restringing-woodland-hills">String replacement</Link>
+              </nav>
+              <p>Need help fitting a set? Contact the shop before your appointment.</p>
+            </section>
           </div>
         </section>
 
@@ -310,10 +331,10 @@ export default function HomePage() {
                 className="home-button home-button-dark"
                 to="/services/rehearsal-space-los-angeles#local-inquiry"
               >
-                Request a time <ArrowUpRight size={17} />
+                Arrange a session <ArrowUpRight size={17} />
               </Link>
               <span className="home-booking-note">
-                Los Angeles time. Subject to availability and confirmation. Payment after approval.
+                Los Angeles time. Call to confirm your session; online booking is not open yet.
               </span>
             </div>
             <div className="home-address">

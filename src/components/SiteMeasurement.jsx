@@ -43,7 +43,8 @@ export default function SiteMeasurement() {
   const { pathname } = useLocation();
   const preference = usePreference();
   useEffect(() => {
-    trackSiteEvent('page_view');
+    if (pathname === '/cart') trackSiteEvent('cart_view');
+    else trackSiteEvent('page_view');
   }, [pathname, preference]);
   useEffect(() => {
     const clicked = (event) => {

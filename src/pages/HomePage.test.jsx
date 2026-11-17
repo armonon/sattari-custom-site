@@ -43,13 +43,18 @@ it('keeps the three main Hub destinations on the homepage', () => {
   expect(screen.getByRole('link', { name: 'Enter the Hub' })).toHaveAttribute('href', '/hub');
 });
 
-it('introduces a worldwide music company without advertising worldwide shipping', () => {
+it('prioritizes local shopping and repairs while preserving worldwide tools', () => {
   const { container } = renderHome();
-  expect(screen.getByText('For musicians worldwide')).toBeInTheDocument();
+  expect(screen.getByText('Woodland Hills shop · Music tools worldwide')).toBeInTheDocument();
   expect(container.querySelector('.home-hero-description')).toHaveTextContent(
-    'Learn guitar. Find your instrument. Create music.'
+    'Shop guitars, violins, cymbals and accessories.'
   );
   expect(container.textContent).not.toMatch(/worldwide shipping|global delivery/i);
+  expect(screen.getByRole('link', { name: 'Request a repair' })).toHaveAttribute(
+    'href',
+    '/services/instrument-repair-los-angeles'
+  );
+  expect(screen.getByRole('link', { name: 'Shop instruments' })).toHaveAttribute('href', '/shop');
   expect(screen.getByRole('link', { name: /Instrument repair/ })).toHaveAttribute(
     'href',
     '/services/instrument-repair-los-angeles'

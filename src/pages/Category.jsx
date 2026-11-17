@@ -7,6 +7,8 @@ import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
 import { CATEGORY_LOCAL_HELP, CATEGORY_SEO, breadcrumbSchema } from '../data/siteSeo';
 import NotFoundPage from '../components/NotFoundPage';
+import CategoryBuyingGuide from '../components/CategoryBuyingGuide';
+import { categoryBuyingGuides } from '../data/catalogMerchandising';
 import '../styles-products-premium.css';
 import '../components/LocalSeoPage.css';
 
@@ -26,12 +28,19 @@ function sortProducts(list, sort) {
 }
 
 const categoryHighlights = {
-  cymbals: ['Handcrafted tone', 'Stage-ready projection', 'Distinctive response'],
-  sticks: ['Premium wood', 'Balanced rebound', 'Daily-play durability'],
-  essentials: ['Practice-ready', 'Compact carry', 'Built for consistency'],
-  violins: ['Hand-carved tonewoods', 'Workshop-fitted & tuned', 'Acoustic, electric & silent'],
-  'guitar-bass': ['Set up and ready', 'Ships from California', 'Electric & acoustic'],
-  all: ['Instruments & accessories', 'Secure checkout', 'Ships from California'],
+  cymbals: ['Crash & splash', 'Hi-hat pairs', 'Effect cymbals'],
+  sticks: ['5A & 7A', 'Hickory & maple', 'Wood & nylon tips'],
+  essentials: ['Practice pads', 'Bags & accessories', 'Hand percussion'],
+  violins: ['Acoustic & electric', 'Compare included kits', 'Strings & accessories'],
+  'guitar-bass': ['Nylon & steel strings', 'Electric guitar', 'Five-string bass'],
+  all: ['Instruments & accessories', 'Secure checkout', 'Visits by appointment'],
+};
+
+const categoryIntroductions = {
+  violins:
+    'Compare acoustic and electric violin models, plus strings, rosin and pickup accessories.',
+  'guitar-bass':
+    'Explore nylon-string classical, steel-string acoustic and electric guitars, plus five-string bass.',
 };
 
 // Synthetic category for the /shop/all page (lists every product).
@@ -101,7 +110,7 @@ export default function Category() {
       <div className="container section-header narrow">
         <p className="eyebrow">Category spotlight</p>
         <h1>{category.title}</h1>
-        <p>{category.description}</p>
+        <p>{categoryIntroductions[category.key] || category.description}</p>
         <div className="shop-trust-bar" aria-label={`${category.title} highlights`}>
           {categoryHighlights[category.key].map((point) => (
             <span className="trust-chip" key={point}>
@@ -109,6 +118,9 @@ export default function Category() {
             </span>
           ))}
         </div>
+        {categoryBuyingGuides[category.key] && (
+          <a href="#buying-guide">{categoryBuyingGuides[category.key].title}</a>
+        )}
       </div>
       <div className="container shop-toolbar">
         {isAll && (
@@ -257,6 +269,7 @@ export default function Category() {
           );
         })}
       </div>
+      <CategoryBuyingGuide categoryKey={category.key} products={products} />
       <section className="container category-local-help" aria-label="Local instrument support">
         <h2>{CATEGORY_LOCAL_HELP[category.key].title}</h2>
         <p>{CATEGORY_LOCAL_HELP[category.key].copy}</p>

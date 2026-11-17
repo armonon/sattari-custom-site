@@ -18,6 +18,9 @@ const localTargets = [
   '/encino-violin-shop',
   '/services/violin-repair-los-angeles',
   '/services/guitar-setup-los-angeles',
+  '/guitar-strings-woodland-hills',
+  '/violin-strings-woodland-hills',
+  '/services/guitar-restringing-woodland-hills',
 ];
 const linkedLocalTargets = new Set();
 for (const path of localTargets) {
@@ -117,7 +120,7 @@ for (const url of urls) {
     assert.ok(!doc.querySelector('.product-detail-shell').textContent.includes('California made'));
   }
   if (path === '/') {
-    assert.match(doc.querySelector('.home-hero-copy').textContent, /musicians worldwide/i);
+    assert.match(doc.querySelector('.home-hero-copy').textContent, /music tools worldwide/i);
     for (const destination of ['/shop', '/learn', '/studio', '/services']) {
       assert.ok(doc.querySelector(`a[href="${destination}"]`), `Home must link to ${destination}`);
     }

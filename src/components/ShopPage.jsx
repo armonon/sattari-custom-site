@@ -19,6 +19,7 @@ import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
+import './StringsDiscovery.css';
 
 const trustPoints = [
   { label: 'Instruments & accessories', to: '/shop/instruments-los-angeles' },
@@ -245,6 +246,21 @@ export default function ShopPage() {
           </Link>
         </nav>
       </div>
+
+      <section className="container strings-discovery" aria-labelledby="shop-strings-title">
+        <h2 id="shop-strings-title">Strings for guitars and violins</h2>
+        <p>
+          Match the strings to your instrument before you buy. Explore violin string options, ask
+          about electric and acoustic guitar strings, or arrange a restringing assessment at our
+          appointment-only Woodland Hills shop. Confirm brands, gauges and availability with the
+          team.
+        </p>
+        <nav aria-label="Shop strings and string replacement">
+          <Link to="/guitar-strings-woodland-hills">Electric &amp; acoustic guitar strings</Link>
+          <Link to="/violin-strings-woodland-hills">Violin strings for sale</Link>
+          <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+        </nav>
+      </section>
 
       <section
         id="featured-catalog"

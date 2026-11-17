@@ -882,3 +882,25 @@
     scroll-behavior: auto !important;
   }
 }
+
+.home-page .home-hero-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.home-hero-contact a {
+  color: var(--home-muted);
+  text-underline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .home-hero {
+    min-height: 580px;
+    height: auto;
+  }
+  .home-hero-contact {
+    max-width: 300px;
+  }
+}

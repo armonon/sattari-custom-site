@@ -4,6 +4,7 @@ import {
   setMeasurementPreference,
   trackSiteEvent,
   trackSiteEventOnce,
+  trackVerifiedPurchaseOnce,
 } from './siteMeasurement';
 
 beforeEach(() => {
@@ -146,4 +147,42 @@ it('respects Global Privacy Control for the new events', () => {
   vi.stubGlobal('navigator', { globalPrivacyControl: true });
   trackSiteEvent('mix_exported');
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it('counts only a coarse verified purchase on a checkout page and omits its session query', () => {
+  setMeasurementPreference(true);
+  window.location.pathname = '/checkout/success';
+  window.location.search = '?session_id=cs_private&email=private@example.com';
+  trackSiteEvent('page_view');
+  expect(fetch).not.toHaveBeenCalled();
+  trackSiteEvent('purchase_verified');
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    event: 'purchase_verified',
+    page: 'purchase',
+    source: 'chatgpt',
+  });
+});
+
+it('deduplicates paid returns across remounts without transmitting checkout identifiers', () => {
+  window.location.pathname = '/checkout/success';
+  trackVerifiedPurchaseOnce('cs_private');
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).toBeNull();
+  setMeasurementPreference(true);
+  trackVerifiedPurchaseOnce('cs_private');
+  trackVerifiedPurchaseOnce('cs_private');
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    event: 'purchase_verified',
+    page: 'purchase',
+    source: 'chatgpt',
+  });
+});
+
+it('clears optional checkout deduplication data on consent withdrawal', () => {
+  window.location.pathname = '/checkout/success';
+  setMeasurementPreference(true);
+  trackVerifiedPurchaseOnce('cs_withdrawal_test');
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).not.toBeNull();
+  setMeasurementPreference(false);
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).toBeNull();
 });

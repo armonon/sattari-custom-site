@@ -6,6 +6,9 @@ import ProductDetail from './ProductDetail';
 import { CartProvider } from '../context/CartContext';
 import { InventoryProvider } from '../context/InventoryContext';
 import { deferred } from '../test/deferred';
+import { trackSiteEvent } from '../utils/siteMeasurement';
+
+vi.mock('../utils/siteMeasurement', () => ({ trackSiteEvent: vi.fn() }));
 
 const EMPTY_CATALOG = { overrides: {}, added: [], hidden: [] };
 
@@ -86,6 +89,43 @@ it('exposes item-specific violin specifications and all real gallery images to s
 afterEach(() => {
   localStorage.clear();
   vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
+
+it('offers string-fit help without presenting installation as part of the product price', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('violin-strings');
+  await screen.findByRole('heading', { level: 1, name: 'Violin Strings' });
+  expect(screen.getByText(/Installation is a separate service inquiry/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Violin string fit and replacement' })).toHaveAttribute(
+    'href',
+    '/violin-strings-woodland-hills'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await waitFor(() =>
+    expect(storedCart()).toEqual([expect.objectContaining({ slug: 'violin-strings', quantity: 1 })])
+  );
+});
+
+it('measures a loaded product once and only emits cart_add when quantity is added', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  localStorage.setItem(
+    'sattari-cart-v1',
+    JSON.stringify([{ slug: 'cymbal-felts', size: null, color: null, quantity: 9 }])
+  );
+  renderProduct('cymbal-felts');
+  await waitFor(() => expect(trackSiteEvent).toHaveBeenCalledWith('product_view'));
+  fireEvent.click(screen.getByRole('button', { name: 'Increase quantity' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await screen.findByText(/Added 1\. 10 is the most/);
+  fireEvent.click(screen.getByRole('button', { name: /Added/ }));
+  expect(trackSiteEvent.mock.calls).toEqual([['product_view'], ['cart_add']]);
 });
 
 it('starts each product with its own photo, color and quantity', async () => {

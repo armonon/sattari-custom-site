@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
+import ServicePlanningDetails from './ServicePlanningDetails';
 import OptimizedProductImage from './OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { formatPriceRange } from '../data/catalog';
@@ -27,7 +28,10 @@ type PageKey =
   | 'woodland-drums'
   | 'encino-violins'
   | 'violin-repair'
-  | 'guitar-setup';
+  | 'guitar-setup'
+  | 'guitar-strings'
+  | 'violin-strings'
+  | 'guitar-restringing';
 
 interface LocalSeoPageProps {
   pageKey: PageKey;
@@ -204,8 +208,8 @@ export const localSeoPages = {
         a: 'Instruments and musician gear for rehearsals, sessions, gigs, classes, and events. Send a request and we’ll confirm what’s available for your dates.',
       },
       {
-        q: 'How do rentals work?',
-        a: 'Tell us the gear, the dates, and what it’s for. We’ll respond with availability and next steps — no long-term commitment required.',
+        q: 'How do I arrange a rental?',
+        a: 'Tell us the gear, size, dates and purpose. Confirm the available equipment, rental period, total price, deposit and collection/return terms before committing.',
       },
       {
         q: 'Do you rent for one-off events or single sessions?',
@@ -218,7 +222,7 @@ export const localSeoPages = {
     title: 'Rehearsal space in Woodland Hills',
     seoTitle: 'Rehearsal Space | Woodland Hills, Los Angeles',
     description:
-      'Request rehearsal space in Woodland Hills: $25 per hour or $60 for four hours. Sattari reviews your time, then emails a payment link to finalize your booking.',
+      'Call about rehearsal space in Woodland Hills: $25 per hour or $60 for four hours. Confirm dates, equipment and arrangements with Sattari before your visit.',
     url: 'https://sattarimusic.com/services/rehearsal-space-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Rehearsal Space',
@@ -244,7 +248,7 @@ export const localSeoPages = {
       'Teachers and students needing a focused local space',
       'Musicians who also need gear, repairs, rentals, or setup help',
     ],
-    primaryCta: { label: 'Book rehearsal time', href: '#local-inquiry' },
+    primaryCta: { label: 'Arrange rehearsal time', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Ask about studio rental',
       to: '/services/recording-studio-rental-los-angeles',
@@ -258,7 +262,7 @@ export const localSeoPages = {
       },
       {
         q: 'How do I book rehearsal time?',
-        a: 'Choose a date, start time, and duration in the booking form. Sattari reviews your request and emails a payment link after approval. Payment finalizes your booking. The rate is $25 per hour or $60 for four hours.',
+        a: 'Call (424) 465-3020 with your preferred date, time, session length and group size. Online booking is not open yet. Confirm availability and arrangements with the shop. Published rates are $25 per hour or $60 for four hours.',
       },
       {
         q: 'Can I also get gear or studio time through the same request?',
@@ -271,7 +275,7 @@ export const localSeoPages = {
     title: 'Studio rental in Woodland Hills',
     seoTitle: 'Recording Studio Rental | Woodland Hills',
     description:
-      'Request Sattari studio time in Woodland Hills for recording, content or teaching. $25 per hour or $60 for four hours, with staff approval before payment.',
+      'Call about studio rental in Woodland Hills for recording, content or teaching. Published rates: $25 per hour or $60 for four hours. Confirm equipment and availability.',
     url: 'https://sattarimusic.com/services/recording-studio-rental-los-angeles',
     schemaType: 'Service',
     schemaName: 'Sattari Music Rental Studio',
@@ -290,7 +294,7 @@ export const localSeoPages = {
       'Producers and musicians who need a local creative room',
       'Bands or solo players who need rehearsal and recording support together',
     ],
-    primaryCta: { label: 'Book studio time', href: '#local-inquiry' },
+    primaryCta: { label: 'Arrange studio time', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Ask about rehearsal space',
       to: '/services/rehearsal-space-los-angeles',
@@ -304,7 +308,7 @@ export const localSeoPages = {
       },
       {
         q: 'How do I request studio time?',
-        a: 'Choose your date, time, and session length. After Sattari approves the request, you receive an email with a secure payment link. Your booking is finalized after payment. Studio time is $25 per hour or $60 for four hours.',
+        a: 'Call (424) 465-3020 with your date, session length and recording needs. Online booking is not open yet. Confirm the equipment, any engineer support, availability and payment arrangements. Published rates are $25 per hour or $60 for four hours.',
       },
       {
         q: 'Do you support teaching and content, not just recording?',
@@ -914,6 +918,10 @@ export const localSeoPages = {
         q: 'Is same-day violin repair guaranteed?',
         a: "No. Scope, parts, scheduling and the instrument's condition determine timing. Tell us your deadline so the team can confirm whether it is practical.",
       },
+      {
+        q: 'Can I ask about replacing violin strings without booking a repair?',
+        a: 'Yes. For strings alone, check the violin strings listing and confirm the instrument size and string-end fit. If you want help fitting them, include the violin size and any tuning or bridge concerns in your inquiry so the team can confirm the work and quote first.',
+      },
     ],
   },
   'guitar-setup': {
@@ -972,6 +980,230 @@ export const localSeoPages = {
         q: 'Where do Calabasas customers bring a guitar for setup?',
         a: `Arrange a visit to ${BUSINESS.addressLine}. Call ${BUSINESS.phoneDisplay} or send the inquiry before bringing your instrument.`,
       },
+      {
+        q: 'Do I need a full setup when I replace guitar strings?',
+        a: 'That depends on the instrument and what is changing. Describe your current strings, preferred gauge and tuning, and any buzzing or difficult action. Ask for string replacement and any additional setup work to be quoted clearly before you approve the service.',
+      },
+    ],
+  },
+  'guitar-strings': {
+    eyebrow: 'Guitar strings in Woodland Hills',
+    title: 'Find guitar strings in Woodland Hills',
+    seoTitle: 'Guitar Strings in Woodland Hills | Electric & Acoustic',
+    description:
+      'Ask Sattari Music about electric, acoustic and classical guitar strings in Woodland Hills. Confirm compatible gauges, availability and restringing before visiting.',
+    url: 'https://sattarimusic.com/guitar-strings-woodland-hills',
+    schemaType: 'WebPage',
+    schemaName: 'Guitar Strings at Sattari Music in Woodland Hills',
+    image: '/sattari site/guitars/flame-stratocaster.jpg',
+    intro:
+      'Looking for guitar strings for sale near Woodland Hills? Start with the kind of guitar you play and the strings already on it. Send Sattari Music your electric, steel-string acoustic or nylon-string classical guitar model, preferred gauge and tuning. We will confirm available options and pricing before you make a trip to our appointment-only shop.',
+    highlights: ['Electric guitar', 'Acoustic guitar', 'Classical guitar', 'Gauge', 'Tuning'],
+    offerings: [
+      'Availability inquiries for electric and acoustic guitar strings',
+      'Classical guitar string questions with material and instrument fit checked first',
+      'Help identifying the information needed to choose a replacement set',
+      'A separate inquiry for fitting strings or assessing setup concerns',
+    ],
+    goodFor: [
+      'Replacing worn strings with a familiar type and gauge',
+      'A beginner choosing strings for an electric or acoustic guitar',
+      'Players changing tuning who want to discuss string choice and setup',
+      'Local musicians checking a particular set before arranging pickup',
+    ],
+    details: [
+      {
+        title: 'Electric guitar strings: start with your current set',
+        copy: 'Share the guitar model, number of strings and the gauge printed on the package if you have it. Include whether you want the same feel or a change, and mention a locking or floating bridge. A preferred brand or model is useful for an availability check; no specific brand, gauge or set is guaranteed in stock.',
+      },
+      {
+        title: 'Acoustic and classical guitars need the right string type',
+        copy: 'Identify whether your acoustic guitar is designed for steel strings or nylon strings. Classical guitars generally use nylon-string sets; do not substitute steel strings on a guitar designed for nylon. If you are unsure, send the make and model or a photo of the existing string packaging before choosing replacements.',
+      },
+      {
+        title: 'Match gauge to your instrument and tuning',
+        copy: 'Gauge describes string thickness. Tell us your normal tuning, playing style and what feels uncomfortable about your current strings. A different gauge or tuning can change tension and may call for a setup assessment. Check the instrument maker’s recommendations rather than choosing a set solely because its label says light or medium.',
+      },
+      {
+        title: 'Buying strings and having them fitted are separate requests',
+        copy: 'Let us know whether you want strings to fit yourself or help replacing them. For a purchase, confirm the exact set, price and pickup arrangements. For restringing, also ask about labor, appointment availability and whether any setup work is proposed. Your inquiry does not reserve stock or book a service.',
+      },
+    ],
+    primaryCta: { label: 'Ask about guitar strings', href: '#local-inquiry' },
+    secondaryCta: {
+      label: 'Request guitar restringing',
+      to: '/services/guitar-restringing-woodland-hills',
+    },
+    formService: 'accessories',
+    formSource: 'Guitar strings Woodland Hills',
+    inquiryCopy:
+      'Include your guitar make and model, number of strings, current or preferred gauge, tuning and timing. Tell us whether you need strings only or help fitting them.',
+    faqs: [
+      {
+        q: 'Where can I buy guitar strings in Woodland Hills?',
+        a: `Ask Sattari Music about available strings at ${BUSINESS.addressLine}. Call ${BUSINESS.phoneDisplay} or use the inquiry form to confirm the set and price, then arrange an appointment before visiting.`,
+      },
+      {
+        q: 'Do you have electric guitar strings and acoustic guitar strings in stock?',
+        a: 'Send the string type, gauge and preferred brand or model. Availability is confirmed by the team; this page does not represent a live list of guitar string stock. Ask about a suitable alternative if your requested set is unavailable.',
+      },
+      {
+        q: 'Can I use the same strings on an electric, acoustic and classical guitar?',
+        a: 'Choose strings for the instrument they are designed for. Electric, steel-string acoustic and classical nylon-string sets are different choices. Confirm the guitar model and manufacturer guidance before changing type, and do not fit steel strings to a guitar designed for nylon.',
+      },
+      {
+        q: 'What gauge of guitar strings should I choose?',
+        a: 'Start with the current set and the guitar maker’s recommendations. Include your tuning, playing style and whether you want a different feel. If you change gauge or tuning, ask whether the guitar also needs a setup assessment.',
+      },
+      {
+        q: 'Can I ask Sattari to replace my guitar strings?',
+        a: 'Yes. Use the guitar restringing inquiry with your instrument details. The team will confirm compatible strings, service scope, the quote and an appointment before work is arranged.',
+      },
+    ],
+  },
+  'violin-strings': {
+    eyebrow: 'Violin strings in Woodland Hills',
+    title: 'Violin strings for sale in Woodland Hills',
+    seoTitle: 'Violin Strings for Sale in Woodland Hills',
+    description:
+      'Explore violin strings specified for 4/4 and 3/4 violins with ball ends. Check current stock and replacement support with Sattari Music in Woodland Hills.',
+    url: 'https://sattarimusic.com/violin-strings-woodland-hills',
+    schemaType: 'WebPage',
+    schemaName: 'Violin Strings at Sattari Music in Woodland Hills',
+    image: '/sattari site/violins/violin-strings.jpg',
+    intro:
+      'Sattari’s violin string specifications list fit for 4/4 and 3/4 violins with ball ends. Confirm fit, pricing and current availability before ordering or arranging pickup. Our Woodland Hills team also takes inquiries about string replacement and violin setup; visits are by appointment.',
+    highlights: ['Violin strings', '4/4 fit listed', '3/4 fit listed', 'Ball ends', 'Replacement'],
+    offerings: [
+      'Violin string purchase inquiries, with availability confirmed before ordering',
+      'Listed fit for 4/4 and 3/4 violins, with ball-end strings',
+      'Questions about the correct instrument size and string-end compatibility',
+      'Separate inquiries for string fitting, tuning concerns and violin setup',
+    ],
+    goodFor: [
+      'Students checking a teacher’s replacement-string requirements',
+      'Players comparing their existing strings with the listed specifications',
+      'Parents confirming violin size before buying a replacement',
+      'Musicians asking whether a string issue also needs an assessment',
+    ],
+    details: [
+      {
+        title: 'Check the violin size before ordering',
+        copy: 'Confirm the instrument size from its paperwork, teacher or maker. The current listing names 4/4 and 3/4 fit; it does not establish compatibility with every fractional-size violin. For a smaller instrument or uncertain size, ask before purchasing and include the model or label if known.',
+      },
+      {
+        title: 'Match ball ends to your existing fitting',
+        copy: 'Our listed violin strings have ball ends. Check the requirements of the tailpiece and fine tuners, including the E-string fitting. If you have a loop-end requirement or cannot identify the fitting, contact us before ordering rather than assuming the listed set will fit.',
+      },
+      {
+        title: 'Bring any teacher or player requirements',
+        copy: 'Include a requested brand, material or tension if your teacher has specified one. Those details are not stated in this listing and should be confirmed with the team. Tell us whether you need a complete replacement or a particular string so we can confirm what is available.',
+      },
+      {
+        title: 'Ask about installation or a recurring problem',
+        copy: 'If you want help fitting strings, describe the violin and any tuning, bridge or playability concerns. Repeated breakage or tuning trouble may require assessment beyond buying a replacement. Confirm the service, cost and appointment before bringing the instrument to the shop.',
+      },
+    ],
+    productIds: ['violin-strings'],
+    primaryCta: { label: 'Shop violin strings', to: '/product/violin-strings' },
+    secondaryCta: { label: 'Ask about fit or replacement', href: '#local-inquiry' },
+    formService: 'accessories',
+    formSource: 'Violin strings Woodland Hills',
+    inquiryCopy:
+      'Include the violin size, model if known, string-end requirements and any teacher recommendations. Tell us whether you want strings only or help fitting them.',
+    faqs: [
+      {
+        q: 'What violin strings does Sattari sell?',
+        a: 'Sattari’s listed violin string specifications name fit for 4/4 and 3/4 violins and ball ends. Confirm current product details, pricing and availability before ordering. Ask about brand, material or tension if those details matter for your instrument or teacher’s requirements.',
+      },
+      {
+        q: 'Will these strings fit a smaller student violin?',
+        a: 'Do not assume that they will. The listing names 4/4 and 3/4 violins. Confirm the student’s instrument size and ask about compatible options for other sizes before buying.',
+      },
+      {
+        q: 'Are ball-end and loop-end violin strings interchangeable?',
+        a: 'The string end must suit the instrument’s fitting. This listing specifies ball ends. Check the tailpiece or fine tuner requirements, particularly for the E string, and ask the team if your instrument needs a loop end.',
+      },
+      {
+        q: 'Can I request violin string replacement in Woodland Hills?',
+        a: 'Yes. Send the violin size and any tuning or setup concerns. String fitting and additional work need confirmation and a quote before an appointment; purchasing strings does not include installation.',
+      },
+      {
+        q: 'Can I collect violin strings at the shop?',
+        a: `Contact Sattari Music at ${BUSINESS.phoneDisplay} to confirm current in-store availability and pickup arrangements at ${BUSINESS.addressLine}. Shop visits are by appointment only.`,
+      },
+    ],
+  },
+  'guitar-restringing': {
+    eyebrow: 'Guitar restringing in Woodland Hills',
+    title: 'Guitar string replacement in Woodland Hills',
+    seoTitle: 'Guitar Restringing & String Replacement | Woodland Hills',
+    description:
+      'Request electric or acoustic guitar restringing in Woodland Hills. Confirm strings, labor, setup needs, a quote and an appointment with Sattari Music.',
+    url: 'https://sattarimusic.com/services/guitar-restringing-woodland-hills',
+    schemaType: 'Service',
+    schemaName: 'Sattari Music Guitar Restringing Inquiries',
+    image: '/sattari site/guitars/flame-stratocaster.jpg',
+    intro:
+      'Need to replace the strings on an electric or acoustic guitar? Send Sattari Music the model, string type and usual tuning to start a restringing inquiry. Our Woodland Hills team will confirm compatible strings, the proposed work, a quote and an appointment. Mention buzzing, tuning trouble or difficult action so those concerns can be assessed separately.',
+    highlights: ['String replacement', 'Electric guitar', 'Acoustic guitar', 'Quote first'],
+    offerings: [
+      'Electric and acoustic guitar string replacement inquiries',
+      'Compatibility and string availability checks before scheduling',
+      'A clear discussion of strings, labor and any additional setup work',
+      'Appointment requests with timing confirmed by the Woodland Hills team',
+    ],
+    goodFor: [
+      'Players replacing worn or broken strings before the next practice',
+      'Beginners who want to ask for help fitting a replacement set',
+      'Musicians changing gauge or tuning who need to discuss setup',
+      'Owners of guitars with unusual bridges or stringing requirements',
+    ],
+    details: [
+      {
+        title: '1. Describe the guitar and the replacement you need',
+        copy: 'Include the make and model, number of strings, current gauge if known, desired tuning and your deadline. Tell us whether the guitar is electric, steel-string acoustic or nylon-string classical. Mention a locking tremolo, floating bridge, twelve-string instrument or other unusual requirements so the team can confirm whether it can accept the job.',
+      },
+      {
+        title: '2. Confirm compatible strings and the quote',
+        copy: 'Ask which strings are available, what the labor includes and whether you can supply your own set. Confirm the price of strings and labor, any proposed assessment or setup charges, and the expected turnaround before approving work. We do not publish a universal restringing price because the instrument and agreed scope matter.',
+      },
+      {
+        title: '3. Arrange your appointment and collection',
+        copy: `Shop visits are by appointment at ${BUSINESS.addressLine}. Wait for the team to confirm the time, what to bring and collection arrangements. An online inquiry is not a booking, and same-day completion is not guaranteed.`,
+      },
+      {
+        title: 'When a string change becomes a setup or repair question',
+        copy: 'A restringing request covers the agreed string replacement work. Persistent buzzing, high action, notes sounding out of tune along the neck, repeated breakage or damaged parts can need further assessment. Describe those symptoms when you inquire; a full setup, fret work, electronics or structural repair is not automatically included.',
+      },
+    ],
+    primaryCta: { label: 'Request a restringing quote', href: '#local-inquiry' },
+    secondaryCta: { label: 'Find guitar strings', to: '/guitar-strings-woodland-hills' },
+    formService: 'repairs',
+    formSource: 'Guitar restringing Woodland Hills',
+    inquiryCopy:
+      'Include your guitar model, string type and gauge if known, preferred tuning and deadline. Mention any buzzing, repeated string breakage or unusual bridge so the team can confirm scope and quote.',
+    faqs: [
+      {
+        q: 'How much does it cost to replace guitar strings?',
+        a: 'Request a quote for your instrument. Confirm the replacement strings, labor and any proposed setup or assessment charges before you approve the work. There is no single price published here for every guitar and service scope.',
+      },
+      {
+        q: 'Can I request electric guitar or acoustic guitar restringing?',
+        a: 'Yes. Include the guitar make and model, number of strings and current string type. For a classical guitar, locking bridge, twelve-string guitar or other particular requirements, ask the team to confirm compatibility and service availability before scheduling.',
+      },
+      {
+        q: 'Does restringing include a complete guitar setup?',
+        a: 'A string replacement inquiry does not automatically include a full setup or repair. Ask what is included in the quote. If you are changing gauge or tuning, or have action, buzzing or intonation concerns, request an assessment of those issues as well.',
+      },
+      {
+        q: 'Can I bring my own guitar strings?',
+        a: 'Tell the team the exact set you plan to bring and your guitar model. Confirm compatibility, whether customer-supplied strings can be used, and the labor quote before arranging your appointment.',
+      },
+      {
+        q: 'Can you replace my guitar strings while I wait?',
+        a: 'Ask about timing when you request the quote. Availability, instrument condition and the agreed work determine turnaround. Shop visits are by appointment, and an inquiry does not guarantee same-day or while-you-wait service.',
+      },
     ],
   },
 } as const;
@@ -993,7 +1225,7 @@ function canonicalUrlFor(pageKey: PageKey): string {
 const RELATED_PAGES: Record<PageKey, PageKey[]> = {
   'music-store': ['woodland-hills', 'woodland-drums', 'encino-violins', 'guitar-setup'],
   instruments: ['woodland-drums', 'encino-violins', 'guitars', 'instrument-rentals'],
-  accessories: ['woodland-drums', 'drums', 'violins', 'guitar-setup'],
+  accessories: ['woodland-drums', 'guitar-strings', 'violin-strings', 'guitar-restringing'],
   'instrument-rentals': ['rehearsal-space', 'recording-studio', 'instruments', 'music-lessons'],
   'rehearsal-space': ['recording-studio', 'instrument-rentals', 'music-lessons', 'woodland-drums'],
   'recording-studio': ['rehearsal-space', 'instrument-rentals', 'guitar-setup', 'woodland-drums'],
@@ -1009,12 +1241,15 @@ const RELATED_PAGES: Record<PageKey, PageKey[]> = {
   ],
   'repair-calabasas': ['guitar-setup', 'violin-repair', 'calabasas', 'instrument-rentals'],
   drums: ['woodland-drums', 'accessories', 'repair-woodland-hills', 'rehearsal-space'],
-  violins: ['encino-violins', 'violin-repair', 'music-lessons', 'woodland-hills'],
-  guitars: ['guitar-setup', 'calabasas', 'music-lessons', 'recording-studio'],
+  violins: ['encino-violins', 'violin-strings', 'violin-repair', 'music-lessons'],
+  guitars: ['guitar-strings', 'guitar-restringing', 'guitar-setup', 'music-lessons'],
   'woodland-drums': ['drums', 'accessories', 'repair-woodland-hills', 'rehearsal-space'],
-  'encino-violins': ['violins', 'violin-repair', 'music-lessons', 'encino'],
-  'violin-repair': ['encino-violins', 'violins', 'repair-woodland-hills', 'instrument-rentals'],
-  'guitar-setup': ['guitars', 'repair-calabasas', 'woodland-hills', 'rehearsal-space'],
+  'encino-violins': ['violins', 'violin-strings', 'violin-repair', 'music-lessons'],
+  'violin-repair': ['violin-strings', 'encino-violins', 'violins', 'repair-woodland-hills'],
+  'guitar-setup': ['guitar-strings', 'guitar-restringing', 'guitars', 'repair-calabasas'],
+  'guitar-strings': ['guitar-restringing', 'guitar-setup', 'guitars', 'violin-strings'],
+  'violin-strings': ['violin-repair', 'violins', 'encino-violins', 'guitar-strings'],
+  'guitar-restringing': ['guitar-strings', 'guitar-setup', 'guitars', 'violin-repair'],
 };
 
 // Home → (Shop | Services) → current — drives both the breadcrumb UI and schema.
@@ -1022,7 +1257,8 @@ function getBreadcrumbs(pageKey: PageKey): { label: string; to?: string }[] {
   const page = pages[pageKey];
   const path = toPath(page.url);
   const crumbs: { label: string; to?: string }[] = [{ label: 'Home', to: '/' }];
-  if (path.startsWith('/shop')) crumbs.push({ label: 'Shop', to: '/shop' });
+  if (path.startsWith('/shop') || ['guitar-strings', 'violin-strings'].includes(pageKey))
+    crumbs.push({ label: 'Shop', to: '/shop' });
   else if (path.startsWith('/services')) crumbs.push({ label: 'Local services', to: '/services' });
   crumbs.push({ label: page.eyebrow });
   return crumbs;
@@ -1058,6 +1294,15 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
   };
   const productIds: readonly string[] = 'productIds' in page ? page.productIds : [];
   const featuredProducts = products.filter((product) => productIds.includes(product.slug));
+  const primaryProductPath =
+    'to' in page.primaryCta && page.primaryCta.to.startsWith('/product/')
+      ? page.primaryCta.to
+      : null;
+  const primaryCta =
+    primaryProductPath &&
+    !products.some((product) => primaryProductPath === `/product/${product.slug}`)
+      ? { label: 'Ask about availability', href: '#local-inquiry' }
+      : page.primaryCta;
   const breadcrumbs = getBreadcrumbs(pageKey);
   const isSpace = pageKey === 'rehearsal-space' || pageKey === 'recording-studio';
 
@@ -1130,7 +1375,7 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           <h1>{page.title}</h1>
           <p>{page.intro}</p>
           <div className="hero-actions services-actions">
-            <CtaLink cta={page.primaryCta} className="button button-solid" />
+            <CtaLink cta={primaryCta} className="button button-solid" />
             <CtaLink cta={page.secondaryCta} className="button button-outline" />
           </div>
         </div>
@@ -1200,13 +1445,17 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
             <p className="eyebrow">Studio &amp; rehearsal bookings</p>
             <h2>Your next session starts here.</h2>
             <p>
-              $25 per hour or $60 for four hours. Send your preferred time; we will review it before
-              you pay.
+              $25 per hour or $60 for four hours. Call with your preferred date and equipment needs
+              to confirm availability and arrangements.
             </p>
           </div>
           <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
         </div>
       )}
+
+      <div className="container">
+        <ServicePlanningDetails service={page.formService} />
+      </div>
 
       <div className="container repair-grid">
         <article className="info-card repair-info-card">
@@ -1251,8 +1500,9 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
             <p className="eyebrow">Start the conversation</p>
             <h2>Ask the Woodland Hills team</h2>
             <p>
-              Share the instrument, accessory, class, rental, studio, rehearsal, or repair request
-              and any timing details that matter.
+              {'inquiryCopy' in page
+                ? page.inquiryCopy
+                : 'Share the instrument, accessory, class, rental, studio, rehearsal, or repair request and any timing details that matter.'}
             </p>
           </div>
           <ServiceInquiryForm initialService={page.formService} source={page.formSource} />

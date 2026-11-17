@@ -1,3 +1,4 @@
+import { trackVerifiedPurchaseOnce } from '../utils/siteMeasurement';
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
@@ -23,6 +24,7 @@ export default function CheckoutStatus() {
   const verificationRef = useRef(null);
   // Likewise one release request per canceled session.
   const releasedRef = useRef(null);
+  const measuredRef = useRef(null);
 
   useEffect(() => {
     clearCartRef.current = clearCart;
@@ -73,6 +75,10 @@ export default function CheckoutStatus() {
         if (session.payment_status === 'paid') {
           clearCartRef.current();
           setVerificationState('verified');
+          if (measuredRef.current !== sessionId) {
+            measuredRef.current = sessionId;
+            trackVerifiedPurchaseOnce(sessionId);
+          }
           return;
         }
 

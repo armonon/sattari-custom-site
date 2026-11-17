@@ -21,7 +21,8 @@
     "test:studio-audio": "node scripts/run-studio-audio-qa.mjs",
     "test:studio-release": "node scripts/studio-release-gate.mjs",
     "test:ui": "vitest --ui",
-    "postinstall": "node scripts/apply-audio-cycle-precheck.mjs"
+    "postinstall": "node scripts/apply-audio-cycle-precheck.mjs",
+    "build:production": "node scripts/growth-inventory-build.mjs --evidence .local-data/growth-build"
   },
   "dependencies": {
     "@coderline/alphatab": "1.8.3",

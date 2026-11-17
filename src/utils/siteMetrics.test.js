@@ -66,3 +66,23 @@ describe('privacy-bounded metrics', () => {
     }
   );
 });
+
+it('groups commercial pages and Google campaign tags without retaining queries', () => {
+  expect(metricPage('/guitar-strings-woodland-hills')).toBe('local');
+  expect(metricPage('/violin-strings-woodland-hills')).toBe('local');
+  expect(metricPage('/cart')).toBe('cart');
+  expect(
+    referralSource('', '?utm_source=google_business_profile&utm_medium=organic&private=omit')
+  ).toBe('google');
+  expect(validMetric({ event: 'purchase_verified', page: 'purchase', source: 'google' })).toBe(
+    true
+  );
+  expect(
+    validMetric({
+      event: 'purchase_verified',
+      page: 'purchase',
+      source: 'google',
+      session: 'private',
+    })
+  ).toBe(false);
+});

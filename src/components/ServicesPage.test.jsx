@@ -94,7 +94,7 @@ describe('ServicesPage', () => {
         'aria-pressed',
         'false'
       );
-      expect(screen.getByRole('heading', { name: 'Book a time' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Arrange a session' })).toBeInTheDocument();
       expect(screen.getByLabelText('Service Type')).toHaveValue(service);
       await waitFor(() => expect(screen.getByLabelText('Your name')).not.toBeDisabled());
       expect(screen.getByLabelText('Your name')).toHaveValue('Armon');

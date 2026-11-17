@@ -155,7 +155,7 @@ export default function StudioBookingForm({
       <div className="studio-booking-heading">
         <CalendarClock size={22} aria-hidden="true" />
         <div>
-          <h3>Book studio &amp; rehearsal time</h3>
+          <h3>Arrange studio &amp; rehearsal time</h3>
           <p>Woodland Hills · Los Angeles time</p>
         </div>
       </div>
@@ -201,145 +201,151 @@ export default function StudioBookingForm({
           </div>
         )
       )}
-      <fieldset disabled={!config?.enabled || loading || submitting}>
-        <div className="studio-booking-grid">
-          <label>
-            <span>Date</span>
-            <input
-              required
-              type="date"
-              name="date"
-              value={form.date}
-              min={today ? localDate(today) : undefined}
-              max={today ? localDate(today + 90 * 86400000) : undefined}
-              onChange={change}
-            />
-          </label>
-          <label>
-            <span>Duration</span>
-            <select name="hours" value={form.hours} onChange={change}>
-              {(config?.durations || [1, 2, 3, 4]).map((hours) => (
-                <option value={hours} key={hours}>
-                  {hours} hour{hours === 1 ? '' : 's'} - {money(bookingPrice(hours))}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Start time</span>
-            <select required name="startHour" value={form.startHour} onChange={change}>
-              <option value="">
-                {!form.date
-                  ? 'Choose a date first'
-                  : starts.length
-                    ? 'Choose a time'
-                    : 'No times available'}
-              </option>
-              {starts.map((hour) => (
-                <option key={hour} value={hour}>
-                  {hourLabel(hour)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Session type</span>
-            <select name="purpose" value={form.purpose} onChange={change}>
-              {['Rehearsal', 'Recording', 'Teaching', 'Other'].map((purpose) => (
-                <option key={purpose}>{purpose}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Your name</span>
-            <input
-              required
-              name="name"
-              maxLength={120}
-              autoComplete="name"
-              value={form.name}
-              onChange={change}
-            />
-          </label>
-          <label>
-            <span>Email address</span>
-            <input
-              required
-              type="email"
-              name="email"
-              maxLength={180}
-              autoComplete="email"
-              value={form.email}
-              onChange={change}
-            />
-          </label>
-        </div>
-        <label>
-          <span>Phone (optional)</span>
-          <input
-            type="tel"
-            name="phone"
-            maxLength={40}
-            autoComplete="tel"
-            value={form.phone}
-            onChange={change}
-          />
-        </label>
-        <label>
-          <span>Session notes (optional)</span>
-          <textarea
-            name="notes"
-            rows={3}
-            maxLength={2000}
-            placeholder="Group size, instruments, and anything you need"
-            value={form.notes}
-            onChange={change}
-          />
-        </label>
-        <div className="studio-booking-honeypot" aria-hidden="true">
-          <label>
-            Leave blank
-            <input
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              value={form.website}
-              onChange={change}
-            />
-          </label>
-        </div>
-        <label className="studio-booking-consent">
-          <input
-            required
-            type="checkbox"
-            name="accepted"
-            checked={form.accepted}
-            onChange={change}
-          />
-          <span>
-            I understand this is a request. My time is finalized after Sattari approves it and I pay
-            through the emailed link.
-          </span>
-        </label>
-      </fieldset>
-      <div className="studio-booking-checkout">
-        <span>
-          Session total<strong>{money(bookingPrice(Number(form.hours)))}</strong>
-        </span>
-        <span>No payment now</span>
-      </div>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
+      {config?.enabled && !loading && !loadError && (
+        <>
+          <fieldset disabled={submitting}>
+            <div className="studio-booking-grid">
+              <label>
+                <span>Date</span>
+                <input
+                  required
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  min={today ? localDate(today) : undefined}
+                  max={today ? localDate(today + 90 * 86400000) : undefined}
+                  onChange={change}
+                />
+              </label>
+              <label>
+                <span>Duration</span>
+                <select name="hours" value={form.hours} onChange={change}>
+                  {(config?.durations || [1, 2, 3, 4]).map((hours) => (
+                    <option value={hours} key={hours}>
+                      {hours} hour{hours === 1 ? '' : 's'} - {money(bookingPrice(hours))}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Start time</span>
+                <select required name="startHour" value={form.startHour} onChange={change}>
+                  <option value="">
+                    {!form.date
+                      ? 'Choose a date first'
+                      : starts.length
+                        ? 'Choose a time'
+                        : 'No times available'}
+                  </option>
+                  {starts.map((hour) => (
+                    <option key={hour} value={hour}>
+                      {hourLabel(hour)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Session type</span>
+                <select name="purpose" value={form.purpose} onChange={change}>
+                  {['Rehearsal', 'Recording', 'Teaching', 'Other'].map((purpose) => (
+                    <option key={purpose}>{purpose}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Your name</span>
+                <input
+                  required
+                  name="name"
+                  maxLength={120}
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={change}
+                />
+              </label>
+              <label>
+                <span>Email address</span>
+                <input
+                  required
+                  type="email"
+                  name="email"
+                  maxLength={180}
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={change}
+                />
+              </label>
+            </div>
+            <label>
+              <span>Phone (optional)</span>
+              <input
+                type="tel"
+                name="phone"
+                maxLength={40}
+                autoComplete="tel"
+                value={form.phone}
+                onChange={change}
+              />
+            </label>
+            <label>
+              <span>Session notes (optional)</span>
+              <textarea
+                name="notes"
+                rows={3}
+                maxLength={2000}
+                placeholder="Group size, instruments, and anything you need"
+                value={form.notes}
+                onChange={change}
+              />
+            </label>
+            <div className="studio-booking-honeypot" aria-hidden="true">
+              <label>
+                Leave blank
+                <input
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={form.website}
+                  onChange={change}
+                />
+              </label>
+            </div>
+            <label className="studio-booking-consent">
+              <input
+                required
+                type="checkbox"
+                name="accepted"
+                checked={form.accepted}
+                onChange={change}
+              />
+              <span>
+                I understand this is a request. My time is finalized after Sattari approves it and I
+                pay through the emailed link.
+              </span>
+            </label>
+          </fieldset>
+          <div className="studio-booking-checkout">
+            <span>
+              Session total<strong>{money(bookingPrice(Number(form.hours)))}</strong>
+            </span>
+            <span>No payment now</span>
+          </div>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            className="button button-solid button-full"
+            disabled={
+              !config?.enabled || loading || submitting || !form.date || form.startHour === ''
+            }
+            type="submit"
+          >
+            {submitting ? 'Sending request...' : 'Request booking'}
+          </button>
+        </>
       )}
-      <button
-        className="button button-solid button-full"
-        disabled={!config?.enabled || loading || submitting || !form.date || form.startHour === ''}
-        type="submit"
-      >
-        {submitting ? 'Sending request...' : 'Request booking'}
-      </button>
     </form>
   );
 }
