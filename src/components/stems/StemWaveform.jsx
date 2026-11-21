@@ -10,6 +10,7 @@ export default function StemWaveform({
   color,
   progress = 0,
   loop = null,
+  markers = null,
   onSeek = null,
   height = 44,
 }) {
@@ -39,6 +40,12 @@ export default function StemWaveform({
         context.fillStyle = color;
         context.fillRect(index * step, (height - bar) / 2, Math.max(1, step - 1), bar);
       }
+      if (markers?.length) {
+        // Bar lines from the beat grid.
+        context.globalAlpha = 0.35;
+        context.fillStyle = color;
+        for (const marker of markers) context.fillRect(marker * rect.width, 0, 1, height);
+      }
       context.globalAlpha = 1;
       context.fillStyle = 'currentColor';
       context.fillRect(Math.min(rect.width - 1, progress * rect.width), 0, 1.5, height);
@@ -48,7 +55,7 @@ export default function StemWaveform({
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, [peaks, color, progress, loop, height]);
+  }, [peaks, color, progress, loop, height, markers]);
   return (
     <canvas
       ref={ref}

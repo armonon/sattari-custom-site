@@ -33,6 +33,15 @@ import {
 } from '../../utils/stemMix';
 import StemWaveform from './StemWaveform';
 import { aacSupported, encodeMixAac } from '../../utils/mixEncodeAac';
+import {
+  BEATS_PER_BAR,
+  barLoop,
+  clicksBetween,
+  isDownbeat,
+  rhythmSignal,
+  snapToBeat,
+} from '../../utils/beatGrid';
+import { pitchRatio, resample, stretchFactor } from '../../utils/timeStretch';
 import './StemPlayer.css';
 
 export const formatClock = (seconds) => {
@@ -40,6 +49,59 @@ export const formatClock = (seconds) => {
   return `${Math.floor(safe / 60)}:${String(Math.floor(safe % 60)).padStart(2, '0')}`;
 };
 const MIN_LOOP = 0.25;
+export const SPEED_MIN = 0.5;
+export const SPEED_MAX = 1.25;
+export const SEMITONE_RANGE = 6;
+// Speed and key changes duplicate every stem in memory; keep them to songs a
+// typical laptop or phone can hold twice.
+export const PRACTICE_MAX_SECONDS = 6 * 60;
+
+// Vite bundles workers only from a literal `new Worker(new URL(...))`.
+function stretchInWorker(stems, alpha) {
+  return new Promise((resolve, reject) => {
+    if (typeof Worker === 'undefined') {
+      reject(new Error('This browser cannot change speed or key here.'));
+      return;
+    }
+    const worker = new Worker(new URL('../../utils/timeStretch.worker.js', import.meta.url), {
+      type: 'module',
+    });
+    worker.onmessage = ({ data }) => {
+      worker.terminate();
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.result);
+    };
+    worker.onerror = (event) => {
+      event.preventDefault?.();
+      worker.terminate();
+      reject(new Error('Speed change ran out of memory. Try a shorter song.'));
+    };
+    worker.postMessage({ id: 1, stems, alpha });
+  });
+}
+
+function trackBeatsInWorker(samples, rate) {
+  return new Promise((resolve, reject) => {
+    if (typeof Worker === 'undefined') {
+      reject(new Error('unavailable'));
+      return;
+    }
+    const worker = new Worker(new URL('../../utils/beatGrid.worker.js', import.meta.url), {
+      type: 'module',
+    });
+    worker.onmessage = ({ data }) => {
+      worker.terminate();
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.grid);
+    };
+    worker.onerror = (event) => {
+      event.preventDefault?.();
+      worker.terminate();
+      reject(new Error('Beat tracking failed.'));
+    };
+    worker.postMessage({ id: 1, samples, rate }, [samples.buffer]);
+  });
+}
 
 /** Presets that make sense for the stems this result actually contains. */
 export function availablePresets(ids) {
@@ -92,6 +154,13 @@ export default function StemPlayer({
   const frame = useRef(0);
   const exportAbort = useRef(null);
   const previewCounted = useRef(false);
+  // Practice playback: processed (stretched) buffers and the clicks in flight.
+  const playBuffers = useRef(null); // Map id → AudioBuffer, or null for originals
+  const originalPlayBuffer = useRef(null);
+  const practice = useRef({ speed: 1, semitones: 0, alpha: 1, rate: 1 });
+  const clickNodes = useRef([]);
+  const clickState = useRef({ scheduledTo: -Infinity });
+  const stretchJob = useRef(0);
   const [load, setLoad] = useState({
     status: 'loading',
     message: 'Preparing synchronized playback',
@@ -118,6 +187,21 @@ export default function StemPlayer({
   const [exporting, setExporting] = useState(null);
   const [exported, setExported] = useState(null);
   const [exportError, setExportError] = useState('');
+  const [speed, setSpeed] = useState(1);
+  const [semitones, setSemitones] = useState(0);
+  const [processing, setProcessing] = useState({ status: 'idle', message: '' });
+  const [applyPractice, setApplyPractice] = useState(false);
+  const [grid, setGrid] = useState({ status: 'idle', beats: [], bpm: null });
+  const [barOffset, setBarOffset] = useState(0);
+  const [snap, setSnap] = useState(true);
+  const [click, setClick] = useState(false);
+  const [countIn, setCountIn] = useState(false);
+  const clickOn = useRef(false);
+  clickOn.current = click;
+  const playingRef = useRef(false);
+  playingRef.current = playing;
+  const practiceActive = speed !== 1 || semitones !== 0;
+  const practiceAllowed = duration <= PRACTICE_MAX_SECONDS;
   const description = describeMix(mix);
   const loopActive = loop.a !== null && loop.b !== null;
   const outputGain =
@@ -244,11 +328,107 @@ export default function StemPlayer({
     };
   }, [mix, load.status]);
 
+  // Beat grid from the rhythm stems (drums + bass), tracked off the UI thread.
+  useEffect(() => {
+    if (load.status !== 'ready') return undefined;
+    let live = true;
+    const ids = ['drums', 'bass'].filter((id) => buffers.current.has(id));
+    const use = ids.length ? ids : [...buffers.current.keys()];
+    if (!use.length) return undefined;
+    const sets = use.map((id) => {
+      const buffer = buffers.current.get(id);
+      return [buffer.getChannelData(0), buffer.getChannelData(1)];
+    });
+    const { samples, rate } = rhythmSignal(sets, buffers.current.get(use[0]).sampleRate);
+    setGrid({ status: 'working', beats: [], bpm: null });
+    trackBeatsInWorker(samples, rate)
+      .then((result) => {
+        if (!live) return;
+        setGrid(
+          result.usable
+            ? { status: 'ready', beats: result.beats, bpm: result.bpm }
+            : { status: 'none', beats: [], bpm: null }
+        );
+      })
+      .catch(() => live && setGrid({ status: 'none', beats: [], bpm: null }));
+    return () => {
+      live = false;
+    };
+  }, [load.status]);
+
+  // Speed / key: stretch every stem coherently in a worker, then swap the
+  // playback buffers on the same clock. Debounced so dragging stays smooth.
+  useEffect(() => {
+    if (load.status !== 'ready') return undefined;
+    const job = ++stretchJob.current;
+    const audio = context.current;
+    if (!practiceActive) {
+      const wasActive = Boolean(playBuffers.current);
+      playBuffers.current = null;
+      originalPlayBuffer.current = null;
+      practice.current = { speed: 1, semitones: 0, alpha: 1, rate: 1 };
+      setProcessing({ status: 'idle', message: '' });
+      if (wasActive && playingRef.current) void start(now());
+      return undefined;
+    }
+    if (!practiceAllowed) {
+      setProcessing({
+        status: 'error',
+        message: `Speed and key changes are available for songs up to ${PRACTICE_MAX_SECONDS / 60} minutes.`,
+      });
+      return undefined;
+    }
+    setProcessing({ status: 'working', message: 'Preparing practice playback…' });
+    const timer = setTimeout(async () => {
+      const alpha = stretchFactor(speed, semitones);
+      const rate = pitchRatio(semitones);
+      setProcessing({ status: 'working', message: 'Preparing practice playback…' });
+      try {
+        const copy = (buffer) => [
+          buffer.getChannelData(0).slice(),
+          buffer.getChannelData(1).slice(),
+        ];
+        const stems = Object.fromEntries(
+          [...buffers.current].map(([id, buffer]) => [id, copy(buffer)])
+        );
+        const result = await stretchInWorker(stems, alpha);
+        // The original has its own sample rate, so it gets its own path.
+        const originalResult = originalBuffer.current
+          ? await stretchInWorker({ original: copy(originalBuffer.current) }, alpha)
+          : null;
+        if (job !== stretchJob.current || !audio) return;
+        const toBuffer = ([left, right], sampleRate) => {
+          const buffer = audio.createBuffer(2, Math.max(1, left.length), sampleRate);
+          buffer.copyToChannel(left, 0);
+          buffer.copyToChannel(right, 1);
+          return buffer;
+        };
+        playBuffers.current = new Map(
+          Object.entries(result).map(([id, channels]) => [
+            id,
+            toBuffer(channels, buffers.current.get(id).sampleRate),
+          ])
+        );
+        originalPlayBuffer.current = originalResult
+          ? toBuffer(originalResult.original, originalBuffer.current.sampleRate)
+          : null;
+        practice.current = { speed, semitones, alpha, rate };
+        setProcessing({ status: 'ready', message: '' });
+        if (playingRef.current) void start(now());
+      } catch (error) {
+        if (job === stretchJob.current)
+          setProcessing({ status: 'error', message: error.message || 'Speed change failed.' });
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [speed, semitones, load.status, originalState === 'ready']); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Song-time position. One real second advances the song by `speed` seconds.
   const now = useCallback(() => {
     const audio = context.current;
-    const { startedAt, offset, loopA, loopB } = clock.current;
+    const { startedAt, offset, loopA, loopB, speed: rate = 1 } = clock.current;
     if (!audio || !startedAt) return offset;
-    const elapsed = Math.max(0, audio.currentTime - startedAt);
+    const elapsed = Math.max(0, audio.currentTime - startedAt) * rate;
     if (loopA !== undefined && loopB !== undefined) {
       const span = loopB - loopA;
       const into = offset + elapsed;
@@ -267,10 +447,35 @@ export default function StemPlayer({
       }
     });
     sourcesPlaying.current = [];
+    clickNodes.current.forEach((node) => {
+      try {
+        node.stop();
+      } catch {
+        /* already stopped */
+      }
+    });
+    clickNodes.current = [];
     cancelAnimationFrame(frame.current);
   };
 
-  const start = async (offsetInput, loopState = loop) => {
+  const playClick = (when, accent) => {
+    const audio = context.current;
+    if (!audio?.createOscillator) return;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.frequency.value = accent ? 1600 : 1000;
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.5 : 0.3, when + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    osc.connect(gain);
+    gain.connect(audio.destination);
+    osc.start(when);
+    osc.stop(when + 0.06);
+    clickNodes.current.push(osc);
+    if (clickNodes.current.length > 64) clickNodes.current.splice(0, 32);
+  };
+
+  const start = async (offsetInput, loopState = loop, { withCountIn = false } = {}) => {
     const audio = context.current;
     if (!audio || load.status !== 'ready') return;
     await audio.resume();
@@ -279,26 +484,40 @@ export default function StemPlayer({
     let offset = Math.min(Math.max(0, offsetInput), duration);
     if (looping && (offset < loopState.a || offset >= loopState.b)) offset = loopState.a;
     if (!looping && offset >= duration - 0.01) offset = 0;
-    const when = audio.currentTime + 0.05;
+    // Processed buffers are stretched by alpha (= rate / speed) in buffer
+    // time and played at `rate`, so the song advances at `speed`.
+    const {
+      speed: rateOfSong,
+      alpha,
+      rate,
+    } = playBuffers.current ? practice.current : { speed: 1, alpha: 1, rate: 1 };
+    const beat = grid.bpm ? 60 / grid.bpm / rateOfSong : 0;
+    const lead = withCountIn && beat ? beat * BEATS_PER_BAR : 0;
+    const begin = audio.currentTime + 0.05;
+    const when = begin + lead;
+    for (let i = 0; lead && i < BEATS_PER_BAR; i++) playClick(begin + i * beat, i === 0);
     const schedule = (buffer, node) => {
       const source = audio.createBufferSource();
       source.buffer = buffer;
+      if (source.playbackRate) source.playbackRate.value = rate;
       if (looping) {
         source.loop = true;
-        source.loopStart = loopState.a;
-        source.loopEnd = Math.min(loopState.b, buffer.duration);
+        source.loopStart = loopState.a * alpha;
+        source.loopEnd = Math.min(loopState.b * alpha, buffer.duration);
       }
       source.connect(node);
-      if (offset < buffer.duration || looping)
-        source.start(when, Math.min(offset, buffer.duration));
+      if (offset * alpha < buffer.duration || looping)
+        source.start(when, Math.min(offset * alpha, buffer.duration));
       sourcesPlaying.current.push(source);
     };
-    for (const [id, buffer] of buffers.current) schedule(buffer, laneNodes.current.get(id));
-    if (originalBuffer.current && originalNode.current)
-      schedule(originalBuffer.current, originalNode.current);
+    const lanes = playBuffers.current || buffers.current;
+    for (const [id, buffer] of lanes) schedule(buffer, laneNodes.current.get(id));
+    const reference = playBuffers.current ? originalPlayBuffer.current : originalBuffer.current;
+    if (reference && originalNode.current) schedule(reference, originalNode.current);
     clock.current = looping
-      ? { startedAt: when, offset, loopA: loopState.a, loopB: loopState.b }
-      : { startedAt: when, offset };
+      ? { startedAt: when, offset, loopA: loopState.a, loopB: loopState.b, speed: rateOfSong }
+      : { startedAt: when, offset, speed: rateOfSong };
+    clickState.current = { scheduledTo: -1e-6 };
     setPlaying(true);
     if (!previewCounted.current) {
       previewCounted.current = true;
@@ -306,6 +525,26 @@ export default function StemPlayer({
     }
     const tick = () => {
       const at = now();
+      // Schedule metronome clicks half a second ahead on the same clock.
+      if (clickOn.current && grid.beats.length) {
+        const elapsed = Math.max(0, audio.currentTime - when) * rateOfSong;
+        const horizon = elapsed + 0.5 * rateOfSong;
+        if (horizon > clickState.current.scheduledTo) {
+          for (const tickInfo of clicksBetween(
+            grid.beats,
+            {
+              offset,
+              loopA: looping ? loopState.a : null,
+              loopB: looping ? loopState.b : null,
+              barOffset,
+            },
+            clickState.current.scheduledTo,
+            horizon
+          ))
+            playClick(when + tickInfo.elapsed / rateOfSong, tickInfo.downbeat);
+          clickState.current.scheduledTo = horizon;
+        }
+      }
       if (!looping && at >= duration) {
         stopSources();
         clock.current = { startedAt: 0, offset: 0 };
@@ -340,8 +579,10 @@ export default function StemPlayer({
     setLoop(next);
     if (playing) void start(now(), next);
   };
+  const gridReady = grid.status === 'ready';
   const setLoopPoint = (point) => {
-    const at = Math.round(now() * 100) / 100;
+    const raw = now();
+    const at = Math.round((snap && gridReady ? snapToBeat(grid.beats, raw) : raw) * 1000) / 1000;
     if (point === 'a') {
       const b = loop.b !== null && loop.b - at >= MIN_LOOP ? loop.b : null;
       changeLoop({ a: at, b });
@@ -393,6 +634,8 @@ export default function StemPlayer({
     const snapshotHeadroom = headroom;
     const snapshotFormat = format;
     const snapshotRange = range === 'loop' && loopActive ? { start: loop.a, end: loop.b } : null;
+    const snapshotPractice =
+      applyPractice && playBuffers.current && practiceActive ? { ...practice.current } : null;
     setExportError('');
     setExported(null);
     setExporting({ progress: 0 });
@@ -408,8 +651,32 @@ export default function StemPlayer({
         ])
       );
       const compressed = snapshotFormat === 'aac';
+      let renderSources = sources;
+      let renderRange = snapshotRange;
+      if (snapshotPractice) {
+        // Bake speed and key into the file: stretched stems resampled by the
+        // pitch ratio, so the output timeline is song time / speed.
+        renderSources = Object.fromEntries(
+          [...playBuffers.current].map(([id, buffer]) => [
+            id,
+            {
+              sampleRate: buffer.sampleRate,
+              channels: [0, 1].map((c) =>
+                resample(buffer.getChannelData(c), snapshotPractice.rate)
+              ),
+            },
+          ])
+        );
+        if (snapshotRange)
+          renderRange = {
+            start: snapshotRange.start / snapshotPractice.speed,
+            end: snapshotRange.end / snapshotPractice.speed,
+          };
+      }
       const render = await renderMix(
-        snapshotRange ? sliceSources(sources, snapshotRange.start, snapshotRange.end) : sources,
+        renderRange
+          ? sliceSources(renderSources, renderRange.start, renderRange.end)
+          : renderSources,
         snapshot,
         {
           signal: controller.signal,
@@ -426,7 +693,14 @@ export default function StemPlayer({
           })
         : mixWavBlob(render, snapshotFormat);
       controller.signal.throwIfAborted();
-      const name = mixFileName(fileBase, snapshot, {
+      const practiceSuffix = snapshotPractice
+        ? `${snapshotPractice.speed !== 1 ? `-${Math.round(snapshotPractice.speed * 100)}pct` : ''}${
+            snapshotPractice.semitones
+              ? `-${snapshotPractice.semitones > 0 ? 'up' : 'down'}${Math.abs(snapshotPractice.semitones)}st`
+              : ''
+          }`
+        : '';
+      const name = mixFileName(`${fileBase}${practiceSuffix}`, snapshot, {
         ext: MIX_FORMATS[snapshotFormat].ext,
         range: snapshotRange,
       });
@@ -442,6 +716,7 @@ export default function StemPlayer({
         peakDb: render.peakDb,
         outputGainDb: render.outputGainDb,
         range: snapshotRange,
+        practice: snapshotPractice,
         clippedInFile: snapshotFormat !== 'float32' && render.overFrames > 0,
         overs: render.overFrames,
         preset: describeMix(snapshot).id,
@@ -459,6 +734,16 @@ export default function StemPlayer({
     }
   };
 
+  const barMarkers = useMemo(
+    () =>
+      gridReady && duration
+        ? grid.beats
+            .filter((_, index) => isDownbeat(index, barOffset))
+            .slice(0, 600)
+            .map((time) => time / duration)
+        : null,
+    [gridReady, grid.beats, barOffset, duration]
+  );
   const labelFor = (id) => stems.find((stem) => stem.id === id)?.label || id;
   const peakDb = peak === null ? null : gainToDb(peak * outputGain);
   const over = peak !== null && peak * outputGain > 1;
@@ -519,7 +804,9 @@ export default function StemPlayer({
           type="button"
           className="stem-player-play"
           disabled={load.status !== 'ready'}
-          onClick={() => (playing ? pause() : void start(clock.current.offset))}
+          onClick={() =>
+            playing ? pause() : void start(clock.current.offset, loop, { withCountIn: countIn })
+          }
           aria-label={playing ? 'Pause' : 'Play'}
         >
           {load.status === 'loading' ? (
@@ -612,6 +899,143 @@ export default function StemPlayer({
           </button>
         </div>
       </div>
+
+      <div className="stem-player-practice" role="group" aria-label="Practice tools">
+        <label className="stem-player-speed">
+          <span>
+            Speed <span aria-hidden="true">{Math.round(speed * 100)}%</span>
+          </span>
+          <input
+            type="range"
+            min={SPEED_MIN}
+            max={SPEED_MAX}
+            step="0.05"
+            value={speed}
+            aria-label="Playback speed"
+            disabled={load.status !== 'ready' || !practiceAllowed}
+            aria-valuetext={`${Math.round(speed * 100)} percent`}
+            onChange={(event) => setSpeed(Number(event.target.value))}
+          />
+        </label>
+        <div className="stem-player-key" role="group" aria-label="Key">
+          <span>
+            Key{' '}
+            <output>
+              {semitones === 0
+                ? 'original'
+                : `${semitones > 0 ? '+' : '−'}${Math.abs(semitones)} st`}
+            </output>
+          </span>
+          <button
+            type="button"
+            aria-label="Transpose down a semitone"
+            disabled={load.status !== 'ready' || !practiceAllowed || semitones <= -SEMITONE_RANGE}
+            onClick={() => setSemitones((value) => value - 1)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Transpose up a semitone"
+            disabled={load.status !== 'ready' || !practiceAllowed || semitones >= SEMITONE_RANGE}
+            onClick={() => setSemitones((value) => value + 1)}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            disabled={!practiceActive}
+            onClick={() => {
+              setSpeed(1);
+              setSemitones(0);
+            }}
+          >
+            Reset
+          </button>
+        </div>
+        <span className="stem-player-note" role="status" aria-live="polite">
+          {processing.status === 'working'
+            ? processing.message
+            : processing.status === 'error'
+              ? processing.message
+              : practiceActive && processing.status === 'ready'
+                ? 'Practice playback · pitch kept when slowing, tempo kept when transposing'
+                : ''}
+        </span>
+      </div>
+
+      <div className="stem-player-practice" role="group" aria-label="Beat tools">
+        <span className="stem-player-grid-status">
+          {grid.status === 'working'
+            ? 'Finding the beat…'
+            : gridReady
+              ? `Beat grid · ${grid.bpm} BPM (estimated)`
+              : grid.status === 'none'
+                ? 'No steady beat found: loops and clicks work without a grid'
+                : ''}
+        </span>
+        <label className="stem-player-check">
+          <input
+            type="checkbox"
+            checked={click}
+            disabled={!gridReady}
+            onChange={(event) => setClick(event.target.checked)}
+          />
+          Click
+        </label>
+        <label className="stem-player-check">
+          <input
+            type="checkbox"
+            checked={countIn}
+            disabled={!gridReady}
+            onChange={(event) => setCountIn(event.target.checked)}
+          />
+          Count-in (1 bar)
+        </label>
+        <label className="stem-player-check">
+          <input
+            type="checkbox"
+            checked={snap}
+            disabled={!gridReady}
+            onChange={(event) => setSnap(event.target.checked)}
+          />
+          Snap A–B to beats
+        </label>
+        <span className="stem-player-bars" role="group" aria-label="Loop bars from the playhead">
+          {[1, 2, 4, 8].map((bars) => (
+            <button
+              key={bars}
+              type="button"
+              disabled={!gridReady}
+              onClick={() => {
+                const next = barLoop(grid.beats, now(), bars, barOffset, duration);
+                if (next) changeLoop(next);
+              }}
+            >
+              {bars} {bars === 1 ? 'bar' : 'bars'}
+            </button>
+          ))}
+        </span>
+        <span className="stem-player-bars" role="group" aria-label="Bar start">
+          <button
+            type="button"
+            disabled={!gridReady}
+            aria-label="Move bar start one beat earlier"
+            onClick={() => setBarOffset((value) => (value + BEATS_PER_BAR - 1) % BEATS_PER_BAR)}
+          >
+            ◀
+          </button>
+          <span>Bar start</span>
+          <button
+            type="button"
+            disabled={!gridReady}
+            aria-label="Move bar start one beat later"
+            onClick={() => setBarOffset((value) => (value + 1) % BEATS_PER_BAR)}
+          >
+            ▶
+          </button>
+        </span>
+      </div>
       {originalState === 'error' && (
         <p className="stem-player-note" role="alert">
           The original song could not be decoded for comparison. The stems are unaffected.
@@ -675,7 +1099,7 @@ export default function StemPlayer({
                   loopActive && duration ? { a: loop.a / duration, b: loop.b / duration } : null
                 }
                 onSeek={load.status === 'ready' ? (fraction) => seek(fraction * duration) : null}
-                label={`${stem.label} waveform`}
+                markers={barMarkers}
               />
               <input
                 type="range"
@@ -813,6 +1237,19 @@ export default function StemPlayer({
           </button>
         )}
       </div>
+      {practiceActive && (
+        <label className="stem-player-check">
+          <input
+            type="checkbox"
+            checked={applyPractice}
+            disabled={processing.status !== 'ready' || Boolean(exporting)}
+            onChange={(event) => setApplyPractice(event.target.checked)}
+          />
+          Use my speed ({Math.round(speed * 100)}%) and key (
+          {semitones === 0 ? 'original' : `${semitones > 0 ? '+' : '−'}${Math.abs(semitones)} st`})
+          in the download
+        </label>
+      )}
       {format !== 'float32' && over && headroom === 'none' && (
         <p className="stem-player-note">
           This format cannot store peaks above 0 dBFS; they will be clipped. Use 32-bit float WAV or
@@ -849,6 +1286,12 @@ export default function StemPlayer({
               : formatClock(exported.duration)}{' '}
             · {MIX_FORMATS[exported.format].label} · peak{' '}
             {formatDb(exported.peakDb).replace(' dB', ' dBFS')}
+            {exported.practice &&
+              ` · ${Math.round(exported.practice.speed * 100)}% speed${
+                exported.practice.semitones
+                  ? `, ${exported.practice.semitones > 0 ? '+' : '−'}${Math.abs(exported.practice.semitones)} semitones`
+                  : ''
+              }`}
             {exported.outputGainDb < 0 &&
               ` · lowered ${formatDb(exported.outputGainDb)} to prevent clipping`}
             {exported.clippedInFile && ' · some peaks were clipped at 0 dBFS'}
