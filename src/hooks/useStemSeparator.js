@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   decodeTrack,
+  fileKey,
   LIMITS,
   safeTrackName,
   selectedStemIds,
@@ -8,8 +9,9 @@ import {
   validateFiles,
 } from '../utils/stemSeparator';
 import { StemSeparatorClient } from '../utils/stemSeparatorClient';
-import { trackSiteEvent } from '../utils/siteMeasurement';
+import { trackSiteEventOnce } from '../utils/siteMeasurement';
 import {
+  clearSplitSessions,
   deleteSplitSession,
   loadSplitSessions,
   saveSplitSession,
@@ -25,6 +27,8 @@ export default function useStemSeparator() {
   const [cpuOnly, setCpuOnly] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [storageWarning, setStorageWarning] = useState('');
+  const [goal, setGoal] = useState('all');
+  const [restoring, setRestoring] = useState(true);
   const demo = useRef(null);
   const queue = useRef([]);
   const userChangedQueue = useRef(false);
@@ -75,27 +79,42 @@ export default function useStemSeparator() {
           setStorageWarning(
             `${warnings.length} saved Split session(s) could not be restored. The records remain untouched.`
           );
-        if (!activeEffect || userChangedQueue.current) {
+        if (!activeEffect || replaceStoredOnRestore.current) {
           sessions.forEach(release);
-          if (activeEffect && replaceStoredOnRestore.current)
+          if (activeEffect)
             sessions.forEach(({ id }) =>
               deleteSplitSession(id).catch(() => {
                 if (mounted.current)
                   setStorageWarning(
-                    'A replaced session could not be removed from browser storage.'
+                    'A cleared song could not be removed from browser storage. Use Clear saved work again.'
                   );
               })
             );
           return;
         }
-        queue.current = sessions;
+        // Files added while storage was still opening are kept after the
+        // restored songs instead of either silently replacing the other.
+        const present = new Set(queue.current.map((job) => job.id));
+        const restored = sessions.filter((job) => !present.has(job.id));
+        const restoredFiles = new Set(restored.map((job) => fileKey(job.file)));
+        const duplicate = (job) => job.status === 'queued' && restoredFiles.has(fileKey(job.file));
+        queue.current
+          .filter(duplicate)
+          .forEach((job) => deleteSplitSession(job.id).catch(() => {}));
+        queue.current = queue.current.filter((job) => !duplicate(job));
+        const room = Math.max(0, LIMITS.tracks - queue.current.length);
+        restored.slice(room).forEach(release);
+        queue.current = [...restored.slice(0, room), ...queue.current];
         setJobs(queue.current);
       })
       .catch(() => {
         if (activeEffect)
           setStorageWarning(
-            'Saved Split storage could not be opened. Current results remain available in this tab.'
+            'Saved work could not be opened in this browser. New results stay available in this tab; download what you need.'
           );
+      })
+      .finally(() => {
+        if (activeEffect) setRestoring(false);
       });
     const warn = (event) => {
       if (active.current || queue.current.some((job) => job.status === 'done')) {
@@ -116,7 +135,8 @@ export default function useStemSeparator() {
     };
   }, []);
 
-  const addFiles = (files) => {
+  // origin: optional same-tab handoff metadata ({ from, kind, label, user }).
+  const addFiles = (files, origin = null) => {
     if (active.current) return [];
     const { accepted, errors: issues } = validateFiles(Array.from(files), queue.current);
     setErrors(issues);
@@ -127,6 +147,7 @@ export default function useStemSeparator() {
       message: 'Queued',
       outputs: [],
       progress: null,
+      ...(origin ? { origin } : {}),
     }));
     if (added.length) userChangedQueue.current = true;
     publish([...queue.current, ...added], true);
@@ -148,6 +169,24 @@ export default function useStemSeparator() {
     publish([]);
   };
 
+  // Removes this tool's saved songs from the browser, including records that
+  // could not be restored. Resolves to true when storage confirmed the clear.
+  const clearSaved = async () => {
+    if (active.current) return false;
+    clearAll();
+    try {
+      await clearSplitSessions();
+      if (mounted.current) setStorageWarning('');
+      return true;
+    } catch {
+      if (mounted.current)
+        setStorageWarning(
+          'Browser storage did not confirm the removal. Clear this site’s data in browser settings to be sure.'
+        );
+      return false;
+    }
+  };
+
   const clearFinished = () => {
     if (active.current) return;
     userChangedQueue.current = true;
@@ -155,14 +194,14 @@ export default function useStemSeparator() {
     publish(queue.current.filter((job) => job.status !== 'done'));
   };
 
-  const run = async (onlyId) => {
+  const run = async (onlyId, stemOverride = null) => {
     if (active.current) return;
-    const stems = selectedStemIds(selected);
+    const stems = selectedStemIds(stemOverride || selected);
+    const runGoal = goal;
     const batch = queue.current.filter(
       (job) => job.status !== 'done' && (!onlyId || job.id === onlyId)
     );
     if (!batch.length || !stems.length) return;
-    trackSiteEvent('separator_started');
     const controller = new AbortController();
     active.current = controller;
     setRunning(true);
@@ -171,12 +210,17 @@ export default function useStemSeparator() {
     try {
       for (const job of batch) {
         if (controller.signal.aborted) break;
+        // Events are per track attempt; the attempt id prevents rerenders or
+        // restored sessions from counting the same outcome twice.
+        const attempt = crypto.randomUUID();
+        trackSiteEventOnce(`${attempt}:start`, 'separator_started');
         update(job.id, {
           status: 'processing',
           message: 'Reading audio',
           progress: null,
           startedAt: Date.now(),
           stems,
+          goal: runGoal,
         });
         try {
           const audio = await decodeTrack(job.file, controller.signal);
@@ -205,9 +249,12 @@ export default function useStemSeparator() {
             name: `${safeTrackName(job.file.name)}-${output.id === 'other' ? 'instruments' : output.id}.wav`,
           }));
           update(job.id, { status: 'done', message: 'Ready', progress: 1, outputs });
-          trackSiteEvent('separator_completed');
+          trackSiteEventOnce(`${attempt}:end`, 'separator_completed');
         } catch (error) {
-          if (!controller.signal.aborted) trackSiteEvent('separator_failed');
+          trackSiteEventOnce(
+            `${attempt}:end`,
+            controller.signal.aborted ? 'separator_cancelled' : 'separator_failed'
+          );
           update(job.id, {
             status: controller.signal.aborted ? 'cancelled' : 'error',
             message: controller.signal.aborted ? 'Cancelled' : error.message,
@@ -239,7 +286,11 @@ export default function useStemSeparator() {
       const [job] = addFiles([
         new File([blob], 'sattari-practice-demo.wav', { type: 'audio/wav', lastModified: 0 }),
       ]);
-      if (job) await run(job.id);
+      if (job)
+        await run(
+          job.id,
+          STEMS.map((stem) => stem.id)
+        );
     } catch (error) {
       if (!controller.signal.aborted && mounted.current)
         setErrors([
@@ -267,11 +318,15 @@ export default function useStemSeparator() {
     remove,
     clearFinished,
     clearAll,
+    clearSaved,
     run,
     cancel: () => {
       demo.current?.abort();
       active.current?.abort();
     },
     storageWarning,
+    goal,
+    setGoal,
+    restoring,
   };
 }

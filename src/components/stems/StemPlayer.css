@@ -1,0 +1,383 @@
+/* Shared synchronized stem player (Stem Separator and its Split alias).
+   Inherits each page's palette, falls back to the Sattari night palette. */
+.stem-player {
+  --sp-panel: var(--sep-panel, var(--alab-panel, #191b1d));
+  --sp-raised: var(--sep-raised, var(--alab-raised, #232628));
+  --sp-line: var(--sep-line, var(--alab-line, #34383b));
+  --sp-text: var(--sep-text, var(--alab-text, #f3f5f4));
+  --sp-muted: var(--sep-muted, var(--alab-muted, #a4acae));
+  --sp-accent: var(--sep-accent, var(--alab-accent, #b9e7c8));
+  --sp-bad: var(--alab-bad, #ffb4a8);
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--sp-line);
+  border-radius: 8px;
+  background: var(--sp-panel);
+  color: var(--sp-text);
+}
+.stem-player :is(h3, p) {
+  margin: 0;
+}
+.stem-player button,
+.stem-player select {
+  font: inherit;
+  color: inherit;
+}
+.stem-player :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 3px;
+}
+.stem-player button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stem-player-presets,
+.stem-player-listen,
+.stem-player-loop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.stem-player-presets button,
+.stem-player-listen button,
+.stem-player-loop button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--sp-line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.stem-player-presets button[aria-pressed='true'],
+.stem-player-listen button[aria-pressed='true'] {
+  border-color: var(--sp-accent);
+  background: var(--sp-accent);
+  color: var(--sep-bg, var(--alab-accent-ink, #102018));
+  font-weight: 600;
+}
+.stem-player-solo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px 0 14px;
+  border: 1px solid var(--sp-line);
+  border-radius: 999px;
+  font-size: 13px;
+}
+.stem-player-solo select,
+.stem-player-format select {
+  min-height: 34px;
+  border: 1px solid var(--sp-line);
+  border-radius: 6px;
+  background: var(--sp-raised);
+  padding: 0 8px;
+}
+.stem-player-custom {
+  font-size: 12px;
+  color: var(--sp-muted);
+}
+.stem-player-custom.is-on {
+  color: var(--sp-accent);
+  font-weight: 600;
+}
+.stem-player-transport {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.stem-player-play {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sp-accent);
+  color: var(--sep-bg, var(--alab-accent-ink, #102018));
+  cursor: pointer;
+}
+.stem-player-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--sp-line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.stem-player-scrub {
+  position: relative;
+  display: grid;
+  align-items: center;
+}
+.stem-player-scrub input,
+.stem-player-gain,
+.stem-player-master input[type='range'] {
+  width: 100%;
+  accent-color: var(--sp-accent);
+}
+.stem-player-loop-band {
+  position: absolute;
+  top: calc(50% + 9px);
+  height: 3px;
+  border-radius: 2px;
+  background: var(--sp-accent);
+  pointer-events: none;
+}
+.stem-player-time {
+  min-width: 92px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--sp-muted);
+}
+.stem-player-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+.stem-player-loop svg {
+  color: var(--sp-muted);
+}
+.stem-player-lanes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stem-player-lane {
+  display: grid;
+  grid-template-columns: 128px auto minmax(120px, 1fr) 120px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--lane-color);
+  border-radius: 6px;
+  background: var(--sp-raised);
+  color: var(--lane-color);
+}
+.stem-player-lane.is-silent {
+  opacity: 0.55;
+}
+.stem-player-lane-name {
+  display: grid;
+  color: var(--sp-text);
+}
+.stem-player-lane-name small {
+  font-size: 12px;
+  color: var(--sp-muted);
+  font-variant-numeric: tabular-nums;
+}
+.stem-player-lane-buttons,
+.stem-player-lane-actions {
+  display: inline-flex;
+  gap: 6px;
+  color: var(--sp-text);
+}
+.stem-player-lane-buttons button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--sp-line);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.stem-player-lane-buttons button[aria-pressed='true'] {
+  border-color: var(--lane-color);
+  background: var(--lane-color);
+  color: #111213;
+}
+.stem-waveform {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.stem-waveform.is-seekable {
+  cursor: pointer;
+}
+.stem-player-master {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sp-line);
+  font-size: 13px;
+}
+.stem-player-master > label:first-child {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 220px) auto;
+  align-items: center;
+  gap: 10px;
+}
+.stem-player-master output {
+  min-width: 64px;
+  font-variant-numeric: tabular-nums;
+}
+.stem-player-peak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sp-muted);
+}
+.stem-player-peak.is-over {
+  color: var(--sp-bad);
+  font-weight: 600;
+}
+.stem-player-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+.stem-player-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sp-accent);
+}
+.stem-player-export {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--sp-raised);
+}
+.stem-player-export h3 {
+  font-size: 16px;
+}
+.stem-player-export p {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--sp-muted);
+}
+.stem-player-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--sp-line);
+  border-radius: 6px;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+.stem-player-button.is-primary {
+  border-color: var(--sp-accent);
+  background: var(--sp-accent);
+  color: var(--sep-bg, var(--alab-accent-ink, #102018));
+}
+.stem-player-progress {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.stem-player-progress progress {
+  width: 100%;
+  accent-color: var(--sp-accent);
+}
+.stem-player-note {
+  font-size: 13px;
+  color: var(--sp-muted);
+}
+.stem-player-error {
+  font-size: 13px;
+  color: var(--sp-bad);
+}
+.stem-player-done {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--sp-accent);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.stem-player-done > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.stem-player-spin {
+  animation: stem-player-spin 1s linear infinite;
+}
+@keyframes stem-player-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.stem-player-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+[data-theme='day'] .stem-player-lane-buttons button[aria-pressed='true'] {
+  color: #fff;
+}
+[data-theme='day'] .stem-player-lane {
+  color: color-mix(in srgb, var(--lane-color) 70%, #19221e);
+}
+@media (prefers-reduced-motion: reduce) {
+  .stem-player-spin {
+    animation: none;
+  }
+}
+@media (max-width: 760px) {
+  .stem-player {
+    padding: 12px;
+  }
+  .stem-player-transport {
+    grid-template-columns: auto auto 1fr;
+  }
+  .stem-player-time {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+  .stem-player-lane {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas:
+      'name buttons actions'
+      'wave wave wave'
+      'gain gain gain';
+    gap: 8px;
+  }
+  .stem-player-lane-name {
+    grid-area: name;
+  }
+  .stem-player-lane-buttons {
+    grid-area: buttons;
+  }
+  .stem-player-lane-actions {
+    grid-area: actions;
+  }
+  .stem-player-lane .stem-waveform {
+    grid-area: wave;
+  }
+  .stem-player-gain {
+    grid-area: gain;
+  }
+  .stem-player-export {
+    grid-template-columns: 1fr;
+  }
+  .stem-player-master > label:first-child {
+    grid-template-columns: auto 1fr auto;
+    width: 100%;
+  }
+}

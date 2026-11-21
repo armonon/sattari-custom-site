@@ -72,7 +72,7 @@ function queueTrack() {
 
 async function finishTrack() {
   queueTrack();
-  fireEvent.click(screen.getByRole('button', { name: 'Separate 1 track' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Separate 1 song' }));
   return screen.findByRole('link', { name: 'Download Bass WAV' });
 }
 
@@ -117,10 +117,12 @@ afterEach(() => {
 
 it.each([
   ['Sattari Hub', '/hub', 'Hub destination'],
-  ['Open Studio', '/studio', 'Studio destination'],
+  ['Songboard', '/studio', 'Studio destination'],
   ['Formats, privacy & limits', '/tools/stem-separator', 'Reference destination'],
 ])(
-  'preserves results on Cancel and leaves once on confirmation via %s',
+  // jsdom has no IndexedDB, so finished results exist only in the tab: the
+  // guard must protect them. With working storage it does not block.
+  'preserves unsaved results on Cancel and leaves once on confirmation via %s',
   async (name, path, title) => {
     const router = renderPage();
     const output = await finishTrack();
@@ -182,18 +184,18 @@ it('does not stop active processing when navigation is cancelled', async () => {
   );
   const router = renderPage();
   queueTrack();
-  fireEvent.click(screen.getByRole('button', { name: 'Separate 1 track' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Separate 1 song' }));
   await waitFor(() => expect(separate).toHaveBeenCalledTimes(1));
   const disposals = dispose.mock.calls.length;
 
-  fireEvent.click(screen.getByRole('link', { name: 'Open Studio' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Songboard' }));
   expect(window.confirm).toHaveBeenCalledTimes(1);
   expect(router.state.location.pathname).toBe('/stem-separator');
   expect(signal.aborted).toBe(false);
   expect(dispose).toHaveBeenCalledTimes(disposals);
 
   vi.mocked(window.confirm).mockReturnValue(true);
-  fireEvent.click(screen.getByRole('link', { name: 'Open Studio' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Songboard' }));
   expect(await screen.findByRole('heading', { name: 'Studio destination' })).toBeInTheDocument();
   expect(signal.aborted).toBe(true);
 });
@@ -224,7 +226,7 @@ it('allows leaving a queued-only session without a warning', async () => {
 it('stops blocking after the finished results are cleared', async () => {
   renderPage();
   await finishTrack();
-  fireEvent.click(screen.getByRole('button', { name: 'Clear finished' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Remove finished' }));
   fireEvent.click(screen.getByRole('link', { name: 'Sattari Hub', exact: true }));
   expect(await screen.findByRole('heading', { name: 'Hub destination' })).toBeInTheDocument();
   expect(window.confirm).not.toHaveBeenCalled();
@@ -280,7 +282,7 @@ it('hydrates the existing StaticRouter page through a wildcard data router witho
     });
     expect(container.querySelector('h1')).toBe(heading);
     expect(onRecoverableError).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Separate tracks' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Separate' })).toBeDisabled();
   } finally {
     act(() => root?.unmount());
     container.remove();
