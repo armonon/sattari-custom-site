@@ -4,6 +4,7 @@ const SOURCE = 'sattari-referral-v1';
 let lastPage = '';
 let lastPageAt = 0;
 let emitted = 0;
+const onceKeys = new Set();
 
 export function measurementBlocked() {
   return (
@@ -63,4 +64,16 @@ export function trackSiteEvent(event) {
   } catch {
     /* Never interrupt a musical session or inquiry for measurement. */
   }
+}
+
+/**
+ * Count an outcome once per page load for a caller-chosen key (for example a
+ * track attempt id), so rerenders, retries of the same attempt and restored
+ * saved work never inflate counts. Keys are local only and never sent.
+ */
+export function trackSiteEventOnce(key, event) {
+  if (onceKeys.has(key)) return;
+  if (onceKeys.size > 2000) onceKeys.clear();
+  onceKeys.add(key);
+  trackSiteEvent(event);
 }

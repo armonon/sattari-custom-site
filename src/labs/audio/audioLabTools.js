@@ -5,14 +5,15 @@ export const LAB_TOOLS = [
     name: 'Split',
     path: '/studio/split',
     seoTitle: 'Split Stems On-Device: Vocals, Drums & Bass',
-    blurb: 'Separate a song into vocals, drums, bass and instruments on your device.',
+    blurb: 'One-song view of Stem Separator: stems, practice mixes and Songboard handoff.',
   },
   {
     id: 'keybpm',
     name: 'Key & BPM',
     path: '/studio/keybpm',
-    seoTitle: 'Key & BPM Finder: Batch Detect Key, Camelot & Tempo',
-    blurb: 'Drop a folder of tracks, get key, Camelot and tempo, export CSV.',
+    seoTitle: 'Key & BPM Finder: Song Key, Camelot & Tempo, Free',
+    blurb: 'Find key, Camelot and tempo, listen back, fix half/double time, export CSV.',
+    stage: 'Beta',
   },
   {
     id: 'vox',

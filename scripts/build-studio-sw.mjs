@@ -5,8 +5,10 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const dist = new URL('../dist/', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: checkouts whose path contains spaces must work.
+const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 const source = new URL('../src/pwa/studio-sw.js', import.meta.url);
 
 const PAGES = { '/studio': 'studio.html' };

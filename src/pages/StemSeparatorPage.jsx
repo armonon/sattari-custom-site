@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -8,14 +8,18 @@ import {
   Download,
   Drum,
   FileAudio,
+  Gauge,
   Guitar,
+  HardDrive,
   Layers,
+  Link2,
   LoaderCircle,
   Mic2,
   Music2,
   Plus,
   RotateCcw,
   ShieldCheck,
+  SlidersHorizontal,
   Square,
   Trash2,
   Upload,
@@ -26,12 +30,28 @@ import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import { separatorGuides } from '../data/stemSeparatorContent';
 import useStemSeparator from '../hooks/useStemSeparator';
 import ToolReferenceLink from '../components/ToolReferenceLink';
-import SeparatorNavigationGuard from '../components/SeparatorNavigationGuard';
+import SeparatorNavigationGuard, {
+  LEAVE_WHILE_PROCESSING,
+} from '../components/SeparatorNavigationGuard';
 import StemAnalysisSummary from '../components/StemAnalysisSummary';
-import { trackSiteEvent } from '../utils/siteMeasurement';
+import StemPlayer from '../components/stems/StemPlayer';
+import HandoffNotice from '../components/stems/HandoffNotice';
+import ToolFeedback from '../components/stems/ToolFeedback';
+import { trackSiteEvent, trackSiteEventOnce } from '../utils/siteMeasurement';
 import { AUDIO_ACCEPT, formatDuration, safeTrackName, STEMS } from '../utils/stemSeparator';
 import { createStemArchive } from '../utils/stemSeparatorDownload';
+import { renderBatchMixes } from '../utils/batchMix';
+import { MIX_PRESETS } from '../utils/stemMix';
 import { stemAnalysisReport } from '../utils/stemAnalysisReport';
+import { offerToolHandoff, takeToolHandoff } from '../utils/toolHandoff';
+import { offerStemHandoff } from '../studio/stemHandoff';
+import {
+  GOAL_SLUGS,
+  SEPARATOR_GOALS,
+  goalFromLink,
+  goalStems,
+  stemLabel,
+} from './stemSeparatorGoals';
 import './StemSeparatorPage.css';
 
 const icons = { vocals: Mic2, drums: Drum, bass: Guitar, other: Music2 };
@@ -40,6 +60,7 @@ function Waveform({ peaks, color = '#8b939b' }) {
   const ref = useRef(null);
   useEffect(() => {
     const canvas = ref.current;
+    if (!canvas || !peaks?.length) return undefined;
     const draw = () => {
       const rect = canvas.getBoundingClientRect();
       const scale = window.devicePixelRatio || 1;
@@ -49,7 +70,8 @@ function Waveform({ peaks, color = '#8b939b' }) {
       if (!context) return;
       context.scale(scale, scale);
       context.fillStyle = color;
-      const max = Math.max(0.01, ...peaks);
+      let max = 0.01;
+      for (const peak of peaks) if (peak > max) max = peak;
       const step = rect.width / peaks.length;
       peaks.forEach((peak, index) => {
         const height = Math.max(1, (peak / max) * 34);
@@ -57,56 +79,12 @@ function Waveform({ peaks, color = '#8b939b' }) {
       });
     };
     draw();
+    if (typeof ResizeObserver === 'undefined') return undefined;
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
     return () => observer.disconnect();
   }, [peaks, color]);
   return <canvas ref={ref} className="separator-waveform" aria-hidden="true" />;
-}
-
-function StemOutput({ output }) {
-  const stem = STEMS.find(({ id }) => id === output.id);
-  const Icon = icons[stem.id];
-  const audioRef = useRef(null);
-  useEffect(() => {
-    const pauseOther = (event) => {
-      if (event.detail !== audioRef.current) audioRef.current?.pause();
-    };
-    window.addEventListener('sattari-stem-preview', pauseOther);
-    return () => window.removeEventListener('sattari-stem-preview', pauseOther);
-  }, []);
-  return (
-    <div className="separator-output" style={{ '--stem-color': stem.color }}>
-      <span className="separator-output-name">
-        <Icon size={16} />
-        <strong>{stem.label}</strong>
-      </span>
-      <Waveform peaks={output.peaks} color={stem.color} />
-      <audio
-        ref={audioRef}
-        controls
-        preload="none"
-        src={output.url}
-        aria-label={`${stem.label} preview`}
-        onPlay={(event) =>
-          window.dispatchEvent(
-            new CustomEvent('sattari-stem-preview', { detail: event.currentTarget })
-          )
-        }
-      />
-      <a
-        className="separator-icon"
-        href={output.url}
-        download={output.name}
-        onClick={() => trackSiteEvent('stem_download')}
-        title={`Download ${stem.label} WAV`}
-        aria-label={`Download ${stem.label} WAV`}
-      >
-        <Download size={17} />
-      </a>
-      <StemAnalysisSummary analysis={output.analysis} compact label={`${stem.label} analysis`} />
-    </div>
-  );
 }
 
 function ProcessingProgress({ job }) {
@@ -128,12 +106,31 @@ function ProcessingProgress({ job }) {
         value={job.progress === null ? undefined : job.progress}
         aria-label={`${job.file.name} progress`}
       />
-      <small aria-live="off">Elapsed {formatDuration(elapsed)}</small>
+      <small aria-live="off">
+        Elapsed {formatDuration(elapsed)}
+        {job.progress === null ? ' · this step has no measurable progress' : ''}
+      </small>
     </div>
   );
 }
 
+function download(blob, name, links) {
+  const url = URL.createObjectURL(blob);
+  links.add(url);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    links.delete(url);
+  }, 60000);
+}
+
 export default function StemSeparatorPage() {
+  const separator = useStemSeparator();
   const {
     jobs,
     selected,
@@ -147,23 +144,50 @@ export default function StemSeparatorPage() {
     addFiles,
     remove,
     clearFinished,
+    clearSaved,
     run,
     cancel,
-  } = useStemSeparator();
+    storageWarning,
+    goal,
+    setGoal,
+  } = separator;
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dragging, setDragging] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [packing, setPacking] = useState(false);
   const [downloadError, setDownloadError] = useState('');
+  const [focusId, setFocusId] = useState(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearNote, setClearNote] = useState('');
+  const [received, setReceived] = useState(null);
+  const [batchPreset, setBatchPreset] = useState('no-vocals');
+  const [batchProgress, setBatchProgress] = useState(null);
+  const [batchNote, setBatchNote] = useState('');
   const picker = useRef(null);
-  const all = useRef(null);
   const archive = useRef(null);
   const links = useRef(new Set());
+  const handoff = useRef(undefined);
   const ready = jobs.filter((job) => job.status === 'done');
   const pending = jobs.filter((job) => job.status !== 'done');
   const locked = running || loadingDemo || packing;
+  const focused = ready.find((job) => job.id === focusId) || ready[ready.length - 1] || null;
 
+  // Consume a same-tab transfer from Key & BPM once (refs survive StrictMode).
   useEffect(() => {
-    all.current.indeterminate = selected.length > 0 && selected.length < STEMS.length;
-  }, [selected]);
+    if (handoff.current === undefined) handoff.current = takeToolHandoff('separator');
+    const offer = handoff.current;
+    if (!offer || offer.consumed) return;
+    offer.consumed = true;
+    const added = addFiles([offer.file], {
+      from: offer.from,
+      kind: offer.kind,
+      label: offer.label,
+      user: offer.user,
+    });
+    setReceived({ ...offer, added: added.length > 0 });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(
     () => () => {
       archive.current?.abort();
@@ -172,22 +196,39 @@ export default function StemSeparatorPage() {
     []
   );
 
+  const chooseGoal = (value) => {
+    setGoal(value);
+    setLinkCopied(false);
+    const stems = goalStems(value);
+    if (stems) setSelected(stems);
+  };
+
+  // A shared link (?goal=drum-practice) preselects the goal once on arrival.
+  // Read after mount so the prerendered page hydrates unchanged.
+  useEffect(() => {
+    const linked = goalFromLink(searchParams.get('goal'));
+    if (linked) chooseGoal(linked);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const shareGoal = async () => {
+    const url = new URL('/stem-separator', 'https://sattarimusic.com');
+    url.searchParams.set('goal', GOAL_SLUGS[goal] || 'all');
+    setSearchParams({ goal: GOAL_SLUGS[goal] || 'all' }, { replace: true });
+    try {
+      await navigator.clipboard.writeText(url.href);
+      setLinkCopied(url.href);
+    } catch {
+      setLinkCopied(`Copy this link: ${url.href}`);
+    }
+  };
+
   const downloadReport = (job) => {
-    const blob = new Blob([JSON.stringify(stemAnalysisReport(job), null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    links.current.add(url);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${safeTrackName(job.file.name)}-analysis.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      links.current.delete(url);
-    }, 60000);
+    download(
+      new Blob([JSON.stringify(stemAnalysisReport(job), null, 2)], { type: 'application/json' }),
+      `${safeTrackName(job.file.name)}-analysis.json`,
+      links.current
+    );
+    trackSiteEvent('separator_report_exported');
   };
 
   const downloadZip = async (rows) => {
@@ -199,20 +240,12 @@ export default function StemSeparatorPage() {
     try {
       const blob = await createStemArchive(rows, controller.signal);
       controller.signal.throwIfAborted();
-      const url = URL.createObjectURL(blob);
-      links.current.add(url);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download =
-        rows.length === 1 ? `${safeTrackName(rows[0].file.name)}-stems.zip` : 'sattari-stems.zip';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      download(
+        blob,
+        rows.length === 1 ? `${safeTrackName(rows[0].file.name)}-stems.zip` : 'sattari-stems.zip',
+        links.current
+      );
       trackSiteEvent('stem_download');
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        links.current.delete(url);
-      }, 60000);
     } catch (error) {
       if (!controller.signal.aborted)
         setDownloadError(error.message || 'Download failed. Try downloading individual stems.');
@@ -224,18 +257,130 @@ export default function StemSeparatorPage() {
     }
   };
 
+  // One preset for every finished song, rendered one song at a time and
+  // packaged with the existing ZIP worker (one folder per song).
+  const downloadPracticeMixes = async () => {
+    if (locked) return;
+    const controller = new AbortController();
+    archive.current = controller;
+    setPacking(true);
+    setDownloadError('');
+    setBatchNote('');
+    setBatchProgress(0);
+    try {
+      const { mixes, skipped } = await renderBatchMixes(ready, batchPreset, {
+        signal: controller.signal,
+        onProgress: setBatchProgress,
+        fileBase: (job) => safeTrackName(job.file.name),
+      });
+      if (!mixes.length)
+        throw new Error('No song has all four parts. Separate all parts to build practice mixes.');
+      const blob = await createStemArchive(
+        mixes.map((mix) => ({ file: mix.job.file, outputs: [{ name: mix.name, blob: mix.blob }] })),
+        controller.signal
+      );
+      controller.signal.throwIfAborted();
+      const label = MIX_PRESETS.find((preset) => preset.id === batchPreset)?.label || 'mixes';
+      download(
+        blob,
+        `sattari-${label.toLowerCase().replace(/[^a-z]+/g, '-')}-mixes.zip`,
+        links.current
+      );
+      trackSiteEvent('mix_exported');
+      setBatchNote(
+        `${mixes.length} ${mixes.length === 1 ? 'mix' : 'mixes'} downloaded (32-bit float WAV).` +
+          (skipped.length
+            ? ` Skipped ${skipped.length} without all four parts: ${skipped.join(', ')}.`
+            : '')
+      );
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setDownloadError(
+          error.message || 'Practice mixes could not be made. Try one song at a time.'
+        );
+    } finally {
+      setBatchProgress(null);
+      if (archive.current === controller) {
+        archive.current = null;
+        setPacking(false);
+      }
+    }
+  };
+
+  const toKeyBpm = (job, { file, kind, label }) => {
+    const detected =
+      kind === 'original' && job.analysis?.status === 'ready'
+        ? { key: job.analysis.key || null, bpm: job.analysis.bpm ?? null }
+        : null;
+    offerToolHandoff({
+      target: 'keybpm',
+      from: 'Stem Separator',
+      file,
+      kind,
+      label,
+      detected,
+      user: kind === 'original' ? job.origin?.user || null : null,
+    });
+    trackSiteEvent('continue_to_keybpm');
+    navigate('/studio/keybpm');
+  };
+
+  const toSongboard = (job) => {
+    offerStemHandoff({
+      title: safeTrackName(job.file.name),
+      fullMix: job.file,
+      stems: job.outputs.map((output) => ({
+        id: output.id,
+        file: new File([output.blob], output.name, { type: 'audio/wav' }),
+      })),
+    });
+    trackSiteEvent('continue_to_songboard');
+    navigate('/studio');
+  };
+
+  const playerStems = useMemo(
+    () =>
+      focused
+        ? STEMS.map((stem) => {
+            const output = focused.outputs.find((item) => item.id === stem.id);
+            return (
+              output && {
+                id: stem.id,
+                label: stemLabel(stem.id),
+                color: stem.color,
+                blob: output.blob,
+                url: output.url,
+                name: output.name,
+                peaks: output.peaks,
+              }
+            );
+          }).filter(Boolean)
+        : [],
+    [focused]
+  );
+
+  const doClear = async () => {
+    setConfirmClear(false);
+    setFocusId(null);
+    const ok = await clearSaved();
+    setClearNote(ok ? 'Saved songs and stems were removed from this browser.' : '');
+  };
+
   return (
     <>
-      <SeparatorNavigationGuard when={locked || ready.length > 0} />
+      <SeparatorNavigationGuard
+        when={locked || Boolean(storageWarning && ready.length)}
+        message={locked ? LEAVE_WHILE_PROCESSING : undefined}
+      />
       <SEO {...PAGE_SEO.separator} />
       <StructuredData
         data={musicToolSchema('separator', [
-          'Batch stem separation',
-          'Vocal isolation',
-          'Drum, bass and instrument stems',
-          'On-device audio processing',
-          'Estimated song and stem key, tempo and prominent notes',
-          'Audio levels and downloadable analysis reports',
+          'Vocal, drum, bass and other-instrument stems',
+          'Synchronized stem playback with mute, solo and levels',
+          'Vocal backing, drumless and bassless practice mixes as one WAV',
+          'A–B practice loop',
+          'Batch separation on your device',
+          'Estimated song and stem key and tempo',
           'WAV and ZIP downloads',
         ])}
       />
@@ -245,100 +390,166 @@ export default function StemSeparatorPage() {
             <Link to="/hub">
               <ArrowLeft size={15} /> Sattari Hub
             </Link>
-            <Link to="/studio">
-              Open Studio <ArrowUpRight size={15} />
-            </Link>
+            <span className="separator-breadcrumb-end">
+              <Link to="/studio/keybpm">
+                <Gauge size={15} /> Key & BPM
+              </Link>
+              <Link to="/studio">
+                Songboard <ArrowUpRight size={15} />
+              </Link>
+            </span>
           </nav>
           <header className="separator-heading">
             <div>
-              <p className="separator-eyebrow">Sattari music tools</p>
+              <p className="separator-eyebrow">Sattari Music</p>
               <h1>
                 Stem Separator <span className="separator-beta">Beta</span>
               </h1>
+              <p className="separator-lede">
+                Split a song into vocals, drums, bass and other instruments, play along with the
+                parts you need, and download your practice mix.
+              </p>
             </div>
             <span className="separator-private">
-              <ShieldCheck size={16} /> On-device processing
+              <ShieldCheck size={16} /> Audio is processed on this device
             </span>
           </header>
-          <ToolReferenceLink tool="stem-separator" />
+
+          {received && <HandoffNotice handoff={received} destination="Stem Separator" />}
+
           <div className="separator-workspace">
             <aside className="separator-settings" aria-label="Separation settings">
-              <fieldset disabled={locked}>
-                <legend>Output stems</legend>
-                <label className="separator-all">
-                  <Layers size={17} />
-                  <span>All stems</span>
-                  <input
-                    ref={all}
-                    type="checkbox"
-                    checked={selected.length === STEMS.length}
-                    onChange={(event) =>
-                      setSelected(event.target.checked ? STEMS.map((stem) => stem.id) : [])
-                    }
-                  />
-                </label>
-                <div className="separator-choices">
-                  {STEMS.map(({ id, label, color }) => {
-                    const Icon = icons[id];
-                    return (
-                      <label
-                        key={id}
-                        className={`separator-choice${selected.includes(id) ? ' is-selected' : ''}`}
-                        style={{ '--stem-color': color }}
-                      >
-                        <Icon size={20} />
-                        <span>
-                          {label}
-                          {id === 'other' && <small>Guitar, keys & other sounds</small>}
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(id)}
-                          onChange={(event) =>
-                            setSelected((current) =>
-                              event.target.checked
-                                ? [...current, id]
-                                : current.filter((stem) => stem !== id)
-                            )
-                          }
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
+              <fieldset disabled={locked} className="separator-goals">
+                <legend>What are you making?</legend>
+                {SEPARATOR_GOALS.map((item) => (
+                  <label
+                    key={item.id}
+                    className={`separator-goal${goal === item.id ? ' is-selected' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="separator-goal"
+                      value={item.id}
+                      checked={goal === item.id}
+                      onChange={() => chooseGoal(item.id)}
+                    />
+                    <span>
+                      <strong>{item.label}</strong>
+                      <small>{item.detail}</small>
+                    </span>
+                  </label>
+                ))}
               </fieldset>
-              <label className="separator-device">
-                Processing device
-                <select
-                  value={cpuOnly ? 'cpu' : 'auto'}
-                  disabled={locked}
-                  onChange={(event) => setCpuOnly(event.target.value === 'cpu')}
-                >
-                  <option value="auto">Automatic</option>
-                  <option value="cpu">CPU compatibility mode</option>
-                </select>
-              </label>
+              <button
+                type="button"
+                className="separator-text-button"
+                onClick={() => void shareGoal()}
+              >
+                <Link2 size={14} /> Copy a link to this setup
+              </button>
+              {linkCopied && (
+                <p className="separator-note" role="status">
+                  {linkCopied.startsWith('Copy')
+                    ? linkCopied
+                    : 'Link copied. Anyone who opens it starts here.'}
+                </p>
+              )}
+              {goal === 'custom' && (
+                <fieldset disabled={locked}>
+                  <legend>Parts to keep</legend>
+                  <div className="separator-choices">
+                    {STEMS.map(({ id, color }) => {
+                      const Icon = icons[id];
+                      return (
+                        <label
+                          key={id}
+                          className={`separator-choice${selected.includes(id) ? ' is-selected' : ''}`}
+                          style={{ '--stem-color': color }}
+                        >
+                          <Icon size={20} />
+                          <span>
+                            {stemLabel(id)}
+                            {id === 'other' && <small>Guitar, keys, synths and the rest</small>}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(id)}
+                            onChange={(event) =>
+                              setSelected((current) =>
+                                event.target.checked
+                                  ? [...current, id]
+                                  : current.filter((stem) => stem !== id)
+                              )
+                            }
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="separator-note">
+                    Keeping fewer parts saves memory. The model still computes all four.
+                  </p>
+                </fieldset>
+              )}
+              <details className="separator-disclosure">
+                <summary>Processing options</summary>
+                <label className="separator-device">
+                  Processing device
+                  <select
+                    value={cpuOnly ? 'cpu' : 'auto'}
+                    disabled={locked}
+                    onChange={(event) => setCpuOnly(event.target.value === 'cpu')}
+                  >
+                    <option value="auto">Automatic (GPU when available)</option>
+                    <option value="cpu">CPU compatibility mode</option>
+                  </select>
+                </label>
+                <p className="separator-note">
+                  Use CPU mode if GPU processing fails or produces errors. It is slower.
+                </p>
+              </details>
               <dl className="separator-specs">
                 <div>
-                  <dt>Engine</dt>
-                  <dd>HTDemucs</dd>
+                  <dt>Model</dt>
+                  <dd>HTDemucs, 4 parts</dd>
                 </div>
                 <div>
-                  <dt>Export</dt>
-                  <dd>44.1 kHz WAV</dd>
+                  <dt>Stems</dt>
+                  <dd>32-bit float WAV, 44.1 kHz</dd>
+                </div>
+                <div>
+                  <dt>Your mix</dt>
+                  <dd>WAV, 32-bit float or 24-bit</dd>
                 </div>
                 <div>
                   <dt>Audio uploads</dt>
                   <dd>None</dd>
                 </div>
               </dl>
+              <details className="separator-disclosure">
+                <summary>Where your audio goes</summary>
+                <ul className="separator-facts">
+                  <li>
+                    Songs are decoded and separated in this browser. They are not uploaded to
+                    Sattari or anyone else.
+                  </li>
+                  <li>
+                    The first separation downloads the 172 MB model from Hugging Face at a pinned,
+                    checksum-verified version. Your browser keeps it in its cache for next time.
+                  </li>
+                  <li>
+                    Finished songs and stems are saved in this browser so they survive a reload.
+                    That is not a backup: the browser can remove it. Download what matters.
+                  </li>
+                </ul>
+              </details>
               <p className="separator-note">
-                172 MB model download on first use. Desktop recommended; separation can take several
-                minutes per track.
+                A laptop or desktop with a current browser works best. Each song can take several
+                minutes on CPU. Phones may run out of memory on long songs.
               </p>
               <p className="separator-note">
-                AI estimates may contain bleed or artifacts. Instruments excludes drums, bass, and
-                vocals.
+                Results are AI estimates and can contain bleed or artifacts. “Other instruments” is
+                everything that is not vocals, drums or bass, in one stem.
               </p>
               <a
                 className="separator-credits"
@@ -369,14 +580,14 @@ export default function StemSeparatorPage() {
                   <Upload size={25} strokeWidth={1.5} />
                 </div>
                 <div className="separator-drop-copy">
-                  <h2>{dragging ? 'Drop tracks' : 'Add your tracks'}</h2>
-                  <p>WAV, MP3, FLAC, M4A, AAC, OGG</p>
-                  <small>Up to 20 tracks · 100 MB / 10 min each</small>
+                  <h2>{dragging ? 'Drop your songs' : 'Add a song'}</h2>
+                  <p>Drag audio here or choose files. WAV, MP3, FLAC, M4A, AAC, OGG.</p>
+                  <small>Up to 20 songs · 100 MB and 10 minutes each</small>
                 </div>
                 <div className="separator-upload-actions">
                   <button
                     type="button"
-                    className="separator-button"
+                    className="separator-button separator-primary"
                     disabled={locked}
                     onClick={() => picker.current.click()}
                   >
@@ -385,10 +596,11 @@ export default function StemSeparatorPage() {
                   <button
                     type="button"
                     className="separator-text-button"
-                    disabled={locked || !selected.length}
+                    disabled={locked}
                     onClick={loadDemo}
+                    title="An 8-second original Sattari practice mix, separated by the real model"
                   >
-                    <AudioLines size={15} /> Separate demo
+                    <AudioLines size={15} /> Try the 8-second example
                   </button>
                 </div>
                 <input
@@ -412,9 +624,112 @@ export default function StemSeparatorPage() {
                   ))}
                 </div>
               )}
+              {storageWarning && (
+                <p className="separator-warning" role="status">
+                  {storageWarning}
+                </p>
+              )}
+
+              {focused && (
+                <section className="separator-player" aria-labelledby="separator-player-heading">
+                  <div className="separator-player-head">
+                    <div>
+                      <p className="separator-eyebrow">Now playing</p>
+                      <h2 id="separator-player-heading" title={focused.file.name}>
+                        {focused.file.name}
+                      </h2>
+                    </div>
+                    <div className="separator-player-actions">
+                      <button
+                        type="button"
+                        className="separator-text-button"
+                        onClick={() =>
+                          toKeyBpm(focused, {
+                            file: focused.file,
+                            kind: 'original',
+                            label: focused.file.name,
+                          })
+                        }
+                      >
+                        <Gauge size={14} /> Check key & BPM
+                      </button>
+                      {focused.outputs.length === 4 && (
+                        <button
+                          type="button"
+                          className="separator-text-button"
+                          onClick={() => toSongboard(focused)}
+                        >
+                          <SlidersHorizontal size={14} /> Open in Songboard
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <StemPlayer
+                    key={focused.id}
+                    trackName={focused.file.name}
+                    fileBase={safeTrackName(focused.file.name)}
+                    stems={playerStems}
+                    original={{ blob: focused.file, peaks: focused.peaks }}
+                    initialPreset={focused.goal || 'all'}
+                    onEvent={(type) => {
+                      if (type === 'preview')
+                        trackSiteEventOnce(`${focused.id}:preview`, 'stem_preview');
+                      if (type === 'stem_download') trackSiteEvent('stem_download');
+                      if (type === 'mix_exported') trackSiteEvent('mix_exported');
+                    }}
+                    stemActions={(stem) => (
+                      <button
+                        type="button"
+                        className="stem-player-icon"
+                        aria-label={`Check key and BPM of the ${stem.label} stem`}
+                        title={`Check key & BPM of ${stem.label}`}
+                        onClick={() =>
+                          toKeyBpm(focused, {
+                            file: new File([stem.blob], stem.name, { type: 'audio/wav' }),
+                            kind: 'stem',
+                            label: `${stem.label} stem of ${focused.file.name}`,
+                          })
+                        }
+                      >
+                        <Gauge size={15} aria-hidden="true" />
+                      </button>
+                    )}
+                    afterExport={(mix) => (
+                      <div>
+                        <button
+                          type="button"
+                          className="separator-text-button"
+                          onClick={() =>
+                            toKeyBpm(focused, {
+                              file: new File([mix.blob], mix.name, { type: 'audio/wav' }),
+                              kind: 'mix',
+                              label: `${mix.name} (your mix of ${focused.file.name})`,
+                            })
+                          }
+                        >
+                          <Gauge size={14} /> Check key & BPM of this mix
+                        </button>
+                      </div>
+                    )}
+                  />
+                  {focused.origin?.user && (focused.origin.user.key || focused.origin.user.bpm) && (
+                    <p className="separator-note">
+                      Your settings from {focused.origin.from}:{' '}
+                      {[
+                        focused.origin.user.key,
+                        focused.origin.user.bpm && `${focused.origin.user.bpm} BPM`,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}{' '}
+                      (chosen by you, not detected here).
+                    </p>
+                  )}
+                </section>
+              )}
+
               <div className="separator-queue-heading">
                 <h2>
-                  Tracks <span>{jobs.length.toString().padStart(2, '0')}</span>
+                  Songs <span>{jobs.length.toString().padStart(2, '0')}</span>
                 </h2>
                 {ready.length > 0 && (
                   <button
@@ -422,21 +737,21 @@ export default function StemSeparatorPage() {
                     onClick={clearFinished}
                     disabled={locked}
                   >
-                    <Trash2 size={14} /> Clear finished
+                    <Trash2 size={14} /> Remove finished
                   </button>
                 )}
               </div>
               {jobs.length === 0 ? (
                 <div className="separator-empty">
                   <FileAudio size={32} strokeWidth={1.2} />
-                  <strong>No tracks queued</strong>
-                  <span>Your audio stays on this device.</span>
+                  <strong>No songs yet</strong>
+                  <span>Add a song or try the example to hear separated parts.</span>
                 </div>
               ) : (
                 <div className="separator-queue">
                   {jobs.map((job, index) => (
                     <article
-                      className={`separator-track is-${job.status}`}
+                      className={`separator-track is-${job.status}${focused?.id === job.id ? ' is-focused' : ''}`}
                       key={job.id}
                       aria-label={job.file.name}
                     >
@@ -449,6 +764,7 @@ export default function StemSeparatorPage() {
                           <span>
                             {(job.file.size / 1024 ** 2).toFixed(1)} MB
                             {job.duration ? ` · ${formatDuration(job.duration)}` : ''}
+                            {job.origin ? ` · from ${job.origin.from}` : ''}
                           </span>
                         </div>
                         <span className={`separator-status status-${job.status}`}>
@@ -463,9 +779,9 @@ export default function StemSeparatorPage() {
                           ) : job.status === 'error' ? (
                             'Failed'
                           ) : job.status === 'cancelled' ? (
-                            'Cancelled'
+                            'Stopped'
                           ) : (
-                            'Queued'
+                            'Waiting'
                           )}
                         </span>
                         {(job.status === 'error' || job.status === 'cancelled') && (
@@ -489,47 +805,64 @@ export default function StemSeparatorPage() {
                           <X size={16} />
                         </button>
                       </div>
+                      {job.peaks && job.status !== 'done' && <Waveform peaks={job.peaks} />}
                       {job.status === 'processing' && <ProcessingProgress job={job} />}
-                      {job.status === 'error' && (
-                        <p className="separator-track-error" role="alert">
+                      {(job.status === 'error' || job.status === 'cancelled') && (
+                        <p
+                          className="separator-track-error"
+                          role={job.status === 'error' ? 'alert' : undefined}
+                        >
                           {job.message}
+                          {job.status === 'error' &&
+                            !cpuOnly &&
+                            ' You can also retry in CPU compatibility mode under Processing options.'}
                         </p>
                       )}
                       {job.analysis && (
                         <div className="separator-song-analysis">
                           <StemAnalysisSummary analysis={job.analysis} />
-                          <button
-                            className="separator-text-button separator-report-download"
-                            onClick={() => downloadReport(job)}
-                            aria-label={`Download analysis for ${job.file.name}`}
-                          >
-                            <Download size={14} /> Analysis JSON
-                          </button>
                         </div>
                       )}
                       {job.status === 'done' && (
-                        <details className="separator-results" open>
-                          <summary>
-                            <span>
-                              {job.outputs.length} stems{' '}
-                              <span className="separator-result-format">/ WAV</span>
-                            </span>
-                          </summary>
-                          <div className="separator-output-list">
+                        <div className="separator-track-download">
+                          <button
+                            className="separator-text-button"
+                            aria-pressed={focused?.id === job.id}
+                            onClick={() => setFocusId(job.id)}
+                          >
+                            <AudioLines size={14} />{' '}
+                            {focused?.id === job.id ? 'In the player' : 'Open in player'}
+                          </button>
+                          <span className="separator-stem-links">
                             {job.outputs.map((output) => (
-                              <StemOutput key={output.id} output={output} />
+                              <a
+                                key={output.id}
+                                href={output.url}
+                                download={output.name}
+                                onClick={() => trackSiteEvent('stem_download')}
+                                aria-label={`Download ${stemLabel(output.id)} WAV for ${job.file.name}`}
+                              >
+                                <Download size={13} /> {stemLabel(output.id)}
+                              </a>
                             ))}
-                          </div>
-                          <div className="separator-track-download">
+                          </span>
+                          <button
+                            className="separator-text-button"
+                            disabled={locked}
+                            onClick={() => downloadZip([job])}
+                          >
+                            <Download size={14} /> Song ZIP
+                          </button>
+                          {job.analysis && (
                             <button
                               className="separator-text-button"
-                              disabled={locked}
-                              onClick={() => downloadZip([job])}
+                              onClick={() => downloadReport(job)}
+                              aria-label={`Download analysis for ${job.file.name}`}
                             >
-                              <Download size={14} /> Download track ZIP
+                              <Download size={14} /> Analysis JSON
                             </button>
-                          </div>
-                        </details>
+                          )}
+                        </div>
                       )}
                     </article>
                   ))}
@@ -538,22 +871,24 @@ export default function StemSeparatorPage() {
               <div className="separator-actions">
                 <div className="separator-batch-summary" role="status">
                   {running
-                    ? 'Batch in progress'
-                    : `${selected.length} ${selected.length === 1 ? 'stem' : 'stems'} selected`}
+                    ? 'Separating…'
+                    : selected.length === STEMS.length
+                      ? 'All four parts'
+                      : `${selected.length} of 4 parts`}
                   {jobs.length > 0 && (
                     <small>
-                      {ready.length} of {jobs.length} tracks ready
+                      {ready.length} of {jobs.length} songs ready
                     </small>
                   )}
                 </div>
                 <div className="separator-action-buttons">
-                  {ready.length > 0 && (
+                  {ready.length > 1 && (
                     <button
                       className="separator-button"
                       disabled={locked}
                       onClick={() => downloadZip(ready)}
                     >
-                      <Download size={16} /> Download all ZIP
+                      <Download size={16} /> All songs ZIP
                     </button>
                   )}
                   {packing ? (
@@ -562,7 +897,7 @@ export default function StemSeparatorPage() {
                     </button>
                   ) : running || loadingDemo ? (
                     <button className="separator-button" onClick={cancel}>
-                      <Square size={14} /> {running ? 'Stop batch' : 'Cancel demo'}
+                      <Square size={14} /> {running ? 'Stop' : 'Cancel example'}
                     </button>
                   ) : (
                     <button
@@ -570,17 +905,54 @@ export default function StemSeparatorPage() {
                       disabled={!pending.length || !selected.length}
                       onClick={() => run()}
                     >
-                      <AudioLines size={17} /> Separate
+                      <Layers size={17} /> Separate
                       {pending.length > 0
-                        ? ` ${pending.length} ${pending.length === 1 ? 'track' : 'tracks'}`
-                        : ' tracks'}
+                        ? ` ${pending.length} ${pending.length === 1 ? 'song' : 'songs'}`
+                        : ''}
                     </button>
                   )}
                 </div>
               </div>
+              {ready.length > 1 && (
+                <div
+                  className="separator-batch-mix"
+                  role="group"
+                  aria-label="Practice mixes for every song"
+                >
+                  <label>
+                    <span>Same practice mix for all {ready.length} songs</span>
+                    <select
+                      value={batchPreset}
+                      disabled={locked}
+                      onChange={(event) => setBatchPreset(event.target.value)}
+                    >
+                      {MIX_PRESETS.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="separator-button"
+                    disabled={locked}
+                    onClick={() => void downloadPracticeMixes()}
+                  >
+                    <Download size={16} /> Download mixes ZIP
+                  </button>
+                </div>
+              )}
               {packing && (
                 <p className="separator-note" role="status">
-                  Preparing ZIP...
+                  {batchProgress === null
+                    ? 'Preparing ZIP…'
+                    : `Rendering practice mixes… ${Math.round(batchProgress * 100)}%`}
+                </p>
+              )}
+              {batchNote && (
+                <p className="separator-note" role="status">
+                  {batchNote}
                 </p>
               )}
               {downloadError && (
@@ -588,14 +960,58 @@ export default function StemSeparatorPage() {
                   {downloadError}
                 </p>
               )}
-              <p className="separator-session-note">
-                Results last for this page session. Download before leaving. Process only audio you
-                have the right to use.
-              </p>
+
+              <section className="separator-saved" aria-labelledby="separator-saved-heading">
+                <h2 id="separator-saved-heading">
+                  <HardDrive size={15} /> Saved in this browser
+                </h2>
+                <p>
+                  Songs and their stems stay in this browser until you remove them, so a reload does
+                  not lose your work. Browsers can still clear this storage when space runs low, so
+                  download anything important. Use one Stem Separator tab at a time.
+                </p>
+                {confirmClear ? (
+                  <div className="separator-confirm" role="group" aria-label="Confirm clearing">
+                    <span>
+                      Remove all {jobs.length || ''} saved songs and stems from this browser? The
+                      cached model and other Sattari tools are not affected.
+                    </span>
+                    <button className="separator-button" onClick={() => void doClear()}>
+                      Remove saved work
+                    </button>
+                    <button
+                      className="separator-text-button"
+                      onClick={() => setConfirmClear(false)}
+                    >
+                      Keep it
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="separator-text-button"
+                    disabled={locked}
+                    onClick={() => {
+                      setClearNote('');
+                      setConfirmClear(true);
+                    }}
+                  >
+                    <Trash2 size={14} /> Clear saved work
+                  </button>
+                )}
+                {clearNote && (
+                  <p className="separator-note" role="status">
+                    {clearNote}
+                  </p>
+                )}
+                <p className="separator-session-note">
+                  Process only audio you have the right to use.
+                </p>
+              </section>
             </div>
           </div>
+          <ToolReferenceLink tool="stem-separator" />
           <nav className="separator-guides" aria-labelledby="separator-guides-heading">
-            <h2 id="separator-guides-heading">Practice & remix guides</h2>
+            <h2 id="separator-guides-heading">Practice guides</h2>
             <div>
               {separatorGuides.map((guide) => (
                 <a
@@ -619,6 +1035,7 @@ export default function StemSeparatorPage() {
               </a>
             </div>
           </nav>
+          <ToolFeedback tool="Stem Separator" className="separator-feedback" />
         </div>
       </section>
     </>

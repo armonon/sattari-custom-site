@@ -154,3 +154,117 @@ export function resultsCsv(rows) {
   for (const row of rows) lines.push(CSV_COLUMNS.map(([, get]) => csvCell(get(row))).join(','));
   return `${lines.join('\r\n')}\r\n`;
 }
+
+// ---- Musician corrections (metadata only) --------------------------------
+// The detected result is never modified. A correction is stored beside it as
+// { key, bpm, bpmChoice, editedAt } and only changes what is displayed,
+// sorted and exported as "corrected". It does not stretch or transpose audio.
+
+export const ALL_KEYS = [
+  ...NOTES.map((note) => `${note} major`),
+  ...NOTES.map((note) => `${note} minor`),
+];
+export const BPM_MIN = 20;
+export const BPM_MAX = 400;
+export const BPM_CHOICES = ['half', 'double', 'tap', 'manual'];
+
+/** A finite positive BPM within range, keeping up to two decimals; else null. */
+export function normalizeBpm(value) {
+  const number = typeof value === 'string' ? Number(value.trim().replace(',', '.')) : value;
+  if (typeof number !== 'number' || !Number.isFinite(number)) return null;
+  if (number < BPM_MIN || number > BPM_MAX) return null;
+  return Math.round(number * 100) / 100;
+}
+
+export const formatBpm = (bpm) =>
+  bpm === null || bpm === undefined ? '' : String(Math.round(bpm * 100) / 100);
+
+/** Half / double interpretation of the detected tempo (null if out of range). */
+export function tempoInterpretation(detectedBpm, choice) {
+  if (!Number.isFinite(detectedBpm)) return null;
+  if (choice === 'half') return normalizeBpm(detectedBpm / 2);
+  if (choice === 'double') return normalizeBpm(detectedBpm * 2);
+  return normalizeBpm(detectedBpm);
+}
+
+/** Sanitized correction, or null when nothing differs from the detection. */
+export function cleanCorrection(user) {
+  if (!user || typeof user !== 'object') return null;
+  const key = typeof user.key === 'string' && ALL_KEYS.includes(user.key) ? user.key : null;
+  const bpm = normalizeBpm(user.bpm);
+  const bpmChoice = bpm !== null && BPM_CHOICES.includes(user.bpmChoice) ? user.bpmChoice : null;
+  if (key === null && bpm === null) return null;
+  return {
+    key,
+    bpm,
+    bpmChoice: bpm === null ? null : bpmChoice || 'manual',
+    editedAt: typeof user.editedAt === 'string' ? user.editedAt : new Date().toISOString(),
+  };
+}
+
+/** What to show for a row: corrected values win, each labelled by its source. */
+export function effectiveValues(result, user) {
+  const correction = cleanCorrection(user);
+  const key = correction?.key ?? (result?.key || '');
+  const bpm = correction?.bpm ?? result?.bpm ?? null;
+  return {
+    key,
+    camelot: camelot(key),
+    bpm,
+    keySource: correction?.key ? 'user' : 'detected',
+    bpmSource:
+      correction?.bpm !== null && correction?.bpm !== undefined ? correction.bpmChoice : 'detected',
+  };
+}
+
+/**
+ * Tap tempo: the average of the most recent intervals. A pause longer than
+ * resetMs starts a new count. Needs at least three taps for a value.
+ */
+export function createTapTempo({ maxTaps = 8, resetMs = 2500 } = {}) {
+  let taps = [];
+  return {
+    tap(at = performance.now()) {
+      if (taps.length && at - taps[taps.length - 1] > resetMs) taps = [];
+      if (taps.length && at <= taps[taps.length - 1]) return this.value();
+      taps.push(at);
+      if (taps.length > maxTaps) taps.shift();
+      return this.value();
+    },
+    value() {
+      if (taps.length < 3) return null;
+      const span = taps[taps.length - 1] - taps[0];
+      return normalizeBpm(Math.round((60000 * (taps.length - 1) * 10) / span) / 10);
+    },
+    count: () => taps.length,
+    reset() {
+      taps = [];
+    },
+  };
+}
+
+export const CORRECTION_COLUMNS = [
+  ['Corrected key', (row) => row.user?.key || ''],
+  ['Corrected Camelot', (row) => (row.user?.key ? camelot(row.user.key) : '')],
+  ['Corrected BPM', (row) => formatBpm(row.user?.bpm ?? null)],
+  ['BPM correction', (row) => (row.user?.bpm != null ? row.user.bpmChoice : '')],
+  ['Corrected at', (row) => (row.user ? row.user.editedAt : '')],
+  ['Source', (row) => row.origin?.label || ''],
+];
+
+/**
+ * CSV of detected measurements, with the musician's corrections in separate
+ * trailing columns so existing spreadsheets keep their column positions.
+ * rows: [{ result, user?, origin? }]
+ */
+export function correctedResultsCsv(rows) {
+  const columns = [...CSV_COLUMNS, ...CORRECTION_COLUMNS];
+  const lines = [columns.map(([name]) => csvCell(name)).join(',')];
+  for (const row of rows)
+    lines.push(
+      columns
+        .map(([, get], index) => csvCell(index < CSV_COLUMNS.length ? get(row.result) : get(row)))
+        .join(',')
+    );
+  return `${lines.join('\r\n')}\r\n`;
+}

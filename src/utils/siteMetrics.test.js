@@ -27,6 +27,11 @@ describe('privacy-bounded metrics', () => {
     expect(metricPage('/checkout/success')).toBeNull();
     expect(metricPage('/private-song.wav')).toBeNull();
     expect(metricPage('/product/a-specific-product')).toBe('product');
+    expect(metricPage('/studio/split')).toBe('split');
+    expect(metricPage('/studio/keybpm')).toBe('key-bpm');
+    expect(metricPage('/stem-separator')).toBe('stem-separator');
+    for (const event of ['mix_exported', 'keybpm_corrected', 'continue_to_separator'])
+      expect(validMetric({ source: 'direct', page: 'key-bpm', event })).toBe(true);
   });
   it('recognizes every published guide using only coarse allowlisted page groups', () => {
     const groups = musicGuides.map((guide) => metricPage(`/guides/${guide.slug}`));

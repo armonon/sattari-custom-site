@@ -5,12 +5,12 @@ export const separatorGuides = [
     linkLabel: 'Karaoke & vocal removal',
     category: 'Backing tracks',
     description:
-      'Make a karaoke backing track with Sattari: separate vocals, keep drums, bass and instruments, then combine the WAV stems. Free, on-device vocal removal.',
+      'Make a vocal backing track on your device: separate the song, mute the vocal, loop a section, and download drums + bass + other instruments as one WAV.',
     answer:
-      'To make an estimated karaoke backing track, select Drums, Bass and Instruments in Sattari Stem Separator. Download those three WAV files and align their starts in Studio. Instruments alone is not the full backing track: it leaves out bass and drums.',
+      'In Sattari Stem Separator choose Vocal backing track, add the song and press Separate. When it is ready the player already has the vocal muted. Listen, adjust levels if needed, then press Download my mix to save drums + bass + other instruments as one WAV. Other instruments alone is not the full backing track: it leaves out bass and drums.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'Sattari Stem Separator showing downloadable stem results from its practice demo',
-    action: { label: 'Open vocal remover', path: '/stem-separator' },
+    action: { label: 'Make a vocal backing track', path: '/stem-separator?goal=vocal-backing' },
     sections: [
       {
         title: 'Keep the band. Take the lead.',
@@ -20,26 +20,28 @@ export const separatorGuides = [
         ],
       },
       {
-        title: 'Build your non-vocal mix',
+        title: 'Build your vocal backing track',
         steps: [
-          'Add the song to Stem Separator. Choose Drums, Bass and Instruments. Also choose Vocals if you want an isolated singing reference for rehearsal.',
-          'Run separation and preview the results. Listen through a verse and chorus, especially reverb tails and passages with backing singers.',
-          'Download the three backing stems as WAV files. The track ZIP packages separate files; it does not automatically mix them into one karaoke file.',
-          'Import the WAV files into separate arrangement lanes in Sattari Studio. Align their starts at the same position, leave the vocal out, and listen for clipping before exporting your mix.',
+          'Open Stem Separator and choose Vocal backing track under “What are you making?”. All four parts are separated so you can still bring the vocal back as a guide.',
+          'Add the song (or try the 8-second example first) and press Separate. The first run downloads the 172 MB model; later runs reuse it from the browser cache.',
+          'When the song is ready, press Play. Vocals is muted and Drums, Bass and Other instruments play together on one clock. Use Original song to compare with the untouched recording.',
+          'Rehearse a hard phrase with the A–B loop: press Set A at the start of the phrase and Set B at its end. Clear loop returns to the full song.',
+          'Watch the Mix peak readout. If it goes above 0 dBFS, lower the master or tick Prevent clipping, which lowers the whole mix to a −1 dBFS peak and says by how much.',
+          'Press Download my mix. You get one full-length WAV (32-bit float by default, or 24-bit) named like song-no-vocals-mix.wav, rendered from exactly the parts and levels you hear.',
         ],
       },
       {
         title: 'Want an acapella instead?',
         paragraphs: [
-          'Select Vocals to retain the estimated vocal stem. This is useful for hearing phrasing, breaths and lyric timing in context. It is not guaranteed to separate a lead singer from backing vocals, and some instruments or reverb may remain audible.',
-          'Selecting only Vocals saves result memory, but the model still computes its four source groups internally. A smaller output selection is not a promise of faster processing.',
+          'Choose Solo a part and pick Vocals, or press the headphones button on the Vocals lane. Download my mix then renders just the vocal. It is useful for hearing phrasing, breaths and lyric timing. It is not guaranteed to separate a lead singer from backing vocals, and some instruments or reverb may remain audible.',
+          'Under Custom you can keep only the Vocals stem to save memory, but the model still computes all four parts internally, so it is not faster.',
         ],
       },
       {
         title: 'What a vocal remover does not do',
         paragraphs: [
           'Sattari estimates parts from a finished recording; it does not recover the original studio multitracks. Vocal bleed, missing harmonics and watery artifacts can remain. Compare against the original and keep a reference copy before editing.',
-          "Stem Separator does not generate synchronized lyrics or automatically change a song to your singing key. These downloads are practice and production ingredients, not a complete karaoke player. Separation also does not grant permission to publish, distribute or perform someone else's recording.",
+          "Stem Separator does not generate synchronized lyrics, change the song's speed or move it to your singing key. Check the key in Key & BPM if you need it. Separation also does not grant permission to publish, distribute or perform someone else's recording.",
         ],
       },
     ],
@@ -56,12 +58,12 @@ export const separatorGuides = [
     linkLabel: 'Drumless practice tracks',
     category: 'Drum practice',
     description:
-      'Turn a song into a drumless practice track. Isolate the drums as a reference, combine the remaining stems, and rehearse grooves, fills and transitions.',
+      'Make a drumless practice track on your device: solo the drums to learn the part, loop a fill, then download vocals + bass + other instruments as one WAV.',
     answer:
-      'Separate all four stems. Use Drums as your listening reference, then combine Vocals, Bass and Instruments with aligned starts for an estimated drumless backing track. Play the part yourself and compare your timing with the original drummer.',
+      'Choose Drum practice in Sattari Stem Separator and separate the song. The player mutes Drums and plays Vocals, Bass and Other instruments together. Solo the drums to study the part, then press Download my mix for a single drumless WAV to play along with.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'The drum stem and playback controls in Sattari Stem Separator',
-    action: { label: 'Separate a drum practice track', path: '/stem-separator' },
+    action: { label: 'Make a drumless practice track', path: '/stem-separator?goal=drum-practice' },
     sections: [
       {
         title: 'Hear the drummer, then become the drummer',
@@ -73,10 +75,11 @@ export const separatorGuides = [
       {
         title: 'Make the backing track',
         steps: [
-          'Upload a recording you have permission to use and select All stems. Separate the track and download the four WAV outputs before leaving the page.',
-          'Import Vocals, Bass and Instruments into separate Studio arrangement lanes. Line up the starts exactly. Do not trim silence from only one file, because the parts can drift out of alignment.',
-          'Keep the Drums file available as a reference, but mute it when playing your own part. Preview the combined backing and check levels before exporting.',
-          'Choose a short section and listen for an unmistakable entry point. The separator does not automatically add a spoken count-in or click track.',
+          'Open Stem Separator, choose Drum practice and add a recording you have permission to use. Press Separate. The song and its stems are saved in this browser, but download anything you need to keep.',
+          'Press Play. Drums is muted; the other three parts share one clock, so muting, soloing or changing a level never pulls them out of time. Press the headphones button on Drums to hear the part alone.',
+          'Loop the fill or groove you are learning: Set A at its start, Set B at its end. Playback stays inside the loop until you press Clear loop.',
+          'Press Download my mix for one WAV of vocals + bass + other instruments, full length and aligned to the original. The file name ends in -drumless-mix.wav.',
+          'The separator does not add a count-in or click. Use the first clear downbeat of the song as your entry point.',
         ],
       },
       {
@@ -91,7 +94,7 @@ export const separatorGuides = [
       {
         title: 'Let the song decide the tempo',
         paragraphs: [
-          'Use the estimated BPM as a starting point and count along to check it. A busy drum pattern may produce a double-time estimate; a sparse groove may suggest half-time. That disagreement does not necessarily mean the audio is playing at a different speed.',
+          'Use the estimated BPM as a starting point and count along to check it. A busy drum pattern may produce a double-time estimate; a sparse groove may suggest half-time. In Key & BPM you can switch the value to half or double time, or tap the tempo yourself. That changes the label you keep, not the speed of the audio.',
           'A song recorded without a click can change tempo. One BPM number will not describe every bar. Practice listening to the band and returning from fills in time rather than forcing the entire recording to match an uncertain estimate.',
         ],
       },
@@ -105,16 +108,16 @@ export const separatorGuides = [
   },
   {
     slug: 'find-song-key-and-bpm',
-    title: "Find a song's key and BPM from audio",
+    title: "Find a song's key and BPM, and fix half/double time",
     linkLabel: 'Song key & BPM',
     category: 'Song analysis',
     description:
-      "Estimate a song's key and BPM in Sattari Stem Separator. Compare stem keys, prominent notes and pulse, understand uncertain results, and export an analysis report.",
+      "Estimate a song's key, Camelot code and BPM, listen back, fix half- or double-time tempo, tap the beat, and save both the estimate and your correction.",
     answer:
-      "Add a song to Sattari Stem Separator and run separation. Its analysis estimates the original song's key and BPM, then analyzes the selected stems. Treat the results as listening clues, not a verified chord chart or transcription.",
+      'Add a song to Sattari Key & BPM. It measures the key, Camelot code and tempo on your device without separating anything. Press play to check the result by ear, use the adjust button to pick half or double time, tap the tempo or choose another key, and export a CSV or report that keeps the detected value and your correction side by side.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'Sattari Stem Separator workspace used to separate and analyze audio files',
-    action: { label: 'Analyze a song', path: '/stem-separator' },
+    action: { label: 'Open Key & BPM', path: '/studio/keybpm' },
     sections: [
       {
         title: 'Read the full song before the individual parts',
@@ -139,18 +142,29 @@ export const separatorGuides = [
         ],
       },
       {
+        title: 'Check and correct a result in Key & BPM',
+        steps: [
+          'Add one song or a folder. Each file is decoded and measured on this device, one at a time. Stop keeps finished rows; Resume continues the rest.',
+          'Press the play button on a row to hear the original audio while you read the result. Rows opened from a saved report have no audio; add the source file again to listen.',
+          'Read the flags. Tentative means the best key only narrowly beat the alternative shown in Notes. Rough means the strict tempo estimator declined and a single middle section was used.',
+          'Press the adjust button. Under Tempo choose Half time or Double time if the count feels wrong, tap along with Tap (three taps or more), or type a value from 20 to 400 BPM.',
+          'Under Key, pick the alternative or any of the 24 keys. The Camelot code follows your choice. Reset to detected removes your corrections.',
+          'Export CSV or Save report. The detected key and BPM stay in their original columns; your corrections appear in separate “Corrected” columns. A corrected BPM is a label: the audio is not stretched or transposed.',
+        ],
+      },
+      {
         title: 'Keep an analysis report with your stems',
         steps: [
-          'Run separation and inspect the original-song summary and each selected stem. Read the evidence labels as well as the key and tempo numbers.',
+          'In Stem Separator, each song and stem also gets a key and tempo estimate. Read the evidence labels as well as the numbers, or send the song, a stem or your rendered mix to Key & BPM with Check key & BPM.',
           'Open the analysis details to review duration, working sample rate, channels, sample peak and RMS levels. Those audio levels are measured across the audio, unlike the sampled musical analysis.',
-          'Download the JSON analysis report for a machine-readable record. The stem ZIP includes the report too. Save your outputs before closing or leaving the separator.',
+          'Download the JSON analysis report for a machine-readable record. The stem ZIP includes the report too. Saved songs survive a reload in this browser, but the browser can clear that storage, so keep downloads of anything important.',
           'Use the findings to pick a practice starting point in Learn or organize a Studio session. Verify the musical choices by ear before building an arrangement around them.',
         ],
       },
     ],
     related: [
+      '/studio/keybpm',
       '/tools/stem-separator',
-      '/tools/learn',
       '/guides/practice-bass-with-isolated-stems',
       '/guides/make-drumless-practice-tracks',
     ],
@@ -163,7 +177,7 @@ export const separatorGuides = [
     description:
       'Batch separate up to 20 songs into vocals, drums, bass and instruments. Check file limits, browser support and privacy, then download WAV stems and ZIPs.',
     answer:
-      "Drop several audio files into Sattari Stem Separator, choose the stem types once, and start the queue. Tracks process one after another on your device. Download individual WAVs, one track's ZIP, or a ZIP of completed tracks before leaving.",
+      'Drop several audio files into Sattari Stem Separator, choose the stem types once, and start the queue. Tracks process one after another on your device. Download individual WAVs, a song ZIP, an all-songs ZIP or a rendered practice mix; finished songs are also saved in this browser.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'Sattari Stem Separator with its shared stem selection and track queue',
     action: { label: 'Start a stem batch', path: '/stem-separator' },
@@ -180,9 +194,9 @@ export const separatorGuides = [
         steps: [
           'Begin with one short file to check that your browser can decode it and run the model. Desktop use is recommended; device memory and available acceleration affect performance.',
           'Name the source files distinctly so their downloads are easy to recognize. Add your remaining files within the queue and size limits.',
-          'Select Vocals, Drums, Bass, Instruments or all four. Instruments contains remaining sounds such as guitar and keys, not the entire non-vocal mix.',
+          'Choose what you are making (all parts, a vocal backing track, drum or bass practice), or pick stems under Custom. Other instruments contains remaining sounds such as guitar and keys, not the entire non-vocal mix.',
           'Start separation and keep the page open. The initial model download is approximately 172 MiB; a later run can reuse the model when the browser cache is available.',
-          'Preview completed stems, download them and clear completed tracks when needed. Check any failed file individually before trying it again.',
+          'Open any finished song in the player, download stems, a song ZIP, an all-songs ZIP or a rendered mix. Retrying a failed song keeps every finished one.',
         ],
       },
       {
@@ -193,10 +207,10 @@ export const separatorGuides = [
         ],
       },
       {
-        title: 'Local processing, temporary results',
+        title: 'Local processing, browser-saved results',
         paragraphs: [
           'The separator processes your source audio on your device rather than uploading it for separation. The app still needs network access to load and to download its model from Hugging Face. Normal hosting requests are distinct from sending a song to a processing service.',
-          'The current tool is free and does not require sign-in. CPU processing can be slow, and GPU acceleration is attempted only where available. There is no all-browser speed guarantee. Results last for the current page session, so a cached model is not a backup of your songs or stems.',
+          'The current tool is free and does not require sign-in. CPU processing can be slow, and GPU acceleration is attempted only where available. There is no all-browser speed guarantee. Finished songs and stems are saved in this browser so a reload does not lose them, and Clear saved work removes them. Browser storage can be evicted, so it is not a backup: download what you need.',
         ],
       },
     ],
@@ -216,14 +230,14 @@ export const separatorQuestions = [
       'The current browser tool is free and does not require an account or app installation. Your device supplies the processing power. The first run downloads an approximately 172 MiB model, and browser, memory and queue limits still apply.',
   },
   {
-    question: 'Does Instruments mean a complete instrumental backing track?',
+    question: 'Does Other instruments mean a complete instrumental backing track?',
     answer:
-      'No. Instruments is the remaining source group, including sounds such as guitar and keys. For a non-vocal backing track, combine Drums, Bass and Instruments with aligned starts. A ZIP contains separate stems, not an automatically mixed instrumental.',
+      'No. Other instruments is the remaining source group, including sounds such as guitar and keys. For a vocal-free backing track choose Vocal backing track, which plays Drums + Bass + Other instruments, then press Download my mix for one WAV. The ZIP still contains the separate stems.',
   },
   {
     question: 'Can I isolate guitar, piano, kick or snare separately?',
     answer:
-      'Not with the current four-source model. Guitar and piano generally share Instruments; kick, snare and cymbals share Drums. Vocals can include both lead and backing singers. Separation estimates can contain leakage between groups.',
+      'Not with the current four-source model. Guitar and piano generally share Other instruments; kick, snare and cymbals share Drums. Vocals can include both lead and backing singers. Separation estimates can contain leakage between groups.',
   },
   {
     question: 'Can I paste a YouTube, Spotify or other streaming link?',
@@ -238,6 +252,6 @@ export const separatorQuestions = [
   {
     question: 'Are my songs uploaded or my stems saved automatically?',
     answer:
-      'Source audio is processed on your device, not uploaded for separation. Loading the site and downloading its model still use the network. Results last only for the current page session: download your WAVs, ZIPs and analysis report before leaving or reloading.',
+      'Source audio is processed on your device, not uploaded for separation. Loading the site and downloading its model still use the network. Finished songs and stems are saved in this browser (IndexedDB) so a reload does not lose them; Clear saved work removes them. Browsers can evict that storage, so download the WAVs, ZIPs or mixes you want to keep.',
   },
 ];

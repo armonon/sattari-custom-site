@@ -25,20 +25,31 @@ const renderPage = () =>
     </MemoryRouter>
   );
 
-it('offers four selected stems and disables separation until tracks exist', async () => {
+it('starts with a clear goal, all four parts and separation disabled until songs exist', async () => {
   await act(async () => {
     renderPage();
   });
   expect(screen.getByRole('heading', { name: /Stem Separator/ })).toBeInTheDocument();
-  expect(screen.getByLabelText('All stems')).toBeChecked();
-  expect(screen.getByRole('button', { name: 'Separate tracks' })).toBeDisabled();
-  expect(screen.getAllByRole('checkbox')).toHaveLength(5);
-  expect(screen.getByRole('button', { name: 'Separate demo' })).toBeEnabled();
+  expect(screen.getByRole('radio', { name: /Separate all parts/ })).toBeChecked();
+  for (const goal of [
+    /Vocal backing track/,
+    /Drum practice/,
+    /Bass practice/,
+    /Solo a part/,
+    /Custom/,
+  ])
+    expect(screen.getByRole('radio', { name: goal })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Separate' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /Try the 8-second example/ })).toBeEnabled();
+  expect(screen.getByText(/All four parts/)).toBeInTheDocument();
   expect(screen.getByLabelText('Processing device')).toHaveValue('auto');
   await act(async () => {
     fireEvent.change(screen.getByLabelText('Processing device'), { target: { value: 'cpu' } });
   });
   expect(screen.getByLabelText('Processing device')).toHaveValue('cpu');
+  // Truthful storage copy: saved in this browser, not "session only".
+  expect(screen.getByRole('heading', { name: /Saved in this browser/ })).toBeInTheDocument();
+  expect(screen.queryByText(/Results last for this page session/)).not.toBeInTheDocument();
 });
 
 it('links to practical guides in new tabs without replacing the audio session', async () => {
@@ -57,7 +68,7 @@ it('links to practical guides in new tabs without replacing the audio session', 
   expect(screen.getByLabelText('Add audio tracks')).toBeInTheDocument();
 });
 
-it('queues multiple files and requires a nonempty selection', async () => {
+it('queues multiple files and requires a nonempty custom selection', async () => {
   await act(async () => {
     renderPage();
   });
@@ -72,20 +83,28 @@ it('queues multiple files and requires a nonempty selection', async () => {
     });
   });
   expect(screen.getAllByRole('article')).toHaveLength(2);
-  expect(screen.getByRole('button', { name: 'Separate 2 tracks' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Separate 2 songs' })).toBeEnabled();
   await act(async () => {
-    fireEvent.click(screen.getByLabelText('All stems'));
+    fireEvent.click(screen.getByRole('radio', { name: /Custom/ }));
   });
-  expect(screen.getByRole('button', { name: 'Separate 2 tracks' })).toBeDisabled();
+  for (const name of ['Vocals', 'Drums', 'Bass', 'Other instruments'])
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(`^${name}`) }));
+    });
+  expect(screen.getByRole('button', { name: 'Separate 2 songs' })).toBeDisabled();
   await act(async () => {
-    fireEvent.click(screen.getByLabelText('Bass'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /^Bass/ }));
   });
-  expect(screen.getByRole('button', { name: 'Separate 2 tracks' })).toBeEnabled();
-  expect(screen.getByLabelText('All stems').indeterminate).toBe(true);
+  expect(screen.getByRole('button', { name: 'Separate 2 songs' })).toBeEnabled();
+  expect(screen.getByText('1 of 4 parts')).toBeInTheDocument();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('radio', { name: /Drum practice/ }));
+  });
+  expect(screen.getByText('All four parts')).toBeInTheDocument();
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove first.wav' }));
   });
-  expect(screen.getByRole('button', { name: 'Separate 1 track' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Separate 1 song' })).toBeEnabled();
 });
 
 it('accepts a drop and reports an unsupported file without losing the audio', async () => {
@@ -93,18 +112,31 @@ it('accepts a drop and reports an unsupported file without losing the audio', as
     renderPage();
   });
   await act(async () => {
-    fireEvent.drop(
-      screen.getByRole('heading', { name: 'Add your tracks' }).closest('.separator-drop'),
-      {
-        dataTransfer: {
-          files: [
-            new File(['one'], 'valid.wav', { type: 'audio/wav' }),
-            new File(['text'], 'not-a-song.txt', { type: 'text/plain' }),
-          ],
-        },
-      }
-    );
+    fireEvent.drop(screen.getByRole('heading', { name: 'Add a song' }).closest('.separator-drop'), {
+      dataTransfer: {
+        files: [
+          new File(['one'], 'valid.wav', { type: 'audio/wav' }),
+          new File(['text'], 'not-a-song.txt', { type: 'text/plain' }),
+        ],
+      },
+    });
   });
   expect(screen.getByRole('article', { name: 'valid.wav' })).toBeInTheDocument();
   expect(screen.getByRole('alert')).toHaveTextContent('not-a-song.txt: Choose an audio file.');
+});
+
+it.each([
+  ['bass-practice', /Bass practice/],
+  ['drum-practice', /Drum practice/],
+  ['vocal-backing', /Vocal backing track/],
+  ['nonsense', /Separate all parts/],
+])('opens ?goal=%s with the matching goal selected', async (goal, radio) => {
+  await act(async () => {
+    render(
+      <MemoryRouter initialEntries={[`/stem-separator?goal=${goal}`]}>
+        <StemSeparatorPage />
+      </MemoryRouter>
+    );
+  });
+  expect(screen.getByRole('radio', { name: radio })).toBeChecked();
 });

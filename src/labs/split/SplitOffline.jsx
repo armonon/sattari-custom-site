@@ -89,7 +89,8 @@ export default function SplitOffline({ disabled }) {
           <p className="alab-note">
             The rest of the studio works offline after your first visit. Split also needs its 172 MB
             model and a 28 MB runtime, which are only saved if you ask: press the button to store
-            them in this browser (about 200 MB). Your songs and stems are never stored.
+            them in this browser (about 200 MB). This setting covers only the model and runtime;
+            your songs and stems are saved separately, as described above.
           </p>
           <button
             type="button"

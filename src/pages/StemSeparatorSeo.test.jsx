@@ -108,7 +108,9 @@ describe('Stem Separator search content', () => {
         expect(doc.body.textContent).toContain(text);
       }
     }
-    expect(doc.querySelector('.resource-action').getAttribute('href')).toBe('/stem-separator');
+    // Each guide's call to action opens the flagship tool that completes its task.
+    expect(doc.querySelector('.resource-action').getAttribute('href')).toBe(guide.action.path);
+    expect(['/stem-separator', '/studio/keybpm']).toContain(guide.action.path.split('?')[0]);
     expect(schema.find((item) => item['@type'] === 'Article')).toMatchObject({
       headline: guide.title,
       description: guide.description,

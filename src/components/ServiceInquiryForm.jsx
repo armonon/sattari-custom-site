@@ -12,6 +12,7 @@ const SERVICE_OPTIONS = [
   { value: 'rehearsal', label: 'Rehearsal space' },
   { value: 'studio', label: 'Rental studio' },
   { value: 'lessons', label: 'Teachers / classes' },
+  { value: 'tool-feedback', label: 'Music tool feedback' },
 ];
 
 // Off-screen rather than display:none, which some bots skip. Named to match the
@@ -282,13 +283,17 @@ export default function ServiceInquiryForm({
         </label>
       </div>
       <label>
-        <span>Describe what you need</span>
+        <span>{service === 'tool-feedback' ? 'Your feedback' : 'Describe what you need'}</span>
         <textarea
           name="details"
           value={form.details}
           onChange={handleChange}
           rows={4}
-          placeholder="Timing, location, gear, and what you are trying to solve"
+          placeholder={
+            service === 'tool-feedback'
+              ? 'What were you trying to do, and what happened? Browser and device help.'
+              : 'Timing, location, gear, and what you are trying to solve'
+          }
           required
         />
       </label>
@@ -306,7 +311,11 @@ export default function ServiceInquiryForm({
         </label>
       </div>
       <button className="button button-solid button-full" type="submit" disabled={submitting}>
-        {submitting ? 'Sending...' : 'Send service request'}
+        {submitting
+          ? 'Sending...'
+          : service === 'tool-feedback'
+            ? 'Send feedback'
+            : 'Send service request'}
       </button>
     </form>
   );

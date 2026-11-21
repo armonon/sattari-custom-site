@@ -105,7 +105,7 @@ it('restores saved results and keeps interrupted sources available for retry', a
   });
 });
 
-it('does not restore old sessions after the user creates and removes a new queue', async () => {
+it('still restores saved songs after the user adds and removes a file before storage opens', async () => {
   let resolveLoad;
   loadSessions.mockReturnValueOnce(
     new Promise((resolve) => {
@@ -123,7 +123,29 @@ it('does not restore old sessions after the user creates and removes a new queue
     });
     await Promise.resolve();
   });
-  expect(result.current.jobs).toEqual([]);
+  // Saved work is never silently dropped because of an unrelated early edit.
+  expect(result.current.jobs.map((job) => job.id)).toEqual(['old']);
+});
+
+it('keeps a file added before restoration alongside restored songs, without duplicates', async () => {
+  let resolveLoad;
+  loadSessions.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveLoad = resolve;
+    })
+  );
+  const { result } = renderHook(useStemSeparator);
+  const saved = file('saved.wav');
+  act(() => result.current.addFiles([file('new.wav'), saved]));
+  await act(async () => {
+    resolveLoad({
+      sessions: [{ id: 'old', file: saved, status: 'done', outputs: [], updatedAt: 1 }],
+      warnings: [],
+    });
+    await Promise.resolve();
+  });
+  expect(result.current.jobs.map((job) => job.file.name)).toEqual(['saved.wav', 'new.wav']);
+  expect(result.current.jobs[0].id).toBe('old');
 });
 
 it('deletes valid saved sessions replaced before restoration completes', async () => {
@@ -275,7 +297,7 @@ it('releases output URLs on remove, clear, and unmount', async () => {
   expect(URL.revokeObjectURL).toHaveBeenCalledTimes(16);
 });
 
-it('runs the real demo pipeline with the selected stems and CPU preference', async () => {
+it('runs the real demo pipeline with all four parts and the CPU preference', async () => {
   const fetchDemo = vi.fn(async () => ({ ok: true, blob: async () => new Blob(['audio']) }));
   vi.stubGlobal('fetch', fetchDemo);
   const { result } = renderHook(useStemSeparator);
@@ -287,7 +309,14 @@ it('runs the real demo pipeline with the selected stems and CPU preference', asy
   await act(async () => result.current.loadDemo());
   expect(result.current.jobs.map((job) => job.status)).toEqual(['queued', 'done']);
   expect(result.current.jobs[1].file.name).toBe('sattari-practice-demo.wav');
-  expect(result.current.jobs[1].outputs.map((output) => output.id)).toEqual(['drums', 'bass']);
+  // The example always separates every part so each practice mix can be heard.
+  expect(result.current.jobs[1].outputs.map((output) => output.id)).toEqual([
+    'vocals',
+    'drums',
+    'bass',
+    'other',
+  ]);
+  expect(result.current.selected).toEqual(['drums', 'bass']);
   expect(separate.mock.lastCall[5]).toBe(true);
   expect(result.current.loadingDemo).toBe(false);
   expect(fetchDemo.mock.calls[0][0]).toBe('/audio/sattari-practice-demo.wav');

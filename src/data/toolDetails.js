@@ -18,7 +18,11 @@ export const toolDetails = {
       ],
       [
         'Output',
-        '44.1 kHz, 32-bit float stereo WAV. Individual stems, per-track ZIP and batch ZIP. Instruments is the other source, excluding vocals, drums and bass.',
+        '44.1 kHz, 32-bit float stereo WAV. Individual stems, per-track ZIP and batch ZIP. Other instruments is the residual source, excluding vocals, drums and bass.',
+      ],
+      [
+        'Practice mixes',
+        'Synchronized playback of all stems with mute, solo, levels, master gain and an A–B loop, plus the original song for comparison. Download my mix renders the audible parts at your levels as one full-length 44.1 kHz stereo WAV (32-bit float, or 24-bit PCM). Vocal backing track = drums + bass + other instruments; drum practice = vocals + bass + other; bass practice = vocals + drums + other. Mix peak is shown; optional clipping prevention lowers the whole mix to a −1 dBFS peak and states the change.',
       ],
       [
         'Musical analysis',
@@ -42,7 +46,7 @@ export const toolDetails = {
       ],
       [
         'Storage',
-        'Results are temporary for this page session. Download before leaving or reloading. Model caching does not save your finished stems.',
+        'Finished songs and stems are saved in this browser so a reload does not lose them. Clear saved work removes them without touching the cached model or other tools. Browser storage can be evicted, so it is not a backup: download what you need.',
       ],
       [
         'Limitations',
@@ -60,6 +64,62 @@ export const toolDetails = {
       'make-drumless-practice-tracks',
       'find-song-key-and-bpm',
       'batch-separate-audio-stems',
+      'practice-bass-with-isolated-stems',
+    ],
+  },
+  'key-bpm': {
+    key: 'key-bpm',
+    slug: 'key-bpm',
+    name: 'Sattari Key & BPM',
+    path: '/studio/keybpm',
+    status: 'Beta',
+    description:
+      'Find the key, Camelot code and BPM of songs in your browser. Supported files, half/double tempo, corrections, reports, CSV and privacy.',
+    summary:
+      'Estimate the musical key, Camelot code and tempo of one song or a folder, listen back, correct half- or double-time and the key, and export a CSV or report that keeps the detection and your corrections apart.',
+    screenshot: '/images/tools/key-bpm.jpg',
+    screenshotWidth: 1280,
+    screenshotHeight: 858,
+    screenshotCaption:
+      'Actual Key & BPM result for the original Sattari demo (C major, 8B, 120 BPM), with the tempo set to half time by the user. The detected value stays visible beside the correction.',
+    facts: [
+      [
+        'Input',
+        'Audio files your browser can decode (WAV, MP3, FLAC, M4A, OGG; AIFF and M4A support varies by browser). Mono or stereo, up to 10 minutes and 200 MB each, up to 200 tracks in a list.',
+      ],
+      [
+        'Output',
+        'Key, Camelot code, BPM, evidence flags (tentative, rough, insufficient), the alternative key, and RMS/peak level. CSV with detected values first and your corrections in separate columns; a JSON report (version 2) that reopens later.',
+      ],
+      [
+        'Corrections',
+        'Half time, double time, tap tempo or a typed BPM (20–400, two decimals), and any of the 24 keys or the detected alternative. Reset to detected at any time. Corrections are labels: the audio is never stretched or transposed.',
+      ],
+      [
+        'Engine',
+        'Sattari AutoKey (a browser port of the Sattari plugin suite key estimator) and the site tempo tracker, running in a background worker. No separation model is downloaded for key-only work.',
+      ],
+      [
+        'Privacy',
+        'Audio is decoded and measured on your device and never uploaded. Reports and CSV contain names and measurements, not audio.',
+      ],
+      [
+        'Storage',
+        'Results, corrections and (within a budget) the audio files are saved in this browser so a reload keeps them. Clear removes them. Browser storage is not a backup: save a report or CSV.',
+      ],
+      [
+        'Limitations',
+        'One global key per track; key changes and modal or atonal music are not mapped. Tempo can lock to half or double time. Tested on synthetic fixtures and the demo, not yet benchmarked on a labelled set of real songs, so treat values as starting points.',
+      ],
+    ],
+    demo: [
+      'Download the original eight-second demo below, or press Try the 8-second example in the tool.',
+      'Check the result by ear with the play button, then open Adjust and compare Detected, Half time and Double time.',
+      'Export a CSV and confirm the detected and corrected columns.',
+    ],
+    guides: [
+      'find-song-key-and-bpm',
+      'make-drumless-practice-tracks',
       'practice-bass-with-isolated-stems',
     ],
   },
@@ -181,3 +241,6 @@ export const toolDetails = {
     guides: ['learn-guitar-from-a-song', 'how-to-separate-vocals-drums-bass'],
   },
 };
+
+/** Reference page path for a tool, e.g. /tools/stem-separator or /tools/key-bpm. */
+export const toolReferencePath = (tool) => `/tools/${tool.slug || tool.path.slice(1)}`;

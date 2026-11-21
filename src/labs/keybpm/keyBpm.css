@@ -1,0 +1,224 @@
+/* Key & BPM flagship additions: audition bar, row actions, correction editor. */
+.alab-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.kb-audition {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--alab-line);
+  border-radius: 8px;
+  background: var(--alab-panel);
+}
+.kb-audition > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.kb-audition strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.kb-audition input[type='range'] {
+  width: 100%;
+  accent-color: var(--alab-accent);
+}
+.kb-audition-play {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+}
+.kb-audition-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--alab-muted);
+}
+.kb-table td,
+.kb-table th {
+  vertical-align: top;
+}
+.kb-actions {
+  white-space: nowrap;
+}
+.kb-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 4px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+.kb-icon[aria-pressed='true'],
+.kb-icon[aria-expanded='true'] {
+  border-color: var(--alab-accent);
+  color: var(--alab-accent);
+}
+.kb-flag-user {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--alab-accent);
+}
+.kb-edit-row td {
+  padding: 0 0 12px;
+  background: var(--alab-raised);
+}
+.kb-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px 28px;
+  padding: 16px;
+  white-space: normal;
+}
+.kb-editor fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.kb-editor legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.kb-segment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.kb-segment button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--alab-line);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+}
+.kb-segment button[aria-pressed='true'] {
+  border-color: var(--alab-accent);
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+}
+.kb-tap,
+.kb-manual,
+.kb-editor-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.kb-tap .alab-button {
+  min-width: 88px;
+}
+.kb-manual label,
+.kb-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.kb-manual input {
+  width: 96px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: var(--alab-panel);
+  color: inherit;
+}
+.kb-manual input[aria-invalid='true'] {
+  border-color: var(--alab-bad);
+}
+.kb-key select {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--alab-line);
+  border-radius: 6px;
+  background: var(--alab-panel);
+  color: inherit;
+}
+.kb-editor-foot {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--alab-line);
+}
+.tool-handoff {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--alab-accent);
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.tool-handoff span {
+  color: var(--alab-muted);
+}
+.tool-handoff svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.tool-feedback {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--alab-line);
+}
+.tool-feedback summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.tool-feedback > p {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--alab-muted);
+}
+@media (max-width: 640px) {
+  .kb-audition {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .kb-audition-time {
+    grid-column: 2;
+  }
+}
+.kb-editor fieldset {
+  align-content: start;
+}
+.kb-editor .kb-key {
+  margin-top: 0;
+}
+.alab-workspace .alab-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kb-storage-note {
+  padding: 10px 12px;
+  border-left: 2px solid #d9b26a;
+  background: color-mix(in srgb, #d9b26a 12%, transparent);
+  font-size: 13px;
+}
