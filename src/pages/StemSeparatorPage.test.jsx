@@ -124,3 +124,19 @@ it('accepts a drop and reports an unsupported file without losing the audio', as
   expect(screen.getByRole('article', { name: 'valid.wav' })).toBeInTheDocument();
   expect(screen.getByRole('alert')).toHaveTextContent('not-a-song.txt: Choose an audio file.');
 });
+
+it.each([
+  ['bass-practice', /Bass practice/],
+  ['drum-practice', /Drum practice/],
+  ['vocal-backing', /Vocal backing track/],
+  ['nonsense', /Separate all parts/],
+])('opens ?goal=%s with the matching goal selected', async (goal, radio) => {
+  await act(async () => {
+    render(
+      <MemoryRouter initialEntries={[`/stem-separator?goal=${goal}`]}>
+        <StemSeparatorPage />
+      </MemoryRouter>
+    );
+  });
+  expect(screen.getByRole('radio', { name: radio })).toBeChecked();
+});

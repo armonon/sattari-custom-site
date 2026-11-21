@@ -215,3 +215,22 @@ it('loops every lane between A and B and clears the loop', async () => {
   for (const source of restarted) expect(source.loop).toBeUndefined();
   expect(screen.getByRole('button', { name: /^Set A/ })).toHaveTextContent(/^Set A$/);
 });
+
+it('exports only the A–B loop when chosen, aligned to the loop start', async () => {
+  const { onEvent } = await setup({ frames: RATE * 2, initialPreset: 'no-drums' });
+  const position = screen.getByLabelText('Playback position');
+  await act(async () => fireEvent.change(position, { target: { value: '0.5' } }));
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set A/ })));
+  await act(async () => fireEvent.change(position, { target: { value: '1.5' } }));
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set B/ })));
+  await act(async () =>
+    fireEvent.change(screen.getByLabelText('Length of the mix'), { target: { value: 'loop' } })
+  );
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Download my mix' })));
+  await waitFor(() => expect(onEvent).toHaveBeenCalledWith('mix_exported', expect.any(Object)));
+  const [, result] = onEvent.mock.calls.find(([type]) => type === 'mix_exported');
+  expect(result.name).toBe('Song-drumless-loop-0m00s-0m01s.wav');
+  expect(result.frames).toBe(RATE);
+  const parsed = parseWav(await downloads.at(-1).arrayBuffer());
+  expect(parsed.channels[0]).toHaveLength(RATE);
+});

@@ -253,13 +253,16 @@
   accent-color: var(--sp-accent);
 }
 .stem-player-export {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 14px;
   border-radius: 8px;
   background: var(--sp-raised);
+}
+.stem-player-export > div {
+  flex: 1 1 220px;
 }
 .stem-player-export h3 {
   font-size: 16px;
@@ -376,7 +379,8 @@
     grid-area: gain;
   }
   .stem-player-export {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
   .stem-player-master > label:first-child {
     grid-template-columns: auto 1fr auto;

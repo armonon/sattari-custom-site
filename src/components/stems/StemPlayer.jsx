@@ -26,11 +26,13 @@ import {
   mixFileName,
   mixPeak,
   mixWavBlob,
+  sliceSources,
   parseWav,
   renderMix,
   soloMix,
 } from '../../utils/stemMix';
 import StemWaveform from './StemWaveform';
+import { aacSupported, encodeMixAac } from '../../utils/mixEncodeAac';
 import './StemPlayer.css';
 
 export const formatClock = (seconds) => {
@@ -111,6 +113,8 @@ export default function StemPlayer({
   const [peak, setPeak] = useState(null);
   const [headroom, setHeadroom] = useState('none');
   const [format, setFormat] = useState('float32');
+  const [range, setRange] = useState('full');
+  const [aac, setAac] = useState(null);
   const [exporting, setExporting] = useState(null);
   const [exported, setExported] = useState(null);
   const [exportError, setExportError] = useState('');
@@ -187,6 +191,14 @@ export default function StemPlayer({
       void audio.close().catch(() => {});
     };
   }, [stems]);
+
+  useEffect(() => {
+    let live = true;
+    aacSupported().then((ok) => live && setAac(ok));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // One gain rule for preview and export (laneGain), plus the labelled output
   // gain when "Prevent clipping" is on. The original reference is exclusive.
@@ -380,6 +392,7 @@ export default function StemPlayer({
     const snapshot = structuredClone(mix);
     const snapshotHeadroom = headroom;
     const snapshotFormat = format;
+    const snapshotRange = range === 'loop' && loopActive ? { start: loop.a, end: loop.b } : null;
     setExportError('');
     setExported(null);
     setExporting({ progress: 0 });
@@ -394,14 +407,29 @@ export default function StemPlayer({
           },
         ])
       );
-      const render = await renderMix(sources, snapshot, {
-        signal: controller.signal,
-        headroom: snapshotHeadroom,
-        onProgress: (progress) => setExporting({ progress }),
-      });
+      const compressed = snapshotFormat === 'aac';
+      const render = await renderMix(
+        snapshotRange ? sliceSources(sources, snapshotRange.start, snapshotRange.end) : sources,
+        snapshot,
+        {
+          signal: controller.signal,
+          headroom: snapshotHeadroom,
+          onProgress: (progress) =>
+            setExporting({ progress: compressed ? progress * 0.4 : progress }),
+        }
+      );
       controller.signal.throwIfAborted();
-      const blob = mixWavBlob(render, snapshotFormat);
-      const name = mixFileName(fileBase, snapshot);
+      const blob = compressed
+        ? await encodeMixAac(render, {
+            signal: controller.signal,
+            onProgress: (progress) => setExporting({ progress: 0.4 + progress * 0.6 }),
+          })
+        : mixWavBlob(render, snapshotFormat);
+      controller.signal.throwIfAborted();
+      const name = mixFileName(fileBase, snapshot, {
+        ext: MIX_FORMATS[snapshotFormat].ext,
+        range: snapshotRange,
+      });
       download(blob, name);
       const result = {
         blob,
@@ -413,8 +441,8 @@ export default function StemPlayer({
         sampleRate: render.sampleRate,
         peakDb: render.peakDb,
         outputGainDb: render.outputGainDb,
-        overFrames: snapshotFormat === 'pcm24' ? render.overFrames : 0,
-        clippedInFile: snapshotFormat === 'pcm24' && render.overFrames > 0,
+        range: snapshotRange,
+        clippedInFile: snapshotFormat !== 'float32' && render.overFrames > 0,
         overs: render.overFrames,
         preset: describeMix(snapshot).id,
       };
@@ -728,9 +756,28 @@ export default function StemPlayer({
           <p>
             {noneAudible
               ? 'Unmute at least one part to render a mix.'
-              : `Renders ${description.audible.map(labelFor).join(' + ')} exactly as set above, full length.`}
+              : `Renders ${description.audible.map(labelFor).join(' + ')} exactly as set above, ${
+                  range === 'loop' && loopActive
+                    ? `${formatClock(loop.a)}–${formatClock(loop.b)} only`
+                    : 'full length'
+                }.`}
           </p>
         </div>
+        <label className="stem-player-format">
+          <span className="stem-player-visually-hidden">Length of the mix</span>
+          <select
+            value={range === 'loop' && loopActive ? 'loop' : 'full'}
+            onChange={(event) => setRange(event.target.value)}
+            disabled={Boolean(exporting)}
+          >
+            <option value="full">Whole song</option>
+            <option value="loop" disabled={!loopActive}>
+              {loopActive
+                ? `A–B loop only (${formatClock(loop.a)}–${formatClock(loop.b)})`
+                : 'A–B loop only (set A and B first)'}
+            </option>
+          </select>
+        </label>
         <label className="stem-player-format">
           <span className="stem-player-visually-hidden">Mix file format</span>
           <select
@@ -739,8 +786,10 @@ export default function StemPlayer({
             disabled={Boolean(exporting)}
           >
             {Object.entries(MIX_FORMATS).map(([value, option]) => (
-              <option key={value} value={value}>
-                {option.label}
+              <option key={value} value={value} disabled={value === 'aac' && aac === false}>
+                {value === 'aac' && aac === false
+                  ? 'M4A · not supported by this browser'
+                  : option.label}
               </option>
             ))}
           </select>
@@ -764,15 +813,24 @@ export default function StemPlayer({
           </button>
         )}
       </div>
-      {format === 'pcm24' && over && headroom === 'none' && (
+      {format !== 'float32' && over && headroom === 'none' && (
         <p className="stem-player-note">
-          24-bit PCM cannot store peaks above 0 dBFS; they will be clipped. Use 32-bit float or turn
-          on Prevent clipping.
+          This format cannot store peaks above 0 dBFS; they will be clipped. Use 32-bit float WAV or
+          turn on Prevent clipping.
+        </p>
+      )}
+      {format === 'aac' && (
+        <p className="stem-player-note">
+          M4A is much smaller but lossy, and adds a few milliseconds of encoder delay. Use WAV when
+          you will line the mix up with other tracks.
         </p>
       )}
       {exporting && (
         <div className="stem-player-progress" role="status">
-          <span>Rendering mix… {Math.round(exporting.progress * 100)}%</span>
+          <span>
+            {format === 'aac' && exporting.progress >= 0.4 ? 'Encoding M4A…' : 'Rendering mix…'}{' '}
+            {Math.round(exporting.progress * 100)}%
+          </span>
           <progress max="1" value={exporting.progress} aria-label="Mix render progress" />
         </div>
       )}
@@ -785,8 +843,11 @@ export default function StemPlayer({
         <div className="stem-player-done" role="status">
           <p>
             <strong>{exported.name}</strong> downloaded ·{' '}
-            {exported.audible.map(labelFor).join(' + ')} · {formatClock(exported.duration)} ·{' '}
-            {MIX_FORMATS[exported.format].label} · peak{' '}
+            {exported.audible.map(labelFor).join(' + ')} ·{' '}
+            {exported.range
+              ? `${formatClock(exported.range.start)}–${formatClock(exported.range.end)} loop`
+              : formatClock(exported.duration)}{' '}
+            · {MIX_FORMATS[exported.format].label} · peak{' '}
             {formatDb(exported.peakDb).replace(' dB', ' dBFS')}
             {exported.outputGainDb < 0 &&
               ` · lowered ${formatDb(exported.outputGainDb)} to prevent clipping`}

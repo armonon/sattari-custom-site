@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
+  Gauge,
   Library,
   Radio,
   SlidersHorizontal,
@@ -53,6 +54,19 @@ const workspaces = [
     status: 'Local processing',
     tools: ['Vocals', 'Drums', 'Bass', 'Other instruments'],
   },
+  {
+    id: 'key-bpm',
+    name: 'Key & BPM',
+    category: 'Understand',
+    detail: 'Find key, Camelot and tempo, then fix half/double time',
+    path: '/studio/keybpm',
+    image: '/images/tools/key-bpm.jpg',
+    alt: 'Key & BPM showing C major, 8B and a half-time tempo correction',
+    icon: Gauge,
+    status: 'Beta',
+    reference: '/tools/key-bpm',
+    tools: ['Key', 'Camelot', 'BPM', 'CSV'],
+  },
 ];
 
 const reading = [
@@ -99,12 +113,24 @@ export default function SattariHubPage() {
           <section className="hub-workspaces" aria-labelledby="hub-workspaces-title">
             <div className="hub-section-heading">
               <h2 id="hub-workspaces-title">Your workspaces</h2>
-              <span>01 / 03</span>
+              <span>01 / 04</span>
             </div>
             <div className="hub-workspace-grid">
               {workspaces.map(
                 (
-                  { id, name, category, detail, path, image, alt, icon: Icon, status, tools },
+                  {
+                    id,
+                    name,
+                    category,
+                    detail,
+                    path,
+                    image,
+                    alt,
+                    icon: Icon,
+                    status,
+                    tools,
+                    reference,
+                  },
                   index
                 ) => (
                   <article key={id} className={`hub-tool hub-tool-${id}`}>
@@ -131,7 +157,10 @@ export default function SattariHubPage() {
                     </Link>
                     <div className="hub-tool-footer">
                       <span>{status}</span>
-                      <Link to={`/tools${path}`} aria-label={`${name} formats, privacy and limits`}>
+                      <Link
+                        to={reference || `/tools${path}`}
+                        aria-label={`${name} formats, privacy and limits`}
+                      >
                         Details <ArrowRight size={14} aria-hidden="true" />
                       </Link>
                     </div>

@@ -10,7 +10,7 @@ import {
 } from '../data/siteSeo';
 import { musicGuides } from '../data/musicGuides';
 import { separatorQuestions } from '../data/stemSeparatorContent';
-import { toolDetails } from '../data/toolDetails';
+import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
@@ -20,7 +20,7 @@ const guidePath = (guide) => `/guides/${guide.slug}`;
 const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
   const guide = musicGuides.find((item) => guidePath(item) === path);
-  const tool = Object.values(toolDetails).find((item) => `/tools${item.path}` === path);
+  const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
     guide?.title ||
@@ -147,7 +147,7 @@ export function GuideIndex() {
         <h2>Know your tools</h2>
         <div className="resource-tool-links">
           {Object.values(toolDetails).map((tool) => (
-            <Link to={`/tools${tool.path}`} key={tool.key}>
+            <Link to={toolReferencePath(tool)} key={tool.key}>
               {tool.name}
               <ArrowRight size={18} />
             </Link>

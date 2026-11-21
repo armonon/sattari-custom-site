@@ -1100,3 +1100,27 @@
   font-size: 13px;
   line-height: 1.55;
 }
+.separator-batch-mix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--sep-line);
+  border-radius: 8px;
+}
+.separator-batch-mix label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.separator-batch-mix select {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--sep-line);
+  border-radius: 6px;
+  background: var(--sep-raised);
+  color: inherit;
+}

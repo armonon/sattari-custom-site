@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { unzipSync } from 'fflate';
 import { parseWav } from '../src/utils/stemMix.js';
+import { wavBytes } from '../src/utils/arrangementExport.js';
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const base = (process.env.FLAGSHIP_URL || 'http://127.0.0.1:4310').replace(/\/$/, '');
@@ -217,6 +218,73 @@ try {
     assert(await page.getByRole('button', { name: 'Download my mix' }).isEnabled());
   });
 
+  const setPosition = (seconds) =>
+    page.getByLabel('Playback position').evaluate((input, value) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(input, String(value));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, seconds);
+
+  await check('A–B loop export equals the same frames of the full mix', async () => {
+    await page.getByRole('button', { name: 'Drum practice' }).click();
+    await setPosition(2);
+    await page.getByRole('button', { name: /^Set A/ }).click();
+    await setPosition(4);
+    await page.getByRole('button', { name: /^Set B/ }).click();
+    await page.getByLabel('Length of the mix').selectOption('loop');
+    await page.getByLabel('Mix file format').selectOption('float32');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download my mix' }).click(),
+    ]);
+    const file = await readDownload(download);
+    const loop = parseWav(toArrayBuffer(file.bytes));
+    assert.match(file.name, /-drumless-loop-0m02s-0m04s\.wav$/);
+    assert.equal(loop.channels[0].length, 2 * 44100);
+    let maxError = 0;
+    for (let i = 0; i < loop.channels[0].length; i++)
+      maxError = Math.max(maxError, Math.abs(loop.channels[0][i] - mix.channels[0][2 * 44100 + i]));
+    assert(maxError < 1e-6, `max error ${maxError}`);
+    return `${file.name}, ${loop.channels[0].length} frames, max |error| ${maxError.toExponential(2)}`;
+  });
+
+  await check('M4A/AAC export decodes back to the same mix level and length', async () => {
+    await page.getByLabel('Length of the mix').selectOption('full');
+    const enabled = await page
+      .getByLabel('Mix file format')
+      .locator('option[value="aac"]')
+      .evaluate((option) => !option.disabled);
+    if (!enabled) throw new Error('This browser reports no AAC encoder');
+    await page.getByLabel('Mix file format').selectOption('aac');
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 120000 }),
+      page.getByRole('button', { name: 'Download my mix' }).click(),
+    ]);
+    const file = await readDownload(download);
+    assert.match(file.name, /-drumless-mix\.m4a$/);
+    const decoded = await page.evaluate(async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const context = new OfflineAudioContext(2, 1, 44100);
+      const buffer = await context.decodeAudioData(bytes.buffer);
+      const data = buffer.getChannelData(0);
+      let sum = 0;
+      for (const value of data) sum += value * value;
+      return {
+        duration: buffer.duration,
+        rms: Math.sqrt(sum / data.length),
+        rate: buffer.sampleRate,
+      };
+    }, file.bytes.toString('base64'));
+    let sum = 0;
+    for (const value of mix.channels[0]) sum += value * value;
+    const wavRms = Math.sqrt(sum / mix.channels[0].length);
+    const levelDb = 20 * Math.log10(decoded.rms / wavRms);
+    assert(Math.abs(decoded.duration - 8) < 0.1, `duration ${decoded.duration}`);
+    assert(Math.abs(levelDb) < 1, `level differs by ${levelDb.toFixed(2)} dB`);
+    await page.getByLabel('Mix file format').selectOption('float32');
+    return `${file.name}, ${(file.bytes.length / 1024).toFixed(0)} KB vs ${(mixFile.bytes.length / 1024).toFixed(0)} KB WAV, ${decoded.duration.toFixed(3)}s, level ${levelDb.toFixed(2)} dB`;
+  });
+
   await check('song ZIP contains this song’s four stems and report', async () => {
     const [download] = await Promise.all([
       page.waitForEvent('download'),
@@ -230,6 +298,64 @@ try {
         part
       );
     return names.join(', ');
+  });
+
+  await check('one preset for every song downloads a ZIP of practice mixes', async () => {
+    const seconds = 4;
+    const samples = Float32Array.from({ length: seconds * 44100 }, (_, i) => {
+      const t = i / 44100;
+      return (
+        0.2 * Math.sin(2 * Math.PI * 110 * t) +
+        0.15 * Math.exp(-(t % 0.5) * 30) * Math.sin(2 * Math.PI * 60 * t)
+      );
+    });
+    await page.getByLabel('Add audio tracks').setInputFiles({
+      name: 'second-song.wav',
+      mimeType: 'audio/wav',
+      buffer: Buffer.from(
+        wavBytes({
+          sampleRate: 44100,
+          length: samples.length,
+          numberOfChannels: 2,
+          getChannelData: () => samples,
+        })
+      ),
+    });
+    await page.getByRole('button', { name: 'Separate 1 song' }).click();
+    await page.getByText('2 of 2 songs ready').waitFor({ timeout: inferenceTimeout });
+    await page.getByLabel(/Same practice mix for all 2 songs/).selectOption('no-bass');
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 300000 }),
+      page.getByRole('button', { name: 'Download mixes ZIP' }).click(),
+    ]);
+    const zip = unzipSync(new Uint8Array((await readDownload(download)).bytes));
+    const names = Object.keys(zip);
+    assert(
+      names.some((name) => name.endsWith('sattari-practice-demo-bassless-mix.wav')),
+      names.join()
+    );
+    assert(
+      names.some((name) => name.endsWith('second-song-bassless-mix.wav')),
+      names.join()
+    );
+    const demo = parseWav(
+      toArrayBuffer(
+        Buffer.from(zip[names.find((name) => name.includes('sattari-practice-demo-bassless'))])
+      )
+    );
+    let maxError = 0;
+    for (let i = 0; i < demo.channels[0].length; i += 3)
+      maxError = Math.max(
+        maxError,
+        Math.abs(
+          demo.channels[0][i] -
+            (stems.Vocals.channels[0][i] +
+              stems.Drums.channels[0][i] +
+              stems['Other instruments'].channels[0][i])
+        )
+      );
+    assert(maxError < 1e-6, `max error ${maxError}`);
+    return `${names.join(', ')}; demo mix max |error| ${maxError.toExponential(2)}`;
   });
 
   await check('saved song survives a reload', async () => {
@@ -352,6 +478,12 @@ try {
     await page.getByRole('heading', { name: /Key & BPM/ }).waitFor();
     assert.equal(await page.getByText(/Added from Stem Separator/).count(), 0);
   });
+  await check('Key & BPM keeps results, correction and audio after a reload', async () => {
+    const row = page.locator('tr[data-status="done"]').first();
+    await row.waitFor({ timeout: 30000 });
+    assert.match(await row.textContent(), /half time · detected 120/);
+    assert(await page.getByRole('button', { name: /^Play sattari-practice-demo/ }).isEnabled());
+  });
 
   await check(
     'report round trip in a fresh context keeps the correction, without audio',
@@ -378,6 +510,12 @@ try {
       await fresh.close();
     }
   );
+
+  await check('a shared ?goal= link opens with that goal selected', async () => {
+    await page.goto(`${base}/stem-separator?goal=bass-practice`);
+    await page.getByRole('radio', { name: /Bass practice/ }).waitFor();
+    assert(await page.getByRole('radio', { name: /Bass practice/ }).isChecked());
+  });
 
   await check('Clear saved work removes saved songs after confirmation', async () => {
     await page.goto(`${base}/stem-separator`);

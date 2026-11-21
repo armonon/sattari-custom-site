@@ -330,9 +330,35 @@ export async function mixPeak(sources, mixInput, { signal, chunkFrames = 1 << 16
 }
 
 export const MIX_FORMATS = {
-  float32: { label: 'WAV · 32-bit float · 44.1 kHz stereo', float: true },
-  pcm24: { label: 'WAV · 24-bit PCM · 44.1 kHz stereo', float: false },
+  float32: { label: 'WAV · 32-bit float · 44.1 kHz stereo', float: true, ext: 'wav' },
+  pcm24: { label: 'WAV · 24-bit PCM · 44.1 kHz stereo', float: false, ext: 'wav' },
+  aac: { label: 'M4A · AAC 192 kbps · smaller, for phones', compressed: true, ext: 'm4a' },
 };
+
+/**
+ * Restrict sources to [start, end) seconds as zero-copy views, for exporting
+ * just the A–B loop. Every stem is cut at the same frames, so alignment holds.
+ */
+export function sliceSources(sources, start, end) {
+  return Object.fromEntries(
+    Object.entries(sources).map(([id, source]) => {
+      const from = Math.max(0, Math.round(start * source.sampleRate));
+      const to = Math.max(from, Math.round(end * source.sampleRate));
+      return [
+        id,
+        {
+          ...source,
+          channels: source.channels.map((channel) =>
+            channel.subarray(Math.min(from, channel.length), Math.min(to, channel.length))
+          ),
+        },
+      ];
+    })
+  );
+}
+
+const stamp = (seconds) =>
+  `${Math.floor(seconds / 60)}m${String(Math.floor(seconds % 60)).padStart(2, '0')}s`;
 
 /** Encode a renderMix() result with the site's existing WAV encoder. */
 export function mixWavBlob(render, format = 'float32') {
@@ -356,13 +382,18 @@ const SUFFIX = {
   'no-bass': 'bassless',
 };
 
-/** File name that says what the mix contains, e.g. "song-drumless-mix.wav". */
-export function mixFileName(trackName, mix) {
+/**
+ * File name that says what the mix contains, e.g. "song-drumless-mix.wav" or
+ * "song-drumless-loop-0m12s-0m20s.m4a".
+ */
+export function mixFileName(trackName, mix, { ext = 'wav', range = null } = {}) {
   const { id } = describeMix(mix);
   const label =
     SUFFIX[id] ||
     (id.startsWith('solo:')
       ? `${id.slice(5) === 'other' ? 'instruments' : id.slice(5)}-solo`
       : 'custom');
-  return `${trackName}-${label}-mix.wav`;
+  return range
+    ? `${trackName}-${label}-loop-${stamp(range.start)}-${stamp(range.end)}.${ext}`
+    : `${trackName}-${label}-mix.${ext}`;
 }

@@ -22,3 +22,35 @@ export const SEPARATOR_GOALS = [
 export function goalStems(goal) {
   return goal === 'custom' ? null : ALL;
 }
+
+// Shareable links: /stem-separator?goal=drum-practice opens that goal.
+export const GOAL_LINKS = {
+  all: 'all',
+  'vocal-backing': 'no-vocals',
+  karaoke: 'no-vocals',
+  'drum-practice': 'no-drums',
+  drumless: 'no-drums',
+  'bass-practice': 'no-bass',
+  bassless: 'no-bass',
+  'solo-vocals': 'solo:vocals',
+  'solo-drums': 'solo:drums',
+  'solo-bass': 'solo:bass',
+  'solo-other': 'solo:other',
+  custom: 'custom',
+};
+export const GOAL_SLUGS = {
+  all: 'all',
+  'no-vocals': 'vocal-backing',
+  'no-drums': 'drum-practice',
+  'no-bass': 'bass-practice',
+  'solo:vocals': 'solo-vocals',
+  'solo:drums': 'solo-drums',
+  'solo:bass': 'solo-bass',
+  'solo:other': 'solo-other',
+  custom: 'custom',
+};
+/** Goal id from a ?goal= value, or null when absent or unknown. */
+export const goalFromLink = (value) =>
+  Object.hasOwn(GOAL_LINKS, String(value || '').toLowerCase())
+    ? GOAL_LINKS[String(value).toLowerCase()]
+    : null;

@@ -27,10 +27,13 @@ needed for its core workflow. Existing shared suite/account features are separat
    quoted and spreadsheet-formula prefixes are neutralized. CSV is an output
    format, not an analysis-report input format.
 
-Results are not automatically persisted or synced. Keep a downloaded report
-before closing the tab; source audio must be retained separately. Only actual
-byte-identical files with the same name/size are treated as duplicates; different
-mixes that happen to share a filename and length are both admitted.
+Results, corrections, origin labels and (within a 600 MiB budget, in list
+order) the source audio are saved in this browser's IndexedDB
+(`sattari-keybpm`) and restored on reload. Rows over the budget keep their results
+and show "Saved result · audio not kept". Rows that were measuring restore as
+waiting; press Resume. Every saved record is revalidated with the report schema;
+invalid records are skipped with a note. **Clear** empties the list and the store.
+Nothing is synced between devices; save a report or CSV as a copy.
 
 ## Listening and corrections
 

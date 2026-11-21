@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -12,6 +12,7 @@ import {
   Guitar,
   HardDrive,
   Layers,
+  Link2,
   LoaderCircle,
   Mic2,
   Music2,
@@ -39,10 +40,18 @@ import ToolFeedback from '../components/stems/ToolFeedback';
 import { trackSiteEvent, trackSiteEventOnce } from '../utils/siteMeasurement';
 import { AUDIO_ACCEPT, formatDuration, safeTrackName, STEMS } from '../utils/stemSeparator';
 import { createStemArchive } from '../utils/stemSeparatorDownload';
+import { renderBatchMixes } from '../utils/batchMix';
+import { MIX_PRESETS } from '../utils/stemMix';
 import { stemAnalysisReport } from '../utils/stemAnalysisReport';
 import { offerToolHandoff, takeToolHandoff } from '../utils/toolHandoff';
 import { offerStemHandoff } from '../studio/stemHandoff';
-import { SEPARATOR_GOALS, goalStems, stemLabel } from './stemSeparatorGoals';
+import {
+  GOAL_SLUGS,
+  SEPARATOR_GOALS,
+  goalFromLink,
+  goalStems,
+  stemLabel,
+} from './stemSeparatorGoals';
 import './StemSeparatorPage.css';
 
 const icons = { vocals: Mic2, drums: Drum, bass: Guitar, other: Music2 };
@@ -143,13 +152,18 @@ export default function StemSeparatorPage() {
     setGoal,
   } = separator;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dragging, setDragging] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [packing, setPacking] = useState(false);
   const [downloadError, setDownloadError] = useState('');
   const [focusId, setFocusId] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [clearNote, setClearNote] = useState('');
   const [received, setReceived] = useState(null);
+  const [batchPreset, setBatchPreset] = useState('no-vocals');
+  const [batchProgress, setBatchProgress] = useState(null);
+  const [batchNote, setBatchNote] = useState('');
   const picker = useRef(null);
   const archive = useRef(null);
   const links = useRef(new Set());
@@ -184,8 +198,28 @@ export default function StemSeparatorPage() {
 
   const chooseGoal = (value) => {
     setGoal(value);
+    setLinkCopied(false);
     const stems = goalStems(value);
     if (stems) setSelected(stems);
+  };
+
+  // A shared link (?goal=drum-practice) preselects the goal once on arrival.
+  // Read after mount so the prerendered page hydrates unchanged.
+  useEffect(() => {
+    const linked = goalFromLink(searchParams.get('goal'));
+    if (linked) chooseGoal(linked);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const shareGoal = async () => {
+    const url = new URL('/stem-separator', 'https://sattarimusic.com');
+    url.searchParams.set('goal', GOAL_SLUGS[goal] || 'all');
+    setSearchParams({ goal: GOAL_SLUGS[goal] || 'all' }, { replace: true });
+    try {
+      await navigator.clipboard.writeText(url.href);
+      setLinkCopied(url.href);
+    } catch {
+      setLinkCopied(`Copy this link: ${url.href}`);
+    }
   };
 
   const downloadReport = (job) => {
@@ -216,6 +250,56 @@ export default function StemSeparatorPage() {
       if (!controller.signal.aborted)
         setDownloadError(error.message || 'Download failed. Try downloading individual stems.');
     } finally {
+      if (archive.current === controller) {
+        archive.current = null;
+        setPacking(false);
+      }
+    }
+  };
+
+  // One preset for every finished song, rendered one song at a time and
+  // packaged with the existing ZIP worker (one folder per song).
+  const downloadPracticeMixes = async () => {
+    if (locked) return;
+    const controller = new AbortController();
+    archive.current = controller;
+    setPacking(true);
+    setDownloadError('');
+    setBatchNote('');
+    setBatchProgress(0);
+    try {
+      const { mixes, skipped } = await renderBatchMixes(ready, batchPreset, {
+        signal: controller.signal,
+        onProgress: setBatchProgress,
+        fileBase: (job) => safeTrackName(job.file.name),
+      });
+      if (!mixes.length)
+        throw new Error('No song has all four parts. Separate all parts to build practice mixes.');
+      const blob = await createStemArchive(
+        mixes.map((mix) => ({ file: mix.job.file, outputs: [{ name: mix.name, blob: mix.blob }] })),
+        controller.signal
+      );
+      controller.signal.throwIfAborted();
+      const label = MIX_PRESETS.find((preset) => preset.id === batchPreset)?.label || 'mixes';
+      download(
+        blob,
+        `sattari-${label.toLowerCase().replace(/[^a-z]+/g, '-')}-mixes.zip`,
+        links.current
+      );
+      trackSiteEvent('mix_exported');
+      setBatchNote(
+        `${mixes.length} ${mixes.length === 1 ? 'mix' : 'mixes'} downloaded (32-bit float WAV).` +
+          (skipped.length
+            ? ` Skipped ${skipped.length} without all four parts: ${skipped.join(', ')}.`
+            : '')
+      );
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setDownloadError(
+          error.message || 'Practice mixes could not be made. Try one song at a time.'
+        );
+    } finally {
+      setBatchProgress(null);
       if (archive.current === controller) {
         archive.current = null;
         setPacking(false);
@@ -356,6 +440,20 @@ export default function StemSeparatorPage() {
                   </label>
                 ))}
               </fieldset>
+              <button
+                type="button"
+                className="separator-text-button"
+                onClick={() => void shareGoal()}
+              >
+                <Link2 size={14} /> Copy a link to this setup
+              </button>
+              {linkCopied && (
+                <p className="separator-note" role="status">
+                  {linkCopied.startsWith('Copy')
+                    ? linkCopied
+                    : 'Link copied. Anyone who opens it starts here.'}
+                </p>
+              )}
               {goal === 'custom' && (
                 <fieldset disabled={locked}>
                   <legend>Parts to keep</legend>
@@ -815,9 +913,46 @@ export default function StemSeparatorPage() {
                   )}
                 </div>
               </div>
+              {ready.length > 1 && (
+                <div
+                  className="separator-batch-mix"
+                  role="group"
+                  aria-label="Practice mixes for every song"
+                >
+                  <label>
+                    <span>Same practice mix for all {ready.length} songs</span>
+                    <select
+                      value={batchPreset}
+                      disabled={locked}
+                      onChange={(event) => setBatchPreset(event.target.value)}
+                    >
+                      {MIX_PRESETS.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="separator-button"
+                    disabled={locked}
+                    onClick={() => void downloadPracticeMixes()}
+                  >
+                    <Download size={16} /> Download mixes ZIP
+                  </button>
+                </div>
+              )}
               {packing && (
                 <p className="separator-note" role="status">
-                  Preparing ZIP…
+                  {batchProgress === null
+                    ? 'Preparing ZIP…'
+                    : `Rendering practice mixes… ${Math.round(batchProgress * 100)}%`}
+                </p>
+              )}
+              {batchNote && (
+                <p className="separator-note" role="status">
+                  {batchNote}
                 </p>
               )}
               {downloadError && (

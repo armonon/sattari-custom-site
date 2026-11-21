@@ -38,6 +38,14 @@ import { offerToolHandoff, takeToolHandoff } from '../../utils/toolHandoff';
 import { trackSiteEvent, trackSiteEventOnce } from '../../utils/siteMeasurement';
 import HandoffNotice from '../../components/stems/HandoffNotice';
 import ToolFeedback from '../../components/stems/ToolFeedback';
+import {
+  audioAllowance,
+  clearKeyBpmRows,
+  deleteKeyBpmRows,
+  loadKeyBpmRows,
+  rowRecord,
+  saveKeyBpmRows,
+} from './keyBpmStore';
 import './keyBpm.css';
 
 const LIMITS = [
@@ -46,7 +54,7 @@ const LIMITS = [
   '"Tentative" means the best key only narrowly beat the runner-up, which is shown as the alternative. The margin is not a probability.',
   'Your corrections are labels on the result. They do not stretch, speed up or transpose the audio.',
   'Up to 10 minutes and 200 MB per file, mono or stereo, in formats your browser can decode.',
-  'Results stay in this tab until you save a report or CSV. Reports contain no audio; choose the source files again to listen or re-measure.',
+  'Results are saved in this browser (not a backup; browsers can clear it). Reports and CSV contain no audio; choose the source files again to listen or re-measure rows without audio.',
   'Fixture-tested, not benchmarked on a labelled music corpus yet: treat values as starting points.',
 ];
 
@@ -281,10 +289,41 @@ export default function KeyBpmPage() {
   const audio = useRef(null);
   const auditionUrl = useRef(null);
   const handoff = useRef(undefined);
+  const [storageNote, setStorageNote] = useState('');
+  const saved = useRef(new Map());
+  const saveTimer = useRef(null);
+  const clearedBeforeRestore = useRef(false);
 
+  // Mirror the list into browser storage: write changed rows, delete removed
+  // ones. Failures never block measuring; they are reported once in the page.
+  const flush = () => {
+    const current = rowsRef.current;
+    const keep = audioAllowance(current);
+    const changed = [];
+    current.forEach((row, order) => {
+      const previous = saved.current.get(row.id);
+      const keepAudio = keep.has(row.id);
+      if (previous?.row === row && previous.keepAudio === keepAudio && previous.order === order)
+        return;
+      changed.push(rowRecord(row, order, keepAudio));
+      saved.current.set(row.id, { row, keepAudio, order });
+    });
+    const ids = new Set(current.map((row) => row.id));
+    const removed = [...saved.current.keys()].filter((id) => !ids.has(id));
+    removed.forEach((id) => saved.current.delete(id));
+    const fail = () =>
+      mounted.current &&
+      setStorageNote(
+        'Results could not be saved in this browser. They stay in this tab; save a report to keep them.'
+      );
+    if (changed.length) saveKeyBpmRows(changed).catch(fail);
+    if (removed.length) deleteKeyBpmRows(removed).catch(fail);
+  };
   const publish = (next) => {
     rowsRef.current = next;
     if (mounted.current) setRows(next);
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flush, 300);
   };
   const update = (id, patch) =>
     publish(rowsRef.current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -300,14 +339,46 @@ export default function KeyBpmPage() {
   useEffect(() => {
     mounted.current = true;
     const element = audio.current;
+    let live = true;
+    loadKeyBpmRows()
+      .then(({ rows: restored, skipped }) => {
+        if (!live) return;
+        if (clearedBeforeRestore.current) {
+          clearKeyBpmRows().catch(() => {});
+          return;
+        }
+        // Rows added before storage answered stay after the restored ones.
+        const present = new Set(rowsRef.current.map((row) => row.id));
+        const room = Math.max(0, KEYBPM_MAX_FILES - rowsRef.current.length);
+        const kept = restored.filter((row) => !present.has(row.id)).slice(0, room);
+        kept.forEach((row, order) =>
+          saved.current.set(row.id, {
+            row,
+            keepAudio: !row.audioNotSaved && !row.fromReport,
+            order,
+          })
+        );
+        if (kept.length) publish([...kept, ...rowsRef.current]);
+        if (skipped)
+          setStorageNote(`${skipped} saved result(s) could not be restored and were left out.`);
+      })
+      .catch(() => {
+        if (live)
+          setStorageNote(
+            'Saved results could not be opened in this browser. New results stay in this tab; save a report to keep them.'
+          );
+      });
     return () => {
+      live = false;
+      clearTimeout(saveTimer.current);
+      if (mounted.current) flush();
       mounted.current = false;
       controller.current?.abort();
       worker.current?.terminate();
       element?.pause();
       if (auditionUrl.current) URL.revokeObjectURL(auditionUrl.current);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-only restore
 
   // Stop listening to a row that no longer exists (cleared or replaced).
   useEffect(() => {
@@ -742,7 +813,13 @@ export default function KeyBpmPage() {
               disabled={running || checking || !rows.length}
               onClick={() => {
                 setEditing(null);
+                clearedBeforeRestore.current = true;
                 publish([]);
+                clearTimeout(saveTimer.current);
+                saved.current.clear();
+                clearKeyBpmRows()
+                  .then(() => mounted.current && setStorageNote(''))
+                  .catch(() => {});
               }}
             >
               <Trash2 size={14} aria-hidden="true" /> Clear
@@ -750,9 +827,15 @@ export default function KeyBpmPage() {
           </div>
         </div>
         <p className="alab-note">
-          Save a report to reopen results, including your corrections, after closing this tab.
-          Reports and CSV contain no audio. Opening a report adds its results to this list.
+          Results and your corrections are saved in this browser, so a reload keeps them. Clear
+          removes them. Browsers can clear this storage, so save a report or CSV to keep a copy.
+          Very large folders keep their results but not every audio file.
         </p>
+        {storageNote && (
+          <p className="kb-storage-note" role="status">
+            {storageNote}
+          </p>
+        )}
         {rows.length === 0 ? (
           <p className="alab-empty">
             No tracks yet. Add a song or try the example; each result appears here as it is
@@ -809,6 +892,9 @@ export default function KeyBpmPage() {
                         )}
                         {fromReport && (
                           <small className="alab-flag">Report · audio not included</small>
+                        )}
+                        {row.audioNotSaved && (
+                          <small className="alab-flag">Saved result · audio not kept</small>
                         )}
                       </th>
                       {status === 'done' ? (
@@ -867,7 +953,7 @@ export default function KeyBpmPage() {
                               title={
                                 playable
                                   ? 'Listen to the original audio'
-                                  : 'This row came from a report without audio. Add the source file to listen or re-measure.'
+                                  : 'No audio is available for this row. Add the source file to listen or re-measure.'
                               }
                               onClick={() => void toggleAudition(row)}
                             >
@@ -942,7 +1028,7 @@ export default function KeyBpmPage() {
           <Link to="/guides/find-song-key-and-bpm">
             how to read key estimates and half/double BPM
           </Link>
-          .
+          . <Link to="/tools/key-bpm">Formats, privacy &amp; limits</Link>.
         </p>
         <ToolFeedback tool="Key & BPM" />
       </div>

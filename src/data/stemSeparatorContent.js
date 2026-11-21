@@ -10,7 +10,7 @@ export const separatorGuides = [
       'In Sattari Stem Separator choose Vocal backing track, add the song and press Separate. When it is ready the player already has the vocal muted. Listen, adjust levels if needed, then press Download my mix to save drums + bass + other instruments as one WAV. Other instruments alone is not the full backing track: it leaves out bass and drums.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'Sattari Stem Separator showing downloadable stem results from its practice demo',
-    action: { label: 'Make a vocal backing track', path: '/stem-separator' },
+    action: { label: 'Make a vocal backing track', path: '/stem-separator?goal=vocal-backing' },
     sections: [
       {
         title: 'Keep the band. Take the lead.',
@@ -63,7 +63,7 @@ export const separatorGuides = [
       'Choose Drum practice in Sattari Stem Separator and separate the song. The player mutes Drums and plays Vocals, Bass and Other instruments together. Solo the drums to study the part, then press Download my mix for a single drumless WAV to play along with.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'The drum stem and playback controls in Sattari Stem Separator',
-    action: { label: 'Separate a drum practice track', path: '/stem-separator' },
+    action: { label: 'Make a drumless practice track', path: '/stem-separator?goal=drum-practice' },
     sections: [
       {
         title: 'Hear the drummer, then become the drummer',

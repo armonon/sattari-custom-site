@@ -184,3 +184,21 @@ describe('WAV round trip', () => {
     expect(() => parseWav(new ArrayBuffer(10))).toThrow();
   });
 });
+
+describe('loop range export', () => {
+  it('cuts every stem at the same frames and names the file by range and format', async () => {
+    const sources = fixture(RATE * 2);
+    sources.bass.channels[0][RATE / 2] = 0.5;
+    const sliced = (await import('./stemMix')).sliceSources(sources, 0.5, 1.5);
+    for (const source of Object.values(sliced)) expect(source.channels[0]).toHaveLength(RATE);
+    const render = await renderMix(sliced, soloMix(createMix(ids), 'bass'));
+    expect(render.frames).toBe(RATE);
+    expect(render.channels[0][0]).toBeCloseTo(0.5, 6);
+    expect(
+      mixFileName('song', applyPreset(createMix(ids), 'no-drums'), {
+        ext: 'm4a',
+        range: { start: 72.4, end: 80 },
+      })
+    ).toBe('song-drumless-loop-1m12s-1m20s.m4a');
+  });
+});

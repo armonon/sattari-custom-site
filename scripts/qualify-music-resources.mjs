@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { musicGuides } from '../src/data/musicGuides.js';
-import { toolDetails } from '../src/data/toolDetails.js';
+import { toolDetails, toolReferencePath } from '../src/data/toolDetails.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const base = process.env.RESOURCE_QA_URL || 'http://127.0.0.1:5173';
 const out = '/tmp/sattari-resources-qa';
@@ -11,7 +11,7 @@ const paths = [
   '/visit',
   '/privacy',
   ...musicGuides.map((guide) => `/guides/${guide.slug}`),
-  ...Object.values(toolDetails).map((tool) => `/tools${tool.path}`),
+  ...Object.values(toolDetails).map(toolReferencePath),
 ];
 const browser = await chromium.launch({ headless: true });
 try {

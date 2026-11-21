@@ -216,3 +216,9 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.kb-storage-note {
+  padding: 10px 12px;
+  border-left: 2px solid #d9b26a;
+  background: color-mix(in srgb, #d9b26a 12%, transparent);
+  font-size: 13px;
+}

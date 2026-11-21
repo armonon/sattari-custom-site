@@ -3,10 +3,10 @@
     "browser": "chromium 159.0.8154.6",
     "platform": "darwin",
     "device": "cpu",
-    "startedAt": "2026-11-21T20:36:28.639Z",
+    "startedAt": "2026-11-21T21:00:16.660Z",
     "webgpu": true,
-    "separationSeconds": 122,
-    "finishedAt": "2026-11-21T20:38:40.362Z"
+    "separationSeconds": 58,
+    "finishedAt": "2026-11-21T21:03:09.131Z"
   },
   "results": [
     {
@@ -27,7 +27,7 @@
     {
       "name": "real HTDemucs separation of the demo",
       "pass": true,
-      "detail": "122s on cpu"
+      "detail": "58s on cpu"
     },
     {
       "name": "drum practice preset is active with drums muted",
@@ -65,9 +65,24 @@
       "detail": ""
     },
     {
+      "name": "A–B loop export equals the same frames of the full mix",
+      "pass": true,
+      "detail": "sattari-practice-demo-drumless-loop-0m02s-0m04s.wav, 88200 frames, max |error| 0.00e+0"
+    },
+    {
+      "name": "M4A/AAC export decodes back to the same mix level and length",
+      "pass": true,
+      "detail": "sattari-practice-demo-drumless-mix.m4a, 179 KB vs 2756 KB WAV, 8.081s, level -0.05 dB"
+    },
+    {
       "name": "song ZIP contains this song’s four stems and report",
       "pass": true,
       "detail": "01-sattari-practice-demo/analysis.json, 01-sattari-practice-demo/sattari-practice-demo-vocals.wav, 01-sattari-practice-demo/sattari-practice-demo-drums.wav, 01-sattari-practice-demo/sattari-practice-demo-bass.wav, 01-sattari-practice-demo/sattari-practice-demo-instruments.wav"
+    },
+    {
+      "name": "one preset for every song downloads a ZIP of practice mixes",
+      "pass": true,
+      "detail": "01-sattari-practice-demo/sattari-practice-demo-bassless-mix.wav, 02-second-song/second-song-bassless-mix.wav; demo mix max |error| 2.83e-8"
     },
     {
       "name": "saved song survives a reload",
@@ -130,7 +145,17 @@
       "detail": ""
     },
     {
+      "name": "Key & BPM keeps results, correction and audio after a reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "name": "report round trip in a fresh context keeps the correction, without audio",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "a shared ?goal= link opens with that goal selected",
       "pass": true,
       "detail": ""
     },

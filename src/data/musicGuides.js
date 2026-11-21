@@ -61,7 +61,7 @@ export const musicGuides = [
       'In Sattari Stem Separator choose Bass practice and separate the song. Solo the Bass lane to learn a phrase by ear, loop it with Set A and Set B, then press Download my mix for one bassless WAV of vocals, drums and other instruments to play along with.',
     image: '/images/tools/studio.jpg',
     imageAlt: 'Sattari Studio with audio loaded across four decks',
-    action: { label: 'Make a bass practice track', path: '/stem-separator' },
+    action: { label: 'Make a bass practice track', path: '/stem-separator?goal=bass-practice' },
     sections: [
       {
         title: 'Prepare one musical phrase',

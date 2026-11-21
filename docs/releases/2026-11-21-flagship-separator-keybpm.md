@@ -51,6 +51,14 @@ existing local HTDemucs engine, and no new services.
 - Same-tab handoffs are in memory, single use, expire after 10 minutes, and are
   described as "transferred in this tab only". A reload shows no false transfer.
 
+## Follow-up quick wins (same PR)
+
+- Key & BPM saves results, corrections and (within 600 MiB) audio in this browser.
+- `?goal=` links preselect a goal; "Copy a link to this setup".
+- Mix export: A–B loop only, and M4A/AAC where the browser can encode it.
+- Same practice mix for every finished song as one ZIP.
+- Key & BPM has a Hub card with a real screenshot and a `/tools/key-bpm` reference page.
+
 ## Measurement
 
 See `docs/SEARCH_GROWTH.md` (events table). New pages `split` and `key-bpm`; new
@@ -72,7 +80,7 @@ cores), so timings are not representative.
 | New tests | Mix rule and render (17), StemPlayer with a fake Web Audio clock (6), Key & BPM corrections/report v2 (25+), handoff (5), measurement routes/once/GPC |
 | Type-check | `tsc --noEmit` clean |
 | Production build + prerender + SEO check | Passed; 90 public pages valid |
-| Real-model end-to-end, CPU mode | 27/27 checks (latest run) (`2026-11-flagship-evidence/qualify-flagship-cpu.json`): 167 s HTDemucs inference on the demo; the downloaded drumless mix equals vocals+bass+other per sample (max error 2.1e-8), 44.1 kHz stereo, 352,800 frames; the downloaded mix plays back in the browser; an all-muted export is refused; the ZIP holds the right song's stems; reload recovery; Key & BPM handoff measured C major / 8B / 120 BPM; half time → 60 kept "detected 120"; audition; CSV columns; fresh-context report round trip; malformed report rejected atomically; Clear saved work |
+| Real-model end-to-end, CPU mode | 32/32 checks (latest run, includes the follow-up quick wins: loop export equals the same frames of the full mix exactly; M4A is 179 KB vs 2.7 MB WAV and decodes at −0.05 dB with ~80 ms AAC padding; batch ZIP mixes match per sample; Key & BPM keeps results, corrections and audio across reload; `?goal=` links) (`2026-11-flagship-evidence/qualify-flagship-cpu.json`): 167 s HTDemucs inference on the demo; the downloaded drumless mix equals vocals+bass+other per sample (max error 2.1e-8), 44.1 kHz stereo, 352,800 frames; the downloaded mix plays back in the browser; an all-muted export is refused; the ZIP holds the right song's stems; reload recovery; Key & BPM handoff measured C major / 8B / 120 BPM; half time → 60 kept "detected 120"; audition; CSV columns; fresh-context report round trip; malformed report rejected atomically; Clear saved work |
 | Real-model end-to-end, automatic mode | 23/23 checks (`qualify-flagship-auto.json`). The browser exposed a WebGPU adapter, but the script did not record which backend ran, and the time matched the CPU run (167 s), so GPU inference is **not verified** |
 | Layout | No page overflow at 390/768/1440 px, and every player control stays inside the player at 390/768/1024/1440 px (emulated widths). The in-player check was added after a review of the deploy preview found the player clipped in the narrow tablet column; the player now lays out by container width |
 | Hosted deploy preview | Same real-model script against `deploy-preview-47--sattari.netlify.app`: 23/23 before the tablet fix (`qualify-flagship-deploy-preview.json`); the local rebuild with the fix passes 27/27 |

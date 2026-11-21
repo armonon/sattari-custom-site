@@ -39,6 +39,17 @@ the main page. Both routes stay live; Split is not redirected.
   it); the applied change is shown in preview and in the export summary. An
   all-muted or all-zero mix cannot be exported. File names say what is in them
   (`song-no-vocals-mix.wav`, `-drumless-`, `-bassless-`, `-vocals-solo-`, `-custom-`).
+- **Export choices** (added 2026-11-21): whole song or **A–B loop only** (every
+  stem cut at the same frames, file named `…-loop-0m12s-0m20s`), and **M4A · AAC
+  192 kbps** next to the WAVs when the browser has an AAC encoder (WebCodecs via
+  `mediabunny`, loaded only when used). AAC is lossy and adds encoder padding (about
+  80 ms on the demo), so WAV remains the choice for sample-exact alignment.
+- **Same practice mix for every song**: with two or more finished songs, pick a
+  preset and download one ZIP with one mix per song (rendered one song at a time;
+  songs without all four parts are skipped and named).
+- **Shareable goal links**: `/stem-separator?goal=` `vocal-backing`, `drum-practice`,
+  `bass-practice`, `solo-vocals|drums|bass|other`, `all` or `custom` preselect the
+  goal; "Copy a link to this setup" produces one. Unknown values are ignored.
 - Drop multiple audio files or use the file picker.
 - `Separate demo` runs the bundled eight-second original practice mix through
   the same decoder, analysis, model, and export path as an uploaded track. It
