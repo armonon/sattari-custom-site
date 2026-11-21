@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FlaskConical, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Layers, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { SEO } from '../../utils/seo';
 import { LAB_TOOLS } from './audioLabTools';
 import SattariAppMetadata from '../../pwa/SattariAppMetadata';
@@ -20,6 +20,8 @@ export default function AudioLabShell({
   children,
   badge = 'Alpha',
   limitsTitle = 'Alpha: what it does not do yet',
+  // Optional sister-tool link shown first in the header, e.g. Key & BPM → Stem Separator.
+  related = null,
 }) {
   const current = LAB_TOOLS.find((item) => item.id === tool);
   return (
@@ -33,6 +35,11 @@ export default function AudioLabShell({
               <ArrowLeft size={14} aria-hidden="true" /> Sattari Hub
             </Link>
             <span className="alab-breadcrumb-end">
+              {related && (
+                <Link to={related.path}>
+                  <Layers size={14} aria-hidden="true" /> {related.label}
+                </Link>
+              )}
               <Link to="/studio">
                 <SlidersHorizontal size={14} aria-hidden="true" /> Open Songboard
               </Link>

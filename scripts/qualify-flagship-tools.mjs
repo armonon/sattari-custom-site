@@ -237,6 +237,35 @@ try {
     await page.getByRole('button', { name: 'Download my mix' }).waitFor({ timeout: 120000 });
   });
 
+  // Page-level overflow is not enough: a component can be clipped inside a
+  // column that itself fits. Every player control must stay within the player.
+  for (const [label, width, height] of [
+    ['phone', 390, 844],
+    ['tablet', 768, 1024],
+    ['small laptop', 1024, 768],
+    ['desktop', 1440, 1000],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const clipped = await page.evaluate(() => {
+      const player = document.querySelector('.stem-player');
+      const box = player.getBoundingClientRect();
+      return [...player.querySelectorAll('button, input, select, a, canvas')]
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.width > 0 && (rect.right > box.right + 1 || rect.left < box.left - 1);
+        })
+        .map(
+          (element) =>
+            element.getAttribute('aria-label') || element.textContent.trim() || element.tagName
+        )
+        .slice(0, 6);
+    });
+    record(
+      `player controls fit inside the player at ${label} (${width}px)`,
+      clipped.length === 0,
+      clipped.join(', ')
+    );
+  }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: `${out}/separator-player-phone.png`, fullPage: true });
   record(

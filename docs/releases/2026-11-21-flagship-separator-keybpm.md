@@ -72,13 +72,14 @@ cores), so timings are not representative.
 | New tests | Mix rule and render (17), StemPlayer with a fake Web Audio clock (6), Key & BPM corrections/report v2 (25+), handoff (5), measurement routes/once/GPC |
 | Type-check | `tsc --noEmit` clean |
 | Production build + prerender + SEO check | Passed; 90 public pages valid |
-| Real-model end-to-end, CPU mode | 23/23 checks (`2026-11-flagship-evidence/qualify-flagship-cpu.json`): 167 s HTDemucs inference on the demo; the downloaded drumless mix equals vocals+bass+other per sample (max error 2.1e-8), 44.1 kHz stereo, 352,800 frames; the downloaded mix plays back in the browser; an all-muted export is refused; the ZIP holds the right song's stems; reload recovery; Key & BPM handoff measured C major / 8B / 120 BPM; half time → 60 kept "detected 120"; audition; CSV columns; fresh-context report round trip; malformed report rejected atomically; Clear saved work |
+| Real-model end-to-end, CPU mode | 27/27 checks (latest run) (`2026-11-flagship-evidence/qualify-flagship-cpu.json`): 167 s HTDemucs inference on the demo; the downloaded drumless mix equals vocals+bass+other per sample (max error 2.1e-8), 44.1 kHz stereo, 352,800 frames; the downloaded mix plays back in the browser; an all-muted export is refused; the ZIP holds the right song's stems; reload recovery; Key & BPM handoff measured C major / 8B / 120 BPM; half time → 60 kept "detected 120"; audition; CSV columns; fresh-context report round trip; malformed report rejected atomically; Clear saved work |
 | Real-model end-to-end, automatic mode | 23/23 checks (`qualify-flagship-auto.json`). The browser exposed a WebGPU adapter, but the script did not record which backend ran, and the time matched the CPU run (167 s), so GPU inference is **not verified** |
-| Layout | No horizontal overflow at 390, 768 and 1440 px (automated, emulated widths) |
+| Layout | No page overflow at 390/768/1440 px, and every player control stays inside the player at 390/768/1024/1440 px (emulated widths). The in-player check was added after a review of the deploy preview found the player clipped in the narrow tablet column; the player now lays out by container width |
+| Hosted deploy preview | Same real-model script against `deploy-preview-47--sattari.netlify.app`: 23/23 before the tablet fix (`qualify-flagship-deploy-preview.json`); the local rebuild with the fix passes 27/27 |
 
 NOT VERIFIED: physical phones and tablets; Safari/Firefox for the new player and
 export; subjective listening quality; long songs (10 minutes) and large-batch memory
-use; GPU timing on other hardware; the Netlify deploy preview and production.
+use; GPU timing on other hardware; production.
 Synthetic fixtures and the 8-second demo do not establish key/BPM accuracy across
 genres.
 

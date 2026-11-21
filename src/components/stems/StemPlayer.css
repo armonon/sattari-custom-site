@@ -9,8 +9,13 @@
   --sp-accent: var(--sep-accent, var(--alab-accent, #b9e7c8));
   --sp-bad: var(--alab-bad, #ffb4a8);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+  min-width: 0;
   padding: 16px;
+  /* Lay out by the space the player actually has (a sidebar column on a
+     tablet can be narrower than a phone), not by the viewport. */
+  container: stem-player / inline-size;
   border: 1px solid var(--sp-line);
   border-radius: 8px;
   background: var(--sp-panel);
@@ -339,10 +344,7 @@
     animation: none;
   }
 }
-@media (max-width: 760px) {
-  .stem-player {
-    padding: 12px;
-  }
+@container stem-player (max-width: 640px) {
   .stem-player-transport {
     grid-template-columns: auto auto 1fr;
   }
@@ -379,5 +381,15 @@
   .stem-player-master > label:first-child {
     grid-template-columns: auto 1fr auto;
     width: 100%;
+  }
+  .stem-player-format,
+  .stem-player-format select,
+  .stem-player-export .stem-player-button {
+    width: 100%;
+  }
+}
+@media (max-width: 760px) {
+  .stem-player {
+    padding: 12px;
   }
 }

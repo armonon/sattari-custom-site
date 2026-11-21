@@ -3,10 +3,10 @@
     "browser": "chromium 159.0.8154.6",
     "platform": "darwin",
     "device": "cpu",
-    "startedAt": "2026-11-21T07:54:14.390Z",
+    "startedAt": "2026-11-21T20:36:28.639Z",
     "webgpu": true,
-    "separationSeconds": 167,
-    "finishedAt": "2026-11-21T07:58:29.042Z"
+    "separationSeconds": 122,
+    "finishedAt": "2026-11-21T20:38:40.362Z"
   },
   "results": [
     {
@@ -27,7 +27,7 @@
     {
       "name": "real HTDemucs separation of the demo",
       "pass": true,
-      "detail": "167s on cpu"
+      "detail": "122s on cpu"
     },
     {
       "name": "drum practice preset is active with drums muted",
@@ -75,6 +75,26 @@
       "detail": ""
     },
     {
+      "name": "player controls fit inside the player at phone (390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at tablet (768px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at small laptop (1024px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at desktop (1440px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "name": "separator player fits phone width",
       "pass": true,
       "detail": ""
@@ -82,7 +102,7 @@
     {
       "name": "Key & BPM shows the transferred source and measures it",
       "pass": true,
-      "detail": "sattari-practice-demo.wavsattari-practice-demo.wav0:08C major8B120-22.4 dB RMSAlt. A minor. "
+      "detail": "sattari-practice-demo.wavFrom Stem Separator0:08C major8B120-22.4 dB RMSAlt. A minor. "
     },
     {
       "name": "Key & BPM route did not request the separation model",

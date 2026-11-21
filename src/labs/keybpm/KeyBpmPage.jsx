@@ -579,6 +579,7 @@ export default function KeyBpmPage() {
       description="Detect the musical key, Camelot code and BPM of one or many tracks in your browser. Audition each song, correct half/double tempo or the key, and export CSV or a report."
       limits={LIMITS}
       limitsTitle="What the estimates can and cannot tell you"
+      related={{ path: '/stem-separator', label: 'Stem Separator' }}
     >
       <div className="alab-workspace">
         {received && <HandoffNotice handoff={received} destination="Key & BPM" />}
