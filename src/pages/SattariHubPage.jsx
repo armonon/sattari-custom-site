@@ -45,13 +45,13 @@ const workspaces = [
     id: 'stem-separator',
     name: 'Stem Separator',
     category: 'Explore',
-    detail: 'Find the individual parts of a track',
+    detail: 'Separate a song and download vocal, drum or bass practice mixes',
     path: '/stem-separator',
     image: '/images/tools/separator.jpg',
     alt: 'Stem Separator with completed bass and drum files',
     icon: Split,
     status: 'Local processing',
-    tools: ['Vocals', 'Drums', 'Bass', 'Instruments'],
+    tools: ['Vocals', 'Drums', 'Bass', 'Other instruments'],
   },
 ];
 

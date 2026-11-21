@@ -18,7 +18,11 @@ export const toolDetails = {
       ],
       [
         'Output',
-        '44.1 kHz, 32-bit float stereo WAV. Individual stems, per-track ZIP and batch ZIP. Instruments is the other source, excluding vocals, drums and bass.',
+        '44.1 kHz, 32-bit float stereo WAV. Individual stems, per-track ZIP and batch ZIP. Other instruments is the residual source, excluding vocals, drums and bass.',
+      ],
+      [
+        'Practice mixes',
+        'Synchronized playback of all stems with mute, solo, levels, master gain and an A–B loop, plus the original song for comparison. Download my mix renders the audible parts at your levels as one full-length 44.1 kHz stereo WAV (32-bit float, or 24-bit PCM). Vocal backing track = drums + bass + other instruments; drum practice = vocals + bass + other; bass practice = vocals + drums + other. Mix peak is shown; optional clipping prevention lowers the whole mix to a −1 dBFS peak and states the change.',
       ],
       [
         'Musical analysis',
@@ -42,7 +46,7 @@ export const toolDetails = {
       ],
       [
         'Storage',
-        'Results are temporary for this page session. Download before leaving or reloading. Model caching does not save your finished stems.',
+        'Finished songs and stems are saved in this browser so a reload does not lose them. Clear saved work removes them without touching the cached model or other tools. Browser storage can be evicted, so it is not a backup: download what you need.',
       ],
       [
         'Limitations',

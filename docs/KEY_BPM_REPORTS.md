@@ -1,6 +1,6 @@
 # Key & BPM: measurements and portable reports
 
-Status: alpha. This is a local, browser-decoded analysis utility, not a certified
+Status: beta (flagship tool, November 2026). This is a local, browser-decoded analysis utility, not a certified
 music-corpus key/tempo detector. No microphone permission or audio upload is
 needed for its core workflow. Existing shared suite/account features are separate.
 
@@ -32,9 +32,44 @@ before closing the tab; source audio must be retained separately. Only actual
 byte-identical files with the same name/size are treated as duplicates; different
 mixes that happen to share a filename and length are both admitted.
 
+## Listening and corrections
+
+- **Play** on a row auditions the original file through one shared `<audio>`
+  element with play/pause and a seek bar. Only one source plays; its object URL is
+  revoked when you stop, switch rows, clear the list or leave. Rows opened from a
+  report have no audio: play and separate are disabled and say why.
+- **Adjust** opens the correction editor. Tempo: Detected / Half time / Double time
+  of the detected value, **Tap** (average of up to 8 taps, at least 3; a pause over
+  2.5 s restarts), or a typed value. Valid BPM is finite, 20–400, kept to two
+  decimals; invalid input disables Apply. Key: any of the 24 keys, or the detected
+  alternative; the Camelot code follows (`camelot()`). **Reset to detected** removes
+  the correction.
+- Corrections are stored beside the result as `user: { key, bpm, bpmChoice,
+  editedAt }`; the detected `result` (key, BPM, evidence, alternative, margin) and
+  `measuredAt` are never modified. The table shows the corrected value with
+  "yours · detected …" / "half time · detected …". Sorting uses the displayed value.
+  A corrected BPM or key is metadata only: no audio is stretched or transposed.
+- **Separate** sends the row's real file to Stem Separator in the same tab, with
+  user values labelled as the musician's. Stem Separator's **Check key & BPM**
+  sends the original song, a stem or a rendered mix here, labelled by kind.
+
+## CSV
+
+The first 13 columns are unchanged (detected values). Six columns are appended:
+`Corrected key`, `Corrected Camelot`, `Corrected BPM`, `BPM correction`
+(`half|double|tap|manual`), `Corrected at`, `Source` (handoff label). Every cell is
+quoted; cells beginning with `= + - @`, tab or CR are prefixed with `'`.
+
 ## Report format and failure behavior
 
-Schema `SattariKeyBpm.report`, version 1, UTF-8 JSON, maximum 2 MiB. Records preserve
+Version 2 (current) adds optional per-track `user` (above) and `origin: { kind,
+label }`. Version 1 reports open unchanged (no corrections). Saving always writes
+version 2. A malformed correction (unknown key, BPM outside 20–400 or with more than
+two decimals, BPM without a choice, an empty correction, a correction on an error
+row, a missing timestamp) rejects the whole report without changing current rows,
+like any other invalid record. Versions other than 1 and 2 are rejected.
+
+Schema `SattariKeyBpm.report`, versions 1–2, UTF-8 JSON, maximum 2 MiB. Records preserve
 source filename/size/type/modification time, measurement timestamp, measurements,
 confidence/evidence and notes. No audio bytes, credentials or server state are
 included. Report limits are supplied by the app, not trusted arbitrary file claims.

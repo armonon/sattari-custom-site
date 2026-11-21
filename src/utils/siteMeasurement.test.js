@@ -1,5 +1,10 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { measurementPreference, setMeasurementPreference, trackSiteEvent } from './siteMeasurement';
+import {
+  measurementPreference,
+  setMeasurementPreference,
+  trackSiteEvent,
+  trackSiteEventOnce,
+} from './siteMeasurement';
 
 beforeEach(() => {
   localStorage.clear();
@@ -113,4 +118,32 @@ it('rejects arbitrary event names and replaces non-allowlisted stored referral d
     page: 'learn',
     source: 'chatgpt',
   });
+});
+
+it('counts flagship outcomes once per key on both lab routes, and never with consent off', () => {
+  window.location.pathname = '/studio/keybpm';
+  trackSiteEventOnce('consent-off', 'keybpm_completed');
+  expect(fetch).not.toHaveBeenCalled();
+  setMeasurementPreference(true);
+  trackSiteEventOnce('batch-1:end', 'keybpm_completed');
+  trackSiteEventOnce('batch-1:end', 'keybpm_completed');
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    source: 'chatgpt',
+    page: 'key-bpm',
+    event: 'keybpm_completed',
+  });
+  window.location.pathname = '/studio/split';
+  trackSiteEventOnce('song-1:preview', 'stem_preview');
+  expect(JSON.parse(fetch.mock.calls[1][1].body).page).toBe('split');
+  // Unknown events are dropped client-side, exactly as the server would.
+  trackSiteEvent('mix_exported_with_filename');
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+it('respects Global Privacy Control for the new events', () => {
+  window.location.pathname = '/stem-separator';
+  setMeasurementPreference(true);
+  vi.stubGlobal('navigator', { globalPrivacyControl: true });
+  trackSiteEvent('mix_exported');
+  expect(fetch).not.toHaveBeenCalled();
 });

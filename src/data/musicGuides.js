@@ -8,7 +8,7 @@ export const musicGuides = [
     description:
       'Separate a song into vocals, drums, bass and other instruments with Sattari. Choose outputs, preview the results and download WAV stems in your browser.',
     answer:
-      'Open Sattari Stem Separator, add an audio file, select the parts you need, and start separation. Preview each result, then download the WAV files or ZIP before leaving the page. Processing happens on your device.',
+      'Open Sattari Stem Separator, add an audio file, select the parts you need, and start separation. Play the parts together, mute or solo any of them, then download individual WAVs, a ZIP or your own mix. Processing happens on your device.',
     image: '/images/tools/separator.jpg',
     imageAlt: 'Sattari Stem Separator with completed bass and drum stems from the original demo',
     action: { label: 'Open Stem Separator', path: '/stem-separator' },
@@ -56,17 +56,17 @@ export const musicGuides = [
     title: 'How to practice bass using isolated stems',
     category: 'Practice',
     description:
-      'Build a focused bass practice session from isolated stems: hear the line, match the rhythm, loop a phrase and play with a backing track without bass.',
+      'Make a bassless practice track on your device: solo the bass to learn the line, loop a phrase, then download vocals + drums + other instruments as one WAV.',
     answer:
-      'Separate the bass and drums, learn a short phrase by ear, and compare it with the full mix. Then mute the bass and play over the remaining stems. Use Studio to align the stems and build your practice backing track.',
+      'In Sattari Stem Separator choose Bass practice and separate the song. Solo the Bass lane to learn a phrase by ear, loop it with Set A and Set B, then press Download my mix for one bassless WAV of vocals, drums and other instruments to play along with.',
     image: '/images/tools/studio.jpg',
     imageAlt: 'Sattari Studio with audio loaded across four decks',
-    action: { label: 'Open Sattari Studio', path: '/studio' },
+    action: { label: 'Make a bass practice track', path: '/stem-separator' },
     sections: [
       {
         title: 'Prepare one musical phrase',
         paragraphs: [
-          'Choose a recording you have permission to use. In Stem Separator, export all four parts. The Bass stem is your reference; Drums, Vocals and Instruments can become the backing track you play against. Start with a short, repeated phrase rather than the entire song.',
+          'Choose a recording you have permission to use. In Stem Separator, choose Bass practice and separate it. The Bass stem is your reference; Vocals, Drums and Other instruments become the backing track you play against. Start with a short, repeated phrase rather than the entire song.',
           'Listen to the bass in the full mix first, then in isolation. Count where notes begin and end. A convincing bass part depends on note length, rests and its relationship with the kick as much as the pitches.',
         ],
       },
@@ -80,10 +80,13 @@ export const musicGuides = [
         ],
       },
       {
-        title: 'Build a backing track in Studio',
-        paragraphs: [
-          'Import the separated stems into Studio and align their starts. Keep the bass available as a reference, then mute it when you are ready to play the part yourself.',
-          'Work on a short phrase you can repeat comfortably. Compare the isolated bass with the full mix: separation can soften attacks or leave sounds from other instruments.',
+        title: 'Make the bassless track',
+        steps: [
+          'In the Stem Separator player, Bass is muted by the Bass practice choice. Press the headphones button on Bass, or choose Solo a part, to hear the line alone; press it again to return.',
+          'Loop the phrase: Set A where it starts, Set B where it ends. Every part stays on the same clock while looping, muting or changing levels.',
+          'Press Download my mix. You get one full-length WAV of vocals + drums + other instruments, named like song-bassless-mix.wav, rendered at the levels you set. Check key & BPM of this mix if you need the key to play in.',
+          'Want more control? Open in Songboard sends the song and all four stems to the Songboard decks in the same tab.',
+          'Compare the isolated bass with the full mix: separation can soften attacks or leave sounds from other instruments.',
         ],
       },
       {
@@ -95,7 +98,7 @@ export const musicGuides = [
       },
     ],
     related: [
-      '/tools/learn',
+      '/tools/stem-separator',
       '/tools/studio',
       '/product/five-string-bass-guitar',
       '/guides/find-song-key-and-bpm',

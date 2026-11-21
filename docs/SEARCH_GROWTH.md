@@ -289,14 +289,34 @@ Events:
 | inquiry_sent | Inquiry endpoint/form returned success, not a sale |
 | booking_requested | Booking request accepted, not approved or paid |
 | contact_click / directions_click | A clicked contact action, not a completed call or visit |
-| separator_started | A nonempty batch was started |
-| separator_completed / separator_failed | Per-track result or failure, not a batch count |
+| separator_started | Per track attempt: a song began processing (changed Nov 2026 from per batch) |
+| separator_completed / separator_failed / separator_cancelled | Per track attempt outcome, counted once per attempt id after the actual result |
+| stem_preview | Synchronized playback was started for a song, once per song per page load |
 | stem_download | A WAV/ZIP download was initiated, not confirmation that the user saved it |
+| mix_exported | A rendered mix WAV was produced and handed to the browser download |
+| separator_report_exported | An analysis JSON download was initiated |
+| keybpm_started | Per Key & BPM batch run (a run can cover up to 200 tracks) |
+| keybpm_completed / keybpm_failed / keybpm_cancelled | Batch outcome: at least one track measured / every track failed / stopped |
+| keybpm_preview | Original audio audition started, once per row per page load |
+| keybpm_corrected | The musician first changed a key or BPM on a row (once per row) |
+| keybpm_report_exported / keybpm_csv_exported | A report or CSV download was initiated |
+| continue_to_keybpm / continue_to_separator / continue_to_songboard | A same-tab continuation was chosen |
+| feedback_opened | The voluntary feedback form was opened, not submitted |
 | learn_started / learn_completed / learn_failed | Local song analysis lifecycle |
 | practice_started / practice_completed | Entered/finished a focused practice session, once per opened session; not a verified skill or score |
 | software_download | Clicked a same-site software download link, not a verified download or installation |
 | studio_imported | An audio file was successfully loaded into a deck lane |
 | studio_exported | A portable project download was initiated |
+
+Pages now include `split` (`/studio/split`) and `key-bpm` (`/studio/keybpm`);
+client and server share `validMetric`, so both reject anything else. Events never
+carry audio, filenames, report contents, keys, BPM or timings; once-keys (attempt,
+song or row ids) stay in the page and are never sent. Restored saved songs do not
+emit events because outcomes are only counted inside a live processing attempt.
+These counts can show whether tools are started, finish, fail, are previewed,
+exported or continued; they cannot identify returning people, tell why someone
+stopped, or show that a mix sounded good. Voluntary written feedback goes through
+the existing service-inquiry route as "Music tool feedback".
 
 Review recognized AI sources against inquiries and successful tool actions using
 the staff report's 7/28/90-day and source filters. These are opt-in event counts,

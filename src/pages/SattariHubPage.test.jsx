@@ -62,12 +62,12 @@ it('lists the Studio alpha labs', () => {
       <SattariHubPage />
     </MemoryRouter>
   );
-  for (const [name, route] of [
-    ['Split', '/studio/split'],
-    ['Key & BPM', '/studio/keybpm'],
-    ['Vox', '/studio/vox'],
+  for (const [name, route, stage] of [
+    ['Split', '/studio/split', 'Alpha'],
+    ['Key & BPM', '/studio/keybpm', 'Beta'],
+    ['Vox', '/studio/vox', 'Alpha'],
   ]) {
-    expect(screen.getByRole('link', { name: new RegExp(`^Alpha\\s*${name}`) })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: new RegExp(`^${stage}\\s*${name}`) })).toHaveAttribute(
       'href',
       route
     );

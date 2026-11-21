@@ -423,8 +423,9 @@ export function PrivacyPage() {
         <p>
           Studio stores projects and audio assets in your browser. Learn stores imported lessons,
           guitar settings, practice history, recorded takes and attached lesson videos locally. Stem
-          Separator results last only for the current page session. Download backups; clearing
-          browser data can remove local projects, lessons and recordings.
+          Separator saves your songs and stems in this browser until you choose Clear saved work.
+          Key & BPM keeps results only in the open tab unless you save a report. Download backups;
+          clearing browser data can remove local projects, lessons, recordings and saved stems.
         </p>
       </section>
       <section className="resource-section">

@@ -8,6 +8,22 @@ export const METRIC_EVENTS = [
   'separator_completed',
   'separator_failed',
   'stem_download',
+  'separator_cancelled',
+  'stem_preview',
+  'mix_exported',
+  'separator_report_exported',
+  'keybpm_started',
+  'keybpm_completed',
+  'keybpm_failed',
+  'keybpm_cancelled',
+  'keybpm_preview',
+  'keybpm_corrected',
+  'keybpm_report_exported',
+  'keybpm_csv_exported',
+  'continue_to_keybpm',
+  'continue_to_separator',
+  'continue_to_songboard',
+  'feedback_opened',
   'learn_started',
   'learn_completed',
   'learn_failed',
@@ -38,6 +54,8 @@ export const METRIC_PAGES = [
   'visit',
   'hub',
   'stem-separator',
+  'split',
+  'key-bpm',
   'studio',
   'learn',
   'guides',
@@ -74,6 +92,9 @@ export function metricPage(path) {
   )
     return 'local';
   if (path.startsWith('/tools/')) return 'tool-details';
+  // Flagship tools and their established lab URLs.
+  if (path === '/studio/split') return 'split';
+  if (path === '/studio/keybpm') return 'key-bpm';
   const guides = {
     '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
     '/guides/practice-bass-with-isolated-stems': 'guide-bass',
