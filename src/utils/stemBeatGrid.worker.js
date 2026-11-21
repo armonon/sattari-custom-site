@@ -1,4 +1,4 @@
-import { computeBeatGrid } from './beatGrid.js';
+import { computeBeatGrid } from './stemBeatGrid.js';
 
 // Beat tracking over a whole song can take a moment; keep it off the UI thread.
 self.onmessage = ({ data: { id, samples, rate } }) => {

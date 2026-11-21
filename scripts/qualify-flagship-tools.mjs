@@ -225,6 +225,44 @@ try {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }, seconds);
 
+  await check('beat grid is found on the demo at its tempo', async () => {
+    const status = page.locator('.stem-player-grid-status');
+    await status.filter({ hasText: /Beat grid|No steady beat/ }).waitFor({ timeout: 120000 });
+    const text = await status.textContent();
+    const bpm = Number(/([\d.]+) BPM/.exec(text)?.[1]);
+    assert(Math.abs(bpm - 120) / 120 < 0.04, text);
+    assert(await page.getByLabel('Count-in (1 bar)').isEnabled());
+    return text;
+  });
+
+  await check('75% speed plays and downloads a longer mix through the stretch worker', async () => {
+    await page.getByLabel('Playback speed').evaluate((input) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(input, '0.75');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.getByText(/Practice playback/).waitFor({ timeout: 300000 });
+    await page.getByLabel(/Use my speed/).check();
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 120000 }),
+      page.getByRole('button', { name: 'Download my mix' }).click(),
+    ]);
+    const file = await readDownload(download);
+    const slow = parseWav(toArrayBuffer(file.bytes));
+    const expected = Math.round(mix.channels[0].length / 0.75);
+    assert.match(file.name, /-75pct-/);
+    assert(
+      Math.abs(slow.channels[0].length - expected) <= 4,
+      `${slow.channels[0].length} vs ${expected}`
+    );
+    let energy = 0;
+    for (const value of slow.channels[0]) energy += value * value;
+    assert(energy > 0, 'silent');
+    await page.getByLabel(/Use my speed/).uncheck();
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    return `${file.name}: ${slow.channels[0].length} frames (expected ${expected})`;
+  });
+
   await check('A–B loop export equals the same frames of the full mix', async () => {
     await page.getByRole('button', { name: 'Drum practice' }).click();
     await setPosition(2);
@@ -301,7 +339,7 @@ try {
   });
 
   await check('one preset for every song downloads a ZIP of practice mixes', async () => {
-    const seconds = 4;
+    const seconds = 50; // long enough for the 20-second preview pass
     const samples = Float32Array.from({ length: seconds * 44100 }, (_, i) => {
       const t = i / 44100;
       return (
@@ -322,6 +360,9 @@ try {
       ),
     });
     await page.getByRole('button', { name: 'Separate 1 song' }).click();
+    await page.getByText(/^Preview · /).waitFor({ timeout: inferenceTimeout });
+    record('a 20-second preview is playable before the whole song finishes', true);
+    await page.screenshot({ path: `${out}/separator-preview-desktop.png`, fullPage: true });
     await page.getByText('2 of 2 songs ready').waitFor({ timeout: inferenceTimeout });
     await page.getByLabel(/Same practice mix for all 2 songs/).selectOption('no-bass');
     const [download] = await Promise.all([

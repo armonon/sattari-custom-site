@@ -40,7 +40,7 @@ import {
   isDownbeat,
   rhythmSignal,
   snapToBeat,
-} from '../../utils/beatGrid';
+} from '../../utils/stemBeatGrid';
 import { pitchRatio, resample, stretchFactor } from '../../utils/timeStretch';
 import './StemPlayer.css';
 
@@ -86,7 +86,7 @@ function trackBeatsInWorker(samples, rate) {
       reject(new Error('unavailable'));
       return;
     }
-    const worker = new Worker(new URL('../../utils/beatGrid.worker.js', import.meta.url), {
+    const worker = new Worker(new URL('../../utils/stemBeatGrid.worker.js', import.meta.url), {
       type: 'module',
     });
     worker.onmessage = ({ data }) => {
