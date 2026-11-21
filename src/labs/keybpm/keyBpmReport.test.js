@@ -52,7 +52,7 @@ describe('portable analysis reports', () => {
     expect(decoded.tracks.map((t) => t.result)).toEqual([quiet.result, failure.result]);
   });
   it.each([
-    ['unsupported version', (r) => (r.version = 2)],
+    ['unsupported version', (r) => (r.version = 3)],
     ['mismatched key/Camelot', (r) => (r.tracks[0].result.camelot = '12A')],
     ['fake success shape', (r) => delete r.tracks[0].result.duration],
     ['invalid confidence', (r) => (r.tracks[0].result.keyConfidence = 99)],

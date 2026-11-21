@@ -18,6 +18,8 @@ export default function AudioLabShell({
   description,
   limits,
   children,
+  badge = 'Alpha',
+  limitsTitle = 'Alpha: what it does not do yet',
 }) {
   const current = LAB_TOOLS.find((item) => item.id === tool);
   return (
@@ -42,7 +44,7 @@ export default function AudioLabShell({
             <div>
               <p className="alab-eyebrow">{eyebrow}</p>
               <h1>
-                {title} <span className="alab-alpha">Alpha</span>
+                {title} <span className="alab-alpha">{badge}</span>
               </h1>
               <p className="alab-summary">{summary}</p>
             </div>
@@ -53,7 +55,7 @@ export default function AudioLabShell({
           {children}
           <section className="alab-limits" aria-labelledby={`${tool}-limits`}>
             <h2 id={`${tool}-limits`}>
-              <FlaskConical size={16} aria-hidden="true" /> Alpha: what it does not do yet
+              <FlaskConical size={16} aria-hidden="true" /> {limitsTitle}
             </h2>
             <ul>
               {limits.map((limit) => (

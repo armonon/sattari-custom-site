@@ -18,11 +18,11 @@ class FakeWorker {
 afterEach(() => vi.unstubAllGlobals());
 
 describe.each([
-  ['Split', SplitPage, /Split into stems|Add a song/, /bleed between stems/],
-  ['Key & BPM', KeyBpmPage, /Add tracks/, /half or double time/],
-  ['Vox', VoxPage, /Record a take/, /monophonic/],
-])('%s lab', (title, Page, control, limitation) => {
-  it('is labelled alpha, states its limits and links the other labs', async () => {
+  ['Split', SplitPage, /Split into stems|Add a song/, /bleed between stems/, 'Alpha'],
+  ['Key & BPM', KeyBpmPage, /Add tracks/, /half or double time/, 'Beta'],
+  ['Vox', VoxPage, /Record a take/, /monophonic/, 'Alpha'],
+])('%s lab', (title, Page, control, limitation, stage) => {
+  it('is labelled with its release stage, states its limits and links the other labs', async () => {
     vi.stubGlobal('Worker', FakeWorker);
     await act(async () => {
       render(
@@ -32,7 +32,7 @@ describe.each([
       );
     });
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(title);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Alpha');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(stage);
     expect(screen.getAllByText(control).length).toBeGreaterThan(0);
     expect(screen.getByText(limitation)).toBeInTheDocument();
     expect(screen.getByText(/Runs on your device/)).toBeInTheDocument();
