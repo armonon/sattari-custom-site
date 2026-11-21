@@ -265,6 +265,9 @@ try {
 
   await check('A–B loop export equals the same frames of the full mix', async () => {
     await page.getByRole('button', { name: 'Drum practice' }).click();
+    // Exact-frame comparison: turn beat snapping off (unit tests cover snapping).
+    if (await page.getByLabel('Snap A–B to beats').isChecked())
+      await page.getByLabel('Snap A–B to beats').uncheck();
     await setPosition(2);
     await page.getByRole('button', { name: /^Set A/ }).click();
     await setPosition(4);
