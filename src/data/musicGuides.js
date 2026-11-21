@@ -413,6 +413,7 @@ export const musicGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-violin-strings',
       '/product/sattari-rosin',
       '/product/violin-strings',
       '/shop/violins',
@@ -461,6 +462,7 @@ export const musicGuides = [
       },
     ],
     related: [
+      '/guides/acoustic-vs-electric-violin',
       '/product/brescia-acoustic-violin',
       '/product/chiara-wooden-electric-violin',
       '/product/violin-strings',
@@ -616,6 +618,7 @@ export const musicGuides = [
       },
     ],
     related: [
+      '/guides/nylon-vs-steel-string-guitar',
       '/product/steel-string-acoustic-guitar',
       '/product/classic-nylon-string-guitar',
       '/product/flame-stratocaster-electric-guitar',
