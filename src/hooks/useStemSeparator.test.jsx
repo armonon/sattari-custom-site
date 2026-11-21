@@ -360,3 +360,57 @@ it('shows a failed demo request without leaving the page locked', async () => {
   expect(result.current.loadingDemo).toBe(false);
   expect(result.current.running).toBe(false);
 });
+
+it('separates a 20-second preview section first on longer songs, then the whole song', async () => {
+  const frames = 44100 * 60;
+  decodeTrack.mockResolvedValueOnce({
+    left: new Float32Array(frames),
+    right: new Float32Array(frames),
+    channels: 2,
+    duration: 60,
+    peaks: [],
+  });
+  let releaseFull;
+  const seen = [];
+  separate.mockImplementation((audio, stems) => {
+    seen.push(audio.left.length);
+    if (seen.length === 1) return Promise.resolve(outputs(stems));
+    return new Promise((resolve) => {
+      releaseFull = () => resolve(outputs(stems));
+    });
+  });
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('long.wav')]));
+  let running;
+  act(() => {
+    running = result.current.run();
+  });
+  await waitFor(() => expect(result.current.jobs[0].preview).toBeTruthy());
+  expect(seen[0]).toBe(20 * 44100);
+  expect(result.current.jobs[0].preview).toMatchObject({ start: 18, duration: 20 });
+  expect(result.current.jobs[0].status).toBe('processing');
+  await act(async () => {
+    releaseFull();
+    await running;
+  });
+  expect(seen[1]).toBe(frames);
+  expect(result.current.jobs[0].status).toBe('done');
+  expect(result.current.jobs[0].preview).toBeNull();
+});
+
+it('a failed preview does not stop the full separation, and short songs skip it', async () => {
+  decodeTrack.mockResolvedValueOnce({
+    left: new Float32Array(44100 * 50),
+    right: new Float32Array(44100 * 50),
+    channels: 2,
+    duration: 50,
+    peaks: [],
+  });
+  separate.mockRejectedValueOnce(new Error('preview failed'));
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('fifty.wav'), file('short.wav')]));
+  await act(async () => result.current.run());
+  expect(result.current.jobs.map((job) => job.status)).toEqual(['done', 'done']);
+  // fifty.wav: failed preview + full; short.wav (1 s fixture): full only.
+  expect(separate).toHaveBeenCalledTimes(3);
+});

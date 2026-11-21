@@ -140,6 +140,9 @@ export default function StemPlayer({
   onEvent = () => {},
   stemActions,
   afterExport,
+  // A short preview section while the whole song separates: listening and
+  // mixing only, no downloads (they would not be the finished song).
+  previewOnly = false,
 }) {
   const ids = useMemo(() => stems.map((stem) => stem.id), [stems]);
   const presets = useMemo(() => availablePresets(ids), [ids]);
@@ -1112,7 +1115,7 @@ export default function StemPlayer({
                 aria-valuetext={formatDb(gainToDb(lane.gain))}
                 onChange={(event) => change(stem.id, { gain: Number(event.target.value) })}
               />
-              <span className="stem-player-lane-actions">
+              <span className="stem-player-lane-actions" hidden={previewOnly}>
                 <a
                   className="stem-player-icon"
                   href={stem.url}
@@ -1174,7 +1177,7 @@ export default function StemPlayer({
         </label>
       </div>
 
-      <div className="stem-player-export">
+      <div className="stem-player-export" hidden={previewOnly}>
         <div>
           <h3>Download my mix</h3>
           <p>

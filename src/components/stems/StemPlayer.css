@@ -441,3 +441,6 @@
     padding: 12px;
   }
 }
+.stem-player [hidden] {
+  display: none !important;
+}

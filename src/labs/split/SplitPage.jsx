@@ -273,6 +273,36 @@ export default function SplitPage() {
                 />
               </div>
             )}
+            {job.status === 'processing' && job.preview && (
+              <>
+                <p className="alab-note" role="status">
+                  Preview of {formatTime(job.preview.start)}–
+                  {formatTime(job.preview.start + job.preview.duration)} while the whole song
+                  separates. Downloads appear when it finishes.
+                </p>
+                <StemPlayer
+                  key={`${job.id}-preview`}
+                  trackName={`${job.file.name} (preview)`}
+                  fileBase={safeTrackName(job.file.name)}
+                  stems={STEMS.map((stem) => {
+                    const output = job.preview.outputs.find((item) => item.id === stem.id);
+                    return (
+                      output && {
+                        id: stem.id,
+                        label: stemLabel(stem.id),
+                        color: stem.color,
+                        blob: output.blob,
+                        url: output.url,
+                        name: output.name,
+                        peaks: output.peaks,
+                      }
+                    );
+                  }).filter(Boolean)}
+                  initialPreset={job.goal || 'all'}
+                  previewOnly
+                />
+              </>
+            )}
             {(job.status === 'error' || job.status === 'cancelled') && (
               <p className="alab-bad" role="alert">
                 {job.message}
