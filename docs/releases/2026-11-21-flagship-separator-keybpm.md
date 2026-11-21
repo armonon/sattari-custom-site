@@ -73,7 +73,7 @@ cores), so timings are not representative.
 | Type-check | `tsc --noEmit` clean |
 | Production build + prerender + SEO check | Passed; 90 public pages valid |
 | Real-model end-to-end, CPU mode | 23/23 checks (`2026-11-flagship-evidence/qualify-flagship-cpu.json`): 167 s HTDemucs inference on the demo; the downloaded drumless mix equals vocals+bass+other per sample (max error 2.1e-8), 44.1 kHz stereo, 352,800 frames; the downloaded mix plays back in the browser; an all-muted export is refused; the ZIP holds the right song's stems; reload recovery; Key & BPM handoff measured C major / 8B / 120 BPM; half time → 60 kept "detected 120"; audition; CSV columns; fresh-context report round trip; malformed report rejected atomically; Clear saved work |
-| Real-model end-to-end, automatic (WebGPU) mode | See the PR description for the result of this run |
+| Real-model end-to-end, automatic mode | 23/23 checks (`qualify-flagship-auto.json`). The browser exposed a WebGPU adapter, but the script did not record which backend ran, and the time matched the CPU run (167 s), so GPU inference is **not verified** |
 | Layout | No horizontal overflow at 390, 768 and 1440 px (automated, emulated widths) |
 
 NOT VERIFIED: physical phones and tablets; Safari/Firefox for the new player and
