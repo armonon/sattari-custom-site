@@ -357,8 +357,10 @@ export function sliceSources(sources, start, end) {
   );
 }
 
-const stamp = (seconds) =>
-  `${Math.floor(seconds / 60)}m${String(Math.floor(seconds % 60)).padStart(2, '0')}s`;
+const stamp = (seconds) => {
+  const whole = Math.round(seconds);
+  return `${Math.floor(whole / 60)}m${String(whole % 60).padStart(2, '0')}s`;
+};
 
 /** Encode a renderMix() result with the site's existing WAV encoder. */
 export function mixWavBlob(render, format = 'float32') {
@@ -376,7 +378,7 @@ export function mixWavBlob(render, format = 'float32') {
 }
 
 const SUFFIX = {
-  all: 'full-mix',
+  all: 'full',
   'no-vocals': 'no-vocals',
   'no-drums': 'drumless',
   'no-bass': 'bassless',

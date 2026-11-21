@@ -229,7 +229,7 @@ it('exports only the A–B loop when chosen, aligned to the loop start', async (
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Download my mix' })));
   await waitFor(() => expect(onEvent).toHaveBeenCalledWith('mix_exported', expect.any(Object)));
   const [, result] = onEvent.mock.calls.find(([type]) => type === 'mix_exported');
-  expect(result.name).toBe('Song-drumless-loop-0m00s-0m01s.wav');
+  expect(result.name).toBe('Song-drumless-loop-0m01s-0m02s.wav');
   expect(result.frames).toBe(RATE);
   const parsed = parseWav(await downloads.at(-1).arrayBuffer());
   expect(parsed.channels[0]).toHaveLength(RATE);

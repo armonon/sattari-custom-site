@@ -202,3 +202,11 @@ describe('loop range export', () => {
     ).toBe('song-drumless-loop-1m12s-1m20s.m4a');
   });
 });
+
+it('rounds loop stamps to the nearest second and names full mixes once', () => {
+  const all = createMix(ids);
+  expect(mixFileName('song', all)).toBe('song-full-mix.wav');
+  expect(mixFileName('song', all, { range: { start: 1.97, end: 59.6 } })).toBe(
+    'song-full-loop-0m02s-1m00s.wav'
+  );
+});
