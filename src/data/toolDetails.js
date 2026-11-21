@@ -109,7 +109,7 @@ export const toolDetails = {
       ],
       [
         'Limitations',
-        'One global key per track; key changes and modal or atonal music are not mapped. Tempo can lock to half or double time. Tested on synthetic fixtures and the demo, not yet benchmarked on a labelled set of real songs, so treat values as starting points.',
+        'One global key per track; key changes and modal or atonal music are not mapped. Tempo can lock to half or double time. Benchmark (November 2026): 24 generated songs, key 96% exact and tempo 100% within 4%; 17 Sattari lesson recordings, key 35% exact and tempo 71% within 4%, where supported keys were exact 5 of 6 times and tentative keys 1 of 7. These sets are small and not commercial music across genres, so treat values as starting points and check tentative keys by ear.',
       ],
     ],
     demo: [

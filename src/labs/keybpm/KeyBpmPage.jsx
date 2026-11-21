@@ -51,11 +51,11 @@ import './keyBpm.css';
 const LIMITS = [
   'Key is one global estimate per track (Sattari AutoKey). Key changes, modal or atonal music are not reported separately.',
   'BPM can land on half or double time. "Rough" means the strict estimator declined and a single 60-second pass was used, folded into 70–180 BPM.',
-  '"Tentative" means the best key only narrowly beat the runner-up, which is shown as the alternative. The margin is not a probability.',
+  '"Tentative" means the best key only narrowly beat the runner-up, which is shown as the alternative. In Sattari\'s own 17-recording test set, tentative keys were exact only 1 time in 7, while supported keys were exact 5 times in 6: check a tentative key and its alternative by ear. A small set, not a genre benchmark.',
   'Your corrections are labels on the result. They do not stretch, speed up or transpose the audio.',
   'Up to 10 minutes and 200 MB per file, mono or stereo, in formats your browser can decode.',
   'Results are saved in this browser (not a backup; browsers can clear it). Reports and CSV contain no audio; choose the source files again to listen or re-measure rows without audio.',
-  'Fixture-tested, not benchmarked on a labelled music corpus yet: treat values as starting points.',
+  "Benchmarked on generated songs and Sattari's own lesson recordings (docs/qualification), not yet on a licensed set of commercial songs across genres: treat values as starting points.",
 ];
 
 const SOURCE_LABEL = {
@@ -911,9 +911,9 @@ export default function KeyBpmPage() {
                               result.keyEvidence === 'tentative' && (
                                 <small
                                   className="alab-flag"
-                                  title={`Alternative: ${result.alternative}`}
+                                  title={`Close call. Check by ear: the alternative is ${result.alternative}.`}
                                 >
-                                  tentative
+                                  tentative · or {result.alternative}
                                 </small>
                               )
                             )}
