@@ -167,6 +167,22 @@ export const ALL_KEYS = [
 export const BPM_MIN = 20;
 export const BPM_MAX = 400;
 export const BPM_CHOICES = ['half', 'double', 'tap', 'manual'];
+export const NOTES_MAX = 500;
+
+/** One line of plain text: control characters become spaces, trimmed, capped. */
+export function cleanNotes(value) {
+  if (typeof value !== 'string') return '';
+  // Control characters (including line breaks) become spaces; runs collapse.
+  const visible = Array.from(value, (char) => {
+    const code = char.charCodeAt(0);
+    return code < 32 || code === 127 ? ' ' : char;
+  }).join('');
+  return visible
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, NOTES_MAX)
+    .trim();
+}
 
 /** A finite positive BPM within range, keeping up to two decimals; else null. */
 export function normalizeBpm(value) {
@@ -193,12 +209,14 @@ export function cleanCorrection(user) {
   const key = typeof user.key === 'string' && ALL_KEYS.includes(user.key) ? user.key : null;
   const bpm = normalizeBpm(user.bpm);
   const bpmChoice = bpm !== null && BPM_CHOICES.includes(user.bpmChoice) ? user.bpmChoice : null;
-  if (key === null && bpm === null) return null;
+  const notes = cleanNotes(user.notes);
+  if (key === null && bpm === null && !notes) return null;
   return {
     key,
     bpm,
     bpmChoice: bpm === null ? null : bpmChoice || 'manual',
     editedAt: typeof user.editedAt === 'string' ? user.editedAt : new Date().toISOString(),
+    ...(notes ? { notes } : {}),
   };
 }
 
@@ -250,6 +268,7 @@ export const CORRECTION_COLUMNS = [
   ['BPM correction', (row) => (row.user?.bpm != null ? row.user.bpmChoice : '')],
   ['Corrected at', (row) => (row.user ? row.user.editedAt : '')],
   ['Source', (row) => row.origin?.label || ''],
+  ['Your notes', (row) => row.user?.notes || ''],
 ];
 
 /**

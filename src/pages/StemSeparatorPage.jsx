@@ -440,6 +440,135 @@ export default function StemSeparatorPage() {
 
           {received && <HandoffNotice handoff={received} destination="Stem Separator" />}
 
+          <div className="separator-stage">
+            {previewing && (
+              <section className="separator-player" aria-labelledby="separator-preview-heading">
+                <div className="separator-player-head">
+                  <div>
+                    <p className="separator-eyebrow">
+                      Preview · {formatDuration(previewing.preview.start)}–
+                      {formatDuration(previewing.preview.start + previewing.preview.duration)}
+                    </p>
+                    <h2 id="separator-preview-heading" title={previewing.file.name}>
+                      {previewing.file.name}
+                    </h2>
+                  </div>
+                  <p className="separator-note" role="status">
+                    The whole song is still separating. Downloads appear when it finishes.
+                  </p>
+                </div>
+                <StemPlayer
+                  key={`${previewing.id}-preview`}
+                  trackName={`${previewing.file.name} (preview)`}
+                  fileBase={safeTrackName(previewing.file.name)}
+                  stems={previewStems}
+                  initialPreset={previewing.goal || 'all'}
+                  previewOnly
+                  onEvent={(type) =>
+                    type === 'preview' &&
+                    trackSiteEventOnce(`${previewing.id}:quick-preview`, 'stem_preview')
+                  }
+                />
+              </section>
+            )}
+            {focused && (
+              <section className="separator-player" aria-labelledby="separator-player-heading">
+                <div className="separator-player-head">
+                  <div>
+                    <p className="separator-eyebrow">Now playing</p>
+                    <h2 id="separator-player-heading" title={focused.file.name}>
+                      {focused.file.name}
+                    </h2>
+                  </div>
+                  <div className="separator-player-actions">
+                    <button
+                      type="button"
+                      className="separator-text-button"
+                      onClick={() =>
+                        toKeyBpm(focused, {
+                          file: focused.file,
+                          kind: 'original',
+                          label: focused.file.name,
+                        })
+                      }
+                    >
+                      <Gauge size={14} /> Check key & BPM
+                    </button>
+                    {focused.outputs.length === 4 && (
+                      <button
+                        type="button"
+                        className="separator-text-button"
+                        onClick={() => toSongboard(focused)}
+                      >
+                        <SlidersHorizontal size={14} /> Open in Songboard
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <StemPlayer
+                  key={focused.id}
+                  trackName={focused.file.name}
+                  fileBase={safeTrackName(focused.file.name)}
+                  stems={playerStems}
+                  original={{ blob: focused.file, peaks: focused.peaks }}
+                  initialPreset={focused.goal || 'all'}
+                  onEvent={(type) => {
+                    if (type === 'preview')
+                      trackSiteEventOnce(`${focused.id}:preview`, 'stem_preview');
+                    if (type === 'stem_download') trackSiteEvent('stem_download');
+                    if (type === 'mix_exported') trackSiteEvent('mix_exported');
+                  }}
+                  stemActions={(stem) => (
+                    <button
+                      type="button"
+                      className="stem-player-icon"
+                      aria-label={`Check key and BPM of the ${stem.label} stem`}
+                      title={`Check key & BPM of ${stem.label}`}
+                      onClick={() =>
+                        toKeyBpm(focused, {
+                          file: new File([stem.blob], stem.name, { type: 'audio/wav' }),
+                          kind: 'stem',
+                          label: `${stem.label} stem of ${focused.file.name}`,
+                        })
+                      }
+                    >
+                      <Gauge size={15} aria-hidden="true" />
+                    </button>
+                  )}
+                  afterExport={(mix) => (
+                    <div>
+                      <button
+                        type="button"
+                        className="separator-text-button"
+                        onClick={() =>
+                          toKeyBpm(focused, {
+                            file: new File([mix.blob], mix.name, { type: 'audio/wav' }),
+                            kind: 'mix',
+                            label: `${mix.name} (your mix of ${focused.file.name})`,
+                          })
+                        }
+                      >
+                        <Gauge size={14} /> Check key & BPM of this mix
+                      </button>
+                    </div>
+                  )}
+                />
+                {focused.origin?.user && (focused.origin.user.key || focused.origin.user.bpm) && (
+                  <p className="separator-note">
+                    Your settings from {focused.origin.from}:{' '}
+                    {[
+                      focused.origin.user.key,
+                      focused.origin.user.bpm && `${focused.origin.user.bpm} BPM`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}{' '}
+                    (chosen by you, not detected here).
+                  </p>
+                )}
+              </section>
+            )}
+          </div>
+
           <div className="separator-workspace">
             <aside className="separator-settings" aria-label="Separation settings">
               <fieldset disabled={locked} className="separator-goals">
@@ -664,133 +793,6 @@ export default function StemSeparatorPage() {
                 <p className="separator-warning" role="status">
                   {storageWarning}
                 </p>
-              )}
-
-              {previewing && (
-                <section className="separator-player" aria-labelledby="separator-preview-heading">
-                  <div className="separator-player-head">
-                    <div>
-                      <p className="separator-eyebrow">
-                        Preview · {formatDuration(previewing.preview.start)}–
-                        {formatDuration(previewing.preview.start + previewing.preview.duration)}
-                      </p>
-                      <h2 id="separator-preview-heading" title={previewing.file.name}>
-                        {previewing.file.name}
-                      </h2>
-                    </div>
-                    <p className="separator-note" role="status">
-                      The whole song is still separating. Downloads appear when it finishes.
-                    </p>
-                  </div>
-                  <StemPlayer
-                    key={`${previewing.id}-preview`}
-                    trackName={`${previewing.file.name} (preview)`}
-                    fileBase={safeTrackName(previewing.file.name)}
-                    stems={previewStems}
-                    initialPreset={previewing.goal || 'all'}
-                    previewOnly
-                    onEvent={(type) =>
-                      type === 'preview' &&
-                      trackSiteEventOnce(`${previewing.id}:quick-preview`, 'stem_preview')
-                    }
-                  />
-                </section>
-              )}
-              {focused && (
-                <section className="separator-player" aria-labelledby="separator-player-heading">
-                  <div className="separator-player-head">
-                    <div>
-                      <p className="separator-eyebrow">Now playing</p>
-                      <h2 id="separator-player-heading" title={focused.file.name}>
-                        {focused.file.name}
-                      </h2>
-                    </div>
-                    <div className="separator-player-actions">
-                      <button
-                        type="button"
-                        className="separator-text-button"
-                        onClick={() =>
-                          toKeyBpm(focused, {
-                            file: focused.file,
-                            kind: 'original',
-                            label: focused.file.name,
-                          })
-                        }
-                      >
-                        <Gauge size={14} /> Check key & BPM
-                      </button>
-                      {focused.outputs.length === 4 && (
-                        <button
-                          type="button"
-                          className="separator-text-button"
-                          onClick={() => toSongboard(focused)}
-                        >
-                          <SlidersHorizontal size={14} /> Open in Songboard
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <StemPlayer
-                    key={focused.id}
-                    trackName={focused.file.name}
-                    fileBase={safeTrackName(focused.file.name)}
-                    stems={playerStems}
-                    original={{ blob: focused.file, peaks: focused.peaks }}
-                    initialPreset={focused.goal || 'all'}
-                    onEvent={(type) => {
-                      if (type === 'preview')
-                        trackSiteEventOnce(`${focused.id}:preview`, 'stem_preview');
-                      if (type === 'stem_download') trackSiteEvent('stem_download');
-                      if (type === 'mix_exported') trackSiteEvent('mix_exported');
-                    }}
-                    stemActions={(stem) => (
-                      <button
-                        type="button"
-                        className="stem-player-icon"
-                        aria-label={`Check key and BPM of the ${stem.label} stem`}
-                        title={`Check key & BPM of ${stem.label}`}
-                        onClick={() =>
-                          toKeyBpm(focused, {
-                            file: new File([stem.blob], stem.name, { type: 'audio/wav' }),
-                            kind: 'stem',
-                            label: `${stem.label} stem of ${focused.file.name}`,
-                          })
-                        }
-                      >
-                        <Gauge size={15} aria-hidden="true" />
-                      </button>
-                    )}
-                    afterExport={(mix) => (
-                      <div>
-                        <button
-                          type="button"
-                          className="separator-text-button"
-                          onClick={() =>
-                            toKeyBpm(focused, {
-                              file: new File([mix.blob], mix.name, { type: 'audio/wav' }),
-                              kind: 'mix',
-                              label: `${mix.name} (your mix of ${focused.file.name})`,
-                            })
-                          }
-                        >
-                          <Gauge size={14} /> Check key & BPM of this mix
-                        </button>
-                      </div>
-                    )}
-                  />
-                  {focused.origin?.user && (focused.origin.user.key || focused.origin.user.bpm) && (
-                    <p className="separator-note">
-                      Your settings from {focused.origin.from}:{' '}
-                      {[
-                        focused.origin.user.key,
-                        focused.origin.user.bpm && `${focused.origin.user.bpm} BPM`,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}{' '}
-                      (chosen by you, not detected here).
-                    </p>
-                  )}
-                </section>
               )}
 
               <div className="separator-queue-heading">

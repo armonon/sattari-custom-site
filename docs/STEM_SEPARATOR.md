@@ -22,6 +22,20 @@ the main page. Both routes stay live; Split is not redirected.
   nodes, so lanes never drift. The original song is an exclusive A/B reference: it
   is decoded on demand, routed straight to the output and never summed into the
   stem mix or the export.
+- **Layout** (November 2026 overhaul, "console"): the player spans the page above
+  the song list. An overview (`StemOverview.jsx`) draws every part's real peaks in
+  its colour (silent parts dimmed), numbered bar lines, the loop and playhead;
+  clicking seeks and the position slider stays the keyboard equivalent. Below:
+  transport with m:ss.t timecode and bar.beat / speed / key readouts
+  (`beatPosition`), then a channel strip per part (waveform, vertical fader, mute,
+  solo, WAV) plus a master strip, and a side rail with Practice, Beat and click,
+  and Download my mix. Colours come from CSS variables, so the site's day and night
+  themes both apply, including the canvas.
+- **Level meters**: each lane's gain node feeds an `AnalyserNode` before the
+  master, and the master feeds one before the output, so meters are real
+  post-fader peaks (−60 to 0 dBFS, with a short visual fall-off) drawn straight to
+  the DOM each frame. Muted lanes read zero. Browsers without `createAnalyser`
+  connect directly and show no meter movement.
 - **Mix rule** (`src/utils/stemMix.js`, `laneGain`): a muted lane is silent (mute
   wins over solo); if any unmuted lane is soloed only soloed lanes play; an audible
   lane plays at lane gain (0–2) × master (0–1.5). Preview and export call the same

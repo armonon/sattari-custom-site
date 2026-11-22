@@ -13,6 +13,7 @@ import {
   Square,
   Trash2,
 } from 'lucide-react';
+import KeyReadout from './KeyReadout';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
@@ -251,9 +252,10 @@ function CorrectionEditor({ row, onChange, onClose }) {
         <button
           type="button"
           className="alab-text-button"
-          disabled={!row.user}
+          disabled={!row.user?.key && row.user?.bpm == null}
           onClick={() => {
-            onChange(null);
+            // Your notes stay; only the key and tempo go back to the detection.
+            onChange(cleanCorrection(row.user?.notes ? { notes: row.user.notes } : null));
             setTyped('');
           }}
         >
@@ -278,6 +280,7 @@ export default function KeyBpmPage() {
   const [received, setReceived] = useState(null);
   const [loadingExample, setLoadingExample] = useState(false);
   const [audition, setAudition] = useState({ id: null, playing: false, time: 0, duration: 0 });
+  const [focusId, setFocusId] = useState(null);
   const imports = useRef(Promise.resolve());
   const pendingImports = useRef(0);
   const reportPicker = useRef(null);
@@ -605,6 +608,7 @@ export default function KeyBpmPage() {
       return;
     }
     stopAudition();
+    setFocusId(row.id);
     const url = URL.createObjectURL(row.file);
     auditionUrl.current = url;
     element.src = url;
@@ -638,7 +642,12 @@ export default function KeyBpmPage() {
   const done = rows.filter((row) => row.result);
   const sorted = useMemo(() => [...rows].sort(SORTS[sort]), [rows, sort]);
   const remaining = rows.filter((row) => row.status === 'queued' || row.status === 'analyzing');
-  const auditionRow = rows.find((row) => row.id === audition.id);
+  // The large readout shows the chosen track, else the one playing, else the
+  // most recently measured one.
+  const focusRow =
+    rows.find((row) => row.id === focusId && row.status === 'done') ||
+    rows.find((row) => row.id === audition.id && row.status === 'done') ||
+    [...rows].reverse().find((row) => row.status === 'done');
 
   return (
     <AudioLabShell
@@ -707,44 +716,22 @@ export default function KeyBpmPage() {
             if (Number.isFinite(value)) setAudition((current) => ({ ...current, duration: value }));
           }}
         />
-        {auditionRow && (
-          <section className="kb-audition" aria-label="Listen to the original audio">
-            <button
-              type="button"
-              className="kb-audition-play"
-              onClick={() => void toggleAudition(auditionRow)}
-              aria-label={audition.playing ? 'Pause' : 'Play'}
-            >
-              {audition.playing ? (
-                <Pause size={18} aria-hidden="true" />
-              ) : (
-                <Play size={18} aria-hidden="true" />
-              )}
-            </button>
-            <div>
-              <strong title={auditionRow.file.name}>{auditionRow.file.name}</strong>
-              <input
-                type="range"
-                min="0"
-                max={audition.duration || 1}
-                step="0.01"
-                value={audition.time}
-                aria-label="Position in the original audio"
-                aria-valuetext={`${formatTime(audition.time)} of ${formatTime(audition.duration)}`}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  if (audio.current) audio.current.currentTime = value;
-                  setAudition((current) => ({ ...current, time: value }));
-                }}
-              />
-            </div>
-            <span className="kb-audition-time">
-              {formatTime(audition.time)} / {formatTime(audition.duration)}
-            </span>
-            <button type="button" className="alab-text-button" onClick={stopAudition}>
-              <Square size={13} aria-hidden="true" /> Stop
-            </button>
-          </section>
+        {focusRow && (
+          <KeyReadout
+            row={focusRow}
+            audition={audition}
+            playable={hasAudio(focusRow)}
+            onToggleAudition={() => void toggleAudition(focusRow)}
+            onSeek={(value) => {
+              if (audio.current) audio.current.currentTime = value;
+              setAudition((current) => ({ ...current, time: value }));
+            }}
+            onCorrect={(user) => {
+              update(focusRow.id, { user, userFrom: undefined });
+              if (user) trackSiteEventOnce(`${focusRow.id}:corrected`, 'keybpm_corrected');
+            }}
+            onSeparate={() => toSeparator(focusRow)}
+          />
         )}
 
         <div className="alab-toolbar">
@@ -880,9 +867,24 @@ export default function KeyBpmPage() {
                   const values = status === 'done' ? effectiveValues(result, row.user) : null;
                   const playable = hasAudio(row);
                   return [
-                    <tr key={id} data-status={status}>
+                    <tr
+                      key={id}
+                      data-status={status}
+                      className={focusRow?.id === id ? 'is-focused' : undefined}
+                    >
                       <th scope="row" title={file.name}>
-                        {file.name}
+                        {status === 'done' ? (
+                          <button
+                            type="button"
+                            className="kb-row-name"
+                            aria-current={focusRow?.id === id ? 'true' : undefined}
+                            onClick={() => setFocusId(id)}
+                          >
+                            {file.name}
+                          </button>
+                        ) : (
+                          file.name
+                        )}
                         {origin && (
                           <small className="alab-flag">
                             {origin.label === file.name
@@ -935,6 +937,9 @@ export default function KeyBpmPage() {
                           </td>
                           <td>{result.rmsDb === null ? '—' : `${result.rmsDb} dB RMS`}</td>
                           <td className="alab-note">
+                            {row.user?.notes && (
+                              <span className="kb-row-notes">{row.user.notes} </span>
+                            )}
                             {result.alternative && `Alt. ${result.alternative}. `}
                             {result.note}
                             {row.userFrom && ` Your values from ${row.userFrom}.`}

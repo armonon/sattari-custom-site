@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept — Sattari Key & BPM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080a;--panel:#111114;--panel-2:#17171b;--panel-3:#1e1e23;
+  --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+  --text:#f5f5f2;--muted:#9a9a93;--dim:#5e5e59;
+  --gold:#d6b36d;--gold-soft:rgba(214,179,109,.14);
+  --ok:#8fd4a0;--warn:#e7c06a;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Sora,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono)}
+.label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.top{display:flex;align-items:center;gap:20px;padding:14px 28px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500}
+.brand i{width:22px;height:22px;border-radius:6px;background:var(--gold);display:grid;place-items:center;color:#1a1408;font-style:normal;font-size:12px;font-weight:600}
+.crumbs{color:var(--muted);font-size:13px}.crumbs b{color:var(--text);font-weight:500}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line-2);border-radius:999px;font-size:12px;color:var(--muted)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:10px;border:1px solid var(--line-2);font-size:13px}
+.btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:500}
+
+.wrap{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:calc(100vh - 56px)}
+
+/* Queue */
+.queue{border-right:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:10px}
+.drop{border:1.5px dashed var(--line-2);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px}
+.drop b{display:block;color:var(--text);font-weight:500;margin-bottom:2px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:12px 14px;border-radius:12px;border:1px solid transparent}
+.item.on{background:var(--panel-2);border-color:var(--line-2)}
+.item b{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .k{font-family:var(--mono);font-size:13px;text-align:right}
+.item .s{font-size:12px;color:var(--muted)}
+.item .t{font-size:11px;text-align:right}
+.item .t.ok{color:var(--ok)}.item .t.warn{color:var(--warn)}
+.item .bar{grid-column:1/-1;height:3px;border-radius:2px;background:rgba(255,255,255,.06);margin-top:6px;overflow:hidden}
+.item .bar i{display:block;height:100%;width:64%;background:var(--gold)}
+.queue .foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+
+/* Hero readout */
+.main{padding:28px 32px;display:flex;flex-direction:column;gap:22px}
+.title{display:flex;align-items:flex-end;gap:16px}
+.title h1{font-weight:300;font-size:26px;letter-spacing:-.01em}
+.title .meta{color:var(--muted);font-size:13px}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;position:relative;overflow:hidden}
+.readout{display:flex;gap:28px;align-items:flex-start}
+.big{font-weight:200;font-size:104px;line-height:.9;letter-spacing:-.05em}
+.big small{font-size:40px;font-weight:300;letter-spacing:-.02em;color:var(--muted);margin-left:6px}
+.camelot{display:inline-flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pill{padding:5px 10px;border-radius:999px;border:1px solid var(--line-2);font-size:12px;color:var(--muted);font-family:var(--mono)}
+.pill.gold{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.pill.ok{border-color:rgba(143,212,160,.5);color:var(--ok)}
+.wheel{margin-left:auto;width:220px;height:220px;flex:none}
+.alt{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:18px;font-size:13px;color:var(--muted);align-items:center}
+.alt b{color:var(--text);font-weight:500}
+
+.bpm .big{font-family:var(--mono);font-weight:300;font-size:96px;letter-spacing:-.06em}
+.interp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.interp button{padding:12px 8px;border-radius:12px;border:1px solid var(--line-2);text-align:center}
+.interp button b{display:block;font-family:var(--mono);font-size:20px;font-weight:400}
+.interp button span{font-size:11px;color:var(--muted)}
+.interp button.on{border-color:var(--gold);background:var(--gold-soft)}
+.interp button.on b{color:var(--gold)}
+.pulse{position:absolute;right:24px;top:24px;display:flex;gap:6px}
+.pulse i{width:10px;height:10px;border-radius:50%;background:var(--panel-3)}
+.pulse i.on{background:var(--gold)}
+
+/* Audition row */
+.row3{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px}
+.aud{display:flex;flex-direction:column;gap:14px}
+.aud .bar{display:flex;align-items:center;gap:16px}
+.play{width:48px;height:48px;border-radius:50%;background:var(--gold);color:#1a1408;display:grid;place-items:center;flex:none}
+.wv{flex:1;height:64px}
+.aud .opts{display:flex;gap:8px;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid var(--line-2);font-size:13px;color:var(--muted)}
+.toggle.on{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+
+.tap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.tap .pad{width:132px;height:132px;border-radius:50%;border:1.5px solid var(--gold);background:radial-gradient(circle,rgba(214,179,109,.22),rgba(214,179,109,.04) 70%);display:grid;place-items:center}
+.tap .pad b{font-family:var(--mono);font-size:30px;font-weight:400}
+.tap .pad span{display:block;font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.tap small{color:var(--muted);font-size:12px}
+
+/* Corrections */
+.fix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:12px;align-items:end}
+.field{display:flex;flex-direction:column;gap:6px}
+.field .in{height:42px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);display:flex;align-items:center;padding:0 12px;font-family:var(--mono);font-size:14px;justify-content:space-between}
+.field .in span{color:var(--muted)}
+.edited{font-size:12px;color:var(--gold);margin-top:10px}
+
+.tag{position:fixed;right:16px;bottom:16px;padding:6px 10px;border-radius:8px;background:#000;border:1px solid var(--line-2);font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i>S</i>Sattari Studio</div>
+  <div class="crumbs">Tools / <b>Key & BPM</b></div>
+  <div class="spacer"></div>
+  <span class="chip"><span class="dot"></span>Analysed on this device</span>
+  <button class="btn">Export CSV</button>
+  <button class="btn">Report JSON</button>
+</header>
+
+<div class="wrap">
+  <aside class="queue" aria-label="Songs">
+    <div class="drop"><b>Drop songs here</b>MP3, WAV, M4A, FLAC · up to 20 at once</div>
+    <div class="item on"><b>Midnight Groove — demo take</b><span class="k">A min</span><span class="s">3:42 · edited</span><span class="k">120</span></div>
+    <div class="item"><b>Lesson 04 — setar intro</b><span class="k">D min</span><span class="s">2:18</span><span class="t warn">tentative</span></div>
+    <div class="item"><b>Warm-up in 7/8</b><span class="k">E♭ maj</span><span class="s">1:56</span><span class="t ok">supported</span></div>
+    <div class="item"><b>Bandmate rehearsal mix.wav</b><span class="k">—</span><span class="s">analysing…</span><span class="t">64%</span><span class="bar"><i></i></span></div>
+    <div class="foot">
+      <span class="label">Saved in this browser</span>
+      <button class="btn">Clear saved songs</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="title"><h1>Midnight Groove — demo take</h1><span class="meta">3:42 · stereo · 44.1 kHz</span><div class="spacer"></div><button class="btn">Separate this song →</button></div>
+
+    <div class="hero">
+      <section class="panel">
+        <div class="readout">
+          <div>
+            <div class="label">Key</div>
+            <div class="big">A<small>minor</small></div>
+            <div class="camelot"><span class="pill gold">8A</span><span class="pill ok">supported</span><span class="pill">relative C major</span></div>
+          </div>
+          <svg class="wheel" viewBox="-110 -110 220 220" aria-hidden="true" id="wheel"></svg>
+        </div>
+        <div class="alt"><span>Second choice <b>E minor</b></span><span>·</span><span>Agreement across sections <b>9 / 11</b></span></div>
+      </section>
+
+      <section class="panel bpm">
+        <div class="pulse" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+        <div class="label">Tempo</div>
+        <div class="big">120<small style="font-family:Sora,sans-serif">BPM</small></div>
+        <div class="label" style="margin-top:14px">Which feels right?</div>
+        <div class="interp">
+          <button><b>60</b><span>half time</span></button>
+          <button class="on"><b>120</b><span>as detected</span></button>
+          <button><b>240</b><span>double time</span></button>
+        </div>
+      </section>
+    </div>
+
+    <div class="row3">
+      <section class="panel aud">
+        <div class="label">Check it by ear</div>
+        <div class="bar">
+          <button class="play" aria-label="Play"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg></button>
+          <svg class="wv" viewBox="0 0 1000 64" preserveAspectRatio="none" id="wv" aria-hidden="true"></svg>
+        </div>
+        <div class="opts">
+          <span class="toggle on">♩ Click at 120</span>
+          <span class="toggle on">♪ Drone on A</span>
+          <span class="toggle">Play the A minor scale</span>
+          <span class="toggle">Compare with E minor</span>
+        </div>
+      </section>
+      <section class="panel tap">
+        <div class="pad"><div><b>118.9</b><span>tap tempo</span></div></div>
+        <small>Tap on the beat · 8 taps · press T</small>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="label" style="margin-bottom:12px">Correct it</div>
+      <div class="fix">
+        <div class="field"><span class="label">Key</span><div class="in">A minor <span>▾</span></div></div>
+        <div class="field"><span class="label">BPM</span><div class="in">120.0 <span>±</span></div></div>
+        <div class="field"><span class="label">Notes</span><div class="in" style="font-family:Sora,sans-serif;font-size:13px"><span>Swung feel, count in 2</span></div></div>
+        <button class="btn">Reset to detected</button>
+      </div>
+      <div class="edited">Edited by you · the detected values stay in the report next to yours</div>
+    </section>
+  </main>
+</div>
+
+<div class="tag">Concept A · “Instrument readout” · static mockup</div>
+
+<script>
+const keys=['C','G','D','A','E','B','F♯','D♭','A♭','E♭','B♭','F'];
+const minors=['Am','Em','Bm','F♯m','C♯m','G♯m','E♭m','B♭m','Fm','Cm','Gm','Dm'];
+let s='';
+for(let i=0;i<12;i++){
+  const a0=(i-.5)/12*2*Math.PI-Math.PI/2,a1=(i+.5)/12*2*Math.PI-Math.PI/2;
+  const seg=(r0,r1)=>`M${Math.cos(a0)*r1} ${Math.sin(a0)*r1}A${r1} ${r1} 0 0 1 ${Math.cos(a1)*r1} ${Math.sin(a1)*r1}L${Math.cos(a1)*r0} ${Math.sin(a1)*r0}A${r0} ${r0} 0 0 0 ${Math.cos(a0)*r0} ${Math.sin(a0)*r0}Z`;
+  const am=i===0, em=i===1;
+  s+=`<path d="${seg(70,104)}" fill="${i===0?'rgba(214,179,109,.16)':'rgba(255,255,255,.03)'}" stroke="#08080a" stroke-width="2"/>`;
+  s+=`<path d="${seg(38,68)}" fill="${am?'#d6b36d':em?'rgba(214,179,109,.3)':'rgba(255,255,255,.05)'}" stroke="#08080a" stroke-width="2"/>`;
+  const a=i/12*2*Math.PI-Math.PI/2;
+  s+=`<text x="${Math.cos(a)*87}" y="${Math.sin(a)*87+4}" text-anchor="middle" font-size="11" font-family="Sora" fill="${i===0?'#d6b36d':'#9a9a93'}">${keys[i]}</text>`;
+  s+=`<text x="${Math.cos(a)*53}" y="${Math.sin(a)*53+3.5}" text-anchor="middle" font-size="9.5" font-family="Sora" fill="${am?'#1a1408':em?'#f5f5f2':'#5e5e59'}">${minors[i]}</text>`;
+}
+s+=`<text x="0" y="-2" text-anchor="middle" font-size="22" font-family="JetBrains Mono" fill="#f5f5f2">8A</text><text x="0" y="16" text-anchor="middle" font-size="9" letter-spacing="1.5" font-family="Sora" fill="#9a9a93">CAMELOT</text>`;
+document.getElementById('wheel').innerHTML=s;
+let w='',seed=5;const r=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+for(let i=0;i<160;i++){const v=(r()*.6+.4)*(.4+.6*Math.abs(Math.sin(i/160*Math.PI*4)))*28;w+=`<rect x="${i*6.25}" y="${32-v}" width="4.5" height="${v*2}" rx="1" fill="${i<52?'#d6b36d':'#3a3a40'}"/>`}
+for(let b=0;b<1000;b+=62.5)w+=`<rect x="${b}" y="0" width="1" height="64" fill="rgba(255,255,255,.12)"/>`;
+document.getElementById('wv').innerHTML=w;
+</script>
+</body>
+</html>

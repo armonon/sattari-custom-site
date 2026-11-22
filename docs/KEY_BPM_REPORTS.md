@@ -46,9 +46,18 @@ Nothing is synced between devices; save a report or CSV as a copy.
   2.5 s restarts), or a typed value. Valid BPM is finite, 20–400, kept to two
   decimals; invalid input disables Apply. Key: any of the 24 keys, or the detected
   alternative; the Camelot code follows (`camelot()`). **Reset to detected** removes
-  the correction.
+  the key and tempo correction and keeps your notes.
+- The large readout above the table shows the selected track (click a track name;
+  playing a track also selects it): the key on a circle of fifths with the second
+  choice shaded, the tempo with half / as detected / double buttons, a tap pad (or
+  the T key), and reference tones for checking by ear — a drone on the tonic (root,
+  fifth, octave), a one-octave major or natural-minor scale, and a drone on the
+  second choice. The tones only play; they never change the result.
+- **Your notes**: one line of plain text (up to 500 characters; line breaks and
+  other control characters become spaces), saved like a correction. Notes alone
+  are a valid correction.
 - Corrections are stored beside the result as `user: { key, bpm, bpmChoice,
-  editedAt }`; the detected `result` (key, BPM, evidence, alternative, margin) and
+  editedAt, notes? }`; the detected `result` (key, BPM, evidence, alternative, margin) and
   `measuredAt` are never modified. The table shows the corrected value with
   "yours · detected …" / "half time · detected …". Sorting uses the displayed value.
   A corrected BPM or key is metadata only: no audio is stretched or transposed.
@@ -58,17 +67,19 @@ Nothing is synced between devices; save a report or CSV as a copy.
 
 ## CSV
 
-The first 13 columns are unchanged (detected values). Six columns are appended:
+The first 13 columns are unchanged (detected values). Seven columns are appended:
 `Corrected key`, `Corrected Camelot`, `Corrected BPM`, `BPM correction`
-(`half|double|tap|manual`), `Corrected at`, `Source` (handoff label). Every cell is
+(`half|double|tap|manual`), `Corrected at`, `Source` (handoff label), `Your notes`. Every cell is
 quoted; cells beginning with `= + - @`, tab or CR are prefixed with `'`.
 
 ## Report format and failure behavior
 
 Version 2 (current) adds optional per-track `user` (above) and `origin: { kind,
-label }`. Version 1 reports open unchanged (no corrections). Saving always writes
+label }`. `user.notes` is optional; reports without it open unchanged, and earlier
+builds ignore it. Version 1 reports open unchanged (no corrections). Saving always writes
 version 2. A malformed correction (unknown key, BPM outside 20–400 or with more than
-two decimals, BPM without a choice, an empty correction, a correction on an error
+two decimals, BPM without a choice, notes that are not one clean line or exceed
+500 characters, an empty correction, a correction on an error
 row, a missing timestamp) rejects the whole report without changing current rows,
 like any other invalid record. Versions other than 1 and 2 are rejected.
 

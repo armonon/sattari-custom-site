@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import KeyBpmPage from './KeyBpmPage';
@@ -122,7 +122,7 @@ it('keeps the detection while the musician picks half time, taps, types and rese
   await act(async () =>
     worker.onmessage({ data: { id: worker.id, analysis: measured, rough: null } })
   );
-  const row = () => screen.getByText('groove.wav').closest('tr');
+  const row = () => within(screen.getByRole('table')).getByText('groove.wav').closest('tr');
   await waitFor(() => expect(row().dataset.status).toBe('done'));
   expect(row()).toHaveTextContent('140');
   expect(row()).toHaveTextContent('8A');
@@ -184,14 +184,16 @@ it('report rows without audio cannot be played or separated, and say why', async
       target: { files: [{ size: report.length, text: async () => report }] },
     });
   });
-  await waitFor(() => expect(screen.getByText('archived.wav')).toBeInTheDocument());
+  await waitFor(() =>
+    expect(within(screen.getByRole('table')).getByText('archived.wav')).toBeInTheDocument()
+  );
   expect(screen.getByText('Report · audio not included')).toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: 'archived.wav: choose the source file again to listen' })
   ).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Separate stems of archived.wav' })).toBeDisabled();
   // The saved correction is restored and still labelled as the musician's.
-  expect(screen.getByText('archived.wav').closest('tr')).toHaveTextContent(
-    'half time · detected 120'
-  );
+  expect(
+    within(screen.getByRole('table')).getByText('archived.wav').closest('tr')
+  ).toHaveTextContent('half time · detected 120');
 });

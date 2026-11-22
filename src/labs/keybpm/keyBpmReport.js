@@ -2,6 +2,8 @@ import {
   ALL_KEYS,
   BPM_CHOICES,
   camelot,
+  cleanNotes,
+  NOTES_MAX,
   keyParts,
   KEYBPM_MAX_BYTES,
   KEYBPM_MAX_FILES,
@@ -10,7 +12,8 @@ import {
 
 export const KEYBPM_REPORT_MAX_BYTES = 2 * 1024 * 1024;
 export const KEYBPM_REPORT_SCHEMA = 'SattariKeyBpm.report';
-// Version 2 adds optional per-track `user` corrections and `origin` labels.
+// Version 2 adds optional per-track `user` corrections (with optional
+// one-line `notes`) and `origin` labels.
 // Version 1 reports (no corrections) still open unchanged.
 export const KEYBPM_REPORT_VERSION = 2;
 const SUPPORTED_VERSIONS = [1, 2];
@@ -96,9 +99,17 @@ function track(record, version) {
     const bpmChoice = user.bpmChoice === null ? null : user.bpmChoice;
     if ((bpm === null) !== (bpmChoice === null)) invalid();
     if (bpmChoice !== null && !BPM_CHOICES.includes(bpmChoice)) invalid();
-    if (key === null && bpm === null) invalid();
+    const notes = user.notes === undefined ? '' : text(user.notes, NOTES_MAX);
+    if (notes !== cleanNotes(notes)) invalid();
+    if (key === null && bpm === null && !notes) invalid();
     if (result.status !== 'done') invalid();
-    parsed.user = { key, bpm, bpmChoice, editedAt: timestamp(user.editedAt) };
+    parsed.user = {
+      key,
+      bpm,
+      bpmChoice,
+      editedAt: timestamp(user.editedAt),
+      ...(notes ? { notes } : {}),
+    };
   }
   if (version >= 2 && record.origin !== undefined && record.origin !== null) {
     if (!object(record.origin) || !['original', 'stem', 'mix'].includes(record.origin.kind))
