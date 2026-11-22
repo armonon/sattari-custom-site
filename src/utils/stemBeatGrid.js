@@ -123,3 +123,19 @@ export function clicksBetween(
     for (const { time, index } of loopBeats) push(firstPass + k * span + (time - loopA), index);
   return out;
 }
+
+/**
+ * Bar and beat at time t for the transport readout: { bar, beat } with bar 1
+ * starting at the first downbeat (bar 0 is a pickup before it), or null
+ * before the first beat or without a grid.
+ */
+export function beatPosition(beats, t, barOffset = 0) {
+  if (!beats?.length || t < beats[0] - 0.05) return null;
+  let index = nearestBeatIndex(beats, t);
+  if (beats[index] > t + 0.05 && index > 0) index--;
+  const relative = index - (((barOffset % BEATS_PER_BAR) + BEATS_PER_BAR) % BEATS_PER_BAR);
+  return {
+    bar: Math.floor(relative / BEATS_PER_BAR) + 1,
+    beat: (((relative % BEATS_PER_BAR) + BEATS_PER_BAR) % BEATS_PER_BAR) + 1,
+  };
+}

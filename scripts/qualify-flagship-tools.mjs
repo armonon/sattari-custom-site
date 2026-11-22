@@ -109,6 +109,50 @@ try {
     `${environment.separationSeconds}s on ${device}`
   );
   await page.screenshot({ path: `${out}/separator-player-desktop.png`, fullPage: true });
+  // Both site themes: the console reads its colours from CSS variables.
+  for (const theme of ['night', 'day']) {
+    await page.evaluate((mode) => (document.documentElement.dataset.theme = mode), theme);
+    await page.waitForTimeout(150);
+    await page
+      .locator('.separator-stage')
+      .screenshot({ path: `${out}/separator-console-${theme}.png` });
+  }
+
+  await check('level meters move with the audio and rest when paused', async () => {
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await page.waitForFunction(
+      () =>
+        [...document.querySelectorAll('.stem-player-meter')].some(
+          (meter) => Number(meter.style.getPropertyValue('--level')) > 0.2
+        ),
+      null,
+      { timeout: 15000 }
+    );
+    const levels = await page.evaluate(() =>
+      Object.fromEntries(
+        [...document.querySelectorAll('.stem-player-lane')].map((lane) => [
+          lane.querySelector('.stem-player-lane-name strong').textContent,
+          Number(lane.querySelector('.stem-player-meter').style.getPropertyValue('--level')),
+        ])
+      )
+    );
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    // Drum practice mutes the drums, so their post-fader meter stays down.
+    assert.equal(levels.Drums, 0, 'muted drums meter moved');
+    assert(levels.Master > 0.2, 'master meter did not move');
+    await page.waitForFunction(
+      () =>
+        [...document.querySelectorAll('.stem-player-meter')].every(
+          (meter) => Number(meter.style.getPropertyValue('--level')) === 0
+        ),
+      null,
+      { timeout: 5000 }
+    );
+    return Object.entries(levels)
+      .map(([name, value]) => `${name} ${value.toFixed(2)}`)
+      .join(', ');
+  });
+  await page.getByRole('button', { name: /^Back to/ }).click();
 
   await check('drum practice preset is active with drums muted', async () => {
     assert.equal(
@@ -446,7 +490,13 @@ try {
   await page.screenshot({ path: `${out}/separator-player-tablet.png`, fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
 
-  // Continue with the original song in Key & BPM (same-tab handoff).
+  // Continue with the demo's original song in Key & BPM (same-tab handoff).
+  // Open it in the player first: after the batch step the most recently saved
+  // song (not necessarily the demo) is the one shown by default.
+  const demoTrack = page.locator('.separator-track', { hasText: 'sattari-practice-demo' }).first();
+  const openDemo = demoTrack.getByRole('button', { name: /Open in player|In the player/ });
+  if ((await openDemo.getAttribute('aria-pressed')) !== 'true') await openDemo.click();
+  await page.locator('#separator-player-heading', { hasText: 'sattari-practice-demo' }).waitFor();
   await page.getByRole('button', { name: 'Check key & BPM' }).first().click();
   await page.waitForURL(/\/studio\/keybpm$/);
   await check('Key & BPM shows the transferred source and measures it', async () => {
@@ -491,6 +541,24 @@ try {
     );
     await page.getByRole('button', { name: 'Pause', exact: true }).click();
     assert(await page.evaluate(() => document.querySelector('audio').paused));
+  });
+  await check('Key & BPM readout shows the key on the circle and a drone plays', async () => {
+    const label = await page.locator('.kb-big').first().getAttribute('aria-label');
+    assert(label, 'no key shown for the demo');
+    await page.getByRole('img', { name: /Circle of fifths/ }).waitFor();
+    const lit = await page.locator('.kb-circle path.is-key').count();
+    assert.equal(lit, 1, 'circle should light exactly one key');
+    const drone = page.getByRole('button', { name: /^Drone on [A-G]/ }).first();
+    await drone.click();
+    assert.equal(await drone.getAttribute('aria-pressed'), 'true');
+    await drone.click();
+    for (const theme of ['night', 'day']) {
+      await page.evaluate((mode) => (document.documentElement.dataset.theme = mode), theme);
+      await page.waitForTimeout(150);
+      await page.locator('.kb-readout').screenshot({ path: `${out}/keybpm-readout-${theme}.png` });
+    }
+    await page.evaluate(() => (document.documentElement.dataset.theme = 'night'));
+    return label;
   });
   const [reportDownload] = await Promise.all([
     page.waitForEvent('download'),

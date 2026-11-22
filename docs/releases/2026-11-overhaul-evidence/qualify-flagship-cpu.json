@@ -1,0 +1,198 @@
+{
+  "environment": {
+    "browser": "chromium 159.0.8154.6",
+    "platform": "darwin",
+    "device": "cpu",
+    "startedAt": "2026-11-22T16:17:21.171Z",
+    "webgpu": true,
+    "separationSeconds": 38,
+    "finishedAt": "2026-11-22T16:23:13.676Z"
+  },
+  "results": [
+    {
+      "name": "separator first screen fits phone (390px)",
+      "pass": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "separator first screen fits tablet (768px)",
+      "pass": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "separator first screen fits desktop (1440px)",
+      "pass": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "real HTDemucs separation of the demo",
+      "pass": true,
+      "detail": "38s on cpu"
+    },
+    {
+      "name": "level meters move with the audio and rest when paused",
+      "pass": true,
+      "detail": "Vocals 0.21, Drums 0.00, Bass 0.80, Other instruments 0.31, Master 0.80"
+    },
+    {
+      "name": "drum practice preset is active with drums muted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "stems are 44.1 kHz stereo, equal length",
+      "pass": true,
+      "detail": "352800 frames, 32-bit float"
+    },
+    {
+      "name": "mix file is named for its content",
+      "pass": true,
+      "detail": "sattari-practice-demo-drumless-mix.wav"
+    },
+    {
+      "name": "downloaded mix equals vocals + bass + other, sample for sample",
+      "pass": true,
+      "detail": "max |error| 2.13e-8; UI Mix peak −12.0 dBFS"
+    },
+    {
+      "name": "mix excludes the drum stem",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "downloaded mix plays back in the browser",
+      "pass": true,
+      "detail": "duration 8.00s, advanced to 1.16s"
+    },
+    {
+      "name": "all-muted mix cannot be exported",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "beat grid is found on the demo at its tempo",
+      "pass": true,
+      "detail": "Beat grid · 119.7 BPM (estimated)"
+    },
+    {
+      "name": "75% speed plays and downloads a longer mix through the stretch worker",
+      "pass": true,
+      "detail": "sattari-practice-demo-75pct-full-mix.wav: 470400 frames (expected 470400)"
+    },
+    {
+      "name": "A–B loop export equals the same frames of the full mix",
+      "pass": true,
+      "detail": "sattari-practice-demo-drumless-loop-0m02s-0m04s.wav, 88200 frames, max |error| 0.00e+0"
+    },
+    {
+      "name": "M4A/AAC export decodes back to the same mix level and length",
+      "pass": true,
+      "detail": "sattari-practice-demo-drumless-mix.m4a, 179 KB vs 2756 KB WAV, 8.081s, level -0.05 dB"
+    },
+    {
+      "name": "song ZIP contains this song’s four stems and report",
+      "pass": true,
+      "detail": "01-sattari-practice-demo/analysis.json, 01-sattari-practice-demo/sattari-practice-demo-vocals.wav, 01-sattari-practice-demo/sattari-practice-demo-drums.wav, 01-sattari-practice-demo/sattari-practice-demo-bass.wav, 01-sattari-practice-demo/sattari-practice-demo-instruments.wav"
+    },
+    {
+      "name": "a 20-second preview is playable before the whole song finishes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "one preset for every song downloads a ZIP of practice mixes",
+      "pass": true,
+      "detail": "01-sattari-practice-demo/sattari-practice-demo-bassless-mix.wav, 02-second-song/second-song-bassless-mix.wav; demo mix max |error| 2.83e-8"
+    },
+    {
+      "name": "saved song survives a reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at phone (390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at tablet (768px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at small laptop (1024px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "player controls fit inside the player at desktop (1440px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "separator player fits phone width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Key & BPM shows the transferred source and measures it",
+      "pass": true,
+      "detail": "sattari-practice-demo.wavFrom Stem Separator0:08C major8B120-22.4 dB RMSAlt. A minor. "
+    },
+    {
+      "name": "Key & BPM route did not request the separation model",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "half time correction keeps the detection",
+      "pass": true,
+      "detail": "120 → 60half time · detected 120"
+    },
+    {
+      "name": "original audio audition plays and pauses",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Key & BPM readout shows the key on the circle and a drone plays",
+      "pass": true,
+      "detail": "C major"
+    },
+    {
+      "name": "CSV keeps detected columns and adds correction columns",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "a reload does not claim a transfer that no longer exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Key & BPM keeps results, correction and audio after a reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "report round trip in a fresh context keeps the correction, without audio",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "a shared ?goal= link opens with that goal selected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Clear saved work removes saved songs after confirmation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no uncaught page errors",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

@@ -49,3 +49,18 @@ describe('beat grid helpers', () => {
     expect(silent.usable).toBe(false);
   });
 });
+
+describe('beatPosition', () => {
+  const beats = Array.from({ length: 16 }, (_, i) => 1 + i * 0.5);
+  it('counts bars from the first downbeat and treats earlier beats as a pickup', async () => {
+    const { beatPosition } = await import('./stemBeatGrid');
+    expect(beatPosition([], 3)).toBeNull();
+    expect(beatPosition(beats, 0.2)).toBeNull();
+    expect(beatPosition(beats, 1)).toEqual({ bar: 1, beat: 1 });
+    expect(beatPosition(beats, 2.74)).toEqual({ bar: 1, beat: 4 });
+    expect(beatPosition(beats, 3.01)).toEqual({ bar: 2, beat: 1 });
+    // Bar start moved one beat later: the first beat becomes a pickup.
+    expect(beatPosition(beats, 1, 1)).toEqual({ bar: 0, beat: 4 });
+    expect(beatPosition(beats, 1.5, 1)).toEqual({ bar: 1, beat: 1 });
+  });
+});

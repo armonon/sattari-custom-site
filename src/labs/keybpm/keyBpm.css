@@ -1,4 +1,4 @@
-/* Key & BPM flagship additions: audition bar, row actions, correction editor. */
+/* Key & BPM flagship additions: readout, row actions, correction editor. */
 .alab-visually-hidden {
   position: absolute;
   width: 1px;
@@ -221,4 +221,449 @@
   border-left: 2px solid #d9b26a;
   background: color-mix(in srgb, #d9b26a 12%, transparent);
   font-size: 13px;
+}
+
+/* 2026-11 visual overhaul: "instrument readout". Scoped to this tool so the
+   other Studio labs that share the lab shell keep their own look. */
+.alab-page[data-lab='keybpm'] {
+  --alab-bg: #08080a;
+  --alab-panel: #111114;
+  --alab-raised: #17171b;
+  --alab-line: rgba(255, 255, 255, 0.1);
+  --alab-text: #f5f5f2;
+  --alab-muted: #a3a39c;
+  --alab-accent: #d6b36d;
+  --alab-accent-ink: #1a1408;
+  --kb-raised-2: #1e1e23;
+  --kb-line-2: rgba(255, 255, 255, 0.16);
+  --kb-accent-soft: rgba(214, 179, 109, 0.14);
+  --kb-ok: #8fd4a0;
+  --kb-warn: #e7c06a;
+  --kb-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-family: Sora, Inter, sans-serif;
+}
+[data-theme='day'] .alab-page[data-lab='keybpm'] {
+  --alab-bg: #f6f4ef;
+  --alab-panel: #ffffff;
+  --alab-raised: #f3f0e9;
+  --alab-line: rgba(27, 26, 23, 0.1);
+  --alab-text: #1b1a17;
+  --alab-muted: #625e55;
+  --alab-accent: #8a6516;
+  --alab-accent-ink: #ffffff;
+  --kb-raised-2: #e9e5dc;
+  --kb-line-2: rgba(27, 26, 23, 0.2);
+  --kb-accent-soft: rgba(138, 101, 22, 0.1);
+  --kb-ok: #2d7a45;
+  --kb-warn: #8a5a00;
+}
+.alab-page[data-lab='keybpm'] .alab-shell {
+  max-width: 1320px;
+}
+.alab-page[data-lab='keybpm'] .alab-heading h1 {
+  font-size: clamp(34px, 4.2vw, 52px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+.alab-page[data-lab='keybpm'] .alab-eyebrow {
+  color: var(--alab-accent);
+  letter-spacing: 0.16em;
+}
+.kb-label {
+  margin: 0;
+  color: var(--alab-muted);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.kb-note {
+  color: var(--alab-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.kb-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+}
+.kb-ghost:hover:not(:disabled) {
+  border-color: var(--alab-accent);
+  color: var(--alab-accent);
+}
+.kb-readout {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--alab-line);
+  border-radius: 24px;
+  background: radial-gradient(120% 140% at 100% 0%, var(--kb-accent-soft), transparent 50%),
+    var(--alab-bg);
+}
+.kb-readout-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+.kb-readout-head h2 {
+  margin-top: 6px !important;
+  overflow-wrap: anywhere;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 300;
+  letter-spacing: -0.015em;
+}
+.kb-readout-meta {
+  margin-top: 4px !important;
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.kb-readout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.kb-readout-grid.is-secondary {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+.kb-panel {
+  position: relative;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--alab-line);
+  border-radius: 20px;
+  background: var(--alab-panel);
+}
+.kb-key-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px 20px;
+}
+.kb-key-foot {
+  grid-column: 1 / -1;
+  padding-top: 14px;
+  border-top: 1px solid var(--alab-line);
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.kb-key-foot b {
+  color: var(--alab-text);
+  font-weight: 500;
+}
+.kb-big {
+  margin: 6px 0 0 !important;
+  font-size: clamp(64px, 8vw, 104px);
+  font-weight: 200;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+}
+.kb-big small {
+  margin-left: 8px;
+  color: var(--alab-muted);
+  font-size: 0.38em;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+.kb-big.is-empty {
+  color: var(--alab-muted);
+}
+.kb-bpm {
+  font-family: var(--kb-mono);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+}
+.kb-bpm small {
+  font-family: Sora, Inter, sans-serif;
+  letter-spacing: 0;
+}
+.kb-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0 !important;
+}
+.kb-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 999px;
+  color: var(--alab-muted);
+  font-family: var(--kb-mono);
+  font-size: 12px;
+}
+.kb-pill.is-accent,
+.kb-pill.is-user {
+  border-color: var(--alab-accent);
+  background: var(--kb-accent-soft);
+  color: var(--alab-accent);
+}
+.kb-pill.is-supported {
+  border-color: color-mix(in srgb, var(--kb-ok) 50%, transparent);
+  color: var(--kb-ok);
+}
+.kb-pill.is-tentative,
+.kb-pill.is-rough {
+  border-color: color-mix(in srgb, var(--kb-warn) 50%, transparent);
+  color: var(--kb-warn);
+}
+.kb-circle {
+  width: clamp(170px, 18vw, 230px);
+  height: auto;
+}
+.kb-circle path {
+  fill: color-mix(in srgb, var(--alab-text) 4%, transparent);
+  stroke: var(--alab-panel);
+  stroke-width: 2;
+}
+.kb-circle .kb-circle-minor {
+  fill: color-mix(in srgb, var(--alab-text) 6%, transparent);
+}
+.kb-circle path.is-alt {
+  fill: color-mix(in srgb, var(--alab-accent) 32%, transparent);
+}
+.kb-circle path.is-key {
+  fill: var(--alab-accent);
+}
+.kb-circle-label {
+  fill: var(--alab-muted);
+  font-family: Sora, Inter, sans-serif;
+  font-size: 11px;
+}
+.kb-circle-label.is-small {
+  font-size: 9px;
+}
+.kb-circle-label.is-alt {
+  fill: var(--alab-text);
+}
+.kb-circle-label.is-key {
+  fill: var(--alab-accent-ink);
+  font-weight: 600;
+}
+.kb-circle-code {
+  fill: var(--alab-text);
+  font-family: var(--kb-mono);
+  font-size: 22px;
+}
+.kb-circle-caption {
+  fill: var(--alab-muted);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+}
+.kb-tempo-panel {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.kb-tempo-panel > .kb-label:not(:first-child) {
+  margin-top: 16px;
+}
+.kb-interp {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.kb-interp button {
+  display: grid;
+  gap: 2px;
+  padding: 12px 6px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+}
+.kb-interp b {
+  font-family: var(--kb-mono);
+  font-size: 20px;
+  font-weight: 400;
+}
+.kb-interp span {
+  color: var(--alab-muted);
+  font-size: 11px;
+}
+.kb-interp button:hover:not(:disabled) {
+  border-color: var(--alab-accent);
+}
+.kb-interp button[aria-pressed='true'] {
+  border-color: var(--alab-accent);
+  background: var(--kb-accent-soft);
+}
+.kb-interp button[aria-pressed='true'] b {
+  color: var(--alab-accent);
+}
+.kb-listen-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.kb-listen-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.kb-listen-bar input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--alab-accent);
+}
+.kb-play {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+}
+.kb-listen-time {
+  color: var(--alab-muted);
+  font-family: var(--kb-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kb-tones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.kb-tones button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--alab-muted);
+  font-size: 13px;
+}
+.kb-tones button:hover {
+  color: var(--alab-text);
+}
+.kb-tones button[aria-pressed='true'] {
+  border-color: var(--alab-accent);
+  background: var(--kb-accent-soft);
+  color: var(--alab-accent);
+}
+.kb-tap-panel {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.kb-tap-pad {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  width: 140px;
+  height: 140px;
+  border: 1.5px solid var(--alab-accent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--kb-accent-soft), transparent 72%);
+  color: inherit;
+  transition: transform 80ms ease;
+}
+.kb-tap-pad:active {
+  transform: scale(0.96);
+}
+.kb-tap-pad b {
+  font-family: var(--kb-mono);
+  font-size: 30px;
+  font-weight: 400;
+}
+.kb-tap-pad span {
+  color: var(--alab-muted);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.kb-notes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+}
+.kb-notes label {
+  display: grid;
+  gap: 8px;
+}
+.kb-notes input {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 12px;
+  background: var(--alab-raised);
+  color: inherit;
+  font-size: 14px;
+}
+.kb-notes .kb-note {
+  grid-column: 1 / -1;
+}
+.kb-row-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.kb-row-name:hover,
+.kb-row-name[aria-current='true'] {
+  color: var(--alab-accent);
+}
+.kb-table tr.is-focused > * {
+  background: var(--kb-accent-soft);
+}
+.kb-row-notes {
+  color: var(--alab-text);
+}
+.alab-page[data-lab='keybpm'] :is(.alab-drop, .alab-table-wrap, .alab-limits) {
+  border-radius: 18px;
+}
+.alab-page[data-lab='keybpm'] .alab-button {
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-tap-pad {
+    transition: none;
+  }
+}
+@media (max-width: 900px) {
+  .kb-readout-grid,
+  .kb-readout-grid.is-secondary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .kb-readout {
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .kb-panel {
+    padding: 16px;
+  }
+  .kb-key-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kb-circle {
+    justify-self: center;
+  }
+  .kb-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

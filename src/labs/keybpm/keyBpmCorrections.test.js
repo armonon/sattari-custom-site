@@ -160,3 +160,60 @@ describe('report v2', () => {
     expect(() => parseKeyBpmReport(JSON.stringify(report))).toThrow();
   });
 });
+
+describe('notes on a result', async () => {
+  const { cleanCorrection, cleanNotes, correctedResultsCsv } = await import('./keyBpm');
+  const { createKeyBpmReport, parseKeyBpmReport } = await import('./keyBpmReport');
+  it('keeps one safe line of text and allows notes without other corrections', () => {
+    expect(cleanNotes('  swung\n feel\u0000 ')).toBe('swung feel');
+    expect(cleanNotes('x'.repeat(900))).toHaveLength(500);
+    const user = cleanCorrection({ notes: 'Count in 2', editedAt: '2026-11-21T00:00:00.000Z' });
+    expect(user).toEqual({
+      key: null,
+      bpm: null,
+      bpmChoice: null,
+      editedAt: '2026-11-21T00:00:00.000Z',
+      notes: 'Count in 2',
+    });
+    expect(cleanCorrection({ notes: '   ' })).toBeNull();
+  });
+
+  it('round-trips notes through the report and exports them formula-safe in the CSV', () => {
+    const result = {
+      file: 'a.wav',
+      status: 'done',
+      duration: 10,
+      key: 'A minor',
+      camelot: '8A',
+      keyConfidence: 0.2,
+      keyEvidence: 'supported',
+      alternative: 'C major',
+      bpm: 120,
+      tempoEvidence: 'supported',
+      rmsDb: -20,
+      peakDb: -1,
+      note: '',
+    };
+    const row = {
+      file: { name: 'a.wav', size: 10, type: 'audio/wav', lastModified: 0 },
+      result,
+      measuredAt: '2026-11-21T00:00:00.000Z',
+      user: {
+        key: null,
+        bpm: null,
+        bpmChoice: null,
+        editedAt: '2026-11-21T00:00:00.000Z',
+        notes: '=SUM(A1)',
+      },
+    };
+    const back = parseKeyBpmReport(createKeyBpmReport([row]));
+    expect(back.tracks[0].user.notes).toBe('=SUM(A1)');
+    const csv = correctedResultsCsv([row]);
+    const [header, line] = csv.trim().split('\r\n');
+    expect(header.endsWith('"Your notes"')).toBe(true);
+    expect(line.endsWith(`"'=SUM(A1)"`)).toBe(true);
+    const tampered = JSON.parse(createKeyBpmReport([row]));
+    tampered.tracks[0].user.notes = 'two\nlines';
+    expect(() => parseKeyBpmReport(JSON.stringify(tampered))).toThrow();
+  });
+});
