@@ -59,3 +59,40 @@ Concept mockups: `docs/design/2026-11-overhaul/` (static HTML, not served).
 - Not verified: how the drone and scale sound on different speakers, physical
   phones, Safari/Firefox rendering of vertical range inputs
   (`writing-mode: vertical-lr`, supported in current versions).
+
+## Production deploy (2026-11-22 16:43 UTC)
+
+Published deploy `6b031aa0be957ee3fa607f60` on the `sattari` site
+(sattarimusic.com), built from `main` at `562c238` (#47, #48, #49). Rollback:
+publish `6afca869b14b4fe388647634` (the previous production deploy) with
+`overlay_deploy.py publish` semantics or Netlify → Deploys → Publish deploy.
+
+GitHub Actions could not run (account billing), and the live site had
+content outside this repo, so a whole-site deploy was not used. Instead,
+`2026-11-overhaul-evidence/overlay_deploy.py`, modeled on the 2026-11-17
+recovery process:
+
+- **Static:** all 644 live files kept (including `_redirects` with the 3 legacy
+  storefront redirects, the Woodland Hills strings/restringing pages,
+  `/sattari site/` media, model licences, edge-function files and old asset
+  bundles); the new build replaces or adds files. 744 files in total.
+- **Functions:** all 24 rebuilt from this repo. Of the 58 source files the backend
+  can reach, only `netlify/functions/service-inquiry.js` (a label for
+  `tool-feedback`) and `src/utils/siteMetrics.js` (new tool events) differ from
+  the source of the previous production backend
+  (`sattari-seo-20261117-recovery/source`, f007b9e); the lockfile is identical.
+  Live routes, memory, region, priority and rate limits were kept; the 3
+  schedules and the edge function were reused.
+- **Runtime settings:** the 14 production-context values were bound in memory
+  (two are production-only: booking email and SMS). Receipt lists key names only.
+
+Checks on the unpublished draft, then again on production:
+- New bundle served; all 91 sitemap pages return 200.
+- 15 legacy/live-only URLs (redirects, legacy pages, media, edge 404s) behave the
+  same as the previous production; security headers identical.
+- Function guards identical to production: inventory (`consistency: strong`),
+  checkout missing-session guard, booking public config, staff/admin auth,
+  Stripe webhook method guard, Instagram fallback, inquiry validation.
+- `site-event` accepts the new `stem_preview` event (one test count recorded).
+- Browser: both tools load without script errors; Key & BPM measures the example
+  and shows the readout (C major, one key lit).
