@@ -150,6 +150,8 @@ export default function StemSeparatorPage() {
     storageWarning,
     goal,
     setGoal,
+    quickPreview,
+    setQuickPreview,
   } = separator;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -172,6 +174,27 @@ export default function StemSeparatorPage() {
   const pending = jobs.filter((job) => job.status !== 'done');
   const locked = running || loadingDemo || packing;
   const focused = ready.find((job) => job.id === focusId) || ready[ready.length - 1] || null;
+  const previewing = jobs.find((job) => job.status === 'processing' && job.preview) || null;
+  const previewStems = useMemo(
+    () =>
+      previewing
+        ? STEMS.map((stem) => {
+            const output = previewing.preview.outputs.find((item) => item.id === stem.id);
+            return (
+              output && {
+                id: stem.id,
+                label: stemLabel(stem.id),
+                color: stem.color,
+                blob: output.blob,
+                url: output.url,
+                name: output.name,
+                peaks: output.peaks,
+              }
+            );
+          }).filter(Boolean)
+        : [],
+    [previewing]
+  );
 
   // Consume a same-tab transfer from Key & BPM once (refs survive StrictMode).
   useEffect(() => {
@@ -507,6 +530,19 @@ export default function StemSeparatorPage() {
                 <p className="separator-note">
                   Use CPU mode if GPU processing fails or produces errors. It is slower.
                 </p>
+                <label className="separator-device-check">
+                  <input
+                    type="checkbox"
+                    checked={quickPreview}
+                    disabled={locked}
+                    onChange={(event) => setQuickPreview(event.target.checked)}
+                  />
+                  Play a 20-second preview first (songs over 45 seconds)
+                </label>
+                <p className="separator-note">
+                  The preview section is separated before the rest, so you can listen sooner. It
+                  adds a little to the total time.
+                </p>
               </details>
               <dl className="separator-specs">
                 <div>
@@ -630,6 +666,36 @@ export default function StemSeparatorPage() {
                 </p>
               )}
 
+              {previewing && (
+                <section className="separator-player" aria-labelledby="separator-preview-heading">
+                  <div className="separator-player-head">
+                    <div>
+                      <p className="separator-eyebrow">
+                        Preview · {formatDuration(previewing.preview.start)}–
+                        {formatDuration(previewing.preview.start + previewing.preview.duration)}
+                      </p>
+                      <h2 id="separator-preview-heading" title={previewing.file.name}>
+                        {previewing.file.name}
+                      </h2>
+                    </div>
+                    <p className="separator-note" role="status">
+                      The whole song is still separating. Downloads appear when it finishes.
+                    </p>
+                  </div>
+                  <StemPlayer
+                    key={`${previewing.id}-preview`}
+                    trackName={`${previewing.file.name} (preview)`}
+                    fileBase={safeTrackName(previewing.file.name)}
+                    stems={previewStems}
+                    initialPreset={previewing.goal || 'all'}
+                    previewOnly
+                    onEvent={(type) =>
+                      type === 'preview' &&
+                      trackSiteEventOnce(`${previewing.id}:quick-preview`, 'stem_preview')
+                    }
+                  />
+                </section>
+              )}
               {focused && (
                 <section className="separator-player" aria-labelledby="separator-player-heading">
                   <div className="separator-player-head">

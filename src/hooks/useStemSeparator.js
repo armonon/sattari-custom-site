@@ -3,6 +3,7 @@ import {
   decodeTrack,
   fileKey,
   LIMITS,
+  SAMPLE_RATE,
   safeTrackName,
   selectedStemIds,
   STEMS,
@@ -17,7 +18,20 @@ import {
   saveSplitSession,
 } from '../utils/splitSessionStore';
 
-const release = (job) => job.outputs?.forEach(({ url }) => URL.revokeObjectURL(url));
+const release = (job) => {
+  job.outputs?.forEach(({ url }) => URL.revokeObjectURL(url));
+  job.preview?.outputs.forEach(({ url }) => URL.revokeObjectURL(url));
+};
+
+// "Hear something sooner": separate a short section first so the musician can
+// listen while the whole song is processed. Only worth it for longer songs.
+export const PREVIEW_SECONDS = 20;
+export const PREVIEW_MIN_SONG_SECONDS = 45;
+export function previewWindow(duration) {
+  if (!(duration >= PREVIEW_MIN_SONG_SECONDS)) return null;
+  const start = Math.min(Math.max(0, duration * 0.3), duration - PREVIEW_SECONDS);
+  return { start: Math.round(start * 10) / 10, duration: PREVIEW_SECONDS };
+}
 
 export default function useStemSeparator() {
   const [jobs, setJobs] = useState([]);
@@ -29,6 +43,7 @@ export default function useStemSeparator() {
   const [storageWarning, setStorageWarning] = useState('');
   const [goal, setGoal] = useState('all');
   const [restoring, setRestoring] = useState(true);
+  const [quickPreview, setQuickPreview] = useState(true);
   const demo = useRef(null);
   const queue = useRef([]);
   const userChangedQueue = useRef(false);
@@ -234,6 +249,43 @@ export default function useStemSeparator() {
             );
           }
           update(job.id, { duration: audio.duration, peaks: audio.peaks });
+          const section = quickPreview ? previewWindow(audio.duration) : null;
+          if (section) {
+            const from = Math.floor(section.start * SAMPLE_RATE);
+            const to = from + Math.floor(section.duration * SAMPLE_RATE);
+            try {
+              const excerpt = await client.current.separate(
+                {
+                  left: audio.left.slice(from, to),
+                  right: audio.right.slice(from, to),
+                  channels: audio.channels,
+                },
+                stems,
+                controller.signal,
+                ({ message, progress }) =>
+                  update(job.id, { message: `Preview section: ${message}`, progress }),
+                () => {},
+                cpuOnly
+              );
+              controller.signal.throwIfAborted();
+              update(job.id, {
+                preview: {
+                  ...section,
+                  outputs: excerpt.map((output) => ({
+                    ...output,
+                    url: URL.createObjectURL(output.blob),
+                    name: `${safeTrackName(job.file.name)}-preview-${output.id}.wav`,
+                  })),
+                },
+                message: 'Preview ready. Separating the whole song',
+                progress: null,
+              });
+            } catch (error) {
+              controller.signal.throwIfAborted();
+              // A failed preview never blocks the full separation.
+              void error;
+            }
+          }
           const result = await client.current.separate(
             audio,
             stems,
@@ -248,17 +300,23 @@ export default function useStemSeparator() {
             url: URL.createObjectURL(output.blob),
             name: `${safeTrackName(job.file.name)}-${output.id === 'other' ? 'instruments' : output.id}.wav`,
           }));
-          update(job.id, { status: 'done', message: 'Ready', progress: 1, outputs });
+          const finished = queue.current.find((row) => row.id === job.id);
+          finished?.preview?.outputs.forEach(({ url }) => URL.revokeObjectURL(url));
+          update(job.id, { status: 'done', message: 'Ready', progress: 1, outputs, preview: null });
           trackSiteEventOnce(`${attempt}:end`, 'separator_completed');
         } catch (error) {
           trackSiteEventOnce(
             `${attempt}:end`,
             controller.signal.aborted ? 'separator_cancelled' : 'separator_failed'
           );
+          queue.current
+            .find((row) => row.id === job.id)
+            ?.preview?.outputs.forEach(({ url }) => URL.revokeObjectURL(url));
           update(job.id, {
             status: controller.signal.aborted ? 'cancelled' : 'error',
             message: controller.signal.aborted ? 'Cancelled' : error.message,
             progress: null,
+            preview: null,
           });
         }
       }
@@ -328,5 +386,7 @@ export default function useStemSeparator() {
     goal,
     setGoal,
     restoring,
+    quickPreview,
+    setQuickPreview,
   };
 }

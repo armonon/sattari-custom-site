@@ -1124,3 +1124,14 @@
   background: var(--sep-raised);
   color: inherit;
 }
+.separator-device-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.separator-device-check input {
+  margin-top: 2px;
+  accent-color: var(--sep-accent);
+}

@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import StemPlayer from './StemPlayer';
 import { wavBytes } from '../../utils/arrangementExport';
 import { parseWav } from '../../utils/stemMix';
@@ -50,6 +50,8 @@ class FakeContext {
   }
   createGain() {
     const node = { gain: new FakeParam(1), connect: (target) => (node.target = target) };
+    node.gain.setValueAtTime = () => {};
+    node.gain.exponentialRampToValueAtTime = () => {};
     this.gains.push(node);
     return node;
   }
@@ -71,6 +73,16 @@ class FakeContext {
     };
     this.sources.push(source);
     return source;
+  }
+  createOscillator() {
+    const osc = {
+      frequency: { value: 0 },
+      connect: () => {},
+      start: (when) => Object.assign(osc, { when }),
+      stop: () => {},
+    };
+    (this.clicks ||= []).push(osc);
+    return osc;
   }
   async decodeAudioData() {
     return this.createBuffer(2, FRAMES, 48000);
@@ -233,4 +245,122 @@ it('exports only the A–B loop when chosen, aligned to the loop start', async (
   expect(result.frames).toBe(RATE);
   const parsed = parseWav(await downloads.at(-1).arrayBuffer());
   expect(parsed.channels[0]).toHaveLength(RATE);
+});
+
+describe('practice speed and key', () => {
+  beforeEach(async () => {
+    const { stretchStems } = await import('../../utils/timeStretch');
+    // Run the real stretch synchronously in place of the worker.
+    vi.stubGlobal(
+      'Worker',
+      class {
+        postMessage({ stems, alpha }) {
+          if (!stems) return; // beat-grid worker: report no grid
+          queueMicrotask(() => this.onmessage({ data: { result: stretchStems(stems, alpha) } }));
+        }
+        terminate() {}
+      }
+    );
+  });
+
+  it('plays stretched stems at the pitch rate, aligned on song time, and exports at the new speed', async () => {
+    const { context, onEvent } = await setup({ frames: RATE, initialPreset: 'no-drums' });
+    await act(async () =>
+      fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '0.5' } })
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Transpose up a semitone' }))
+    );
+    await waitFor(() => expect(screen.getByText(/Practice playback/)).toBeInTheDocument(), {
+      timeout: 5000,
+    });
+    await act(async () =>
+      fireEvent.change(screen.getByLabelText('Playback position'), { target: { value: '0.5' } })
+    );
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
+    const alpha = 2 ** (1 / 12) / 0.5;
+    const sources = context.sources.slice(-4);
+    for (const source of sources) {
+      expect(source.offset).toBeCloseTo(0.5 * alpha, 6);
+      expect(source.buffer.length).toBe(Math.round(RATE * alpha));
+    }
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Pause' })));
+    await act(async () => fireEvent.click(screen.getByLabelText(/Use my speed/)));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Download my mix' })));
+    await waitFor(() => expect(onEvent).toHaveBeenCalledWith('mix_exported', expect.any(Object)));
+    const [, result] = onEvent.mock.calls.find(([type]) => type === 'mix_exported');
+    expect(result.name).toBe('Song-50pct-up1st-drumless-mix.wav');
+    // Half speed doubles the length; the key change does not alter it.
+    expect(Math.abs(result.frames - 2 * RATE)).toBeLessThanOrEqual(2);
+  });
+
+  it('turns practice off at the original speed and key', async () => {
+    const { context } = await setup({ frames: RATE });
+    await act(async () =>
+      fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '0.75' } })
+    );
+    await waitFor(() => expect(screen.getByText(/Practice playback/)).toBeInTheDocument(), {
+      timeout: 5000,
+    });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Reset' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
+    for (const source of context.sources.slice(-4)) expect(source.buffer.length).toBe(RATE);
+  });
+});
+
+describe('beat tools', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'Worker',
+      class {
+        postMessage({ samples }) {
+          if (!samples) return;
+          const beats = Array.from({ length: 16 }, (_, i) => i * 0.25); // 240 BPM
+          queueMicrotask(() =>
+            this.onmessage({ data: { grid: { usable: true, beats, bpm: 240 } } })
+          );
+        }
+        terminate() {}
+      }
+    );
+  });
+
+  it('counts in one bar before the music and loops whole bars from the playhead', async () => {
+    const { context } = await setup({ frames: RATE * 4 });
+    await waitFor(() => expect(screen.getByText(/Beat grid · 240 BPM/)).toBeInTheDocument());
+    await act(async () => fireEvent.click(screen.getByLabelText('Count-in (1 bar)')));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
+    const clicks = context.clicks.map((osc) => osc.when);
+    const start = context.sources[0].when;
+    expect(clicks).toHaveLength(4);
+    expect(start - clicks[0]).toBeCloseTo(1, 6); // 4 beats at 240 BPM
+    expect(clicks[0] < clicks[3] && clicks[3] < start).toBe(true);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Pause' })));
+    await act(async () =>
+      fireEvent.change(screen.getByLabelText('Playback position'), { target: { value: '1.6' } })
+    );
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '2 bars' })));
+    expect(screen.getByRole('button', { name: /^Set A/ })).toHaveTextContent('0:01');
+    expect(
+      screen.getByLabelText('Length of the mix').querySelector('[value="loop"]')
+    ).toHaveTextContent('0:01–0:03');
+  });
+
+  it('snaps A and B to the nearest beat', async () => {
+    const { onEvent } = await setup({ frames: RATE * 4 });
+    await waitFor(() => expect(screen.getByText(/Beat grid/)).toBeInTheDocument());
+    const position = screen.getByLabelText('Playback position');
+    await act(async () => fireEvent.change(position, { target: { value: '0.61' } }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set A/ })));
+    await act(async () => fireEvent.change(position, { target: { value: '1.4' } }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set B/ })));
+    await act(async () =>
+      fireEvent.change(screen.getByLabelText('Length of the mix'), { target: { value: 'loop' } })
+    );
+    // 0.61 → 0.5 and 1.4 → 1.5 on the 0.25 s grid: exactly one second.
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Download my mix' })));
+    await waitFor(() => expect(onEvent).toHaveBeenCalledWith('mix_exported', expect.any(Object)));
+    const [, result] = onEvent.mock.calls.find(([type]) => type === 'mix_exported');
+    expect(result.frames).toBe(RATE);
+  });
 });
