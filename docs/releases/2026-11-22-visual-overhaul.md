@@ -55,6 +55,7 @@ Concept mockups: `docs/design/2026-11-overhaul/` (static HTML, not served).
   loop export exact, 75% speed 470,400 frames, M4A level −0.05 dB).
 - QA fix: the Key & BPM handoff now opens the demo in the player first. After the
   two-song batch step the most recently saved song is shown by default, which
-  made the handoff depend on save order. Not verified: how the drone and scale sound on different
-speakers, physical phones, Safari/Firefox rendering of vertical range inputs
-(`writing-mode: vertical-lr`, supported in current versions).
+  made the handoff depend on save order.
+- Not verified: how the drone and scale sound on different speakers, physical
+  phones, Safari/Firefox rendering of vertical range inputs
+  (`writing-mode: vertical-lr`, supported in current versions).
