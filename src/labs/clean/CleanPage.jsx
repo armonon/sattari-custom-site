@@ -105,6 +105,28 @@ export default function CleanPage() {
 
   const audioCtx = useRef(null);
   const activeNode = useRef(null);
+  const loadGeneration = useRef(0);
+
+  useEffect(
+    () => () => {
+      loadGeneration.current += 1;
+      const node = activeNode.current;
+      activeNode.current = null;
+      if (node) {
+        node.onended = null;
+        try {
+          node.stop();
+        } catch {
+          /* already stopped */
+        }
+        node.disconnect();
+      }
+      const context = audioCtx.current;
+      audioCtx.current = null;
+      if (context) void context.close().catch(() => {});
+    },
+    []
+  );
 
   const recorder = useVoxRecorder((blob) => void load(blob, 'Microphone take'));
 
@@ -144,10 +166,12 @@ export default function CleanPage() {
   function stopPlayback() {
     if (activeNode.current) {
       try {
+        activeNode.current.onended = null;
         activeNode.current.stop();
       } catch {
         /* already stopped */
       }
+      activeNode.current.disconnect();
       activeNode.current = null;
     }
     setPlaying(null);
@@ -203,13 +227,17 @@ export default function CleanPage() {
   }
 
   async function load(blob, name) {
+    const generation = ++loadGeneration.current;
     setError('');
+    setSource(null);
     setResult(null);
     stopPlayback();
     try {
       const { samples, rate, duration } = await decodeMono(blob, LAB_RATE);
+      if (generation !== loadGeneration.current) return;
       setSource({ samples, rate, duration, name });
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err.message || 'That file could not be decoded.');
     }
   }
