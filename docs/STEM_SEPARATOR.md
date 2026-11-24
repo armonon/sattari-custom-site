@@ -42,7 +42,23 @@ the main page. Both routes stay live; Split is not redirected.
   function.
 - **A–B loop**: Set A / Set B at the playhead (minimum 0.25 s), Clear loop. While a
   loop is set every source uses `loop`, `loopStart`, `loopEnd`; starting outside the
-  loop starts at A. Export is always the full track.
+  loop starts at A. The export can be the whole song or the loop only.
+- **Practice memory** (`practiceState.js`, `practiceStore.js`, `usePracticeMemory`):
+  each song's setup is remembered in this browser: mix (levels, mute, solo,
+  master), Prevent clipping, speed, key, the current loop, up to 12 named
+  **saved loops**, and the click, count-in, snap and bar-start settings. It lives
+  in its own small IndexedDB database (`sattari-practice-state`, JSON only, no
+  audio) keyed by the song, so a fader move never rewrites the audio record.
+  Writes are debounced (0.4 s) and flushed when the page hides. Everything read
+  back goes through `cleanPracticeState`: values are clamped, loops that do not
+  fit the audio are dropped, a mix saved for a different set of parts is not
+  applied, and a damaged record falls back to defaults. Removing a song forgets
+  its setup; **Clear saved work** clears all of them. If storage is unavailable
+  the player works as before and simply does not remember.
+- **Keyboard shortcuts** (finished songs only, never while typing in a field):
+  Space play/pause, ← → 5 seconds, `[` `]` set loop start/end, `\` clear the
+  loop, 1–9 jump to a saved loop, 0 back to the start or loop start, C click.
+  Space and arrows keep their normal meaning on a focused button or slider.
 - **Download my mix**: snapshots the settings, headroom option, format and decoded
   sources, then renders in 65,536-frame chunks (cancellable between chunks, with
   measured progress). Output length is the longest stem; shorter stems are padded
@@ -123,7 +139,8 @@ Third-party notices: `public/stem-separator-credits.txt`.
   before storage finishes opening are merged with restored songs (a queued duplicate
   of a restored file is dropped). Invalid or over-limit records are skipped with a
   warning and left untouched; **Clear saved work** (with confirmation) clears the
-  whole store, including those, and does not touch the model cache, other tools,
+  whole store, including those, plus every saved practice setup, and does not touch
+  the model cache, other tools,
   theme or measurement choice. Storage failure is reported in the page; results stay
   usable in the tab. Browser storage can be evicted, so it is not a backup.
 - In-app navigation prompts only while processing or packaging, or when results

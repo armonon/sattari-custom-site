@@ -29,6 +29,7 @@ import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, musicToolSchema } from '../data/siteSeo';
 import { separatorGuides } from '../data/stemSeparatorContent';
 import useStemSeparator from '../hooks/useStemSeparator';
+import usePracticeMemory from '../hooks/usePracticeMemory';
 import ToolReferenceLink from '../components/ToolReferenceLink';
 import SeparatorNavigationGuard, {
   LEAVE_WHILE_PROCESSING,
@@ -131,6 +132,7 @@ function download(blob, name, links) {
 
 export default function StemSeparatorPage() {
   const separator = useStemSeparator();
+  const practice = usePracticeMemory();
   const {
     jobs,
     selected,
@@ -385,6 +387,7 @@ export default function StemSeparatorPage() {
   const doClear = async () => {
     setConfirmClear(false);
     setFocusId(null);
+    await practice.forgetAll();
     const ok = await clearSaved();
     setClearNote(ok ? 'Saved songs and stems were removed from this browser.' : '');
   };
@@ -471,7 +474,7 @@ export default function StemSeparatorPage() {
                 />
               </section>
             )}
-            {focused && (
+            {focused && practice.ready && (
               <section className="separator-player" aria-labelledby="separator-player-heading">
                 <div className="separator-player-head">
                   <div>
@@ -512,6 +515,8 @@ export default function StemSeparatorPage() {
                   stems={playerStems}
                   original={{ blob: focused.file, peaks: focused.peaks }}
                   initialPreset={focused.goal || 'all'}
+                  initialPractice={practice.get(focused.id)}
+                  onPracticeChange={(state) => practice.save(focused.id, state)}
                   onEvent={(type) => {
                     if (type === 'preview')
                       trackSiteEventOnce(`${focused.id}:preview`, 'stem_preview');
@@ -866,7 +871,10 @@ export default function StemSeparatorPage() {
                         <button
                           className="separator-icon"
                           disabled={locked}
-                          onClick={() => remove(job.id)}
+                          onClick={() => {
+                            practice.forget(job.id);
+                            remove(job.id);
+                          }}
                           title={`Remove ${job.file.name}`}
                           aria-label={`Remove ${job.file.name}`}
                         >

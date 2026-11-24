@@ -733,3 +733,97 @@
 .stem-player [hidden] {
   display: none !important;
 }
+
+/* Saved loops and keyboard shortcuts */
+.stem-player-sections {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stem-player-sections li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid var(--sp-line);
+  border-radius: 12px;
+  background: var(--sp-raised);
+}
+.stem-player-sections li.is-current {
+  border-color: var(--sp-accent);
+  background: var(--sp-accent-soft);
+}
+.stem-player-section-go {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--sp-line-2);
+  border-radius: 9px;
+  background: transparent;
+  font-family: var(--sp-mono);
+  font-size: 13px;
+}
+.stem-player-section-go[aria-pressed='true'] {
+  border-color: var(--sp-accent);
+  background: var(--sp-accent);
+  color: var(--sp-on-accent);
+}
+.stem-player-sections input {
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+.stem-player-sections input:hover,
+.stem-player-sections input:focus {
+  border-color: var(--sp-line-2);
+  background: var(--sp-panel);
+}
+.stem-player-section-time {
+  color: var(--sp-muted);
+  font-family: var(--sp-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.stem-player-section-remove {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sp-muted);
+  font-size: 16px;
+}
+.stem-player-section-remove:hover {
+  color: var(--sp-bad);
+}
+.stem-player-shortcuts {
+  padding-top: 10px;
+  border-top: 1px solid var(--sp-line);
+  color: var(--sp-muted);
+  font-size: 12px;
+}
+.stem-player-shortcuts summary {
+  cursor: pointer;
+}
+.stem-player-shortcuts dl {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.stem-player-shortcuts div {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 10px;
+}
+.stem-player-shortcuts dt {
+  color: var(--sp-text);
+  font-family: var(--sp-mono);
+}

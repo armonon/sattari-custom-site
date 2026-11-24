@@ -364,3 +364,149 @@ describe('beat tools', () => {
     expect(result.frames).toBe(RATE);
   });
 });
+
+describe('practice memory', () => {
+  const saved = () => ({
+    v: 1,
+    mix: {
+      lanes: {
+        vocals: { gain: 1, muted: false, solo: false },
+        drums: { gain: 1, muted: true, solo: false },
+        bass: { gain: 0.5, muted: false, solo: false },
+        other: { gain: 1, muted: false, solo: false },
+      },
+      master: 1,
+    },
+    speed: 1,
+    semitones: 0,
+    loop: { a: 0.5, b: 1.5 },
+    sections: [
+      { id: 'a', name: 'Verse', a: 0.5, b: 1.5 },
+      { id: 'b', name: 'Solo', a: 1, b: 1.8 },
+      { id: 'gone', name: 'Past the end', a: 5, b: 9 },
+    ],
+    click: false,
+    countIn: false,
+    snap: false,
+    barOffset: 0,
+    headroom: 'prevent-clipping',
+  });
+
+  it('restores a saved setup and drops loops that do not fit the audio', async () => {
+    const { context } = await setup({ frames: RATE * 2, initialPractice: saved() });
+    expect(screen.getByRole('button', { name: 'Mute drums' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(laneGains(context)).toEqual([1, 0, 0.5, 1]);
+    expect(screen.getByRole('button', { name: /^Set A/ })).toHaveTextContent('0:00');
+    expect(screen.getByLabelText(/Prevent clipping/)).toBeChecked();
+    expect(screen.getByLabelText('Name of saved loop 1')).toHaveValue('Verse');
+    expect(screen.getByLabelText('Name of saved loop 2')).toHaveValue('Solo');
+    expect(screen.queryByLabelText('Name of saved loop 3')).toBeNull();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
+    for (const source of context.sources)
+      expect(source).toMatchObject({ loop: true, loopStart: 0.5, loopEnd: 1.5, offset: 0.5 });
+  });
+
+  it('ignores a damaged saved setup', async () => {
+    const { context } = await setup({ initialPractice: { v: 1, mix: 'nope', speed: 'fast' } });
+    expect(laneGains(context)).toEqual([1, 1, 1, 1]);
+    expect(screen.getByLabelText('Playback speed')).toHaveValue('1');
+  });
+
+  it('reports changes, and saves, renames, recalls and removes loops', async () => {
+    const onPracticeChange = vi.fn();
+    const { context } = await setup({ frames: RATE * 2, onPracticeChange });
+    expect(onPracticeChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Save this loop' })).toBeDisabled();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Mute bass' })));
+    expect(onPracticeChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ v: 1, loop: null, sections: [] })
+    );
+    expect(onPracticeChange.mock.lastCall[0].mix.lanes.bass.muted).toBe(true);
+
+    const position = screen.getByLabelText('Playback position');
+    await act(async () => fireEvent.change(position, { target: { value: '0.5' } }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set A/ })));
+    await act(async () => fireEvent.change(position, { target: { value: '1.5' } }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Set B/ })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save this loop' })));
+    // The same loop is not saved twice.
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save this loop' })));
+    expect(onPracticeChange.mock.lastCall[0].sections).toHaveLength(1);
+
+    const name = screen.getByLabelText('Name of saved loop 1');
+    expect(name).toHaveValue('Loop 1');
+    await act(async () => {
+      fireEvent.change(name, { target: { value: '  Chorus  ' } });
+      fireEvent.blur(name);
+    });
+    expect(onPracticeChange.mock.lastCall[0].sections[0]).toMatchObject({
+      name: 'Chorus',
+      a: 0.5,
+      b: 1.5,
+    });
+
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Clear loop' })));
+    expect(onPracticeChange.mock.lastCall[0].loop).toBeNull();
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: /^Loop Chorus, 0:00 to 0:01/ }))
+    );
+    expect(onPracticeChange.mock.lastCall[0].loop).toEqual({ a: 0.5, b: 1.5 });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
+    for (const source of context.sources.slice(-4))
+      expect(source).toMatchObject({ loop: true, loopStart: 0.5, loopEnd: 1.5, offset: 0.5 });
+
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Remove saved loop Chorus' }))
+    );
+    expect(onPracticeChange.mock.lastCall[0].sections).toEqual([]);
+  });
+
+  it('keyboard shortcuts play, loop and recall, but never while typing', async () => {
+    const onPracticeChange = vi.fn();
+    const { context } = await setup({
+      frames: RATE * 2,
+      onPracticeChange,
+      initialPractice: { ...saved(), loop: null, snap: false },
+    });
+    const press = (key, target = document.body) =>
+      act(async () => fireEvent.keyDown(target, { key, code: key === ' ' ? 'Space' : key }));
+
+    await press(' ');
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    expect(context.sources).toHaveLength(4);
+    await press(' ');
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+
+    await press('2');
+    expect(onPracticeChange.mock.lastCall[0].loop).toEqual({ a: 1, b: 1.8 });
+    await press('\\');
+    expect(onPracticeChange.mock.lastCall[0].loop).toBeNull();
+
+    const position = screen.getByLabelText('Playback position');
+    await act(async () => fireEvent.change(position, { target: { value: '0.25' } }));
+    await press('[');
+    await act(async () => fireEvent.change(position, { target: { value: '1.25' } }));
+    await press(']');
+    expect(onPracticeChange.mock.lastCall[0].loop).toEqual({ a: 0.25, b: 1.25 });
+
+    // Typing a loop name must not trigger shortcuts.
+    const calls = onPracticeChange.mock.calls.length;
+    await press('\\', screen.getByLabelText('Name of saved loop 1'));
+    await press(' ', screen.getByLabelText('Name of saved loop 1'));
+    expect(onPracticeChange.mock.calls.length).toBe(calls);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    // Space on a button keeps its normal meaning (no double toggle).
+    await press(' ', screen.getByRole('button', { name: 'Mute drums' }));
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  it('a preview player has no saved loops or shortcuts', async () => {
+    await setup({ previewOnly: true });
+    await act(async () => fireEvent.keyDown(document.body, { key: ' ', code: 'Space' }));
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save this loop' })).toBeNull();
+  });
+});

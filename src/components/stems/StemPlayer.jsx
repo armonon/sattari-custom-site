@@ -44,6 +44,13 @@ import {
   snapToBeat,
 } from '../../utils/stemBeatGrid';
 import { pitchRatio, resample, stretchFactor } from '../../utils/timeStretch';
+import {
+  cleanPracticeState,
+  cleanSectionName,
+  MAX_SECTIONS,
+  PRACTICE_VERSION,
+  SECTION_NAME_MAX,
+} from '../../utils/practiceState';
 import './StemPlayer.css';
 
 export const formatClock = (seconds) => {
@@ -155,9 +162,14 @@ export default function StemPlayer({
   // A short preview section while the whole song separates: listening and
   // mixing only, no downloads (they would not be the finished song).
   previewOnly = false,
+  // A previously saved setup for this song (mix, speed, key, loops, beat
+  // switches), and a callback that receives the current one after each change.
+  initialPractice = null,
+  onPracticeChange = null,
 }) {
   const ids = useMemo(() => stems.map((stem) => stem.id), [stems]);
   const presets = useMemo(() => availablePresets(ids), [ids]);
+  const [restored] = useState(() => cleanPracticeState(initialPractice, ids));
   const context = useRef(null);
   const buffers = useRef(new Map());
   const laneNodes = useRef(new Map());
@@ -188,8 +200,10 @@ export default function StemPlayer({
   const [duration, setDuration] = useState(0);
   const [listen, setListen] = useState('stems');
   const [originalState, setOriginalState] = useState(original ? 'idle' : 'missing');
-  const [loop, setLoop] = useState({ a: null, b: null });
+  const [loop, setLoop] = useState(() => restored?.loop || { a: null, b: null });
+  const [sections, setSections] = useState(() => restored?.sections || []);
   const [mix, setMix] = useState(() => {
+    if (restored?.mix) return restored.mix;
     const base = createMix(ids);
     if (initialPreset?.startsWith('solo:') && ids.includes(initialPreset.slice(5)))
       return soloMix(base, initialPreset.slice(5));
@@ -198,22 +212,22 @@ export default function StemPlayer({
       : base;
   });
   const [peak, setPeak] = useState(null);
-  const [headroom, setHeadroom] = useState('none');
+  const [headroom, setHeadroom] = useState(restored?.headroom || 'none');
   const [format, setFormat] = useState('float32');
   const [range, setRange] = useState('full');
   const [aac, setAac] = useState(null);
   const [exporting, setExporting] = useState(null);
   const [exported, setExported] = useState(null);
   const [exportError, setExportError] = useState('');
-  const [speed, setSpeed] = useState(1);
-  const [semitones, setSemitones] = useState(0);
+  const [speed, setSpeed] = useState(restored?.speed ?? 1);
+  const [semitones, setSemitones] = useState(restored?.semitones ?? 0);
   const [processing, setProcessing] = useState({ status: 'idle', message: '' });
   const [applyPractice, setApplyPractice] = useState(false);
   const [grid, setGrid] = useState({ status: 'idle', beats: [], bpm: null });
-  const [barOffset, setBarOffset] = useState(0);
-  const [snap, setSnap] = useState(true);
-  const [click, setClick] = useState(false);
-  const [countIn, setCountIn] = useState(false);
+  const [barOffset, setBarOffset] = useState(restored?.barOffset ?? 0);
+  const [snap, setSnap] = useState(restored?.snap ?? true);
+  const [click, setClick] = useState(restored?.click ?? false);
+  const [countIn, setCountIn] = useState(restored?.countIn ?? false);
   const clickOn = useRef(false);
   clickOn.current = click;
   const playingRef = useRef(false);
@@ -688,6 +702,108 @@ export default function StemPlayer({
       ...current,
       lanes: { ...current.lanes, [id]: { ...current.lanes[id], ...patch } },
     }));
+
+  // A restored loop or saved loop that does not fit this audio is dropped.
+  useEffect(() => {
+    if (!duration) return;
+    const fits = (range) => range.a >= 0 && range.b <= duration + 0.01 && range.b > range.a;
+    setLoop((current) =>
+      current.a !== null && current.b !== null && !fits(current) ? { a: null, b: null } : current
+    );
+    setSections((current) => (current.every(fits) ? current : current.filter(fits)));
+  }, [duration]);
+
+  // Report the setup after each change so the page can save it with the song.
+  const reported = useRef(false);
+  useEffect(() => {
+    if (!reported.current) {
+      reported.current = true;
+      return;
+    }
+    onPracticeChange?.({
+      v: PRACTICE_VERSION,
+      mix,
+      speed,
+      semitones,
+      loop: loop.a !== null && loop.b !== null ? { a: loop.a, b: loop.b } : null,
+      sections,
+      click,
+      countIn,
+      snap,
+      barOffset,
+      headroom,
+    });
+  }, [mix, speed, semitones, loop, sections, click, countIn, snap, barOffset, headroom]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveSection = () => {
+    if (loop.a === null || loop.b === null || sections.length >= MAX_SECTIONS) return;
+    if (sections.some((section) => section.a === loop.a && section.b === loop.b)) return;
+    const used = new Set(sections.map((section) => section.name));
+    let number = sections.length + 1;
+    while (used.has(`Loop ${number}`)) number++;
+    setSections([
+      ...sections,
+      {
+        id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${sections.length}`,
+        name: `Loop ${number}`,
+        a: loop.a,
+        b: loop.b,
+      },
+    ]);
+  };
+  const goSection = (section) => {
+    const next = { a: section.a, b: section.b };
+    setLoop(next);
+    if (playing) void start(section.a, next);
+    else {
+      clock.current = { startedAt: 0, offset: section.a };
+      setPosition(section.a);
+    }
+  };
+
+  // Keyboard shortcuts for hands-on-instrument practice. One listener reads
+  // the latest handlers from a ref; typing in a field is never intercepted.
+  const keys = useRef({});
+  keys.current = {
+    toggle: () =>
+      playing ? pause() : void start(clock.current.offset, loop, { withCountIn: countIn }),
+    seekBy: (seconds) => seek(now() + seconds),
+    setA: () => setLoopPoint('a'),
+    setB: () => setLoopPoint('b'),
+    clearLoop: () => changeLoop({ a: null, b: null }),
+    go: (index) => sections[index] && goSection(sections[index]),
+    restart: () => seek(loop.a !== null && loop.b !== null ? loop.a : 0),
+    toggleClick: () => grid.status === 'ready' && setClick((value) => !value),
+  };
+  const shortcutsOn = !previewOnly && load.status === 'ready';
+  useEffect(() => {
+    if (!shortcutsOn) return undefined;
+    const onKey = (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return;
+      const target = event.target;
+      if (
+        target?.closest?.('input:not([type="range"]), textarea, select, [contenteditable="true"]')
+      )
+        return;
+      const onControl = Boolean(target?.closest?.('button, a, summary, input'));
+      const run = (action) => {
+        event.preventDefault();
+        action();
+      };
+      if (event.key === ' ' || event.code === 'Space') {
+        if (!onControl) run(keys.current.toggle);
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        if (!onControl) run(() => keys.current.seekBy(event.key === 'ArrowLeft' ? -5 : 5));
+      } else if (event.key === '[') run(keys.current.setA);
+      else if (event.key === ']') run(keys.current.setB);
+      else if (event.key === '\\') run(keys.current.clearLoop);
+      else if (event.key === '0' || event.key === 'Home') run(keys.current.restart);
+      else if (event.key === 'c' || event.key === 'C') run(keys.current.toggleClick);
+      else if (/^[1-9]$/.test(event.key)) run(() => keys.current.go(Number(event.key) - 1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [shortcutsOn]);
 
   const exportMix = async () => {
     if (exporting || load.status !== 'ready') return;
@@ -1311,6 +1427,122 @@ export default function StemPlayer({
                 ▶
               </button>
             </span>
+          </div>
+
+          <div
+            className="stem-player-card"
+            role="group"
+            aria-label="Saved loops"
+            hidden={previewOnly}
+          >
+            <h3>
+              Saved loops
+              <button
+                type="button"
+                className="stem-player-text"
+                disabled={!loopActive || sections.length >= MAX_SECTIONS}
+                onClick={saveSection}
+              >
+                Save this loop
+              </button>
+            </h3>
+            {sections.length === 0 ? (
+              <p className="stem-player-note">
+                Set A and B, then save the loop to come back to it. Saved loops, your mix, speed and
+                key are remembered for this song in this browser.
+              </p>
+            ) : (
+              <ol className="stem-player-sections">
+                {sections.map((section, index) => {
+                  const current = loopActive && loop.a === section.a && loop.b === section.b;
+                  return (
+                    <li key={section.id} className={current ? 'is-current' : undefined}>
+                      <button
+                        type="button"
+                        className="stem-player-section-go"
+                        aria-pressed={current}
+                        disabled={!ready}
+                        aria-label={`Loop ${section.name}, ${formatClock(section.a)} to ${formatClock(section.b)}`}
+                        title={index < 9 ? `Press ${index + 1}` : undefined}
+                        onClick={() => goSection(section)}
+                      >
+                        {index < 9 ? index + 1 : '·'}
+                      </button>
+                      <input
+                        value={section.name}
+                        maxLength={SECTION_NAME_MAX}
+                        aria-label={`Name of saved loop ${index + 1}`}
+                        onChange={(event) =>
+                          setSections((all) =>
+                            all.map((item) =>
+                              item.id === section.id ? { ...item, name: event.target.value } : item
+                            )
+                          )
+                        }
+                        onBlur={(event) =>
+                          setSections((all) =>
+                            all.map((item) =>
+                              item.id === section.id
+                                ? {
+                                    ...item,
+                                    name: cleanSectionName(event.target.value, `Loop ${index + 1}`),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                      <span className="stem-player-section-time">
+                        {formatClock(section.a)}–{formatClock(section.b)}
+                      </span>
+                      <button
+                        type="button"
+                        className="stem-player-section-remove"
+                        aria-label={`Remove saved loop ${section.name}`}
+                        onClick={() =>
+                          setSections((all) => all.filter((item) => item.id !== section.id))
+                        }
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            <details className="stem-player-shortcuts">
+              <summary>Keyboard shortcuts</summary>
+              <dl>
+                <div>
+                  <dt>Space</dt>
+                  <dd>Play or pause</dd>
+                </div>
+                <div>
+                  <dt>← →</dt>
+                  <dd>Back or forward 5 seconds</dd>
+                </div>
+                <div>
+                  <dt>[ ]</dt>
+                  <dd>Set loop start and end</dd>
+                </div>
+                <div>
+                  <dt>{'\\'}</dt>
+                  <dd>Clear the loop</dd>
+                </div>
+                <div>
+                  <dt>1–9</dt>
+                  <dd>Jump to a saved loop</dd>
+                </div>
+                <div>
+                  <dt>0</dt>
+                  <dd>Back to the start (or loop start)</dd>
+                </div>
+                <div>
+                  <dt>C</dt>
+                  <dd>Click on or off</dd>
+                </div>
+              </dl>
+            </details>
           </div>
 
           <div className="stem-player-card stem-player-export" hidden={previewOnly}>
