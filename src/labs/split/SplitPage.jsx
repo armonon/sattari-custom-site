@@ -20,6 +20,7 @@ import { stemLabel } from '../../pages/stemSeparatorGoals';
 import { offerToolHandoff } from '../../utils/toolHandoff';
 import { trackSiteEvent, trackSiteEventOnce } from '../../utils/siteMeasurement';
 import useStemSeparator from '../../hooks/useStemSeparator';
+import usePracticeMemory from '../../hooks/usePracticeMemory';
 import { safeTrackName, STEMS } from '../../utils/stemSeparator';
 import { createStemArchive } from '../../utils/stemSeparatorDownload';
 import { downloadBlob } from '../audio/audioLabFiles';
@@ -37,6 +38,7 @@ const LIMITS = [
 
 export default function SplitPage() {
   const separator = useStemSeparator();
+  const practice = usePracticeMemory();
   const {
     jobs,
     running,
@@ -314,7 +316,7 @@ export default function SplitPage() {
                 your browser cache.
               </p>
             )}
-            {stems && (
+            {stems && practice.ready && (
               <>
                 <StemPlayer
                   key={job.id}
@@ -323,6 +325,8 @@ export default function SplitPage() {
                   stems={stems}
                   original={{ blob: job.file, peaks: job.peaks }}
                   initialPreset={job.goal || 'all'}
+                  initialPractice={practice.get(job.id)}
+                  onPracticeChange={(state) => practice.save(job.id, state)}
                   onEvent={(type) => {
                     if (type === 'preview') trackSiteEventOnce(`${job.id}:preview`, 'stem_preview');
                     if (type === 'stem_download') trackSiteEvent('stem_download');

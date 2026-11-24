@@ -446,9 +446,69 @@ try {
     return `${names.join(', ')}; demo mix max |error| ${maxError.toExponential(2)}`;
   });
 
+  // Practice memory: set up the demo, reload, and expect the same setup back.
+  const openDemoInPlayer = async () => {
+    const track = page.locator('.separator-track', { hasText: 'sattari-practice-demo' }).first();
+    const open = track.getByRole('button', { name: /Open in player|In the player/ });
+    if ((await open.getAttribute('aria-pressed')) !== 'true') await open.click();
+    await page.locator('#separator-player-heading', { hasText: 'sattari-practice-demo' }).waitFor();
+    await page.getByRole('button', { name: 'Play', exact: true }).waitFor({ timeout: 120000 });
+    await page.waitForFunction(
+      () => !document.querySelector('.stem-player-play svg.stem-player-spin'),
+      null,
+      { timeout: 120000 }
+    );
+  };
+  await openDemoInPlayer();
+  await page.getByRole('button', { name: 'All parts' }).click();
+  await page.getByLabel('Snap A–B to beats').uncheck();
+  if (await page.getByRole('button', { name: 'Clear loop' }).isEnabled())
+    await page.getByRole('button', { name: 'Clear loop' }).click();
+  await setPosition(2);
+  await page.getByRole('button', { name: /^Set A/ }).click();
+  await setPosition(4);
+  await page.getByRole('button', { name: /^Set B/ }).click();
+  await page.getByRole('button', { name: 'Save this loop' }).click();
+  await page.getByLabel('Name of saved loop 1').fill('Riff');
+  await page.getByLabel('Name of saved loop 1').blur();
+  await page.getByRole('button', { name: 'Mute Bass', exact: true }).click();
+  await page.getByLabel('Bass level').focus();
+  await page.waitForTimeout(700);
+
   await check('saved song survives a reload', async () => {
     await page.reload();
     await page.getByRole('button', { name: 'Download my mix' }).waitFor({ timeout: 120000 });
+  });
+  await check('the practice setup (mix, loop, saved loop) is restored after a reload', async () => {
+    await openDemoInPlayer();
+    assert.equal(
+      await page
+        .getByRole('button', { name: 'Mute Bass', exact: true })
+        .getAttribute('aria-pressed'),
+      'true',
+      'bass mute not restored'
+    );
+    assert.equal(await page.getByLabel('Name of saved loop 1').inputValue(), 'Riff');
+    assert.equal(await page.getByLabel('Snap A–B to beats').isChecked(), false);
+    assert.match(await page.getByRole('button', { name: /^Set A/ }).textContent(), /0:02/);
+    assert.match(await page.getByRole('button', { name: /^Set B/ }).textContent(), /0:04/);
+    // Shortcut: clear the loop with the keyboard, then recall the saved loop with 1.
+    await page.locator('.stem-player h3').first().click();
+    await page.keyboard.press('Backslash');
+    assert.doesNotMatch(await page.getByRole('button', { name: /^Set A/ }).textContent(), /0:02/);
+    await page.keyboard.press('1');
+    assert.match(await page.getByRole('button', { name: /^Set A/ }).textContent(), /0:02/);
+    await page.keyboard.press('Space');
+    await page.getByRole('button', { name: 'Pause', exact: true }).waitFor({ timeout: 5000 });
+    await page.keyboard.press('Space');
+    await page.getByRole('button', { name: 'Play', exact: true }).waitFor({ timeout: 5000 });
+    // Leave the player as later checks expect it.
+    await page.getByRole('button', { name: 'Remove saved loop Riff' }).click();
+    await page.getByRole('button', { name: 'Clear loop' }).click();
+    await page.getByLabel('Snap A–B to beats').check();
+    await page.getByRole('button', { name: 'All parts' }).click();
+    await page.waitForTimeout(700);
+    return 'bass muted, loop 0:02–0:04 "Riff", snap off; keys \\, 1 and Space work';
   });
 
   // Page-level overflow is not enough: a component can be clipped inside a
@@ -637,6 +697,22 @@ try {
     await page.getByText('Saved songs and stems were removed from this browser.').waitFor();
     await page.reload();
     await page.getByText('No songs yet').waitFor({ timeout: 60000 });
+    const left = await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const open = indexedDB.open('sattari-practice-state');
+          open.onerror = () => resolve(-1);
+          open.onsuccess = () => {
+            const db = open.result;
+            if (!db.objectStoreNames.contains('practice')) return resolve(0);
+            const count = db.transaction('practice').objectStore('practice').count();
+            count.onsuccess = () => resolve(count.result);
+            count.onerror = () => resolve(-1);
+          };
+        })
+    );
+    assert.equal(left, 0, `practice setups left in storage: ${left}`);
+    return 'songs and practice setups removed';
   });
 } catch (error) {
   record('qualification run', false, error.message);
