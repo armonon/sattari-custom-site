@@ -1,0 +1,73 @@
+{
+  "id": "6b0603f4d906fdc28eea200a",
+  "site_id": "53a43ab7-fd89-4b5b-902e-6bc0e36c58b2",
+  "previous_deploy": "6b060230e176dd28e66479f2",
+  "title": "Practice memory, saved loops and shortcuts on the Nov 24 SEO release (28617d4)",
+  "files": 916,
+  "replaced_or_added_from_build": 564,
+  "functions": 24,
+  "backend_reused_by_digest": true,
+  "function_digests": {
+    "admin-orders": "0d03e2ac19b35a2a7df695cc316bae3ae6a19854c10420b5a15d2b42358cbf45",
+    "checkout-maintenance": "ee326407f22778597134962f7b03e0f13ad30ce6260bded993ca55fbe49a073c",
+    "checkout-release": "861dba2c75c83bef023283aa52b95c92dbbf885b03a60ed886d9c28c87076c5c",
+    "checkout-session-status": "4e1778863fe0c1c3d3f2b3b3b837171498c3b635c074eb56ef4cc671c73cd0c0",
+    "create-checkout-session": "252a9a3d95e817e9144660d89bfd335d9340991d0bebf3d896ab7842bb1ac1f9",
+    "instagram-feed": "d4f05a89cf7c236d86b0fb1fa7a4eb92bdbd3dbf602a5760f2b598b1a4292f4a",
+    "inventory": "1b84ec3280c125941f6a7842d3ceb63badec276e8d6b43aefeb161ded9583f3f",
+    "nightly-backup": "2d0c762feb23f5c030eae9004810963f4177141467585e802fced0b667690ba3",
+    "product-image": "6018c69a727fbfa852ec60eef1eaf95ef6170c6be375972cbe36a403553618c9",
+    "service-inquiry": "4b35b5baee14b592d9312db16aa08d208947c503a9f2d79bda11a36c822cb5b2",
+    "site-event": "d7658eacac4917d3e13bb49f5f0819c0372da3434510bc41ae1542284419cb5d",
+    "staff-backup": "9aa1c94556e6bdd1ca53acd02ddbf9203e0fa90505ea69055f8494f8232c347c",
+    "staff-bookings": "b9ad6f1361fb5fb6517bbabb0281318b0bc1c80f422695eb426486cd45523333",
+    "staff-catalog": "01000eea8bdf95af6dc51faaeda4eb848cdc526134b8c7a40da593d18ddb765a",
+    "staff-image": "f785cb6dd70fdfc47c679c1cb83cddd54b402bd4e217f4b7edbfa6ff171117f0",
+    "staff-inquiries": "56d9208d06162f6f605aabdd29438fa15e019e9bc4579cf5558781c44cf1feca",
+    "staff-insights": "633c0283165ae608835475e78354de59e978099d35a91b2da24c2112db2af7ab",
+    "staff-login": "323bcb375989e6d59777fc47dd4c50427c4fc6dfa0b5979568b03c630e4ab814",
+    "staff-logout": "397b30459b8155a482924d561ae42bfb7bcdaa8a10690bf978f06eabb1dc3f47",
+    "staff-orders": "83c3f37bf1991783c7734ddcc77253af20b92861fd9c0bdb81a12bb0789bfd73",
+    "staff-stock": "fab1025c360dd2bd39c7ebc554044f937527e49582b8fd5df08a19e3cffca35c",
+    "stripe-webhook": "3706d54357c53a771f0fa144ef7faa21f9c508de2b9bf3caf9b2b9ae22273411",
+    "studio-booking-maintenance": "cd018c2dba3b87fbb6212883c54b4aec4e7c1941229b5b396c119ae76118c2ca",
+    "studio-bookings": "406f63c333c236fc020eb2135bdc40be125968dbd6353b13f9a7b66dde723d72"
+  },
+  "schedules": [
+    {
+      "name": "checkout-maintenance",
+      "cron": "*/10 * * * *"
+    },
+    {
+      "name": "nightly-backup",
+      "cron": "0 9 * * *"
+    },
+    {
+      "name": "studio-booking-maintenance",
+      "cron": "*/5 * * * *"
+    }
+  ],
+  "runtime_keys": [
+    "INSTAGRAM_ACCESS_TOKEN",
+    "STAFF_PASSWORD_HASH",
+    "STAFF_PASSWORD_SALT",
+    "STAFF_SESSION_SECRET",
+    "STAFF_USERNAME",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STUDIO_BOOKING_CLOSE_HOUR",
+    "STUDIO_BOOKING_DAYS",
+    "STUDIO_BOOKING_EMAIL",
+    "STUDIO_BOOKING_ENABLED",
+    "STUDIO_BOOKING_OPEN_HOUR",
+    "STUDIO_BOOKING_SMS_TO",
+    "VITE_STRIPE_PUBLISHABLE_KEY"
+  ],
+  "published": true,
+  "state": "ready",
+  "error": null,
+  "draft_url": "https://6b0603f4d906fdc28eea200a--sattari.netlify.app",
+  "uploaded_files": 187,
+  "uploaded_functions": 0,
+  "published_at": "2026-11-24T21:42:25.355Z"
+}
