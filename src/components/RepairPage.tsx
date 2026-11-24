@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
+import ServicePlanningDetails from './ServicePlanningDetails';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, breadcrumbSchema, businessSchema } from '../data/siteSeo';
 import './LocalSeoPage.css';
@@ -163,6 +164,10 @@ export default function RepairPage() {
         </article>
       </div>
 
+      <div className="container">
+        <ServicePlanningDetails service="repairs" />
+      </div>
+
       <div className="container repair-process-panel">
         <div>
           <p className="eyebrow">Simple process</p>
@@ -179,7 +184,7 @@ export default function RepairPage() {
           </div>
           <div>
             <strong>3</strong>
-            <span>We schedule the repair, tune-up, setup, or inspection.</span>
+            <span>Confirm the estimate, approve the work and arrange service or inspection.</span>
           </div>
         </div>
       </div>
@@ -214,6 +219,8 @@ export default function RepairPage() {
         <nav aria-label="Instrument-specific services">
           <Link to="/services/violin-repair-los-angeles">Violin repair and setup</Link>
           <Link to="/services/guitar-setup-los-angeles">Guitar and bass setup</Link>
+          <Link to="/services/guitar-restringing-woodland-hills">Guitar string replacement</Link>
+          <Link to="/violin-strings-woodland-hills">Violin strings and replacement advice</Link>
           <Link to="/woodland-hills-drum-shop">Woodland Hills drum gear</Link>
         </nav>
         <p>

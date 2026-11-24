@@ -19,10 +19,16 @@ import './MusicResources.css';
 const guidePath = (guide) => `/guides/${guide.slug}`;
 const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
+  const stringsPages = {
+    '/guitar-strings-woodland-hills': 'Guitar strings in Woodland Hills',
+    '/violin-strings-woodland-hills': 'Violin strings in Woodland Hills',
+    '/services/guitar-restringing-woodland-hills': 'Guitar restringing and string replacement',
+  };
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
+    stringsPages[path] ||
     guide?.title ||
     product?.name ||
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   formatPrice,
@@ -13,8 +13,12 @@ import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data/siteSeo';
 import NotFoundPage from '../components/NotFoundPage';
 import QuantityInput from '../components/QuantityInput';
+import ProductBuyingHelp from '../components/ProductBuyingHelp';
+import { productVariantPath, relatedCatalogProducts } from '../data/catalogMerchandising';
 import { MAX_LINE_QUANTITY } from '../utils/cartCatalog';
 import { FLAT_SHIPPING_CENTS } from '../data/shipping';
+import { trackSiteEvent } from '../utils/siteMeasurement';
+import { useHydratedSearchParams, useHydrating } from './useHydratedSearchParams';
 import '../styles-products-premium.css';
 
 const buyingGuides = {
@@ -31,36 +35,45 @@ const buyingGuides = {
 // not offer, or a photo past the end of its gallery).
 export default function ProductDetail() {
   const { slug } = useParams();
-  return <ProductDetailView key={slug} slug={slug} />;
+  const params = useHydratedSearchParams();
+  const initialSize = params.get('size');
+  const initialColor = params.get('color');
+  return (
+    <ProductDetailView
+      key={JSON.stringify([slug, initialSize, initialColor])}
+      slug={slug}
+      initialSize={initialSize}
+      initialColor={initialColor}
+    />
+  );
 }
 
-function ProductDetailView({ slug }) {
+function ProductDetailView({ slug, initialSize, initialColor }) {
+  const hydrating = useHydrating();
   const { isVariantSoldOut, quantityFor, products, status, refresh } = useInventory();
   const product = products.find((p) =>
     p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug
   );
   // null until the shopper picks one; the defaults below follow the catalog,
   // which can change when live inventory arrives.
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(initialSize);
+  const [selectedColor, setSelectedColor] = useState(initialColor);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
   const [limitMessage, setLimitMessage] = useState('');
   const [retrying, setRetrying] = useState(false);
   const { addToCart, cartItems } = useCart();
+  const measuredProduct = useRef(false);
 
-  // Related items: same category first, then fill from the rest of the catalog.
-  const related = useMemo(() => {
-    if (!product) return [];
-    const sameCategory = products.filter(
-      (p) => p.category === product.category && p.slug !== product.slug
-    );
-    const others = products.filter(
-      (p) => p.category !== product.category && p.slug !== product.slug
-    );
-    return [...sameCategory, ...others].slice(0, 4);
-  }, [product, products]);
+  useEffect(() => {
+    if (product && status === 'ready' && !hydrating && !measuredProduct.current) {
+      measuredProduct.current = true;
+      trackSiteEvent('product_view');
+    }
+  }, [product, status, hydrating]);
+
+  const related = useMemo(() => relatedCatalogProducts(product, products), [product, products]);
 
   if (!product) {
     // A product an employee added lives in the catalog layer, which arrives a
@@ -160,7 +173,7 @@ function ProductDetailView({ slug }) {
           availability: isVariantSoldOut(product.slug, option.size, color)
             ? 'https://schema.org/OutOfStock'
             : 'https://schema.org/InStock',
-          url: productUrl,
+          url: absoluteUrl(productVariantPath(product, { size: option.size, color })),
           sku: `${product.slug}-${option.size.replace(/[^a-zA-Z0-9]/g, '')}`,
           seller: { '@id': businessSchema['@id'] },
         }))
@@ -169,7 +182,7 @@ function ProductDetailView({ slug }) {
           priceCurrency: 'USD',
           price: unitPrice,
           availability,
-          url: productUrl,
+          url: absoluteUrl(productVariantPath(product, { size, color })),
           sku: product.slug,
           seller: { '@id': businessSchema['@id'] },
         },
@@ -193,6 +206,7 @@ function ProductDetailView({ slug }) {
       return;
     }
     addToCart({ slug: product.slug, size, color, quantity: adding });
+    trackSiteEvent('cart_add');
     setLimitMessage(adding < quantity ? `Added ${adding}. ${limit}` : '');
     setAddedMessage('Added to cart.');
     window.setTimeout(() => setAddedMessage(''), 2200);
@@ -329,6 +343,11 @@ function ProductDetailView({ slug }) {
               </div>
             </div>
           )}
+          {(product.sizes?.length || colorOptions) && (
+            <p className="product-option-link">
+              <Link to={productVariantPath(product, { size, color })}>Link to this option</Link>
+            </p>
+          )}
           <div className="control-group">
             <label htmlFor="qty" className="control-label">
               Qty
@@ -422,11 +441,12 @@ function ProductDetailView({ slug }) {
           )}
         </div>
       </div>
+      <ProductBuyingHelp product={product} />
       {related.length > 0 ? (
         <div className="container related-products">
           <div className="related-products-header">
             <p className="card-kicker">More from Sattari</p>
-            <h2>You might also like</h2>
+            <h2>Explore related gear</h2>
           </div>
           <div className="product-grid related-grid">
             {related.map((item) => {

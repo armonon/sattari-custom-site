@@ -100,9 +100,10 @@ const steps = [
   ['types', ['node_modules/typescript/bin/tsc', '--noEmit']],
   ['meter', ['scripts/qualify-loudness.mjs']],
   ['tempo', ['scripts/qualify-tempo.mjs']],
-  ['build', ['node_modules/vite/bin/vite.js', 'build']],
-  ['prerender', ['scripts/prerender.mjs']],
-  ['service-worker', ['scripts/build-studio-sw.mjs']],
+  [
+    'build',
+    ['scripts/growth-inventory-build.mjs', '--evidence', resolve(output, 'production-build')],
+  ],
   ['seo', ['scripts/check-seo.mjs']],
   ['browser', ['scripts/run-studio-browser-qa.mjs']],
   ['soak', ['scripts/run-windowed-soak.mjs']],

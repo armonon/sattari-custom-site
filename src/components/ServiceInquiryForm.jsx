@@ -39,6 +39,8 @@ export default function ServiceInquiryForm({
     email: '',
     phone: '',
     details: '',
+    instrument: '',
+    timing: '',
     'bot-field': '',
   });
   const [submitted, setSubmitted] = useState(false);
@@ -88,7 +90,20 @@ export default function ServiceInquiryForm({
     e.preventDefault();
     if (submitting) return;
     const version = ++submissionVersion.current;
-    const inquiry = { ...form, service };
+    // Extra prompts are combined into the existing details field so both
+    // Netlify Forms and the API keep the same delivery/storage contract.
+    const { instrument, timing, ...contactForm } = form;
+    const inquiry = {
+      ...contactForm,
+      service,
+      details: [
+        instrument.trim() && `Instrument / gear: ${instrument.trim()}`,
+        timing.trim() && `Preferred timing: ${timing.trim()}`,
+        form.details.trim(),
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+    };
     setSubmitting(true);
     setError('');
 
@@ -194,7 +209,13 @@ export default function ServiceInquiryForm({
           className="button button-outline"
           onClick={() => {
             focusFormRef.current = true;
-            setForm((current) => ({ ...current, details: '', 'bot-field': '' }));
+            setForm((current) => ({
+              ...current,
+              details: '',
+              instrument: '',
+              timing: '',
+              'bot-field': '',
+            }));
             setSubmitted(false);
             setError('');
           }}
@@ -282,6 +303,42 @@ export default function ServiceInquiryForm({
           />
         </label>
       </div>
+      {service !== 'tool-feedback' && (
+        <div className="service-form-row">
+          <label>
+            <span>
+              {service === 'lessons'
+                ? 'Instrument and experience (optional)'
+                : 'Instrument / gear and model (optional)'}
+            </span>
+            <input
+              name="instrument"
+              value={form.instrument}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'lessons'
+                  ? 'e.g. guitar, beginner'
+                  : 'e.g. electric guitar, model if known'
+              }
+            />
+          </label>
+          <label>
+            <span>Preferred timing (optional)</span>
+            <input
+              name="timing"
+              value={form.timing}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'rentals'
+                  ? 'Pickup and return dates'
+                  : 'Your deadline or preferred days'
+              }
+            />
+          </label>
+        </div>
+      )}
       <label>
         <span>{service === 'tool-feedback' ? 'Your feedback' : 'Describe what you need'}</span>
         <textarea
@@ -289,14 +346,26 @@ export default function ServiceInquiryForm({
           value={form.details}
           onChange={handleChange}
           rows={4}
+          maxLength={3200}
           placeholder={
             service === 'tool-feedback'
               ? 'What were you trying to do, and what happened? Browser and device help.'
-              : 'Timing, location, gear, and what you are trying to solve'
+              : service === 'repairs'
+                ? 'Describe the symptoms, tuning and any recent changes. Ask about restringing, setup or an assessment.'
+                : service === 'rentals'
+                  ? 'Gear, sizes, quantities, dates and purpose. We will confirm availability and terms.'
+                  : service === 'lessons'
+                    ? 'Your goals, experience and preferred lesson format. Ask about available teachers and rates.'
+                    : 'What are you looking for? Include fit, availability or service questions.'
           }
           required
         />
       </label>
+      <p className="form-helper">
+        {service === 'tool-feedback'
+          ? 'Share the steps you tried and what happened. We may follow up by email.'
+          : 'A request starts a conversation. We will confirm scope, availability and any price before you commit. For repairs, we can ask for photos when we reply.'}
+      </p>
       <div aria-hidden="true" style={HONEYPOT_STYLE}>
         <label>
           Leave this field empty

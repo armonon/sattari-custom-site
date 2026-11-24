@@ -1,0 +1,5 @@
+# Legacy storefront URLs observed in Google Search Console on 2026-11-17.
+# Keep these exact matches ahead of the existing netlify.toml catch-all.
+/main / 301
+/product-page/hi-hat-pirouz-series /product/sattari-hand-crafted-hi-hat 301
+/product-page/darbuka /product/sattari-darbuka 301

@@ -1,5 +1,10 @@
 export const METRIC_EVENTS = [
   'page_view',
+  'product_view',
+  'cart_add',
+  'cart_view',
+  'checkout_started',
+  'purchase_verified',
   'inquiry_sent',
   'booking_requested',
   'contact_click',
@@ -49,6 +54,8 @@ export const METRIC_PAGES = [
   'about',
   'shop',
   'product',
+  'cart',
+  'purchase',
   'services',
   'local',
   'visit',
@@ -83,6 +90,9 @@ export const METRIC_PAGES = [
 
 export function metricPage(path) {
   if (path === '/') return 'home';
+  if (path === '/cart') return 'cart';
+  if (['/guitar-strings-woodland-hills', '/violin-strings-woodland-hills'].includes(path))
+    return 'local';
   if (path.startsWith('/shop')) return 'shop';
   if (path.startsWith('/product/')) return 'product';
   if (path.startsWith('/services')) return 'services';
@@ -120,6 +130,9 @@ export function metricPage(path) {
 export function referralSource(referrer = '', search = '', origin = 'https://sattarimusic.com') {
   const campaign = new URLSearchParams(search).get('utm_source')?.toLowerCase();
   const campaigns = {
+    google: 'google',
+    google_business_profile: 'google',
+    bing: 'bing',
     chatgpt: 'chatgpt',
     'chatgpt.com': 'chatgpt',
     perplexity: 'perplexity',

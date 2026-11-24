@@ -106,9 +106,59 @@ describe('local search pages', () => {
     const links = Object.values(CATEGORY_LOCAL_HELP).flatMap((help) =>
       help.links.map((link) => link.to)
     );
-    for (const key of ['woodland-drums', 'encino-violins', 'violin-repair', 'guitar-setup']) {
+    for (const key of [
+      'woodland-drums',
+      'encino-violins',
+      'violin-repair',
+      'guitar-setup',
+      'guitar-strings',
+      'violin-strings',
+      'guitar-restringing',
+    ]) {
       expect(links).toContain(new URL(localSeoPages[key].url).pathname);
     }
+  });
+
+  it('keeps string buying and fitting connected without inventing guitar stock or offers', () => {
+    const guitar = renderPage(<LocalSeoPage pageKey="guitar-strings" />);
+    expect(guitar.doc.querySelectorAll('.local-product')).toHaveLength(0);
+    expect(guitar.schema.some((item) => ['Product', 'Offer'].includes(item['@type']))).toBe(false);
+    expect(
+      guitar.doc.querySelector('a[href="/services/guitar-restringing-woodland-hills"]')
+    ).not.toBeNull();
+
+    const violin = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+    expect(violin.doc.querySelectorAll('.local-product')).toHaveLength(1);
+    expect(violin.doc.querySelector('.local-product').getAttribute('href')).toBe(
+      '/product/violin-strings'
+    );
+    expect(
+      violin.doc.querySelector('a[href="/services/violin-repair-los-angeles"]')
+    ).not.toBeNull();
+
+    const restringing = renderPage(<LocalSeoPage pageKey="guitar-restringing" />);
+    const service = restringing.schema.find((item) => item['@type'] === 'Service');
+    expect(service.provider['@id']).toBe('https://sattarimusic.com/#business');
+    expect(service.offers).toBeUndefined();
+    expect(
+      restringing.doc.querySelector('a[href="/services/guitar-setup-los-angeles"]')
+    ).not.toBeNull();
+  });
+
+  it('replaces the violin purchase CTA with an inquiry when inventory hides the product', () => {
+    useInventory.mockReturnValue({
+      products: products.filter((product) => product.slug !== 'violin-strings'),
+      isSoldOut: () => false,
+    });
+    const { doc, schema } = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+    expect(doc.querySelector('a[href="/product/violin-strings"]')).toBeNull();
+    expect(doc.querySelectorAll('.local-product')).toHaveLength(0);
+    const primaryCta = doc.querySelector('.repair-hero-copy .button-solid');
+    expect(primaryCta.textContent).toBe('Ask about availability');
+    expect(primaryCta.getAttribute('href')).toBe('#local-inquiry');
+    expect(doc.body.textContent).not.toContain('available through the current online catalog');
+    const faqs = schema.find((item) => item['@type'] === 'FAQPage').mainEntity;
+    for (const faq of faqs) expect(doc.body.textContent).toContain(faq.acceptedAnswer.text);
   });
 
   it('gives Los Angeles instrument repair visible FAQs matching its schema', () => {

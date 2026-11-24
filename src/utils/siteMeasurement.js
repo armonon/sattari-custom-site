@@ -23,7 +23,10 @@ export function measurementPreference() {
 export function setMeasurementPreference(allowed) {
   try {
     localStorage.setItem(PREFERENCE, allowed && !measurementBlocked() ? 'allowed' : 'denied');
-    if (!allowed) sessionStorage.removeItem(SOURCE);
+    if (!allowed) {
+      sessionStorage.removeItem(SOURCE);
+      sessionStorage.removeItem('sattari-purchase-measured-v1');
+    }
   } catch {
     /* Measurement is optional when storage is unavailable. */
   }
@@ -37,7 +40,12 @@ export function trackSiteEvent(event) {
       window.location.hostname !== 'sattarimusic.com'
     )
       return;
-    const page = metricPage(window.location.pathname);
+    // A verified purchase emits one coarse event; checkout URLs/query strings
+    // and session/customer details never enter the measurement payload.
+    const page =
+      event === 'purchase_verified' && window.location.pathname === '/checkout/success'
+        ? 'purchase'
+        : metricPage(window.location.pathname);
     if (!page || emitted >= 200) return;
     if (event === 'page_view') {
       const now = Date.now();
@@ -61,6 +69,7 @@ export function trackSiteEvent(event) {
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
     }).catch(() => {});
+    return true;
   } catch {
     /* Never interrupt a musical session or inquiry for measurement. */
   }
@@ -76,4 +85,27 @@ export function trackSiteEventOnce(key, event) {
   if (onceKeys.size > 2000) onceKeys.clear();
   onceKeys.add(key);
   trackSiteEvent(event);
+}
+
+// Retain the deduplication marker only in this browser session after consent.
+// The checkout identifier never enters an analytics request.
+export function trackVerifiedPurchaseOnce(sessionId) {
+  try {
+    if (
+      !sessionId ||
+      measurementBlocked() ||
+      measurementPreference() !== 'allowed' ||
+      window.location.hostname !== 'sattarimusic.com' ||
+      window.location.pathname !== '/checkout/success'
+    )
+      return;
+    const key = 'sattari-purchase-measured-v1';
+    const seen = JSON.parse(sessionStorage.getItem(key) || '[]');
+    if (!Array.isArray(seen) || seen.includes(sessionId)) return;
+    if (trackSiteEvent('purchase_verified')) {
+      sessionStorage.setItem(key, JSON.stringify([...seen, sessionId].slice(-200)));
+    }
+  } catch {
+    /* Optional measurement must never interrupt payment confirmation. */
+  }
 }

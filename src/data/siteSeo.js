@@ -65,7 +65,7 @@ export const businessSchema = {
   image: absoluteUrl('/sattari site/sattari logo.png'),
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Appointment-only Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
+    'Appointment-only Woodland Hills music store with cymbals, drumsticks, violins, guitars and violin strings. Ask about guitar strings, restringing, instrument repair, rentals and lessons.',
 };
 
 export const websiteSchema = {
@@ -77,22 +77,22 @@ export const websiteSchema = {
   alternateName: 'Sattari',
   inLanguage: 'en-US',
   description:
-    'Learn guitar, shop musical instruments, create music, separate stems and download Sattari audio software. Local repairs and musician services in Woodland Hills, California.',
+    'Shop musical instruments, learn guitar and create music with Sattari browser tools. Local repairs and musician services in Woodland Hills, California.',
   publisher: { '@id': organizationSchema['@id'] },
 };
 
 export const PAGE_SEO = {
   home: {
-    title: 'Learn, Shop & Create Music',
+    title: 'Instruments & Repairs in Woodland Hills | Music Tools',
     description:
-      'Learn guitar, buy instruments, create music and download audio software with Sattari. Online music tools worldwide; repairs in Woodland Hills, Los Angeles.',
+      'Shop guitars, violins and strings. Learn and create music worldwide with Sattari. Ask about guitar restringing in Woodland Hills; visits by appointment.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
     imageWidth: 1536,
     imageHeight: 1024,
   },
   about: {
-    title: 'Our Story | Instruments, Music & Software',
+    title: 'Our Story | Instruments, Repairs & Music Tools',
     description:
       'Meet Sattari Music and founder Mohammad Sattari. A California music company connecting instruments, online learning, music creation and local repair services.',
     url: `${SITE_ORIGIN}/about`,
@@ -100,25 +100,25 @@ export const PAGE_SEO = {
   shop: {
     title: 'Buy Musical Instruments & Accessories Online',
     description:
-      'Buy cymbals, drumsticks, acoustic and electric violins, guitars, bass and music accessories online. Sattari instruments with support from Woodland Hills, California.',
+      'Buy cymbals, drumsticks, acoustic and electric violins, violin strings, guitars and bass online. Ask Sattari Music in Woodland Hills about guitar string availability.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
     title: 'Repairs, Rentals & Music Lessons | Woodland Hills',
     description:
-      'Request guitar, violin or drum repair, instrument rentals, music lessons and rehearsal space in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
+      'Ask about guitar restringing, violin and instrument repair, rentals, lessons and rehearsal space at Sattari Music in Woodland Hills. Confirm scope and availability.',
     url: `${SITE_ORIGIN}/services`,
   },
   repair: {
     title: 'Los Angeles Instrument Repair Shop | Woodland Hills',
     description:
-      'Guitar, violin, drum and percussion repair support at Sattari Music in Woodland Hills. Describe the issue and request an assessment before bringing in your gear.',
+      'Ask Sattari Music in Woodland Hills about guitar restringing, violin strings, setup and instrument repair. Request an assessment and quote before arranging service.',
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
   },
   hub: {
     title: 'Online Music Tools | Learn, Create & Separate',
     description:
-      'Learn guitar, create in Sattari Songboard, separate vocals and instruments, or explore Mac audio plugins. Sattari Hub connects your next music session.',
+      'Learn guitar, create in Sattari Songboard, separate vocals and instruments, or explore experimental browser music tools. Sattari Hub connects your next music session.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,
@@ -189,6 +189,7 @@ export const CATEGORY_LOCAL_HELP = {
         label: 'How to choose a violin for beginners',
         to: '/guides/choose-a-violin-for-beginners',
       },
+      { label: 'Violin strings in Woodland Hills', to: '/violin-strings-woodland-hills' },
       { label: 'Choosing a violin near Encino', to: '/encino-violin-shop' },
       { label: 'Violin repair and setup', to: '/services/violin-repair-los-angeles' },
     ],
@@ -202,6 +203,11 @@ export const CATEGORY_LOCAL_HELP = {
         to: '/guides/choose-a-beginner-acoustic-guitar',
       },
       { label: 'Guitar and bass setup', to: '/services/guitar-setup-los-angeles' },
+      { label: 'Electric and acoustic guitar strings', to: '/guitar-strings-woodland-hills' },
+      {
+        label: 'Guitar restringing and string replacement',
+        to: '/services/guitar-restringing-woodland-hills',
+      },
       { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
     ],
   },

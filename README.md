@@ -50,15 +50,15 @@ Stripe test mode works with card `4242 4242 4242 4242`. The staff page is at
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Vite dev server |
-| `npm run dev:api` | Runs the real Netlify functions on the same `/api` paths, Blobs on disk (`LOCAL_BLOBS_PATH`) |
-| `npm run build` | Production build, then prerenders every route and writes the sitemap |
-| `npm run type-check` / `npm run lint` | TypeScript (strict, `.ts`/`.tsx` only) and ESLint + Prettier |
-| `npm test` | All unit and function tests (Vitest). The Studio UI suites are heavy: on a busy machine use `npx vitest run --maxWorkers=1` |
-| `npm run test:seo` | Checks the prerendered pages' titles, canonicals, structured data and sitemap |
-| `npm run test:studio-release` | The full release gate (lint, unit, types, loudness and tempo qualification, build, prerender, browser QA, soak). Needs a clean, committed tree |
+| Command                               | What it does                                                                                                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                         | Vite dev server                                                                                                                                |
+| `npm run dev:api`                     | Runs the real Netlify functions on the same `/api` paths, Blobs on disk (`LOCAL_BLOBS_PATH`)                                                   |
+| `npm run build`                       | Freezes live inventory, builds and prerenders the site, then checks all required public routes and private-output exclusions                   |
+| `npm run type-check` / `npm run lint` | TypeScript (strict, `.ts`/`.tsx` only) and ESLint + Prettier                                                                                   |
+| `npm test`                            | All unit and function tests (Vitest). The Studio UI suites are heavy: on a busy machine use `npx vitest run --maxWorkers=1`                    |
+| `npm run test:seo`                    | Checks the prerendered pages' titles, canonicals, structured data and sitemap                                                                  |
+| `npm run test:studio-release`         | The full release gate (lint, unit, types, loudness and tempo qualification, build, prerender, browser QA, soak). Needs a clean, committed tree |
 
 CI ([`.github/workflows/build-deploy.yml`](.github/workflows/build-deploy.yml)) runs the release gate on pushes and pull requests to `main` and `develop`. Full-site deployment is conditional on `SATTARI_FULL_DEPLOY_ALLOWED` being `true`; when enabled for `main`, it deploys the qualified build artifact. The workflow currently documents a parity requirement before enabling full-site deployment.
 
@@ -106,5 +106,4 @@ Release qualification follows [docs/STABLE_CANDIDATE_PROTOCOL.md](docs/STABLE_CA
 
 - Checkout enforces catalog availability and stock contention on the server. The current implementation intentionally allows checkout during a stock-store outage; do not interpret stock checks as an unconditional no-oversell guarantee.
 - Most of the codebase is JavaScript/JSX and is not type-checked. TypeScript strict covers the `.ts`/`.tsx` files only.
-- `public/downloads/` holds the Sattari audio-plugin installers served from `/downloads`.
-
+- Retired native-plugin installers are not published. Current browser tools are linked from `/hub`.

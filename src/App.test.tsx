@@ -92,6 +92,21 @@ it('opens the guided shop assistant from the new homepage', async () => {
   expect(launcher).toHaveAttribute('aria-expanded', 'false');
 }, 30000);
 
+it.each([
+  ['/guitar-strings-woodland-hills', 'Find guitar strings in Woodland Hills'],
+  ['/violin-strings-woodland-hills', 'Violin strings for sale in Woodland Hills'],
+  ['/services/guitar-restringing-woodland-hills', 'Guitar string replacement in Woodland Hills'],
+])(
+  'opens the registered string page at %s',
+  async (path, title) => {
+    expect(await preloadRoute(path)).toEqual({ hydrate: true });
+    renderApp(path);
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument();
+    expect(document.querySelector('#local-inquiry form')).toBeInTheDocument();
+  },
+  30000
+);
+
 describe('cart drawer', () => {
   it('is a modal dialog: focus moves in, the page is inert, Escape closes and focus returns', async () => {
     renderApp('/page-that-does-not-exist');

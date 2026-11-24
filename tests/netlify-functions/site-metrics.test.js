@@ -101,3 +101,19 @@ it('requires staff auth for reports', async () => {
   expect((await staffHandler({ httpMethod: 'POST' })).statusCode).toBe(405);
   expect(JSON.parse((await staffHandler({ httpMethod: 'GET' })).body)).toEqual({ days: [] });
 });
+
+it.each([
+  ['product_view', 'product'],
+  ['cart_add', 'product'],
+  ['cart_view', 'cart'],
+  ['checkout_started', 'cart'],
+  ['purchase_verified', 'purchase'],
+])(
+  'accepts the coarse commerce event %s without storing order/customer identifiers',
+  async (event, page) => {
+    expect((await handler(request({ event, page, source: 'google' }))).status).toBe(204);
+    const [data] = await readMetrics({});
+    expect(data.counts).toEqual({ [`google|${page}|${event}`]: 1 });
+    expect(Object.keys(data).sort()).toEqual(['counts', 'date', 'total']);
+  }
+);
