@@ -303,38 +303,42 @@ export default function ServiceInquiryForm({
           />
         </label>
       </div>
-      <div className="service-form-row">
-        <label>
-          <span>
-            {service === 'lessons'
-              ? 'Instrument and experience (optional)'
-              : 'Instrument / gear and model (optional)'}
-          </span>
-          <input
-            name="instrument"
-            value={form.instrument}
-            onChange={handleChange}
-            maxLength={160}
-            placeholder={
-              service === 'lessons'
-                ? 'e.g. guitar, beginner'
-                : 'e.g. electric guitar, model if known'
-            }
-          />
-        </label>
-        <label>
-          <span>Preferred timing (optional)</span>
-          <input
-            name="timing"
-            value={form.timing}
-            onChange={handleChange}
-            maxLength={160}
-            placeholder={
-              service === 'rentals' ? 'Pickup and return dates' : 'Your deadline or preferred days'
-            }
-          />
-        </label>
-      </div>
+      {service !== 'tool-feedback' && (
+        <div className="service-form-row">
+          <label>
+            <span>
+              {service === 'lessons'
+                ? 'Instrument and experience (optional)'
+                : 'Instrument / gear and model (optional)'}
+            </span>
+            <input
+              name="instrument"
+              value={form.instrument}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'lessons'
+                  ? 'e.g. guitar, beginner'
+                  : 'e.g. electric guitar, model if known'
+              }
+            />
+          </label>
+          <label>
+            <span>Preferred timing (optional)</span>
+            <input
+              name="timing"
+              value={form.timing}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'rentals'
+                  ? 'Pickup and return dates'
+                  : 'Your deadline or preferred days'
+              }
+            />
+          </label>
+        </div>
+      )}
       <label>
         <span>{service === 'tool-feedback' ? 'Your feedback' : 'Describe what you need'}</span>
         <textarea
@@ -358,8 +362,9 @@ export default function ServiceInquiryForm({
         />
       </label>
       <p className="form-helper">
-        A request starts a conversation. We will confirm scope, availability and any price before
-        you commit. For repairs, we can ask for photos when we reply.
+        {service === 'tool-feedback'
+          ? 'Share the steps you tried and what happened. We may follow up by email.'
+          : 'A request starts a conversation. We will confirm scope, availability and any price before you commit. For repairs, we can ask for photos when we reply.'}
       </p>
       <div aria-hidden="true" style={HONEYPOT_STYLE}>
         <label>

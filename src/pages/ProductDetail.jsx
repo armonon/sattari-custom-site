@@ -14,10 +14,11 @@ import { BUSINESS, absoluteUrl, breadcrumbSchema, businessSchema } from '../data
 import NotFoundPage from '../components/NotFoundPage';
 import QuantityInput from '../components/QuantityInput';
 import ProductBuyingHelp from '../components/ProductBuyingHelp';
-import { relatedCatalogProducts } from '../data/catalogMerchandising';
+import { productVariantPath, relatedCatalogProducts } from '../data/catalogMerchandising';
 import { MAX_LINE_QUANTITY } from '../utils/cartCatalog';
 import { FLAT_SHIPPING_CENTS } from '../data/shipping';
 import { trackSiteEvent } from '../utils/siteMeasurement';
+import { useHydratedSearchParams, useHydrating } from './useHydratedSearchParams';
 import '../styles-products-premium.css';
 
 const buyingGuides = {
@@ -34,18 +35,29 @@ const buyingGuides = {
 // not offer, or a photo past the end of its gallery).
 export default function ProductDetail() {
   const { slug } = useParams();
-  return <ProductDetailView key={slug} slug={slug} />;
+  const params = useHydratedSearchParams();
+  const initialSize = params.get('size');
+  const initialColor = params.get('color');
+  return (
+    <ProductDetailView
+      key={JSON.stringify([slug, initialSize, initialColor])}
+      slug={slug}
+      initialSize={initialSize}
+      initialColor={initialColor}
+    />
+  );
 }
 
-function ProductDetailView({ slug }) {
+function ProductDetailView({ slug, initialSize, initialColor }) {
+  const hydrating = useHydrating();
   const { isVariantSoldOut, quantityFor, products, status, refresh } = useInventory();
   const product = products.find((p) =>
     p.slug ? p.slug === slug : p.name.replace(/\s+/g, '-').toLowerCase() === slug
   );
   // null until the shopper picks one; the defaults below follow the catalog,
   // which can change when live inventory arrives.
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(initialSize);
+  const [selectedColor, setSelectedColor] = useState(initialColor);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState('');
@@ -55,11 +67,11 @@ function ProductDetailView({ slug }) {
   const measuredProduct = useRef(false);
 
   useEffect(() => {
-    if (product && status === 'ready' && !measuredProduct.current) {
+    if (product && status === 'ready' && !hydrating && !measuredProduct.current) {
       measuredProduct.current = true;
       trackSiteEvent('product_view');
     }
-  }, [product, status]);
+  }, [product, status, hydrating]);
 
   const related = useMemo(() => relatedCatalogProducts(product, products), [product, products]);
 
@@ -161,7 +173,7 @@ function ProductDetailView({ slug }) {
           availability: isVariantSoldOut(product.slug, option.size, color)
             ? 'https://schema.org/OutOfStock'
             : 'https://schema.org/InStock',
-          url: productUrl,
+          url: absoluteUrl(productVariantPath(product, { size: option.size, color })),
           sku: `${product.slug}-${option.size.replace(/[^a-zA-Z0-9]/g, '')}`,
           seller: { '@id': businessSchema['@id'] },
         }))
@@ -170,7 +182,7 @@ function ProductDetailView({ slug }) {
           priceCurrency: 'USD',
           price: unitPrice,
           availability,
-          url: productUrl,
+          url: absoluteUrl(productVariantPath(product, { size, color })),
           sku: product.slug,
           seller: { '@id': businessSchema['@id'] },
         },
@@ -330,6 +342,11 @@ function ProductDetailView({ slug }) {
                 })}
               </div>
             </div>
+          )}
+          {(product.sizes?.length || colorOptions) && (
+            <p className="product-option-link">
+              <Link to={productVariantPath(product, { size, color })}>Link to this option</Link>
+            </p>
           )}
           <div className="control-group">
             <label htmlFor="qty" className="control-label">

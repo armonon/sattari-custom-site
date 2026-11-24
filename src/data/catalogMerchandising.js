@@ -197,3 +197,12 @@ export function comparisonSpec(product, field) {
   const matches = (product.specs || []).filter((spec) => patterns[field]?.test(spec));
   return matches.length ? matches.join(' · ') : 'Ask the shop to confirm.';
 }
+
+// Only catalog-backed options enter a public variant URL; canonical pages stay query-free.
+export function productVariantPath(product, { size = null, color = null } = {}) {
+  const params = new URLSearchParams();
+  if (product.sizes?.some((option) => option.size === size)) params.set('size', size);
+  if (product.colors?.some((option) => option.name === color)) params.set('color', color);
+  const query = params.toString();
+  return `/product/${product.slug}${query ? `?${query}` : ''}`;
+}

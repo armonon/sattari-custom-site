@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { verifyGrowthRelease } from './growth-release-guard.mjs';
 
 export function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -87,7 +88,7 @@ export async function runInventoryBuild({
   });
   try {
     const code = await new Promise((done, fail) => {
-      const child = spawn('npm', ['run', 'build'], {
+      const child = spawn('npm', ['run', 'build:assets'], {
         cwd,
         stdio: 'inherit',
         env: {
@@ -100,6 +101,11 @@ export async function runInventoryBuild({
     });
     if (code !== 0) throw Error(`Build failed: ${code}`);
     const checks = await verifySnapshots(dist, snapshot);
+    const routes = await verifyGrowthRelease(dist);
+    await writeFile(
+      resolve(output, 'route-qualification.json'),
+      JSON.stringify(routes, null, 2) + '\n'
+    );
     const report = {
       passed: true,
       checked_at: new Date().toISOString(),

@@ -26,7 +26,7 @@ it('layers the transparent instrument artwork over the dynamic hero background',
   );
 });
 
-it('keeps the three main Hub destinations on the homepage', () => {
+it('keeps the four main Hub destinations on the homepage', () => {
   renderHome();
   expect(screen.getByRole('link', { name: 'Open Sattari Studio' })).toHaveAttribute(
     'href',
@@ -85,4 +85,14 @@ it('omits the listening desk, extra promotions, development row and listening sh
   ]) {
     expect(screen.queryByText(label)).not.toBeInTheDocument();
   }
+});
+
+it('links the current Key & BPM tool to its matching reference page', () => {
+  renderHome();
+  expect(screen.getByRole('link', { name: 'Open Sattari Key & BPM' })).toHaveAttribute(
+    'href',
+    '/studio/keybpm'
+  );
+  expect(document.querySelector('a[href="/tools/key-bpm"]')).toBeInTheDocument();
+  expect(document.querySelector('a[href="/tools/studio/keybpm"]')).not.toBeInTheDocument();
 });

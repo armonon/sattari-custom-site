@@ -1,6 +1,6 @@
 {
   "origin": "https://sattarimusic.com",
-  "baseline_date": "2026-11-17",
+  "baseline_date": "2026-11-24",
   "required_canonical_paths": [
     "/",
     "/about",
@@ -86,6 +86,7 @@
     "/studio/pocket",
     "/studio/split",
     "/studio/vox",
+    "/tools/key-bpm",
     "/tools/learn",
     "/tools/stem-separator",
     "/tools/studio",

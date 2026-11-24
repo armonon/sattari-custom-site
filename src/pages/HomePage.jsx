@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Drum,
   GraduationCap,
+  Gauge,
   Headphones,
   MapPin,
   Music2,
@@ -120,6 +121,18 @@ const tools = [
     icon: Split,
     status: 'Beta',
     color: '#b9e3c3',
+  },
+  {
+    name: 'Key & BPM',
+    category: 'Understand a song',
+    detail: 'Find key, Camelot and tempo, then check half or double time.',
+    path: '/studio/keybpm',
+    reference: '/tools/key-bpm',
+    image: '/images/tools/key-bpm.jpg',
+    alt: 'Key & BPM showing a musical key and tempo correction',
+    icon: Gauge,
+    status: 'Beta',
+    color: '#f2dc75',
   },
 ];
 
@@ -373,7 +386,18 @@ export default function HomePage() {
             </div>
             <div className="home-tools">
               {tools.map(
-                ({ name, category, detail, path, image, alt, icon: Icon, status, color }) => (
+                ({
+                  name,
+                  category,
+                  detail,
+                  path,
+                  reference,
+                  image,
+                  alt,
+                  icon: Icon,
+                  status,
+                  color,
+                }) => (
                   <article className="home-tool" key={path} style={{ '--tool-color': color }}>
                     <Link to={path} className="home-tool-link" aria-label={`Open Sattari ${name}`}>
                       <div className="home-tool-eyebrow">
@@ -392,7 +416,7 @@ export default function HomePage() {
                         <img src={image} alt={alt} width="1440" height="1000" loading="lazy" />
                       </div>
                     </Link>
-                    <Link to={`/tools${path}`} className="home-tool-details">
+                    <Link to={reference || `/tools${path}`} className="home-tool-details">
                       Formats, privacy & limits <ArrowRight size={14} />
                     </Link>
                   </article>

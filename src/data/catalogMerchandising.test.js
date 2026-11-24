@@ -41,3 +41,18 @@ describe('catalog buying guidance', () => {
     expect(relatedCatalogProducts(darbuka, products)).toEqual([]);
   });
 });
+
+it('builds direct links only for real options without tracking or arbitrary query data', async () => {
+  const { productVariantPath } = await import('./catalogMerchandising');
+  const product = {
+    slug: 'test-instrument',
+    sizes: [{ size: '17"' }],
+    colors: [{ name: 'Dark Blue' }],
+  };
+  expect(productVariantPath(product, { size: '17"', color: 'Dark Blue' })).toBe(
+    '/product/test-instrument?size=17%22&color=Dark+Blue'
+  );
+  expect(
+    productVariantPath(product, { size: 'unknown', color: 'https://example.com/private' })
+  ).toBe('/product/test-instrument');
+});

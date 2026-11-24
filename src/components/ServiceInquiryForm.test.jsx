@@ -151,3 +151,14 @@ it('delivers instrument and timing through the existing details contract on both
   expect(fallback).not.toHaveProperty('instrument');
   expect(fallback).not.toHaveProperty('timing');
 });
+
+it('keeps music-tool feedback focused while service intake captures instrument and timing', () => {
+  const { rerender } = render(<ServiceInquiryForm initialService="tool-feedback" />);
+  expect(screen.getByLabelText('Your feedback')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Instrument / gear and model (optional)')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Preferred timing (optional)')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send feedback' })).toBeInTheDocument();
+  rerender(<ServiceInquiryForm initialService="repairs" />);
+  expect(screen.getByLabelText('Instrument / gear and model (optional)')).toBeInTheDocument();
+  expect(screen.getByLabelText('Preferred timing (optional)')).toBeInTheDocument();
+});

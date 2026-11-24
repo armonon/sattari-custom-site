@@ -281,3 +281,45 @@ it('shows the retry as busy while the catalog is asked again', async () => {
   await act(async () => retry.resolve(jsonResponse({ error: 'Unavailable' }, 503)));
   expect(await screen.findByRole('button', { name: 'Try again' })).toBeEnabled();
 });
+
+it('opens a linked cymbal size at its real price and adds that option to the cart', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('sattari-effect-cymbal?size=17%22');
+  await waitFor(() => expect(screen.getByLabelText('Choose Size')).toHaveValue('17"'));
+  expect(screen.getByRole('link', { name: 'Link to this option' })).toHaveAttribute(
+    'href',
+    '/product/sattari-effect-cymbal?size=17%22'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await waitFor(() =>
+    expect(storedCart()).toEqual([expect.objectContaining({ size: '17"', quantity: 1 })])
+  );
+  await waitFor(() => {
+    const product = [...document.head.querySelectorAll('script[type="application/ld+json"]')]
+      .map((node) => JSON.parse(node.textContent))
+      .find((data) => data['@type'] === 'Product');
+    expect(product.offers.find((offer) => offer.price === 80).url).toBe(
+      'https://sattarimusic.com/product/sattari-effect-cymbal?size=17%22'
+    );
+  });
+});
+it('keeps an explicitly linked sold-out color selected rather than substituting another color', async () => {
+  const stock = { 'miami-electric-violin::::Black': 4, 'miami-electric-violin::::Red': 0 };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('miami-electric-violin?color=Red', { snapshot: { stock, catalog: EMPTY_CATALOG } });
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Red (out of stock)' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  );
+  expect(
+    screen.getByRole('button', { name: 'MIAMI - Electric Violin is out of stock', exact: true })
+  ).toBeDisabled();
+});

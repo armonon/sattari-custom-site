@@ -84,3 +84,11 @@
 .catalog-comparison td:last-child {
   white-space: nowrap;
 }
+
+.product-detail-content-card .product-option-link {
+  font-size: 0.875rem;
+  margin: 0.4rem 0 1rem;
+}
+.product-detail-content-card .product-option-link a {
+  text-underline-offset: 3px;
+}
