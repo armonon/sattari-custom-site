@@ -11,8 +11,8 @@ export const LAB_TOOLS = [
     id: 'keybpm',
     name: 'Tuner & Key',
     path: '/studio/keybpm',
-    seoTitle: 'Online Music Tuner, Song Key Detector & Scales',
-    blurb: 'Tune guitar, bass and violin live, practice scales, or find song key and BPM.',
+    seoTitle: 'Online Music Tuner, Song Key Detector & BPM Finder',
+    blurb: 'Tune an instrument, practice scales, or find the key and tempo of a song.',
     stage: 'Beta',
   },
   {

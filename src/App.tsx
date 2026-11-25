@@ -30,6 +30,7 @@ import {
   StemSeparatorPage,
   SplitPage,
   KeyBpmPage,
+  InstrumentTunerPage,
   VoxPage,
   LyricPage,
   CleanPage,
@@ -128,6 +129,7 @@ const ROUTES: RouteDefinition[] = [
   // Studio alpha labs: Split, Key & BPM, Vox (src/labs).
   { path: '/studio/split', page: SplitPage },
   { path: '/studio/keybpm', page: KeyBpmPage },
+  { path: '/tuner/:instrument', page: InstrumentTunerPage },
   { path: '/studio/vox', page: VoxPage },
   // Wave-3 alpha tools.
   { path: '/studio/lyric', page: LyricPage },
@@ -189,7 +191,10 @@ const App: FC = () => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   // Alpha lab tools: /studio/<lab> (Split, Key & BPM, Vox, Canvas, Pocket) and /press.
-  const isLabPage = pagePath.startsWith('/studio/') || LAB_PATHS.includes(pagePath);
+  const isLabPage =
+    pagePath.startsWith('/studio/') ||
+    pagePath.startsWith('/tuner/') ||
+    LAB_PATHS.includes(pagePath);
   const isAudioWorkspace =
     isLabPage || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
   const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);

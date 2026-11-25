@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import KeyReadout from './KeyReadout';
 import InstrumentTuner from './InstrumentTuner';
+import { instrumentTunerPages } from '../../data/instrumentTunerPages';
 import { StructuredData } from '../../utils/seo';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop } from '../audio/AudioLabParts';
@@ -664,8 +665,8 @@ export default function KeyBpmPage() {
       title="Music Tuner & Song Key Detector"
       badge="Beta"
       eyebrow="Sattari Music"
-      summary="Tune guitar, bass, violin and more by ear or microphone. Practice a scale or find the key and tempo of a recording."
-      description="Free online music tuner for guitar, bass and violin, with practice scales and a song key detector. Find key and BPM locally in your browser."
+      summary="Tune one note by ear or microphone, or practice a scale. For a whole song, add a recording to find its musical key and tempo."
+      description="Tune by ear or microphone with a free chromatic tuner and instrument presets. Find a song’s key, Camelot code and tempo in BPM from an audio file on your device."
       limits={LIMITS}
       limitsTitle="What the estimates can and cannot tell you"
       related={{ path: '/stem-separator', label: 'Stem Separator' }}
@@ -681,7 +682,7 @@ export default function KeyBpmPage() {
           operatingSystem: 'Web browser',
           isAccessibleForFree: true,
           featureList: [
-            'Single-note microphone tuner',
+            'Live chromatic tuner for single notes',
             'Continuous open-string reference tones with adjustable concert pitch',
             'Guitar, bass, violin, viola, cello and ukulele presets',
             'Major, minor, pentatonic, blues, Dorian and Mixolydian scales',
@@ -706,11 +707,20 @@ export default function KeyBpmPage() {
           songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
           onBeforeListen={stopAudition}
         />
-        <div id="song-key" style={{ scrollMarginTop: 110 }} />
+        <nav className="kb-instrument-guides" aria-label="Instrument tuning guides">
+          <span>Instrument tuning guides</span>
+          {instrumentTunerPages.map(({ slug, path, name }) => (
+            <Link to={path} key={slug}>
+              {name} tuner
+            </Link>
+          ))}
+        </nav>
         {received && <HandoffNotice handoff={received} destination="Key & BPM" />}
         <LabDrop
-          title="Add tracks"
-          hint="Drop one song or many · WAV, MP3, FLAC, M4A, OGG · up to 10 min each · measured on this device, nothing is uploaded"
+          id="song-key"
+          title="Song key detector & BPM finder"
+          inputLabel="Add tracks"
+          hint="Add tracks to estimate their musical key and tempo in beats per minute. Choose WAV, MP3, FLAC, M4A or OGG files, up to 10 minutes each."
           multiple
           disabled={checking}
           onFiles={addFiles}
@@ -725,6 +735,11 @@ export default function KeyBpmPage() {
             <AudioLines size={15} aria-hidden="true" /> Try the 8-second example
           </button>
         </LabDrop>
+        <p className="alab-note">
+          Finding the key of a beat? Choose a section with bass, chords or melody. A drums-only loop
+          can give you a tempo even when its key is unclear.{' '}
+          <Link to="/guides/find-song-key-and-bpm">How to check a song’s key and BPM by ear</Link>
+        </p>
         {errors.length > 0 && (
           <div className="alab-error" role="alert">
             {errors.slice(0, 6).map((error) => (

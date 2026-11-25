@@ -218,7 +218,13 @@ export function GuideArticle() {
         </ol>
       </nav>
       <figure className="resource-figure">
-        <img src={guide.image} alt={guide.imageAlt} width="1280" height="800" loading="lazy" />
+        <img
+          src={guide.image}
+          alt={guide.imageAlt}
+          width="1280"
+          height={guide.imageHeight || 800}
+          loading="lazy"
+        />
       </figure>
       <div className="resource-article">
         {guide.sections.map((section, index) => (

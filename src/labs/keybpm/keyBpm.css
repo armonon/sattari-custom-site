@@ -36,6 +36,27 @@
   border-color: var(--alab-accent);
   background: var(--alab-raised);
 }
+.kb-instrument-guides {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1rem;
+  font-size: 0.875rem;
+}
+.kb-instrument-guides span {
+  color: var(--alab-muted);
+  font-weight: 600;
+}
+.kb-instrument-guides a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--alab-accent);
+  text-underline-offset: 3px;
+}
+#song-key {
+  scroll-margin-top: 110px;
+}
 @media (max-width: 480px) {
   .kb-section-nav {
     gap: 4px;

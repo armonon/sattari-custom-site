@@ -33,11 +33,21 @@ export function LabWaveform({ peaks, color = 'currentColor', progress = null, he
 }
 
 /** Drop zone plus file picker. */
-export function LabDrop({ title, hint, multiple = false, disabled = false, onFiles, children }) {
+export function LabDrop({
+  id,
+  title,
+  inputLabel = title,
+  hint,
+  multiple = false,
+  disabled = false,
+  onFiles,
+  children,
+}) {
   const [dragging, setDragging] = useState(false);
   const picker = useRef(null);
   return (
     <div
+      id={id}
       className={`alab-drop${dragging ? ' is-dragging' : ''}${disabled ? ' is-locked' : ''}`}
       onDragOver={(event) => {
         event.preventDefault();
@@ -74,7 +84,7 @@ export function LabDrop({ title, hint, multiple = false, disabled = false, onFil
         ref={picker}
         type="file"
         className="alab-file-input"
-        aria-label={title}
+        aria-label={inputLabel}
         accept="audio/*,.wav,.mp3,.flac,.m4a,.aac,.ogg,.opus,.aif,.aiff,.webm"
         multiple={multiple}
         disabled={disabled}

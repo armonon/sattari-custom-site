@@ -190,6 +190,7 @@ export const CATEGORY_LOCAL_HELP = {
         to: '/guides/choose-a-violin-for-beginners',
       },
       { label: 'Violin strings in Woodland Hills', to: '/violin-strings-woodland-hills' },
+      { label: 'Online violin tuner', to: '/tuner/violin' },
       {
         label: 'Violin restringing and string fitting',
         to: '/services/violin-restringing-woodland-hills',
@@ -216,7 +217,8 @@ export const CATEGORY_LOCAL_HELP = {
         label: 'Broken-string help for guitar and bass',
         to: '/services/string-replacement-woodland-hills',
       },
-      { label: 'Tune your instrument and practice scales', to: '/studio/keybpm#live-tuner' },
+      { label: 'Online guitar tuner', to: '/tuner/guitar' },
+      { label: 'Four- and five-string bass tuner', to: '/tuner/bass' },
       { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
     ],
   },

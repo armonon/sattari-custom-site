@@ -15,14 +15,15 @@ import useInstrumentTuner from './useInstrumentTuner';
 import useTunerReference from './useTunerReference';
 import './instrumentTuner.css';
 
-export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) {
+export default function InstrumentTuner({ songKey, onBeforeListen = () => {}, instrumentPage }) {
   const tuner = useInstrumentTuner();
-  const [instrument, setInstrument] = useState('guitar');
+  const [instrument, setInstrument] = useState(instrumentPage?.slug ?? 'guitar');
   const [target, setTarget] = useState(0);
   const [reference, setReference] = useState(440);
-  const [root, setRoot] = useState('C');
+  const [root, setRoot] = useState(instrumentPage?.root ?? 'C');
   const [scale, setScale] = useState('major');
-  const [octave, setOctave] = useState(3);
+  const [octave, setOctave] = useState(instrumentPage?.octave ?? 3);
+  const Heading = instrumentPage ? 'h1' : 'h2';
   const profile = INSTRUMENTS[instrument];
   const targetMidi = profile.notes[target];
   const {
@@ -74,14 +75,19 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
   return (
     <section className="instrument-lab" id="live-tuner" aria-labelledby="live-tuner-heading">
       <header className="instrument-lab-heading">
-        <h2 id="live-tuner-heading">Live instrument tuner</h2>
-        <p>Tap a string to hear it, or start the microphone to measure the note you play.</p>
+        <Heading id="live-tuner-heading">
+          {instrumentPage?.heading ?? 'Live instrument tuner'}
+        </Heading>
+        <p>
+          {instrumentPage?.intro ??
+            'Tap a string to hear it, or start the microphone to measure the note you play.'}
+        </p>
       </header>
       <div className="instrument-console">
         <div className="instrument-setup">
           <div className="instrument-controls instrument-preset">
             <label>
-              Instrument
+              {instrumentPage ? 'Tuning' : 'Instrument'}
               <select
                 value={instrument}
                 onChange={(e) => {
@@ -89,9 +95,9 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
                   setTarget(0);
                 }}
               >
-                {Object.entries(INSTRUMENTS).map(([id, item]) => (
+                {(instrumentPage?.presets ?? Object.keys(INSTRUMENTS)).map((id) => (
                   <option key={id} value={id}>
-                    {item.name}
+                    {INSTRUMENTS[id].name}
                   </option>
                 ))}
               </select>
@@ -397,18 +403,20 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
           </p>
         )}
       </div>
-      <aside className="instrument-service">
-        <h3>Fresh strings, then tune up</h3>
-        <p>
-          A broken string, repeated slipping or buzzing may need attention beyond tuning. Our
-          Woodland Hills shop takes string replacement and setup inquiries by appointment.
-        </p>
-        <div>
-          <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
-          <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
-          <Link to="/services/string-replacement-woodland-hills">Broken-string help</Link>
-        </div>
-      </aside>
+      {!instrumentPage && (
+        <aside className="instrument-service">
+          <h3>Fresh strings, then tune up</h3>
+          <p>
+            A broken string, repeated slipping or buzzing may need attention beyond tuning. Our
+            Woodland Hills shop takes string replacement and setup inquiries by appointment.
+          </p>
+          <div>
+            <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+            <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
+            <Link to="/services/string-replacement-woodland-hills">Broken-string help</Link>
+          </div>
+        </aside>
+      )}
     </section>
   );
 }

@@ -129,6 +129,7 @@ export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage
 // Studio alpha labs (wave 2): /studio/split, /studio/keybpm, /studio/vox.
 export const SplitPage = lazyPage(() => import('../labs/split/SplitPage'));
 export const KeyBpmPage = lazyPage(() => import('../labs/keybpm/KeyBpmPage'));
+export const InstrumentTunerPage = lazyPage(() => import('@pages/InstrumentTunerPage'));
 export const VoxPage = lazyPage(() => import('../labs/vox/VoxPage'));
 export const LyricPage = lazyPage(() => import('../labs/lyric/LyricPage'));
 export const CleanPage = lazyPage(() => import('../labs/clean/CleanPage'));

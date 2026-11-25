@@ -99,7 +99,13 @@
     "/violin-strings-woodland-hills",
     "/services/guitar-restringing-woodland-hills",
     "/services/violin-restringing-woodland-hills",
-    "/services/string-replacement-woodland-hills"
+    "/services/string-replacement-woodland-hills",
+    "/tuner/guitar",
+    "/tuner/violin",
+    "/tuner/viola",
+    "/tuner/cello",
+    "/tuner/bass",
+    "/tuner/ukulele"
   ],
   "excluded_paths": [
     "/cart",

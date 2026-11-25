@@ -1,0 +1,69 @@
+.instrument-tuner-page .alab-shell {
+  max-width: 1100px;
+}
+.instrument-page-nav,
+.instrument-page-related {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 22px;
+  padding-block: 12px;
+}
+.instrument-page-nav a,
+.instrument-page-related a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.89rem;
+  text-underline-offset: 4px;
+}
+.instrument-page-nav a {
+  color: var(--alab-muted);
+  text-decoration: none;
+}
+.instrument-page-nav a:hover {
+  color: var(--alab-text);
+  text-decoration: underline;
+}
+.instrument-tuner-page .instrument-lab {
+  background-color: var(--alab-panel);
+}
+.instrument-tuner-page .instrument-lab-heading h1 {
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-weight: 620;
+  letter-spacing: -0.055em;
+  line-height: 1.06;
+}
+.instrument-tuner-page .instrument-lab-heading > p {
+  max-width: 72ch;
+  margin-top: 12px;
+}
+.instrument-guide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 44px;
+  padding: clamp(24px, 4vw, 44px) clamp(4px, 3vw, 34px);
+}
+.instrument-guide h2 {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  line-height: 1.25;
+}
+.instrument-guide p {
+  margin-top: 10px;
+  color: var(--alab-muted);
+  line-height: 1.65;
+}
+.instrument-page-related {
+  justify-content: flex-start;
+  border-top: 1px solid var(--alab-line);
+}
+.instrument-page-related a {
+  color: var(--alab-accent);
+}
+@media (max-width: 650px) {
+  .instrument-guide {
+    grid-template-columns: 1fr;
+  }
+}

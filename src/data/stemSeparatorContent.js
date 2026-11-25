@@ -108,16 +108,18 @@ export const separatorGuides = [
   },
   {
     slug: 'find-song-key-and-bpm',
-    title: "Find a song's key & BPM and fix half/double time",
+    title: 'How to find a song’s key and BPM and check them by ear',
     linkLabel: 'Song key & BPM',
     category: 'Song analysis',
     description:
-      "Estimate a song's key, Camelot code and BPM, listen back, fix half- or double-time tempo, tap the beat, and save both the estimate and your correction.",
+      'Find the key and tempo of a song or instrumental beat from an audio file. Check the tonic, compare relative keys, tap the beat and correct a half-time or double-time BPM.',
     answer:
-      'Add a song to Sattari Key & BPM. It measures the key, Camelot code and tempo on your device without separating anything. Press play to check the result by ear, use the adjust button to pick half or double time, tap the tempo or choose another key, and export a CSV or report that keeps the detected value and your correction side by side.',
-    image: '/images/tools/separator.jpg',
-    imageAlt: 'Sattari Stem Separator workspace used to separate and analyze audio files',
-    action: { label: 'Open Key & BPM', path: '/studio/keybpm' },
+      'Open the song key detector and choose an audio file. It estimates the musical key, Camelot code and tempo on your device. Listen for the note that feels like home at phrase endings, then tap along with the beat to check the BPM. You can save both the original estimates and your corrections.',
+    image: '/images/tools/key-bpm.jpg',
+    imageHeight: 858,
+    imageAlt:
+      'Sattari song analysis showing C major, Camelot 8B and a half-time correction to the detected tempo',
+    action: { label: 'Open the song key and BPM finder', path: '/studio/keybpm#song-key' },
     sections: [
       {
         title: 'Read the full song before the individual parts',
@@ -127,15 +129,21 @@ export const separatorGuides = [
         ],
       },
       {
-        title: 'Key is a suggestion, not a verdict',
+        title: 'How to check a major or minor key',
         paragraphs: [
           'A key estimate summarizes the tonal pattern the analyzer hears. Relative keys share a key signature. C major and A natural minor use the same seven notes, but C and A feel like different points of rest. In A minor, a phrase may also use G-sharp to lead back to A. Repeated notes, unusual tunings and separation artifacts can also affect the estimate.',
           'Prominent notes are pitch classes, not a melody, a bass transcription or a list of chords in time. Try the suggested home note on your instrument and compare it with the ends of phrases. If the result disagrees with the recording, trust a listening check over a confident-looking label.',
-          'Drum stems are not assigned a musical key. Weak or unsuitable tonal material can be shown as undetermined instead of receiving a useful key estimate.',
         ],
       },
       {
-        title: 'BPM versus detected pulse',
+        title: 'Can I find the key of an instrumental beat?',
+        paragraphs: [
+          'Listen for a pitched part. A bass line, chord loop or sample may establish a tonal center even when the beat has no vocals. Play a phrase that resolves, then compare the suggested tonic and the second-choice tonic against that ending.',
+          'A percussion loop can give a clear tempo while leaving the key undetermined. Likewise, a single sustained bass note can give a tuner a clear pitch while fitting several possible keys. When using Stem Separator, its drum stem is intentionally left without a key.',
+        ],
+      },
+      {
+        title: 'How to count the beat and check the BPM',
         paragraphs: [
           'BPM means beats per minute. The analyzer looks for a repeating pulse, which may correspond to the beat, half the beat rate or twice it. For example, a pattern that feels like 80 BPM may generate an estimate around 160 BPM.',
           'Count steady beats along with the original, then check which interpretation matches the phrasing. A vocal line with long gaps is a weak tempo reference; the drum stem often supplies clearer rhythmic information. Estimates do not create a beat grid or guarantee that a song stays at one tempo.',

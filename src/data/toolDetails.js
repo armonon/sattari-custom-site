@@ -74,9 +74,9 @@ export const toolDetails = {
     path: '/studio/keybpm',
     status: 'Beta',
     description:
-      'Online tuner for guitar, bass, violin and more, with reference notes, scales, song key and BPM detection. Inputs, privacy and limits.',
+      'Compare live chromatic tuning with song key and BPM detection. See supported audio formats, concert pitches, scale playback, export options and privacy details.',
     summary:
-      'Tune a single live note, hear instrument tuning references and practice scales, then estimate a recorded song’s key and tempo in the same tool. Live microphone audio is not recorded or uploaded. Saved song reports keep detected values and your corrections apart.',
+      'Choose the live tuner to match an open string by ear or measure one note with your microphone. Choose the song key detector to estimate the key, Camelot code and tempo of a recording. Both run on your device. Song reports keep the original measurements alongside your corrections.',
     screenshot: '/images/tools/key-bpm.jpg',
     screenshotWidth: 1280,
     screenshotHeight: 858,
@@ -84,8 +84,12 @@ export const toolDetails = {
       'Actual Key & BPM result for the original Sattari demo (C major, 8B, 120 BPM), with the tempo set to half time by the user. The detected value stays visible beside the correction.',
     facts: [
       [
-        'Live tuner and scales',
-        'Guitar standard/drop D, four- and five-string bass, violin, viola, cello, high-G ukulele and chromatic presets. Tap an open string to hear its pitch until you press Stop. In microphone mode the string buttons select the note to measure. Choose a concert A of 432, 440, 441, 442 or 443 Hz. The live meter measures one note at a time, and seven scales are available to practice. Microphone starts only on request and stops when the page is hidden. Real instruments and microphones vary; low bass and noisy rooms may be unreliable.',
+        'Live chromatic tuner',
+        'Choose Chromatic to see the nearest note and how many cents sharp or flat you are. For open strings, choose standard or Drop D guitar, four- or five-string bass, violin, viola, cello or high-G ukulele. Tap a string to hear it continuously, or select a string while the microphone is on to set your tuning target. A quiet room helps the microphone pick out low notes.',
+      ],
+      [
+        'Calibration and scales',
+        'Choose a concert A of 432, 440, 441, 442 or 443 Hz. Hear individual notes or play a whole major, natural minor, pentatonic, blues, Dorian or Mixolydian scale. After analyzing a song, Use song key sets the practice scale to the selected track’s key.',
       ],
       [
         'Input',
@@ -105,7 +109,7 @@ export const toolDetails = {
       ],
       [
         'Privacy',
-        'Audio is decoded and measured on your device and never uploaded. Reports and CSV contain names and measurements, not audio.',
+        'Audio is decoded and measured on your device. Live microphone sound is never recorded or uploaded. The microphone starts on request and stops when the page is hidden. Reports and CSV contain track names and measurements.',
       ],
       [
         'Storage',

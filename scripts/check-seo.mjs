@@ -23,6 +23,14 @@ const localTargets = [
   '/services/guitar-restringing-woodland-hills',
 ];
 const linkedLocalTargets = new Set();
+const tunerPresets = {
+  '/tuner/guitar': 'guitar',
+  '/tuner/violin': 'violin',
+  '/tuner/viola': 'viola',
+  '/tuner/cello': 'cello',
+  '/tuner/bass': 'bass',
+  '/tuner/ukulele': 'ukulele',
+};
 for (const path of localTargets) {
   assert.ok(urls.includes(origin + path), `${path}: new local page missing from sitemap`);
 }
@@ -32,6 +40,28 @@ for (const url of urls) {
   const file = path === '/' ? 'dist/index.html' : `dist${path}.html`;
   const dom = new JSDOM(await readFile(file, 'utf8'), { url });
   const doc = dom.window.document;
+  if (path === '/studio/keybpm') {
+    for (const tunerPath of Object.keys(tunerPresets)) {
+      assert.ok(urls.includes(origin + tunerPath), `Missing tuner sitemap URL: ${tunerPath}`);
+      assert.ok(doc.querySelector(`a[href="${tunerPath}"]`), `Missing hub link to ${tunerPath}`);
+    }
+    for (const id of ['live-tuner', 'scales', 'song-key']) {
+      assert.ok(doc.getElementById(id), `Missing tuner destination #${id}`);
+    }
+  }
+  if (Object.hasOwn(tunerPresets, path)) {
+    const preset = tunerPresets[path];
+    const selects = [...doc.querySelectorAll('#live-tuner select')];
+    assert.ok(
+      selects.some((select) => select.value === preset),
+      `${path}: wrong initial preset`
+    );
+    assert.ok(doc.title.toLowerCase().includes(preset), `${path}: instrument missing from title`);
+    assert.ok(
+      doc.querySelector('h1').textContent.toLowerCase().includes(preset),
+      `${path}: instrument missing from H1`
+    );
+  }
   for (const link of doc.querySelectorAll('a[href]')) {
     const target = new URL(link.href, url);
     if (

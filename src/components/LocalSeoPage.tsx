@@ -1662,10 +1662,25 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         <aside className="container local-seo-details">
           <h2>Ready to tune and practice?</h2>
           <p>
-            Once the instrument is ready to play, use our{' '}
-            <Link to="/studio/keybpm#live-tuner">online guitar, bass and violin tuner</Link>,
-            practice scales, or find a recorded song’s key. A tuner checks pitch; it does not
-            diagnose a repair problem.
+            {pageKey.startsWith('violin') ? (
+              <>
+                Check each open string with the <Link to="/tuner/violin">online violin tuner</Link>.
+              </>
+            ) : pageKey.startsWith('guitar') ? (
+              <>
+                Check the new strings in standard tuning or drop D with the{' '}
+                <Link to="/tuner/guitar">online guitar tuner</Link>.
+              </>
+            ) : (
+              <>
+                Check the pitch of a replacement string with the{' '}
+                <Link to="/tuner/guitar">guitar tuner</Link>,{' '}
+                <Link to="/tuner/bass">bass tuner</Link>, or{' '}
+                <Link to="/tuner/violin">violin tuner</Link>.
+              </>
+            )}{' '}
+            You can also <Link to="/studio/keybpm#scales">practice scales</Link> or{' '}
+            <Link to="/studio/keybpm#song-key">find a song’s key and tempo</Link>.
           </p>
         </aside>
       )}
