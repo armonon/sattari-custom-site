@@ -12,8 +12,7 @@ export default function useInstrumentTuner() {
     const current = live.current;
     live.current = null;
     if (!current) return;
-    clearTimeout(current.startTimer);
-    if (current.frame != null) cancelAnimationFrame(current.frame);
+    clearInterval(current.monitor);
     current.stream?.getTracks().forEach((track) => {
       track.removeEventListener?.('ended', current.onEnded);
       track.stop();
@@ -29,7 +28,7 @@ export default function useInstrumentTuner() {
   }, [release]);
   const start = useCallback(async () => {
     release();
-    const current = { last: -Infinity };
+    const current = {};
     live.current = current;
     setError('');
     setPitch(null);
@@ -71,14 +70,6 @@ export default function useInstrumentTuner() {
       if (!Context) throw new Error('This browser does not support the audio tuner.');
       const context = new Context();
       current.context = context;
-      // Permission is already granted. Release the mic if the audio device never wakes.
-      current.startTimer = setTimeout(
-        () => fail('The microphone audio could not start. Check the input device and try again.'),
-        6000
-      );
-      await context.resume();
-      if (live.current !== current) return;
-      clearTimeout(current.startTimer);
       const analyser = context.createAnalyser();
       // Keep at least 160 ms for bass fundamentals, including 192 kHz audio interfaces.
       analyser.fftSize = Math.max(
@@ -89,18 +80,56 @@ export default function useInstrumentTuner() {
       current.source = source;
       source.connect(analyser);
       const data = new Float32Array(analyser.fftSize);
-      const update = (time) => {
+      let sampledClock = context.currentTime;
+      let lastProgress = performance.now();
+      let listening = false;
+      let heardInputClock = false;
+      let retried = false;
+      const update = () => {
         if (live.current !== current) return;
-        if (time - current.last >= 80) {
+        const clock = context.currentTime;
+        // Some devices report "running" indefinitely after rendering just one quantum.
+        // An advancing input clock is valid even when the room is completely silent.
+        if (context.state === 'running' && clock - sampledClock >= 0.05) {
+          sampledClock = clock;
+          lastProgress = performance.now();
+          retried = false;
+          if (!listening) {
+            listening = true;
+            heardInputClock = true;
+            setStatus('listening');
+          }
           analyser.getFloatTimeDomainData(data);
           const reduced = reduceSampleRate(data, context.sampleRate, 12000);
           setPitch(detectTunerPitch(reduced.samples, reduced.rate));
-          current.last = time;
+          return;
         }
-        current.frame = requestAnimationFrame(update);
+        const elapsed = performance.now() - lastProgress;
+        if (elapsed >= 4000) {
+          fail(
+            heardInputClock
+              ? 'Microphone audio stopped responding. Check the selected input device and start the tuner again.'
+              : 'The microphone audio could not start. Check the selected input device and start the tuner again.'
+          );
+        } else if (!retried && elapsed >= 1200) {
+          retried = true;
+          if (listening) {
+            listening = false;
+            setPitch(null);
+            setStatus('requesting');
+          }
+          // Reopen a running but frozen input; a suspended input only needs resume().
+          const reset = context.state === 'running' ? context.suspend() : Promise.resolve();
+          void reset
+            .then(() => {
+              if (live.current === current) return context.resume();
+            })
+            .catch(() => {});
+        }
       };
-      current.frame = requestAnimationFrame(update);
-      setStatus('listening');
+      current.monitor = setInterval(update, 90);
+      await context.resume();
+      update();
     } catch (cause) {
       fail(
         cause?.name === 'NotAllowedError'

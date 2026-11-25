@@ -310,7 +310,10 @@ it('selects the string silently while the microphone is starting or listening', 
     'AudioContext',
     class extends Context {
       sampleRate = 48000;
-      createAnalyser = () => ({});
+      resume = vi.fn(async () => {
+        this.currentTime += 0.09;
+      });
+      createAnalyser = () => ({ getFloatTimeDomainData: (data) => data.fill(0) });
       createMediaStreamSource = () => ({ connect() {}, disconnect() {} });
     }
   );
@@ -323,8 +326,6 @@ it('selects the string silently while the microphone is starting or listening', 
       })
   );
   vi.stubGlobal('navigator', { mediaDevices: { getUserMedia } });
-  vi.stubGlobal('requestAnimationFrame', () => 1);
-  vi.stubGlobal('cancelAnimationFrame', () => {});
   renderTuner();
   click('Start live tuner');
   click(/E4.*High E/i);
