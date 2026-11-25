@@ -70,19 +70,23 @@ export const toolDetails = {
   'key-bpm': {
     key: 'key-bpm',
     slug: 'key-bpm',
-    name: 'Sattari Key & BPM',
+    name: 'Sattari Tuner & Key',
     path: '/studio/keybpm',
     status: 'Beta',
     description:
-      'Find the key, Camelot code and BPM of songs in your browser. Supported files, half/double tempo, corrections, reports, CSV and privacy.',
+      'Online tuner for guitar, bass, violin and more, with reference notes, scales, song key and BPM detection. Inputs, privacy and limits.',
     summary:
-      'Estimate the musical key, Camelot code and tempo of one song or a folder, listen back, correct half- or double-time and the key, and export a CSV or report that keeps the detection and your corrections apart.',
+      'Tune a single live note, hear instrument tuning references and practice scales, then estimate a recorded song’s key and tempo in the same tool. Live microphone audio is not recorded or uploaded. Saved song reports keep detected values and your corrections apart.',
     screenshot: '/images/tools/key-bpm.jpg',
     screenshotWidth: 1280,
     screenshotHeight: 858,
     screenshotCaption:
       'Actual Key & BPM result for the original Sattari demo (C major, 8B, 120 BPM), with the tempo set to half time by the user. The detected value stays visible beside the correction.',
     facts: [
+      [
+        'Live tuner and scales',
+        'Guitar standard/drop D, four- and five-string bass, violin, viola, cello, high-G ukulele and chromatic presets. Single-note microphone pitch, 432/440/441/442/443 Hz references and seven scale patterns. Microphone starts only on request and stops when the page is hidden. Real instruments and microphones vary; low bass and noisy rooms may be unreliable.',
+      ],
       [
         'Input',
         'Audio files your browser can decode (WAV, MP3, FLAC, M4A, OGG; AIFF and M4A support varies by browser). Mono or stereo, up to 10 minutes and 200 MB each, up to 200 tracks in a list.',

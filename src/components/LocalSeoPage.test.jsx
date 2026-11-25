@@ -114,6 +114,8 @@ describe('local search pages', () => {
       'guitar-strings',
       'violin-strings',
       'guitar-restringing',
+      'violin-restringing',
+      'string-replacement',
     ]) {
       expect(links).toContain(new URL(localSeoPages[key].url).pathname);
     }

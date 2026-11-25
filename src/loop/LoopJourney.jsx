@@ -66,7 +66,7 @@ export function SongArt({ lesson, small = false }) {
   );
 }
 
-function JourneyHeader({ stage, onBack, onTool }) {
+function JourneyHeader({ stage, onBack }) {
   return (
     <header className="lj-header">
       <button
@@ -96,15 +96,14 @@ function JourneyHeader({ stage, onBack, onTool }) {
           <ArrowLeft size={16} />
           <span>Hub</span>
         </Link>
-        <button
-          type="button"
+        <Link
           className="lj-tool-link"
-          aria-label="Tune your guitar"
-          onClick={() => onTool('tuner')}
+          to="/studio/keybpm#live-tuner"
+          aria-label="Tune your instrument and find song key"
         >
           <SlidersHorizontal size={16} />
-          <span>Tune your guitar</span>
-        </button>
+          <span>Tuner & key</span>
+        </Link>
       </div>
     </header>
   );
@@ -725,7 +724,6 @@ export default function LoopJourney({
   onChoose,
   onUpload,
   onBack,
-  onTool,
   onPractice,
   onExitPractice,
   onStudio,
@@ -790,7 +788,7 @@ export default function LoopJourney({
     );
   return (
     <div className="lj-journey">
-      <JourneyHeader stage={stage} onBack={onBack} onTool={onTool} />
+      <JourneyHeader stage={stage} onBack={onBack} />
       {stage === 'choose' ? (
         <SongLibrary
           records={records}

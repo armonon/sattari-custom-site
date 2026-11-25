@@ -94,6 +94,8 @@ const ROUTES: RouteDefinition[] = [
   localPage('/guitar-strings-woodland-hills', 'guitar-strings'),
   localPage('/violin-strings-woodland-hills', 'violin-strings'),
   localPage('/services/guitar-restringing-woodland-hills', 'guitar-restringing'),
+  localPage('/services/violin-restringing-woodland-hills', 'violin-restringing'),
+  localPage('/services/string-replacement-woodland-hills', 'string-replacement'),
   localPage('/los-angeles-music-store', 'music-store'),
   localPage('/woodland-hills-music-store', 'woodland-hills'),
   localPage('/encino-music-store', 'encino'),

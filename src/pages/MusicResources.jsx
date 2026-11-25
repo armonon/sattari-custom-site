@@ -23,6 +23,8 @@ function labelFor(path) {
     '/guitar-strings-woodland-hills': 'Guitar strings in Woodland Hills',
     '/violin-strings-woodland-hills': 'Violin strings in Woodland Hills',
     '/services/guitar-restringing-woodland-hills': 'Guitar restringing and string replacement',
+    '/services/violin-restringing-woodland-hills': 'Violin restringing and string fitting',
+    '/services/string-replacement-woodland-hills': 'Broken guitar, bass or violin string help',
   };
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);

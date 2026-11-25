@@ -97,7 +97,9 @@
   "required_new_paths": [
     "/guitar-strings-woodland-hills",
     "/violin-strings-woodland-hills",
-    "/services/guitar-restringing-woodland-hills"
+    "/services/guitar-restringing-woodland-hills",
+    "/services/violin-restringing-woodland-hills",
+    "/services/string-replacement-woodland-hills"
   ],
   "excluded_paths": [
     "/cart",

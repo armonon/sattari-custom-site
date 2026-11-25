@@ -65,7 +65,11 @@ it('rejects a non-audio import and allows returning to the demo', async () => {
 
 it('opens the chord library and updates an accessible fingering diagram', async () => {
   await renderPage();
-  fireEvent.click(screen.getByRole('button', { name: 'Tune your guitar' }));
+  expect(
+    screen.getByRole('link', { name: 'Tune your instrument and find song key' })
+  ).toHaveAttribute('href', '/studio/keybpm#live-tuner');
+  fireEvent.click(screen.getByRole('button', { name: 'Learn Night shift' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Explore & edit the full practice sheet' }));
   fireEvent.click(screen.getByRole('button', { name: 'Chord library', exact: true }));
   fireEvent.change(screen.getByLabelText('Find a chord'), { target: { value: 'F#' } });
   fireEvent.click(screen.getByRole('button', { name: 'F#m', exact: true }));

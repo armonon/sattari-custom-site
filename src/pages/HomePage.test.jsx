@@ -89,7 +89,7 @@ it('omits the listening desk, extra promotions, development row and listening sh
 
 it('links the current Key & BPM tool to its matching reference page', () => {
   renderHome();
-  expect(screen.getByRole('link', { name: 'Open Sattari Key & BPM' })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Open Sattari Tuner & Key' })).toHaveAttribute(
     'href',
     '/studio/keybpm'
   );

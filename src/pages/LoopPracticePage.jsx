@@ -651,10 +651,6 @@ function LoopPracticeApp() {
           onBack={() => goTo('choose')}
           onExitPractice={() => goTo('overview')}
           onPractice={() => goTo('focus')}
-          onTool={(id) => {
-            changeNav(id);
-            goTo('studio');
-          }}
           onStudio={() => {
             changeNav('practice');
             goTo('studio');

@@ -9,10 +9,10 @@ export const LAB_TOOLS = [
   },
   {
     id: 'keybpm',
-    name: 'Key & BPM',
+    name: 'Tuner & Key',
     path: '/studio/keybpm',
-    seoTitle: 'Key & BPM Finder: Song Key, Camelot & Tempo, Free',
-    blurb: 'Find key, Camelot and tempo, listen back, fix half/double time, export CSV.',
+    seoTitle: 'Online Music Tuner, Song Key Detector & Scales',
+    blurb: 'Tune guitar, bass and violin live, practice scales, or find song key and BPM.',
     stage: 'Beta',
   },
   {

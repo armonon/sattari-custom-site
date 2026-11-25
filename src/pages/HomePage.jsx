@@ -123,9 +123,9 @@ const tools = [
     color: '#b9e3c3',
   },
   {
-    name: 'Key & BPM',
+    name: 'Tuner & Key',
     category: 'Understand a song',
-    detail: 'Find key, Camelot and tempo, then check half or double time.',
+    detail: 'Tune guitar, bass or violin, practice scales, and find song key and BPM.',
     path: '/studio/keybpm',
     reference: '/tools/key-bpm',
     image: '/images/tools/key-bpm.jpg',
@@ -290,7 +290,9 @@ export default function HomePage() {
               <nav aria-label="Strings and restringing">
                 <Link to="/guitar-strings-woodland-hills">Guitar strings</Link>
                 <Link to="/violin-strings-woodland-hills">Violin strings</Link>
-                <Link to="/services/guitar-restringing-woodland-hills">String replacement</Link>
+                <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+                <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
+                <Link to="/studio/keybpm#live-tuner">Tune your instrument</Link>
               </nav>
               <p>Need help fitting a set? Contact the shop before your appointment.</p>
             </section>

@@ -31,7 +31,9 @@ type PageKey =
   | 'guitar-setup'
   | 'guitar-strings'
   | 'violin-strings'
-  | 'guitar-restringing';
+  | 'guitar-restringing'
+  | 'violin-restringing'
+  | 'string-replacement';
 
 interface LocalSeoPageProps {
   pageKey: PageKey;
@@ -1206,6 +1208,165 @@ export const localSeoPages = {
       },
     ],
   },
+  'violin-restringing': {
+    eyebrow: 'Violin restringing in Woodland Hills',
+    title: 'Violin restringing and string replacement in Woodland Hills',
+    seoTitle: 'Violin Restringing & String Replacement | Woodland Hills',
+    description:
+      'Ask Sattari Music about violin string replacement, fitting and tuning concerns in Woodland Hills. Confirm violin size, string ends, quote and appointment.',
+    url: 'https://sattarimusic.com/services/violin-restringing-woodland-hills',
+    schemaType: 'Service',
+    schemaName: 'Violin string replacement inquiries at Sattari Music',
+    image: '/sattari site/violins/violin-strings.jpg',
+    intro:
+      'A worn set, a broken E string or a string that will not settle can interrupt practice. Tell Sattari Music your violin size, which string needs attention and any teacher requirements. Our Woodland Hills team will confirm the proposed string fitting, compatible replacements, price and appointment before you bring the instrument in.',
+    highlights: [
+      'Violin strings',
+      'Single-string inquiries',
+      'Fit checked first',
+      'By appointment',
+    ],
+    offerings: [
+      'Inquiries about replacing one violin string or a full set',
+      'Violin size, ball-end or loop-end fitting and teacher requirements discussed before ordering',
+      'Separate assessment requests for slipping pegs, bridge concerns or repeated breakage',
+      'A quote and appointment confirmed by the shop before work',
+    ],
+    goodFor: [
+      'Parents arranging a student violin string replacement',
+      'Players checking a broken E, A, D or G string',
+      'Musicians replacing worn strings ahead of practice',
+      'Owners whose recurring tuning problem needs assessment',
+    ],
+    details: [
+      {
+        title: 'One broken string or a complete set?',
+        copy: 'Name the affected string and describe when it broke. A single replacement may be the right inquiry when the other strings are usable; an older or uneven set can be discussed as a whole. The team needs to check compatible options and availability. No particular brand, tension or single-string stock is promised here.',
+      },
+      {
+        title: 'Size and string ends matter',
+        copy: 'Include the violin size and a photo or name of the previous set when available. The current Sattari string listing specifies 4/4 and 3/4 fit with ball ends. A violin requiring a loop-end E string, a different fractional size or a teacher-specified set needs a separate compatibility check.',
+      },
+      {
+        title: 'Tell us about bridge, peg or tuning concerns',
+        copy: 'If the bridge is leaning, a peg keeps slipping or the same string repeatedly breaks, describe that before requesting a routine string change. Do not force a stuck peg or assume a tuner reading explains the cause. Fitting strings and diagnosing a recurring problem can involve different work; confirm scope before approving it.',
+      },
+      {
+        title: 'Confirm the quote and appointment',
+        copy: 'Ask about string cost, labor, whether customer-supplied strings can be used and expected collection time. Confirm any additional assessment charges first. Visits to 4881 Topanga Canyon Blvd #202 are by appointment; an inquiry does not reserve stock or guarantee same-day service.',
+      },
+    ],
+    productIds: ['violin-strings'],
+    primaryCta: {
+      label: 'Ask about violin restringing',
+      href: '#local-inquiry',
+    },
+    secondaryCta: {
+      label: 'Compare violin strings',
+      to: '/violin-strings-woodland-hills',
+    },
+    formService: 'repairs',
+    formSource: 'Violin restringing Woodland Hills',
+    inquiryCopy:
+      'Include violin size, the affected string, ball or loop ends if known, the existing set or teacher request, and your deadline. Mention bridge or peg concerns and repeated breakage.',
+    faqs: [
+      {
+        q: 'Can I ask for just one broken violin string to be replaced?',
+        a: 'Yes. Identify the affected string and violin size. The team will confirm whether a compatible single string is available and whether fitting or assessment is appropriate before quoting.',
+      },
+      {
+        q: 'Does a violin string change include a setup?',
+        a: 'Not automatically. Ask what the string fitting quote includes, and describe bridge, peg, action or recurring tuning concerns separately so the team can discuss any assessment.',
+      },
+      {
+        q: 'How much is violin restringing?',
+        a: 'Request a quote for the actual strings and work. Confirm string cost, labor, any extra assessment and turnaround before agreeing. There is no universal service price published here.',
+      },
+      {
+        q: 'Can I use the online tuner after a string change?',
+        a: 'The combined tuner has a violin preset for G3, D4, A4 and E5 with concert A at 440 Hz by default. Tune one note at a time and follow your teacher’s guidance. A pitch reading does not diagnose bridge, peg or string damage.',
+      },
+    ],
+  },
+  'string-replacement': {
+    eyebrow: 'Broken-string help in Woodland Hills',
+    title: 'Broken instrument string? Plan the right replacement',
+    seoTitle: 'Broken Guitar or Violin String? Replacement Help | Woodland Hills',
+    description:
+      'Get help planning a broken guitar, bass or violin string replacement. Describe the instrument, string and symptoms; confirm compatible parts and service with Sattari.',
+    url: 'https://sattarimusic.com/services/string-replacement-woodland-hills',
+    schemaType: 'WebPage',
+    schemaName: 'Instrument string replacement planning at Sattari Music',
+    image: '/sattari site/violins/violin-strings.jpg',
+    intro:
+      'A snapped string and a tuning problem are different starting points. This page helps you prepare a useful replacement inquiry: which instrument and string, what happened, and whether the issue has happened before. Sattari Music in Woodland Hills will confirm compatible strings, service scope and appointment availability for your particular instrument.',
+    highlights: [
+      'Broken string',
+      'Guitar and bass questions',
+      'Violin string help',
+      'Quote before work',
+    ],
+    offerings: [
+      'Help routing a string purchase, guitar restringing or violin string-fitting inquiry',
+      'Compatibility questions for instrument type, scale length, gauge and string ends',
+      'Assessment inquiries for repeated breakage, slipping or buzzing',
+      'Separate confirmation of accepted work, price and timing',
+    ],
+    goodFor: [
+      'A guitar string breaks before the next practice',
+      'A violin student needs to identify a replacement string',
+      'A bass player is unsure which scale length or set to request',
+      'A player wants to distinguish string replacement from a setup inquiry',
+    ],
+    details: [
+      {
+        title: 'Identify the instrument and string',
+        copy: 'For a guitar or bass, include make, model, number of strings, usual tuning and gauge if known. For bass, include scale length or model and whether it has four or five strings. For a violin, include size, the affected string and end fitting. Do not assume one set fits every instrument.',
+      },
+      {
+        title: 'Describe how and where it broke',
+        copy: 'Say whether the string broke while tuning or playing, whether it has happened repeatedly, and whether the break was near the bridge, nut or tuning post. These observations help the team decide what to assess; they are not enough for an online diagnosis. Avoid forcing a peg or tightening damaged hardware.',
+      },
+      {
+        title: 'String change, tuning or setup?',
+        copy: 'Replacing a string is not the same as correcting intonation, buzzing, high action, slipping pegs or damaged parts. Changing gauge or tuning can also affect setup. Describe those symptoms so the proposed work can be confirmed separately instead of assuming a fresh set will solve everything.',
+      },
+      {
+        title: 'Check availability before making a trip',
+        copy: 'Confirm the exact replacement or compatible alternatives, string and labor prices, whether your own strings can be fitted, and appointment and collection times. Bass models, unusual bridges and fractional violins require specific confirmation. No walk-in, emergency or same-day availability is guaranteed.',
+      },
+    ],
+    primaryCta: {
+      label: 'Describe your string problem',
+      href: '#local-inquiry',
+    },
+    secondaryCta: {
+      label: 'Guitar restringing details',
+      to: '/services/guitar-restringing-woodland-hills',
+    },
+    formService: 'repairs',
+    formSource: 'Broken instrument string Woodland Hills',
+    inquiryCopy:
+      'Tell us the instrument model or violin size, affected string, usual tuning, where and when it broke, whether this is recurring, and when you need the instrument.',
+    faqs: [
+      {
+        q: 'Can I replace one string instead of the whole set?',
+        a: 'Ask about a matching individual string and the condition of the existing set. Availability, compatibility and your preference determine the options. A whole set is not automatically required or automatically included.',
+      },
+      {
+        q: 'Can I ask about bass restringing?',
+        a: 'Send the bass model, scale length, number of strings, gauge and tuning. The shop must confirm compatible stock, whether it can accept the particular work, labor and timing before scheduling.',
+      },
+      {
+        q: 'Why does the same string keep breaking?',
+        a: 'There can be several causes. Record where the break occurs and the circumstances, then request an assessment. A website or tuner cannot establish the cause from the symptom alone.',
+      },
+      {
+        q: 'Will tuning fix a broken string?',
+        a: 'No. A broken string needs an appropriate replacement. Once the instrument is ready, use a single-note tuner to check pitch. Recurring slipping, buzzing or tuning trouble should be described in your service inquiry.',
+      },
+    ],
+  },
 } as const;
 
 const pages = localSeoPages;
@@ -1245,11 +1406,23 @@ const RELATED_PAGES: Record<PageKey, PageKey[]> = {
   guitars: ['guitar-strings', 'guitar-restringing', 'guitar-setup', 'music-lessons'],
   'woodland-drums': ['drums', 'accessories', 'repair-woodland-hills', 'rehearsal-space'],
   'encino-violins': ['violins', 'violin-strings', 'violin-repair', 'music-lessons'],
-  'violin-repair': ['violin-strings', 'encino-violins', 'violins', 'repair-woodland-hills'],
+  'violin-repair': ['violin-restringing', 'violin-strings', 'string-replacement', 'violins'],
   'guitar-setup': ['guitar-strings', 'guitar-restringing', 'guitars', 'repair-calabasas'],
   'guitar-strings': ['guitar-restringing', 'guitar-setup', 'guitars', 'violin-strings'],
-  'violin-strings': ['violin-repair', 'violins', 'encino-violins', 'guitar-strings'],
-  'guitar-restringing': ['guitar-strings', 'guitar-setup', 'guitars', 'violin-repair'],
+  'violin-strings': ['violin-restringing', 'violin-repair', 'violins', 'guitar-strings'],
+  'violin-restringing': ['violin-strings', 'violin-repair', 'string-replacement', 'violins'],
+  'string-replacement': [
+    'guitar-restringing',
+    'violin-restringing',
+    'guitar-setup',
+    'violin-strings',
+  ],
+  'guitar-restringing': [
+    'guitar-strings',
+    'guitar-setup',
+    'string-replacement',
+    'violin-restringing',
+  ],
 };
 
 // Home → (Shop | Services) → current — drives both the breadcrumb UI and schema.
@@ -1479,6 +1652,23 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         </article>
       </div>
 
+      {[
+        'guitar-restringing',
+        'violin-restringing',
+        'string-replacement',
+        'violin-strings',
+        'guitar-strings',
+      ].includes(pageKey) && (
+        <aside className="container local-seo-details">
+          <h2>Ready to tune and practice?</h2>
+          <p>
+            Once the instrument is ready to play, use our{' '}
+            <Link to="/studio/keybpm#live-tuner">online guitar, bass and violin tuner</Link>,
+            practice scales, or find a recorded song’s key. A tuner checks pitch; it does not
+            diagnose a repair problem.
+          </p>
+        </aside>
+      )}
       <div className="container local-seo-faq">
         <div className="section-header narrow">
           <p className="eyebrow">Common questions</p>

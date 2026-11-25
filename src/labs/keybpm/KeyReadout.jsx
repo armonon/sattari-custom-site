@@ -119,7 +119,8 @@ function useReferenceTones() {
     setDroneKey(null);
   }, []);
   const startDrone = (key) => {
-    stopDrone();
+    window.dispatchEvent(new Event('sattari:stop-reference'));
+    window.dispatchEvent(new Event('sattari:reference-tone'));
     const audio = ensure();
     const root = tonicFrequency(key, 2);
     if (!audio || !root) return;
@@ -144,6 +145,8 @@ function useReferenceTones() {
     setDroneKey(key);
   };
   const playScale = (key) => {
+    window.dispatchEvent(new Event('sattari:stop-reference'));
+    window.dispatchEvent(new Event('sattari:reference-tone'));
     const audio = ensure();
     const notes = scaleFrequencies(key, 3);
     if (!audio || !notes.length) return;
@@ -170,6 +173,16 @@ function useReferenceTones() {
     },
     [stopDrone]
   );
+  useEffect(() => {
+    const stop = () => {
+      stopDrone();
+      const current = context.current;
+      context.current = null;
+      void current?.close?.().catch(() => {});
+    };
+    window.addEventListener('sattari:stop-reference', stop);
+    return () => window.removeEventListener('sattari:stop-reference', stop);
+  }, [stopDrone]);
   return { droneKey, startDrone, stopDrone, playScale };
 }
 

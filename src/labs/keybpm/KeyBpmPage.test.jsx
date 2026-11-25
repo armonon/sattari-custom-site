@@ -6,7 +6,7 @@ import { createKeyBpmReport } from './keyBpmReport';
 const lockerOpen = vi.hoisted(() => ({ current: null }));
 const decodeTrack = vi.hoisted(() => vi.fn());
 vi.mock('../../utils/stemSeparator', () => ({ decodeTrack, SAMPLE_RATE: 44100 }));
-vi.mock('../../utils/seo', () => ({ SEO: () => null }));
+vi.mock('../../utils/seo', () => ({ SEO: () => null, StructuredData: () => null }));
 vi.mock('../../pwa/SattariAppMetadata', () => ({ default: () => null }));
 vi.mock('../../suite/suiteKit', async (importOriginal) => ({
   ...(await importOriginal()),

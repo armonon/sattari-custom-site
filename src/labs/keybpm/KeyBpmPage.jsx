@@ -14,6 +14,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import KeyReadout from './KeyReadout';
+import InstrumentTuner from './InstrumentTuner';
+import { StructuredData } from '../../utils/seo';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
@@ -652,16 +654,45 @@ export default function KeyBpmPage() {
   return (
     <AudioLabShell
       tool="keybpm"
-      title="Key & BPM"
+      title="Music Tuner & Song Key Detector"
       badge="Beta"
       eyebrow="Sattari Music"
-      summary="Find the key, Camelot code and tempo of one song or a whole folder. Listen back, fix half- or double-time, tap the beat, and save the values you trust."
-      description="Detect the musical key, Camelot code and BPM of one or many tracks in your browser. Audition each song, correct half/double tempo or the key, and export CSV or a report."
+      summary="Tune your instrument live, practice scales, or find a song’s key and BPM. Guitar, bass, violin and more, together in one browser tool."
+      description="Free online music tuner for guitar, bass and violin, with practice scales and a song key detector. Find key and BPM locally in your browser."
       limits={LIMITS}
       limitsTitle="What the estimates can and cannot tell you"
       related={{ path: '/stem-separator', label: 'Stem Separator' }}
     >
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          '@id': 'https://sattarimusic.com/studio/keybpm#application',
+          name: 'Sattari Music Tuner & Song Key Detector',
+          url: 'https://sattarimusic.com/studio/keybpm',
+          applicationCategory: 'MusicApplication',
+          operatingSystem: 'Web browser',
+          isAccessibleForFree: true,
+          featureList: [
+            'Single-note microphone tuner',
+            'Guitar, bass, violin, viola, cello and ukulele presets',
+            'Major, minor, pentatonic, blues, Dorian and Mixolydian scales',
+            'Recorded song key, Camelot and BPM estimates',
+            'Local audio processing',
+          ],
+        }}
+      />
       <div className="alab-workspace">
+        <nav className="instrument-jump" aria-label="Tuner and key detector sections">
+          <a href="#live-tuner">Live tuner</a>
+          <a href="#song-key">Song key & BPM</a>
+          <a href="#scales">Scales</a>
+        </nav>
+        <InstrumentTuner
+          songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
+          onBeforeListen={stopAudition}
+        />
+        <div id="song-key" style={{ scrollMarginTop: 110 }} />
         {received && <HandoffNotice handoff={received} destination="Key & BPM" />}
         <LabDrop
           title="Add tracks"
@@ -704,7 +735,11 @@ export default function KeyBpmPage() {
         <audio
           ref={audio}
           preload="metadata"
-          onPlay={() => setAudition((current) => ({ ...current, playing: true }))}
+          onPlay={() => {
+            window.dispatchEvent(new Event('sattari:stop-reference'));
+            window.dispatchEvent(new Event('sattari:reference-tone'));
+            setAudition((current) => ({ ...current, playing: true }));
+          }}
           onPause={() => setAudition((current) => ({ ...current, playing: false }))}
           onEnded={() => setAudition((current) => ({ ...current, playing: false }))}
           onTimeUpdate={(event) => {
