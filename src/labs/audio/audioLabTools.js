@@ -26,14 +26,14 @@ export const LAB_TOOLS = [
     id: 'lyric',
     name: 'Lyric',
     path: '/studio/lyric',
-    seoTitle: 'Lyric: Free Lyric Video Maker with On-Device Alignment',
+    seoTitle: 'Lyric: Free Lyric Video Maker, Aligned On-Device',
     blurb: 'Drop a song and paste lyrics, align words on-device, animate and export MP4.',
   },
   {
     id: 'clean',
     name: 'Clean',
     path: '/studio/clean',
-    seoTitle: 'Clean: One-Click Voice Cleanup, Denoise & Loudness',
+    seoTitle: 'Clean: 1-Click Voice Cleanup, Denoise & Loudness',
     blurb:
       'Clean up a voice recording on-device: denoise, de-ess, compress and match loudness in one click.',
   },

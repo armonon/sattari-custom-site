@@ -83,7 +83,7 @@ export const websiteSchema = {
 
 export const PAGE_SEO = {
   home: {
-    title: 'Instruments & Repairs in Woodland Hills | Music Tools',
+    title: 'Woodland Hills Instruments, Repairs & Music Tools',
     description:
       'Shop guitars, violins and strings. Learn and create music worldwide with Sattari. Ask about guitar restringing in Woodland Hills; visits by appointment.',
     url: `${SITE_ORIGIN}/`,
@@ -110,7 +110,7 @@ export const PAGE_SEO = {
     url: `${SITE_ORIGIN}/services`,
   },
   repair: {
-    title: 'Los Angeles Instrument Repair Shop | Woodland Hills',
+    title: 'Los Angeles Instrument Repair | Woodland Hills',
     description:
       'Ask Sattari Music in Woodland Hills about guitar restringing, violin strings, setup and instrument repair. Request an assessment and quote before arranging service.',
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
@@ -134,7 +134,7 @@ export const PAGE_SEO = {
     imageHeight: 1131,
   },
   studio: {
-    title: 'Sattari Songboard | Online Music Studio & Browser DAW',
+    title: 'Songboard: Online Music Studio & Browser DAW | Sattari',
     description:
       'Create and remix with Sattari Songboard in your browser: four decks, instant-access stem controls, recording, MIDI instruments, arrangement and WAV export.',
     url: `${SITE_ORIGIN}/studio`,

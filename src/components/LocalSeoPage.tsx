@@ -867,7 +867,7 @@ export const localSeoPages = {
   'violin-repair': {
     eyebrow: 'Violin repair and setup',
     title: 'Violin repair and setup in Woodland Hills',
-    seoTitle: 'Violin Repair & Setup | Woodland Hills, Los Angeles',
+    seoTitle: 'Violin Repair Los Angeles | Woodland Hills',
     description:
       'Request violin repair, string and setup support in Woodland Hills, serving Encino and Los Angeles. Describe tuning or playability issues before a shop visit.',
     url: 'https://sattarimusic.com/services/violin-repair-los-angeles',
@@ -929,7 +929,7 @@ export const localSeoPages = {
   'guitar-setup': {
     eyebrow: 'Guitar and bass setup',
     title: 'Guitar setup and repair in Woodland Hills',
-    seoTitle: 'Guitar Setup & Repair | Woodland Hills, Los Angeles',
+    seoTitle: 'Guitar Setup Los Angeles | Woodland Hills',
     description:
       'Ask about guitar and bass setup, string changes, buzzing and tuning issues in Woodland Hills. Sattari serves Calabasas, Encino and Los Angeles musicians.',
     url: 'https://sattarimusic.com/services/guitar-setup-los-angeles',
@@ -991,7 +991,7 @@ export const localSeoPages = {
   'guitar-strings': {
     eyebrow: 'Guitar strings in Woodland Hills',
     title: 'Find guitar strings in Woodland Hills',
-    seoTitle: 'Guitar Strings in Woodland Hills | Electric & Acoustic',
+    seoTitle: 'Guitar Strings in Woodland Hills',
     description:
       'Ask Sattari Music about electric, acoustic and classical guitar strings in Woodland Hills. Confirm compatible gauges, availability and restringing before visiting.',
     url: 'https://sattarimusic.com/guitar-strings-woodland-hills',
@@ -1139,7 +1139,7 @@ export const localSeoPages = {
   'guitar-restringing': {
     eyebrow: 'Guitar restringing in Woodland Hills',
     title: 'Guitar string replacement in Woodland Hills',
-    seoTitle: 'Guitar Restringing & String Replacement | Woodland Hills',
+    seoTitle: 'Guitar Restringing & String Replacement, Woodland Hills | Sattari',
     description:
       'Request electric or acoustic guitar restringing in Woodland Hills. Confirm strings, labor, setup needs, a quote and an appointment with Sattari Music.',
     url: 'https://sattarimusic.com/services/guitar-restringing-woodland-hills',
@@ -1211,7 +1211,7 @@ export const localSeoPages = {
   'violin-restringing': {
     eyebrow: 'Violin restringing in Woodland Hills',
     title: 'Violin restringing and string replacement in Woodland Hills',
-    seoTitle: 'Violin Restringing & String Replacement | Woodland Hills',
+    seoTitle: 'Violin Restringing & String Replacement, Woodland Hills | Sattari',
     description:
       'Ask Sattari Music about violin string replacement, fitting and tuning concerns in Woodland Hills. Confirm violin size, string ends, quote and appointment.',
     url: 'https://sattarimusic.com/services/violin-restringing-woodland-hills',
@@ -1291,7 +1291,7 @@ export const localSeoPages = {
   'string-replacement': {
     eyebrow: 'Broken-string help in Woodland Hills',
     title: 'Broken instrument string? Plan the right replacement',
-    seoTitle: 'Broken Guitar or Violin String? Replacement Help | Woodland Hills',
+    seoTitle: 'Broken Guitar or Violin String? Woodland Hills',
     description:
       'Get help planning a broken guitar, bass or violin string replacement. Describe the instrument, string and symptoms; confirm compatible parts and service with Sattari.',
     url: 'https://sattarimusic.com/services/string-replacement-woodland-hills',

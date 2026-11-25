@@ -108,7 +108,7 @@ export const separatorGuides = [
   },
   {
     slug: 'find-song-key-and-bpm',
-    title: "Find a song's key and BPM, and fix half/double time",
+    title: "Find a song's key & BPM and fix half/double time",
     linkLabel: 'Song key & BPM',
     category: 'Song analysis',
     description:

@@ -3,7 +3,7 @@ import { separatorGuides } from './stemSeparatorContent';
 export const musicGuides = [
   {
     slug: 'how-to-separate-vocals-drums-bass',
-    title: 'How to separate vocals, drums, and bass from a song',
+    title: 'How to separate vocals, drums & bass from a song',
     category: 'Stem separation',
     description:
       'Separate a song into vocals, drums, bass and other instruments with Sattari. Choose outputs, preview the results and download WAV stems in your browser.',

@@ -903,4 +903,10 @@
   .home-hero-contact {
     max-width: 300px;
   }
+  /* The copy fills the hero's width here, so the badge sits just below it
+     (over the artwork) instead of on top of the contact links. */
+  .home-hero-edition {
+    top: calc(100% + 10px);
+    bottom: auto;
+  }
 }

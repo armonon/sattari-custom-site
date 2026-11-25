@@ -22,12 +22,15 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
   const [scale, setScale] = useState('major');
   const [octave, setOctave] = useState(3);
   const [toneError, setToneError] = useState('');
+  // 'note' or 'scale' while a reference is sounding, so Stop shows only then.
+  const [sounding, setSounding] = useState('');
   const tones = useRef(null);
   const toneGeneration = useRef(0);
   const stopTones = () => {
     toneGeneration.current++;
     const context = tones.current;
     tones.current = null;
+    setSounding('');
     void context?.close().catch(() => {});
   };
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
       tones.current = context;
       await context.resume();
       if (token !== toneGeneration.current) return;
+      setSounding(notes.length > 1 ? 'scale' : 'note');
       notes.forEach((midi, i) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
@@ -212,9 +216,11 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
               Hear {noteLabel(targetMidi)}
             </button>
           )}
-          <button type="button" className="alab-text-button" onClick={stopTones}>
-            Stop reference sound
-          </button>
+          {sounding === 'note' && (
+            <button type="button" className="alab-text-button" onClick={stopTones}>
+              Stop reference sound
+            </button>
+          )}
         </div>
       </div>
       {tuner.error && (
@@ -300,9 +306,11 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
           <button type="button" className="alab-button" onClick={() => void play(scaleMidi)}>
             Play {PITCH_NAMES[root]} {SCALES[scale].name.toLowerCase()} scale
           </button>
-          <button type="button" className="alab-text-button" onClick={stopTones}>
-            Stop scale
-          </button>
+          {sounding === 'scale' && (
+            <button type="button" className="alab-text-button" onClick={stopTones}>
+              Stop scale
+            </button>
+          )}
         </div>
       </div>
       <aside className="instrument-service">

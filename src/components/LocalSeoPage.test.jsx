@@ -167,7 +167,7 @@ describe('local search pages', () => {
     const { doc, schema } = renderPage(<RepairPage />);
     const faqs = schema.find((item) => item['@type'] === 'FAQPage').mainEntity;
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
-    expect(doc.title).toContain('Los Angeles Instrument Repair Shop');
+    expect(doc.title).toContain('Los Angeles Instrument Repair');
     expect(doc.querySelectorAll('details')).toHaveLength(faqs.length);
     for (const faq of faqs) {
       expect(doc.body.textContent).toContain(faq.name);
