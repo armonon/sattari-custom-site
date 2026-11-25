@@ -2,6 +2,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const fetchMock = vi.fn();
+// The stored (renewed) token; null means nothing has been renewed yet.
+let storedToken = null;
+vi.mock('../../server/blobs.js', () => ({
+  openStore: () => ({ get: async () => storedToken }),
+}));
 let feed;
 let config;
 
@@ -29,6 +34,7 @@ beforeEach(async () => {
   vi.setSystemTime(new Date('2026-09-26T12:00:00Z'));
   vi.resetModules();
   fetchMock.mockReset();
+  storedToken = null;
   vi.stubGlobal('fetch', fetchMock);
   vi.stubEnv('INSTAGRAM_ACCESS_TOKEN', 'IGQV-secret-token');
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -115,6 +121,38 @@ describe('instagram-feed', () => {
     expect(response.status).toBe(503);
     expect(await response.text()).not.toMatch(/INSTAGRAM_ACCESS_TOKEN/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the renewed token once one is stored for the configured token', async () => {
+    const { createHash } = await import('node:crypto');
+    storedToken = {
+      token: 'IGQV-renewed',
+      seed: createHash('sha256').update('IGQV-secret-token').digest('hex'),
+    };
+    fetchMock.mockResolvedValue(upstream(200, media));
+    await get();
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('access_token=IGQV-renewed');
+  });
+
+  it('prefers a newly saved token over a renewed one from an older token', async () => {
+    storedToken = { token: 'IGQV-renewed', seed: 'seed-of-an-older-token' };
+    fetchMock.mockResolvedValue(upstream(200, media));
+    await get();
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('access_token=IGQV-secret-token');
+  });
+
+  it('reads a business account through the Facebook Graph API', async () => {
+    vi.stubEnv('INSTAGRAM_BUSINESS_ACCOUNT_ID', '17841400000000000');
+    storedToken = { token: 'IGQV-renewed', seed: 'ignored' };
+    fetchMock.mockResolvedValue(upstream(200, media));
+    const response = await get();
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.origin + url.pathname).toBe('https://graph.facebook.com/17841400000000000/media');
+    expect(url.searchParams.get('access_token')).toBe('IGQV-secret-token');
+    expect((await response.json()).posts).toHaveLength(2);
   });
 
   it('refuses methods other than GET and HEAD', async () => {

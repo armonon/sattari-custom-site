@@ -90,23 +90,45 @@ def draft(dist, functions_dir, receipt_path, title):
     # Functions: archives from this repo, configuration from the live deploy.
     live_functions = {f['n']: f for f in live['available_functions']}
     reuse = functions_dir == 'reuse'
+    # `<dir>:name,name` uploads only the named functions from the build and
+    # reuses every other live archive by digest. A named function that is not
+    # live yet is added, taking memory, region and priority from `template`.
+    only = None
+    if not reuse and ':' in functions_dir:
+        functions_dir, names = functions_dir.rsplit(':', 1)
+        only = set(names.split(','))
+    reused = {name: {'digest': f['d'], 'buildData': f.get('bd')} for name, f in live_functions.items()}
     if reuse:
-        built = {name: {'digest': f['d'], 'buildData': f.get('bd')} for name, f in live_functions.items()}
+        built = reused
     else:
         manifest = json.loads((Path(functions_dir) / 'manifest.json').read_text())
         built = {f['name']: f for f in manifest['functions']}
-    if set(built) != set(live_functions):
+        if only is not None:
+            if only - set(built):
+                raise SystemExit('Named function missing from the build')
+            if set(built) - only != set(live_functions) - only:
+                raise SystemExit('Function set differs from production beyond the named functions')
+            built = {**reused, **{name: built[name] for name in only}}
+    added = set(built) - set(live_functions)
+    if set(live_functions) - set(built) or (added and (only is None or added - only)):
         raise SystemExit('Function set differs from production')
+    template = live_functions['nightly-backup']
+    schedules = list(live['function_schedules'])
     hashes, configs, function_uploads = {}, {}, {}
     for name, item in built.items():
-        if reuse:
+        if 'digest' in item:
             digest = item['digest']
         else:
             archive = Path(item['path']).read_bytes()
             digest = hashlib.sha256(archive).hexdigest()
             function_uploads[digest] = (name, archive, item)
         hashes[name] = digest
-        current = live_functions[name]
+        if name in added:
+            if item.get('routes'):
+                raise SystemExit('A new function with routes needs its routes reviewed by hand')
+            if item.get('schedule'):
+                schedules.append({'name': name, 'cron': item['schedule']})
+        current = live_functions.get(name, {k: template.get(k) for k in ('m', 'p', 'rg')})
         entry = {}
         for short, long in [('dn', 'display_name'), ('g', 'generator'), ('m', 'memory'),
                             ('p', 'priority'), ('rg', 'region'), ('tr', 'traffic_rules')]:
@@ -140,7 +162,7 @@ def draft(dist, functions_dir, receipt_path, title):
         'draft': True,
         'functions': hashes,
         'functions_config': configs,
-        'function_schedules': live['function_schedules'],
+        'function_schedules': schedules,
         'environment': environment,
     }
     if edge and len(eszip) == 1:
@@ -157,7 +179,8 @@ def draft(dist, functions_dir, receipt_path, title):
         'functions': len(hashes),
         'backend_reused_by_digest': reuse,
         'function_digests': hashes,
-        'schedules': live['function_schedules'],
+        'schedules': schedules,
+        'functions_from_build': sorted(function_uploads[d][0] for d in function_uploads),
         'runtime_keys': sorted(v['key'] for v in environment),
         'published': False,
     }
