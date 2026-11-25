@@ -1,154 +1,456 @@
 .instrument-lab {
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: clamp(18px, 3vw, 32px);
-  background: var(--panel);
-  margin: 20px 0 32px;
+  --tuner-accent-wash: color-mix(in srgb, var(--alab-accent) 10%, var(--alab-panel));
+  --tuner-display: #14251f;
+  --tuner-phosphor: #c6f6d8;
+  --tuner-display-muted: #b0c9bc;
+  border: 1px solid var(--alab-line);
+  border-radius: 18px;
+  background: var(--alab-panel);
+  padding: clamp(16px, 3vw, 36px);
   scroll-margin-top: 110px;
+  min-width: 0;
 }
 .instrument-lab h2 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  margin: 0 0 12px;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  font-weight: 620;
 }
-.instrument-lab-heading,
-.instrument-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+.instrument-lab-heading > p,
+.instrument-scales > p,
+.instrument-service > p {
+  margin-top: 8px;
+  max-width: 70ch;
+  color: var(--alab-muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+.instrument-console {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: stretch;
+  margin-top: clamp(20px, 3vw, 30px);
+}
+.instrument-setup {
+  display: grid;
+  gap: 22px;
+  align-content: start;
+  align-self: center;
+  min-width: 0;
 }
 .instrument-controls {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin: 20px 0;
+  display: grid;
+  gap: 12px;
+}
+.instrument-preset {
+  grid-template-columns: minmax(0, 1fr) minmax(94px, 0.42fr);
+}
+.instrument-controls label,
+.instrument-field-label {
+  color: var(--alab-text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  font-weight: 600;
 }
 .instrument-controls label {
   display: grid;
+  align-content: start;
   gap: 7px;
-  flex: 1 1 150px;
-  font-size: 0.9rem;
+  min-width: 0;
 }
 .instrument-controls select {
   width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  color: var(--text);
-  background: var(--panel);
-  padding: 10px;
-  font: inherit;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 8px;
+  background-color: var(--alab-raised);
+  padding-inline: 10px 2px;
+  font-size: 0.91rem;
+  font-weight: 450;
+  text-overflow: ellipsis;
 }
 .instrument-strings,
 .instrument-scale-notes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin: 18px 0;
+  display: grid;
+  gap: 7px;
+}
+.instrument-strings {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
 }
 .instrument-strings button,
 .instrument-scale-notes button {
+  position: relative;
   display: grid;
+  align-content: center;
   justify-items: center;
-  min-width: 65px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  gap: 3px;
+  min-width: 0;
+  min-height: 59px;
+  border: 1px solid var(--alab-line);
+  border-radius: 9px;
+  background: var(--alab-panel);
+  color: var(--alab-text);
+  padding: 7px 2px;
+  font-variant-numeric: tabular-nums;
+}
+.instrument-strings strong,
+.instrument-scale-notes strong {
+  font-size: 1.12rem;
+  font-weight: 620;
+  line-height: 1.25;
 }
 .instrument-strings small,
 .instrument-scale-notes small {
-  font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--alab-muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
 }
-.instrument-strings [aria-pressed='true'] {
-  outline: 2px solid var(--accent);
-  background: var(--accent-soft);
+.instrument-strings button[aria-pressed='true'] {
+  border: 2px solid var(--alab-accent);
+  background: var(--tuner-accent-wash);
+  color: var(--alab-accent);
+}
+.instrument-strings button[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+.instrument-reference {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+}
+.instrument-reference > p,
+.instrument-chromatic {
+  font-size: 0.81rem;
+  color: var(--alab-muted);
+  line-height: 1.5;
+}
+.instrument-hear,
+.instrument-mic,
+.instrument-song-key {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 9px 16px;
+}
+.instrument-lab .instrument-hear {
+  min-width: min(190px, 100%);
+  border: 1px solid var(--alab-accent);
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+.instrument-lab .instrument-hear[data-playing='true'] {
+  color: var(--alab-accent);
+  background: var(--tuner-accent-wash);
 }
 .instrument-readout {
-  background: var(--panel-2);
-  padding: clamp(18px, 3vw, 30px);
+  display: grid;
+  align-content: center;
+  position: relative;
+  min-width: 0;
+  gap: 12px;
+  padding: clamp(18px, 2.7vw, 34px);
+  border: 1px solid #456352;
   border-radius: 14px;
+  color: #effff5;
+  background-color: var(--tuner-display);
+  background-image:
+    radial-gradient(ellipse at 56% 0%, #2f54422e, transparent 68%),
+    linear-gradient(110deg, transparent, #0b17123d);
 }
-.instrument-readout > strong {
-  display: block;
-  font-size: clamp(3rem, 8vw, 5rem);
-  line-height: 1.3;
+.instrument-screen-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: var(--tuner-display-muted);
+  font-size: 0.7rem;
+  font-weight: 550;
 }
-.instrument-readout > span,
-.instrument-note {
-  color: var(--muted);
-  font-size: 0.85rem;
+.instrument-screen-top > span:first-child,
+.instrument-screen-label {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.instrument-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.instrument-signal i {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--tuner-display-muted);
+  border-radius: 50%;
+}
+.instrument-signal[data-active='true'] i {
+  background: var(--tuner-phosphor);
+  border-color: var(--tuner-phosphor);
+  box-shadow: 0 0 9px #beffd045;
+}
+.instrument-pitch {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.instrument-screen-label {
+  font-size: 0.65rem;
+  color: var(--tuner-display-muted);
+}
+.instrument-pitch > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 11px;
+}
+.instrument-pitch strong {
+  font-size: clamp(3.8rem, 7vw, 6.4rem);
+  font-weight: 560;
+  letter-spacing: -0.065em;
+  line-height: 1.08;
+  color: var(--tuner-phosphor);
+}
+.instrument-pitch > div > span {
+  font-family: ui-monospace, monospace;
+  font-size: 0.94rem;
+  color: var(--tuner-display-muted);
+}
+.instrument-gauge {
+  padding: 0 4px;
+}
+.instrument-gauge-caption {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: var(--tuner-display-muted);
+  font-size: 0.67rem;
 }
 .instrument-meter {
   position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(
-    90deg,
-    transparent 40%,
-    var(--accent-soft) 47%,
-    var(--accent-soft) 53%,
-    transparent 60%
-  );
-  border: 1px solid var(--line);
-  height: 50px;
-  border-radius: 8px;
-  padding: 0 8px;
-  margin: 18px 0;
-  overflow: hidden;
+  height: 23px;
+  border-bottom: 1px solid #7b9787;
+  background:
+    linear-gradient(90deg, #8da497 1px, transparent 1px) left bottom / 25% 21px repeat-x,
+    linear-gradient(90deg, #668072 1px, transparent 1px) left bottom / 5% 12px repeat-x;
 }
-.instrument-meter i {
+.instrument-meter::after {
+  content: '';
   position: absolute;
-  width: 4px;
-  height: 34px;
-  background: var(--text);
-  transform: translateX(-50%);
-  transition: left 80ms linear;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 21px;
+  background: #8da497;
 }
-.instrument-meter b {
+.instrument-sweet-spot {
   position: absolute;
+  inset: 0 45%;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(0deg, #89c49c46, #89c49c10);
+  border-bottom: 2px solid var(--tuner-phosphor);
+}
+.instrument-meter::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
   left: 50%;
   width: 1px;
-  height: 100%;
-  background: var(--accent);
+  height: 24px;
+  background: var(--tuner-phosphor);
+}
+.instrument-needle {
+  position: absolute;
+  bottom: -2px;
+  width: 3px;
+  height: 32px;
+  transform: translateX(-50%);
+  background: #ffda99;
+  box-shadow: 0 0 6px #ffc77d44;
+  transition: left 80ms linear;
+}
+.instrument-needle::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: -1px;
+  border-inline: 4.5px solid transparent;
+  border-top: 6px solid #ffda99;
+}
+.instrument-gauge-labels {
+  position: relative;
+  height: 14px;
+  margin-top: 5px;
+  font:
+    0.66rem/1.2 ui-monospace,
+    monospace;
+  color: var(--tuner-display-muted);
+}
+.instrument-gauge-labels span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+.instrument-gauge-labels span:first-child {
+  left: 0;
+  transform: none;
+}
+.instrument-gauge-labels span:nth-child(2) {
+  left: 25%;
+}
+.instrument-gauge-labels span:nth-child(3) {
+  left: 50%;
+}
+.instrument-gauge-labels span:nth-child(4) {
+  left: 75%;
+}
+.instrument-gauge-labels span:last-child {
+  right: 0;
+  transform: none;
+}
+.instrument-readout .instrument-feedback {
+  color: var(--tuner-display-muted);
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.instrument-feedback strong {
+  color: #ffda99;
+}
+.instrument-readout[data-in-tune='true'] .instrument-feedback strong {
+  color: var(--tuner-phosphor);
+}
+.instrument-lab .instrument-mic {
+  justify-self: center;
+  border: 1px solid #719280;
+  color: #effff5;
+  background: #253d31;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.instrument-lab .instrument-mic:focus-visible {
+  outline-color: var(--tuner-phosphor);
+}
+.instrument-lab .instrument-note {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--alab-muted);
+}
+.instrument-lab .alab-error {
+  margin-top: 12px;
+}
+.instrument-scales,
+.instrument-service {
+  margin-top: clamp(22px, 3vw, 32px);
+  border-top: 1px solid var(--alab-line);
+  padding-top: clamp(22px, 3vw, 32px);
 }
 .instrument-scales {
-  border-top: 1px solid var(--line);
-  margin-top: 30px;
-  padding-top: 26px;
   scroll-margin-top: 110px;
 }
-.instrument-service {
-  border-top: 1px solid var(--line);
-  margin-top: 28px;
-  padding-top: 20px;
+.instrument-scales h2 {
+  font-size: clamp(1.28rem, 2vw, 1.55rem);
 }
-.instrument-service div,
-.instrument-jump {
+.instrument-song-key {
+  background: var(--tuner-accent-wash);
+  border: 1px solid var(--alab-accent);
+  color: var(--alab-accent);
+  margin-top: 12px;
+}
+.instrument-scale-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0 12px;
+}
+.instrument-scale-notes {
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+}
+.instrument-actions {
+  margin-top: 12px;
+}
+.instrument-actions .alab-button {
+  min-height: 44px;
+}
+.instrument-service h3 {
+  font-size: 1.07rem;
+}
+.instrument-service div {
   display: flex;
-  gap: 14px;
   flex-wrap: wrap;
+  gap: 2px 20px;
+  margin-top: 10px;
 }
-.instrument-jump {
-  margin-bottom: 16px;
-}
-.instrument-jump a,
 .instrument-service a {
-  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--alab-accent);
+  font-weight: 550;
+  font-size: 0.9rem;
   text-underline-offset: 4px;
 }
-@media (max-width: 600px) {
-  .instrument-actions > button {
-    flex: 1 1 180px;
-    justify-content: center;
+@media (hover: hover) {
+  .instrument-strings button:hover,
+  .instrument-scale-notes button:hover {
+    border-color: var(--alab-accent);
+    background: var(--tuner-accent-wash);
   }
-  .instrument-controls label {
-    flex-basis: 100%;
+  .instrument-hear:hover {
+    filter: brightness(1.08);
+  }
+  .instrument-lab .instrument-mic:hover {
+    background: #33523f;
+  }
+}
+@media (max-width: 760px) {
+  .instrument-console {
+    grid-template-columns: 1fr;
+  }
+  .instrument-setup {
+    gap: 16px;
+  }
+  .instrument-strings {
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  }
+  .instrument-readout {
+    padding-block: 22px;
+  }
+}
+@media (max-width: 520px) {
+  .instrument-strings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .instrument-scale-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .instrument-scale-controls label:last-child {
+    grid-column: 1 / -1;
+  }
+  .instrument-scale-notes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .instrument-hear {
+    width: 100%;
+  }
+  .instrument-screen-top {
+    font-size: 0.67rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .instrument-meter i {
+  .instrument-needle {
     transition: none;
   }
+}
+
+.instrument-strings:has(button:nth-child(4):last-child) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }

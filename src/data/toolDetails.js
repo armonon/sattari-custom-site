@@ -85,7 +85,7 @@ export const toolDetails = {
     facts: [
       [
         'Live tuner and scales',
-        'Guitar standard/drop D, four- and five-string bass, violin, viola, cello, high-G ukulele and chromatic presets. Single-note microphone pitch, 432/440/441/442/443 Hz references and seven scale patterns. Microphone starts only on request and stops when the page is hidden. Real instruments and microphones vary; low bass and noisy rooms may be unreliable.',
+        'Guitar standard/drop D, four- and five-string bass, violin, viola, cello, high-G ukulele and chromatic presets. Select an open string and press Hear to hold its pitch until you press Stop. Choose a concert A of 432, 440, 441, 442 or 443 Hz. The live meter measures one note at a time, and seven scales are available to practice. Microphone starts only on request and stops when the page is hidden. Real instruments and microphones vary; low bass and noisy rooms may be unreliable.',
       ],
       [
         'Input',

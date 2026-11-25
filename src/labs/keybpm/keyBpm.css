@@ -7,6 +7,45 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+.kb-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.kb-section-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--alab-text);
+  background: var(--alab-panel);
+  border: 1px solid var(--alab-line);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.kb-section-nav svg {
+  flex: none;
+  color: var(--alab-accent);
+}
+.kb-section-nav a:hover,
+.kb-section-nav a:focus-visible {
+  border-color: var(--alab-accent);
+  background: var(--alab-raised);
+}
+@media (max-width: 480px) {
+  .kb-section-nav {
+    gap: 4px;
+  }
+  .kb-section-nav a {
+    padding: 0 9px;
+    gap: 5px;
+    font-size: 0.8rem;
+  }
+}
 .kb-audition {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;

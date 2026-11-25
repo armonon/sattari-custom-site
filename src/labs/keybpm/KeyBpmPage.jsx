@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AudioLines,
+  Disc3,
   Download,
   FolderOpen,
   Layers,
   LoaderCircle,
   Pause,
+  Piano,
   Play,
   Save,
   SlidersHorizontal,
@@ -657,7 +659,7 @@ export default function KeyBpmPage() {
       title="Music Tuner & Song Key Detector"
       badge="Beta"
       eyebrow="Sattari Music"
-      summary="Tune your instrument live, practice scales, or find a song’s key and BPM. Guitar, bass, violin and more, together in one browser tool."
+      summary="Tune guitar, bass, violin and more by ear or microphone. Practice a scale or find the key and tempo of a recording."
       description="Free online music tuner for guitar, bass and violin, with practice scales and a song key detector. Find key and BPM locally in your browser."
       limits={LIMITS}
       limitsTitle="What the estimates can and cannot tell you"
@@ -675,6 +677,7 @@ export default function KeyBpmPage() {
           isAccessibleForFree: true,
           featureList: [
             'Single-note microphone tuner',
+            'Continuous open-string reference tones with adjustable concert pitch',
             'Guitar, bass, violin, viola, cello and ukulele presets',
             'Major, minor, pentatonic, blues, Dorian and Mixolydian scales',
             'Recorded song key, Camelot and BPM estimates',
@@ -683,10 +686,16 @@ export default function KeyBpmPage() {
         }}
       />
       <div className="alab-workspace">
-        <nav className="instrument-jump" aria-label="Tuner and key detector sections">
-          <a href="#live-tuner">Live tuner</a>
-          <a href="#song-key">Song key & BPM</a>
-          <a href="#scales">Scales</a>
+        <nav className="kb-section-nav" aria-label="Tuner and key detector sections">
+          <a href="#live-tuner">
+            <AudioLines size={16} aria-hidden="true" /> Live tuner
+          </a>
+          <a href="#scales">
+            <Piano size={16} aria-hidden="true" /> Scales
+          </a>
+          <a href="#song-key">
+            <Disc3 size={16} aria-hidden="true" /> Song key &amp; BPM
+          </a>
         </nav>
         <InstrumentTuner
           songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
