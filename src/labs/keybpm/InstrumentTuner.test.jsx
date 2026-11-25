@@ -2,6 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { expect, it, vi } from 'vitest';
 import * as liveInput from './useInstrumentTuner';
+import * as referenceOutput from './useTunerReference';
+import * as measurement from '../../utils/siteMeasurement';
 import InstrumentTuner from './InstrumentTuner';
 it('switches instrument targets and lets a detected song key select the scale', () => {
   render(
@@ -59,6 +61,43 @@ it('asks to check the string and octave when a low E is played against the high 
     expect(screen.queryByText(/raise the pitch/i)).not.toBeInTheDocument();
     expect(mic.mock.results.at(-1).value.stop).not.toHaveBeenCalled();
   } finally {
+    mic.mockRestore();
+  }
+});
+
+it('measures one confirmed reference and microphone start per visit and skips failed attempts', () => {
+  const input = { status: 'requesting', pitch: null, error: '', start: vi.fn(), stop: vi.fn() };
+  const reference = { referenceOn: true, startingAudio: true };
+  const mic = vi.spyOn(liveInput, 'default').mockImplementation(() => input);
+  const audio = vi.spyOn(referenceOutput, 'default').mockImplementation(() => reference);
+  const events = vi.spyOn(measurement, 'trackSiteEvent').mockReturnValue(true);
+  const workspace = () => (
+    <MemoryRouter>
+      <InstrumentTuner />
+    </MemoryRouter>
+  );
+  try {
+    const { rerender } = render(workspace());
+    expect(events).not.toHaveBeenCalled();
+    reference.referenceOn = false;
+    reference.startingAudio = false;
+    input.status = 'error';
+    rerender(workspace());
+    expect(events).not.toHaveBeenCalled();
+    reference.referenceOn = true;
+    rerender(workspace());
+    input.status = 'listening';
+    reference.referenceOn = false;
+    rerender(workspace());
+    input.status = 'off';
+    reference.referenceOn = true;
+    rerender(workspace());
+    input.status = 'listening';
+    rerender(workspace());
+    expect(events.mock.calls).toEqual([['tuner_reference_started'], ['tuner_microphone_started']]);
+  } finally {
+    events.mockRestore();
+    audio.mockRestore();
     mic.mockRestore();
   }
 });

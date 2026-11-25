@@ -11,21 +11,24 @@ import { separatorGuides, separatorQuestions } from '../data/stemSeparatorConten
 import { toolDetails } from '../data/toolDetails';
 import { LIMITS } from '../utils/stemSeparator';
 import { GuideArticle, GuideIndex, ToolDetailsPage } from './MusicResources';
+import { InventoryProvider } from '../context/InventoryContext';
 
-function renderPage(path) {
+function renderPage(path, inventory = null) {
   const context = {};
   const canUseDOM = HelmetProvider.canUseDOM;
   HelmetProvider.canUseDOM = false;
   try {
     const body = renderToString(
       <HelmetProvider context={context}>
-        <StaticRouter location={path}>
-          <Routes>
-            <Route path="/guides" element={<GuideIndex />} />
-            <Route path="/guides/:slug" element={<GuideArticle />} />
-            <Route path="/tools/:tool" element={<ToolDetailsPage />} />
-          </Routes>
-        </StaticRouter>
+        <InventoryProvider initialInventory={inventory}>
+          <StaticRouter location={path}>
+            <Routes>
+              <Route path="/guides" element={<GuideIndex />} />
+              <Route path="/guides/:slug" element={<GuideArticle />} />
+              <Route path="/tools/:tool" element={<ToolDetailsPage />} />
+            </Routes>
+          </StaticRouter>
+        </InventoryProvider>
       </HelmetProvider>
     );
     const { helmet } = context;
@@ -155,4 +158,30 @@ describe('Stem Separator search content', () => {
     expect(text).toContain('ten minutes per track');
     expect(text).toContain('still calculates all four source groups');
   });
+});
+
+it('renders the violin checklist before navigation and compares the current catalog offers', () => {
+  const { doc } = renderPage('/guides/choose-a-violin-for-beginners', {
+    catalog: { overrides: { 'brescia-acoustic-violin': { price: 215 } } },
+    stock: { 'brescia-acoustic-violin::::': 0, 'chiara-wooden-electric-violin::::': 1 },
+  });
+  const list = doc.querySelector('.resource-checklist ol');
+  expect(list.children).toHaveLength(5);
+  expect(list.compareDocumentPosition(doc.querySelector('.resource-contents'))).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
+  const models = [...doc.querySelectorAll('#compare-violins article')];
+  expect(models).toHaveLength(2);
+  expect(models[0].textContent).toContain('$215.00 · Sold out online');
+  expect(models[1].textContent).toContain('In stock online');
+  expect(models[0].textContent).toContain('triangular foam case');
+  expect(models[1].textContent).toContain('9V battery');
+});
+
+it('removes hidden models and their links from the beginner violin guide', () => {
+  const { doc } = renderPage('/guides/choose-a-violin-for-beginners', {
+    catalog: { hidden: ['chiara-wooden-electric-violin'] },
+  });
+  expect(doc.querySelectorAll('#compare-violins article')).toHaveLength(1);
+  expect(doc.querySelector('a[href="/product/chiara-wooden-electric-violin"]')).toBeNull();
 });

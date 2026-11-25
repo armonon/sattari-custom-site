@@ -111,27 +111,26 @@ export default function RepairPage() {
           <p className="eyebrow">Los Angeles instrument repair</p>
           <h1>Instrument repair in Woodland Hills</h1>
           <p>
-            Sattari Music helps local musicians diagnose, repair, tune, and dial in instruments and
-            performance gear for Woodland Hills, Encino, Calabasas, and Los Angeles musicians — from
-            everyday fixes to rare or sentimental pieces that need thoughtful care.
+            Broken string, buzzing fret or rattling drum hardware? Tell us what you hear and which
+            instrument you play. Our Woodland Hills shop takes repair and setup appointments for
+            musicians across Los Angeles.
           </p>
           <div className="hero-actions services-actions">
             <a className="button button-solid" href="#repair-inquiry">
               Request a repair check
             </a>
-            <Link className="button button-outline" to="/services">
-              View all local services
-            </Link>
+            <a className="button button-outline" href={BUSINESS.phoneHref}>
+              Call {BUSINESS.phoneDisplay}
+            </a>
           </div>
         </div>
 
         <div className="repair-callout-card">
-          <p className="card-kicker">Repair focus</p>
-          <h2>Fast clarity before you spend money.</h2>
+          <h2>What goes into a repair quote?</h2>
           <p>
-            Tell us what is wrong, send photos if needed when we reply, and we’ll point you toward
-            the best next step: repair, tune-up, replacement part, setup adjustment, or a deeper
-            inspection.
+            Ask for the labor, replacement strings or parts, and any additional setup work to be
+            listed separately. Include your rehearsal or lesson date so we can confirm timing before
+            you make the trip.
           </p>
           <div className="repair-mini-stats" aria-label="Repair service highlights">
             <span>Violins</span>
@@ -168,26 +167,32 @@ export default function RepairPage() {
         <ServicePlanningDetails service="repairs" />
       </div>
 
-      <div className="container repair-process-panel">
+      <section className="container repair-archive" aria-labelledby="repair-archive-title">
+        <figure>
+          <img
+            src="/images/local-gallery/owner-03.webp"
+            alt="Hands holding a string alongside the tuning pegs of a sitar"
+            width="765"
+            height="1020"
+            loading="lazy"
+          />
+          <figcaption>String work on a sitar, from Sattari’s photo archive.</figcaption>
+        </figure>
         <div>
-          <p className="eyebrow">Simple process</p>
-          <h2>Send the issue. Get a clear next step.</h2>
+          <h2 id="repair-archive-title">Which string needs attention?</h2>
+          <p>
+            On this sitar, the playing strings run over the frets and the sympathetic strings run
+            underneath. When asking about a broken string, tell us which set it belongs to and where
+            it broke. A photo of the bridge and tuning pegs can help us identify the fitting.
+          </p>
+          <p>
+            For a guitar or violin, tell us the string name if you know it, whether it slipped or
+            snapped, and whether it has happened in the same spot before. We’ll confirm what the
+            shop can take on and how to share photos when we reply.
+          </p>
+          <a href="#repair-inquiry">Describe your instrument</a>
         </div>
-        <div className="repair-process-steps">
-          <div>
-            <strong>1</strong>
-            <span>Describe the instrument, gear, or rare piece and what is happening.</span>
-          </div>
-          <div>
-            <strong>2</strong>
-            <span>We reply with what to check, bring, or send photos of.</span>
-          </div>
-          <div>
-            <strong>3</strong>
-            <span>Confirm the estimate, approve the work and arrange service or inspection.</span>
-          </div>
-        </div>
-      </div>
+      </section>
 
       <div className="container service-form-shell" id="repair-inquiry">
         <div className="service-form-copy section-header narrow">

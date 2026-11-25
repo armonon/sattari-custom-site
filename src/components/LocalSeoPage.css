@@ -16,6 +16,52 @@
   line-height: 1.6;
 }
 
+.repair-archive {
+  display: grid;
+  grid-template-columns: minmax(0, 21rem) minmax(0, 38rem);
+  align-items: center;
+  gap: clamp(1.25rem, 4vw, 3.5rem);
+  margin-block: 2.5rem;
+}
+
+.repair-archive figure {
+  margin: 0;
+}
+
+.repair-archive img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.repair-archive figcaption,
+.repair-hero-copy .restring-quote-note {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.repair-archive p {
+  margin-block: 1rem;
+  line-height: 1.65;
+}
+
+.repair-archive a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 640px) {
+  .repair-archive {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-archive figure {
+    max-width: 21rem;
+  }
+}
+
 .local-seo-shell .repair-callout-card h2,
 .local-seo-shell .repair-info-card h2 {
   font-size: 26px;

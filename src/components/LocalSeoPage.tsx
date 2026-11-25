@@ -107,6 +107,17 @@ export const localSeoPages = {
       'Musicians who want help sourcing, repairing, or setting up gear',
       'Rare, vintage, or unusual instrument questions that need a human check',
     ],
+    catalogHeading: 'Compare instruments for sale',
+    productIds: [
+      'steel-string-acoustic-guitar',
+      'flame-stratocaster-electric-guitar',
+      'five-string-bass-guitar',
+      'brescia-acoustic-violin',
+      'chiara-wooden-electric-violin',
+      'sattari-darbuka',
+      'sattari-hand-crafted-hi-hat',
+      'pirouz-series-cymbals',
+    ],
     primaryCta: { label: 'Shop current catalog', to: '/shop' },
     secondaryCta: { label: 'Ask about an instrument', href: '#local-inquiry' },
     formService: 'instrument-sales',
@@ -616,6 +627,17 @@ export const localSeoPages = {
     ],
     primaryCta: { label: 'Shop cymbals', to: '/shop/cymbals' },
     secondaryCta: { label: 'Shop sticks & essentials', to: '/shop/sticks' },
+    catalogHeading: 'Cymbals, hand percussion and practice gear',
+    productIds: [
+      'sattari-darbuka',
+      'pirouz-series-cymbals',
+      'pirouz-series-splash',
+      'sattari-hand-crafted-hi-hat',
+      'sattari-effect-cymbal',
+      'classic-american-hickory-a5',
+      'sattari-practice-pad-12',
+      'sattari-practice-pad-8',
+    ],
     formService: 'instrument-sales',
     formSource: 'Drums Los Angeles SEO page',
     faqs: [
@@ -670,6 +692,14 @@ export const localSeoPages = {
     ],
     primaryCta: { label: 'Shop violins', to: '/shop/violins' },
     secondaryCta: { label: 'Ask about a violin', href: '#local-inquiry' },
+    catalogHeading: 'Compare acoustic and electric violins',
+    productIds: [
+      'brescia-acoustic-violin',
+      'cremona-handmade-acoustic-violin',
+      'chiara-wooden-electric-violin',
+      'miami-electric-violin',
+      'matilde-electric-violin',
+    ],
     formService: 'instrument-sales',
     formSource: 'Violins Los Angeles SEO page',
     faqs: [
@@ -712,6 +742,13 @@ export const localSeoPages = {
       'Anyone who wants a real person behind the purchase',
     ],
     primaryCta: { label: 'Shop guitar & bass', to: '/shop/guitar-bass' },
+    catalogHeading: 'Electric, acoustic and bass guitars for sale',
+    productIds: [
+      'flame-stratocaster-electric-guitar',
+      'steel-string-acoustic-guitar',
+      'classic-nylon-string-guitar',
+      'five-string-bass-guitar',
+    ],
     secondaryCta: { label: 'Ask about a guitar', href: '#local-inquiry' },
     formService: 'instrument-sales',
     formSource: 'Guitars Los Angeles SEO page',
@@ -999,7 +1036,7 @@ export const localSeoPages = {
     schemaName: 'Guitar Strings at Sattari Music in Woodland Hills',
     image: '/sattari site/guitars/flame-stratocaster.jpg',
     intro:
-      'Looking for guitar strings for sale near Woodland Hills? Start with the kind of guitar you play and the strings already on it. Send Sattari Music your electric, steel-string acoustic or nylon-string classical guitar model, preferred gauge and tuning. We will confirm available options and pricing before you make a trip to our appointment-only shop.',
+      'Check electric, acoustic or classical guitar string availability before visiting our Woodland Hills shop. Tell us the set you want or ask us to help identify it. We’ll confirm the pack price and a pickup appointment, or quote installation separately if you want the strings fitted.',
     highlights: ['Electric guitar', 'Acoustic guitar', 'Classical guitar', 'Gauge', 'Tuning'],
     offerings: [
       'Availability inquiries for electric and acoustic guitar strings',
@@ -1031,7 +1068,7 @@ export const localSeoPages = {
         copy: 'Let us know whether you want strings to fit yourself or help replacing them. For a purchase, confirm the exact set, price and pickup arrangements. For restringing, also ask about labor, appointment availability and whether any setup work is proposed. Your inquiry does not reserve stock or book a service.',
       },
     ],
-    primaryCta: { label: 'Ask about guitar strings', href: '#local-inquiry' },
+    primaryCta: { label: 'Check pack price and pickup', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Request guitar restringing',
       to: '/services/guitar-restringing-woodland-hills',
@@ -1039,7 +1076,7 @@ export const localSeoPages = {
     formService: 'accessories',
     formSource: 'Guitar strings Woodland Hills',
     inquiryCopy:
-      'Include your guitar make and model, number of strings, current or preferred gauge, tuning and timing. Tell us whether you need strings only or help fitting them.',
+      'The brand and gauge printed on your old packet help us find a match. If you no longer have it, tell us the guitar model and how you tune it.',
     faqs: [
       {
         q: 'Where can I buy guitar strings in Woodland Hills?',
@@ -1551,6 +1588,13 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
             <CtaLink cta={primaryCta} className="button button-solid" />
             <CtaLink cta={page.secondaryCta} className="button button-outline" />
           </div>
+          {pageKey === 'guitar-restringing' && (
+            <p className="restring-quote-note">
+              Ask for the price of the string set, installation labor and any setup work separately.
+              Bringing your own strings? Include the brand and gauge so we can confirm fit and
+              labor.
+            </p>
+          )}
         </div>
 
         <div className="repair-callout-card">
@@ -1576,8 +1620,9 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
       {featuredProducts.length > 0 && (
         <section className="container local-catalog" aria-labelledby="local-catalog-title">
           <div className="section-header narrow">
-            <p className="eyebrow">From the Sattari catalog</p>
-            <h2 id="local-catalog-title">Explore the instruments and gear</h2>
+            <h2 id="local-catalog-title">
+              {'catalogHeading' in page ? page.catalogHeading : 'Explore the instruments and gear'}
+            </h2>
             <p>
               Check each listing for specifications and options. Contact us to confirm in-store
               availability before visiting.
@@ -1703,14 +1748,20 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         <div className="container service-form-shell" id="local-inquiry">
           <div className="service-form-copy section-header narrow">
             <p className="eyebrow">Start the conversation</p>
-            <h2>Ask the Woodland Hills team</h2>
+            <h2>
+              {pageKey === 'guitar-strings' ? 'Check a string pack' : 'Ask the Woodland Hills team'}
+            </h2>
             <p>
               {'inquiryCopy' in page
                 ? page.inquiryCopy
                 : 'Share the instrument, accessory, class, rental, studio, rehearsal, or repair request and any timing details that matter.'}
             </p>
           </div>
-          <ServiceInquiryForm initialService={page.formService} source={page.formSource} />
+          <ServiceInquiryForm
+            initialService={page.formService}
+            source={page.formSource}
+            guitarStringInquiry={pageKey === 'guitar-strings'}
+          />
         </div>
       )}
 

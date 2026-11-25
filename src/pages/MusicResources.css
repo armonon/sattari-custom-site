@@ -153,6 +153,36 @@ html[data-theme='night'] .resource-label {
 .resource-section p {
   margin: 0 0 16px;
 }
+.resource-checklist .resource-section {
+  border-inline-start: 3px solid #29857a;
+  border-top: 0;
+  padding: 10px 0 2px 22px;
+}
+.violin-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 22px;
+  margin-bottom: 22px;
+}
+.violin-comparison-grid article {
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid var(--resource-line);
+  border-radius: 10px;
+}
+.violin-comparison-grid img {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: contain;
+  background: white;
+}
+.violin-comparison-grid h3 {
+  margin: 18px 0 8px;
+}
+.violin-comparison-grid .violin-comparison-price {
+  font-weight: 600;
+  color: var(--resource-ink);
+}
 .resource-questions details {
   border-bottom: 1px solid var(--resource-line);
   padding: 18px 0;

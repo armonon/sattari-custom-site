@@ -268,6 +268,11 @@ function ProductDetailView({ slug, initialSize, initialColor }) {
               ))}
             </div>
           )}
+          {product.slug === 'five-string-bass-guitar' && (
+            <Link className="btn-details" to="/tuner/bass?preset=bass-five">
+              Tune this five-string bass, from low B to G
+            </Link>
+          )}
           {guide && (
             <Link className="btn-details" to={guide.path}>
               {guide.label}

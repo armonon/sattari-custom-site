@@ -323,3 +323,15 @@ it('keeps an explicitly linked sold-out color selected rather than substituting 
     screen.getByRole('button', { name: 'MIAMI - Electric Violin is out of stock', exact: true })
   ).toBeDisabled();
 });
+
+it('links the five-string bass to the playable low-B tuner preset', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('five-string-bass-guitar');
+  expect(await screen.findByRole('link', { name: /tune this five-string bass/i })).toHaveAttribute(
+    'href',
+    '/tuner/bass?preset=bass-five'
+  );
+});

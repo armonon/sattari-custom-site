@@ -65,3 +65,13 @@ it('does not substitute guitar content for unknown instrument URLs', () => {
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Page not found');
   expect(screen.queryByRole('button', { name: 'Start live tuner' })).toBeNull();
 });
+
+it('opens the low-B product link directly and rejects presets from different instruments', () => {
+  open('/tuner/bass?preset=bass-five');
+  expect(screen.getByLabelText('Tuning')).toHaveValue('bass-five');
+  expect(displayedStrings()).toEqual(['B0', 'E1', 'A1', 'D2', 'G2']);
+});
+it('falls back to a published preset for invalid query parameters', () => {
+  open('/tuner/violin?preset=bass-five');
+  expect(screen.getByLabelText('Tuning')).toHaveValue('violin');
+});

@@ -1,6 +1,13 @@
-import { METRIC_SOURCES, metricPage, referralSource, validMetric } from './siteMetrics';
+import {
+  METRIC_SOURCES,
+  PRODUCT_ORIGIN_PAGES,
+  metricPage,
+  referralSource,
+  validMetric,
+} from './siteMetrics';
 const PREFERENCE = 'sattari-measurement-v1';
 const SOURCE = 'sattari-referral-v1';
+const SHOPPING_ORIGIN = 'sattari-product-origin-v1';
 let lastPage = '';
 let lastPageAt = 0;
 let emitted = 0;
@@ -25,6 +32,7 @@ export function setMeasurementPreference(allowed) {
     localStorage.setItem(PREFERENCE, allowed && !measurementBlocked() ? 'allowed' : 'denied');
     if (!allowed) {
       sessionStorage.removeItem(SOURCE);
+      sessionStorage.removeItem(SHOPPING_ORIGIN);
       sessionStorage.removeItem('sattari-purchase-measured-v1');
     }
   } catch {
@@ -32,7 +40,13 @@ export function setMeasurementPreference(allowed) {
   }
   window.dispatchEvent(new Event('sattari-measurement-change'));
 }
-export function trackSiteEvent(event) {
+export function trackSiteEvent(event, fromPath) {
+  if (fromPath === undefined) return sendMetric(event);
+  const page = metricPage(fromPath);
+  if (page) return sendMetric(event, page);
+}
+
+function sendMetric(event, originatingPage) {
   try {
     if (
       measurementBlocked() ||
@@ -45,7 +59,7 @@ export function trackSiteEvent(event) {
     const page =
       event === 'purchase_verified' && window.location.pathname === '/checkout/success'
         ? 'purchase'
-        : metricPage(window.location.pathname);
+        : (originatingPage ?? metricPage(window.location.pathname));
     if (!page || emitted >= 200) return;
     if (event === 'page_view') {
       const now = Date.now();
@@ -60,6 +74,9 @@ export function trackSiteEvent(event) {
     }
     const metric = { event, page, source };
     if (!validMetric(metric)) return;
+    if (event === 'product_link_click' && PRODUCT_ORIGIN_PAGES.includes(page)) {
+      sessionStorage.setItem(SHOPPING_ORIGIN, page);
+    }
     emitted += 1;
     void fetch('/api/site-event', {
       method: 'POST',
@@ -104,6 +121,10 @@ export function trackVerifiedPurchaseOnce(sessionId) {
     if (!Array.isArray(seen) || seen.includes(sessionId)) return;
     if (trackSiteEvent('purchase_verified')) {
       sessionStorage.setItem(key, JSON.stringify([...seen, sessionId].slice(-200)));
+      // Last measured local product link in this tab before a verified purchase.
+      const origin = sessionStorage.getItem(SHOPPING_ORIGIN);
+      if (PRODUCT_ORIGIN_PAGES.includes(origin)) sendMetric('purchase_after_product_visit', origin);
+      sessionStorage.removeItem(SHOPPING_ORIGIN);
     }
   } catch {
     /* Optional measurement must never interrupt payment confirmation. */

@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
 import { StaticRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { products } from '../data/catalog';
+import { formatPriceRange, products } from '../data/catalog';
 import { BUSINESS, CATEGORY_LOCAL_HELP, CATEGORY_SEO, PAGE_SEO } from '../data/siteSeo';
 import { useInventory } from '../context/InventoryContext';
 import LocalSeoPage, { localSeoPages } from './LocalSeoPage';
@@ -101,6 +101,36 @@ describe('local search pages', () => {
     expect(doc.querySelectorAll('.local-product')).toHaveLength(3);
     expect(doc.querySelectorAll('.local-product-stock')).toHaveLength(3);
   });
+
+  it.each(['instruments', 'guitars', 'violins', 'drums'])(
+    'shows current product prices, images and availability on the %s sales page',
+    (key) => {
+      const ids = localSeoPages[key].productIds;
+      const hidden = ids[0];
+      const soldOut = ids[1];
+      const current = products
+        .filter((product) => product.slug !== hidden)
+        .map((product) =>
+          product.slug === soldOut ? { ...product, price: 42, sizes: [] } : product
+        );
+      useInventory.mockReturnValue({ products: current, isSoldOut: (p) => p.slug === soldOut });
+      const { doc } = renderPage(<LocalSeoPage pageKey={key} />);
+      const cards = [...doc.querySelectorAll('.local-product')];
+      expect(cards).toHaveLength(ids.length - 1);
+      for (const card of cards) {
+        const slug = card.getAttribute('href').replace('/product/', '');
+        expect(ids).toContain(slug);
+        expect(slug).not.toBe(hidden);
+        const product = current.find((item) => item.slug === slug);
+        expect(card.querySelector('img')).not.toBeNull();
+        expect(card.querySelector('h3').textContent).toBe(product.name);
+        expect(card.querySelector('p').textContent).toBe(formatPriceRange(product));
+      }
+      expect(doc.querySelector(`a[href="/product/${soldOut}"]`).textContent).toContain(
+        'Out of stock'
+      );
+    }
+  );
 
   it('keeps all new pages discoverable from product categories or repair services', () => {
     const links = Object.values(CATEGORY_LOCAL_HELP).flatMap((help) =>

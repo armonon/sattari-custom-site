@@ -13,6 +13,7 @@ import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
+import ViolinBuyingComparison from '../components/ViolinBuyingComparison';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
 import './MusicResources.css';
 
@@ -166,10 +167,33 @@ export function GuideIndex() {
   );
 }
 
+function GuideSection({ section }) {
+  return (
+    <section className="resource-section" id={section.id}>
+      <h2>{section.title}</h2>
+      {section.paragraphs?.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      {section.steps && (
+        <ol>
+          {section.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      )}
+      {section.link && <Link to={section.link.path}>{section.link.label}</Link>}
+    </section>
+  );
+}
+
 export function GuideArticle() {
   const { slug } = useParams();
   const guide = musicGuides.find((item) => item.slug === slug);
   if (!guide) return <NotFoundPage />;
+  const sections = guide.sections.map((section, index) => ({ ...section, id: sectionId(index) }));
+  const leadSection = sections.find((section) => section.lead);
+  const bodySections = sections.filter((section) => !section.lead);
+  const violinBuying = slug === 'choose-a-violin-for-beginners';
   return (
     <Page
       title={guide.title}
@@ -203,44 +227,50 @@ export function GuideArticle() {
         Published by <Link to="/about">{BUSINESS.name}</Link>
       </p>
       <p className="resource-lead">{guide.answer}</p>
-      <Link className="resource-action" to={guide.action.path}>
-        {guide.action.label}
-        <ArrowRight size={18} />
-      </Link>
+      {leadSection && (
+        <div className="resource-article resource-checklist">
+          <GuideSection section={leadSection} />
+        </div>
+      )}
+      {!violinBuying && (
+        <Link className="resource-action" to={guide.action.path}>
+          {guide.action.label}
+          <ArrowRight size={18} />
+        </Link>
+      )}
       <nav className="resource-contents" aria-label="In this guide">
         <h2>In this guide</h2>
         <ol>
-          {guide.sections.map((section, index) => (
+          {violinBuying && (
+            <li>
+              <a href="#compare-violins">
+                Compare acoustic and electric violins for a first lesson
+              </a>
+            </li>
+          )}
+          {bodySections.map((section) => (
             <li key={section.title}>
-              <a href={`#${sectionId(index)}`}>{section.title}</a>
+              <a href={`#${section.id}`}>{section.title}</a>
             </li>
           ))}
         </ol>
       </nav>
-      <figure className="resource-figure">
-        <img
-          src={guide.image}
-          alt={guide.imageAlt}
-          width="1280"
-          height={guide.imageHeight || 800}
-          loading="lazy"
-        />
-      </figure>
+      {violinBuying ? (
+        <ViolinBuyingComparison action={guide.action} />
+      ) : (
+        <figure className="resource-figure">
+          <img
+            src={guide.image}
+            alt={guide.imageAlt}
+            width="1280"
+            height={guide.imageHeight || 800}
+            loading="lazy"
+          />
+        </figure>
+      )}
       <div className="resource-article">
-        {guide.sections.map((section, index) => (
-          <section key={section.title} className="resource-section" id={sectionId(index)}>
-            <h2>{section.title}</h2>
-            {section.paragraphs?.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-            {section.steps && (
-              <ol>
-                {section.steps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-            )}
-          </section>
+        {bodySections.map((section) => (
+          <GuideSection section={section} key={section.title} />
         ))}
         {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
           slug
@@ -438,25 +468,27 @@ export function PrivacyPage() {
           Studio stores projects and audio assets in your browser. Learn stores imported lessons,
           guitar settings, practice history, recorded takes and attached lesson videos locally. Stem
           Separator saves your songs and stems in this browser until you choose Clear saved work.
-          Key & BPM keeps results only in the open tab unless you save a report. Download backups;
-          clearing browser data can remove local projects, lessons, recordings and saved stems.
+          The song key and BPM finder saves results in this browser. You can export a report to keep
+          a copy. Clearing browser data can remove saved results, projects, lessons and recordings.
         </p>
       </section>
       <section className="resource-section">
         <h2>Optional site measurement</h2>
         <p>
-          With your permission, we count page groups, recognized referral sources and actions such
-          as a completed inquiry, analysis, separation, practice session or software download click.
-          A practice completion is not a verified musical skill; a download click is not a verified
-          download or installation. We do not add visitor IDs or store raw referring URLs, query
-          strings, IP addresses, contact fields or audio in these aggregate reports. Counts are not
-          unique visitors or verified sales.
+          With your permission, we count page visits and actions such as starting a tuner microphone
+          or reference tone, following a product link, tapping a phone number, sending an inquiry,
+          using a music tool or completing a verified purchase. Reports contain only the action, a
+          page label and a broad referral source. Audio, notes you play, form contents, visitor IDs,
+          IP addresses, order IDs and raw URLs stay out of these reports.
         </p>
         <p>
           Measurement is off until you allow it. We respect Global Privacy Control and Do Not Track.
-          A local preference remembers your choice; session storage remembers only a broad source
-          such as ChatGPT or Google. Reports cover the latest 90 days. Hosting providers still
-          receive normal network requests and may maintain operational logs.
+          Your browser remembers your choice. During a visit, the tab remembers the broad referral
+          source and the last measured local shopping page or violin buying guide where you followed
+          a product link. This lets us count a later verified purchase from that tab. A checkout
+          reference stays in the tab to avoid counting the same purchase twice. Aggregate reports
+          cover the latest 90 days. Hosting providers receive normal network requests and may keep
+          operational logs.
         </p>
         <AnalyticsChoice />
       </section>

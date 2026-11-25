@@ -1,6 +1,13 @@
 export const METRIC_EVENTS = [
   'page_view',
   'product_view',
+  'product_link_click',
+  'purchase_after_product_visit',
+  'inquiry_link_click',
+  'tuner_reference_started',
+  'tuner_microphone_started',
+  'tuner_repair_click',
+  'tuner_shop_click',
   'cart_add',
   'cart_view',
   'checkout_started',
@@ -45,10 +52,39 @@ export const METRIC_SOURCES = [
   'copilot',
   'gemini',
   'google',
+  'google_business_profile',
   'bing',
   'other_referral',
   'direct',
 ];
+const tunerPages = {
+  '/tuner/guitar': 'tuner-guitar',
+  '/tuner/violin': 'tuner-violin',
+  '/tuner/viola': 'tuner-viola',
+  '/tuner/bass': 'tuner-bass',
+  '/tuner/cello': 'tuner-cello',
+  '/tuner/ukulele': 'tuner-ukulele',
+};
+const salesPages = {
+  '/shop/instruments-los-angeles': 'sales-instruments-la',
+  '/shop/guitars-los-angeles': 'sales-guitars-la',
+  '/shop/violins-los-angeles': 'sales-violins-la',
+  '/shop/drums-los-angeles': 'sales-drums-la',
+  '/shop/accessories-los-angeles': 'sales-accessories-la',
+  '/guitar-strings-woodland-hills': 'sales-guitar-strings',
+  '/violin-strings-woodland-hills': 'sales-violin-strings',
+};
+const repairPages = {
+  '/services/instrument-repair-los-angeles': 'repair-la',
+  '/services/instrument-repair-woodland-hills': 'repair-woodland-hills',
+  '/services/instrument-repair-calabasas': 'repair-calabasas',
+  '/services/violin-repair-los-angeles': 'repair-violin-la',
+  '/services/guitar-setup-los-angeles': 'setup-guitar-la',
+  '/services/guitar-restringing-woodland-hills': 'restring-guitar',
+  '/services/violin-restringing-woodland-hills': 'restring-violin',
+  '/services/string-replacement-woodland-hills': 'replace-string',
+};
+export const PRODUCT_ORIGIN_PAGES = [...Object.values(salesPages), 'guide-violin-choice'];
 export const METRIC_PAGES = [
   'home',
   'about',
@@ -86,13 +122,17 @@ export const METRIC_PAGES = [
   'tool-details',
   'privacy',
   'downloads',
+  ...Object.values(tunerPages),
+  ...Object.values(salesPages),
+  ...Object.values(repairPages),
 ];
 
 export function metricPage(path) {
+  path = path.replace(/\/+$/, '').toLowerCase() || '/';
+  const specificPage = tunerPages[path] || salesPages[path] || repairPages[path];
+  if (specificPage) return specificPage;
   if (path === '/') return 'home';
   if (path === '/cart') return 'cart';
-  if (['/guitar-strings-woodland-hills', '/violin-strings-woodland-hills'].includes(path))
-    return 'local';
   if (path.startsWith('/shop')) return 'shop';
   if (path.startsWith('/product/')) return 'product';
   if (path.startsWith('/services')) return 'services';
@@ -124,14 +164,48 @@ export function metricPage(path) {
     '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
     '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
   };
-  return guides[path] || (METRIC_PAGES.includes(path.slice(1)) ? path.slice(1) : null);
+  const publicPaths = [
+    '/about',
+    '/hub',
+    '/stem-separator',
+    '/studio',
+    '/learn',
+    '/guides',
+    '/visit',
+    '/privacy',
+    '/downloads',
+  ];
+  return guides[path] || (publicPaths.includes(path) ? path.slice(1) : null);
+}
+
+// Only bounded event IDs travel to the collector, never hrefs or query parameters.
+export function internalLinkMetric(fromPath, destination) {
+  const from = fromPath.replace(/\/+$/, '').toLowerCase() || '/';
+  const to = destination.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+  const tuner = tunerPages[from] || from === '/studio/keybpm';
+  if (tuner && repairPages[to]) return 'tuner_repair_click';
+  if (
+    tuner &&
+    (to === '/shop' || to.startsWith('/shop/') || to.startsWith('/product/') || salesPages[to])
+  )
+    return 'tuner_shop_click';
+  if (to.startsWith('/product/') && PRODUCT_ORIGIN_PAGES.includes(metricPage(from)))
+    return 'product_link_click';
+  if (
+    from === to &&
+    ['#local-inquiry', '#repair-inquiry', '#service-inquiry'].includes(destination.hash)
+  )
+    return 'inquiry_link_click';
+  return null;
 }
 
 export function referralSource(referrer = '', search = '', origin = 'https://sattarimusic.com') {
   const campaign = new URLSearchParams(search).get('utm_source')?.toLowerCase();
   const campaigns = {
     google: 'google',
-    google_business_profile: 'google',
+    google_business_profile: 'google_business_profile',
+    gbp: 'google_business_profile',
+    gmb: 'google_business_profile',
     bing: 'bing',
     chatgpt: 'chatgpt',
     'chatgpt.com': 'chatgpt',

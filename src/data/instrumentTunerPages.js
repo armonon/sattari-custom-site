@@ -26,6 +26,7 @@ const instruments = [
         '/services/guitar-restringing-woodland-hills',
       ],
       ['When does my guitar need a setup?', '/guides/when-does-my-guitar-need-a-setup'],
+      ['Compare acoustic and electric guitars', '/shop/guitars-los-angeles'],
     ],
   },
   {
@@ -52,6 +53,7 @@ const instruments = [
     links: [
       ['Violin restringing in Woodland Hills', '/services/violin-restringing-woodland-hills'],
       ['Beginner violin care', '/guides/beginner-violin-care'],
+      ['Find replacement violin strings', '/violin-strings-woodland-hills'],
     ],
   },
   {
@@ -130,6 +132,7 @@ const instruments = [
     links: [
       ['Practice bass with isolated stems', '/guides/practice-bass-with-isolated-stems'],
       ['Compare six-string guitar tuning', '/tuner/guitar'],
+      ['Guitar and bass setup in Woodland Hills', '/services/guitar-setup-los-angeles'],
     ],
   },
   {

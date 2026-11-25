@@ -1,5 +1,6 @@
 import { Mic, Play, Square, Volume2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { trackSiteEvent } from '../../utils/siteMeasurement';
 import { Link } from 'react-router-dom';
 import { keyParts } from './keyBpm';
 import { musicalAccidentals, SCALE_TONICS } from '../../utils/noteSpelling';
@@ -15,9 +16,14 @@ import useInstrumentTuner from './useInstrumentTuner';
 import useTunerReference from './useTunerReference';
 import './instrumentTuner.css';
 
-export default function InstrumentTuner({ songKey, onBeforeListen = () => {}, instrumentPage }) {
+export default function InstrumentTuner({
+  songKey,
+  onBeforeListen = () => {},
+  instrumentPage,
+  initialPreset,
+}) {
   const tuner = useInstrumentTuner();
-  const [instrument, setInstrument] = useState(instrumentPage?.slug ?? 'guitar');
+  const [instrument, setInstrument] = useState(initialPreset ?? instrumentPage?.slug ?? 'guitar');
   const [target, setTarget] = useState(0);
   const [reference, setReference] = useState(440);
   const [root, setRoot] = useState(instrumentPage?.root ?? 'C');
@@ -50,6 +56,14 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {}, in
   const detected = keyParts(songKey);
   const listening = tuner.status === 'listening';
   const requesting = tuner.status === 'requesting';
+  // The audio hooks mark these states only after the input or output clock advances.
+  const measured = useRef({ reference: false, microphone: false });
+  useEffect(() => {
+    if (referenceOn && !startingAudio && !measured.current.reference)
+      measured.current.reference = Boolean(trackSiteEvent('tuner_reference_started'));
+    if (listening && !measured.current.microphone)
+      measured.current.microphone = Boolean(trackSiteEvent('tuner_microphone_started'));
+  }, [referenceOn, startingAudio, listening]);
   const displayMidi = listening ? nearest : targetMidi;
   const displayFrequency = listening
     ? tuner.pitch?.frequency

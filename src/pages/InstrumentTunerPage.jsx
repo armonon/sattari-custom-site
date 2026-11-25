@@ -5,13 +5,16 @@ import { getInstrumentTunerPage } from '../data/instrumentTunerPages';
 import { absoluteUrl, breadcrumbSchema } from '../data/siteSeo';
 import InstrumentTuner from '../labs/keybpm/InstrumentTuner';
 import { SEO, StructuredData } from '../utils/seo';
+import { useHydratedSearchParams } from './useHydratedSearchParams';
 import '../labs/audio/audioLabs.css';
 import './InstrumentTunerPage.css';
 
 export default function InstrumentTunerPage({ instrument }) {
   const params = useParams();
+  const preset = useHydratedSearchParams().get('preset');
   const page = getInstrumentTunerPage(instrument ?? params.instrument);
   if (!page) return <NotFoundPage />;
+  const initialPreset = page.presets.includes(preset) ? preset : page.slug;
   const url = absoluteUrl(page.path);
   const hub = '/studio/keybpm';
   const label = `${page.name} tuner`;
@@ -47,7 +50,11 @@ export default function InstrumentTunerPage({ instrument }) {
             Song key and BPM finder <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </nav>
-        <InstrumentTuner key={page.slug} instrumentPage={page} />
+        <InstrumentTuner
+          key={page.slug + initialPreset}
+          instrumentPage={page}
+          initialPreset={initialPreset}
+        />
         <section className="instrument-guide" aria-label={`${page.name} tuning guide`}>
           {page.tips.map(([heading, text]) => (
             <div key={heading}>

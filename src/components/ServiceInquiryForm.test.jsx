@@ -162,3 +162,35 @@ it('keeps music-tool feedback focused while service intake captures instrument a
   expect(screen.getByLabelText('Instrument / gear and model (optional)')).toBeInTheDocument();
   expect(screen.getByLabelText('Preferred timing (optional)')).toBeInTheDocument();
 });
+
+it('delivers a guitar string quote request on both transports and resets the pack preferences', async () => {
+  render(<ServiceInquiryForm initialService="accessories" guitarStringInquiry />);
+  fireEvent.change(screen.getByLabelText('Your Name'), { target: { value: 'Alex' } });
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alex@example.com' } });
+  fireEvent.change(screen.getByLabelText('Guitar type'), {
+    target: { value: 'Steel-string acoustic guitar' },
+  });
+  fireEvent.change(screen.getByLabelText('What would you like to check?'), {
+    target: { value: 'Pack price and installation quote' },
+  });
+  fireEvent.change(screen.getByLabelText('Preferred brand, set or gauge (optional)'), {
+    target: { value: '12–53' },
+  });
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 404 });
+  fireEvent.click(screen.getByRole('button', { name: 'Send string inquiry' }));
+  await screen.findByRole('status');
+  const netlify = new URLSearchParams(fetchMock.mock.calls[0][1].body);
+  const fallback = JSON.parse(fetchMock.mock.calls[1][1].body);
+  expect(netlify.get('details')).toContain(
+    'Guitar string request: Pack price and installation quote'
+  );
+  expect(netlify.get('details')).toContain('Guitar type: Steel-string acoustic guitar');
+  expect(netlify.get('details')).toContain('Preferred set or gauge: 12–53');
+  expect(fallback.details).toBe(netlify.get('details'));
+  expect(fallback).not.toHaveProperty('preferredPack');
+  fireEvent.click(screen.getByRole('button', { name: 'Start another request' }));
+  expect(screen.getByLabelText('Preferred brand, set or gauge (optional)')).toHaveValue('');
+  fireEvent.change(screen.getByLabelText('Service Type'), { target: { value: 'lessons' } });
+  expect(screen.queryByLabelText('Guitar type')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Describe what you need')).toBeRequired();
+});

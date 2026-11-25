@@ -186,3 +186,41 @@ it('clears optional checkout deduplication data on consent withdrawal', () => {
   setMeasurementPreference(false);
   expect(sessionStorage.getItem('sattari-purchase-measured-v1')).toBeNull();
 });
+
+it('ties one verified purchase to the last measured local product visit in the same tab', () => {
+  setMeasurementPreference(true);
+  window.location.pathname = '/shop/guitars-los-angeles';
+  trackSiteEvent('product_link_click');
+  window.location.pathname = '/guides/choose-a-violin-for-beginners';
+  trackSiteEvent('product_link_click');
+  window.location.pathname = '/checkout/success';
+  trackVerifiedPurchaseOnce('test-order-local');
+  trackVerifiedPurchaseOnce('test-order-local');
+  trackVerifiedPurchaseOnce('test-order-later');
+  expect(
+    fetch.mock.calls
+      .map(([, request]) => JSON.parse(request.body))
+      .map(({ page, event }) => [page, event])
+  ).toEqual([
+    ['sales-guitars-la', 'product_link_click'],
+    ['guide-violin-choice', 'product_link_click'],
+    ['purchase', 'purchase_verified'],
+    ['guide-violin-choice', 'purchase_after_product_visit'],
+    ['purchase', 'purchase_verified'],
+  ]);
+});
+
+it('clears optional sales attribution on withdrawal and drops private originating paths', () => {
+  window.location.pathname = '/shop/guitars-los-angeles';
+  setMeasurementPreference(true);
+  trackSiteEvent('product_link_click');
+  expect(sessionStorage.getItem('sattari-product-origin-v1')).toBe('sales-guitars-la');
+  setMeasurementPreference(false);
+  expect(sessionStorage.getItem('sattari-product-origin-v1')).toBeNull();
+  setMeasurementPreference(true);
+  trackSiteEvent('inquiry_sent', '/private/member');
+  window.location.pathname = '/about';
+  trackSiteEvent('inquiry_sent', '/services/guitar-restringing-woodland-hills');
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetch.mock.calls[1][1].body).page).toBe('restring-guitar');
+});

@@ -6,6 +6,7 @@ import {
   setMeasurementPreference,
   trackSiteEvent,
 } from '../utils/siteMeasurement';
+import { internalLinkMetric } from '../utils/siteMetrics';
 import '../pages/MusicResources.css';
 
 function usePreference() {
@@ -50,18 +51,20 @@ export default function SiteMeasurement() {
     const clicked = (event) => {
       const link = event.target.closest?.('a[href]');
       if (!link) return;
-      if (link.href.startsWith('tel:')) trackSiteEvent('contact_click');
-      if (link.href.startsWith('https://www.google.com/maps/dir'))
-        trackSiteEvent('directions_click');
-      if (link.hasAttribute('download')) {
-        const url = new URL(link.href);
-        if (url.origin === window.location.origin && url.pathname.startsWith('/downloads/'))
-          trackSiteEvent('software_download');
-      }
+      const url = new URL(link.getAttribute('href'), document.baseURI);
+      if (url.protocol === 'tel:') return trackSiteEvent('contact_click');
+      if (url.origin === 'https://www.google.com' && url.pathname.startsWith('/maps/dir'))
+        return trackSiteEvent('directions_click');
+      if (url.origin !== window.location.origin) return;
+      if (link.hasAttribute('download') && url.pathname.startsWith('/downloads/'))
+        return trackSiteEvent('software_download');
+      const metric = internalLinkMetric(pathname, url);
+      if (metric) trackSiteEvent(metric, pathname);
     };
-    document.addEventListener('click', clicked);
-    return () => document.removeEventListener('click', clicked);
-  }, []);
+    // Record the source page before a router link updates the address.
+    document.addEventListener('click', clicked, true);
+    return () => document.removeEventListener('click', clicked, true);
+  }, [pathname]);
   if (
     preference !== null ||
     ['/cart', '/studio-booking', '/checkout/success', '/checkout/cancel'].includes(pathname)

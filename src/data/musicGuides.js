@@ -65,6 +65,7 @@ export const musicGuides = [
     sections: [
       {
         title: 'Prepare one musical phrase',
+        link: { path: '/tuner/bass', label: 'Tune your bass before matching the recording' },
         paragraphs: [
           'Choose a recording you have permission to use. In Stem Separator, choose Bass practice and separate it. The Bass stem is your reference; Vocals, Drums and Other instruments become the backing track you play against. Start with a short, repeated phrase rather than the entire song.',
           'Listen to the bass in the full mix first, then in isolation. Count where notes begin and end. A convincing bass part depends on note length, rests and its relationship with the kick as much as the pitches.',
@@ -288,6 +289,7 @@ export const musicGuides = [
       },
       {
         title: 'Make a useful comparison at home',
+        link: { path: '/tuner/guitar', label: 'Check the open strings with the guitar tuner' },
         steps: [
           'Tune to your normal tuning and play the same familiar chords and notes at your usual strength.',
           'Write down exactly where the symptom occurs and when it began. Keep the current string packet or note the brand and gauge if known.',
@@ -413,6 +415,7 @@ export const musicGuides = [
       },
       {
         title: 'Strings and bridge: check before playing',
+        link: { path: '/tuner/violin', label: 'Check your violin’s open G, D, A and E strings' },
         paragraphs: [
           'Look for a broken winding, corrosion or a string that has become difficult to tune or respond consistently. Replacement timing depends on condition and use. Record the instrument size and the string’s end fitting before ordering; a listing for one size or fitting is not automatically suitable for another.',
           'If you have not changed strings before, ask a teacher or repairer to demonstrate. Removing all strings together can release the bridge. A leaning, displaced or damaged bridge needs assessment; do not force it upright or attempt a soundpost adjustment.',
@@ -444,12 +447,12 @@ export const musicGuides = [
   },
   {
     slug: 'choose-a-violin-for-beginners',
-    title: 'How to choose a violin for beginners',
+    title: 'How to Choose a Violin: Size, Setup & a Beginner’s Checklist',
     category: 'Strings',
     description:
-      'Compare a first violin by player fit, acoustic or electric design, setup and included accessories. Bring these questions to your teacher and the shop.',
+      'Choose a first violin with a fitting and setup checklist. Compare two full-size acoustic and electric models, their prices, and the accessories each includes.',
     answer:
-      'Start with a violin that fits the player and the lessons they intend to take. Have a teacher confirm size and playing comfort, compare acoustic and electric options for the intended use, and check the exact accessories and setup included before buying.',
+      'Start with the size your teacher recommends and the kind of violin your lessons require. Then try a few notes and compare the cost of everything you need to play your first lesson.',
     image: '/sattari site/violins/brescia-acoustic.jpg',
     imageAlt: 'Sattari Brescia acoustic violin',
     action: {
@@ -473,13 +476,14 @@ export const musicGuides = [
         ],
       },
       {
-        title: 'Use the same checklist for each candidate',
+        title: 'Your first-violin buying checklist',
+        lead: true,
         steps: [
-          'Confirm model, instrument size, condition and current availability.',
-          'Ask exactly which bow, case, rosin, shoulder rest and electrical accessories are included. Add only the missing items you need.',
-          'Have the teacher or shop demonstrate tuning, a few comfortable notes and bow response. Ask about bridge fit, string height and what preparation is included.',
-          'Inspect visible condition and ask about any cracks, open seams, previous repairs or tuning difficulties. Do not assume every issue is a quick adjustment.',
-          'Confirm the total price and the actual delivery, collection, return and warranty terms before ordering.',
+          'Check the fit in playing position. Ask your teacher to watch your reach and posture and write down the size.',
+          'Ask which type your lessons or ensemble require. Try an acoustic violin in the room or an electric violin through the equipment you plan to use.',
+          'Play open strings and a few fingered notes. Ask the shop to show how the pegs hold pitch, how the bridge fits and whether the string height feels comfortable.',
+          'Inspect the body and seams with the shop. Ask about cracks, previous repairs or any buzzing you hear.',
+          'Price the complete kit. Confirm the bow, case, rosin, shoulder rest and any electronics you need, plus collection or delivery and return terms.',
         ],
       },
       {
@@ -498,8 +502,6 @@ export const musicGuides = [
     ],
     related: [
       '/shop/violins',
-      '/product/brescia-acoustic-violin',
-      '/product/chiara-wooden-electric-violin',
       '/guides/beginner-violin-care',
       '/services/music-lessons-los-angeles',
       '/services/violin-repair-los-angeles',
