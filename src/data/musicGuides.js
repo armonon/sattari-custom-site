@@ -520,8 +520,8 @@ export const musicGuides = [
       {
         title: 'Why stick size matters',
         paragraphs: [
-          'Drumstick sizes are named with a number and a letter — 5A, 7A, 2B, and so on. The number refers roughly to how many sticks fit within a certain diameter (lower numbers = thicker sticks). The letter indicates the original intended use: A for orchestra, B for band, S for street. In practice, the number is what matters most.',
-          '5A is the most widely used size and the best starting point for most beginners. It is balanced, comfortable for a range of hand sizes, and versatile enough to cover most playing situations. 7A is thinner and lighter — popular for jazz and lighter playing, but can feel fragile for hard practice. Thicker sizes like 2B are designed for volume and power, not for developing technique.',
+          'Drumstick models use size names such as 5A, 5B and 7A. In the Vic Firth American Classic line, a 7A is slimmer than a 5A, and a 5B is thicker than a 5A. Compare the diameter, length and taper of the particular models you are considering.',
+          'Try a 5A as a starting point. Play the same single strokes quietly with a 5A and a 7A to feel the difference in reach, weight and rebound. If you want more weight behind a stroke, try a 5B or 2B.',
         ],
       },
       {
@@ -544,6 +544,16 @@ export const musicGuides = [
           'Stick with the same size long enough to develop consistency. Switching sticks too early makes it harder to build a reliable stroke. Most beginners should use the same pair for at least several months before experimenting with a different size or material.',
           'Consider moving to a heavier stick if you are playing louder music and want more weight behind each stroke. Consider moving lighter if fatigue is limiting your practice time. The right stick is the one that lets you play longer with better control — not the one endorsed by your favourite drummer.',
         ],
+      },
+    ],
+    sources: [
+      {
+        label: 'Vic Firth American Classic 7A specifications',
+        url: 'https://vicfirth.com/products/american-classicr-7a',
+      },
+      {
+        label: 'Vic Firth American Classic 55A and its 5A / 5B size comparison',
+        url: 'https://vicfirth.com/products/american-classicr-55a',
       },
     ],
     related: [

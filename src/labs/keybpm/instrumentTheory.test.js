@@ -6,8 +6,10 @@ import {
   noteFrequency,
   centsFrom,
   scaleNotes,
+  spelledScale,
 } from './instrumentTheory';
 import { detectFundamental, reduceSampleRate } from '../../loop/pitch';
+import { SCALE_TONICS, parseTonic } from '../../utils/noteSpelling';
 
 describe('instrument references and pitch detection', () => {
   it('uses the sounding open pitches for violin, bass and high-G ukulele', () => {
@@ -66,5 +68,35 @@ it('builds each scale as a rising octave and gives expected major/minor pitches'
     const pitches = scaleNotes(6, type, 2);
     expect(pitches.at(-1) - pitches[0]).toBe(12);
     expect(pitches.every((n, i) => !i || n > pitches[i - 1])).toBe(true);
+  }
+});
+
+it.each([
+  ['F', 'major', 'F3 G3 A3 B♭3 C4 D4 E4 F4'],
+  ['F#', 'major', 'F♯3 G♯3 A♯3 B3 C♯4 D♯4 E♯4 F♯4'],
+  ['Gb', 'major', 'G♭3 A♭3 B♭3 C♭4 D♭4 E♭4 F4 G♭4'],
+  ['C#', 'major', 'C♯3 D♯3 E♯3 F♯3 G♯3 A♯3 B♯3 C♯4'],
+  ['Eb', 'minor', 'E♭3 F3 G♭3 A♭3 B♭3 C♭4 D♭4 E♭4'],
+  ['Db', 'major-pentatonic', 'D♭3 E♭3 F3 A♭3 B♭3 D♭4'],
+  ['Bb', 'minor-pentatonic', 'B♭3 D♭4 E♭4 F4 A♭4 B♭4'],
+  ['C', 'blues', 'C3 E♭3 F3 F♯3 G3 B♭3 C4'],
+  ['G', 'dorian', 'G3 A3 B♭3 C4 D4 E4 F4 G4'],
+  ['F', 'mixolydian', 'F3 G3 A3 B♭3 C4 D4 E♭4 F4'],
+])('spells %s %s by scale degree and written octave', (root, pattern, labels) => {
+  expect(spelledScale(root, pattern, 3).map((note) => note.label)).toEqual(labels.split(' '));
+});
+
+it('matches the written pitch to the sounding MIDI number for every selectable scale', () => {
+  const naturals = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  for (const root of SCALE_TONICS) {
+    for (const scale of Object.keys(SCALES)) {
+      const notes = spelledScale(root, scale, 3);
+      expect(notes.map((n) => n.midi)).toEqual(scaleNotes(parseTonic(root).pitchClass, scale, 3));
+      for (const { label, midi } of notes) {
+        const [, letter, accidental, octave] = /^([A-G])([♯♭]*)(-?\d+)$/.exec(label);
+        const alteration = accidental.startsWith('♭') ? -accidental.length : accidental.length;
+        expect((Number(octave) + 1) * 12 + naturals[letter] + alteration).toBe(midi);
+      }
+    }
   }
 });

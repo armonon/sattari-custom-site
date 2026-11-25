@@ -137,3 +137,36 @@ describe('track identity', () => {
     expect(await isDuplicateTrack(file, [existing])).toBe(true);
   });
 });
+
+it('places all 24 keys on the official Camelot wheel, including enharmonic aliases', () => {
+  const pairs = [
+    ['B', 'G#'],
+    ['Gb', 'Eb'],
+    ['Db', 'Bb'],
+    ['Ab', 'F'],
+    ['Eb', 'C'],
+    ['Bb', 'G'],
+    ['F', 'D'],
+    ['C', 'A'],
+    ['G', 'E'],
+    ['D', 'B'],
+    ['A', 'F#'],
+    ['E', 'C#'],
+  ];
+  pairs.forEach(([major, minor], index) => {
+    expect(camelot(major + ' major')).toBe(index + 1 + 'B');
+    expect(camelot(minor + ' minor')).toBe(index + 1 + 'A');
+  });
+  expect(camelot('Cb major')).toBe(camelot('B major'));
+  expect(camelot('E♯ minor')).toBe(camelot('F minor'));
+});
+
+it('presents pitch-class estimates with conventional key signatures', () => {
+  expect(
+    resultRow('a', { status: 'ready', key: 'A# major', keyAlternative: 'D# major' })
+  ).toMatchObject({
+    key: 'Bb major',
+    alternative: 'Eb major',
+    camelot: '6B',
+  });
+});

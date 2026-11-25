@@ -101,6 +101,17 @@
   font-weight: 620;
   line-height: 1.25;
 }
+.instrument-strings strong {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1px 5px;
+}
+.instrument-string-name {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
 .instrument-strings small,
 .instrument-scale-notes small {
   color: var(--alab-muted);

@@ -230,6 +230,11 @@ function CorrectionEditor({ row, onChange, onClose }) {
                 ? `Detected: ${row.result.key} (${row.result.camelot})`
                 : 'No key detected'}
             </option>
+            {row.user?.key && !ALL_KEYS.includes(row.user.key) && (
+              <option value={row.user.key}>
+                {row.user.key} ({camelot(row.user.key)})
+              </option>
+            )}
             {ALL_KEYS.map((key) => (
               <option key={key} value={key}>
                 {key} ({camelot(key)})

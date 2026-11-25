@@ -110,3 +110,13 @@ it('plays a drone on the tonic and stops it, and the T key taps the tempo', () =
   expect(screen.getByText('120 BPM from 4 taps')).toBeInTheDocument();
   now.mockRestore();
 });
+
+it('skips an enharmonic duplicate when offering a second tonic to audition', () => {
+  const source = row({ key: 'Bb major' });
+  source.result = { ...source.result, key: 'A# major', camelot: '6B', alternative: 'G minor' };
+  setup(undefined, { row: source });
+  expect(screen.getByRole('button', { name: 'Drone on B♭' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Drone on the second choice (G minor)' })
+  ).toBeInTheDocument();
+});

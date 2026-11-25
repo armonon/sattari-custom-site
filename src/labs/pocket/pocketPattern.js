@@ -1,6 +1,8 @@
 // Pocket pattern model: plain data, pure helpers. The same timing functions
 // drive live playback and the offline WAV render, so exports match what plays.
 
+import { MAJOR_TONICS, MINOR_TONICS, parseTonic, spellInterval } from '../../utils/noteSpelling';
+
 export const STEPS = 16;
 export const STORAGE_KEY = 'sattari-pocket-patterns-v1';
 export const MAX_SAVED = 40;
@@ -16,7 +18,7 @@ export const DRUM_TRACKS = [
 export const BASS_TRACK = { id: 'bass', label: 'Bass', color: '#00e68a' };
 export const ALL_TRACKS = [...DRUM_TRACKS, BASS_TRACK];
 
-export const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export const pocketTonics = (scale) => (scale === 'major' ? MAJOR_TONICS : MINOR_TONICS);
 export const SCALES = {
   minor: { label: 'Minor', steps: [0, 2, 3, 5, 7, 8, 10] },
   minorPentatonic: { label: 'Minor pentatonic', steps: [0, 3, 5, 7, 10] },
@@ -42,7 +44,12 @@ export function bassRowSemitones(scale = 'minor') {
 }
 
 export function bassRowLabels(key, scale) {
-  return bassRowSemitones(scale).map((semi) => KEYS[(key + semi) % 12]);
+  const tonic = parseTonic(pocketTonics(scale)[key]);
+  const degrees = [0, 2, 3, 4, 6, 7, 9, 10];
+  return bassRowSemitones(scale).map(
+    (semi, row) =>
+      spellInterval(tonic, 1, semi, scale === 'minorPentatonic' ? degrees[row] : row).name
+  );
 }
 
 /** Bass pitch: row 0 is the root in octave 1 (A = 55 Hz). */

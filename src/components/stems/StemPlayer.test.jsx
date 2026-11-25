@@ -328,7 +328,7 @@ describe('beat tools', () => {
   it('counts in one bar before the music and loops whole bars from the playhead', async () => {
     const { context } = await setup({ frames: RATE * 4 });
     await waitFor(() => expect(screen.getByText(/Beat grid · 240 BPM/)).toBeInTheDocument());
-    await act(async () => fireEvent.click(screen.getByLabelText('Count-in (1 bar)')));
+    await act(async () => fireEvent.click(screen.getByLabelText('Count-in (4 beats)')));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Play' })));
     const clicks = context.clicks.map((osc) => osc.when);
     const start = context.sources[0].when;

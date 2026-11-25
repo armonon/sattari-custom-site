@@ -79,7 +79,7 @@ export const separatorGuides = [
           'Press Play. Drums is muted; the other three parts share one clock, so muting, soloing or changing a level never pulls them out of time. Press the headphones button on Drums to hear the part alone.',
           'Loop the fill or groove you are learning: Set A at its start, Set B at its end. Playback stays inside the loop until you press Clear loop.',
           'Press Download my mix for one WAV of vocals + bass + other instruments, full length and aligned to the original. The file name ends in -drumless-mix.wav.',
-          'The separator does not add a count-in or click. Use the first clear downbeat of the song as your entry point.',
+          'When the player finds a steady pulse, you can turn on a four-beat count-in or a practice click. The downloaded mix contains the selected stems. Use the first clear downbeat as your entry point when playing the WAV.',
         ],
       },
       {
@@ -129,7 +129,7 @@ export const separatorGuides = [
       {
         title: 'Key is a suggestion, not a verdict',
         paragraphs: [
-          'A key estimate summarizes the tonal pattern the analyzer hears. Relative major and minor keys share the same pitch collection, so a result can favor one even when the other feels like home. Repeated notes, unusual tunings and separation artifacts can also affect the estimate.',
+          'A key estimate summarizes the tonal pattern the analyzer hears. Relative keys share a key signature. C major and A natural minor use the same seven notes, but C and A feel like different points of rest. In A minor, a phrase may also use G-sharp to lead back to A. Repeated notes, unusual tunings and separation artifacts can also affect the estimate.',
           'Prominent notes are pitch classes, not a melody, a bass transcription or a list of chords in time. Try the suggested home note on your instrument and compare it with the ends of phrases. If the result disagrees with the recording, trust a listening check over a confident-looking label.',
           'Drum stems are not assigned a musical key. Weak or unsuitable tonal material can be shown as undetermined instead of receiving a useful key estimate.',
         ],

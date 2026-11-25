@@ -210,12 +210,9 @@ export default function KeyReadout({
   const playing = isAuditioning && audition.playing;
   const detected = result.bpm;
   const choice = row.user?.bpm != null ? row.user.bpmChoice : 'detected';
-  const alternative =
-    values.keySource === 'detected'
-      ? result.alternative
-      : result.key && result.key !== values.key
-        ? result.key
-        : result.alternative;
+  const alternative = [result.key, result.alternative].find(
+    (key) => key && camelot(key) !== values.camelot
+  );
   const { stopDrone } = tones;
 
   // A different track resets the tapper, notes field and drone.
@@ -438,7 +435,8 @@ export default function KeyReadout({
             </div>
           ) : null}
           <p className="kb-note">
-            Play the song with a drone: the right key sounds settled, a wrong one clashes.
+            Listen for the note that feels like home at phrase endings. Compare the suggested tonics
+            against the recording.
           </p>
         </div>
 

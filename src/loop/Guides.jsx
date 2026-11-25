@@ -17,11 +17,13 @@ export function ChordDiagram({ name, small = false }) {
     top = 42,
     gap = 22,
     step = 30;
+  const fretRows = Math.max(4, Math.max(...shape.frets) - shape.startFret + 1);
+  const gridBottom = top + fretRows * step;
   const stringX = (s) => left + (profile.handedness === 'left' ? 5 - s : s) * gap;
   return (
     <svg
       className={`loop-chord-diagram${small ? ' is-small' : ''}`}
-      viewBox="0 0 174 197"
+      viewBox={`0 0 174 ${gridBottom + 35}`}
       role="img"
       aria-label={`${shape.fullName}. Frets from string 6 to string 1: ${shape.frets.map((f) => (f < 0 ? 'mute' : f === 0 ? 'open' : f)).join(', ')}.`}
     >
@@ -31,11 +33,11 @@ export function ChordDiagram({ name, small = false }) {
           x1={stringX(s)}
           x2={stringX(s)}
           y1={top}
-          y2={top + 4 * step}
+          y2={gridBottom}
           className="loop-diagram-line"
         />
       ))}
-      {Array.from({ length: 5 }, (_, f) => (
+      {Array.from({ length: fretRows + 1 }, (_, f) => (
         <line
           key={`f${f}`}
           x1={left}
@@ -81,7 +83,7 @@ export function ChordDiagram({ name, small = false }) {
               </text>
             </>
           )}
-          <text x={stringX(s)} y="186" className="loop-diagram-label">
+          <text x={stringX(s)} y={gridBottom + 24} className="loop-diagram-label">
             {noteName(openStrings(profile)[s]).replace(/\d/g, '')}
           </text>
         </g>
@@ -307,6 +309,7 @@ export function SongStaffGuide({ lesson, phrase, active }) {
         <StaffGuide
           notes={polyphonic ? overlapping : phrase.notes}
           bpm={lesson.bpm}
+          endBeat={lesson.source === 'demo' ? (phrase.end * lesson.bpm) / 60 : undefined}
           active={polyphonic ? undefined : active}
           polyphonic={polyphonic}
         />

@@ -4,6 +4,7 @@
 // third-party DSP code (Rubber Band and similar GPL libraries are not used).
 import { detectFundamental, reduceSampleRate } from '../../loop/pitch';
 import { decideSongKey } from '../../loop/autoKey';
+import { MAJOR_TONICS, MINOR_TONICS, parseTonic, spellInterval } from '../../utils/noteSpelling';
 
 export const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 export const SCALES = {
@@ -26,17 +27,27 @@ export const midiToName = (midi) =>
   `${NOTE_NAMES[wrap12(Math.round(midi))]}${Math.floor(Math.round(midi) / 12) - 1}`;
 
 export function parseKey(text) {
-  const match = /^([A-G](?:#|b)?)\s*(major|minor|chromatic)?$/i.exec(String(text || '').trim());
+  const match = /^([A-G][#♯b♭]?)\s*(major|minor|chromatic)?$/i.exec(String(text || '').trim());
   if (!match) return null;
-  const flats = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
-  const name = flats[match[1]] || match[1].toUpperCase();
-  const root = NOTE_NAMES.indexOf(name);
-  if (root < 0) return null;
-  return { root, mode: (match[2] || 'major').toLowerCase() };
+  const tonic = parseTonic(match[1]);
+  return tonic ? { root: tonic.pitchClass, mode: (match[2] || 'major').toLowerCase() } : null;
 }
 
+export const voxTonics = (mode) => (mode === 'minor' ? MINOR_TONICS : MAJOR_TONICS);
+
 export function keyLabel({ root, mode }) {
-  return mode === 'chromatic' ? 'Chromatic' : `${NOTE_NAMES[root]} ${mode}`;
+  return mode === 'chromatic' ? 'Chromatic' : `${voxTonics(mode)[root]} ${mode}`;
+}
+
+/** Names indexed by chromatic pitch class for the graph's horizontal guides. */
+export function scaleNoteNames(root, mode) {
+  if (mode === 'chromatic') return NOTE_NAMES;
+  const tonic = parseTonic(voxTonics(mode)[root]);
+  const names = Array(12).fill(null);
+  SCALES[mode].forEach((semitones, degree) => {
+    names[(root + semitones) % 12] = spellInterval(tonic, 3, semitones, degree).name;
+  });
+  return names;
 }
 
 /** Pitch classes of the scale, as offsets from C. */

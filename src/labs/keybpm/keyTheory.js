@@ -2,25 +2,29 @@
 // and the pitches used by the by-ear checks (drone and scale).
 import { keyParts } from './keyBpm';
 
-const SHARP_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11, 12];
-const MINOR_STEPS = [0, 2, 3, 5, 7, 8, 10, 12];
+import {
+  MAJOR_TONICS,
+  musicalAccidentals,
+  parseTonic,
+  spellInterval,
+} from '../../utils/noteSpelling';
+import { spelledScale, noteFrequency } from './instrumentTheory';
 
-/** { tonic: 'F♯', mode: 'minor' } for display, or null. */
+/** Keep the tonic spelling chosen by the musician or supplied by the recording. */
 export function keyDisplay(key) {
   const parts = keyParts(key);
-  return parts ? { tonic: SHARP_NAMES[parts.root], mode: parts.minor ? 'minor' : 'major' } : null;
+  return parts
+    ? { tonic: musicalAccidentals(parts.tonic), mode: parts.minor ? 'minor' : 'major' }
+    : null;
 }
 
-const NAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-/** The relative major or minor, in the analyzer's spelling ('C major' ↔ 'A minor'). */
 export function relativeKey(key) {
   const parts = keyParts(key);
   if (!parts) return '';
-  return parts.minor
-    ? `${NAME[(parts.root + 3) % 12]} major`
-    : `${NAME[(parts.root + 9) % 12]} minor`;
+  const relative = parts.minor
+    ? spellInterval(parseTonic(parts.tonic), 3, 3, 2)
+    : spellInterval(parseTonic(parts.tonic), 3, 9, 5);
+  return `${relative.name} ${parts.minor ? 'major' : 'minor'}`;
 }
 
 /** Position on the circle of fifths: index 0 = C major / A minor at the top, clockwise. */
@@ -36,23 +40,22 @@ export const CIRCLE = Array.from({ length: 12 }, (_, index) => {
   const majorRoot = (index * 7) % 12;
   return {
     index,
-    major: SHARP_NAMES[majorRoot],
-    minor: `${SHARP_NAMES[(majorRoot + 9) % 12]}m`,
+    major: musicalAccidentals(MAJOR_TONICS[majorRoot]),
+    minor: musicalAccidentals(relativeKey(`${MAJOR_TONICS[majorRoot]} major`).split(' ')[0]) + 'm',
   };
 });
-
-const frequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 /** Tonic pitch in Hz (octave 3 by default: A3 = 220 Hz). */
 export function tonicFrequency(key, octave = 3) {
   const parts = keyParts(key);
-  return parts ? frequency(12 * (octave + 1) + parts.root) : null;
+  return parts ? noteFrequency(12 * (octave + 1) + parseTonic(parts.tonic).semitones) : null;
 }
 
 /** One octave of the major or natural minor scale from the tonic, in Hz. */
 export function scaleFrequencies(key, octave = 3) {
   const parts = keyParts(key);
   if (!parts) return [];
-  const base = 12 * (octave + 1) + parts.root;
-  return (parts.minor ? MINOR_STEPS : MAJOR_STEPS).map((step) => frequency(base + step));
+  return spelledScale(parts.tonic, parts.minor ? 'minor' : 'major', octave).map((note) =>
+    noteFrequency(note.midi)
+  );
 }

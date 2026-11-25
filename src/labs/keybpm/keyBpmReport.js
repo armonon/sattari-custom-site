@@ -1,5 +1,4 @@
 import {
-  ALL_KEYS,
   BPM_CHOICES,
   camelot,
   cleanNotes,
@@ -93,7 +92,7 @@ function track(record, version) {
     const user = record.user;
     if (!object(user)) invalid();
     const key = user.key === null ? null : text(user.key, 24, false);
-    if (key !== null && !ALL_KEYS.includes(key)) invalid();
+    if (key !== null && !keyParts(key)) invalid();
     const bpm = user.bpm === null ? null : normalizeBpm(user.bpm);
     if (user.bpm !== null && (bpm === null || bpm !== user.bpm)) invalid();
     const bpmChoice = user.bpmChoice === null ? null : user.bpmChoice;

@@ -24,7 +24,7 @@ import {
   deleteSaved,
   DRUM_TRACKS,
   emptyPattern,
-  KEYS,
+  pocketTonics,
   LIMITS,
   listSaved,
   normalizePattern,
@@ -412,7 +412,7 @@ export default function PocketPage() {
               value={pattern.key}
               onChange={(event) => update(() => ({ key: Number(event.target.value) }))}
             >
-              {KEYS.map((key, index) => (
+              {pocketTonics(pattern.scale).map((key, index) => (
                 <option key={key} value={index}>
                   {key}
                 </option>

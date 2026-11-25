@@ -1699,7 +1699,12 @@ function LoopPracticeApp() {
               <h2>
                 Phrase {i + 1} · {formatTime(p.start)}–{formatTime(p.end)}
               </h2>
-              <StaffGuide notes={p.notes} active={-1} bpm={lesson.bpm} />
+              <StaffGuide
+                notes={p.notes}
+                active={-1}
+                bpm={lesson.bpm}
+                endBeat={lesson.source === 'demo' ? (p.end * lesson.bpm) / 60 : undefined}
+              />
               <TabGuide notes={p.notes} active={-1} onSelect={() => {}} />
               {lesson.polyphonicNotes?.some((n) => n.end > p.start && n.start < p.end) && (
                 <>

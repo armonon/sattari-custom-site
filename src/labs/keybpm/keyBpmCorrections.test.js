@@ -92,6 +92,8 @@ describe('corrections', () => {
   });
   it('drop invalid or empty corrections instead of half-applying them', () => {
     expect(cleanCorrection({ key: 'H major', bpm: 'fast' })).toBeNull();
+    expect(cleanCorrection({ key: 'B♭ major' }).key).toBe('B♭ major');
+    expect(cleanCorrection({ key: 'A# major' }).key).toBe('A# major');
     expect(cleanCorrection({ key: null, bpm: null })).toBeNull();
     expect(cleanCorrection({ bpm: 90 })).toMatchObject({ bpm: 90, bpmChoice: 'manual' });
   });

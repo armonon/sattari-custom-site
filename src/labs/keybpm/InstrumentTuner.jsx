@@ -2,14 +2,14 @@ import { Mic, Play, Square, Volume2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keyParts } from './keyBpm';
+import { musicalAccidentals, SCALE_TONICS } from '../../utils/noteSpelling';
 import {
   INSTRUMENTS,
   SCALES,
-  PITCH_NAMES,
   noteLabel,
   noteFrequency,
   centsFrom,
-  scaleNotes,
+  spelledScale,
 } from './instrumentTheory';
 import useInstrumentTuner from './useInstrumentTuner';
 import useTunerReference from './useTunerReference';
@@ -20,16 +20,21 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
   const [instrument, setInstrument] = useState('guitar');
   const [target, setTarget] = useState(0);
   const [reference, setReference] = useState(440);
-  const [root, setRoot] = useState(0);
+  const [root, setRoot] = useState('C');
   const [scale, setScale] = useState('major');
   const [octave, setOctave] = useState(3);
   const profile = INSTRUMENTS[instrument];
   const targetMidi = profile.notes[target];
-  const { referenceOn, toggleReference, play, stopTones, sounding, toneError } = useTunerReference(
-    targetMidi,
-    reference,
-    onBeforeListen
-  );
+  const {
+    referenceOn,
+    startingAudio,
+    playReference,
+    toggleReference,
+    play,
+    stopTones,
+    sounding,
+    toneError,
+  } = useTunerReference(targetMidi, reference, onBeforeListen);
   const nearest = tuner.pitch
     ? Math.round(69 + 12 * Math.log2(tuner.pitch.frequency / reference))
     : null;
@@ -38,7 +43,8 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
     tuner.pitch && comparison != null
       ? centsFrom(tuner.pitch.frequency, comparison, reference)
       : null;
-  const scaleMidi = scaleNotes(root, scale, octave);
+  const scalePitches = spelledScale(root, scale, octave);
+  const rootOptions = SCALE_TONICS.includes(root) ? SCALE_TONICS : [...SCALE_TONICS, root];
   const detected = keyParts(songKey);
   const listening = tuner.status === 'listening';
   const requesting = tuner.status === 'requesting';
@@ -55,11 +61,12 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
       ? 'Cancel microphone request'
       : 'Start live tuner';
   const inTune = cents != null && Math.abs(cents) <= 5;
+  const checkString = targetMidi != null && nearest != null && Math.abs(nearest - targetMidi) >= 3;
   return (
     <section className="instrument-lab" id="live-tuner" aria-labelledby="live-tuner-heading">
       <header className="instrument-lab-heading">
         <h2 id="live-tuner-heading">Live instrument tuner</h2>
-        <p>Choose a string to tune by ear, or use your microphone to check its pitch.</p>
+        <p>Tap a string to hear it, or start the microphone to measure the note you play.</p>
       </header>
       <div className="instrument-console">
         <div className="instrument-setup">
@@ -101,9 +108,21 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
                       type="button"
                       key={`${instrument}-${i}`}
                       aria-pressed={target === i}
-                      onClick={() => setTarget(i)}
+                      onClick={() => {
+                        setTarget(i);
+                        if (!listening && !requesting) playReference(midi);
+                      }}
                     >
-                      <strong>{noteLabel(midi)}</strong>
+                      <strong>
+                        {noteLabel(midi)}
+                        {(instrument === 'guitar' || instrument === 'drop-d') &&
+                          (midi === 40 || midi === 64) && (
+                            <span className="instrument-string-name">
+                              {' '}
+                              {midi === 40 ? 'Low E' : 'High E'}
+                            </span>
+                          )}
+                      </strong>
                       <small>{noteFrequency(midi, reference).toFixed(1)} Hz</small>
                     </button>
                   ))}
@@ -126,7 +145,9 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
                 <p>
                   {referenceOn
                     ? 'Choose another string to change the pitch.'
-                    : 'The reference tone plays until you stop it.'}
+                    : listening || requesting
+                      ? 'Choose a string to set the microphone target.'
+                      : 'The reference tone plays until you stop it.'}
                 </p>
               </div>
             </>
@@ -146,13 +167,15 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
               role="status"
             >
               <i aria-hidden="true" />
-              {referenceOn
-                ? 'Reference playing'
-                : listening
-                  ? 'Microphone on'
-                  : requesting
-                    ? 'Opening microphone'
-                    : 'Microphone off'}
+              {startingAudio && referenceOn
+                ? 'Starting reference'
+                : referenceOn
+                  ? 'Reference playing'
+                  : listening
+                    ? 'Microphone on'
+                    : requesting
+                      ? 'Opening microphone'
+                      : 'Microphone off'}
             </span>
           </div>
           <div className="instrument-pitch">
@@ -216,11 +239,13 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             ) : (
               <>
                 <strong>
-                  {inTune
-                    ? 'In tune'
-                    : cents < 0
-                      ? 'Flat · raise the pitch'
-                      : 'Sharp · lower the pitch'}
+                  {checkString
+                    ? `Heard ${noteLabel(nearest)}. Check the string and octave for ${noteLabel(targetMidi)}.`
+                    : inTune
+                      ? 'In tune'
+                      : cents < 0
+                        ? 'Flat · raise the pitch'
+                        : 'Sharp · lower the pitch'}
                 </strong>{' '}
                 · {offset > 0 ? '+' : ''}
                 {offset} cents
@@ -264,16 +289,13 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
       </p>
       <div className="instrument-scales" id="scales">
         <h2>Scales to play and hear</h2>
-        <p>
-          Choose a root and scale, then play the sequence or tap a single note. Note labels use
-          sharps.
-        </p>
+        <p>Choose a root and scale, then play the sequence or tap a single note.</p>
         {detected && (
           <button
             className="instrument-song-key"
             type="button"
             onClick={() => {
-              setRoot(detected.root);
+              setRoot(detected.tonic);
               setScale(detected.minor ? 'minor' : 'major');
             }}
           >
@@ -283,10 +305,10 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
         <div className="instrument-controls instrument-scale-controls">
           <label>
             Scale root
-            <select value={root} onChange={(e) => setRoot(Number(e.target.value))}>
-              {PITCH_NAMES.map((name, i) => (
-                <option key={name} value={i}>
-                  {name}
+            <select value={root} onChange={(e) => setRoot(e.target.value)}>
+              {rootOptions.map((name) => (
+                <option key={name} value={name}>
+                  {musicalAccidentals(name)}
                 </option>
               ))}
             </select>
@@ -313,9 +335,9 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
           </label>
         </div>
         <div className="instrument-scale-notes" role="group" aria-label="Scale notes">
-          {scaleMidi.map((midi, i) => (
+          {scalePitches.map(({ midi, label }, i) => (
             <button type="button" key={midi} onClick={() => void play([midi])}>
-              <strong>{noteLabel(midi)}</strong>
+              <strong>{label}</strong>
               <small>Note {i + 1}</small>
             </button>
           ))}
@@ -324,7 +346,9 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
           <button
             type="button"
             className="alab-button"
-            onClick={() => (sounding === 'scale' ? stopTones() : void play(scaleMidi))}
+            onClick={() =>
+              sounding === 'scale' ? stopTones() : void play(scalePitches.map((note) => note.midi))
+            }
           >
             {sounding === 'scale' ? (
               <>
@@ -334,7 +358,7 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             ) : (
               <>
                 <Play size={15} aria-hidden="true" />
-                Play {PITCH_NAMES[root]} {SCALES[scale].name.toLowerCase()} scale
+                Play {musicalAccidentals(root)} {SCALES[scale].name.toLowerCase()} scale
               </>
             )}
           </button>

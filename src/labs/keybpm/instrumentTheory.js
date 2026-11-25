@@ -1,3 +1,5 @@
+import { musicalAccidentals, parseTonic, spellInterval } from '../../utils/noteSpelling';
+
 export const PITCH_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 export const INSTRUMENTS = {
   guitar: { name: 'Guitar · standard', notes: [40, 45, 50, 55, 59, 64] },
@@ -13,9 +15,17 @@ export const INSTRUMENTS = {
 export const SCALES = {
   major: { name: 'Major', steps: [0, 2, 4, 5, 7, 9, 11, 12] },
   minor: { name: 'Natural minor', steps: [0, 2, 3, 5, 7, 8, 10, 12] },
-  'major-pentatonic': { name: 'Major pentatonic', steps: [0, 2, 4, 7, 9, 12] },
-  'minor-pentatonic': { name: 'Minor pentatonic', steps: [0, 3, 5, 7, 10, 12] },
-  blues: { name: 'Blues', steps: [0, 3, 5, 6, 7, 10, 12] },
+  'major-pentatonic': {
+    name: 'Major pentatonic',
+    degrees: [0, 1, 2, 4, 5, 7],
+    steps: [0, 2, 4, 7, 9, 12],
+  },
+  'minor-pentatonic': {
+    name: 'Minor pentatonic',
+    degrees: [0, 2, 3, 4, 6, 7],
+    steps: [0, 3, 5, 7, 10, 12],
+  },
+  blues: { name: 'Minor blues', degrees: [0, 2, 3, 3, 4, 6, 7], steps: [0, 3, 5, 6, 7, 10, 12] },
   dorian: { name: 'Dorian', steps: [0, 2, 3, 5, 7, 9, 10, 12] },
   mixolydian: { name: 'Mixolydian', steps: [0, 2, 4, 5, 7, 9, 10, 12] },
 };
@@ -26,3 +36,12 @@ export const centsFrom = (frequency, midi, reference = 440) =>
   1200 * Math.log2(frequency / noteFrequency(midi, reference));
 export const scaleNotes = (root, scale, octave = 3) =>
   (SCALES[scale] || SCALES.major).steps.map((step) => 12 * (octave + 1) + Number(root) + step);
+
+export function spelledScale(root, scale, octave) {
+  const tonic = parseTonic(root);
+  const pattern = SCALES[scale] || SCALES.major;
+  return pattern.steps.map((step, i) => {
+    const note = spellInterval(tonic, octave, step, pattern.degrees?.[i] ?? i);
+    return { midi: note.midi, label: musicalAccidentals(note.name) + note.octave };
+  });
+}
