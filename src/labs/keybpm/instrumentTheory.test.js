@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   INSTRUMENTS,
+  detectTunerPitch,
   SCALES,
   noteLabel,
   noteFrequency,
@@ -8,7 +9,7 @@ import {
   scaleNotes,
   spelledScale,
 } from './instrumentTheory';
-import { detectFundamental, reduceSampleRate } from '../../loop/pitch';
+import { reduceSampleRate } from '../../loop/pitch';
 import { SCALE_TONICS, parseTonic } from '../../utils/noteSpelling';
 
 describe('instrument references and pitch detection', () => {
@@ -33,14 +34,14 @@ describe('instrument references and pitch detection', () => {
             0.09 * Math.sin((4 * Math.PI * hz * i) / rate)
         );
         const input = reduceSampleRate(samples, rate, 12000);
-        const result = detectFundamental(input.samples, input.rate, 25, 2000, 0.004);
+        const result = detectTunerPitch(input.samples, input.rate);
         expect(result).not.toBeNull();
         expect(Math.abs(centsFrom(result.frequency, midi))).toBeLessThan(6);
       });
     }
   }
   it('does not invent pitch from silence', () => {
-    expect(detectFundamental(new Float32Array(1365), 8000, 25, 2000, 0.004)).toBeNull();
+    expect(detectTunerPitch(new Float32Array(1365), 8000)).toBeNull();
   });
 });
 it('builds each scale as a rising octave and gives expected major/minor pitches', () => {
@@ -99,4 +100,59 @@ it('matches the written pitch to the sounding MIDI number for every selectable s
       }
     }
   }
+});
+
+describe('microphone pitch under harmonic ambiguity', () => {
+  function measure(midi, harmonics, cents = 0, rate = 48000) {
+    const frequency = 440 * 2 ** ((midi - 69 + cents / 100) / 12);
+    const samples = Float32Array.from({ length: 8192 }, (_, i) => {
+      const phase = (i * frequency * 2 * Math.PI) / rate;
+      return harmonics.reduce(
+        (sum, amplitude, h) => sum + 0.13 * amplitude * Math.sin((h + 1) * phase + h * 0.51),
+        0
+      );
+    });
+    const reduced = reduceSampleRate(samples, rate, 12000);
+    const pitch = detectTunerPitch(reduced.samples, reduced.rate);
+    expect(pitch).not.toBeNull();
+    expect(pitch.midi).toBe(midi);
+    expect(Math.abs(1200 * Math.log2(pitch.frequency / frequency))).toBeLessThan(3);
+    expect(Math.abs(pitch.cents - cents)).toBeLessThanOrEqual(3);
+  }
+
+  it('measures real low and high E strings without folding them toward a target', () => {
+    for (const midi of [28, 40, 52, 64, 76]) {
+      measure(midi, [0.15, 1, 0.15, 0.3, 0.12, 0.2], -23);
+      measure(midi, [1], 17);
+    }
+  });
+
+  it('recognizes the period from the second and third harmonics when the first is absent', () => {
+    for (const midi of [23, 40, 64, 76, 86]) measure(midi, [0, 1, 0.55, 0.3, 0.25, 0.12]);
+  });
+
+  it('keeps sustained high violin and chromatic pitches within the in-tune band', () => {
+    for (const midi of [76, 86, 93, 95]) {
+      for (const rate of [44100, 48000]) {
+        measure(midi, [1], 0, rate);
+        measure(midi, [0.15, 1, 0.15, 0.3, 0.12, 0.2], 0, rate);
+        measure(midi, [1, 0.6, 0.4, 0.5, 0.3, 0.24, 0.2, 0.21, 0.15, 0.1], 0, rate);
+      }
+    }
+  });
+
+  it('rejects unpitched noise and very quiet inputs', () => {
+    let seed = 73;
+    const noise = Float32Array.from({ length: 2048 }, () => {
+      seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+      return 0.2 * (seed / 2 ** 32 - 0.5);
+    });
+    expect(detectTunerPitch(noise, 12000)).toBeNull();
+    expect(
+      detectTunerPitch(
+        Float32Array.from(noise, (v) => v * 0.001),
+        12000
+      )
+    ).toBeNull();
+  });
 });

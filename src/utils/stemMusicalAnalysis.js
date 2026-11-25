@@ -1,3 +1,4 @@
+import { analysisChannel, compactWindow } from './analysisMono';
 import { analyzeAutoKey, AUTO_KEY_ENGINE, AUTO_KEY_MIN_MARGIN } from './sattariAutoKey';
 import { chromaForRange } from './audioAnalysis';
 import { trackTempo } from './tempoMap';
@@ -14,23 +15,6 @@ export function musicalAnalysisWindows(duration) {
     const start = count === 1 ? 0 : (i * (duration - length)) / (count - 1);
     return { start, end: start + length };
   });
-}
-
-function compactWindow(left, right, rate, window, useChannel) {
-  const stride = Math.max(1, Math.floor(rate / 11025));
-  const from = Math.floor(window.start * rate);
-  const length = Math.floor((window.end * rate - from) / stride);
-  const samples = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    let sum = 0;
-    for (let offset = 0; offset < stride; offset++) {
-      const at = from + i * stride + offset;
-      sum +=
-        useChannel === 0 ? left[at] : useChannel === 1 ? right[at] : (left[at] + right[at]) / 2;
-    }
-    samples[i] = sum / stride;
-  }
-  return { samples, rate: rate / stride };
 }
 
 function hasRhythmicDynamics(samples, rate) {
@@ -70,13 +54,7 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
   const windows = silent || duration < 3 ? [] : musicalAnalysisWindows(duration);
   const chroma = Array(12).fill(0);
   const tempos = [];
-  // Preserve antiphase material that would disappear in a simple stereo sum.
-  const useChannel =
-    mixEnergy < Math.max(leftEnergy, rightEnergy) * 0.05
-      ? leftEnergy >= rightEnergy
-        ? 0
-        : 1
-      : null;
+  const useChannel = analysisChannel(leftEnergy, rightEnergy, mixEnergy);
   const autoKey =
     !silent && duration >= 3 && stem !== 'drums'
       ? analyzeAutoKey(left, right, rate, useChannel)

@@ -419,9 +419,6 @@ it('retunes a single alternate player, revokes old media and releases it on Stop
   vi.stubGlobal('AudioContext', undefined);
   const { unmount } = renderTuner();
   click(/E2.*Low E/i);
-  expect(screen.getByRole('alert')).toHaveTextContent('Tap the string again');
-  expect(players).toHaveLength(0);
-  click(/E2.*Low E/i);
   const [media] = players;
   expect(button('Stop reference sound')).toBeEnabled();
   expect(media.src).toBe('blob:tuner-1');
@@ -450,4 +447,51 @@ it('retunes a single alternate player, revokes old media and releases it on Stop
   unmount();
   expect(players[1].pause).toHaveBeenCalledOnce();
   expect(release).toHaveBeenCalledWith('blob:tuner-4');
+});
+
+it('switches a held string to native audio on demand and uses the same output method for finite notes and scales', () => {
+  const contexts = audioFixture();
+  const { players, release } = nativeAudioFixture();
+  renderTuner();
+  click('Hear E2');
+  fireEvent.click(screen.getByText('Can’t hear the reference?'));
+  click('Play E2 with alternate player');
+  expect(contexts[0].close).toHaveBeenCalledOnce();
+  expect(players[0].loop).toBe(true);
+  click(/Play C major scale/);
+  expect(players[0].pause).toHaveBeenCalledOnce();
+  expect(players[1].loop).toBe(false);
+  const ended = players[1].onended;
+  select('Scale root', 'F');
+  expect(players[1].pause).toHaveBeenCalledOnce();
+  expect(release).toHaveBeenCalledWith('blob:tuner-2');
+  click(/F3.*Note 1/i);
+  expect(players[2].loop).toBe(false);
+  act(() => ended());
+  expect(players[2].pause).not.toHaveBeenCalled();
+  act(() => players[2].onended());
+  expect(players[2].pause).toHaveBeenCalledOnce();
+  expect(release).toHaveBeenCalledWith('blob:tuner-3');
+  expect(contexts).toHaveLength(1);
+});
+
+it('recovers a failed scale from its own Play button without first playing an open string', () => {
+  vi.stubGlobal(
+    'AudioContext',
+    class {
+      constructor() {
+        throw new Error('Output interrupted');
+      }
+    }
+  );
+  const { players } = nativeAudioFixture();
+  renderTuner();
+  click(/Play C major scale/);
+  expect(screen.getByRole('alert')).toHaveTextContent('Press Play again');
+  click(/Play C major scale/);
+  expect(players).toHaveLength(1);
+  expect(players[0].loop).toBe(false);
+  expect(screen.queryByRole('alert')).toBeNull();
+  click('Stop scale');
+  expect(players[0].pause).toHaveBeenCalledOnce();
 });

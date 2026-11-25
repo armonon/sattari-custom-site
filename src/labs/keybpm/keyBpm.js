@@ -1,5 +1,6 @@
 // Key & BPM alpha: result shaping and CSV export. Measurement itself reuses the
 // Stem Separator's analyzeStemAudio (Sattari AutoKey + the site's beat tracker).
+import { compactWindow } from '../../utils/analysisMono';
 import { trackTempo } from '../../utils/tempoMap';
 
 import { MAJOR_TONICS, MINOR_TONICS, parseTonic } from '../../utils/noteSpelling';
@@ -59,20 +60,11 @@ const median = (values) => [...values].sort((a, b) => a - b)[values.length >> 1]
  * 70–180 BPM.
  */
 export function roughTempo(left, right, rate) {
-  const stride = Math.max(1, Math.floor(rate / 11025));
-  const seconds = Math.min(60, left.length / rate);
-  const from = Math.floor((left.length - seconds * rate) / 2);
-  const length = Math.floor((seconds * rate) / stride);
-  const samples = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    let sum = 0;
-    for (let j = 0; j < stride; j++) {
-      const at = from + i * stride + j;
-      sum += (left[at] + right[at]) / 2;
-    }
-    samples[i] = sum / stride;
-  }
-  const tempo = trackTempo(samples, rate / stride);
+  const duration = left.length / rate;
+  const seconds = Math.min(60, duration);
+  const start = (duration - seconds) / 2;
+  const part = compactWindow(left, right, rate, { start, end: start + seconds });
+  const tempo = trackTempo(part.samples, part.rate);
   const beats = tempo.beats.filter((beat) => !beat.inferred);
   if (beats.length < 8 || !(tempo.confidence >= 0.3)) return null;
   const intervals = tempo.beats.slice(1).map((beat, i) => beat.time - tempo.beats[i].time);

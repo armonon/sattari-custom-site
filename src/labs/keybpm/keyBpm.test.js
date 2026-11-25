@@ -109,6 +109,12 @@ describe('rough tempo', () => {
     expect(roughTempo(samples, samples, rate)).toBe(100);
   });
 
+  it('preserves the pulse when the stereo channels cancel in a mono downmix', () => {
+    const left = loop(14, 100);
+    const right = left.map((sample) => -sample);
+    expect(roughTempo(left, right, rate)).toBe(100);
+  });
+
   it('declines silence', () => {
     const silence = new Float32Array(rate * 10);
     expect(roughTempo(silence, silence, rate)).toBeNull();

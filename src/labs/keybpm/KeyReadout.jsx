@@ -96,94 +96,140 @@ export function CircleOfFifths({ keyName, alternative }) {
   );
 }
 
-/** Reference tones on their own audio context: a drone and a one-octave scale. */
+/** Reference tones own their audio output until stopped or the scale ends. */
 function useReferenceTones() {
-  const context = useRef(null);
-  const drone = useRef(null);
+  const current = useRef(null);
   const [droneKey, setDroneKey] = useState(null);
-  const ensure = () => {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return null;
-    context.current ||= new Context();
-    void context.current.resume?.();
-    return context.current;
-  };
-  const stopDrone = useCallback(() => {
-    const current = drone.current;
-    drone.current = null;
-    if (current) {
-      const { audio, gain, oscillators } = current;
-      gain.gain.setTargetAtTime(0, audio.currentTime, 0.08);
-      oscillators.forEach((osc) => osc.stop(audio.currentTime + 0.5));
-    }
+  const [error, setError] = useState('');
+  const stop = useCallback(() => {
+    const session = current.current;
+    current.current = null;
     setDroneKey(null);
+    setError('');
+    if (!session) return;
+    clearInterval(session.watch);
+    clearTimeout(session.release);
+    for (const osc of session.oscillators) {
+      osc.onended = null;
+      try {
+        osc.stop();
+      } catch {
+        // An oscillator can already have finished or failed before its start.
+      }
+    }
+    if (session.audio && session.audio.state !== 'closed') {
+      void session.audio.close().catch(() => {});
+    }
   }, []);
-  const startDrone = (key) => {
-    window.dispatchEvent(new Event('sattari:stop-reference'));
-    window.dispatchEvent(new Event('sattari:reference-tone'));
-    const audio = ensure();
-    const root = tonicFrequency(key, 2);
-    if (!audio || !root) return;
-    const gain = audio.createGain();
-    const filter = audio.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 900;
-    gain.gain.value = 0;
-    gain.gain.setTargetAtTime(0.09, audio.currentTime, 0.15);
-    filter.connect(gain);
-    gain.connect(audio.destination);
-    // Root, fifth and octave: a neutral reference that fits major and minor.
-    const oscillators = [1, 1.5, 2].map((ratio, index) => {
-      const osc = audio.createOscillator();
-      osc.type = index ? 'sine' : 'triangle';
-      osc.frequency.value = root * ratio;
-      osc.connect(filter);
-      osc.start();
-      return osc;
-    });
-    drone.current = { audio, gain, oscillators };
-    setDroneKey(key);
-  };
-  const playScale = (key) => {
-    window.dispatchEvent(new Event('sattari:stop-reference'));
-    window.dispatchEvent(new Event('sattari:reference-tone'));
-    const audio = ensure();
-    const notes = scaleFrequencies(key, 3);
-    if (!audio || !notes.length) return;
-    const start = audio.currentTime + 0.05;
-    notes.forEach((frequency, index) => {
-      const when = start + index * 0.32;
-      const osc = audio.createOscillator();
-      const gain = audio.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime(0.16, when + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.3);
-      osc.connect(gain);
-      gain.connect(audio.destination);
-      osc.start(when);
-      osc.stop(when + 0.32);
-    });
-  };
-  useEffect(
-    () => () => {
-      stopDrone();
-      void context.current?.close?.().catch(() => {});
-    },
-    [stopDrone]
-  );
+
   useEffect(() => {
-    const stop = () => {
-      stopDrone();
-      const current = context.current;
-      context.current = null;
-      void current?.close?.().catch(() => {});
-    };
     window.addEventListener('sattari:stop-reference', stop);
-    return () => window.removeEventListener('sattari:stop-reference', stop);
-  }, [stopDrone]);
-  return { droneKey, startDrone, stopDrone, playScale };
+    window.addEventListener('pagehide', stop);
+    return () => {
+      window.removeEventListener('sattari:stop-reference', stop);
+      window.removeEventListener('pagehide', stop);
+      stop();
+    };
+  }, [stop]);
+
+  const play = async (key, isScale) => {
+    window.dispatchEvent(new Event('sattari:stop-reference'));
+    window.dispatchEvent(new Event('sattari:reference-tone'));
+    const session = { audio: null, oscillators: [], key: isScale ? null : key };
+    current.current = session;
+    const fail = () => {
+      if (current.current !== session) return;
+      stop();
+      setError('Reference audio could not play. Check your audio output and tap the tone again.');
+    };
+    try {
+      const Context = window.AudioContext || window.webkitAudioContext;
+      const audio = new Context();
+      session.audio = audio;
+      let clock = audio.currentTime;
+      let lastProgress = performance.now();
+      let sounding = false;
+      let scheduled = false;
+      session.watch = setInterval(() => {
+        if (current.current !== session) return;
+        if (scheduled && audio.state === 'running' && audio.currentTime > clock) {
+          clock = audio.currentTime;
+          lastProgress = performance.now();
+          if (!isScale && !sounding) {
+            sounding = true;
+            setDroneKey(key);
+          }
+        } else if (performance.now() - lastProgress >= 4000) {
+          fail();
+        }
+      }, 125);
+      if (audio.state !== 'running') await audio.resume();
+      if (current.current !== session) return;
+      if (isScale) {
+        const notes = scaleFrequencies(key, 3);
+        const start = audio.currentTime + 0.05;
+        notes.forEach((frequency, index) => {
+          const when = start + index * 0.32;
+          const osc = audio.createOscillator();
+          session.oscillators.push(osc);
+          const gain = audio.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.0001, when);
+          gain.gain.exponentialRampToValueAtTime(0.16, when + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.3);
+          osc.connect(gain);
+          gain.connect(audio.destination);
+          if (index === notes.length - 1) {
+            osc.onended = () => {
+              if (current.current === session) stop();
+            };
+          }
+          osc.start(when);
+          osc.stop(when + 0.32);
+        });
+      } else {
+        const root = tonicFrequency(key, 2);
+        const gain = audio.createGain();
+        const filter = audio.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 900;
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(0.09, audio.currentTime, 0.15);
+        session.gain = gain;
+        filter.connect(gain);
+        gain.connect(audio.destination);
+        // Root, fifth and octave fit either major or minor.
+        [1, 1.5, 2].forEach((ratio, index) => {
+          const osc = audio.createOscillator();
+          session.oscillators.push(osc);
+          osc.type = index ? 'sine' : 'triangle';
+          osc.frequency.value = root * ratio;
+          osc.connect(filter);
+          osc.start();
+        });
+      }
+      scheduled = true;
+    } catch {
+      fail();
+    }
+  };
+  return {
+    droneKey,
+    error,
+    toggleDrone(key) {
+      const session = current.current;
+      if (session?.key !== key || session.release) return play(key, false);
+      if (!session.gain || !droneKey) return stop();
+      // Release a sounding drone gently. Switching tracks or leaving still closes it at once.
+      const at = session.audio.currentTime;
+      session.gain.gain.setTargetAtTime(0, at, 0.015);
+      setDroneKey(null);
+      session.release = setTimeout(stop, 80);
+    },
+    stopDrone: stop,
+    playScale: (key) => play(key, true),
+  };
 }
 
 /**
@@ -246,7 +292,7 @@ export default function KeyReadout({
   }, [tap]);
 
   const droneOn = (key) => tones.droneKey === key;
-  const toggleDrone = (key) => (droneOn(key) ? tones.stopDrone() : tones.startDrone(key));
+  const { toggleDrone } = tones;
 
   return (
     <section className="kb-readout" aria-labelledby="kb-readout-title">
@@ -434,6 +480,11 @@ export default function KeyReadout({
               )}
             </div>
           ) : null}
+          {tones.error && (
+            <p className="kb-note" role="alert">
+              {tones.error}
+            </p>
+          )}
           <p className="kb-note">
             Listen for the note that feels like home at phrase endings. Compare the suggested tonics
             against the recording.

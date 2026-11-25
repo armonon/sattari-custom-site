@@ -54,7 +54,7 @@ import {
 import './keyBpm.css';
 
 const LIMITS = [
-  'Key is one global estimate per track (Sattari AutoKey). Key changes, modal or atonal music are not reported separately.',
+  'Key is one global estimate per track (Sattari AutoKey). It compares major and minor keys. A one- or two-note exercise can give you a tuning pitch without enough information to identify its key. A track that changes key or uses a mode may need to be checked by ear.',
   'BPM can land on half or double time. "Rough" means the strict estimator declined and a single 60-second pass was used, folded into 70–180 BPM.',
   '"Tentative" means the best key only narrowly beat the runner-up, which is shown as the alternative. In Sattari\'s own 17-recording test set, tentative keys were exact only 1 time in 7, while supported keys were exact 5 times in 6: check a tentative key and its alternative by ear. A small set, not a genre benchmark.',
   'Your corrections are labels on the result. They do not stretch, speed up or transpose the audio.',

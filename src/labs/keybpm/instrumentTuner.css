@@ -165,6 +165,22 @@
   color: var(--alab-accent);
   background: var(--tuner-accent-wash);
 }
+.instrument-sound-help {
+  color: var(--alab-muted);
+  font-size: 0.875rem;
+}
+.instrument-sound-help summary {
+  width: fit-content;
+  padding-block: 6px;
+  cursor: pointer;
+  color: var(--alab-accent);
+}
+.instrument-sound-help p {
+  margin: 4px 0 8px;
+}
+.instrument-sound-help button {
+  min-height: 44px;
+}
 .instrument-readout {
   display: grid;
   align-content: center;

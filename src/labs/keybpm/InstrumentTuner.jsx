@@ -29,6 +29,7 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
     referenceOn,
     startingAudio,
     playReference,
+    playAlternateReference,
     toggleReference,
     play,
     stopTones,
@@ -62,6 +63,14 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
       : 'Start live tuner';
   const inTune = cents != null && Math.abs(cents) <= 5;
   const checkString = targetMidi != null && nearest != null && Math.abs(nearest - targetMidi) >= 3;
+  const stopScale = () => {
+    if (
+      sounding === 'scale' ||
+      sounding === 'note' ||
+      (toneError && toneError.mode !== 'reference')
+    )
+      stopTones();
+  };
   return (
     <section className="instrument-lab" id="live-tuner" aria-labelledby="live-tuner-heading">
       <header className="instrument-lab-heading">
@@ -89,7 +98,13 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             </label>
             <label>
               Concert A
-              <select value={reference} onChange={(e) => setReference(Number(e.target.value))}>
+              <select
+                value={reference}
+                onChange={(e) => {
+                  stopScale();
+                  setReference(Number(e.target.value));
+                }}
+              >
                 {[432, 440, 441, 442, 443].map((hz) => (
                   <option key={hz} value={hz}>
                     {hz} Hz
@@ -150,11 +165,23 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
                       : 'The reference tone plays until you stop it.'}
                 </p>
               </div>
+              {!listening && !requesting && (
+                <details className="instrument-sound-help">
+                  <summary>Can’t hear the reference?</summary>
+                  <p>
+                    Check your media volume and Bluetooth output, or play this note with your
+                    device’s audio player.
+                  </p>
+                  <button type="button" className="alab-button" onClick={playAlternateReference}>
+                    Play {noteLabel(targetMidi)} with alternate player
+                  </button>
+                </details>
+              )}
             </>
           ) : (
             <p className="instrument-chromatic">
-              Chromatic mode follows the nearest note. Start the microphone and play one note at a
-              time.
+              Chromatic mode follows the nearest note from 25 to 2,000 Hz. Start the microphone and
+              play one sustained note at a time.
             </p>
           )}
         </div>
@@ -278,9 +305,9 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
           {tuner.error}
         </p>
       )}
-      {toneError && (
+      {toneError?.mode === 'reference' && (
         <p role="alert" className="alab-error">
-          {toneError}
+          {toneError.message}
         </p>
       )}
       <p className="instrument-note">
@@ -295,6 +322,7 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             className="instrument-song-key"
             type="button"
             onClick={() => {
+              stopScale();
               setRoot(detected.tonic);
               setScale(detected.minor ? 'minor' : 'major');
             }}
@@ -302,7 +330,7 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             Use song key: {songKey}
           </button>
         )}
-        <div className="instrument-controls instrument-scale-controls">
+        <div className="instrument-controls instrument-scale-controls" onChange={stopScale}>
           <label>
             Scale root
             <select value={root} onChange={(e) => setRoot(e.target.value)}>
@@ -363,6 +391,11 @@ export default function InstrumentTuner({ songKey, onBeforeListen = () => {} }) 
             )}
           </button>
         </div>
+        {toneError && toneError.mode !== 'reference' && (
+          <p role="alert" className="alab-error">
+            {toneError.message}
+          </p>
+        )}
       </div>
       <aside className="instrument-service">
         <h3>Fresh strings, then tune up</h3>

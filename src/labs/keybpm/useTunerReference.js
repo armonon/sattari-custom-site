@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { noteFrequency } from './instrumentTheory';
 
-import { sinePartials, cosinePartials, createReferenceWav } from './referenceWave';
+import {
+  sinePartials,
+  cosinePartials,
+  createReferenceWav,
+  createScaleWav,
+  scaleStepSeconds,
+  scaleSoundSeconds,
+  attackSeconds,
+} from './referenceWave';
 
 // Only override the default category. Another feature may already own the audio session.
 function switchSessionType(from, to) {
@@ -27,12 +35,13 @@ function tuneHeld(session, midi, reference) {
 
 export default function useTunerReference(targetMidi, reference, onBeforeListen) {
   const current = useRef(null);
-  const preferNativeReference = useRef(false);
+  const preferNative = useRef(false);
   const [sounding, setSounding] = useState('');
-  const [toneError, setToneError] = useState('');
+  const [toneError, setToneError] = useState(null);
   const [startingAudio, setStartingAudio] = useState(false);
 
   const stopTones = useCallback(() => {
+    setToneError(null);
     const session = current.current;
     if (!session) return;
     current.current = null;
@@ -43,6 +52,7 @@ export default function useTunerReference(targetMidi, reference, onBeforeListen)
     if (session.native) {
       const media = session.audio;
       media.onerror = null;
+      media.onended = null;
       media.pause();
       media.removeAttribute('src');
       media.load();
@@ -82,29 +92,40 @@ export default function useTunerReference(targetMidi, reference, onBeforeListen)
     tuneHeld(session, targetMidi, reference);
   }, [targetMidi, reference, stopTones]);
 
-  const start = async (notes, mode) => {
+  const start = async (notes, mode, useAlternate = false) => {
     onBeforeListen();
     window.dispatchEvent(new Event('sattari:stop-reference'));
     window.dispatchEvent(new Event('sattari:reference-tone'));
-    setToneError('');
     let session;
     let usesPlayback = false;
-    const native = mode === 'reference' && preferNativeReference.current;
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (useAlternate) preferNative.current = true;
+    const native = preferNative.current || !Context;
     const fail = (message) => {
       if (session && current.current !== session) return;
       if (!session && usesPlayback) switchSessionType('playback', 'auto');
       stopTones();
-      if (mode === 'reference' && !native) {
-        // Native playback begins only on a fresh user gesture.
-        preferNativeReference.current = true;
-        setToneError(`${message} Tap the string again to use the alternate audio player.`);
+      if (!native) {
+        preferNative.current = true;
+        const action =
+          mode === 'reference'
+            ? 'Tap the string'
+            : mode === 'scale'
+              ? 'Press Play'
+              : 'Tap the note';
+        setToneError({
+          mode,
+          message: `${message} ${action} again to use the alternate audio player.`,
+        });
       } else {
-        setToneError(`${message} Check your media volume and audio output, then try again.`);
+        preferNative.current = false;
+        setToneError({
+          mode,
+          message: `${message} Check your media volume and audio output, then try again.`,
+        });
       }
     };
     try {
-      const Context = window.AudioContext || window.webkitAudioContext;
-      if (!native && !Context) throw new Error('Web Audio is unavailable in this browser.');
       usesPlayback = switchSessionType('auto', 'playback');
       const audio = native ? new Audio() : new Context();
       session = { audio, native, held: null, usesPlayback, lastProgress: performance.now() };
@@ -152,58 +173,69 @@ export default function useTunerReference(targetMidi, reference, onBeforeListen)
       };
       session.clockTimer = setInterval(checkClock, 200);
       if (native) {
-        audio.loop = true;
+        audio.loop = mode === 'reference';
         audio.onerror = () => {
           if (audio.error) fail('The alternate audio player could not play this note.');
         };
-        let lastHz;
-        session.held = {
-          retune(hz) {
-            if (hz === lastHz) return;
-            lastHz = hz;
-            try {
-              const oldUrl = session.url;
-              const url = URL.createObjectURL(createReferenceWav(hz));
-              session.url = url;
-              if (oldUrl) URL.revokeObjectURL(oldUrl);
-              audio.src = url;
-              session.lastProgress = performance.now();
-              started = false;
-              lastClock = 0;
-              setStartingAudio(true);
-              // Reuse the unlocked media element and ignore superseded play() rejections.
-              void Promise.resolve(audio.play()).catch(() => {
-                if (session.url === url) fail('The alternate audio player could not start.');
-              });
-            } catch {
-              fail('The alternate audio player could not load this note.');
-            }
-          },
+        const loadMedia = (blob) => {
+          const oldUrl = session.url;
+          const url = URL.createObjectURL(blob);
+          session.url = url;
+          if (oldUrl) URL.revokeObjectURL(oldUrl);
+          audio.src = url;
+          session.lastProgress = performance.now();
+          started = false;
+          lastClock = 0;
+          setStartingAudio(true);
+          // Reuse the unlocked media element and ignore superseded play() rejections.
+          void Promise.resolve(audio.play()).catch(() => {
+            if (session.url === url) fail('The alternate audio player could not start.');
+          });
         };
         setSounding(mode);
-        tuneHeld(session, notes[0], reference);
+        if (mode === 'reference') {
+          let lastHz;
+          session.held = {
+            retune(hz) {
+              if (hz === lastHz) return;
+              lastHz = hz;
+              try {
+                loadMedia(createReferenceWav(hz));
+              } catch {
+                fail('The alternate audio player could not load this note.');
+              }
+            },
+          };
+          tuneHeld(session, notes[0], reference);
+        } else {
+          audio.onended = () => {
+            if (current.current === session) stopTones();
+          };
+          loadMedia(createScaleWav(notes.map((midi) => noteFrequency(midi, reference))));
+        }
         return;
       }
       audio.onstatechange = checkClock;
       const wave = audio.createPeriodicWave?.(cosinePartials, sinePartials, {
         disableNormalization: true,
       });
+      const startTime = audio.currentTime + 0.03;
       notes.forEach((midi, i) => {
         const oscillator = audio.createOscillator();
         const gain = audio.createGain();
-        const when = audio.currentTime + 0.03 + i * 0.42;
+        const when = startTime + i * scaleStepSeconds;
         if (wave) oscillator.setPeriodicWave(wave);
         else oscillator.type = 'triangle';
         oscillator.frequency.value = noteFrequency(midi, reference);
         gain.gain.setValueAtTime(0, when);
-        gain.gain.linearRampToValueAtTime(0.15, when + 0.025);
+        gain.gain.linearRampToValueAtTime(0.15, when + attackSeconds);
         oscillator.connect(gain);
         gain.connect(audio.destination);
         oscillator.start(when);
         if (mode === 'reference') {
-          session.held = { oscillator, gain, attackEnd: when + 0.025 };
+          session.held = { oscillator, gain, attackEnd: when + attackSeconds };
         } else {
-          gain.gain.linearRampToValueAtTime(0, when + 0.38);
+          gain.gain.linearRampToValueAtTime(0, when + scaleSoundSeconds);
           if (i === notes.length - 1) {
             oscillator.onended = () => {
               if (current.current === session) stopTones();
@@ -261,6 +293,7 @@ export default function useTunerReference(targetMidi, reference, onBeforeListen)
     referenceOn: sounding === 'reference',
     toggleReference,
     playReference,
+    playAlternateReference: () => targetMidi != null && start([targetMidi], 'reference', true),
     startingAudio,
     toneError,
   };
