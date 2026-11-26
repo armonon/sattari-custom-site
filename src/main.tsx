@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { reloadForNewDeploy } from './utils/lazyComponents';
 import { startMonitoring } from './utils/monitoring';
 import './fonts.css';
+import './styles-showroom-fonts.css';
 import './styles.css';
 import './styles-refresh.css';
 import './styles-theme.css';

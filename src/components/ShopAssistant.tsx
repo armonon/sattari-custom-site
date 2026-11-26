@@ -72,7 +72,7 @@ function ChatIcon() {
   );
 }
 
-export default function ShopAssistant() {
+export default function ShopAssistant({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [history, setHistory] = useState<StepKey[]>(['root']);
   const navigate = useNavigate();
@@ -115,7 +115,7 @@ export default function ShopAssistant() {
   }
 
   return (
-    <div className="shop-assistant">
+    <div className={`shop-assistant${compact ? ' shop-assistant--compact' : ''}`}>
       {open && (
         <div
           className="shop-assistant-panel"

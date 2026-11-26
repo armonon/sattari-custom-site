@@ -273,3 +273,76 @@
     gap: 28px;
   }
 }
+
+/* Immersive showroom navigation. */
+/* The shop navigation belongs to the opening scene and scrolls away with it. */
+.site-shell.is-shop > .nav-wrap {
+  position: absolute;
+  inset: 0 0 auto;
+  color: #fffaf0;
+  border: 0;
+  background: linear-gradient(180deg, rgba(17, 21, 27, 0.72), transparent);
+  backdrop-filter: none;
+}
+.site-shell.is-shop .nav-inner {
+  width: calc(100% - clamp(40px, 7vw, 112px));
+  min-height: 88px;
+}
+.site-shell.is-shop .brand-logo {
+  filter: brightness(0) invert(1);
+}
+.site-shell.is-shop .nav-link {
+  color: rgba(255, 250, 240, 0.84);
+  font-family: var(--font-showroom-ui, 'Inter', sans-serif);
+  font-size: 13px;
+  font-weight: 450;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+}
+.site-shell.is-shop .nav-link:hover,
+.site-shell.is-shop .nav-link-active {
+  color: #fffaf0;
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 7px;
+  text-decoration-thickness: 1px;
+}
+.site-shell.is-shop .nav-hub-button {
+  font-weight: 500;
+  margin-inline: 0;
+}
+.site-shell.is-shop :is(.theme-toggle, .mobile-menu-button) {
+  color: #fffaf0;
+  background: rgba(190, 210, 235, 0.1);
+  border-color: rgba(255, 250, 240, 0.25);
+  border-radius: 50%;
+}
+.site-shell.is-shop :is(a, button, summary, [tabindex]):focus-visible {
+  outline-color: #dcecff;
+}
+@media (max-width: 760px) {
+  .site-shell.is-shop .nav-inner {
+    min-height: 72px;
+    width: calc(100% - 40px);
+  }
+  .site-shell.is-shop .nav-links {
+    background: #1c232c;
+    border-color: rgba(255, 250, 240, 0.18);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  }
+  .site-shell.is-shop .nav-link {
+    font-size: 15px;
+  }
+}
+
+.is-shop .shop-assistant--compact .shop-assistant-fab-label {
+  display: none;
+}
+.is-shop .shop-assistant--compact .shop-assistant-fab {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  justify-content: center;
+}

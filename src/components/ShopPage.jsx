@@ -1,4 +1,5 @@
 import React from 'react';
+import GuitarShowroom from './GuitarShowroom';
 import {
   ArrowUpRight,
   Check,
@@ -19,12 +20,6 @@ import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
-
-const trustPoints = [
-  { label: 'Instruments & accessories', to: '/shop/instruments-los-angeles' },
-  { label: 'Secure Stripe checkout', to: '/cart' },
-  { label: 'Repairs, rentals & classes', to: '/services' },
-];
 
 const categoryIcons = {
   cymbals: Disc3,
@@ -160,7 +155,7 @@ export default function ShopPage() {
   };
 
   return (
-    <section className="section page-header-offset">
+    <section className="section page-header-offset shop-with-showroom">
       <SEO {...PAGE_SEO.shop} />
       <StructuredData
         data={breadcrumbSchema([
@@ -169,23 +164,9 @@ export default function ShopPage() {
         ])}
       />
       <StructuredData data={itemListSchema} />
-      <div className="container section-header narrow shop-page-intro">
-        <p className="eyebrow">Shop Sattari Music</p>
-        <h1>Musical instruments &amp; accessories</h1>
-        <p>
-          Shop the current catalog online, or ask about instruments, accessories, repairs, rentals,
-          rehearsal space, studio time, teachers, and classes at our Woodland Hills music store.
-        </p>
-        <div className="shop-trust-bar" aria-label="Storefront trust highlights">
-          {trustPoints.map((point) => (
-            <Link className="trust-chip trust-chip-link" to={point.to} key={point.label}>
-              {point.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <GuitarShowroom />
 
-      <div className="container shop-category-panel">
+      <div id="shop-catalog" className="container shop-category-panel">
         <div className="shop-category-panel-heading">
           <div>
             <p className="card-kicker">Browse the catalog</p>
