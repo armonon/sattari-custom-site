@@ -52,6 +52,10 @@ export const bowedInstrumentGuides = [
       },
       {
         title: 'Check the setup and bow before judging the sound',
+        link: {
+          label: 'See how a violin string fits at the tailpiece, bridge and peg',
+          path: '/guides/how-to-change-a-violin-string',
+        },
         paragraphs: [
           'Setup is the fit of the parts that let you tune, stop and bow a string. The pegs make large tuning changes. Fine tuners, where fitted, make small ones. The bridge holds the strings above the fingerboard and its curve helps the bow reach one string at a time. Ask a player to demonstrate each part.',
         ],

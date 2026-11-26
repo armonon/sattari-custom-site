@@ -1,6 +1,8 @@
 import { bowedInstrumentGuides } from './bowedInstrumentGuides.js';
 import { guitarInstrumentGuides } from './guitarInstrumentGuides.js';
 import { instrumentHistoryGuides } from './instrumentHistoryGuides.js';
+import { snareTuningGuide } from './snareTuningGuide.js';
+import { violinStringChangeGuide } from './violinStringChangeGuide.js';
 import { practicePadGuide } from './practicePadGuide.js';
 import { separatorGuides } from './stemSeparatorContent.js';
 
@@ -332,59 +334,6 @@ const practiceGuides = [
     ],
   },
   {
-    slug: 'how-to-tune-a-snare-drum',
-    title: 'How to tune a snare drum',
-    category: 'Drums',
-    description:
-      'Tune a snare drum for a clear, focused sound. Learn even lug tension, the star pattern, and when dull or ringy tone is a tuning problem versus a worn head.',
-    answer:
-      'Finger-tighten all lugs evenly, then use a drum key to add tension in a star pattern — tuning opposite lugs together in small increments. Tap one inch from each lug and listen for pitch consistency. When all lugs ring at the same pitch, the head is even. A focused crack means even tension at the right pitch range; a dull thud or uncontrolled ring usually means uneven lugs or a worn head.',
-    image: '/sattari site/drums/practice-pad-12.jpg',
-    imageAlt: 'Sattari practice pad and drumsticks on a stand',
-    action: {
-      label: 'Ask about drum tuning',
-      path: '/services/instrument-repair-los-angeles#repair-inquiry',
-    },
-    sections: [
-      {
-        title: 'Start with even tension',
-        paragraphs: [
-          'Release all tension from the head first. Press gently on the center to seat the head, then finger-tighten all lugs until you feel light resistance. This is your baseline. No lug should be tighter than any other before you begin tuning.',
-          'Use the star pattern: tighten lug 1, then the lug directly across from it, then move to the next pair at 90 degrees, and repeat. Never tighten adjacent lugs in sequence — you create uneven tension that takes longer to chase out.',
-        ],
-      },
-      {
-        title: 'Match pitch by ear at each lug',
-        steps: [
-          'Tap the head firmly about one inch from each tension rod, moving around the drum. Listen to the pitch at each point.',
-          'Tighten lugs that are lower in pitch, in small increments. A quarter-turn at a time is plenty. Return to the opposite lug before making another adjustment.',
-          'Continue around the drum until all lugs produce the same pitch. At that point the head is even, regardless of what overall tension you choose.',
-          'Adjust the overall tension to the pitch and feel you want. A higher pitch gives a shorter, crisper crack. A lower pitch gives a deeper, fuller sound with more sustain.',
-        ],
-      },
-      {
-        title: 'Tune the bottom head separately',
-        paragraphs: [
-          'The resonant (bottom) head affects the snare response and the overall sustain. A looser bottom head gives more snare buzz and a longer tone. A tighter bottom head gives a drier, more controlled crack.',
-          'Tune the bottom head the same way: even tension first, star pattern second, pitch matching around each lug. Make small changes and listen after each adjustment. The interaction between the two heads changes the tone of both, so expect to go back and forth a few times.',
-        ],
-      },
-      {
-        title: 'When tuning does not fix the problem',
-        paragraphs: [
-          'If the drum sounds dull even at even, correct tension, the head may be worn or dented. A cracked or significantly dented head should be replaced before tuning further.',
-          'If the drum has an uncontrolled overtone that cannot be dialed out, check whether the bearing edge — the rim of the shell that the head sits on — is level and undamaged. A damaged bearing edge cannot be fixed by tuning. Bring the drum in for an inspection if the problem persists after careful, even tuning.',
-        ],
-      },
-    ],
-    related: [
-      '/product/sattari-practice-pad-12',
-      '/product/classic-american-hickory-a5',
-      '/product/classic-american-hickory-a7',
-      '/services/instrument-repair-los-angeles',
-    ],
-  },
-  {
     slug: 'beginner-violin-care',
     title: 'Violin care and maintenance for beginners',
     category: 'Strings',
@@ -446,6 +395,7 @@ const practiceGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-a-violin-string',
       '/violin-strings-woodland-hills',
       '/product/violin-strings',
       '/product/sattari-rosin',
@@ -599,7 +549,7 @@ export const guideCollections = [
   {
     id: 'practice-and-care',
     title: 'Practice, technique and care',
-    guides: [practicePadGuide, ...practiceGuides],
+    guides: [snareTuningGuide, violinStringChangeGuide, practicePadGuide, ...practiceGuides],
   },
 ];
 

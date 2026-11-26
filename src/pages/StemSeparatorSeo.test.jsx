@@ -203,3 +203,31 @@ it('gives every educational guide an index link, cited sources and educational n
     }
   }
 });
+
+it('ships the two snare listening examples as accessible players backed by separate recordings', () => {
+  const { doc, schema } = renderPage('/guides/how-to-tune-a-snare-drum');
+  const players = [...doc.querySelectorAll('#before-and-after audio[controls]')];
+  expect(players.map((p) => p.getAttribute('src'))).toEqual([
+    '/audio/snare-tuning/before.wav',
+    '/audio/snare-tuning/after.wav',
+  ]);
+  const recordings = schema.find((item) => item['@type'] === 'Article').audio;
+  expect(recordings.map((item) => item.name)).toEqual(
+    players.map((p) => p.getAttribute('aria-label'))
+  );
+  expect(
+    doc.querySelector('#before-and-after a[href="https://creativecommons.org/licenses/by/4.0/"]')
+  ).not.toBeNull();
+});
+
+it('places full-size violin detail photographs next to the steps they illustrate', () => {
+  const { doc } = renderPage('/guides/how-to-change-a-violin-string');
+  for (const id of ['seat-the-tailpiece-end', 'wind-the-peg', 'check-the-bridge']) {
+    const figure = doc.querySelector(`#${id} figure`);
+    expect(figure).not.toBeNull();
+    const img = figure.querySelector('img');
+    expect(img.getAttribute('alt').length).toBeGreaterThan(12);
+    expect(figure.querySelector('a').getAttribute('href')).toBe(img.getAttribute('src'));
+    expect(figure.querySelector('figcaption a')).not.toBeNull();
+  }
+});

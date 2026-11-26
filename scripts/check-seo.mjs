@@ -188,7 +188,10 @@ for (const url of urls) {
       await access(`dist${decodeURI(new URL(audio.src).pathname)}`);
     for (const link of doc.querySelectorAll('.resource-page a[href]')) {
       const target = new URL(link.href);
-      if (target.origin === origin && target.pathname.startsWith('/handouts/')) {
+      if (
+        target.origin === origin &&
+        (target.pathname.startsWith('/handouts/') || /\.(webp|jpe?g|png)$/i.test(target.pathname))
+      ) {
         await access(`dist${decodeURI(target.pathname)}`);
       } else if (target.origin === origin && !target.pathname.startsWith('/audio/')) {
         assert.ok(

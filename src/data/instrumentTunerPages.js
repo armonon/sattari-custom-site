@@ -52,6 +52,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Change one violin string, step by step', '/guides/how-to-change-a-violin-string'],
       ['How to choose a violin for a first lesson', '/guides/choose-a-violin-for-beginners'],
       ['Violin restringing in Woodland Hills', '/services/violin-restringing-woodland-hills'],
       ['Beginner violin care', '/guides/beginner-violin-care'],

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowRight, Download, MapPin, Phone } from 'lucide-react';
 import { SEO, StructuredData } from '../utils/seo';
@@ -184,6 +185,68 @@ export function GuideIndex() {
   );
 }
 
+function AudioComparison({ examples, credit }) {
+  const playing = useRef(null);
+  function playExample(event) {
+    const next = event.currentTarget;
+    if (playing.current && playing.current !== next) playing.current.pause();
+    playing.current = next;
+  }
+  return (
+    <div className="guide-audio-comparison">
+      {examples.map((example) => (
+        <div key={example.src} className="guide-audio-example">
+          <h3>{example.label}</h3>
+          <p>{example.description}</p>
+          <audio
+            aria-label={example.label}
+            controls
+            preload="metadata"
+            src={example.src}
+            onPlay={playExample}
+          >
+            <a href={example.src}>Open this recording (WAV)</a>
+          </audio>
+        </div>
+      ))}
+      <p className="guide-media-credit">
+        Recordings by {credit.author} on Freesound. <a href={credit.before}>Lower tuning</a> ·{' '}
+        <a href={credit.after}>Medium-high tuning</a> ·{' '}
+        <a href={credit.licenseUrl}>{credit.license}</a>. {credit.note}
+      </p>
+    </div>
+  );
+}
+
+function LessonPhoto({ photo }) {
+  return (
+    <figure className="guide-step-photo">
+      <a href={photo.src} aria-label={`Open full-size photo: ${photo.alt}`}>
+        <img
+          width={photo.width}
+          height={photo.height}
+          src={photo.src}
+          alt={photo.alt}
+          loading="lazy"
+        />
+      </a>
+      <figcaption>
+        {photo.caption}
+        <span className="guide-media-credit">
+          Photo by <a href={photo.sourceUrl}>{photo.author}</a>
+          {photo.licenseUrl && (
+            <>
+              {' '}
+              · <a href={photo.licenseUrl}>{photo.license}</a>
+            </>
+          )}
+          {photo.edit && <> · {photo.edit}</>}
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
 function GuideSection({ section, sources }) {
   const source = sources?.find((item) => item.url === section.sourceUrl);
   return (
@@ -192,6 +255,9 @@ function GuideSection({ section, sources }) {
       {section.paragraphs?.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
+      {section.audioExamples && (
+        <AudioComparison examples={section.audioExamples} credit={section.audioCredit} />
+      )}
       {section.table && (
         <div className="guide-table-wrap">
           <table aria-label={section.title}>
@@ -224,6 +290,9 @@ function GuideSection({ section, sources }) {
           ))}
         </ol>
       )}
+      {section.photos?.map((photo) => (
+        <LessonPhoto key={photo.src} photo={photo} />
+      ))}
       {source && (
         <p>
           <a href={source.url}>{source.label}</a>
@@ -242,13 +311,16 @@ export function GuideArticle() {
     ...section,
     id: section.id || sectionId(index),
   }));
+  const photos = sections.flatMap((section) => section.photos || []);
+  const audio = sections.flatMap((section) => section.audioExamples || []);
+  const previewImage = guide.image || photos[0]?.src;
   const leadSection = sections.find((section) => section.lead);
   const bodySections = sections.filter((section) => !section.lead);
   return (
     <Page
       title={guide.title}
       description={guide.description}
-      image={guide.image}
+      image={previewImage}
       category={guide.category}
       type="article"
     >
@@ -262,7 +334,20 @@ export function GuideArticle() {
           description: guide.description,
           inLanguage: 'en-US',
           articleSection: guide.category,
-          ...(guide.image && { image: absoluteUrl(guide.image) }),
+          ...(previewImage && {
+            image: photos.length
+              ? photos.map((photo) => absoluteUrl(photo.src))
+              : absoluteUrl(previewImage),
+          }),
+          ...(audio.length > 0 && {
+            audio: audio.map((example) => ({
+              '@type': 'AudioObject',
+              name: example.label,
+              contentUrl: absoluteUrl(example.src),
+              encodingFormat: 'audio/wav',
+              description: example.description,
+            })),
+          }),
           ...(guide.sources?.length && { citation: guide.sources.map((source) => source.url) }),
           mainEntityOfPage: absoluteUrl(guidePath(guide)),
           isPartOf: { '@id': websiteSchema['@id'] },
@@ -278,6 +363,9 @@ export function GuideArticle() {
         Published by <Link to="/about">{BUSINESS.name}</Link>
       </p>
       <p className="resource-lead">{guide.answer}</p>
+      {photos.length > 0 && (
+        <p className="guide-photo-instruction">Select any close-up to open the full-size photo.</p>
+      )}
       {leadSection && (
         <div className="resource-article resource-checklist">
           <GuideSection section={leadSection} sources={guide.sources} />
@@ -291,7 +379,13 @@ export function GuideArticle() {
       )}
       <nav className="resource-contents" aria-label="In this guide">
         <h2>In this guide</h2>
-        <ol>
+        <ol
+          className={
+            sections.some((section) => /^\d+\./.test(section.title))
+              ? 'guide-step-index'
+              : undefined
+          }
+        >
           {sections.map((section) => (
             <li key={section.title}>
               <a href={`#${section.id}`}>{section.title}</a>

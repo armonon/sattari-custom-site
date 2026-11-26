@@ -96,6 +96,7 @@ const guidePages = {
   '/guides/batch-separate-audio-stems': 'guide-batch',
   '/guides/when-does-my-guitar-need-a-setup': 'guide-guitar-setup',
   '/guides/how-to-tune-a-snare-drum': 'guide-snare-tuning',
+  '/guides/how-to-change-a-violin-string': 'guide-violin-string-change',
   '/guides/beginner-violin-care': 'guide-violin-care',
   '/guides/choose-a-violin-for-beginners': 'guide-violin-choice',
   '/guides/drumsticks-for-beginners': 'guide-drumsticks',
