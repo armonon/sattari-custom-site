@@ -103,7 +103,7 @@ export const PAGE_SEO = {
   shop: {
     title: 'Buy Musical Instruments & Accessories Online',
     description:
-      'Buy cymbals, drumsticks, acoustic and electric violins, violin strings, guitars and bass online. Find Ernie Ball guitar strings and restringing at our Woodland Hills shop.',
+      'Shop cymbals, drumsticks, violins, violin strings, guitars and bass online. Find Ernie Ball guitar strings and restringing at our Woodland Hills shop.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
