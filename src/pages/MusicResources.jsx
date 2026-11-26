@@ -127,6 +127,10 @@ export function GuideIndex() {
       description="Practical music guides from Sattari Music: tune your instrument, find the key of a song, choose a violin or drumsticks, care for your gear, separate stems, and more."
     >
       <p className="resource-lead">Good questions. More music.</p>
+      <Link className="resource-action" to="/learn">
+        Practice guitar in the Sattari Learn app
+        <ArrowRight size={18} />
+      </Link>
       <div className="guide-list">
         {musicGuides.map((guide) => (
           <article key={guide.slug}>

@@ -94,6 +94,9 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>Learn guitar. Create music. Explore sound.</p>
+              <Link to="/learn" className="hub-text-link">
+                Sattari Learn: guitar practice <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </div>
           </header>
 

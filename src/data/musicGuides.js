@@ -114,9 +114,10 @@ export const musicGuides = [
       'Standard tunings with note names and frequencies for guitar, bass, ukulele, violin, viola and cello, plus how to tune with a tuner or by ear and stay in tune.',
     answer:
       'Tune each open string to its standard note, one string at a time, using a clip-on tuner or a tuner app. Start below the note and tighten up to it, then go round every string a second time. Standard guitar tuning is E A D G B E from the thickest string to the thinnest, with the A above middle C set to 440 Hz.',
-    image: '/images/local-gallery/guitars.webp',
-    imageAlt: 'Acoustic guitars, a ukulele and a violin on the wall at Sattari Music',
-    action: { label: 'Open the guitar tuner in Sattari Learn', path: '/learn' },
+    image: '/images/guides/standard-guitar-tuning.jpg',
+    imageAlt:
+      'Standard guitar tuning from the thickest string: E2 82.41 Hz, A2 110 Hz, D3 146.83 Hz, G3 196 Hz, B3 246.94 Hz, E4 329.63 Hz',
+    action: { label: 'Open the guitar tuner', path: '/learn?tool=tuner' },
     sections: [
       {
         title: 'What in tune means',
