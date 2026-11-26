@@ -22,7 +22,10 @@ function labelFor(path) {
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
+  if (path === '/keys') return 'Notes and chords for all 24 keys';
+  if (path === '/bpm') return 'Tempo reference: every BPM';
   return (
+    guide?.linkLabel ||
     guide?.title ||
     product?.name ||
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
@@ -120,8 +123,8 @@ function StemAudioExample({ includeOriginal = true }) {
 export function GuideIndex() {
   return (
     <Page
-      title="Music Guides"
-      description="Practical music guides from Sattari Music: choose a violin or drumsticks, tune a snare drum, care for your instrument, separate stems, make karaoke tracks, and more."
+      title="Learn: Music Guides"
+      description="Practical music guides from Sattari Music: tune your instrument, find the key of a song, choose a violin or drumsticks, care for your gear, separate stems, and more."
     >
       <p className="resource-lead">Good questions. More music.</p>
       <div className="guide-list">
@@ -219,6 +222,31 @@ export function GuideArticle() {
             {section.paragraphs?.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
+            {section.table && (
+              <div className="resource-table-scroll">
+                <table className="resource-table">
+                  <thead>
+                    <tr>
+                      {section.table.columns.map((column) => (
+                        <th key={column} scope="col">
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.table.rows.map(([head, ...cells]) => (
+                      <tr key={head}>
+                        <th scope="row">{head}</th>
+                        {cells.map((cell, cellIndex) => (
+                          <td key={section.table.columns[cellIndex + 1]}>{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             {section.steps && (
               <ol>
                 {section.steps.map((step) => (
@@ -226,6 +254,9 @@ export function GuideArticle() {
                 ))}
               </ol>
             )}
+            {section.after?.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
           </section>
         ))}
         {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
