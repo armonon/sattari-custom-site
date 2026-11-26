@@ -281,6 +281,10 @@ export const musicGuides = [
       },
       {
         title: 'Restringing, setup and repair are different jobs',
+        link: {
+          path: '/services/guitar-restringing-woodland-hills',
+          label: 'See guitar restringing prices in Woodland Hills',
+        },
         paragraphs: [
           'Restringing replaces worn or unsuitable strings and brings the instrument back to the intended tuning. It does not automatically include fretwork, nut cutting or a complete setup. Decide on the string type, gauge and usual tuning before a setup assessment.',
           'A setup considers neck relief, string height and intonation together, within the adjustments available on that instrument. Many electric bridges allow individual saddle adjustments; an acoustic saddle is a different design. There is no single measurement that suits every guitar and playing style.',

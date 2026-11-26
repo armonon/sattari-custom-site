@@ -245,7 +245,7 @@ export default function ServiceInquiryForm({
           <h3>{checkStringPack ? 'Guitar string inquiry' : 'Service Inquiry'}</h3>
           <p className="form-helper">
             {checkStringPack
-              ? 'We’ll reply with the available options and a price before you visit.'
+              ? 'Tell us which set you need. We’ll confirm the gauge, the price of any premium option and a time for pickup or installation.'
               : 'Tell us what you need, when you need it, and any details that will help us guide you.'}
           </p>
         </>
@@ -318,9 +318,10 @@ export default function ServiceInquiryForm({
           <div className="service-form-row">
             <label>
               <span>What would you like to check?</span>
-              <select name="stringRequest" defaultValue="Pack price and pickup availability">
-                <option>Pack price and pickup availability</option>
-                <option>Pack price and installation quote</option>
+              <select name="stringRequest" defaultValue="Check pickup availability">
+                <option>Check pickup availability</option>
+                <option>Arrange a restringing appointment</option>
+                <option>Check a premium set and price</option>
                 <option>Help choosing replacement strings</option>
               </select>
             </label>

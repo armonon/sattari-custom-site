@@ -15,6 +15,7 @@ import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
 import { categories, formatPriceRange } from '../data/catalog';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
@@ -250,10 +251,9 @@ export default function ShopPage() {
       <section className="container strings-discovery" aria-labelledby="shop-strings-title">
         <h2 id="shop-strings-title">Strings for guitars and violins</h2>
         <p>
-          Match the strings to your instrument before you buy. Explore violin string options, ask
-          about electric and acoustic guitar strings, or arrange a restringing assessment at our
-          appointment-only Woodland Hills shop. Confirm brands, gauges and availability with the
-          team.
+          Standard guitar string sets cost {`$${guitarStringPricing.standardSet}`}. We carry Ernie
+          Ball and other premium strings. Call the Woodland Hills shop for your preferred set and
+          gauge or to arrange installation. You can also buy violin strings online.
         </p>
         <nav aria-label="Shop strings and string replacement">
           <Link to="/guitar-strings-woodland-hills">Electric &amp; acoustic guitar strings</Link>

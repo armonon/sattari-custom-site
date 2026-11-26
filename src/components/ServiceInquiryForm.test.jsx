@@ -163,7 +163,7 @@ it('keeps music-tool feedback focused while service intake captures instrument a
   expect(screen.getByLabelText('Preferred timing (optional)')).toBeInTheDocument();
 });
 
-it('delivers a guitar string quote request on both transports and resets the pack preferences', async () => {
+it('delivers a guitar string appointment request on both transports and resets the pack preferences', async () => {
   render(<ServiceInquiryForm initialService="accessories" guitarStringInquiry />);
   fireEvent.change(screen.getByLabelText('Your Name'), { target: { value: 'Alex' } });
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alex@example.com' } });
@@ -171,7 +171,7 @@ it('delivers a guitar string quote request on both transports and resets the pac
     target: { value: 'Steel-string acoustic guitar' },
   });
   fireEvent.change(screen.getByLabelText('What would you like to check?'), {
-    target: { value: 'Pack price and installation quote' },
+    target: { value: 'Arrange a restringing appointment' },
   });
   fireEvent.change(screen.getByLabelText('Preferred brand, set or gauge (optional)'), {
     target: { value: '12–53' },
@@ -182,7 +182,7 @@ it('delivers a guitar string quote request on both transports and resets the pac
   const netlify = new URLSearchParams(fetchMock.mock.calls[0][1].body);
   const fallback = JSON.parse(fetchMock.mock.calls[1][1].body);
   expect(netlify.get('details')).toContain(
-    'Guitar string request: Pack price and installation quote'
+    'Guitar string request: Arrange a restringing appointment'
   );
   expect(netlify.get('details')).toContain('Guitar type: Steel-string acoustic guitar');
   expect(netlify.get('details')).toContain('Preferred set or gauge: 12–53');

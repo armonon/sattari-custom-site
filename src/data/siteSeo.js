@@ -1,3 +1,5 @@
+import { guitarStringPricing } from './guitarStringPricing.js';
+
 export const SITE_ORIGIN = 'https://sattarimusic.com';
 
 export const BUSINESS = {
@@ -6,6 +8,7 @@ export const BUSINESS = {
   telephone: '+1-424-465-3020',
   phoneDisplay: '(424) 465-3020',
   phoneHref: 'tel:+14244653020',
+  googlePhotos: 'https://maps.google.com/maps/contrib/103987062368900608516',
   addressLine: '4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364',
   shopHoursNote: 'By appointment only. Call to arrange your visit.',
   studioHoursNote: 'Every day, 6 PM to midnight (Los Angeles time).',
@@ -65,7 +68,7 @@ export const businessSchema = {
   image: absoluteUrl('/sattari site/sattari logo.png'),
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Appointment-only Woodland Hills music store with cymbals, drumsticks, violins, guitars and violin strings. Ask about guitar strings, restringing, instrument repair, rentals and lessons.',
+    'Appointment-only Woodland Hills music store with cymbals, drumsticks, violins, guitars, violin strings and Ernie Ball guitar strings. Services include restringing, instrument repair, rentals and lessons.',
 };
 
 export const websiteSchema = {
@@ -100,7 +103,7 @@ export const PAGE_SEO = {
   shop: {
     title: 'Buy Musical Instruments & Accessories Online',
     description:
-      'Buy cymbals, drumsticks, acoustic and electric violins, violin strings, guitars and bass online. Ask Sattari Music in Woodland Hills about guitar string availability.',
+      'Buy cymbals, drumsticks, acoustic and electric violins, violin strings, guitars and bass online. Find Ernie Ball guitar strings and restringing at our Woodland Hills shop.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
@@ -111,8 +114,7 @@ export const PAGE_SEO = {
   },
   repair: {
     title: 'Los Angeles Instrument Repair | Woodland Hills',
-    description:
-      'Ask Sattari Music in Woodland Hills about guitar restringing, violin strings, setup and instrument repair. Request an assessment and quote before arranging service.',
+    description: `Book instrument repair in Woodland Hills. Standard guitar restringing is $${guitarStringPricing.standardInstalled} with strings and labor. Ask Sattari about violin repair, setups and timing.`,
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
   },
   hub: {

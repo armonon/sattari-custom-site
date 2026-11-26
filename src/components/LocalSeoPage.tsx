@@ -4,6 +4,7 @@ import ServicePlanningDetails from './ServicePlanningDetails';
 import OptimizedProductImage from './OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { formatPriceRange } from '../data/catalog';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, businessSchema } from '../data/siteSeo';
 import type { Product } from '../types';
@@ -38,6 +39,8 @@ type PageKey =
 interface LocalSeoPageProps {
   pageKey: PageKey;
 }
+
+const { standardSet, standardLabor, standardInstalled } = guitarStringPricing;
 
 export const localSeoPages = {
   'music-store': {
@@ -1021,25 +1024,23 @@ export const localSeoPages = {
       },
       {
         q: 'Do I need a full setup when I replace guitar strings?',
-        a: 'That depends on the instrument and what is changing. Describe your current strings, preferred gauge and tuning, and any buzzing or difficult action. Ask for string replacement and any additional setup work to be quoted clearly before you approve the service.',
+        a: `A standard guitar string set installed is $${standardInstalled}, including $${standardLabor} labor. A change of gauge or tuning can affect action and intonation. Describe any buzzing or uncomfortable action so we can discuss additional setup work and its cost separately.`,
       },
     ],
   },
   'guitar-strings': {
     eyebrow: 'Guitar strings in Woodland Hills',
     title: 'Find guitar strings in Woodland Hills',
-    seoTitle: 'Guitar Strings in Woodland Hills',
-    description:
-      'Ask Sattari Music about electric, acoustic and classical guitar strings in Woodland Hills. Confirm compatible gauges, availability and restringing before visiting.',
+    seoTitle: 'Guitar Strings in Woodland Hills | Ernie Ball & More',
+    description: `Shop guitar strings in Woodland Hills. Standard sets cost $${standardSet}. We carry Ernie Ball and other premium strings. Check your preferred gauge and arrange pickup.`,
     url: 'https://sattarimusic.com/guitar-strings-woodland-hills',
     schemaType: 'WebPage',
     schemaName: 'Guitar Strings at Sattari Music in Woodland Hills',
     image: '/sattari site/guitars/flame-stratocaster.jpg',
-    intro:
-      'Check electric, acoustic or classical guitar string availability before visiting our Woodland Hills shop. Tell us the set you want or ask us to help identify it. We’ll confirm the pack price and a pickup appointment, or quote installation separately if you want the strings fitted.',
+    intro: `Pick up a standard guitar string set for $${standardSet} at Sattari Music in Woodland Hills. We carry Ernie Ball and other premium guitar strings. Tell us which guitar you play and which gauge you like so we can confirm the set, any premium price and a pickup time.`,
     highlights: ['Electric guitar', 'Acoustic guitar', 'Classical guitar', 'Gauge', 'Tuning'],
     offerings: [
-      'Availability inquiries for electric and acoustic guitar strings',
+      'Ernie Ball and other guitar string options for players shopping locally',
       'Classical guitar string questions with material and instrument fit checked first',
       'Help identifying the information needed to choose a replacement set',
       'A separate inquiry for fitting strings or assessing setup concerns',
@@ -1053,7 +1054,7 @@ export const localSeoPages = {
     details: [
       {
         title: 'Electric guitar strings: start with your current set',
-        copy: 'Share the guitar model, number of strings and the gauge printed on the package if you have it. Include whether you want the same feel or a change, and mention a locking or floating bridge. A preferred brand or model is useful for an availability check; no specific brand, gauge or set is guaranteed in stock.',
+        copy: 'The old packet is a good starting point. Send the brand, the lightest and heaviest string gauges on the label and the number of strings on your guitar. If you want something different, tell us how you tune and what you would like to change about the feel.',
       },
       {
         title: 'Acoustic and classical guitars need the right string type',
@@ -1064,11 +1065,11 @@ export const localSeoPages = {
         copy: 'Gauge describes string thickness. Tell us your normal tuning, playing style and what feels uncomfortable about your current strings. A different gauge or tuning can change tension and may call for a setup assessment. Check the instrument maker’s recommendations rather than choosing a set solely because its label says light or medium.',
       },
       {
-        title: 'Buying strings and having them fitted are separate requests',
-        copy: 'Let us know whether you want strings to fit yourself or help replacing them. For a purchase, confirm the exact set, price and pickup arrangements. For restringing, also ask about labor, appointment availability and whether any setup work is proposed. Your inquiry does not reserve stock or book a service.',
+        title: 'Take a set home or have it installed',
+        copy: `A standard guitar string set costs $${standardSet}. Add $${standardLabor} for restringing labor, for a total of $${standardInstalled} with the standard set installed. Ask about the price of a particular premium set and arrange your visit before coming in.`,
       },
     ],
-    primaryCta: { label: 'Check pack price and pickup', href: '#local-inquiry' },
+    primaryCta: { label: 'Check a set and arrange pickup', href: '#local-inquiry' },
     secondaryCta: {
       label: 'Request guitar restringing',
       to: '/services/guitar-restringing-woodland-hills',
@@ -1080,11 +1081,11 @@ export const localSeoPages = {
     faqs: [
       {
         q: 'Where can I buy guitar strings in Woodland Hills?',
-        a: `Ask Sattari Music about available strings at ${BUSINESS.addressLine}. Call ${BUSINESS.phoneDisplay} or use the inquiry form to confirm the set and price, then arrange an appointment before visiting.`,
+        a: `Sattari Music carries guitar strings at ${BUSINESS.addressLine}. Call ${BUSINESS.phoneDisplay} or use the form to check your preferred set and arrange a pickup appointment.`,
       },
       {
         q: 'Do you have electric guitar strings and acoustic guitar strings in stock?',
-        a: 'Send the string type, gauge and preferred brand or model. Availability is confirmed by the team; this page does not represent a live list of guitar string stock. Ask about a suitable alternative if your requested set is unavailable.',
+        a: 'We carry Ernie Ball and other premium strings. Send your guitar model, preferred set and gauge so we can confirm the right electric or acoustic strings are available before your visit.',
       },
       {
         q: 'Can I use the same strings on an electric, acoustic and classical guitar?',
@@ -1096,7 +1097,7 @@ export const localSeoPages = {
       },
       {
         q: 'Can I ask Sattari to replace my guitar strings?',
-        a: 'Yes. Use the guitar restringing inquiry with your instrument details. The team will confirm compatible strings, service scope, the quote and an appointment before work is arranged.',
+        a: `Yes. Guitar restringing labor is $${standardLabor}. With a $${standardSet} standard set, the total is $${standardInstalled}. For a premium set, ask us to confirm the pack price and the installed total.`,
       },
     ],
   },
@@ -1177,15 +1178,13 @@ export const localSeoPages = {
     eyebrow: 'Guitar restringing in Woodland Hills',
     title: 'Guitar string replacement in Woodland Hills',
     seoTitle: 'Guitar Restringing & String Replacement, Woodland Hills | Sattari',
-    description:
-      'Request electric or acoustic guitar restringing in Woodland Hills. Confirm strings, labor, setup needs, a quote and an appointment with Sattari Music.',
+    description: `Guitar restringing in Woodland Hills costs $${standardLabor} for labor or $${standardInstalled} with a $${standardSet} standard string set. Ask about Ernie Ball and premium options. Visits by appointment.`,
     url: 'https://sattarimusic.com/services/guitar-restringing-woodland-hills',
     schemaType: 'Service',
-    schemaName: 'Sattari Music Guitar Restringing Inquiries',
+    schemaName: 'Guitar restringing at Sattari Music',
     image: '/sattari site/guitars/flame-stratocaster.jpg',
-    intro:
-      'Need to replace the strings on an electric or acoustic guitar? Send Sattari Music the model, string type and usual tuning to start a restringing inquiry. Our Woodland Hills team will confirm compatible strings, the proposed work, a quote and an appointment. Mention buzzing, tuning trouble or difficult action so those concerns can be assessed separately.',
-    highlights: ['String replacement', 'Electric guitar', 'Acoustic guitar', 'Quote first'],
+    intro: `Standard guitar restringing costs $${standardInstalled} with strings and installation at our Woodland Hills shop. That includes a $${standardSet} standard guitar string set and $${standardLabor} in labor. Tell us your guitar model, usual tuning and preferred appointment time.`,
+    highlights: ['String replacement', 'Electric guitar', 'Acoustic guitar', 'By appointment'],
     offerings: [
       'Electric and acoustic guitar string replacement inquiries',
       'Compatibility and string availability checks before scheduling',
@@ -1204,8 +1203,8 @@ export const localSeoPages = {
         copy: 'Include the make and model, number of strings, current gauge if known, desired tuning and your deadline. Tell us whether the guitar is electric, steel-string acoustic or nylon-string classical. Mention a locking tremolo, floating bridge, twelve-string instrument or other unusual requirements so the team can confirm whether it can accept the job.',
       },
       {
-        title: '2. Confirm compatible strings and the quote',
-        copy: 'Ask which strings are available, what the labor includes and whether you can supply your own set. Confirm the price of strings and labor, any proposed assessment or setup charges, and the expected turnaround before approving work. We do not publish a universal restringing price because the instrument and agreed scope matter.',
+        title: '2. Choose your strings',
+        copy: 'We carry Ernie Ball and other premium guitar strings. If you want a particular set, share the brand and gauge so we can confirm the price and availability before fitting it. Mention any buzzing or setup concerns when you request the appointment so we can discuss that work separately.',
       },
       {
         title: '3. Arrange your appointment and collection',
@@ -1216,16 +1215,16 @@ export const localSeoPages = {
         copy: 'A restringing request covers the agreed string replacement work. Persistent buzzing, high action, notes sounding out of tune along the neck, repeated breakage or damaged parts can need further assessment. Describe those symptoms when you inquire; a full setup, fret work, electronics or structural repair is not automatically included.',
       },
     ],
-    primaryCta: { label: 'Request a restringing quote', href: '#local-inquiry' },
+    primaryCta: { label: 'Request a restringing appointment', href: '#local-inquiry' },
     secondaryCta: { label: 'Find guitar strings', to: '/guitar-strings-woodland-hills' },
     formService: 'repairs',
     formSource: 'Guitar restringing Woodland Hills',
     inquiryCopy:
-      'Include your guitar model, string type and gauge if known, preferred tuning and deadline. Mention any buzzing, repeated string breakage or unusual bridge so the team can confirm scope and quote.',
+      'Include the guitar model, string set or gauge, tuning and the date you need it ready. Mention any buzzing, repeated breakage or unusual bridge so we can confirm the work and timing.',
     faqs: [
       {
         q: 'How much does it cost to replace guitar strings?',
-        a: 'Request a quote for your instrument. Confirm the replacement strings, labor and any proposed setup or assessment charges before you approve the work. There is no single price published here for every guitar and service scope.',
+        a: `Guitar restringing labor is $${standardLabor}, and a standard guitar string set costs $${standardSet}. The standard set installed is $${standardInstalled}. Ask for the price of your chosen premium set and any additional setup or repair work.`,
       },
       {
         q: 'Can I request electric guitar or acoustic guitar restringing?',
@@ -1237,7 +1236,7 @@ export const localSeoPages = {
       },
       {
         q: 'Can I bring my own guitar strings?',
-        a: 'Tell the team the exact set you plan to bring and your guitar model. Confirm compatibility, whether customer-supplied strings can be used, and the labor quote before arranging your appointment.',
+        a: `Standard restringing labor is $${standardLabor}. Send the name and gauge of your set with your guitar model so we can confirm compatibility and whether we can fit it before you visit.`,
       },
       {
         q: 'Can you replace my guitar strings while I wait?',
@@ -1388,7 +1387,7 @@ export const localSeoPages = {
     faqs: [
       {
         q: 'Can I replace one string instead of the whole set?',
-        a: 'Ask about a matching individual string and the condition of the existing set. Availability, compatibility and your preference determine the options. A whole set is not automatically required or automatically included.',
+        a: `Tell us which string broke and whether you want the others replaced. For guitar, a complete standard set is $${standardSet}, or $${standardInstalled} installed. Ask the shop about an individual string, bass or violin strings, or a particular premium set so we can confirm fit, price and availability.`,
       },
       {
         q: 'Can I ask about bass restringing?',
@@ -1531,6 +1530,15 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           name: page.schemaName,
           description: page.description,
           url: canonicalUrlFor(pageKey),
+          ...(pageKey === 'guitar-restringing' && {
+            offers: {
+              '@type': 'Offer',
+              name: 'Standard guitar string set and restringing labor',
+              price: standardInstalled,
+              priceCurrency: 'USD',
+              url: canonicalUrlFor(pageKey),
+            },
+          }),
           ...(page.schemaType === 'Service'
             ? { areaServed: BUSINESS.areas, provider: { '@id': businessSchema['@id'] } }
             : { about: { '@id': businessSchema['@id'] } }),
@@ -1590,9 +1598,9 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           </div>
           {pageKey === 'guitar-restringing' && (
             <p className="restring-quote-note">
-              Ask for the price of the string set, installation labor and any setup work separately.
-              Bringing your own strings? Include the brand and gauge so we can confirm fit and
-              labor.
+              Want a particular premium set? We carry Ernie Ball and other premium strings. Ask for
+              your preferred gauge and its price before visiting. Additional setup work is quoted
+              separately.
             </p>
           )}
         </div>
@@ -1616,6 +1624,35 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           </div>
         </div>
       </div>
+
+      {pageKey === 'guitar-restringing' && (
+        <section className="container repair-archive" aria-labelledby="guitar-restring-story">
+          <figure>
+            <img
+              src="/images/local-gallery/owner-04.webp"
+              alt="Acoustic and classical guitars hanging on Sattari’s display wall"
+              width="640"
+              height="361"
+              loading="lazy"
+            />
+            <figcaption>
+              Guitar display from <a href={BUSINESS.googlePhotos}>Sattari’s Google photo gallery</a>
+              .
+            </figcaption>
+          </figure>
+          <div>
+            <h2 id="guitar-restring-story">A guitar restring before an event</h2>
+            <p>
+              A customer describes bringing their guitar to Sattari for new strings and borrowing a
+              guitar for an event while the shop worked on theirs. They shared three photos with
+              their review.
+            </p>
+            <a href="https://maps.app.goo.gl/KCJNUazLtefu1hNR9">
+              Read the customer’s restringing review and see their photos
+            </a>
+          </div>
+        </section>
+      )}
 
       {featuredProducts.length > 0 && (
         <section className="container local-catalog" aria-labelledby="local-catalog-title">
@@ -1749,7 +1786,11 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
           <div className="service-form-copy section-header narrow">
             <p className="eyebrow">Start the conversation</p>
             <h2>
-              {pageKey === 'guitar-strings' ? 'Check a string pack' : 'Ask the Woodland Hills team'}
+              {pageKey === 'guitar-strings'
+                ? 'Check a string set for pickup or installation'
+                : pageKey === 'guitar-restringing'
+                  ? 'Request your restringing appointment'
+                  : 'Ask the Woodland Hills team'}
             </h2>
             <p>
               {'inquiryCopy' in page

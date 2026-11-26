@@ -151,7 +151,7 @@ describe('local search pages', () => {
     }
   });
 
-  it('keeps string buying and fitting connected without inventing guitar stock or offers', () => {
+  it('shows approved standard guitar prices and connects string buying and fitting', () => {
     const guitar = renderPage(<LocalSeoPage pageKey="guitar-strings" />);
     expect(guitar.doc.querySelectorAll('.local-product')).toHaveLength(0);
     expect(guitar.schema.some((item) => ['Product', 'Offer'].includes(item['@type']))).toBe(false);
@@ -171,7 +171,25 @@ describe('local search pages', () => {
     const restringing = renderPage(<LocalSeoPage pageKey="guitar-restringing" />);
     const service = restringing.schema.find((item) => item['@type'] === 'Service');
     expect(service.provider['@id']).toBe('https://sattarimusic.com/#business');
-    expect(service.offers).toBeUndefined();
+    expect(service.offers).toMatchObject({
+      '@type': 'Offer',
+      name: 'Standard guitar string set and restringing labor',
+      price: 55,
+      priceCurrency: 'USD',
+    });
+    for (const page of [guitar, restringing]) {
+      const priceAnswer = page.schema
+        .find((item) => item['@type'] === 'FAQPage')
+        .mainEntity.find(({ acceptedAnswer }) =>
+          ['$20', '$35', '$55'].every((price) => acceptedAnswer.text.includes(price))
+        );
+      expect(priceAnswer).toBeDefined();
+      expect(page.doc.body.textContent).toContain(priceAnswer.acceptedAnswer.text);
+      expect(page.doc.body.textContent).toContain('Ernie Ball');
+      expect(page.doc.body.textContent).toMatch(/premium/i);
+      expect(page.doc.querySelector('meta[name="description"]').content).toContain('$20');
+    }
+    expect(violin.doc.body.textContent).not.toContain('$55');
     expect(
       restringing.doc.querySelector('a[href="/services/guitar-setup-los-angeles"]')
     ).not.toBeNull();

@@ -3,6 +3,7 @@ import ServiceInquiryForm from './ServiceInquiryForm';
 import ServicePlanningDetails from './ServicePlanningDetails';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import './LocalSeoPage.css';
 
 const repairFaqs = [
@@ -16,7 +17,7 @@ const repairFaqs = [
   },
   {
     q: 'How much will an instrument repair cost?',
-    a: 'Cost depends on the instrument, work and any parts needed. An inquiry starts the assessment; it is not a fixed quote. The team will discuss the proposed work and price before you approve it.',
+    a: `Standard guitar restringing costs $${guitarStringPricing.standardLabor} for installation labor. A standard guitar string set is $${guitarStringPricing.standardSet}, bringing the installed total to $${guitarStringPricing.standardInstalled}. For other repairs, tell us the instrument and symptom so we can confirm the work, parts and price.`,
   },
   {
     q: 'Can my instrument be ready before a gig or lesson?',
@@ -128,9 +129,11 @@ export default function RepairPage() {
         <div className="repair-callout-card">
           <h2>What goes into a repair quote?</h2>
           <p>
-            Ask for the labor, replacement strings or parts, and any additional setup work to be
-            listed separately. Include your rehearsal or lesson date so we can confirm timing before
-            you make the trip.
+            A standard guitar restring with new strings costs{' '}
+            {`$${guitarStringPricing.standardInstalled}`}. See the{' '}
+            <Link to="/services/guitar-restringing-woodland-hills">string and labor prices</Link>.
+            For a setup or another repair, tell us what needs attention and when you need the
+            instrument back. We’ll confirm the price and timing with you.
           </p>
           <div className="repair-mini-stats" aria-label="Repair service highlights">
             <span>Violins</span>
@@ -176,7 +179,10 @@ export default function RepairPage() {
             height="1020"
             loading="lazy"
           />
-          <figcaption>String work on a sitar, from Sattari’s photo archive.</figcaption>
+          <figcaption>
+            String work on a sitar, from{' '}
+            <a href={BUSINESS.googlePhotos}>Sattari’s Google photo gallery</a>.
+          </figcaption>
         </figure>
         <div>
           <h2 id="repair-archive-title">Which string needs attention?</h2>

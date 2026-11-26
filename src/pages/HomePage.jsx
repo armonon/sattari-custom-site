@@ -19,6 +19,7 @@ import OptimizedProductImage from '../components/OptimizedProductImage';
 import HomeHeroBackground from '../components/HomeHeroBackground';
 import HomeLocalGallery from '../components/HomeLocalGallery';
 import { BUSINESS, PAGE_SEO } from '../data/siteSeo';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import { bookingPrice, money } from '../utils/studioBooking';
 import { SEO } from '../utils/seo';
 import './HomePage.css';
@@ -281,11 +282,11 @@ export default function HomePage() {
               </Link>
             </div>
             <section className="strings-discovery" aria-labelledby="home-strings-title">
-              <h2 id="home-strings-title">Fresh strings. A better-feeling instrument.</h2>
+              <h2 id="home-strings-title">Guitar and violin strings in Woodland Hills</h2>
               <p>
-                Looking for guitar strings in Woodland Hills? Ask about electric, acoustic and
-                classical guitar strings, or browse our violin strings. Tell us your instrument and
-                tuning so we can confirm the right fit and current availability.
+                A standard guitar string set is {`$${guitarStringPricing.standardSet}`} at our
+                Woodland Hills shop. We carry Ernie Ball and other premium strings. Call to check
+                your gauge and arrange pickup, or book a restringing appointment.
               </p>
               <nav aria-label="Strings and restringing">
                 <Link to="/guitar-strings-woodland-hills">Guitar strings</Link>
@@ -294,7 +295,6 @@ export default function HomePage() {
                 <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
                 <Link to="/studio/keybpm#live-tuner">Tune your instrument</Link>
               </nav>
-              <p>Need help fitting a set? Contact the shop before your appointment.</p>
             </section>
           </div>
         </section>

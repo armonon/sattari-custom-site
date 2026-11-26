@@ -8,7 +8,7 @@ const PLANNING = {
     cards: [
       [
         'String replacement',
-        'Tell us your instrument, string type and tuning. Ask about compatible strings, installation labor and whether a setup is also needed.',
+        'Tell us which string broke or whether you want a full set. Include the instrument and your usual tuning so we can check fit and discuss any setup work.',
       ],
       [
         'Setup and playability',
@@ -22,7 +22,7 @@ const PLANNING = {
     note: 'Structural work, electrical repairs, bow work and specialist restoration need individual confirmation. Tell us about previous repairs or modifications. Please wait for photo-sharing instructions and keep sensitive documents out of your repair description.',
     links: [
       ['Guitar and bass setup', '/services/guitar-setup-los-angeles'],
-      ['Guitar string replacement', '/services/guitar-restringing-woodland-hills'],
+      ['Guitar string replacement prices', '/services/guitar-restringing-woodland-hills'],
       ['Violin repair and setup', '/services/violin-repair-los-angeles'],
     ],
   },
