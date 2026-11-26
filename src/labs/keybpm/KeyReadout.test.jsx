@@ -110,3 +110,30 @@ it('plays a drone on the tonic and stops it, and the T key taps the tempo', () =
   expect(screen.getByText('120 BPM from 4 taps')).toBeInTheDocument();
   now.mockRestore();
 });
+
+it('lists the chords and compatible keys, and clicks at the shown tempo', () => {
+  setup({ bpm: 60, bpmChoice: 'half', editedAt: '2026-11-26T00:00:00.000Z' });
+  const chords = screen.getByRole('list', { name: 'Chords in A minor' });
+  expect(chords).toHaveTextContent('Ami');
+  expect(chords.querySelectorAll('li')).toHaveLength(7);
+  expect(screen.getByRole('list', { name: 'Compatible keys' })).toHaveTextContent('C major · 8B');
+  const click = screen.getByRole('button', { name: 'Click at 60 BPM' });
+  const before = oscillators.length;
+  fireEvent.click(click);
+  expect(screen.getByRole('button', { name: 'Stop the click' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(oscillators.length).toBeGreaterThan(before);
+  fireEvent.click(screen.getByRole('button', { name: 'Stop the click' }));
+  expect(screen.getByRole('button', { name: 'Click at 60 BPM' })).toBeInTheDocument();
+});
+
+it('copies the shown result as one line', async () => {
+  const writeText = vi.fn().mockResolvedValue();
+  vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+  setup();
+  fireEvent.click(screen.getByRole('button', { name: 'Copy result' }));
+  expect(writeText).toHaveBeenCalledWith('A minor · 8A · 120 BPM');
+  expect(await screen.findByText('Copied')).toBeInTheDocument();
+});

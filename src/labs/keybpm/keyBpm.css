@@ -668,62 +668,147 @@
   }
 }
 
-/* Hero: analog tempo dial + circle of fifths. Minimal, one slow sweep. */
+/* Analog tempo dial: idle hero before a result, live in the readout. */
 .kb-hero {
   display: flex;
   justify-content: center;
   margin: 0 0 12px;
-  color: var(--text-primary, currentColor);
 }
-.kb-hero svg {
-  width: min(150px, 40vw);
+.kb-hero .kb-dial {
+  width: min(180px, 46vw);
+}
+.kb-dial {
+  display: block;
   height: auto;
+  color: var(--text-primary, currentColor);
+  --kb-dial-accent: var(--alab-accent, #c9822b);
 }
-.kb-hero-plate {
+.kb-dial-plate {
   fill: none;
   stroke: currentColor;
   stroke-opacity: 0.18;
-  stroke-width: 1;
 }
-.kb-hero-key {
+.kb-dial-key {
   fill: currentColor;
-  fill-opacity: 0.45;
+  fill-opacity: 0.4;
   font:
-    600 12px ui-monospace,
+    600 15px ui-monospace,
     monospace;
 }
-.kb-hero-tick {
+.kb-dial-key.is-key {
+  fill: var(--kb-dial-accent);
+  fill-opacity: 1;
+}
+.kb-dial-mark {
+  fill: currentColor;
+  fill-opacity: 0.5;
+  font:
+    13px ui-monospace,
+    monospace;
+}
+.kb-dial-tick {
   stroke: currentColor;
   stroke-opacity: 0.35;
   stroke-width: 1.5;
 }
-.kb-hero-tick-long {
-  stroke-opacity: 0.7;
+.kb-dial-tick.is-long {
+  stroke-opacity: 0.75;
   stroke-width: 2.5;
 }
-.kb-hero-needle {
+.kb-dial-needle {
   transform-origin: 200px 200px;
-  transform: rotate(0deg);
-  animation: kb-hero-sweep 6s ease-in-out infinite alternate;
+  transition: transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
-.kb-hero-needle line {
-  stroke: #c9822b;
-  stroke-width: 3;
+.kb-dial.is-idle .kb-dial-needle {
+  animation: kb-dial-idle 6s ease-in-out infinite alternate;
+}
+.kb-dial-needle line {
+  stroke: var(--kb-dial-accent);
+  stroke-width: 3.5;
   stroke-linecap: round;
 }
-.kb-hero-needle circle {
-  fill: #c9822b;
+.kb-dial-hub {
+  fill: var(--kb-dial-accent);
+  transform-origin: 200px 200px;
 }
-@keyframes kb-hero-sweep {
+.kb-dial-hub.is-beating {
+  animation: kb-dial-beat 0.5s ease-out infinite;
+}
+@keyframes kb-dial-idle {
   from {
-    transform: rotate(-4deg);
+    transform: rotate(-18deg);
   }
   to {
-    transform: rotate(4deg);
+    transform: rotate(-8deg);
+  }
+}
+@keyframes kb-dial-beat {
+  0% {
+    transform: scale(2.2);
+    opacity: 1;
+  }
+  35%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .kb-hero-needle {
+  .kb-dial-needle,
+  .kb-dial.is-idle .kb-dial-needle,
+  .kb-dial-hub.is-beating {
     animation: none;
+    transition: none;
   }
+}
+
+/* Tempo panel: number left, dial right. */
+.kb-tempo-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kb-tempo-top .kb-dial {
+  width: clamp(96px, 30%, 150px);
+  flex: none;
+}
+.kb-click {
+  margin-top: 12px;
+}
+/* Key panel: what the key contains and what it mixes with. */
+.kb-inkey {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--kb-line-2);
+  display: grid;
+  gap: 10px;
+}
+.kb-inkey ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kb-chord {
+  display: grid;
+  justify-items: center;
+  min-width: 44px;
+  padding: 5px 8px;
+  border: 1px solid var(--kb-line-2);
+  border-radius: 10px;
+  font-weight: 600;
+}
+.kb-chord small {
+  font:
+    10px ui-monospace,
+    monospace;
+  opacity: 0.6;
+}
+.kb-readout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

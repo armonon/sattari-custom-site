@@ -96,6 +96,10 @@ export const toolDetails = {
         'Half time, double time, tap tempo or a typed BPM (20–400, two decimals), and any of the 24 keys or the detected alternative. Reset to detected at any time. Corrections are labels: the audio is never stretched or transposed.',
       ],
       [
+        'Check by ear',
+        'Play the track with a drone or scale in the shown key, or a metronome click at the shown tempo (free-running, not aligned to the first beat). The readout also lists the notes and chords of the key and the Camelot neighbours that mix with it.',
+      ],
+      [
         'Engine',
         'Sattari AutoKey (a browser port of the Sattari plugin suite key estimator) and the site tempo tracker, running in a background worker. No separation model is downloaded for key-only work.',
       ],
