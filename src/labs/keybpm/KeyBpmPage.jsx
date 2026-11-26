@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import KeyBpmHero from './KeyBpmHero';
 import {
   AudioLines,
   Download,
@@ -662,6 +663,7 @@ export default function KeyBpmPage() {
       related={{ path: '/stem-separator', label: 'Stem Separator' }}
     >
       <div className="alab-workspace">
+        <KeyBpmHero />
         {received && <HandoffNotice handoff={received} destination="Key & BPM" />}
         <LabDrop
           title="Add tracks"

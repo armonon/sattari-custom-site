@@ -667,3 +667,61 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Hero: analog tempo dial + circle of fifths. Minimal, one slow sweep. */
+.kb-hero {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 12px;
+  color: var(--text-primary, currentColor);
+}
+.kb-hero svg {
+  width: min(150px, 40vw);
+  height: auto;
+}
+.kb-hero-plate {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-width: 1;
+}
+.kb-hero-key {
+  fill: currentColor;
+  fill-opacity: 0.45;
+  font: 600 12px ui-monospace, monospace;
+}
+.kb-hero-tick {
+  stroke: currentColor;
+  stroke-opacity: 0.35;
+  stroke-width: 1.5;
+}
+.kb-hero-tick-long {
+  stroke-opacity: 0.7;
+  stroke-width: 2.5;
+}
+.kb-hero-needle {
+  transform-origin: 200px 200px;
+  transform: rotate(0deg);
+  animation: kb-hero-sweep 6s ease-in-out infinite alternate;
+}
+.kb-hero-needle line {
+  stroke: #c9822b;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.kb-hero-needle circle {
+  fill: #c9822b;
+}
+@keyframes kb-hero-sweep {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-hero-needle {
+    animation: none;
+  }
+}
