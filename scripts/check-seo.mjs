@@ -188,7 +188,9 @@ for (const url of urls) {
       await access(`dist${decodeURI(new URL(audio.src).pathname)}`);
     for (const link of doc.querySelectorAll('.resource-page a[href]')) {
       const target = new URL(link.href);
-      if (target.origin === origin && !target.pathname.startsWith('/audio/')) {
+      if (target.origin === origin && target.pathname.startsWith('/handouts/')) {
+        await access(`dist${decodeURI(target.pathname)}`);
+      } else if (target.origin === origin && !target.pathname.startsWith('/audio/')) {
         assert.ok(
           urls.includes(origin + target.pathname),
           `${path}: unknown resource link ${target.pathname}`

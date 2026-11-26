@@ -160,28 +160,46 @@ describe('Stem Separator search content', () => {
   });
 });
 
-it('renders the violin checklist before navigation and compares the current catalog offers', () => {
-  const { doc } = renderPage('/guides/choose-a-violin-for-beginners', {
-    catalog: { overrides: { 'brescia-acoustic-violin': { price: 215 } } },
-    stock: { 'brescia-acoustic-violin::::': 0, 'chiara-wooden-electric-violin::::': 1 },
-  });
+it('keeps the violin trial, comparison anchor and handout available without an inventory dependency', () => {
+  const { doc } = renderPage('/guides/choose-a-violin-for-beginners');
   const list = doc.querySelector('.resource-checklist ol');
   expect(list.children).toHaveLength(5);
   expect(list.compareDocumentPosition(doc.querySelector('.resource-contents'))).toBe(
     Node.DOCUMENT_POSITION_FOLLOWING
   );
-  const models = [...doc.querySelectorAll('#compare-violins article')];
-  expect(models).toHaveLength(2);
-  expect(models[0].textContent).toContain('$215.00 · Sold out online');
-  expect(models[1].textContent).toContain('In stock online');
-  expect(models[0].textContent).toContain('triangular foam case');
-  expect(models[1].textContent).toContain('9V battery');
+  expect(doc.querySelector('#compare-violins h2')).not.toBeNull();
+  expect(doc.querySelector('a[download]').getAttribute('href')).toBe(
+    '/handouts/instrument-trial-sheet.pdf'
+  );
+  expect(doc.querySelector('a[href^="/product/"], a[href^="/shop"]')).toBeNull();
 });
 
-it('removes hidden models and their links from the beginner violin guide', () => {
-  const { doc } = renderPage('/guides/choose-a-violin-for-beginners', {
-    catalog: { hidden: ['chiara-wooden-electric-violin'] },
-  });
-  expect(doc.querySelectorAll('#compare-violins article')).toHaveLength(1);
-  expect(doc.querySelector('a[href="/product/chiara-wooden-electric-violin"]')).toBeNull();
+it('gives every educational guide an index link, cited sources and educational next steps', () => {
+  const { doc: index } = renderPage('/guides');
+  const educational = musicGuides.filter((guide) => !guide.action);
+  for (const guide of educational) {
+    const path = `/guides/${guide.slug}`;
+    const { doc, schema } = renderPage(path);
+    const article = schema.find((item) => item['@type'] === 'Article');
+    expect(index.querySelector(`a[href="${path}"]`)).not.toBeNull();
+    expect(guide.sources.length).toBeGreaterThanOrEqual(2);
+    expect(article.citation).toEqual(guide.sources.map((source) => source.url));
+    expect(
+      doc.querySelector('.resource-action, a[href^="/shop"], a[href^="/product/"]')
+    ).toBeNull();
+    for (const section of guide.sections) {
+      if (section.sourceUrl) {
+        expect(guide.sources.some((source) => source.url === section.sourceUrl)).toBe(true);
+      }
+      if (section.table) {
+        const table = [...doc.querySelectorAll('table')].find(
+          (el) => el.getAttribute('aria-label') === section.title
+        );
+        expect(table.querySelectorAll('th[scope="col"]')).toHaveLength(
+          section.table.headers.length
+        );
+        expect(table.querySelectorAll('th[scope="row"]')).toHaveLength(section.table.rows.length);
+      }
+    }
+  }
 });

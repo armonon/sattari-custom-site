@@ -84,6 +84,35 @@ const repairPages = {
   '/services/violin-restringing-woodland-hills': 'restring-violin',
   '/services/string-replacement-woodland-hills': 'replace-string',
 };
+const guidePages = {
+  '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
+  '/guides/practice-bass-with-isolated-stems': 'guide-bass',
+  '/guides/learn-guitar-from-a-song': 'guide-guitar',
+  '/guides/instrument-repairs-near-encino': 'guide-repair',
+  '/guides/choose-your-first-cymbals': 'guide-cymbals',
+  '/guides/remove-vocals-for-karaoke': 'guide-karaoke',
+  '/guides/make-drumless-practice-tracks': 'guide-drumless',
+  '/guides/find-song-key-and-bpm': 'guide-key-bpm',
+  '/guides/batch-separate-audio-stems': 'guide-batch',
+  '/guides/when-does-my-guitar-need-a-setup': 'guide-guitar-setup',
+  '/guides/how-to-tune-a-snare-drum': 'guide-snare-tuning',
+  '/guides/beginner-violin-care': 'guide-violin-care',
+  '/guides/choose-a-violin-for-beginners': 'guide-violin-choice',
+  '/guides/drumsticks-for-beginners': 'guide-drumsticks',
+  '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
+  '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
+  '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
+  '/guides/how-to-choose-a-viola': 'guide-viola-choice',
+  '/guides/violin-vs-viola': 'guide-violin-viola',
+  '/guides/acoustic-vs-electric-violin': 'guide-violin-types',
+  '/guides/how-to-choose-an-electric-guitar': 'guide-electric-choice',
+  '/guides/how-to-choose-a-bass-guitar': 'guide-bass-choice',
+  '/guides/nylon-vs-steel-string-guitar': 'guide-guitar-strings',
+  '/guides/history-of-the-persian-tar': 'guide-tar-history',
+  '/guides/history-of-the-guitar': 'guide-guitar-history',
+  '/guides/tar-setar-and-sitar': 'guide-tar-setar-sitar',
+  '/guides/instruments-of-iran': 'guide-iran-instruments',
+};
 export const PRODUCT_ORIGIN_PAGES = [...Object.values(salesPages), 'guide-violin-choice'];
 export const METRIC_PAGES = [
   'home',
@@ -102,23 +131,7 @@ export const METRIC_PAGES = [
   'studio',
   'learn',
   'guides',
-  'guide-separation',
-  'guide-bass',
-  'guide-guitar',
-  'guide-repair',
-  'guide-cymbals',
-  'guide-karaoke',
-  'guide-drumless',
-  'guide-key-bpm',
-  'guide-batch',
-  'guide-guitar-setup',
-  'guide-snare-tuning',
-  'guide-violin-care',
-  'guide-violin-choice',
-  'guide-drumsticks',
-  'guide-practice-pad',
-  'guide-acoustic-guitar',
-  'guide-guitar-care',
+  ...Object.values(guidePages),
   'tool-details',
   'privacy',
   'downloads',
@@ -129,7 +142,8 @@ export const METRIC_PAGES = [
 
 export function metricPage(path) {
   path = path.replace(/\/+$/, '').toLowerCase() || '/';
-  const specificPage = tunerPages[path] || salesPages[path] || repairPages[path];
+  const specificPage =
+    tunerPages[path] || salesPages[path] || repairPages[path] || guidePages[path];
   if (specificPage) return specificPage;
   if (path === '/') return 'home';
   if (path === '/cart') return 'cart';
@@ -145,25 +159,7 @@ export function metricPage(path) {
   // Flagship tools and their established lab URLs.
   if (path === '/studio/split') return 'split';
   if (path === '/studio/keybpm') return 'key-bpm';
-  const guides = {
-    '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
-    '/guides/practice-bass-with-isolated-stems': 'guide-bass',
-    '/guides/learn-guitar-from-a-song': 'guide-guitar',
-    '/guides/instrument-repairs-near-encino': 'guide-repair',
-    '/guides/choose-your-first-cymbals': 'guide-cymbals',
-    '/guides/remove-vocals-for-karaoke': 'guide-karaoke',
-    '/guides/make-drumless-practice-tracks': 'guide-drumless',
-    '/guides/find-song-key-and-bpm': 'guide-key-bpm',
-    '/guides/batch-separate-audio-stems': 'guide-batch',
-    '/guides/when-does-my-guitar-need-a-setup': 'guide-guitar-setup',
-    '/guides/how-to-tune-a-snare-drum': 'guide-snare-tuning',
-    '/guides/beginner-violin-care': 'guide-violin-care',
-    '/guides/choose-a-violin-for-beginners': 'guide-violin-choice',
-    '/guides/drumsticks-for-beginners': 'guide-drumsticks',
-    '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
-    '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
-    '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
-  };
+
   const publicPaths = [
     '/about',
     '/hub',
@@ -175,7 +171,7 @@ export function metricPage(path) {
     '/privacy',
     '/downloads',
   ];
-  return guides[path] || (publicPaths.includes(path) ? path.slice(1) : null);
+  return publicPaths.includes(path) ? path.slice(1) : null;
 }
 
 // Only bounded event IDs travel to the collector, never hrefs or query parameters.

@@ -105,7 +105,17 @@
     "/tuner/viola",
     "/tuner/cello",
     "/tuner/bass",
-    "/tuner/ukulele"
+    "/tuner/ukulele",
+    "/guides/acoustic-vs-electric-violin",
+    "/guides/how-to-choose-a-viola",
+    "/guides/violin-vs-viola",
+    "/guides/how-to-choose-an-electric-guitar",
+    "/guides/how-to-choose-a-bass-guitar",
+    "/guides/nylon-vs-steel-string-guitar",
+    "/guides/history-of-the-persian-tar",
+    "/guides/history-of-the-guitar",
+    "/guides/instruments-of-iran",
+    "/guides/tar-setar-and-sitar"
   ],
   "excluded_paths": [
     "/cart",

@@ -1,6 +1,10 @@
-import { separatorGuides } from './stemSeparatorContent';
+import { bowedInstrumentGuides } from './bowedInstrumentGuides.js';
+import { guitarInstrumentGuides } from './guitarInstrumentGuides.js';
+import { instrumentHistoryGuides } from './instrumentHistoryGuides.js';
+import { practicePadGuide } from './practicePadGuide.js';
+import { separatorGuides } from './stemSeparatorContent.js';
 
-export const musicGuides = [
+const practiceGuides = [
   {
     slug: 'how-to-separate-vocals-drums-bass',
     title: 'How to separate vocals, drums & bass from a song',
@@ -450,68 +454,6 @@ export const musicGuides = [
     ],
   },
   {
-    slug: 'choose-a-violin-for-beginners',
-    title: 'How to Choose a Violin: Size, Setup & a Beginner’s Checklist',
-    category: 'Strings',
-    description:
-      'Choose a first violin with a fitting and setup checklist. Compare two full-size acoustic and electric models, their prices, and the accessories each includes.',
-    answer:
-      'Start with the size your teacher recommends and the kind of violin your lessons require. Then try a few notes and compare the cost of everything you need to play your first lesson.',
-    image: '/sattari site/violins/brescia-acoustic.jpg',
-    imageAlt: 'Sattari Brescia acoustic violin',
-    action: {
-      label: 'Compare Sattari violins',
-      path: '/shop/violins',
-    },
-    sections: [
-      {
-        title: 'Confirm size with the player present',
-        paragraphs: [
-          'A full-size violin is labeled 4/4, but that label is not a recommendation for every beginner. Children and some smaller players need a different fit. Ask a teacher to assess reach, posture and comfort rather than choosing only by age or a photograph.',
-          'If buying for someone else, obtain the teacher’s recommended size first. Ask which sizes are actually available; a shop’s full-size catalog does not establish stock of smaller student instruments. Rental availability is also a separate inquiry.',
-        ],
-      },
-      {
-        title: 'Choose the sound and practice setup you need',
-        paragraphs: [
-          'An acoustic violin produces its sound through the body without amplification. If a teacher or ensemble expects an acoustic instrument, start that conversation before comparing other designs.',
-          'Electric and quiet-practice models vary. Check the specific model’s output, power requirements and whether headphone listening needs a separate control box, interface or amplifier. A pickup socket is not necessarily a headphone output, and quiet practice is not completely silent.',
-          'Compare the complete setup you will use at home, including any cable or amplification. Ask to hear the actual model where a demonstration is available, and identify any processing in a recorded demo.',
-        ],
-      },
-      {
-        title: 'Your first-violin buying checklist',
-        lead: true,
-        steps: [
-          'Check the fit in playing position. Ask your teacher to watch your reach and posture and write down the size.',
-          'Ask which type your lessons or ensemble require. Try an acoustic violin in the room or an electric violin through the equipment you plan to use.',
-          'Play open strings and a few fingered notes. Ask the shop to show how the pegs hold pitch, how the bridge fits and whether the string height feels comfortable.',
-          'Inspect the body and seams with the shop. Ask about cracks, previous repairs or any buzzing you hear.',
-          'Price the complete kit. Confirm the bow, case, rosin, shoulder rest and any electronics you need, plus collection or delivery and return terms.',
-        ],
-      },
-      {
-        title: 'Compare value without relying on a label',
-        paragraphs: [
-          'Words such as beginner, professional or handmade do not tell you whether an instrument fits this player. Compare the actual instrument, the quality of its setup, included equipment and the support available. Confirm construction or origin claims with the seller instead of inferring them from a model name.',
-          'Browse Sattari’s violin pages for the current model details, then contact the Woodland Hills shop with your teacher’s size recommendation and intended use. Visits are by appointment. String fit and repair work are separate questions from the purchase of an instrument.',
-        ],
-      },
-    ],
-    sources: [
-      {
-        label: 'Yamaha: choosing a violin with knowledgeable help',
-        url: 'https://www.yamaha.com/en/musical_instrument_guide/violin/selection/',
-      },
-    ],
-    related: [
-      '/shop/violins',
-      '/guides/beginner-violin-care',
-      '/services/music-lessons-los-angeles',
-      '/services/violin-repair-los-angeles',
-    ],
-  },
-  {
     slug: 'drumsticks-for-beginners',
     title: 'What drumsticks should a beginner use?',
     category: 'Drums',
@@ -568,130 +510,6 @@ export const musicGuides = [
       '/product/classic-maple-5a-nylon-tip',
       '/shop/sticks',
       '/product/sattari-practice-pad-8',
-    ],
-  },
-  {
-    slug: 'choose-a-practice-drum-pad',
-    title: 'How to choose a practice drum pad',
-    category: 'Drums',
-    description:
-      'What to look for in your first practice pad — 8-inch vs 12-inch, rubber surface, rebound feel, and what else you need to start.',
-    answer:
-      'An 8-inch rubber practice pad is the standard starting point: quiet enough to use at home, light enough to carry, and sufficient for developing a consistent stroke. Move up to a 12-inch pad when you want more playing surface, a closer snare feel, or plan to share it with a teacher.',
-    image: '/sattari site/drums/practice-pad-8.jpg',
-    imageAlt: 'Sattari 8-inch drummer practice pad',
-    action: { label: 'Shop practice pads', path: '/shop/essentials' },
-    sections: [
-      {
-        title: '8-inch vs 12-inch: which size to start with',
-        paragraphs: [
-          'An 8-inch pad fits in a bag, costs less, and takes up almost no space on a desk or table — it is the practical choice for a student who needs to practice away from a kit. The playing surface is smaller, so technique and stick placement have to be precise. That constraint is a feature: it builds accuracy.',
-          'A 12-inch pad gives you more room to move around the surface and feels noticeably closer to a real snare drum head in diameter. It is a better choice if you are practicing rudiments that cross the center of the drum, if a teacher will share the pad with you in a lesson, or if you want the experience to map more directly to sitting behind a kit.',
-          'Most beginners do not need both. Start with the 8-inch, practice consistently for a few months, and only move to the 12-inch once the size starts limiting your work.',
-        ],
-      },
-      {
-        title: 'Surface feel and rebound',
-        paragraphs: [
-          'Rubber practice pads give consistent rebound and are quieter than foam. The rebound is slightly bouncier than a real drum head, which means strokes that feel good on the pad will need some adjustment when you move to an acoustic kit. That is normal — the pad is for developing control, not reproducing an exact drum feel.',
-          'Gum rubber surfaces are the most common and durable option. Some pads include a second surface with a different feel or a quieter response. For most beginners, a standard rubber surface is all you need.',
-          "Avoid pads that feel unusually hard or that do not give any rebound. Dead surfaces slow down development by forcing you to muscle strokes rather than using the stick's natural bounce.",
-        ],
-      },
-      {
-        title: 'Portability and where you will practice',
-        paragraphs: [
-          'If you practice at a desk or table, a non-slip base keeps the pad in place without a stand. Most 8-inch pads include one. Check that the base is wide enough that the pad does not tip when you strike near the edge.',
-          'If you plan to practice standing up or at drum-kit height, you need a snare stand to mount the pad — or a pad that includes legs. Practicing at the right height builds posture habits that transfer directly to the kit. Practicing hunched over a table does not.',
-          'For travel, an 8-inch pad fits in most drum bags or a backpack without special cases. A 12-inch pad usually needs its own bag or a larger stick bag with a pad pocket.',
-        ],
-      },
-      {
-        title: 'What else you need to start',
-        paragraphs: [
-          'You need sticks. For most beginners, 5A hickory is the right starting pair — a balanced weight for practice across most styles. Pick up two pairs so you have a spare.',
-          'A metronome or a drum machine track is as important as the pad itself. Consistent tempo is the skill that separates a drummer who sounds good from one who does not. A free app works; the goal is to have something that keeps time while you practice.',
-          'A snare stand is optional at first unless you want to practice standing up. If you eventually plan to practice rolls and rudiments for more than 20 minutes at a stretch, standing at proper height makes a real difference in how long you can go without discomfort.',
-        ],
-      },
-    ],
-    related: [
-      '/product/sattari-practice-pad-8',
-      '/product/sattari-practice-pad-12',
-      '/guides/drumsticks-for-beginners',
-      '/shop/essentials',
-      '/woodland-hills-drum-shop',
-    ],
-  },
-  {
-    slug: 'choose-a-beginner-acoustic-guitar',
-    title: 'How to choose a beginner acoustic guitar',
-    category: 'Guitar',
-    description:
-      'Choose a first acoustic guitar by sound, body fit and comfortable playability. Compare steel and nylon strings and check the full purchase before deciding.',
-    answer:
-      'Choose a guitar you can hold comfortably and want to practice, suited to the music you want to learn. Compare steel-string and nylon-string instruments in person where possible, and ask about setup, included accessories and the total cost before buying.',
-    image: '/sattari site/guitars/steel-acoustic.jpg',
-    imageAlt: 'Sattari steel-string acoustic guitar',
-    action: {
-      label: 'Compare guitars and basses',
-      path: '/shop/guitar-bass',
-    },
-    sections: [
-      {
-        title: 'Start with the music and the feel',
-        paragraphs: [
-          'Steel-string acoustics generally offer a bright attack; nylon-string instruments have a different response and are common in classical and related styles. Both can be played with a range of techniques. Bring examples of music you want to learn and ask your teacher which design fits the lessons.',
-          'Many classical guitars have wider string spacing than steel-string models, but dimensions vary. Compare the actual neck width, scale length and feel. Softer-feeling strings alone do not decide whether a guitar is comfortable for your hands.',
-          'String types are not interchangeable by default. Use a set approved for the instrument. In particular, do not fit steel strings to a guitar designed for nylon strings unless its manufacturer explicitly permits it.',
-        ],
-      },
-      {
-        title: 'Try the instrument in your normal playing position',
-        paragraphs: [
-          'Body depth, width and neck reach all affect comfort. Dreadnought, concert and other body names describe different designs, not a single universal full-size fit. A smaller body can be a good choice for an adult as well as a younger player.',
-          'Sit in the position you expect to practice in. Can you reach the first few frets without lifting your shoulder or stretching awkwardly? Try a few notes and a simple chord. Stop if playing causes pain, and ask a teacher to help with posture and fit.',
-          'Action is the height of the strings above the frets. If fretting feels difficult, have the setup checked rather than assuming you must simply press harder. The appropriate height depends on the instrument and how you play.',
-        ],
-      },
-      {
-        title: 'Compare the complete purchase',
-        steps: [
-          'Check the model’s stated materials and construction. Do not assume a top is solid wood or that an included pickup has a particular feature.',
-          'Ask what setup or inspection is included, which strings are fitted and whether the instrument is ready for your intended tuning.',
-          'Check case or bag inclusion, then budget for the accessories you actually need, such as a tuner and picks. Avoid buying duplicates of included items.',
-          'Confirm availability, total price, shipping or appointment collection, and the seller’s actual return and warranty terms.',
-        ],
-      },
-      {
-        title: 'An electric guitar can also be a first guitar',
-        paragraphs: [
-          'You do not have to learn on acoustic before playing electric. If electric guitar is the sound that interests you, compare that option too. Include a suitable listening setup in the budget and verify headphone support if quiet practice matters.',
-          'Sattari lists steel-string acoustic, classical nylon-string and electric guitars. Use the product pages to compare the listed models, then contact the Woodland Hills shop about fit and availability. Visits are by appointment; a setup or string change is a separate service inquiry unless explicitly included.',
-        ],
-      },
-    ],
-    sources: [
-      {
-        label: 'Yamaha: nylon-string and steel-string guitar differences',
-        url: 'https://hub.yamaha.com/guitars/g-acoustic/nylon-string-vs-steel-string-guitars/',
-      },
-      {
-        label: 'Yamaha: acoustic guitar buying guide',
-        url: 'https://www.yamaha.com/US/houseofworship/downloadables/How-to-Choose-Guides/how-to-choose-an-acoustic-guitar-updated.pdf',
-      },
-      {
-        label: 'Córdoba: string compatibility questions',
-        url: 'https://cordobaguitars.com/support/faq/',
-      },
-    ],
-    related: [
-      '/product/steel-string-acoustic-guitar',
-      '/product/classic-nylon-string-guitar',
-      '/product/flame-stratocaster-electric-guitar',
-      '/guides/when-does-my-guitar-need-a-setup',
-      '/services/guitar-setup-los-angeles',
-      '/guitar-strings-woodland-hills',
     ],
   },
   {
@@ -768,3 +586,21 @@ export const musicGuides = [
     ],
   },
 ];
+
+// Each collection is also a destination in the crawlable guide index.
+export const guideCollections = [
+  { id: 'bowed-strings', title: 'Violin and viola', guides: bowedInstrumentGuides },
+  { id: 'guitar-and-bass', title: 'Guitar and bass', guides: guitarInstrumentGuides },
+  {
+    id: 'instrument-history',
+    title: 'Instrument history and listening',
+    guides: instrumentHistoryGuides,
+  },
+  {
+    id: 'practice-and-care',
+    title: 'Practice, technique and care',
+    guides: [practicePadGuide, ...practiceGuides],
+  },
+];
+
+export const musicGuides = guideCollections.flatMap((collection) => collection.guides);

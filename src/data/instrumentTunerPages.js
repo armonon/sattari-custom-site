@@ -21,6 +21,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Hear how nylon and steel guitar strings differ', '/guides/nylon-vs-steel-string-guitar'],
       [
         'Guitar string replacement in Woodland Hills',
         '/services/guitar-restringing-woodland-hills',
@@ -51,6 +52,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['How to choose a violin for a first lesson', '/guides/choose-a-violin-for-beginners'],
       ['Violin restringing in Woodland Hills', '/services/violin-restringing-woodland-hills'],
       ['Beginner violin care', '/guides/beginner-violin-care'],
       ['Find replacement violin strings', '/violin-strings-woodland-hills'],
@@ -78,6 +80,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Hear the difference between violin and viola', '/guides/violin-vs-viola'],
       ['Compare violin tuning', '/tuner/violin'],
       ['Compare cello tuning', '/tuner/cello'],
     ],
@@ -130,6 +133,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Compare four- and five-string bass guitars', '/guides/how-to-choose-a-bass-guitar'],
       ['Practice bass with isolated stems', '/guides/practice-bass-with-isolated-stems'],
       ['Compare six-string guitar tuning', '/tuner/guitar'],
       ['Guitar and bass setup in Woodland Hills', '/services/guitar-setup-los-angeles'],

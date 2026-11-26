@@ -8,12 +8,11 @@ import {
   organizationSchema,
   websiteSchema,
 } from '../data/siteSeo';
-import { musicGuides } from '../data/musicGuides';
+import { guideCollections, musicGuides } from '../data/musicGuides';
 import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
-import ViolinBuyingComparison from '../components/ViolinBuyingComparison';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
 import './MusicResources.css';
 
@@ -130,28 +129,46 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Practical music guides from Sattari Music: choose a violin or drumsticks, tune a snare drum, care for your instrument, separate stems, make karaoke tracks, and more."
+      description="Learn how to choose a violin, viola, guitar or bass, compare instruments by ear, explore Iranian music and guitar history, and build your practice skills."
     >
-      <p className="resource-lead">Good questions. More music.</p>
-      <div className="guide-list">
-        {musicGuides.map((guide) => (
-          <article key={guide.slug}>
-            <Link className="guide-image" to={guidePath(guide)} tabIndex={-1} aria-hidden="true">
-              <img src={guide.image} alt="" loading="lazy" width="1280" height="800" />
-            </Link>
-            <div>
-              <p className="resource-label">{guide.category}</p>
-              <h2>
-                <Link to={guidePath(guide)}>{guide.title}</Link>
-              </h2>
-              <p>{guide.answer}</p>
-              <Link className="resource-link" to={guidePath(guide)}>
-                Read guide <ArrowRight size={16} />
-              </Link>
-            </div>
-          </article>
+      <p className="resource-lead">
+        Choose your first instrument, hear how instruments differ, or explore the music and people
+        behind them.
+      </p>
+      <nav aria-label="Guide topics" className="guide-topics">
+        {guideCollections.map((collection) => (
+          <a key={collection.id} href={`#${collection.id}`}>
+            {collection.title}
+          </a>
         ))}
-      </div>
+      </nav>
+      {guideCollections.map((collection) => (
+        <section className="guide-collection" key={collection.id} aria-labelledby={collection.id}>
+          <h2 id={collection.id}>{collection.title}</h2>
+          <div className="guide-list">
+            {collection.guides.map((guide) => (
+              <article key={guide.slug}>
+                {guide.image && (
+                  <Link
+                    className="guide-image"
+                    to={guidePath(guide)}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  >
+                    <img src={guide.image} alt="" loading="lazy" width="96" height="100" />
+                  </Link>
+                )}
+                <div>
+                  <h3>
+                    <Link to={guidePath(guide)}>{guide.title}</Link>
+                  </h3>
+                  <p>{guide.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
       <section className="resource-section">
         <h2>Know your tools</h2>
         <div className="resource-tool-links">
@@ -167,19 +184,50 @@ export function GuideIndex() {
   );
 }
 
-function GuideSection({ section }) {
+function GuideSection({ section, sources }) {
+  const source = sources?.find((item) => item.url === section.sourceUrl);
   return (
     <section className="resource-section" id={section.id}>
       <h2>{section.title}</h2>
       {section.paragraphs?.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
+      {section.table && (
+        <div className="guide-table-wrap">
+          <table aria-label={section.title}>
+            <thead>
+              <tr>
+                {section.table.headers.map((header) => (
+                  <th key={header} scope="col">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {section.table.rows.map(([label, ...cells]) => (
+                <tr key={label}>
+                  <th scope="row">{label}</th>
+                  {cells.map((cell, i) => (
+                    <td key={section.table.headers[i + 1]}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {section.steps && (
         <ol>
           {section.steps.map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ol>
+      )}
+      {source && (
+        <p>
+          <a href={source.url}>{source.label}</a>
+        </p>
       )}
       {section.link && <Link to={section.link.path}>{section.link.label}</Link>}
     </section>
@@ -190,10 +238,12 @@ export function GuideArticle() {
   const { slug } = useParams();
   const guide = musicGuides.find((item) => item.slug === slug);
   if (!guide) return <NotFoundPage />;
-  const sections = guide.sections.map((section, index) => ({ ...section, id: sectionId(index) }));
+  const sections = guide.sections.map((section, index) => ({
+    ...section,
+    id: section.id || sectionId(index),
+  }));
   const leadSection = sections.find((section) => section.lead);
   const bodySections = sections.filter((section) => !section.lead);
-  const violinBuying = slug === 'choose-a-violin-for-beginners';
   return (
     <Page
       title={guide.title}
@@ -212,7 +262,8 @@ export function GuideArticle() {
           description: guide.description,
           inLanguage: 'en-US',
           articleSection: guide.category,
-          image: absoluteUrl(guide.image),
+          ...(guide.image && { image: absoluteUrl(guide.image) }),
+          ...(guide.sources?.length && { citation: guide.sources.map((source) => source.url) }),
           mainEntityOfPage: absoluteUrl(guidePath(guide)),
           isPartOf: { '@id': websiteSchema['@id'] },
           author: {
@@ -229,10 +280,10 @@ export function GuideArticle() {
       <p className="resource-lead">{guide.answer}</p>
       {leadSection && (
         <div className="resource-article resource-checklist">
-          <GuideSection section={leadSection} />
+          <GuideSection section={leadSection} sources={guide.sources} />
         </div>
       )}
-      {!violinBuying && (
+      {guide.action && (
         <Link className="resource-action" to={guide.action.path}>
           {guide.action.label}
           <ArrowRight size={18} />
@@ -241,36 +292,48 @@ export function GuideArticle() {
       <nav className="resource-contents" aria-label="In this guide">
         <h2>In this guide</h2>
         <ol>
-          {violinBuying && (
-            <li>
-              <a href="#compare-violins">
-                Compare acoustic and electric violins for a first lesson
-              </a>
-            </li>
-          )}
-          {bodySections.map((section) => (
+          {sections.map((section) => (
             <li key={section.title}>
               <a href={`#${section.id}`}>{section.title}</a>
             </li>
           ))}
         </ol>
       </nav>
-      {violinBuying ? (
-        <ViolinBuyingComparison action={guide.action} />
-      ) : (
-        <figure className="resource-figure">
+      {guide.trialSheet && (
+        <a
+          className="resource-link guide-handout"
+          href="/handouts/instrument-trial-sheet.pdf"
+          download
+        >
+          <Download size={18} aria-hidden="true" /> Download the instrument trial sheet (one-page
+          PDF)
+        </a>
+      )}
+      {guide.image && (
+        <figure
+          className={
+            guide.imageCredit || !guide.action
+              ? 'resource-figure guide-instrument-photo'
+              : 'resource-figure'
+          }
+        >
           <img
             src={guide.image}
             alt={guide.imageAlt}
-            width="1280"
+            width={guide.imageWidth || 1280}
             height={guide.imageHeight || 800}
             loading="lazy"
           />
+          {guide.imageCredit && (
+            <figcaption>
+              {guide.imageAlt} <a href={guide.imageCredit.url}>{guide.imageCredit.label}</a>
+            </figcaption>
+          )}
         </figure>
       )}
       <div className="resource-article">
         {bodySections.map((section) => (
-          <GuideSection section={section} key={section.title} />
+          <GuideSection section={section} key={section.title} sources={guide.sources} />
         ))}
         {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
           slug
