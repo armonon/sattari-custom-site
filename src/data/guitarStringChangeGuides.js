@@ -3,7 +3,7 @@ const taylorSteel = {
   url: 'https://www.taylorguitars.com/support/strings/changing-steel-strings',
 };
 const taylorNylon = {
-  label: 'Follow Taylor’s photo lesson for a nylon-string tie bridge',
+  label: 'Taylor’s illustrated reference for a nylon-string tie bridge',
   url: 'https://www.taylorguitars.com/support/strings/changing-nylon-strings',
 };
 const sit = {
@@ -37,7 +37,7 @@ export const acousticStringChangeGuide = {
       title: '1. Match the strings to the guitar and bridge',
       paragraphs: [
         'On a pinned bridge, six round pin heads sit just behind the saddle, the narrow strip the strings pass over. Look up your model’s string specification or check your previous packet. Choose a ball-end steel-string acoustic set in the same gauge (thickness). If just one string broke, match that string’s gauge and note.',
-        'Compare the two bridges in the photos. If the strings loop around a wooden tie block on a classical guitar, use classical strings and the nylon lesson linked here. Steel strings put too much tension on that instrument. Some steel-string guitars also have pinless bridges. If yours has neither pins nor ties, check its model instructions before pulling on anything.',
+        'Compare the two bridges in the photos. If the strings loop around a wooden tie block on a classical guitar, use classical strings and follow the classical guitar guide below. Steel strings put too much tension on that instrument. Some steel-string guitars also have pinless bridges. If yours has neither pins nor ties, check its model instructions before pulling on anything.',
         'Set the guitar on a clean folded towel and support the neck clear of the tuners. Have a tuner, string cutters and a bridge-pin puller ready. Take a photo of the bridge and the winding at the headstock. Keep each string in its labeled envelope until you need it.',
       ],
       photos: [
@@ -69,6 +69,10 @@ export const acousticStringChangeGuide = {
           edit: 'Cropped and converted to WebP.',
         },
       ],
+      link: {
+        label: 'Change the strings on a classical guitar, step by step',
+        path: '/guides/how-to-change-classical-guitar-strings',
+      },
       sourceUrl: taylorNylon.url,
     },
     {

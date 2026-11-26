@@ -237,6 +237,9 @@ it.each([
   'how-to-change-electric-guitar-strings',
   'how-to-change-bass-guitar-strings',
   'how-to-change-a-viola-string',
+  'how-to-change-classical-guitar-strings',
+  'how-to-change-a-cello-string',
+  'how-to-change-ukulele-strings',
 ])('pairs each numbered step of %s with a credited, openable photograph', (slug) => {
   const { doc, schema } = renderPage('/guides/' + slug);
   const article = schema.find((item) => item['@type'] === 'Article');

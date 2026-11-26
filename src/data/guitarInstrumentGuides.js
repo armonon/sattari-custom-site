@@ -259,6 +259,7 @@ export const guitarInstrumentGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-classical-guitar-strings',
       '/guides/choose-a-beginner-acoustic-guitar',
       '/guides/how-to-care-for-a-guitar',
       '/guides/when-does-my-guitar-need-a-setup',

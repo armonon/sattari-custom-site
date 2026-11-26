@@ -191,5 +191,10 @@ export const violaStringChangeGuide = {
     },
   ],
   sources: [sizing, demonstration, stringManual, gearedPeg],
-  related: ['/guides/how-to-choose-a-viola', '/guides/violin-vs-viola', '/tuner/viola'],
+  related: [
+    '/guides/how-to-choose-a-viola',
+    '/guides/how-to-change-a-cello-string',
+    '/guides/violin-vs-viola',
+    '/tuner/viola',
+  ],
 };

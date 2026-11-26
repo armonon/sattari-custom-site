@@ -22,6 +22,10 @@ const instruments = [
     ],
     links: [
       [
+        'Change nylon strings on a classical guitar',
+        '/guides/how-to-change-classical-guitar-strings',
+      ],
+      [
         'How to restring a steel-string acoustic guitar',
         '/guides/how-to-change-acoustic-guitar-strings',
       ],
@@ -114,6 +118,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Change one cello string, step by step', '/guides/how-to-change-a-cello-string'],
       ['Compare viola tuning', '/tuner/viola'],
       ['Explore all instrument tunings', '/studio/keybpm#live-tuner'],
     ],
@@ -169,6 +174,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['How to restring a ukulele', '/guides/how-to-change-ukulele-strings'],
       ['Explore all tunings and scales', '/studio/keybpm#live-tuner'],
       ['Explore Sattari music tools', '/hub'],
     ],

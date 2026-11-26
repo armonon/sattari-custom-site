@@ -6,6 +6,9 @@ import {
   electricStringChangeGuide,
 } from './guitarStringChangeGuides.js';
 import { bassStringChangeGuide } from './bassStringChangeGuide.js';
+import { classicalStringChangeGuide } from './classicalStringChangeGuide.js';
+import { celloStringChangeGuide } from './celloStringChangeGuide.js';
+import { ukuleleStringChangeGuide } from './ukuleleStringChangeGuide.js';
 import { violaStringChangeGuide } from './violaStringChangeGuide.js';
 import { snareTuningGuide } from './snareTuningGuide.js';
 import { violinStringChangeGuide } from './violinStringChangeGuide.js';
@@ -554,10 +557,13 @@ export const guideCollections = [
     title: 'How to change instrument strings',
     guides: [
       acousticStringChangeGuide,
+      classicalStringChangeGuide,
       electricStringChangeGuide,
       bassStringChangeGuide,
       violinStringChangeGuide,
       violaStringChangeGuide,
+      celloStringChangeGuide,
+      ukuleleStringChangeGuide,
     ],
   },
   {

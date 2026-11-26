@@ -133,7 +133,7 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Choose an instrument, change guitar, bass, violin or viola strings with close-up photos, compare sounds by ear, and explore Iranian music and guitar history."
+      description="Choose an instrument, learn to restring guitars, bass, bowed strings and ukulele with close-up photos, compare sounds by ear, and explore music history."
     >
       <p className="resource-lead">
         Choose your first instrument, follow a photographed string change, or listen to the sounds

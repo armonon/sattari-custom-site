@@ -120,7 +120,10 @@
     "/guides/how-to-change-acoustic-guitar-strings",
     "/guides/how-to-change-electric-guitar-strings",
     "/guides/how-to-change-bass-guitar-strings",
-    "/guides/how-to-change-a-viola-string"
+    "/guides/how-to-change-a-viola-string",
+    "/guides/how-to-change-classical-guitar-strings",
+    "/guides/how-to-change-a-cello-string",
+    "/guides/how-to-change-ukulele-strings"
   ],
   "excluded_paths": [
     "/cart",
