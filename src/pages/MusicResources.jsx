@@ -28,7 +28,7 @@ function labelFor(path) {
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
 }
-function Page({
+export function Page({
   title,
   description,
   children,
@@ -328,6 +328,15 @@ export function ToolDetailsPage() {
               <p>{answer}</p>
             </details>
           ))}
+        </section>
+      )}
+      {key === 'key-bpm' && (
+        <section className="resource-section">
+          <h2>Key and tempo reference</h2>
+          <p>
+            <Link to="/keys">Notes, chords and Camelot codes for all 24 keys</Link>, and{' '}
+            <Link to="/bpm">a click and delay times for every tempo</Link>.
+          </p>
         </section>
       )}
       <Related paths={tool.guides.map((slug) => `/guides/${slug}`)} />

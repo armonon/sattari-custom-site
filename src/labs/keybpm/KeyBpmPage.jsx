@@ -1037,7 +1037,8 @@ export default function KeyBpmPage() {
           <Link to="/guides/find-song-key-and-bpm">
             how to read key estimates and half/double BPM
           </Link>
-          . <Link to="/tools/key-bpm">Formats, privacy &amp; limits</Link>.
+          . <Link to="/tools/key-bpm">Formats, privacy &amp; limits</Link>. Reference:{' '}
+          <Link to="/keys">all 24 keys</Link> and <Link to="/bpm">every tempo</Link>.
         </p>
         <ToolFeedback tool="Key & BPM" />
       </div>

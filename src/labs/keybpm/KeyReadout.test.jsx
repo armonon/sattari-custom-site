@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import KeyReadout from './KeyReadout';
 
@@ -60,16 +61,18 @@ afterEach(() => {
 const setup = (user = undefined, props = {}) => {
   const onCorrect = vi.fn();
   render(
-    <KeyReadout
-      row={row(user)}
-      audition={idle}
-      playable
-      onToggleAudition={() => {}}
-      onSeek={() => {}}
-      onCorrect={onCorrect}
-      onSeparate={() => {}}
-      {...props}
-    />
+    <MemoryRouter>
+      <KeyReadout
+        row={row(user)}
+        audition={idle}
+        playable
+        onToggleAudition={() => {}}
+        onSeek={() => {}}
+        onCorrect={onCorrect}
+        onSeparate={() => {}}
+        {...props}
+      />
+    </MemoryRouter>
   );
   return onCorrect;
 };

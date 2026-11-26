@@ -812,3 +812,11 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.kb-more {
+  font-size: 13px;
+  color: var(--alab-accent);
+}
+.kb-pill a {
+  color: inherit;
+}

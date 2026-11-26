@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Check, Copy, Layers, Pause, Play } from 'lucide-react';
+import { bpmPage, keyPageFor } from '../../data/musicReference';
 import { formatTime } from '../audio/AudioLabParts';
 import {
   camelot,
@@ -11,6 +13,7 @@ import {
   tempoInterpretation,
 } from './keyBpm';
 import { TempoDial } from './KeyBpmHero';
+import { useMetronome } from './metronome';
 import {
   CIRCLE,
   circlePosition,
@@ -176,46 +179,6 @@ function useReferenceTones() {
     [stopDrone]
   );
   return { droneKey, startDrone, stopDrone, playScale };
-}
-
-/**
- * A steady click at a tempo, for checking BPM against the song by ear. Clicks
- * are scheduled on the audio clock a little ahead, so timing does not depend
- * on timers. The click is free-running: it is not aligned to the song's beats.
- */
-export function useMetronome(bpm) {
-  const [on, setOn] = useState(false);
-  const context = useRef(null);
-  useEffect(() => {
-    if (!on || !Number.isFinite(bpm) || bpm <= 0) return undefined;
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return undefined;
-    context.current ||= new Context();
-    const audio = context.current;
-    void audio.resume?.();
-    const beat = 60 / bpm;
-    let next = audio.currentTime + 0.06;
-    const schedule = () => {
-      while (next < audio.currentTime + 0.2) {
-        const osc = audio.createOscillator();
-        const gain = audio.createGain();
-        osc.frequency.value = 1500;
-        gain.gain.setValueAtTime(0.0001, next);
-        gain.gain.exponentialRampToValueAtTime(0.3, next + 0.002);
-        gain.gain.exponentialRampToValueAtTime(0.0001, next + 0.05);
-        osc.connect(gain);
-        gain.connect(audio.destination);
-        osc.start(next);
-        osc.stop(next + 0.06);
-        next += beat;
-      }
-    };
-    schedule();
-    const timer = setInterval(schedule, 50);
-    return () => clearInterval(timer);
-  }, [on, bpm]);
-  useEffect(() => () => void context.current?.close?.().catch(() => {}), []);
-  return { on, toggle: () => setOn((value) => !value), stop: () => setOn(false) };
 }
 
 /**
@@ -407,11 +370,17 @@ export default function KeyReadout({
                 <ul aria-label="Compatible keys">
                   {mixes.map(({ key, relation }) => (
                     <li key={relation} className="kb-pill">
-                      {keyLabel(key)} · {camelot(key)} <small>({relation})</small>
+                      <Link to={keyPageFor(key).path}>
+                        {keyLabel(key)} · {camelot(key)}
+                      </Link>{' '}
+                      <small>({relation})</small>
                     </li>
                   ))}
                 </ul>
               </div>
+              <Link className="kb-more" to={keyPageFor(values.key).path}>
+                More about {keyLabel(values.key)}
+              </Link>
             </div>
           )}
         </div>
@@ -490,6 +459,11 @@ export default function KeyReadout({
                 Play the song and tap along with the click. If it lands on every other beat, try
                 half or double time. The click is not lined up with the song&apos;s first beat.
               </p>
+              {bpmPage(values.bpm) && (
+                <Link className="kb-more" to={bpmPage(values.bpm).path}>
+                  Delay times and more at {formatBpm(values.bpm)} BPM
+                </Link>
+              )}
             </div>
           )}
         </div>
