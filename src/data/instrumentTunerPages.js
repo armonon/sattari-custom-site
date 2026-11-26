@@ -21,6 +21,11 @@ const instruments = [
       ],
     ],
     links: [
+      [
+        'How to restring a steel-string acoustic guitar',
+        '/guides/how-to-change-acoustic-guitar-strings',
+      ],
+      ['How to restring an electric guitar', '/guides/how-to-change-electric-guitar-strings'],
       ['Hear how nylon and steel guitar strings differ', '/guides/nylon-vs-steel-string-guitar'],
       [
         'Guitar string replacement in Woodland Hills',
@@ -81,6 +86,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Change one viola string, step by step', '/guides/how-to-change-a-viola-string'],
       ['Hear the difference between violin and viola', '/guides/violin-vs-viola'],
       ['Compare violin tuning', '/tuner/violin'],
       ['Compare cello tuning', '/tuner/cello'],
@@ -134,6 +140,7 @@ const instruments = [
       ],
     ],
     links: [
+      ['Change bass guitar strings, step by step', '/guides/how-to-change-bass-guitar-strings'],
       ['Compare four- and five-string bass guitars', '/guides/how-to-choose-a-bass-guitar'],
       ['Practice bass with isolated stems', '/guides/practice-bass-with-isolated-stems'],
       ['Compare six-string guitar tuning', '/tuner/guitar'],

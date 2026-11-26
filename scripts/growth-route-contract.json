@@ -116,7 +116,11 @@
     "/guides/history-of-the-guitar",
     "/guides/instruments-of-iran",
     "/guides/tar-setar-and-sitar",
-    "/guides/how-to-change-a-violin-string"
+    "/guides/how-to-change-a-violin-string",
+    "/guides/how-to-change-acoustic-guitar-strings",
+    "/guides/how-to-change-electric-guitar-strings",
+    "/guides/how-to-change-bass-guitar-strings",
+    "/guides/how-to-change-a-viola-string"
   ],
   "excluded_paths": [
     "/cart",

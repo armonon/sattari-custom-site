@@ -231,3 +231,33 @@ it('places full-size violin detail photographs next to the steps they illustrate
     expect(figure.querySelector('figcaption a')).not.toBeNull();
   }
 });
+
+it.each([
+  'how-to-change-acoustic-guitar-strings',
+  'how-to-change-electric-guitar-strings',
+  'how-to-change-bass-guitar-strings',
+  'how-to-change-a-viola-string',
+])('pairs each numbered step of %s with a credited, openable photograph', (slug) => {
+  const { doc, schema } = renderPage('/guides/' + slug);
+  const article = schema.find((item) => item['@type'] === 'Article');
+  const steps = [...doc.querySelectorAll('section.resource-section[id]')].filter((section) =>
+    /^\d+\./.test(section.querySelector('h2')?.textContent || '')
+  );
+  expect(steps.length).toBeGreaterThanOrEqual(4);
+  const images = [];
+  for (const [index, step] of steps.entries()) {
+    expect(step.querySelector('h2').textContent).toMatch(new RegExp('^' + (index + 1) + '\\.'));
+    const figures = [...step.querySelectorAll('.guide-step-photo')];
+    expect(figures.length).toBeGreaterThan(0);
+    for (const figure of figures) {
+      const img = figure.querySelector('img');
+      const src = img.getAttribute('src');
+      expect(img.getAttribute('alt').length).toBeGreaterThan(12);
+      expect(figure.querySelector('a').getAttribute('href')).toBe(src);
+      expect(existsSync(resolve('public', src.slice(1)))).toBe(true);
+      expect(figure.querySelector('figcaption .guide-media-credit a')).not.toBeNull();
+      images.push('https://sattarimusic.com' + src);
+    }
+  }
+  expect(article.image).toEqual(images);
+});

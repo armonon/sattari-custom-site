@@ -185,7 +185,12 @@ export const bowedInstrumentGuides = [
       },
     ],
     sources: [violaSizingGuide, schoolInstrumentGuide, philharmoniaViola],
-    related: ['/guides/violin-vs-viola', '/tuner/viola', '/guides/choose-a-violin-for-beginners'],
+    related: [
+      '/guides/how-to-change-a-viola-string',
+      '/guides/violin-vs-viola',
+      '/tuner/viola',
+      '/guides/choose-a-violin-for-beginners',
+    ],
   },
   {
     slug: 'violin-vs-viola',

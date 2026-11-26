@@ -61,6 +61,7 @@ export const guitarInstrumentGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-acoustic-guitar-strings',
       '/guides/nylon-vs-steel-string-guitar',
       '/guides/how-to-choose-an-electric-guitar',
       '/guides/when-does-my-guitar-need-a-setup',
@@ -121,6 +122,7 @@ export const guitarInstrumentGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-electric-guitar-strings',
       '/guides/choose-a-beginner-acoustic-guitar',
       '/guides/how-to-choose-a-bass-guitar',
       '/guides/when-does-my-guitar-need-a-setup',
@@ -180,6 +182,7 @@ export const guitarInstrumentGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-bass-guitar-strings',
       '/guides/practice-bass-with-isolated-stems',
       '/guides/how-to-choose-an-electric-guitar',
       '/tuner/bass',

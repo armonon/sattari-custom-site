@@ -10,6 +10,7 @@ import {
   websiteSchema,
 } from '../data/siteSeo';
 import { guideCollections, musicGuides } from '../data/musicGuides';
+import { instrumentTunerPages } from '../data/instrumentTunerPages';
 import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
@@ -29,10 +30,12 @@ function labelFor(path) {
   };
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);
+  const tuner = instrumentTunerPages.find((page) => page.path === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
     stringsPages[path] ||
     guide?.title ||
+    tuner?.heading ||
     product?.name ||
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
@@ -130,11 +133,11 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Learn how to choose a violin, viola, guitar or bass, compare instruments by ear, explore Iranian music and guitar history, and build your practice skills."
+      description="Choose an instrument, change guitar, bass, violin or viola strings with close-up photos, compare sounds by ear, and explore Iranian music and guitar history."
     >
       <p className="resource-lead">
-        Choose your first instrument, hear how instruments differ, or explore the music and people
-        behind them.
+        Choose your first instrument, follow a photographed string change, or listen to the sounds
+        that distinguish instruments and their traditions.
       </p>
       <nav aria-label="Guide topics" className="guide-topics">
         {guideCollections.map((collection) => (

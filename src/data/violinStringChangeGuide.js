@@ -81,6 +81,7 @@ export const violinStringChangeGuide = {
   ].map((section) => ({ ...section, photos: violinStringChangePhotos[section.id] })),
   sources: [yamaha, pirastro, violinWorkshop, wittner],
   related: [
+    '/guides/how-to-change-a-viola-string',
     '/guides/beginner-violin-care',
     '/guides/choose-a-violin-for-beginners',
     '/tuner/violin',

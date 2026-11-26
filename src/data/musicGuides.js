@@ -1,6 +1,12 @@
 import { bowedInstrumentGuides } from './bowedInstrumentGuides.js';
 import { guitarInstrumentGuides } from './guitarInstrumentGuides.js';
 import { instrumentHistoryGuides } from './instrumentHistoryGuides.js';
+import {
+  acousticStringChangeGuide,
+  electricStringChangeGuide,
+} from './guitarStringChangeGuides.js';
+import { bassStringChangeGuide } from './bassStringChangeGuide.js';
+import { violaStringChangeGuide } from './violaStringChangeGuide.js';
 import { snareTuningGuide } from './snareTuningGuide.js';
 import { violinStringChangeGuide } from './violinStringChangeGuide.js';
 import { practicePadGuide } from './practicePadGuide.js';
@@ -528,6 +534,8 @@ const practiceGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-acoustic-guitar-strings',
+      '/guides/how-to-change-electric-guitar-strings',
       '/guides/when-does-my-guitar-need-a-setup',
       '/services/guitar-restringing-woodland-hills',
       '/guitar-strings-woodland-hills',
@@ -542,6 +550,17 @@ export const guideCollections = [
   { id: 'bowed-strings', title: 'Violin and viola', guides: bowedInstrumentGuides },
   { id: 'guitar-and-bass', title: 'Guitar and bass', guides: guitarInstrumentGuides },
   {
+    id: 'string-replacement',
+    title: 'How to change instrument strings',
+    guides: [
+      acousticStringChangeGuide,
+      electricStringChangeGuide,
+      bassStringChangeGuide,
+      violinStringChangeGuide,
+      violaStringChangeGuide,
+    ],
+  },
+  {
     id: 'instrument-history',
     title: 'Instrument history and listening',
     guides: instrumentHistoryGuides,
@@ -549,7 +568,7 @@ export const guideCollections = [
   {
     id: 'practice-and-care',
     title: 'Practice, technique and care',
-    guides: [snareTuningGuide, violinStringChangeGuide, practicePadGuide, ...practiceGuides],
+    guides: [snareTuningGuide, practicePadGuide, ...practiceGuides],
   },
 ];
 
