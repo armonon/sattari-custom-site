@@ -268,7 +268,9 @@ const App: FC = () => {
   }, [cartOpen]);
 
   return (
-    <div className={`site-shell${pagePath === '/' ? ' is-home' : ''}`}>
+    <div
+      className={`site-shell${pagePath === '/' ? ' is-home' : ''}${pagePath === '/shop' ? ' is-shop' : ''}`}
+    >
       <OrganizationSchema />
       <ScrollManager />
       {STUDIO_APP_PAGE.test(pagePath) && <StudioAppStatus />}
@@ -346,7 +348,7 @@ const App: FC = () => {
 
       {!isAudioWorkspace && <Footer />}
       <SiteMeasurement />
-      {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
+      {!isAudioWorkspace && !isResourcePage && <ShopAssistant compact={pagePath === '/shop'} />}
     </div>
   );
 };

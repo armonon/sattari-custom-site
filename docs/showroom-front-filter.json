@@ -1,0 +1,66 @@
+{
+  "operation": "Filter existing Gaussian centers to a fitted wall-plane distance band",
+  "source": {
+    "path": "public/showroom/guitar-wall-atlas.spz",
+    "sha256": "ffeb42a6386478cdf1b84f07bd45df42687f2300086372a50aff99634bf281e9",
+    "bytes": 30792108,
+    "splats": 2000000
+  },
+  "derivative": {
+    "path": "public/showroom/guitar-wall-front.spz",
+    "sha256": "44292d18890cab75375de5f3d4aa99651fbc7e2ce20e38aa19da19aa0652bf87",
+    "bytes": 17630446,
+    "splats": 1157518
+  },
+  "encoding": {
+    "spzVersion": 2,
+    "shDegree": 0,
+    "fractionalBits": 12,
+    "flags": 64,
+    "reserved": 0
+  },
+  "filter": {
+    "planeEquation": "x = a*y + b*z + c",
+    "coefficients": {
+      "a": 0.0037473263179399474,
+      "b": 0.07362146874269582,
+      "c": -1.7838554488730078
+    },
+    "distanceDefinition": "(x - a*y - b*z - c) / sqrt(1 + a*a + b*b)",
+    "inclusiveDistanceRange": [
+      -0.4,
+      0.55
+    ],
+    "axisAlignedCrop": null,
+    "removedBehindWall": 4,
+    "removedInFrontOfWall": 842478,
+    "retainedDistanceRange": [
+      -0.39156005907543395,
+      0.5499965299418942
+    ],
+    "retainedBounds": {
+      "min": [
+        -2.169921875,
+        -0.39599609375,
+        -2.119384765625
+      ],
+      "max": [
+        -0.96630859375,
+        2.711669921875,
+        3.8349609375
+      ]
+    }
+  },
+  "provenance": {
+    "fit": "../showroom-concepts/atlas-run/frontal-camera-candidate.json",
+    "format": "https://github.com/nianticlabs/spz#file-format",
+    "reproduction": "node scripts/filter-showroom-spz.mjs --min -0.4 --max 0.55",
+    "preserves": "Original file unchanged. Every retained position, opacity, color, scale, rotation, and SH byte is copied without requantization.",
+    "limitation": "A geometric crop removes off-wall centers, not all splat extents; visual QA is required. It does not recover unseen geometry or add product detail."
+  },
+  "validation": {
+    "gzipRoundTrip": true,
+    "allRetainedAttributesUnchanged": true,
+    "visualReview": "Passed: frontal wall and four display anchors visible; large side-wall foreground occluder removed. Original source retained."
+  }
+}

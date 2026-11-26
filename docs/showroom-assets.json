@@ -1,0 +1,171 @@
+{
+  "gaussianShowroom": {
+    "status": "Immersive local Gaussian showroom with cinematic opening and full-instrument spotlight; desktop and mobile visually verified.",
+    "poster": "public/images/showroom/guitar-wall-front.png",
+    "creation": "Built-in ImageGen front-facing edit of the cleared-floor guitar-wall concept. The live scene remains the original Atlas Gaussian reconstruction, geometrically trimmed to the main wall.",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "promptManifest": "../../showroom-concepts/front-wall-generation.json",
+    "intendedSource": "AI-generated concept, not a measured capture of the actual store or verified product photography.",
+    "provider": "World Labs Atlas",
+    "connection": "https://api.atlas.worldlabs.ai/mcp",
+    "workflow": [
+      "Pose cleared-floor generated image",
+      "Generate 12 overlapping translated RGB camera views",
+      "Jointly reconstruct generated views to shared RGBD camera frame",
+      "Exclude separately posed source image",
+      "Refined posedImages2Splats for 12 aligned views",
+      "Export SPZ, calibrate source camera and verify local viewer"
+    ],
+    "renderer": "@sparkjsdev/spark 2.4.0",
+    "configuration": "src/showroom/gaussianShowroomConfig.js",
+    "authorization": {
+      "source": "Existing Atlas Studio promotional signup credits only",
+      "creditCap": 6000,
+      "cashSpendingAuthorized": false,
+      "scope": "Public Sattari shop release, authorized 2026-11-25",
+      "commercialUse": "User confirmed paid plan or commercial permission on 2026-11-25 before publication."
+    },
+    "sessionUrl": "https://atlas.worldlabs.ai/workflows/viewfinder/wsess_d2baf3f686cb41e28df7ab10bc69ac8a",
+    "operationId": "a6f8a5c8326943a792c1754270961d81",
+    "creditAccounting": {
+      "initialStudioCredits": 10000,
+      "usedTotal": 5302,
+      "remainingStudioCredits": 4698,
+      "cashSpent": 0,
+      "pool": "Studio promotional credits"
+    },
+    "calibration": "../../showroom-concepts/atlas-run/reconstructed-calibration-diagnostics.json",
+    "asset": "public/showroom/guitar-wall-front.spz",
+    "assetBytes": 17630446,
+    "splatCount": 1157518,
+    "spzVersion": 2,
+    "assetSha256": "44292d18890cab75375de5f3d4aa99651fbc7e2ce20e38aa19da19aa0652bf87",
+    "finalExport": "../../showroom-concepts/atlas-run/final",
+    "navigation": "Full viewport live Gaussian scene with four cycling hero views; selected full-instrument framing up to84% desktop/45% mobile, adapted to controls and source coverage. Focus and return use1400ms quintic easing with logarithmic zoom, continuous crop endpoints and rapid retargeting. Bounded camera translations remain limited to3cm.",
+    "previewPolish": {
+      "additionalAtlasCreditsUsed": 0,
+      "rendering": "Up to 2x device pixel ratio with a 3-million-pixel cap; serialized async splat sorting, first-frame readiness and recoverable loading errors.",
+      "shopping": "Unboxed desktop specifications beside the selected instrument; scrollable mobile details; four catalog anchors, real prices/specs and guarded cart actions.",
+      "accessibility": "SSR-safe initialization, ambient pause on interaction/hidden/offscreen, live reduced-motion support, and selected-panel/category focus restoration.",
+      "typography": "Self-hosted Cormorant Garamond headings and Inter controls; floating transparent site navigation.",
+      "spotlight": "One preallocated world-space ellipsoid edit supplies a soft oval spotlight. Outside splat RGB is multiplied by0.32; opacity and original asset geometry are unchanged. Selected colors remain clear with natural feathered spill. Each catalog display has its own verified light region; Back restores neutral lighting.",
+      "transitions": "1400ms CSS opacity crossfade between opening and selected overlays; reduced motion immediately settles camera and lighting. Suspension and manual interruption cannot leave an overview dimmed.",
+      "controls": "Removed the entire playback/progress/zoom/reset/fullscreen row and help UI. Instrument category buttons, Previous/Next and Back to full wall remain. Ambient camera cycling still pauses on interaction, selection, focus, scroll, reduced motion, hidden page and less than25% section visibility."
+    },
+    "validation": {
+      "desktop": true,
+      "mobileViewport": [
+        390,
+        844
+      ],
+      "additionalViewports": [
+        [
+          320,
+          740
+        ],
+        [
+          717,
+          831
+        ],
+        [
+          1440,
+          900
+        ]
+      ],
+      "fullscreen": "Removed at user request",
+      "expandedViewFallback": "Removed at user request",
+      "mobileProductFrame": "Full instrument and scrollable specifications verified at390x844 after removing the control row.",
+      "catalogHotspots": 4,
+      "floorInstrumentsRemoved": true,
+      "consoleErrors": 0,
+      "focusedTests": 63,
+      "typeCheck": "passed",
+      "productionBuild": "passed, 77 canonical URLs prerendered",
+      "frontView": true,
+      "desktopNavigationBelowFixedHeader": false,
+      "navigation": "Absolute navigation overlays hero and scrolls with the page.",
+      "cinematicHero": true,
+      "spotlight": true,
+      "testBreakdown": {
+        "renderer": 21,
+        "showroom": 30,
+        "shopPage": 2,
+        "navigation": 10
+      },
+      "cinematicPreview": "http://127.0.0.1:4173/shop?preview=clean",
+      "spotlightRefinement": {
+        "rendererTests": 21,
+        "lint": "passed",
+        "desktop": [
+          1440,
+          900
+        ],
+        "mobile": [
+          390,
+          844
+        ],
+        "silhouetteMathViewports": [
+          1440,
+          960,
+          717,
+          390,
+          320
+        ],
+        "rapidNextAndBack": "passed",
+        "sourcePointLightPlacement": "passed",
+        "typeCheck": "passed",
+        "productionBuild": "passed",
+        "consoleErrors": 0,
+        "preview": "http://127.0.0.1:4173/shop?preview=spotlight",
+        "screenshot": "../showroom-spotlight-enhanced.png"
+      },
+      "controlsRemoved": true,
+      "controlsCleanup": {
+        "focusedUiTests": 32,
+        "lint": "passed",
+        "productionBuild": "passed",
+        "openingAndSelection": "verified",
+        "desktop": [
+          717,
+          831
+        ],
+        "mobile": [
+          390,
+          844
+        ]
+      }
+    },
+    "limitations": "AI-generated reconstruction, not a measured store scan. The frontal view lies outside the original narrow camera fan; fine strings, lettering, side surfaces and grain may remain soft or stretched. The classical position is an authored representative catalog display. Product photos, prices, specs and checkout use the existing catalog. Local preview only; commercial rights for the free Studio promotional tier have not been confirmed.",
+    "originalAsset": {
+      "path": "public/showroom/guitar-wall-atlas.spz",
+      "sha256": "ffeb42a6386478cdf1b84f07bd45df42687f2300086372a50aff99634bf281e9",
+      "bytes": 30792108,
+      "splats": 2000000,
+      "preserved": true
+    },
+    "frontView": {
+      "filterProvenance": "docs/showroom-front-filter.json",
+      "cameraFit": "../../showroom-concepts/atlas-run/frontal-camera-candidate.json",
+      "originalCameraPreservedAs": "calibratedSourceCamera",
+      "additionalAtlasCreditsUsed": 0,
+      "newGeometryGenerated": false
+    }
+  },
+  "materialAtlas": {
+    "asset": "public/images/showroom/store-material-atlas.png",
+    "creation": "Built-in ImageGen, generated from the two user-supplied store references; original product photographs remain the instrument texture sources.",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "references": [
+      "IMG_0733.JPG",
+      "IMG_0734.JPG"
+    ],
+    "prompt": "Create a high-resolution 2048x2048 square photographic material-texture atlas for a physically rendered 3D reconstruction of this exact music store. Reference images show the store whose materials must be matched. EXACTLY FOUR equal square quadrants, edge to edge, no gutters, no labels or text. Top-left: a straight-on flat scan of the store's warm off-white painted plaster, extremely subtle hand-troweled uneven relief and tiny paint chips, no large cracks, realistic fine shallow texture, nearly uniform off-white. Top-right: a straight-on flat scan of a SINGLE white acoustic drop-ceiling panel with its characteristic tiny dark irregular holes and fissures; NO panel grid or border. Bottom-left: a straight-on flat scan of the unfinished light pine wood hanger rail, horizontal natural grain, a couple small natural knots, pale raw honey wood, no screws/hangers. Bottom-right: a straight-on flat scan of the worn grey-brown laminate floor, subtle fine grain running vertically, NO plank seams. Each quadrant seamless-looking, neutral diffuse albedo, even soft light with NO lighting gradient, NO directional shadows, NO highlights, NO perspective, NO objects. Preserve restrained real colors from store. These are photo texture samples, NOT a room rendering, NOT a design mockup, NOT an illustration. Extremely realistic fine material detail. Each quadrant fills precisely 50% width/height.",
+    "limitations": "Reference-matched material reconstruction, not a measured scan. Classical guitar front uses real spruce detail photography because the catalog has no full front view. Repeated display instances share four actual catalog identities, prices, and stock records."
+  }
+}
