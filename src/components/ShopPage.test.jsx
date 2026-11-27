@@ -51,6 +51,7 @@ it('sends products that come in colors to their page instead of adding them with
     );
   });
 
+  fireEvent.click(screen.getByRole('button', { name: 'Show more products' }));
   const chooseColor = await screen.findByRole(
     'link',
     { name: 'Choose a color for Cymbal Felts' },
@@ -86,9 +87,9 @@ it('shows a varied featured selection with current prices and sold-out controls'
       </InventoryProvider>
     </HelmetProvider>
   );
-  const catalog = screen.getByRole('region', { name: 'Ready to play' });
+  const catalog = screen.getByRole('region', { name: 'Featured products' });
   const cards = within(catalog).getAllByRole('article');
-  expect(cards).toHaveLength(10);
+  expect(cards).toHaveLength(4);
   expect(cards.slice(0, 4).map((card) => within(card).getByRole('heading').textContent)).toEqual([
     'Pirouz Series Cymbals',
     'CREMONA - Handmade Acoustic Violin',

@@ -1,18 +1,7 @@
 import React from 'react';
 import GuitarShowroom from './GuitarShowroom';
 import ShopRepairFinder from './ShopRepairFinder';
-import {
-  ArrowUpRight,
-  Check,
-  Disc3,
-  Drumstick,
-  Guitar,
-  LayoutGrid,
-  Music2,
-  PackageOpen,
-  ShoppingBag,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { ArrowUpRight, Check, Music2, ShoppingBag, SlidersHorizontal } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
@@ -24,13 +13,7 @@ import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
 import './StringsDiscovery.css';
 
-const categoryIcons = {
-  cymbals: Disc3,
-  sticks: Drumstick,
-  essentials: PackageOpen,
-  violins: Music2,
-  'guitar-bass': Guitar,
-};
+import './ShopGallery.css';
 
 const featuredCategoryOrder = ['cymbals', 'violins', 'guitar-bass', 'sticks', 'essentials'];
 
@@ -124,6 +107,7 @@ export default function ShopPage() {
   const { addToCart } = useCart();
   const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
+  const [expanded, setExpanded] = React.useState(false);
   const featuredGroups = featuredCategoryOrder.map((category) =>
     products.filter((product) => product.category === category).slice(0, 2)
   );
@@ -168,66 +152,74 @@ export default function ShopPage() {
       <StructuredData data={itemListSchema} />
       <GuitarShowroom />
 
-      <div id="shop-catalog" className="container shop-category-panel">
-        <ShopRepairFinder />
-        <div className="shop-category-panel-heading">
-          <div>
-            <p className="card-kicker">Browse the catalog</p>
-            <h2>Shop by category</h2>
-          </div>
-          <Link to="/shop/all">
-            View all {products.length} products
-            <ArrowUpRight size={17} aria-hidden="true" />
+      <nav id="shop-catalog" className="gallery-category-bar" aria-label="Shop product categories">
+        <Link to="/shop/all">All products</Link>
+        {categories.map((category) => (
+          <Link key={category.key} to={`/shop/${category.key}`}>
+            {category.title}
           </Link>
-        </div>
+        ))}
+      </nav>
 
-        <nav className="shop-category-list" aria-label="Shop product categories">
-          {categories.map((category) => {
-            const Icon = categoryIcons[category.key];
-            const productCount = products.filter(
-              (product) => product.category === category.key
-            ).length;
-
-            return (
-              <Link
-                to={`/shop/${category.key}`}
-                className="shop-category-row"
-                key={category.key}
-                aria-label={`Explore ${category.title}`}
-              >
-                <span className="shop-category-icon" aria-hidden="true">
-                  <Icon size={20} />
-                </span>
-                <span className="shop-category-primary">
-                  <strong>{category.title}</strong>
-                  <small>
-                    {productCount} {productCount === 1 ? 'product' : 'products'}
-                  </small>
-                </span>
-                <span className="shop-category-action">
-                  <ArrowUpRight size={17} aria-hidden="true" />
-                </span>
-              </Link>
-            );
-          })}
-
-          <Link
-            to="/shop/all"
-            className="shop-category-row shop-all-row"
-            aria-label="Shop all products"
-          >
-            <span className="shop-category-icon" aria-hidden="true">
-              <LayoutGrid size={20} />
-            </span>
-            <span className="shop-category-primary">
-              <strong>Shop all</strong>
-              <small>{products.length} products</small>
-            </span>
-            <span className="shop-category-action">
+      <section
+        id="featured-catalog"
+        className="shop-featured-catalog"
+        aria-labelledby="featured-catalog-title"
+      >
+        <div className="container">
+          <div className="shop-catalog-header">
+            <h2 id="featured-catalog-title">Featured products</h2>
+            <Link to="/shop/all" className="shop-catalog-all-link">
+              View all {products.length} products
               <ArrowUpRight size={17} aria-hidden="true" />
-            </span>
-          </Link>
-        </nav>
+            </Link>
+          </div>
+          <div id="gallery-products" className="product-grid shop-featured-grid">
+            {(expanded ? featuredProducts : featuredProducts.slice(0, 4)).map((product) => {
+              const category = categories.find((item) => item.key === product.category);
+
+              return (
+                <ProductCard
+                  key={product.slug}
+                  product={product}
+                  kicker={category?.title || 'Sattari'}
+                  recentlyAddedSlug={recentlyAddedSlug}
+                  onQuickAdd={handleQuickAdd}
+                  soldOut={isSoldOut(product)}
+                />
+              );
+            })}
+          </div>
+          {featuredProducts.length > 4 && (
+            <button
+              type="button"
+              className="gallery-more"
+              aria-expanded={expanded}
+              aria-controls="gallery-products"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? 'Show fewer products' : 'Show more products'}
+            </button>
+          )}
+        </div>
+      </section>
+
+      <div className="gallery-services container">
+        <a href="#shop-strings-title">
+          <img src="/images/local-gallery/owner-06.webp" alt="" loading="lazy" />
+          <span>
+            Find your strings <ArrowUpRight aria-hidden="true" />
+          </span>
+        </a>
+        <Link to="/services/instrument-repair-los-angeles">
+          <img src="/images/local-gallery/owner-24.webp" alt="" loading="lazy" />
+          <span>
+            Instrument repair <ArrowUpRight aria-hidden="true" />
+          </span>
+        </Link>
+      </div>
+      <div className="container gallery-search">
+        <ShopRepairFinder />
       </div>
 
       <section
@@ -267,43 +259,6 @@ export default function ShopPage() {
           <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
           <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
         </nav>
-      </section>
-
-      <section
-        id="featured-catalog"
-        className="shop-featured-catalog"
-        aria-labelledby="featured-catalog-title"
-      >
-        <div className="container">
-          <div className="shop-catalog-header">
-            <div>
-              <p className="card-kicker">Featured catalog</p>
-              <h2 id="featured-catalog-title">
-                Ready to play<span aria-hidden="true">.</span>
-              </h2>
-            </div>
-            <Link to="/shop/all" className="shop-catalog-all-link">
-              View all {products.length} products
-              <ArrowUpRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="product-grid shop-featured-grid">
-            {featuredProducts.map((product) => {
-              const category = categories.find((item) => item.key === product.category);
-
-              return (
-                <ProductCard
-                  key={product.slug}
-                  product={product}
-                  kicker={category?.title || 'Sattari'}
-                  recentlyAddedSlug={recentlyAddedSlug}
-                  onQuickAdd={handleQuickAdd}
-                  soldOut={isSoldOut(product)}
-                />
-              );
-            })}
-          </div>
-        </div>
       </section>
     </section>
   );
