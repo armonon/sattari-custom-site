@@ -285,37 +285,27 @@
 
 /* 2026-11 visual overhaul: "instrument readout". Scoped to this tool so the
    other Studio labs that share the lab shell keep their own look. */
-.alab-page[data-lab='keybpm'] {
-  --alab-bg: #08080a;
-  --alab-panel: #111114;
-  --alab-raised: #17171b;
-  --alab-line: rgba(255, 255, 255, 0.1);
-  --alab-text: #f5f5f2;
-  --alab-muted: #a3a39c;
-  --alab-accent: #d6b36d;
+/* One look in day and night: the ink palette of the hub tile artwork
+   (public/images/tools/key-bpm-hero-ink.jpg), so the tile and the tool match. */
+.alab-page[data-lab='keybpm'],
+[data-theme='day'] .alab-page[data-lab='keybpm'] {
+  --alab-bg: #0f0e0c;
+  --alab-panel: #171512;
+  --alab-raised: #1e1b17;
+  --alab-line: rgba(242, 234, 217, 0.1);
+  --alab-text: #f2ead9;
+  --alab-muted: #a89f8b;
+  --alab-accent: #e4b873;
   --alab-accent-ink: #1a1408;
-  --kb-raised-2: #1e1e23;
-  --kb-line-2: rgba(255, 255, 255, 0.16);
-  --kb-accent-soft: rgba(214, 179, 109, 0.14);
+  --alab-bad: #ffb4a8;
+  --kb-raised-2: #26221c;
+  --kb-line-2: rgba(242, 234, 217, 0.16);
+  --kb-accent-soft: rgba(228, 184, 115, 0.14);
   --kb-ok: #8fd4a0;
   --kb-warn: #e7c06a;
   --kb-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
   font-family: Sora, Inter, sans-serif;
-}
-[data-theme='day'] .alab-page[data-lab='keybpm'] {
-  --alab-bg: #f6f4ef;
-  --alab-panel: #ffffff;
-  --alab-raised: #f3f0e9;
-  --alab-line: rgba(27, 26, 23, 0.1);
-  --alab-text: #1b1a17;
-  --alab-muted: #625e55;
-  --alab-accent: #8a6516;
-  --alab-accent-ink: #ffffff;
-  --kb-raised-2: #e9e5dc;
-  --kb-line-2: rgba(27, 26, 23, 0.2);
-  --kb-accent-soft: rgba(138, 101, 22, 0.1);
-  --kb-ok: #2d7a45;
-  --kb-warn: #8a5a00;
 }
 .alab-page[data-lab='keybpm'] .alab-shell {
   max-width: 1320px;
@@ -886,13 +876,11 @@
   margin: 0;
   display: grid;
   place-items: center;
-  padding: 8px;
-  border-radius: 24px;
-  background: #0f0e0c;
+  padding: 0;
 }
 .kb-meter svg {
   display: block;
-  width: min(100%, 440px);
+  width: min(100%, 520px);
   height: auto;
 }
 .kb-meter-ring {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { KeyBpmMeter } from './KeyBpmHero';
-import { keyLabel } from './keyTheory';
+import { circlePosition, keyLabel } from './keyTheory';
 import {
   AudioLines,
   Disc3,
@@ -294,6 +294,7 @@ export default function KeyBpmPage() {
   const [loadingExample, setLoadingExample] = useState(false);
   const [audition, setAudition] = useState({ id: null, playing: false, time: 0, duration: 0 });
   const [focusId, setFocusId] = useState(null);
+  const [clicking, setClicking] = useState(false);
   const imports = useRef(Promise.resolve());
   const pendingImports = useRef(0);
   const reportPicker = useRef(null);
@@ -662,6 +663,9 @@ export default function KeyBpmPage() {
     rows.find((row) => row.id === audition.id && row.status === 'done') ||
     [...rows].reverse().find((row) => row.status === 'done');
 
+  // The meter shows whatever the readout below is showing.
+  const shown = focusRow ? effectiveValues(focusRow.result, focusRow.user) : null;
+
   return (
     <AudioLabShell
       tool="keybpm"
@@ -695,6 +699,14 @@ export default function KeyBpmPage() {
         }}
       />
       <div className="alab-workspace">
+        <KeyBpmMeter
+          bpm={shown?.bpm ?? null}
+          bpmText={shown?.bpm != null ? formatBpm(shown.bpm) : ''}
+          keyName={shown?.key ? keyLabel(shown.key) : ''}
+          camelot={shown?.camelot || ''}
+          keyIndex={shown?.key ? (circlePosition(shown.key)?.index ?? null) : null}
+          beating={clicking}
+        />
         <nav className="kb-section-nav" aria-label="Tuner and key detector sections">
           <a href="#live-tuner">
             <AudioLines size={16} aria-hidden="true" /> Live tuner
@@ -783,7 +795,6 @@ export default function KeyBpmPage() {
             if (Number.isFinite(value)) setAudition((current) => ({ ...current, duration: value }));
           }}
         />
-        {!focusRow && <KeyBpmMeter />}
         {focusRow && (
           <KeyReadout
             row={focusRow}
@@ -799,6 +810,7 @@ export default function KeyBpmPage() {
               if (user) trackSiteEventOnce(`${focusRow.id}:corrected`, 'keybpm_corrected');
             }}
             onSeparate={() => toSeparator(focusRow)}
+            onClickChange={setClicking}
           />
         )}
 

@@ -12,7 +12,6 @@ import {
   NOTES_MAX,
   tempoInterpretation,
 } from './keyBpm';
-import { KeyBpmMeter } from './KeyBpmHero';
 import { useMetronome } from './metronome';
 import {
   CIRCLE,
@@ -252,6 +251,7 @@ export default function KeyReadout({
   onCorrect,
   onSeparate,
   playable,
+  onClickChange,
 }) {
   const { result } = row;
   const values = effectiveValues(result, row.user);
@@ -270,6 +270,11 @@ export default function KeyReadout({
   const { stopDrone } = tones;
   const click = useMetronome(values.bpm);
   const stopClick = click.stop;
+  // The meter at the top of the page pulses while the click runs.
+  useEffect(() => {
+    onClickChange?.(click.on);
+    return () => onClickChange?.(false);
+  }, [click.on, onClickChange]);
   const [copied, setCopied] = useState(false);
   const summary = [
     values.key && keyLabel(values.key),
@@ -360,15 +365,6 @@ export default function KeyReadout({
           </button>
         </div>
       </header>
-
-      <KeyBpmMeter
-        bpm={values.bpm}
-        bpmText={values.bpm === null ? '' : formatBpm(values.bpm)}
-        keyName={values.key ? keyLabel(values.key) : ''}
-        camelot={values.camelot}
-        keyIndex={circlePosition(values.key)?.index ?? null}
-        beating={click.on}
-      />
 
       <div className="kb-readout-grid">
         <div className="kb-panel kb-key-panel">
