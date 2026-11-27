@@ -516,9 +516,14 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     expect(renderer.renders.at(-1).position.distanceTo(frozen.position)).toBeGreaterThan(0.001);
   });
 
+  const optionalLightingConfig = {
+    ...showroomConfig,
+    spotlight: { ...showroomConfig.spotlight, neighborBrightness: 0.19, softEdge: 2.65 },
+  };
+
   it('animates real edit volumes without changing opacity and restores overview after interruption', async () => {
     const now = vi.spyOn(performance, 'now').mockReturnValue(1000);
-    const view = create(1440, 900, showroomConfig);
+    const view = create(1440, 900, optionalLightingConfig);
     await view.controller.ready;
     await frame(1000);
     await frame(1000);
@@ -532,7 +537,7 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     expect(edit.sdfs.every((sdf) => sdf.color.r === 1 && sdf.opacity === 1)).toBe(true);
     view.controller.focus('flame-stratocaster-electric-guitar');
     await frame(2400);
-    expect(edit.sdfs[0].color.r).toBeCloseTo(showroomConfig.spotlight.neighborBrightness, 12);
+    expect(edit.sdfs[0].color.r).toBeCloseTo(optionalLightingConfig.spotlight.neighborBrightness, 12);
     expect(edit.sdfs[0].opacity).toBe(1);
     const renderer = state.renderers[0];
     const selected = renderer.renders.at(-1).projection.elements.slice();
@@ -543,7 +548,7 @@ describe('Gaussian showroom render lifecycle and framing', () => {
       .at(-1)
       .projection.elements.forEach((value, i) => expect(value).toBeCloseTo(selected[i], 12));
     await frame(3000);
-    expect(edit.sdfs[0].color.r).toBeGreaterThan(showroomConfig.spotlight.neighborBrightness);
+    expect(edit.sdfs[0].color.r).toBeGreaterThan(optionalLightingConfig.spotlight.neighborBrightness);
     expect(edit.sdfs[0].color.r).toBeLessThan(1);
     view.controller.zoom(0.9);
     await frame(5000);
@@ -596,7 +601,7 @@ describe('Gaussian showroom render lifecycle and framing', () => {
       removeEventListener: vi.fn(),
     };
     vi.stubGlobal('matchMedia', () => media);
-    const view = create(1440, 900, showroomConfig);
+    const view = create(1440, 900, optionalLightingConfig);
     await view.controller.ready;
     await frame();
     await frame();
@@ -604,7 +609,7 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     media.matches = true;
     change();
     const sdfs = state.meshes[0].edits[0].sdfs;
-    expect(sdfs[0].color.r).toBeCloseTo(showroomConfig.spotlight.neighborBrightness, 12);
+    expect(sdfs[0].color.r).toBeCloseTo(optionalLightingConfig.spotlight.neighborBrightness, 12);
     expect(sdfs[0].opacity).toBe(1);
     view.controller.reset();
     expect(sdfs.every((sdf) => sdf.color.r === 1)).toBe(true);
@@ -616,7 +621,7 @@ describe('Gaussian showroom render lifecycle and framing', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }));
-    const view = create(1440, 900, showroomConfig);
+    const view = create(1440, 900, optionalLightingConfig);
     await view.controller.ready;
     await frame();
     await frame();
@@ -671,7 +676,10 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     await frame(1301);
     await frame(1302);
     expect(frames.size).toBe(0);
-    expect(state.meshes[0].edits[0].sdfs[0].color.r).toBe(1);
+    view.controller.focus('five-string-bass-guitar');
+    await frame(3000);
+    expect(state.meshes[0].options.editable).toBe(false);
+    expect(state.meshes[0].edits ?? []).toHaveLength(0);
   });
   it('allows page scrolling over the showroom without changing camera zoom', async () => {
     const view = create(1440, 900, showroomConfig);
