@@ -5,6 +5,7 @@ import {
   circlePosition,
   keyDisplay,
   compatibleKeys,
+  conventionalKeyLabel,
   diatonicChords,
   keyLabel,
   relativeKey,
@@ -54,11 +55,12 @@ describe('key theory', () => {
   });
 
   it('spells keys the conventional way without changing the analyzer strings', () => {
-    expect(keyLabel('A# major')).toBe('B♭ major');
-    expect(keyLabel('D# major')).toBe('E♭ major');
-    expect(keyLabel('G# minor')).toBe('G♯ minor');
-    expect(keyLabel('A# minor')).toBe('B♭ minor');
+    expect(conventionalKeyLabel('A# major')).toBe('B♭ major');
+    expect(conventionalKeyLabel('D# major')).toBe('E♭ major');
+    expect(conventionalKeyLabel('G# minor')).toBe('G♯ minor');
+    expect(conventionalKeyLabel('A# minor')).toBe('B♭ minor');
     expect(keyLabel('')).toBe('');
+    expect(keyLabel('A# major')).toBe('A♯ major');
     expect(CIRCLE.map((slot) => slot.major).join(' ')).toBe('C G D A E B F♯ D♭ A♭ E♭ B♭ F');
   });
 

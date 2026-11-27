@@ -47,6 +47,9 @@ describe('key reference pages', () => {
     expect(keyPageFor('C major')).toMatchObject({ signature: 'no sharps or flats', alias: null });
     expect(keyPageFor('D# minor').signature).toBe('6 flats');
     expect(keyPageFor('A minor').tonicHz).toBe(220);
+    expect(keyPageFor('Bb major').slug).toBe('b-flat-major');
+    expect(keyPageFor('B♭ major').slug).toBe('b-flat-major');
+    expect(keyPageFor('nonsense')).toBeNull();
   });
 });
 

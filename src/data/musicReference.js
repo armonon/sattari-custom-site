@@ -1,7 +1,7 @@
 // Reference pages generated from the same theory the Key & BPM tool uses:
 // one page per key (/keys/c-major) and one per tempo (/bpm/120). Every value
 // on a page is computed here, so the pages and the tool cannot disagree.
-import { camelot } from '../labs/keybpm/keyBpm';
+import { camelot, keyParts } from '../labs/keybpm/keyBpm';
 import {
   compatibleKeys,
   conventionalKey,
@@ -83,7 +83,11 @@ export const keyPages = ['major', 'minor'].flatMap((mode) =>
 );
 const byKey = new Map(keyPages.map((page) => [page.key, page]));
 const bySlug = new Map(keyPages.map((page) => [page.slug, page]));
-export const keyPageFor = (key) => byKey.get(key) || null;
+// Any spelling finds its page: 'Bb major', 'A# major' and 'B♭ major' are one key.
+export function keyPageFor(key) {
+  const parts = keyParts(key);
+  return parts ? byKey.get(`${ANALYZER[parts.root]} ${parts.minor ? 'minor' : 'major'}`) : null;
+}
 export const keyPageBySlug = (slug) => bySlug.get(slug) || null;
 
 // People type "B flat major" and "Bb major" as well as B♭ major.
