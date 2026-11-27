@@ -191,11 +191,11 @@ export function comparisonProducts(categoryKey, products) {
 
 export function comparisonSpec(product, field) {
   const patterns = {
-    fit: /^(Size|Instrument|Type|Strings|Overall size):/,
+    fit: /^(Size|Fit|Instrument|Type|Strings|Overall size|Body style|Top|Use|Connections|Pickup type|Output):/,
     included: /^Included:/,
   };
   const matches = (product.specs || []).filter((spec) => patterns[field]?.test(spec));
-  return matches.length ? matches.join(' · ') : 'Ask the shop to confirm.';
+  return matches.length ? matches.slice(0, 3).join(' · ') : 'Ask the shop to confirm.';
 }
 
 // Only catalog-backed options enter a public variant URL; canonical pages stay query-free.

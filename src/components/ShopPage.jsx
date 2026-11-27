@@ -1,5 +1,6 @@
 import React from 'react';
 import GuitarShowroom from './GuitarShowroom';
+import ShopRepairFinder from './ShopRepairFinder';
 import {
   ArrowUpRight,
   Check,
@@ -143,8 +144,7 @@ export default function ShopPage() {
     '@type': 'CollectionPage',
     name: 'Sattari Music Shop',
     url: 'https://sattarimusic.com/shop',
-    description:
-      'Instruments, music accessories, handcrafted cymbals, drumsticks, practice pads, and musician essentials from Sattari Music.',
+    description: PAGE_SEO.shop.description,
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: featuredProducts.map((product, index) => ({
@@ -169,6 +169,7 @@ export default function ShopPage() {
       <GuitarShowroom />
 
       <div id="shop-catalog" className="container shop-category-panel">
+        <ShopRepairFinder />
         <div className="shop-category-panel-heading">
           <div>
             <p className="card-kicker">Browse the catalog</p>
@@ -229,6 +230,30 @@ export default function ShopPage() {
         </nav>
       </div>
 
+      <section
+        id="instruments-for-sale"
+        className="container strings-discovery"
+        aria-labelledby="shop-instruments-title"
+      >
+        <h2 id="shop-instruments-title">Guitars and violins for sale in Woodland Hills</h2>
+        <p>
+          Start with the sound you want. Each instrument comparison shows the listed price and links
+          to its product page. To try a specific model locally, ask about its availability when
+          arranging your appointment.
+        </p>
+        <nav aria-label="Compare instruments for sale">
+          <Link to="/shop/guitar-bass#steel-string-acoustic-guitars">
+            Steel-string acoustic guitars
+          </Link>
+          <Link to="/shop/guitar-bass#classical-guitars">Classical guitars</Link>
+          <Link to="/shop/guitar-bass#electric-guitars">Electric guitars</Link>
+          <Link to="/shop/guitar-bass#bass-guitars">Five-string basses</Link>
+          <Link to="/shop/violins#acoustic-violins">Acoustic violins</Link>
+          <Link to="/shop/violins#electric-violins">Electric violins</Link>
+          <Link to="/visit">Plan a Woodland Hills visit</Link>
+        </nav>
+      </section>
+
       <section className="container strings-discovery" aria-labelledby="shop-strings-title">
         <h2 id="shop-strings-title">Strings for guitars and violins</h2>
         <p>
@@ -240,6 +265,7 @@ export default function ShopPage() {
           <Link to="/guitar-strings-woodland-hills">Electric &amp; acoustic guitar strings</Link>
           <Link to="/violin-strings-woodland-hills">Violin strings for sale</Link>
           <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+          <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
         </nav>
       </section>
 

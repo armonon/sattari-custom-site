@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import ServicePlanningDetails from './ServicePlanningDetails';
+import ShopRepairFinder from './ShopRepairFinder';
 import OptimizedProductImage from './OptimizedProductImage';
 import { useInventory } from '../context/InventoryContext';
 import { formatPriceRange } from '../data/catalog';
@@ -111,6 +112,20 @@ export const localSeoPages = {
       'Rare, vintage, or unusual instrument questions that need a human check',
     ],
     catalogHeading: 'Compare instruments for sale',
+    details: [
+      {
+        id: 'shop-by-instrument',
+        title: 'Shopping for a guitar or bass?',
+        copy: 'Compare steel-string acoustics, nylon-string classical guitars, electric guitars and bass by the music you play. Open a listing for its current price and options. To play one in Woodland Hills, name that model when you ask for an appointment.',
+        link: { label: 'Shop guitars and bass', to: '/shop/guitar-bass' },
+      },
+      {
+        id: 'shop-violins',
+        title: 'Shopping for a violin?',
+        copy: 'Start with the size your teacher recommends and whether you will play in an acoustic ensemble or through amplification. Check the listing for what is included and ask about the bow and case when comparing the total cost.',
+        link: { label: 'Shop acoustic and electric violins', to: '/shop/violins' },
+      },
+    ],
     productIds: [
       'steel-string-acoustic-guitar',
       'flame-stratocaster-electric-guitar',
@@ -378,9 +393,9 @@ export const localSeoPages = {
   'woodland-hills': {
     eyebrow: 'Woodland Hills music store',
     title: 'Visit our Woodland Hills music store',
-    seoTitle: 'Visit Our Woodland Hills Music Store',
+    seoTitle: 'Woodland Hills Music Store | Guitars, Violins, Strings & Repairs',
     description:
-      'Plan a visit to Sattari Music at 4881 Topanga Canyon Blvd #202 in Woodland Hills. Browse drum gear, violins and guitars, or ask about repairs and lessons.',
+      'Shop guitars, violins and strings or arrange a repair at Sattari Music on Topanga Canyon Blvd in Woodland Hills. Check availability and book your visit.',
     url: 'https://sattarimusic.com/woodland-hills-music-store',
     schemaType: 'MusicStore',
     schemaName: 'Sattari Music — Woodland Hills',
@@ -398,6 +413,43 @@ export const localSeoPages = {
       'Getting an instrument repaired or set up close to home',
       'Families and students starting music in the West Valley',
       'Musicians who want gear, repair, and lessons in one place',
+    ],
+    details: [
+      {
+        id: 'guitar-and-violin-sales',
+        title: 'Compare guitars and violins for sale',
+        copy: 'Start with the model you want to play. Compare electric, steel-string and classical guitars or bass in the guitar catalog. For a violin, check the size and whether you want acoustic projection or an amplified sound. Send the listing names so we can confirm which instruments you can try.',
+        links: [
+          { label: 'Shop guitars and bass', to: '/shop/guitar-bass' },
+          { label: 'Shop violins', to: '/shop/violins' },
+        ],
+      },
+      {
+        id: 'strings-and-restringing',
+        title: 'Buy strings or arrange restringing',
+        copy: `A standard guitar string set costs $${standardSet}, or $${standardInstalled} with installation. Include the guitar type and gauge when checking a pack. For a violin, tell us its size, which string needs changing and the end fitting so we can confirm string options and quote the work.`,
+        links: [
+          { label: 'Guitar strings for pickup', to: '/guitar-strings-woodland-hills' },
+          { label: 'Violin strings for sale', to: '/violin-strings-woodland-hills' },
+          {
+            label: 'Guitar restringing prices',
+            to: '/services/guitar-restringing-woodland-hills#restringing-prices',
+          },
+          {
+            label: 'Violin restringing quotes',
+            to: '/services/violin-restringing-woodland-hills#violin-fitting-quote',
+          },
+        ],
+      },
+      {
+        id: 'plan-your-shop-visit',
+        title: 'Arrange a Woodland Hills shop appointment',
+        copy: `Call ${BUSINESS.phoneDisplay} before visiting ${BUSINESS.addressLine}. For pickup, confirm the exact set or instrument and the collection time. For repair, describe the symptom and any deadline so the team can tell you which parts or accessories to bring.`,
+        link: {
+          label: 'Plan an instrument repair visit',
+          to: '/services/instrument-repair-woodland-hills#prepare-for-drop-off',
+        },
+      },
     ],
     primaryCta: { label: 'Shop instruments & gear', to: '/shop' },
     secondaryCta: { label: 'Visit or ask us', href: '#local-inquiry' },
@@ -507,14 +559,14 @@ export const localSeoPages = {
   'repair-woodland-hills': {
     eyebrow: 'Instrument repair in Woodland Hills',
     title: 'Instrument repair in Woodland Hills',
-    seoTitle: 'Instrument Repair in Woodland Hills',
+    seoTitle: 'Instrument Repair in Woodland Hills | Guitars, Violins & Drums',
     description:
-      'Request guitar and violin setup, drum repair, tuning and hardware troubleshooting at Sattari Music in Woodland Hills. Tell us what needs attention.',
+      'Need a guitar or violin repair near Woodland Hills? Compare string replacement, setup and repair, then request an assessment at our Topanga Canyon shop.',
     url: 'https://sattarimusic.com/services/instrument-repair-woodland-hills',
     schemaType: 'Service',
     schemaName: 'Sattari Music Instrument Repair — Woodland Hills',
     intro:
-      'When something needs fixing, Sattari handles instrument repair right in Woodland Hills — drums and percussion, guitars, violins, hardware, and setup — with careful, honest work and a real person to talk it through.',
+      'A broken guitar string, a slipping violin peg and a rattling snare need different work. Start with the instrument and the symptom. We’ll confirm what to bring, the next available assessment and where to meet us on Topanga Canyon Boulevard.',
     highlights: [
       'Drum repair',
       'Guitar setup',
@@ -534,6 +586,32 @@ export const localSeoPages = {
       'Drummers and percussionists with hardware or setup issues',
       'String and guitar players needing setup, tuning, or repair',
       'Anyone with a rare or sentimental instrument to protect',
+    ],
+    details: [
+      {
+        id: 'choose-repair-service',
+        title: 'Which repair service should I ask for?',
+        copy: 'For an otherwise comfortable guitar or violin with one snapped string, ask about replacement. If the same string keeps breaking in the same spot, include that detail so we can check the contact point. For drums and hardware, identify the moving part and when the rattle starts.',
+        link: {
+          label: 'Get help with a broken instrument string',
+          to: '/services/string-replacement-woodland-hills',
+        },
+      },
+      {
+        id: 'prepare-for-drop-off',
+        title: 'What should I bring to a Woodland Hills repair appointment?',
+        copy: 'Bring the instrument in its case and any loose part in a separate pouch. An old string envelope, the make and model, and a short description of the fault help us match parts. For intermittent noise, note how to reproduce it and ask whether to bring your usual cable or pedal.',
+        link: { label: 'Arrange a repair assessment', to: '#local-inquiry' },
+      },
+      {
+        id: 'repair-estimate',
+        title: 'What does an instrument repair estimate cover?',
+        copy: 'Ask which work and parts the estimate covers and when the instrument can be collected. A string-fitting quote, an adjustment to a guitar’s action and a repair to a violin bridge cover different work. Include your next lesson or performance date when requesting a time.',
+        link: {
+          label: 'See standard guitar restringing prices',
+          to: '/services/guitar-restringing-woodland-hills#restringing-prices',
+        },
+      },
     ],
     primaryCta: { label: 'Request a repair', href: '#local-inquiry' },
     secondaryCta: { label: 'See all services', to: '/services' },
@@ -584,6 +662,23 @@ export const localSeoPages = {
       'Drummers with hardware, pedal, or setup issues',
       'String and guitar players needing setup or repair',
       'Rare or sentimental instruments that need careful hands',
+    ],
+    details: [
+      {
+        id: 'repair-trip-from-calabasas',
+        title: 'Arrange your repair visit from Calabasas',
+        copy: `Our repair appointments take place at ${BUSINESS.addressLine}. Before traveling from Calabasas, send the make, model, the first sign of trouble and the date you need the instrument back. The shop will confirm whether to bring the instrument in for fitting, setup or assessment.`,
+        links: [
+          {
+            label: 'Compare guitar restringing and setup',
+            to: '/services/guitar-restringing-woodland-hills#restring-or-setup',
+          },
+          {
+            label: 'Ask about a violin bridge or slipping peg',
+            to: '/services/violin-repair-los-angeles#bridge-and-peg-symptoms',
+          },
+        ],
+      },
     ],
     primaryCta: { label: 'Request a repair', href: '#local-inquiry' },
     secondaryCta: { label: 'See all services', to: '/services' },
@@ -672,17 +767,17 @@ export const localSeoPages = {
     schemaType: 'Store',
     schemaName: 'Sattari Violins',
     intro:
-      'SATTARI violins are hand-carved, shaped, and finished with fine varnishes — acoustic, electric, and silent models, individually fitted and tuned in California, with local setup, repair, and teacher support.',
+      'Compare the current acoustic and electric violin listings before arranging a Woodland Hills appointment. For a student, bring the size and equipment list from the teacher. For an amplified violin, ask which cable, amp or headphone connection the specific model uses.',
     highlights: [
       'Acoustic',
       'Electric',
       'Silent',
-      'Hand-carved',
+      'Student fit',
       'Fitted & tuned',
       'California setup',
     ],
     offerings: [
-      'Handcrafted acoustic, electric, and silent SATTARI violins',
+      'Acoustic and amplified violin models for different practice rooms and performance settings',
       'Individually fitted and tuned before they reach you',
       'Local setup, string, and repair support for your instrument',
       'Teacher and lesson connections for new and returning players',
@@ -690,7 +785,7 @@ export const localSeoPages = {
     goodFor: [
       'Students and players looking for a quality violin locally',
       'Musicians who want acoustic, electric, or silent options',
-      'Anyone who wants a fitted, tuned instrument, not a boxed guess',
+      'Players who want to check their violin size and bow before an appointment',
       'Players who also need setup, repair, or lessons',
     ],
     primaryCta: { label: 'Shop violins', to: '/shop/violins' },
@@ -708,7 +803,7 @@ export const localSeoPages = {
     faqs: [
       {
         q: 'What kinds of violins does Sattari offer?',
-        a: 'Handcrafted acoustic, electric, and silent violins, each fitted and tuned in California.',
+        a: 'Compare acoustic, electric and silent violin listings for your playing situation. Ask about the specific model and size available to try in Woodland Hills before arranging a visit.',
       },
       {
         q: 'Are the violins good for beginners?',
@@ -722,15 +817,15 @@ export const localSeoPages = {
   },
   guitars: {
     eyebrow: 'Guitars & bass in Los Angeles',
-    title: 'Guitars and bass in Los Angeles',
-    seoTitle: 'Los Angeles Guitars & Bass | Sales & Setup',
+    title: 'Shop for a guitar in Woodland Hills, Los Angeles',
+    seoTitle: 'Guitar Shop in Woodland Hills | Los Angeles Guitar Appointments',
     description:
-      'Find electric guitars, acoustic guitars and bass at Sattari Music in Woodland Hills. Shop online or ask about setup, strings and repair support in Los Angeles.',
+      'Compare electric, steel-string, nylon-string and bass guitars before a Woodland Hills shop appointment. Check the model, price and local availability first.',
     url: 'https://sattarimusic.com/shop/guitars-los-angeles',
     schemaType: 'Store',
     schemaName: 'Sattari Guitars & Bass',
     intro:
-      'Electric and acoustic guitars and bass, set up and ready to play and shipped from California — backed by local accessories, setup, string, and repair support so your instrument stays gig-ready.',
+      'Looking for a guitar you can try in Los Angeles? Start with the models below, then tell our Woodland Hills shop which ones you want to play. We’ll confirm the instruments and appointment before you travel. Each listing also shows the current online price and purchase options.',
     highlights: ['Electric', 'Acoustic', 'Bass', 'Set up ready', 'Accessories', 'Repairs'],
     offerings: [
       'Electric and acoustic guitars and bass for players and students',
@@ -743,6 +838,29 @@ export const localSeoPages = {
       'Students and beginners who want a ready-to-play instrument',
       'Musicians who also need accessories, setup, or repairs',
       'Anyone who wants a real person behind the purchase',
+    ],
+    details: [
+      {
+        id: 'plan-a-guitar-trial',
+        title: 'Plan a guitar trial before visiting the shop',
+        copy: 'Send the name of the listing, your budget, and one or two songs you want to play. Ask which models can be tried at the same appointment. Bring your usual pick and compare the same chord and single-note phrase on each guitar, sitting in the position you use at home.',
+        link: { label: 'Ask about a guitar appointment', to: '#local-inquiry' },
+      },
+      {
+        id: 'compare-acoustic-electric',
+        title: 'Choose which guitars to try side by side',
+        copy: 'For unamplified accompaniment, compare a steel-string acoustic with a nylon-string classical and check how the neck fits your fretting hand. For an electric, ask to hear a clean sound before adding effects. On a five-string bass, try muting the low B while playing the other strings.',
+        link: { label: 'Compare current guitar and bass listings', to: '/shop/guitar-bass' },
+      },
+      {
+        id: 'first-guitar-setup',
+        title: 'What should a first guitar feel like?',
+        copy: 'Play near the nut and farther up the neck. Notice if notes sound clear using comfortable finger pressure. Ask about the fitted gauge, usual tuning and anything included with the model before budgeting for strings, a case or an amplifier.',
+        link: {
+          label: 'Try the beginner acoustic guitar fit test',
+          to: '/guides/choose-a-beginner-acoustic-guitar',
+        },
+      },
     ],
     primaryCta: { label: 'Shop guitar & bass', to: '/shop/guitar-bass' },
     catalogHeading: 'Electric, acoustic and bass guitars for sale',
@@ -758,7 +876,7 @@ export const localSeoPages = {
     faqs: [
       {
         q: 'What guitars does Sattari carry?',
-        a: 'Electric and acoustic guitars and bass, with more available by request.',
+        a: 'The online catalog features electric, steel-string acoustic, nylon-string classical and five-string bass models. Each listing shows current online options. Contact our Woodland Hills shop to confirm the exact guitar you want to hear in person.',
       },
       {
         q: 'Are the instruments set up before I get them?',
@@ -868,8 +986,10 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: 'A first violin: confirm the requirements',
-        copy: "Bring the player's size recommendation from their teacher, experience level and budget. Ask what comes with the particular model, what accessories you need, and whether it is available before making the trip.",
+        id: 'violin-trip-from-encino',
+        title: 'Trying a first violin when visiting from Encino',
+        copy: 'Send the size recommended by your teacher, your budget and the listing you want to try before traveling to Woodland Hills. Ask what comes with that violin and whether its size is available for your appointment. Bring the teacher’s equipment list if the instrument is for school orchestra.',
+        link: { label: 'Compare current violin listings', to: '/shop/violins' },
       },
       {
         title: 'Acoustic, electric or silent?',
@@ -878,6 +998,7 @@ export const localSeoPages = {
       {
         title: 'Already have a violin?',
         copy: 'Tell us about tuning, string, bridge or playability concerns before deciding to replace it. The repair inquiry lets the team discuss assessment and whether a shop visit is needed; it is not an online diagnosis.',
+        link: { label: 'Request a violin assessment', to: '/services/violin-repair-los-angeles' },
       },
     ],
     productIds: [
@@ -930,6 +1051,15 @@ export const localSeoPages = {
       'Owners of sentimental instruments who want to discuss handling first',
     ],
     details: [
+      {
+        id: 'bridge-and-peg-symptoms',
+        title: 'Does a slipping peg or a leaning bridge need violin repair?',
+        copy: 'A note that drops suddenly as you tune can point to a slipping peg. A bridge that has tipped or shifted needs a different check. If a bridge foot has lifted, stop tuning and keep the violin in its case until we advise you. Tell us which string is affected and whether the bridge moved during a recent string change.',
+        link: {
+          label: 'Compare routine violin string fitting',
+          to: '/services/violin-restringing-woodland-hills',
+        },
+      },
       {
         title: 'What to include in your request',
         copy: 'Share the violin model or label if known, when the issue started, whether strings or setup recently changed, and any performance or lesson deadline. The team can request photos when replying.',
@@ -993,8 +1123,13 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: 'Describe the problem in playing terms',
-        copy: 'Tell us which strings or frets are affected, whether the issue is new, and whether it happens plugged in or unplugged. Include the model, usual tuning and any recent changes.',
+        id: 'setup-symptoms',
+        title: 'Fret buzz, high action or notes that sound sharp?',
+        copy: 'For fret buzz, name the string and fret, and try the note at your normal playing volume. For high action, tell us where pressing a note feels difficult. If open strings are in tune but chords sound sharp farther up the neck, ask about intonation. Include the tuning and gauge you use so we can assess the instrument as you play it.',
+        link: {
+          label: 'Check the signs that a guitar needs a setup',
+          to: '/guides/when-does-my-guitar-need-a-setup',
+        },
       },
       {
         title: 'Match the setup to your playing',
@@ -1030,8 +1165,8 @@ export const localSeoPages = {
   },
   'guitar-strings': {
     eyebrow: 'Guitar strings in Woodland Hills',
-    title: 'Find guitar strings in Woodland Hills',
-    seoTitle: 'Guitar Strings in Woodland Hills | Ernie Ball & More',
+    title: 'Guitar strings for sale in Woodland Hills',
+    seoTitle: 'Guitar Strings for Sale in Woodland Hills | Ernie Ball & More',
     description: `Shop guitar strings in Woodland Hills. Standard sets cost $${standardSet}. We carry Ernie Ball and other premium strings. Check your preferred gauge and arrange pickup.`,
     url: 'https://sattarimusic.com/guitar-strings-woodland-hills',
     schemaType: 'WebPage',
@@ -1053,19 +1188,30 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: 'Electric guitar strings: start with your current set',
-        copy: 'The old packet is a good starting point. Send the brand, the lightest and heaviest string gauges on the label and the number of strings on your guitar. If you want something different, tell us how you tune and what you would like to change about the feel.',
+        id: 'electric-string-gauges',
+        title: 'How do I match my electric guitar string gauge?',
+        copy: 'Look for two numbers on the packet. A set marked 10–46 runs from .010 inch on the thinnest string to .046 inch on the thickest. Ask for the same brand, set name and gauge if you like the current feel. For Ernie Ball or another premium set, send the packet name and your usual tuning so we can check the exact pack.',
+        link: {
+          label: 'See how electric strings attach to different tuners',
+          to: '/guides/how-to-change-electric-guitar-strings',
+        },
       },
       {
-        title: 'Acoustic and classical guitars need the right string type',
-        copy: 'Identify whether your acoustic guitar is designed for steel strings or nylon strings. Classical guitars generally use nylon-string sets; do not substitute steel strings on a guitar designed for nylon. If you are unsure, send the make and model or a photo of the existing string packaging before choosing replacements.',
+        id: 'acoustic-string-types',
+        title: 'Buying strings for an acoustic or classical guitar',
+        copy: 'Read the model name inside the soundhole and check the old pack. A steel-string acoustic and a nylon-string classical guitar need different sets. The metal winding on a classical bass string can hide its flexible core, so appearance alone can mislead. Use strings approved for the instrument and ask us to check the model if the packet is missing.',
+        link: {
+          label: 'Identify nylon and steel guitar strings',
+          to: '/guides/nylon-vs-steel-string-guitar',
+        },
       },
       {
         title: 'Match gauge to your instrument and tuning',
         copy: 'Gauge describes string thickness. Tell us your normal tuning, playing style and what feels uncomfortable about your current strings. A different gauge or tuning can change tension and may call for a setup assessment. Check the instrument maker’s recommendations rather than choosing a set solely because its label says light or medium.',
       },
       {
-        title: 'Take a set home or have it installed',
+        id: 'set-price-and-pickup',
+        title: 'Guitar string prices for pickup and installation',
         copy: `A standard guitar string set costs $${standardSet}. Add $${standardLabor} for restringing labor, for a total of $${standardInstalled} with the standard set installed. Ask about the price of a particular premium set and arrange your visit before coming in.`,
       },
     ],
@@ -1128,12 +1274,22 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: 'Check the violin size before ordering',
-        copy: 'Confirm the instrument size from its paperwork, teacher or maker. The current listing names 4/4 and 3/4 fit; it does not establish compatibility with every fractional-size violin. For a smaller instrument or uncertain size, ask before purchasing and include the model or label if known.',
+        id: 'violin-string-size',
+        title: 'Which replacement strings fit a student violin?',
+        copy: 'Check the size on the rental agreement, instrument label or teacher’s notes. The Sattari ball-end set lists 4/4 and 3/4 violins. For a 1/2, 1/4 or other fractional violin, send the exact size before buying. Shortening a string intended for a larger instrument does not establish the right tension or fit.',
+        link: {
+          label: 'See where to check violin string size and end fittings',
+          to: '/guides/how-to-change-a-violin-string',
+        },
       },
       {
-        title: 'Match ball ends to your existing fitting',
-        copy: 'Our listed violin strings have ball ends. Check the requirements of the tailpiece and fine tuners, including the E-string fitting. If you have a loop-end requirement or cannot identify the fitting, contact us before ordering rather than assuming the listed set will fit.',
+        id: 'ball-or-loop-end',
+        title: 'Does your violin E string take a ball end or loop end?',
+        copy: 'Look where the E string meets the tailpiece. A forked fine tuner can hold a small metal ball, while a single-hook fitting may take a loop. The set listed here has ball ends. If your teacher specified a loop-end E or you cannot see the fitting clearly, keep the old packet and check the requirement with us.',
+        link: {
+          label: 'Compare the E-string fittings in close-up',
+          to: '/guides/how-to-change-a-violin-string#seat-the-tailpiece-end',
+        },
       },
       {
         title: 'Bring any teacher or player requirements',
@@ -1199,19 +1355,25 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: '1. Describe the guitar and the replacement you need',
-        copy: 'Include the make and model, number of strings, current gauge if known, desired tuning and your deadline. Tell us whether the guitar is electric, steel-string acoustic or nylon-string classical. Mention a locking tremolo, floating bridge, twelve-string instrument or other unusual requirements so the team can confirm whether it can accept the job.',
+        id: 'bridge-and-tuning',
+        title: 'Which bridge, gauge and tuning should I tell the shop about?',
+        copy: 'Send the make, model, number of strings and usual tuning. Mention bridge pins on a steel-string acoustic, a tie block on a classical guitar, or a locking nut or floating tremolo on an electric guitar. Changing the gauge or tuning can affect the balance of a floating bridge. We will check the work and price for that hardware before booking.',
+        link: {
+          label: 'See how a classical guitar tie block works',
+          to: '/guides/how-to-change-classical-guitar-strings',
+        },
       },
       {
-        title: '2. Choose your strings',
+        title: 'Choose your replacement guitar strings',
         copy: 'We carry Ernie Ball and other premium guitar strings. If you want a particular set, share the brand and gauge so we can confirm the price and availability before fitting it. Mention any buzzing or setup concerns when you request the appointment so we can discuss that work separately.',
       },
       {
-        title: '3. Arrange your appointment and collection',
+        title: 'Arrange your appointment and collection',
         copy: `Shop visits are by appointment at ${BUSINESS.addressLine}. Wait for the team to confirm the time, what to bring and collection arrangements. An online inquiry is not a booking, and same-day completion is not guaranteed.`,
       },
       {
-        title: 'When a string change becomes a setup or repair question',
+        id: 'restring-or-setup',
+        title: 'Does my guitar need restringing or a setup?',
         copy: 'A restringing request covers the agreed string replacement work. Persistent buzzing, high action, notes sounding out of tune along the neck, repeated breakage or damaged parts can need further assessment. Describe those symptoms when you inquire; a full setup, fret work, electronics or structural repair is not automatically included.',
       },
     ],
@@ -1276,8 +1438,13 @@ export const localSeoPages = {
     ],
     details: [
       {
-        title: 'One broken string or a complete set?',
-        copy: 'Name the affected string and describe when it broke. A single replacement may be the right inquiry when the other strings are usable; an older or uneven set can be discussed as a whole. The team needs to check compatible options and availability. No particular brand, tension or single-string stock is promised here.',
+        id: 'single-string-or-set',
+        title: 'Replace one violin string or restring the full set?',
+        copy: 'If a nearly new E string snapped and the G, D and A still respond evenly, ask about a matching single E. If the winding is unraveling on several strings or the set feels uneven under the bow, ask about a full set. Single-string availability depends on the size, end fitting and tension your instrument needs.',
+        link: {
+          label: 'Check the fit of the listed violin string set',
+          to: '/violin-strings-woodland-hills',
+        },
       },
       {
         title: 'Size and string ends matter',
@@ -1288,8 +1455,9 @@ export const localSeoPages = {
         copy: 'If the bridge is leaning, a peg keeps slipping or the same string repeatedly breaks, describe that before requesting a routine string change. Do not force a stuck peg or assume a tuner reading explains the cause. Fitting strings and diagnosing a recurring problem can involve different work; confirm scope before approving it.',
       },
       {
-        title: 'Confirm the quote and appointment',
-        copy: 'Ask about string cost, labor, whether customer-supplied strings can be used and expected collection time. Confirm any additional assessment charges first. Visits to 4881 Topanga Canyon Blvd #202 are by appointment; an inquiry does not reserve stock or guarantee same-day service.',
+        id: 'violin-fitting-quote',
+        title: 'What determines violin restringing cost?',
+        copy: 'Request two figures, the price of the compatible string or set and the labor to fit it. Tell us if you already have the teacher’s specified strings. Mention a leaning bridge or slipping peg so the estimate can identify any additional work. Agree on the appointment and expected collection time before bringing the violin.',
       },
     ],
     productIds: ['violin-strings'],
@@ -1360,8 +1528,22 @@ export const localSeoPages = {
         copy: 'For a guitar or bass, include make, model, number of strings, usual tuning and gauge if known. For bass, include scale length or model and whether it has four or five strings. For a violin, include size, the affected string and end fitting. Do not assume one set fits every instrument.',
       },
       {
-        title: 'Describe how and where it broke',
-        copy: 'Say whether the string broke while tuning or playing, whether it has happened repeatedly, and whether the break was near the bridge, nut or tuning post. These observations help the team decide what to assess; they are not enough for an online diagnosis. Avoid forcing a peg or tightening damaged hardware.',
+        id: 'where-it-broke',
+        title: 'Where did the string break?',
+        copy: 'Keep the broken end in its packet if you have it. Tell us whether the break is at the bridge or saddle, near the nut, at a tuning post, or in the middle. Repeated breaks at one contact point are worth inspecting before fitting another string. On a violin, leave the other strings in place and tell us if the bridge moved.',
+        link: {
+          label: 'Request a repair assessment in Woodland Hills',
+          to: '/services/instrument-repair-woodland-hills',
+        },
+      },
+      {
+        id: 'bass-string-fit',
+        title: 'What matters when replacing a broken bass string?',
+        copy: 'Give the string count, make and model, normal tuning, and which note broke. A four-string bass and a five-string bass with a low B need different sets. The bridge-to-tuner path matters too: through-body stringing can require more winding length than a top-loading bridge on the same scale. Ask for the pack price and fitting quote for your bass.',
+        link: {
+          label: 'Check bass string winding length',
+          to: '/guides/how-to-change-bass-guitar-strings',
+        },
       },
       {
         title: 'String change, tuning or setup?',
@@ -1433,8 +1615,8 @@ const RELATED_PAGES: Record<PageKey, PageKey[]> = {
   'repair-woodland-hills': [
     'violin-repair',
     'guitar-setup',
-    'woodland-drums',
-    'instrument-rentals',
+    'guitar-restringing',
+    'violin-restringing',
   ],
   'repair-calabasas': ['guitar-setup', 'violin-repair', 'calabasas', 'instrument-rentals'],
   drums: ['woodland-drums', 'accessories', 'repair-woodland-hills', 'rehearsal-space'],
@@ -1507,9 +1689,11 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
     'to' in page.primaryCta && page.primaryCta.to.startsWith('/product/')
       ? page.primaryCta.to
       : null;
+  const purchaseTarget = primaryProductPath
+    ? products.find((product) => primaryProductPath === `/product/${product.slug}`)
+    : null;
   const primaryCta =
-    primaryProductPath &&
-    !products.some((product) => primaryProductPath === `/product/${product.slug}`)
+    primaryProductPath && (!purchaseTarget || isSoldOut(purchaseTarget))
       ? { label: 'Ask about availability', href: '#local-inquiry' }
       : page.primaryCta;
   const breadcrumbs = getBreadcrumbs(pageKey);
@@ -1596,13 +1780,6 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
             <CtaLink cta={primaryCta} className="button button-solid" />
             <CtaLink cta={page.secondaryCta} className="button button-outline" />
           </div>
-          {pageKey === 'guitar-restringing' && (
-            <p className="restring-quote-note">
-              Want a particular premium set? We carry Ernie Ball and other premium strings. Ask for
-              your preferred gauge and its price before visiting. Additional setup work is quoted
-              separately.
-            </p>
-          )}
         </div>
 
         <div className="repair-callout-card">
@@ -1625,6 +1802,39 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         </div>
       </div>
 
+      {pageKey === 'repair-woodland-hills' && (
+        <div className="container">
+          <ShopRepairFinder />
+        </div>
+      )}
+
+      {pageKey === 'guitar-restringing' && (
+        <section className="container restring-price-guide" aria-labelledby="restringing-prices">
+          <h2 id="restringing-prices">How much does guitar restringing cost in Woodland Hills?</h2>
+          <dl>
+            <div>
+              <dt>Standard guitar string set</dt>
+              <dd>${standardSet}</dd>
+            </div>
+            <div>
+              <dt>Standard restringing labor</dt>
+              <dd>${standardLabor}</dd>
+            </div>
+            <div>
+              <dt>Standard set installed</dt>
+              <dd>${standardInstalled}</dd>
+            </div>
+          </dl>
+          <p>
+            For a premium set, ask for the pack price plus fitting. Bringing your own strings?
+            Include the sealed set name, gauge, tuning and guitar model in your request. Bass,
+            twelve-string and locking-bridge jobs, setups and repairs need an individual quote.
+          </p>
+          <Link to="/guitar-strings-woodland-hills#electric-string-gauges">
+            Check a pack or gauge before fitting
+          </Link>
+        </section>
+      )}
       {pageKey === 'guitar-restringing' && (
         <section className="container repair-archive" aria-labelledby="guitar-restring-story">
           <figure>
@@ -1687,8 +1897,18 @@ export default function LocalSeoPage({ pageKey }: LocalSeoPageProps) {
         <section className="container local-advice" aria-label="Planning your visit or request">
           {page.details.map((detail) => (
             <div key={detail.title}>
-              <h2>{detail.title}</h2>
+              <h2 id={'id' in detail ? detail.id : undefined}>{detail.title}</h2>
               <p>{detail.copy}</p>
+              {'link' in detail && <Link to={detail.link.to}>{detail.link.label}</Link>}
+              {'links' in detail && (
+                <ul className="local-detail-links">
+                  {detail.links.map((link) => (
+                    <li key={link.to}>
+                      <Link to={link.to}>{link.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ))}
         </section>

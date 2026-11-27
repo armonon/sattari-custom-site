@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import ServicePlanningDetails from './ServicePlanningDetails';
+import ShopRepairFinder from './ShopRepairFinder';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, businessSchema } from '../data/siteSeo';
 
@@ -226,6 +227,7 @@ export default function ServicesPage() {
         </div>
 
         <ServicePlanningDetails service={serviceValue} />
+        {serviceValue === 'repairs' && <ShopRepairFinder />}
 
         <section className="services-location" id="visit" aria-labelledby="services-location-title">
           <div className="services-location-copy">

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
 import ServicePlanningDetails from './ServicePlanningDetails';
+import ShopRepairFinder from './ShopRepairFinder';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, breadcrumbSchema, businessSchema } from '../data/siteSeo';
 import { guitarStringPricing } from '../data/guitarStringPricing';
@@ -110,7 +111,7 @@ export default function RepairPage() {
       <div className="container repair-hero">
         <div className="repair-hero-copy">
           <p className="eyebrow">Los Angeles instrument repair</p>
-          <h1>Instrument repair in Woodland Hills</h1>
+          <h1>Guitar, violin and instrument repair in Los Angeles</h1>
           <p>
             Broken string, buzzing fret or rattling drum hardware? Tell us what you hear and which
             instrument you play. Our Woodland Hills shop takes repair and setup appointments for
@@ -144,6 +145,40 @@ export default function RepairPage() {
         </div>
       </div>
 
+      <section className="container local-advice" aria-labelledby="repair-by-instrument">
+        <div>
+          <h2 id="repair-by-instrument">Choose a repair by instrument</h2>
+          <p>
+            For an acoustic guitar, electric guitar or bass, note the usual tuning and whether the
+            problem happens on open strings, at one fret or all the way up the neck.
+          </p>
+          <Link to="/services/guitar-setup-los-angeles#setup-symptoms">
+            Guitar and bass setup assessment
+          </Link>
+        </div>
+        <div>
+          <h2>Violin bridge, peg and string problems</h2>
+          <p>
+            If a peg slips or the bridge has shifted, tell us what changed before you try tuning
+            again. For a single snapped string, include the note, violin size and tailpiece fitting.
+          </p>
+          <Link to="/services/violin-repair-los-angeles#bridge-and-peg-symptoms">
+            Violin repair and setup assessment
+          </Link>
+        </div>
+        <div>
+          <h2>Drums, stands and pedals</h2>
+          <p>
+            Say which drum, stand or pedal makes the sound and whether it occurs with the snare
+            wires engaged, during a pedal stroke or when you move the hardware. Keep any loose
+            pieces for the assessment.
+          </p>
+          <a href="#repair-inquiry">Describe a drum or hardware fault</a>
+        </div>
+      </section>
+      <div className="container">
+        <ShopRepairFinder />
+      </div>
       <div className="container repair-grid">
         <article className="info-card repair-info-card">
           <p className="card-kicker">What we help with</p>

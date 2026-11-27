@@ -93,7 +93,7 @@ it('opens the guided shop assistant from the new homepage', async () => {
 }, 30000);
 
 it.each([
-  ['/guitar-strings-woodland-hills', 'Find guitar strings in Woodland Hills'],
+  ['/guitar-strings-woodland-hills', 'Guitar strings for sale in Woodland Hills'],
   ['/violin-strings-woodland-hills', 'Violin strings for sale in Woodland Hills'],
   ['/services/guitar-restringing-woodland-hills', 'Guitar string replacement in Woodland Hills'],
 ])(

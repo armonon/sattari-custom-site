@@ -8,7 +8,7 @@ const PLANNING = {
     cards: [
       [
         'String replacement',
-        'Tell us which string broke or whether you want a full set. Include the instrument and your usual tuning so we can check fit and discuss any setup work.',
+        'For a guitar, send the model, gauge and usual tuning. For a violin, include the size, string name and end fitting. Tell us if you have your own set or want us to supply the replacement.',
       ],
       [
         'Setup and playability',
@@ -19,10 +19,11 @@ const PLANNING = {
         'Send the model, symptoms and deadline. Confirm the supported work, estimate and timing before approving a repair or arranging your visit.',
       ],
     ],
-    note: 'Structural work, electrical repairs, bow work and specialist restoration need individual confirmation. Tell us about previous repairs or modifications. Please wait for photo-sharing instructions and keep sensitive documents out of your repair description.',
+    note: 'Tell us about previous repairs or modifications. For structural work, electronics, bow work or restoration, we will confirm whether we can take the instrument and what an assessment would cover.',
     links: [
       ['Guitar and bass setup', '/services/guitar-setup-los-angeles'],
       ['Guitar string replacement prices', '/services/guitar-restringing-woodland-hills'],
+      ['Violin string fitting and quotes', '/services/violin-restringing-woodland-hills'],
       ['Violin repair and setup', '/services/violin-repair-los-angeles'],
     ],
   },

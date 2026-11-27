@@ -136,6 +136,54 @@
   margin: 0;
   line-height: 1.65;
 }
+.local-detail-links {
+  margin: 10px 0 0;
+  padding-inline-start: 20px;
+}
+.local-detail-links li {
+  padding: 4px 0;
+  line-height: 1.5;
+}
+.local-detail-links a {
+  text-underline-offset: 4px;
+}
+
+.local-advice h2[id],
+#restringing-prices,
+#repair-by-instrument {
+  scroll-margin-top: 110px;
+}
+.local-advice div > a,
+.restring-price-guide > a {
+  display: inline-block;
+  margin-top: 12px;
+  text-underline-offset: 4px;
+}
+.restring-price-guide {
+  margin-block: 36px;
+}
+.restring-price-guide dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px 20px;
+  margin: 16px 0;
+}
+.restring-price-guide dl > div {
+  border-block-start: 1px solid var(--border, #8886);
+  padding-top: 12px;
+}
+.restring-price-guide dt {
+  font-size: 15px;
+}
+.restring-price-guide dd {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+.restring-price-guide p {
+  max-width: 74ch;
+  line-height: 1.65;
+}
 
 .category-local-help {
   margin-top: 32px;

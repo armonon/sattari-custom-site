@@ -5,6 +5,7 @@ import process from 'node:process';
 import { createServer } from 'vite';
 import { EMPTY_CATALOG_DOC } from '../src/utils/catalogMerge.js';
 import { guideRevisionDates } from '../src/data/guideRevisionDates.js';
+import { shopRepairRevisionDates } from '../src/data/shopRepairRevisionDates.js';
 
 process.env.NODE_ENV = 'production';
 
@@ -181,7 +182,7 @@ try {
   const urls = routes
     .filter((route) => route.indexable)
     .map(({ path }) => {
-      const date = guideRevisionDates[path];
+      const date = shopRepairRevisionDates[path] || guideRevisionDates[path];
       return `  <url><loc>https://sattarimusic.com${path}</loc>${date ? '<lastmod>' + date + '</lastmod>' : ''}</url>`;
     });
   await writeFile(

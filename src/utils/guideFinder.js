@@ -18,7 +18,7 @@ const aliases = {
   drums: 'drum',
   stems: 'stem',
 };
-function normalize(text) {
+export function normalizePhrase(text) {
   return text
     .toLowerCase()
     .normalize('NFKD')
@@ -54,20 +54,24 @@ export function buildGuideFinder(phrases, collections) {
       );
     }
   }
+  return buildPhraseIndex(phrases, destinations);
+}
+
+export function buildPhraseIndex(phrases, destinations) {
   const exact = new Map();
   const entries = [];
   for (const [path, target] of destinations) {
     const terms = phrases[path] || [];
-    for (const term of terms) exact.set(normalize(term), target);
+    for (const term of terms) exact.set(normalizePhrase(term), target);
     const names = target.section ? [target.title + ' ' + target.section] : [target.title];
-    const samples = [...names, ...terms].map((term) => tokens(normalize(term)));
+    const samples = [...names, ...terms].map((term) => tokens(normalizePhrase(term)));
     entries.push({ target, samples });
   }
   return { entries, exact };
 }
 
-export function findGuideSections(index, text, limit = 6) {
-  const value = normalize(text);
+export function findPhraseTargets(index, text, limit = 6) {
+  const value = normalizePhrase(text);
   const wanted = tokens(value);
   if (!wanted.size) return [];
   const match = index.exact.get(value);
@@ -91,3 +95,5 @@ export function findGuideSections(index, text, limit = 6) {
   );
   return [...(match ? [match] : []), ...results.map((item) => item.target)].slice(0, limit);
 }
+
+export { findPhraseTargets as findGuideSections };

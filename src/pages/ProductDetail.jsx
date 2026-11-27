@@ -15,6 +15,7 @@ import NotFoundPage from '../components/NotFoundPage';
 import QuantityInput from '../components/QuantityInput';
 import ProductBuyingHelp from '../components/ProductBuyingHelp';
 import { productVariantPath, relatedCatalogProducts } from '../data/catalogMerchandising';
+import { modelBuyingAdvice } from '../data/instrumentShopping';
 import { MAX_LINE_QUANTITY } from '../utils/cartCatalog';
 import { FLAT_SHIPPING_CENTS } from '../data/shipping';
 import { trackSiteEvent } from '../utils/siteMeasurement';
@@ -143,7 +144,18 @@ function ProductDetailView({ slug, initialSize, initialColor }) {
   const photoIndex = Math.min(activeImage, Math.max(0, galleryImages.length - 1));
   const mainImage = galleryImages.length ? galleryImages[photoIndex] : detailImage;
   const productUrl = `https://sattarimusic.com/product/${product.slug}`;
-  const searchDescription = `${product.name}. ${product.description}`;
+  const listedFit = product.specs?.find((spec) =>
+    /^(?:Size|Fit|Strings|Instrument|Body style|Pickup type|Use):/.test(spec)
+  );
+  const searchDescription = modelBuyingAdvice[product.slug]
+    ? [
+        `${product.name}, ${formatPriceRange(product)}.`,
+        listedFit && listedFit.length < 64 && listedFit + '.',
+        'Check options online or ask the Woodland Hills shop about availability.',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : `${product.name}. ${product.description}`;
   const guide =
     product.slug === 'five-string-bass-guitar'
       ? {

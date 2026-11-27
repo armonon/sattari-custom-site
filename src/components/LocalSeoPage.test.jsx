@@ -215,7 +215,7 @@ describe('local search pages', () => {
     const { doc, schema } = renderPage(<RepairPage />);
     const faqs = schema.find((item) => item['@type'] === 'FAQPage').mainEntity;
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
-    expect(doc.title).toContain('Los Angeles Instrument Repair');
+    expect(doc.title).toContain(PAGE_SEO.repair.title);
     expect(doc.querySelectorAll('details')).toHaveLength(faqs.length);
     for (const faq of faqs) {
       expect(doc.body.textContent).toContain(faq.name);
@@ -225,4 +225,17 @@ describe('local search pages', () => {
       'https://sattarimusic.com/#business'
     );
   });
+});
+
+it('keeps a sold-out violin string listing browsable and sends purchase inquiries to the shop', () => {
+  useInventory.mockReturnValue({
+    products,
+    isSoldOut: (product) => product.slug === 'violin-strings',
+  });
+  const { doc } = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+  expect(doc.querySelector('.repair-hero-copy .button-solid').getAttribute('href')).toBe(
+    '#local-inquiry'
+  );
+  expect(doc.querySelector('.local-product').getAttribute('href')).toBe('/product/violin-strings');
+  expect(doc.querySelector('.local-product-stock').textContent).toBe('Out of stock');
 });
