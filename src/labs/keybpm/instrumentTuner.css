@@ -1,8 +1,9 @@
 .instrument-lab {
   --tuner-accent-wash: color-mix(in srgb, var(--alab-accent) 10%, var(--alab-panel));
-  --tuner-display: #14251f;
-  --tuner-phosphor: #c6f6d8;
-  --tuner-display-muted: #b0c9bc;
+  /* The ink palette of the Key & BPM meter and its hub tile. */
+  --tuner-display: #0f0e0c;
+  --tuner-phosphor: #f2ead9;
+  --tuner-display-muted: #a89f8b;
   border: 1px solid var(--alab-line);
   border-radius: 18px;
   background: var(--alab-panel);
@@ -188,13 +189,10 @@
   min-width: 0;
   gap: 12px;
   padding: clamp(18px, 2.7vw, 34px);
-  border: 1px solid #456352;
+  border: 1px solid rgba(242, 234, 217, 0.16);
   border-radius: 14px;
-  color: #effff5;
+  color: #f2ead9;
   background-color: var(--tuner-display);
-  background-image:
-    radial-gradient(ellipse at 56% 0%, #2f54422e, transparent 68%),
-    linear-gradient(110deg, transparent, #0b17123d);
 }
 .instrument-screen-top {
   display: flex;
@@ -225,7 +223,7 @@
 .instrument-signal[data-active='true'] i {
   background: var(--tuner-phosphor);
   border-color: var(--tuner-phosphor);
-  box-shadow: 0 0 9px #beffd045;
+  box-shadow: 0 0 9px rgba(228, 184, 115, 0.3);
 }
 .instrument-pitch {
   text-align: center;
@@ -354,13 +352,13 @@
   color: #ffda99;
 }
 .instrument-readout[data-in-tune='true'] .instrument-feedback strong {
-  color: var(--tuner-phosphor);
+  color: #8fd4a0;
 }
 .instrument-lab .instrument-mic {
   justify-self: center;
-  border: 1px solid #719280;
-  color: #effff5;
-  background: #253d31;
+  border: 1px solid rgba(228, 184, 115, 0.55);
+  color: #f2ead9;
+  background: rgba(228, 184, 115, 0.12);
   font-weight: 600;
   font-size: 0.85rem;
 }
@@ -435,7 +433,7 @@
     filter: brightness(1.08);
   }
   .instrument-lab .instrument-mic:hover {
-    background: #33523f;
+    background: rgba(228, 184, 115, 0.22);
   }
 }
 @media (max-width: 760px) {
@@ -480,4 +478,108 @@
 
 .instrument-strings:has(button:nth-child(4):last-child) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* The tuner reads on the same meter as Key & BPM: needle = cents from the note. */
+.instrument-dial {
+  position: relative;
+  width: min(100%, 400px);
+  margin-inline: auto;
+  aspect-ratio: 1;
+}
+.instrument-dial-meter,
+.instrument-dial-meter svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.instrument-dial .instrument-pitch {
+  position: absolute;
+  inset: 54% 0 auto;
+  pointer-events: none;
+}
+.instrument-dial .instrument-pitch strong {
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+}
+.instrument-dial .instrument-pitch > div {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.kb-meter-svg .kb-meter-ring {
+  fill: none;
+  stroke: #f2ead9;
+  stroke-opacity: 0.12;
+}
+.kb-meter-svg .kb-meter-ring.is-inner {
+  stroke-opacity: 0.08;
+}
+.kb-meter-svg .kb-meter-key {
+  fill: #f2ead9;
+  fill-opacity: 0.45;
+  font:
+    22px ui-monospace,
+    monospace;
+}
+.kb-meter-svg .kb-meter-tick {
+  stroke: #f2ead9;
+  stroke-opacity: 0.3;
+  stroke-width: 1.5;
+}
+.kb-meter-svg .kb-meter-tick.is-long {
+  stroke-opacity: 0.75;
+  stroke-width: 3;
+}
+.kb-tuner-sweet {
+  fill: none;
+  stroke: #e4b873;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-opacity: 0.55;
+}
+.kb-tuner-side {
+  fill: #a89f8b;
+  font:
+    17px ui-monospace,
+    monospace;
+  letter-spacing: 4px;
+}
+.kb-meter-svg .kb-meter-needle {
+  transform-origin: 720px 500px;
+  transition: transform 0.12s linear;
+}
+.kb-meter-svg .kb-meter-needle line {
+  stroke: #e4b873;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.kb-meter-svg .kb-meter-hub {
+  fill: #e4b873;
+}
+.kb-meter-svg .kb-meter-pin {
+  fill: #0f0e0c;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-needle line {
+  stroke: #8fd4a0;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-hub,
+.kb-tuner-meter.is-in-tune .kb-tuner-sweet {
+  fill: none;
+  stroke: #8fd4a0;
+  stroke-opacity: 1;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-hub {
+  fill: #8fd4a0;
+  stroke: none;
+}
+.instrument-readout[data-in-tune='true'] .instrument-pitch strong {
+  color: #8fd4a0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-meter-svg .kb-meter-needle {
+    transition: none;
+  }
 }

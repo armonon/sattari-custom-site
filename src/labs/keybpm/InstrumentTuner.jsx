@@ -14,6 +14,7 @@ import {
 } from './instrumentTheory';
 import useInstrumentTuner from './useInstrumentTuner';
 import useTunerReference from './useTunerReference';
+import { TunerMeter } from './KeyBpmHero';
 import './instrumentTuner.css';
 
 export default function InstrumentTuner({
@@ -225,27 +226,9 @@ export default function InstrumentTuner({
                       : 'Microphone off'}
             </span>
           </div>
-          <div className="instrument-pitch">
-            <span className="instrument-screen-label">
-              {listening || targetMidi == null ? 'Detected pitch' : 'Reference pitch'}
-            </span>
-            <div>
-              <strong>{displayMidi != null ? noteLabel(displayMidi) : '—'}</strong>
-              {displayFrequency != null && (
-                <span>
-                  {displayFrequency.toFixed(1)} <small>Hz</small>
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="instrument-gauge">
-            <div className="instrument-gauge-caption" aria-hidden="true">
-              <span>Flat</span>
-              <span>Cents</span>
-              <span>Sharp</span>
-            </div>
+          <div className="instrument-dial">
             <div
-              className="instrument-meter"
+              className="instrument-dial-meter"
               role="meter"
               aria-label="Tuning offset in cents"
               aria-valuemin={-50}
@@ -257,21 +240,20 @@ export default function InstrumentTuner({
                   : `${offset} cents from ${noteLabel(comparison)}`
               }
             >
-              <span className="instrument-sweet-spot" aria-hidden="true" />
-              {offset != null && (
-                <i
-                  className="instrument-needle"
-                  aria-hidden="true"
-                  style={{ left: `${50 + Math.max(-50, Math.min(50, cents))}%` }}
-                />
-              )}
+              <TunerMeter cents={cents} inTune={inTune} />
             </div>
-            <div className="instrument-gauge-labels" aria-hidden="true">
-              <span>−50</span>
-              <span>−25</span>
-              <span>0</span>
-              <span>+25</span>
-              <span>+50</span>
+            <div className="instrument-pitch">
+              <span className="instrument-screen-label">
+                {listening || targetMidi == null ? 'Detected pitch' : 'Reference pitch'}
+              </span>
+              <div>
+                <strong>{displayMidi != null ? noteLabel(displayMidi) : '—'}</strong>
+                {displayFrequency != null && (
+                  <span>
+                    {displayFrequency.toFixed(1)} <small>Hz</small>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <p className="instrument-feedback">

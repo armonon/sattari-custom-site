@@ -189,3 +189,75 @@ export function KeyBpmMeter({
     </figure>
   );
 }
+
+// ---- The tuner meter: the same instrument, reading cents ------------------
+const CENT_TICKS = Array.from({ length: 41 }, (_, i) => i); // every 2.5 cents
+const centAngle = (cents) => Math.max(-50, Math.min(50, cents)) * 1.8; // ±50 cents = ±90°
+function arcPath(r, from, to) {
+  const [x1, y1] = meterPoint(r, from);
+  const [x2, y2] = meterPoint(r, to);
+  return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+}
+
+/** cents: null while no pitch is heard, else the offset from the target note. */
+export function TunerMeter({ cents = null, inTune = false }) {
+  const heard = Number.isFinite(cents);
+  return (
+    <svg
+      className={`kb-meter-svg kb-tuner-meter ${heard ? 'is-live' : 'is-idle'} ${inTune ? 'is-in-tune' : ''}`}
+      viewBox="250 30 940 940"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="720" cy="500" r="440" className="kb-meter-ring" />
+      <circle cx="720" cy="500" r="320" className="kb-meter-ring is-inner" />
+      <path d={arcPath(278, -9, 9)} className="kb-tuner-sweet" />
+      {[
+        [-90, '−50'],
+        [-45, '−25'],
+        [0, '0'],
+        [45, '+25'],
+        [90, '+50'],
+      ].map(([deg, label]) => {
+        const [x, y] = meterPoint(385, deg);
+        return (
+          <text key={label} x={x} y={y} dy="8" textAnchor="middle" className="kb-meter-key">
+            {label}
+          </text>
+        );
+      })}
+      <text x="330" y="640" textAnchor="middle" className="kb-tuner-side">
+        FLAT
+      </text>
+      <text x="1110" y="640" textAnchor="middle" className="kb-tuner-side">
+        SHARP
+      </text>
+      {CENT_TICKS.map((i) => {
+        const deg = -90 + i * 4.5;
+        const long = i % 4 === 0;
+        const [x1, y1] = meterPoint(long ? 250 : 262, deg);
+        const [x2, y2] = meterPoint(278, deg);
+        return (
+          <line
+            key={i}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            className={long ? 'kb-meter-tick is-long' : 'kb-meter-tick'}
+          />
+        );
+      })}
+      {heard && (
+        <g
+          className="kb-meter-needle"
+          style={{ transform: `rotate(${centAngle(cents).toFixed(2)}deg)` }}
+        >
+          <line x1="720" y1="500" x2="720" y2="270" />
+        </g>
+      )}
+      <circle cx="720" cy="500" r="16" className="kb-meter-hub" />
+      <circle cx="720" cy="500" r="6" className="kb-meter-pin" />
+    </svg>
+  );
+}
