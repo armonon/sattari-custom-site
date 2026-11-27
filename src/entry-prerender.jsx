@@ -12,6 +12,7 @@ import { categories, products } from './data/catalog';
 import { mergeCatalog, EMPTY_CATALOG_DOC } from './utils/catalogMerge';
 import { musicGuides } from './data/musicGuides';
 import { toolDetails, toolReferencePath } from './data/toolDetails';
+import { referencePaths } from './data/musicReference';
 
 const LOCAL_SEO_ENTRY = 'src/components/LocalSeoPage.tsx';
 const localPages = Object.values(localSeoPages);
@@ -25,6 +26,7 @@ export function getPrerenderRoutes(inventory) {
       ...musicGuides.map((guide) => `/guides/${guide.slug}`),
       ...Object.values(toolDetails).map(toolReferencePath),
     ].map((path) => [path, 'src/pages/MusicResources.jsx']),
+    ...referencePaths.map((path) => [path, 'src/pages/MusicReference.jsx']),
     ['/', 'src/pages/HomePage.jsx'],
     ['/about', 'src/components/AboutPage.jsx'],
     ['/shop', 'src/components/ShopPage.jsx'],

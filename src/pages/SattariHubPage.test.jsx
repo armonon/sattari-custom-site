@@ -5,7 +5,7 @@ import SattariHubPage from './SattariHubPage';
 
 vi.mock('../utils/seo', () => ({ SEO: () => null }));
 
-it('launches all four real workspaces and their reference pages', () => {
+it('launches all three real workspaces and their reference pages', () => {
   render(
     <MemoryRouter>
       <SattariHubPage />
@@ -14,7 +14,6 @@ it('launches all four real workspaces and their reference pages', () => {
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sattari Hub');
   for (const [name, route, reference = `/tools${route}`] of [
     ['Sattari Studio', '/studio'],
-    ['Sattari Learn', '/learn'],
     ['Stem Separator', '/stem-separator'],
     ['Key & BPM', '/studio/keybpm', '/tools/key-bpm'],
   ]) {
@@ -23,7 +22,7 @@ it('launches all four real workspaces and their reference pages', () => {
       screen.getByRole('link', { name: `${name} formats, privacy and limits` })
     ).toHaveAttribute('href', reference);
   }
-  expect(screen.getAllByRole('img')).toHaveLength(4);
+  expect(screen.getAllByRole('img')).toHaveLength(3);
   expect(screen.queryByRole('link', { name: 'Music software for Mac' })).not.toBeInTheDocument();
 });
 

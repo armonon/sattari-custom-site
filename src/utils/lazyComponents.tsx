@@ -137,6 +137,10 @@ export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'Gui
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');
 export const VisitPage = lazyPage(() => import('@pages/MusicResources'), 'VisitPage');
 export const PrivacyPage = lazyPage(() => import('@pages/MusicResources'), 'PrivacyPage');
+export const KeyIndex = lazyPage(() => import('@pages/MusicReference'), 'KeyIndex');
+export const KeyPage = lazyPage(() => import('@pages/MusicReference'), 'KeyPage');
+export const BpmIndex = lazyPage(() => import('@pages/MusicReference'), 'BpmIndex');
+export const BpmPage = lazyPage(() => import('@pages/MusicReference'), 'BpmPage');
 // Wave-2 alpha tools (src/labs).
 export const CanvasPage = lazyPage(() => import('@/labs/canvas/CanvasPage'));
 export const PocketPage = lazyPage(() => import('@/labs/pocket/PocketPage'));

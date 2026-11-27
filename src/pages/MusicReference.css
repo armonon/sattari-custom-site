@@ -1,0 +1,98 @@
+.reference-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  margin: 28px 0;
+}
+.reference-hero > svg {
+  width: min(220px, 60vw);
+  height: auto;
+  flex: none;
+}
+.reference-hero > div {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+.reference-hero button {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+}
+.reference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.reference-grid.is-compact {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+}
+.reference-grid a {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--resource-line);
+  border-radius: 8px;
+  text-decoration: none;
+}
+.reference-grid a:hover {
+  border-color: currentColor;
+}
+.reference-grid span {
+  font-size: 13px;
+  opacity: 0.7;
+}
+.reference-chords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.reference-chords .kb-chord {
+  border-color: var(--resource-line);
+}
+.reference-scroll {
+  overflow-x: auto;
+}
+.reference-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.reference-table th,
+.reference-table td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--resource-line);
+  text-align: left;
+  white-space: nowrap;
+}
+.reference-table thead th {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* The tool's circle, dial and chord chips, on the resource page palette. */
+.resource-page {
+  --alab-text: var(--resource-ink);
+  --alab-muted: var(--resource-muted);
+  --alab-panel: var(--resource-bg);
+  --alab-accent: #146f68;
+  --alab-accent-ink: #fff;
+  --kb-line-2: var(--resource-line);
+  --kb-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+html[data-theme='night'] .resource-page {
+  --alab-accent: #5cc5b9;
+  --alab-accent-ink: #10201e;
+}

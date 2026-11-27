@@ -181,7 +181,13 @@ export default function LoopPracticePage() {
 function LoopPracticeApp() {
   const { profile } = useGuitarProfile();
   const tuning = openStrings(profile);
-  const [journey, setJourney] = useState('choose');
+  // /learn?tool=tuner opens straight on the tuner (linked from the tuning guide).
+  // This page is rendered fresh in the browser, never hydrated, so reading the
+  // address here cannot mismatch prerendered HTML.
+  const openTuner =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('tool') === 'tuner';
+  const [journey, setJourney] = useState(openTuner ? 'studio' : 'choose');
   const [practiceProgress, setPracticeProgress] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('loop-practice-progress-v1') || '{}');
@@ -197,7 +203,7 @@ function LoopPracticeApp() {
   const [practiceUrl, setPracticeUrl] = useState('');
   const [recordingSource, setRecordingSource] = useState('original');
   const [records, setRecords] = useState([]);
-  const [nav, setNav] = useState('practice');
+  const [nav, setNav] = useState(openTuner ? 'tuner' : 'practice');
   const [view, setView] = useState('tab');
   const [modal, setModal] = useState(null);
   const [importKind, setImportKind] = useState('audio');

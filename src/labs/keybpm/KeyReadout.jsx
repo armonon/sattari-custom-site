@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Layers, Pause, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Check, Copy, Layers, Pause, Play } from 'lucide-react';
+import { bpmPage, keyPageFor } from '../../data/musicReference';
 import { formatTime } from '../audio/AudioLabParts';
 import {
   camelot,
@@ -10,11 +12,17 @@ import {
   NOTES_MAX,
   tempoInterpretation,
 } from './keyBpm';
+import { TempoDial } from './KeyBpmHero';
+import { useMetronome } from './metronome';
 import {
   CIRCLE,
   circlePosition,
+  compatibleKeys,
+  diatonicChords,
   keyDisplay,
+  keyLabel,
   relativeKey,
+  scaleNotes,
   scaleFrequencies,
   tonicFrequency,
 } from './keyTheory';
@@ -51,7 +59,7 @@ export function CircleOfFifths({ keyName, alternative }) {
       role="img"
       aria-label={
         keyName
-          ? `Circle of fifths: ${keyName}${alternative ? `, alternative ${alternative}` : ''}`
+          ? `Circle of fifths: ${keyLabel(keyName)}${alternative ? `, alternative ${keyLabel(alternative)}` : ''}`
           : 'Circle of fifths'
       }
     >
@@ -204,6 +212,28 @@ export default function KeyReadout({
         ? result.key
         : result.alternative;
   const { stopDrone } = tones;
+  const click = useMetronome(values.bpm);
+  const stopClick = click.stop;
+  const [copied, setCopied] = useState(false);
+  const summary = [
+    values.key && keyLabel(values.key),
+    values.camelot,
+    values.bpm !== null && `${formatBpm(values.bpm)} BPM`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
+  const notesInKey = scaleNotes(values.key);
+  const chords = diatonicChords(values.key);
+  const mixes = compatibleKeys(values.key);
 
   // A different track resets the tapper, notes field and drone.
   useEffect(() => {
@@ -211,6 +241,8 @@ export default function KeyReadout({
     setTapped({ count: 0, bpm: null });
     setNotes(row.user?.notes || '');
     stopDrone();
+    stopClick();
+    setCopied(false);
   }, [row.id, stopDrone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const correct = (patch) =>
@@ -252,15 +284,25 @@ export default function KeyReadout({
             {row.origin?.label && row.origin.label !== row.file.name && ` · ${row.origin.label}`}
           </p>
         </div>
-        <button
-          type="button"
-          className="kb-ghost"
-          disabled={!playable}
-          onClick={onSeparate}
-          title={playable ? 'Continue in Stem Separator' : 'Add the source file to separate it'}
-        >
-          <Layers size={15} aria-hidden="true" /> Separate this song
-        </button>
+        <div className="kb-readout-actions">
+          <button type="button" className="kb-ghost" disabled={!summary} onClick={copy}>
+            {copied ? (
+              <Check size={15} aria-hidden="true" />
+            ) : (
+              <Copy size={15} aria-hidden="true" />
+            )}{' '}
+            <span aria-live="polite">{copied ? 'Copied' : 'Copy result'}</span>
+          </button>
+          <button
+            type="button"
+            className="kb-ghost"
+            disabled={!playable}
+            onClick={onSeparate}
+            title={playable ? 'Continue in Stem Separator' : 'Add the source file to separate it'}
+          >
+            <Layers size={15} aria-hidden="true" /> Separate this song
+          </button>
+        </div>
       </header>
 
       <div className="kb-readout-grid">
@@ -268,7 +310,7 @@ export default function KeyReadout({
           <div className="kb-key-main">
             <p className="kb-label">Key</p>
             {shown ? (
-              <p className="kb-big" aria-label={values.key}>
+              <p className="kb-big" aria-label={keyLabel(values.key)}>
                 {shown.tonic}
                 <small>{shown.mode}</small>
               </p>
@@ -278,7 +320,9 @@ export default function KeyReadout({
             <p className="kb-pills">
               {values.camelot && <span className="kb-pill is-accent">{values.camelot}</span>}
               {values.keySource === 'user' ? (
-                <span className="kb-pill is-user">yours · detected {result.key || 'none'}</span>
+                <span className="kb-pill is-user">
+                  yours · detected {result.key ? keyLabel(result.key) : 'none'}
+                </span>
               ) : (
                 result.keyEvidence && (
                   <span className={`kb-pill is-${result.keyEvidence}`}>
@@ -286,14 +330,16 @@ export default function KeyReadout({
                   </span>
                 )
               )}
-              {values.key && <span className="kb-pill">relative {relativeKey(values.key)}</span>}
+              {values.key && (
+                <span className="kb-pill">relative {keyLabel(relativeKey(values.key))}</span>
+              )}
             </p>
           </div>
           <CircleOfFifths keyName={values.key} alternative={alternative} />
           <p className="kb-key-foot">
             {alternative ? (
               <>
-                Second choice <b>{alternative}</b> ({camelot(alternative)})
+                Second choice <b>{keyLabel(alternative)}</b> ({camelot(alternative)})
                 {result.keyEvidence === 'tentative' && values.keySource === 'detected' && (
                   <> · a close call, so compare both by ear</>
                 )}
@@ -302,14 +348,58 @@ export default function KeyReadout({
               'No second choice was close enough to report.'
             )}
           </p>
+          {chords.length > 0 && (
+            <div className="kb-inkey">
+              <div>
+                <p className="kb-label">Notes in this key</p>
+                <p className="kb-inkey-notes">{notesInKey.join('  ')}</p>
+              </div>
+              <div>
+                <p className="kb-label">Chords in this key</p>
+                <ul aria-label={`Chords in ${keyLabel(values.key)}`}>
+                  {chords.map(({ numeral, name }) => (
+                    <li key={numeral} className="kb-chord">
+                      {name}
+                      <small>{numeral}</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="kb-label">Mixes well with</p>
+                <ul aria-label="Compatible keys">
+                  {mixes.map(({ key, relation }) => (
+                    <li key={relation} className="kb-pill">
+                      <Link to={keyPageFor(key).path}>
+                        {keyLabel(key)} · {camelot(key)}
+                      </Link>{' '}
+                      <small>({relation})</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link className="kb-more" to={keyPageFor(values.key).path}>
+                More about {keyLabel(values.key)}
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="kb-panel kb-tempo-panel">
-          <p className="kb-label">Tempo</p>
-          <p className="kb-big kb-bpm">
-            {values.bpm === null ? '—' : formatBpm(values.bpm)}
-            <small>BPM</small>
-          </p>
+          <div className="kb-tempo-top">
+            <div>
+              <p className="kb-label">Tempo</p>
+              <p className="kb-big kb-bpm">
+                {values.bpm === null ? '—' : formatBpm(values.bpm)}
+                <small>BPM</small>
+              </p>
+            </div>
+            <TempoDial
+              bpm={values.bpm}
+              beating={click.on}
+              keyIndex={circlePosition(values.key)?.index ?? null}
+            />
+          </div>
           <p className="kb-pills">
             {values.bpmSource !== 'detected' ? (
               <span className="kb-pill is-user">
@@ -359,6 +449,22 @@ export default function KeyReadout({
                 })}
               </div>
             </>
+          )}
+          {values.bpm !== null && (
+            <div className="kb-tones kb-click">
+              <button type="button" aria-pressed={click.on} onClick={click.toggle}>
+                {click.on ? 'Stop the click' : `Click at ${formatBpm(values.bpm)} BPM`}
+              </button>
+              <p className="kb-note">
+                Play the song and tap along with the click. If it lands on every other beat, try
+                half or double time. The click is not lined up with the song&apos;s first beat.
+              </p>
+              {bpmPage(values.bpm) && (
+                <Link className="kb-more" to={bpmPage(values.bpm).path}>
+                  Delay times and more at {formatBpm(values.bpm)} BPM
+                </Link>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -419,7 +525,7 @@ export default function KeyReadout({
                   aria-pressed={droneOn(alternative)}
                   onClick={() => toggleDrone(alternative)}
                 >
-                  Drone on the second choice ({alternative})
+                  Drone on the second choice ({keyLabel(alternative)})
                 </button>
               )}
             </div>

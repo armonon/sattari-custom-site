@@ -76,6 +76,8 @@ export const METRIC_PAGES = [
   'guide-practice-pad',
   'guide-acoustic-guitar',
   'guide-guitar-care',
+  'guide-instrument-tuning',
+  'guide-find-key',
   'tool-details',
   'privacy',
   'downloads',
@@ -113,6 +115,8 @@ export function metricPage(path) {
     '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
     '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
     '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
+    '/guides/how-to-tune-an-instrument': 'guide-instrument-tuning',
+    '/guides/how-to-find-the-key-of-a-song': 'guide-find-key',
   };
   return guides[path] || (METRIC_PAGES.includes(path.slice(1)) ? path.slice(1) : null);
 }

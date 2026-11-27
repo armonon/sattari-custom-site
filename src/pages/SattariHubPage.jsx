@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   AudioLines,
-  BookOpen,
   Gauge,
   Library,
   Radio,
@@ -31,16 +30,17 @@ const workspaces = [
     tools: ['Four decks', 'Instruments', 'Arrangement'],
   },
   {
-    id: 'learn',
-    name: 'Sattari Learn',
-    category: 'Practice',
-    detail: 'Guided guitar lessons & live feedback',
-    path: '/learn',
-    image: '/images/tools/learn-guitar.jpg',
-    alt: 'Sattari Learn song library and interactive guitar practice player',
-    icon: BookOpen,
-    status: 'Practice lab',
-    tools: ['Tabs & chords', 'Guided practice', 'Live feedback'],
+    id: 'key-bpm',
+    name: 'Key & BPM',
+    category: 'Understand',
+    detail: 'Find key, Camelot and tempo, then fix half/double time',
+    path: '/studio/keybpm',
+    image: '/images/tools/key-bpm-hero-ink.jpg',
+    alt: 'Analog tempo dial reading 120 BPM inside a circle of fifths, C major, Camelot 8B',
+    icon: Gauge,
+    status: 'Beta',
+    reference: '/tools/key-bpm',
+    tools: ['Key', 'Camelot', 'BPM', 'CSV'],
   },
   {
     id: 'stem-separator',
@@ -53,19 +53,6 @@ const workspaces = [
     icon: Split,
     status: 'Local processing',
     tools: ['Vocals', 'Drums', 'Bass', 'Other instruments'],
-  },
-  {
-    id: 'key-bpm',
-    name: 'Key & BPM',
-    category: 'Understand',
-    detail: 'Find key, Camelot and tempo, then fix half/double time',
-    path: '/studio/keybpm',
-    image: '/images/tools/key-bpm.jpg',
-    alt: 'Key & BPM showing C major, 8B and a half-time tempo correction',
-    icon: Gauge,
-    status: 'Beta',
-    reference: '/tools/key-bpm',
-    tools: ['Key', 'Camelot', 'BPM', 'CSV'],
   },
 ];
 
@@ -107,13 +94,16 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>Learn guitar. Create music. Explore sound.</p>
+              <Link to="/learn" className="hub-text-link">
+                Sattari Learn: guitar practice <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </div>
           </header>
 
           <section className="hub-workspaces" aria-labelledby="hub-workspaces-title">
             <div className="hub-section-heading">
               <h2 id="hub-workspaces-title">Your workspaces</h2>
-              <span>01 / 04</span>
+              <span>01 / 03</span>
             </div>
             <div className="hub-workspace-grid">
               {workspaces.map(
