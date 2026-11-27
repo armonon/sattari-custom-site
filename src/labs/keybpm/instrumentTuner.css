@@ -583,3 +583,67 @@
     transition: none;
   }
 }
+
+/* Hero layout: the live tuner dial first, then the notes, then the settings. */
+.instrument-lab-heading {
+  text-align: center;
+}
+.alab-page .instrument-lab .instrument-lab-heading > p {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.instrument-console {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 18px;
+}
+.instrument-console > .instrument-readout {
+  order: -1;
+  width: min(100%, 620px);
+  border: 0;
+  padding: 0;
+  background: none;
+}
+.instrument-console .instrument-dial {
+  width: min(100%, 440px);
+}
+.instrument-console > .instrument-readout {
+  gap: 6px;
+}
+.instrument-console > .instrument-setup {
+  width: min(100%, 760px);
+  gap: 14px;
+  justify-items: center;
+}
+.instrument-setup > [role='group'] {
+  order: 1;
+  width: 100%;
+}
+.instrument-setup > [role='group'] .instrument-field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.instrument-setup .instrument-strings {
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  margin-top: 0;
+}
+.instrument-setup > .instrument-reference {
+  order: 2;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.instrument-setup > .instrument-controls {
+  order: 3;
+  width: min(100%, 420px);
+}
+.instrument-setup > .instrument-sound-help,
+.instrument-setup > .instrument-chromatic {
+  order: 4;
+  text-align: center;
+}
