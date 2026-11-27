@@ -704,6 +704,10 @@ export default function KeyBpmPage() {
         }}
       />
       <div className="alab-workspace">
+        <InstrumentTuner
+          songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
+          onBeforeListen={stopAudition}
+        />
         <nav className="kb-section-nav" aria-label="Tuner and key detector sections">
           <a href="#live-tuner">
             <AudioLines size={16} aria-hidden="true" /> Live tuner
@@ -715,10 +719,6 @@ export default function KeyBpmPage() {
             <Disc3 size={16} aria-hidden="true" /> Song key &amp; BPM
           </a>
         </nav>
-        <InstrumentTuner
-          songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
-          onBeforeListen={stopAudition}
-        />
         <nav className="kb-instrument-guides" aria-label="Instrument tuning guides">
           <span>Instrument tuning guides</span>
           {instrumentTunerPages.map(({ slug, path, name }) => (
