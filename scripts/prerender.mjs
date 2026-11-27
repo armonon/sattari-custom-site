@@ -4,6 +4,7 @@ import { resolve, dirname } from 'node:path';
 import process from 'node:process';
 import { createServer } from 'vite';
 import { EMPTY_CATALOG_DOC } from '../src/utils/catalogMerge.js';
+import { guideRevisionDates } from '../src/data/guideRevisionDates.js';
 
 process.env.NODE_ENV = 'production';
 
@@ -179,7 +180,10 @@ try {
   }
   const urls = routes
     .filter((route) => route.indexable)
-    .map(({ path }) => `  <url><loc>https://sattarimusic.com${path}</loc></url>`);
+    .map(({ path }) => {
+      const date = guideRevisionDates[path];
+      return `  <url><loc>https://sattarimusic.com${path}</loc>${date ? '<lastmod>' + date + '</lastmod>' : ''}</url>`;
+    });
   await writeFile(
     resolve(root, 'dist/sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`

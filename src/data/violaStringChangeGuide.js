@@ -44,6 +44,13 @@ export const violaStringChangeGuide = {
   sections: [
     {
       id: 'measure-and-match',
+      stringPhotoLabels: ['Vibrating string length · ruler endpoints'],
+      stringAid: 'viola-ruler',
+      stringCheck: {
+        question: 'Which measurement on a viola string packet should I use?',
+        answer:
+          'If the maker asks for vibrating length, put the ruler’s zero at the fingerboard side of the nut. Read the value at the top of the bridge along the same string. Write the units beside the number.',
+      },
       title: '1. Measure the playing length and match the packet',
       paragraphs: [
         'Follow an intact open string from the nut, the small ridge just below the tuning pegs, to the top edge of the bridge. Measure between those two points along the string with a ruler held beside it. Write that measurement in centimeters. A viola’s body length in inches and its vibrating string length are different measurements. Check which one the string maker asks for.',
@@ -66,6 +73,11 @@ export const violaStringChangeGuide = {
     },
     {
       id: 'loosen-one-peg',
+      stringCheck: {
+        question: 'How can I identify the right viola peg for a broken string?',
+        answer:
+          'Look at the loose end remaining in the pegbox. Trace its winding to the shaft and the shaft to its handle. A photograph is especially helpful when the tip is too short to pluck.',
+      },
       title: '2. Trace the old string and loosen its peg',
       paragraphs: [
         'Lay the viola face up on the towel with the neck supported and the pegs free to turn. Take a photo of the bridge from the side and another of the strings at the pegs. Trace the string you are replacing into the pegbox. On unfamiliar instruments, tracing the string is more reliable than guessing from the peg handle.',
@@ -88,6 +100,11 @@ export const violaStringChangeGuide = {
     },
     {
       id: 'fit-the-tailpiece',
+      stringCheck: {
+        question: 'How do I check a viola string at a keyhole tailpiece?',
+        answer:
+          'Check that the metal ball has passed below the wide hole and that the wire lies in the narrow channel toward the bridge. Take up a little slack and confirm it stays there.',
+      },
       title: '3. Seat the new string at the tailpiece',
       paragraphs: [
         'Open just the packet for this string. If you have a fine-tuner screw for it, leave room for small turns in both directions. Identify the fitting on your own viola before pulling on the new string.',
@@ -111,6 +128,11 @@ export const violaStringChangeGuide = {
     },
     {
       id: 'thread-the-peg',
+      stringCheck: {
+        question: 'How much string should show past a wooden viola peg?',
+        answer:
+          'Follow the maker’s allowance. The plain-peg method here starts with about 5 mm showing. Look across the pegbox before winding so the tip can turn freely.',
+      },
       title: '4. Thread the peg and guide the first turns',
       paragraphs: [
         'Find the hole through the bare peg shaft and thread the free tip through, leaving about 5 mm showing on the far side. Keep light tension on the long part with one hand so the tailpiece end stays put. Turn a conventional wooden peg so the string from the nut passes over the top of its shaft. Guide the coils toward the handle, laying them beside one another with a little clearance from the pegbox wall.',
@@ -134,6 +156,11 @@ export const violaStringChangeGuide = {
     },
     {
       id: 'inspect-the-bridge',
+      stringCheck: {
+        question: 'What is the order of strings across a viola bridge?',
+        answer:
+          'On a standard viola, follow C, G, D and A from thickest to thinnest. Sight along the new string from tailpiece to nut to check that it stays in its own lane.',
+      },
       title: '5. Check the grooves and both bridge feet',
       paragraphs: [
         'At the nut, place the new string in the same groove as the old one. Do the same at the bridge and follow the string from end to end. On a standard four-string viola the order from thickest to thinnest is C, G, D, A. Take up just enough slack to keep it seated, then check that it has stayed in its lane.',
@@ -168,6 +195,11 @@ export const violaStringChangeGuide = {
     },
     {
       id: 'tune-and-settle',
+      stringCheck: {
+        question: 'Is the viola’s low C the same pitch as a cello’s low C?',
+        answer:
+          'The viola’s open C is C3. The cello’s low C is C2, one octave lower. Select the viola reference and match the pitch before using the fine tuner.',
+      },
       title: '6. Tune from below and check the string again',
       paragraphs: [
         'Select viola on the tuner. The open strings, lowest first, are C3, G3, D4 and A4. Play the reference for your string, then pluck yours with no finger on the fingerboard. For the thick C string, listen for C3. An app that shows only “C” can give the same letter an octave away.',

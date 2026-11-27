@@ -36,6 +36,11 @@ export const setarStringChangeGuide = {
   sections: [
     {
       id: 'identify-your-string',
+      stringCheck: {
+        question: 'How do I identify a broken setar string?',
+        answer:
+          'Starting at the usual playing edge, name each wire in turn: white, yellow, moshtāq and bam. A close-set drone and bass still have separate gauges. Mark the missing one on the packet before opening it.',
+      },
       title: '1. Match the wire and record the tuning',
       paragraphs: [
         'Rest the round bowl in the towel with the wooden face upward and support the neck. From the playing edge across the neck, the usual string names are white, yellow, drone (moshtāq) and bass (bam). The drone and bass sit close enough to be struck together. Each has its own wire, peg and pitch. Trace the one you intend to change and match its position and gauge to the packet or the maker’s recommendation.',
@@ -58,6 +63,11 @@ export const setarStringChangeGuide = {
     },
     {
       id: 'loosen-one-wire',
+      stringCheck: {
+        question: 'How do I find the peg for a broken setar wire?',
+        answer:
+          'Look at the fragment still wound near the neck. Trace its shaft out to the handle, then take a close-up of its attachment before undoing the coils.',
+      },
       title: '2. Find the matching peg and loosen just that string',
       paragraphs: [
         'Follow your wire from the nut, the ridged strip where the neck meets the pegs. Hold the neck in one hand. Pluck the wire and move its peg a fraction. If the pitch rises, reverse direction. If a different string changes pitch, restore that note and trace your wire again. Keep lowering the pitch until the wire hangs slack.',
@@ -78,6 +88,11 @@ export const setarStringChangeGuide = {
     },
     {
       id: 'anchor-the-string',
+      stringCheck: {
+        question: 'How do I check the setar tailpiece loop?',
+        answer:
+          'Look along the line of pull from the bridge to the simgir. The loop should settle around one tooth without lifting a neighboring loop or straddling two teeth.',
+      },
       title: '3. Seat the new loop on the tailpiece tooth',
       paragraphs: [
         'Find the simgir, the small string holder on the rim at the far end of the bowl. Look at an intact neighboring string. Its loop straddles a tooth, with one leg in each of the cuts beside the tooth. Set your new loop over the same tooth the old wire occupied. Point the twisted neck of the loop toward the bridge and keep the long wire running straight up the soundboard.',
@@ -114,6 +129,11 @@ export const setarStringChangeGuide = {
     },
     {
       id: 'follow-the-grooves',
+      stringCheck: {
+        question: 'How can I check the setar’s loose bridge while the wire is slack?',
+        answer:
+          'Compare the feet with your starting photograph. Keep a fingertip on the body loop as you lay the wire in its old groove. A bridge that has shifted needs its position checked before tuning.',
+      },
       title: '4. Guide the wire across the bridge and nut',
       paragraphs: [
         'Hold just enough pull to keep the loop seated. Lay the wire into its old groove in the top of the bridge, then into its matching groove at the nut. Compare the route against your first photograph. The bass and drone should remain in their own grooves. A crossed pair can make it hard to sound either string cleanly.',
@@ -134,6 +154,15 @@ export const setarStringChangeGuide = {
     },
     {
       id: 'wind-the-peg',
+      stringPhotoLabels: [
+        'Loop over the projecting wooden peg',
+        'Straight tip through the drilled shaft',
+      ],
+      stringCheck: {
+        question: 'Does my setar peg need a loop or a straight tip?',
+        answer:
+          'Follow the last inch of the old wire. A loop surrounds a projecting tip. A straight tip passes through a hole in the shaft. The two photographs below show the feature to look for.',
+      },
       title: '5. Catch the peg end and wind the shaft',
       paragraphs: [
         'For a wooden peg that used a loop, place the new peg-end loop over the projecting tip in the same position as the one you removed. Hold the loop against the peg while turning it slowly in the direction that takes up slack. Guide the long wire onto the narrow round shaft. If your old wire went through a drilled shaft instead, feed its straight replacement tip through that same hole and leave enough slack for several turns.',
@@ -167,6 +196,11 @@ export const setarStringChangeGuide = {
     },
     {
       id: 'tune-and-check',
+      stringCheck: {
+        question: 'Why does the pitch suddenly fall on my setar?',
+        answer:
+          'Pluck once while looking at the peg, then again while watching the tailpiece loop. If a part moves as the pitch falls, release tension and correct that attachment before tuning again.',
+      },
       title: '6. Tune up to the reference and listen for slipping',
       paragraphs: [
         'Play your reference note, then pluck the new wire without pressing a fret. Lightly mute its neighbor if both ring. In the live tuner’s Instrument menu, choose “Chromatic · any single note.” Tighten in small turns from below the target. A repeated letter in the next octave is much higher. If the wire already feels tight and the note seems wrong, stop and check the string, reference and octave.',

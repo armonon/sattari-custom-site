@@ -36,6 +36,12 @@ export const persianTarStringChangeGuide = {
   sections: [
     {
       id: 'identify-the-course',
+      stringAid: 'tar-courses',
+      stringCheck: {
+        question: 'Which wire in the course broke?',
+        answer:
+          'At the bridge, find the empty groove and follow its neighbor back to the tailpiece. Write down the course and which wire is missing. In the last course, mark drone or bass separately.',
+      },
       title: '1. Find the broken string’s place in its pair',
       paragraphs: [
         'A course is a pair of strings you usually strike together. On a common Persian tar the first pair has two thin steel “white” strings. The second has two “yellow” strings, often bronze. The last combines a thin drone with a much thicker bass. Look at those last two carefully. Their pitches can be an octave apart or different notes altogether. A setar and an Azerbaijani tar have different string layouts.',
@@ -57,6 +63,11 @@ export const persianTarStringChangeGuide = {
     },
     {
       id: 'loosen-one-string',
+      stringCheck: {
+        question: 'Which tar peg should I loosen?',
+        answer:
+          'Follow the winding to the shaft, then along that shaft to its handle. For a broken wire you can trace the short piece left at the peg even when there is no note to pluck.',
+      },
       title: '2. Trace one wire to its peg and let it go slack',
       paragraphs: [
         'Nest the rounded wooden bowl in a folded towel so it cannot roll. Support the neck with the pegs free to turn and the skin facing up. Photograph the bridge from the side and both ends of the old string. Follow that wire over the nut, the small ridge at the top of the fingerboard, into the pegbox and around its shaft. Note which way the wire winds around it.',
@@ -81,6 +92,11 @@ export const persianTarStringChangeGuide = {
     },
     {
       id: 'anchor-the-string',
+      stringCheck: {
+        question: 'How do I know the loop is on the simgir tooth?',
+        answer:
+          'Keep the wire slack, settle the loop down around the base of the empty tooth and draw the wire toward the bridge with two fingers. Watch whether the loop walks up the tip.',
+      },
       title: '3. Hook the prepared loop onto the tailpiece',
       paragraphs: [
         'Find the small string holder at the wooden end of the bowl, beyond the bridge. It is called the simgir. On the toothed style pictured here, each wire has a loop that catches around a tooth. Find the spot left by the old loop. Lower the replacement loop over that tooth and guide the long part of the wire back toward the bridge. A gentle lengthwise pull should seat the loop against the base of the tooth. Watch that the neighboring loops stay in place.',
@@ -102,6 +118,11 @@ export const persianTarStringChangeGuide = {
     },
     {
       id: 'wind-the-peg',
+      stringCheck: {
+        question: 'What should the first turn at the peg do?',
+        answer:
+          'Watch both ends during one slow turn. The free wire should begin wrapping onto its own shaft while the body loop stays on its tooth. Ease the peg back if the loop lifts.',
+      },
       title: '4. Thread the peg and take up the slack',
       paragraphs: [
         'Run the free end along the old path over the bridge and nut. At the correct wooden peg, locate the small drilled hole in the shaft. With the wire still loose, pass its tip through so a short end emerges on the far side. Leave enough slack along the neck for several turns. If your peg uses a cord leader, an undrilled shaft or a geared mechanism, follow the instructions for that fitting. A little cord inside the pegbox can be a working part.',
@@ -127,6 +148,11 @@ export const persianTarStringChangeGuide = {
     },
     {
       id: 'check-the-bridge',
+      stringCheck: {
+        question: 'Which bridge groove belongs to the new wire?',
+        answer:
+          'Sight from the tailpiece toward the nut. The two wires in each white or yellow course should run alongside each other. A wire that crosses its partner before the nut is in the wrong path.',
+      },
       title: '5. Seat the string on the bridge and nut',
       paragraphs: [
         'While the string is still loose, guide it into its original groove on the bridge, then into the corresponding groove at the nut. Sight along the neck. The new wire should run alongside its partner without crossing it. Check the loop at the tailpiece once more, then take up just enough slack to keep the string seated.',
@@ -148,6 +174,11 @@ export const persianTarStringChangeGuide = {
     },
     {
       id: 'tune-your-course',
+      stringCheck: {
+        question: 'What should I listen for when tuning a pair?',
+        answer:
+          'Sound the unchanged partner alone, then the replacement alone, then both together. Use the slowing pulse as a check only for a pair meant to share a pitch. Refer to your separate notes for the drone and bass.',
+      },
       title: '6. Tune one open string and listen to the pair',
       paragraphs: [
         'Choose “Chromatic · any single note” under Instrument in the live tuner. Lightly touch the other strings to silence them and pluck the new string alone, with no finger pressing it to a fret. Raise the pitch from below in small steps, plucking again after each turn. Match the note and octave you recorded, your teacher’s reference or the correct unison partner. A note letter by itself can be an octave too high. For a tuning with an altered pitch, use your teacher’s sounding reference.',

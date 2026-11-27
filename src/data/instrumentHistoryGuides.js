@@ -23,13 +23,16 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'Start with the Iranian tar in The Metropolitan Museum of Art, object 89.4.1679. It dates to the late nineteenth century. Trace the outline from the larger lobe through the narrow waist to the smaller lobe beside the neck. A thin membrane stretches over the openings. The strings pass over a small bridge that rests on that skin.',
           'A plucked string sets the bridge vibrating, and the bridge moves the membrane. This is one reason a slight change in the force of the pick can be so audible. Follow the six strings up the neck on this example. The Met describes them in three pairs, or courses. A course is a group that can be sounded together in a single stroke.',
+          'The skin face is easiest to see beside the bridge. Follow the bridge feet down to the membrane, then trace the waist between the two chambers. Those two details are visible even when the strings are hard to count.',
         ],
       },
       {
         title: 'Place the instrument in time',
+        choiceAid: 'tarEvidence',
         paragraphs: [
           'Long-necked lutes appear in West Asian art centuries before this form of tar. The Smithsonian dates the development of its distinctive double chamber to the late eighteenth or early nineteenth century and points to nineteenth-century Persian paintings and photographs. The Met associates the instrument with the area around Shiraz. Together these clues give the tar a place and period without assigning an invention date to a single maker.',
           'Part of its later history was carried by teachers. Generations of musicians passed on the radif, a repertoire of melodic material used in Iranian classical music. A player learns short units called gushehs by ear and hears how a teacher shapes their turns and endings. That shared vocabulary gives two players a way to recognize a melody even when each ornaments it differently.',
+          'Date the claim you are making. A museum accession number identifies one surviving object. The date of its construction and the period when the instrument’s form developed answer two different historical questions.',
         ],
       },
       {
@@ -38,6 +41,7 @@ export const instrumentHistoryGuides = [
           'https://asia-archive.si.edu/podcast/masters-of-persian-musichossein-alizadeh-and-kayhan-kalhor/',
         paragraphs: [
           'In the Smithsonian’s March 1997 concert, Alizadeh opens alone on tar. His piece Dād-o Bidād draws melodic material from two modes, māhur and homāyun. You can follow the performance by ear before learning either name.',
+          'Listen twice to the same short ending. Hum the last pitch after the first hearing. On the second, tap each new pick stroke you hear on the way to it.',
         ],
         steps: [
           'Play the opening minute. Hum the end of one phrase, then replay it. Listen for which notes Alizadeh gives more time and which pass by as ornaments.',
@@ -52,6 +56,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'UNESCO’s film of tar making and playing in Azerbaijan gives you a second point of reference. Watch a player support the instrument horizontally at the chest, then look at how the maker shapes and covers the two lobes. These are details you can compare with the Iranian museum instrument even if you are new to both traditions.',
           'The Azerbaijani inscription recognizes a living craft and performance practice, including how makers teach apprentices and musicians play at gatherings. The year 2012 marks UNESCO’s inscription. The instruments, their makers and their players have histories reaching well before that date.',
+          'Watch one uninterrupted phrase in the UNESCO film. Note how the instrument is held and identify the hand producing the attacks before comparing it with Alizadeh’s Iranian performance.',
         ],
       },
     ],
@@ -94,6 +99,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'Many earlier lutes have a neck, a waist and plucked strings. The Met’s curators describe the guitar’s ancestry before the Renaissance as uncertain. By the sixteenth century a guitarist could find music printed for a small four-course instrument. The vihuela, a larger plucked instrument used in Spain, was its contemporary.',
           'A course can have one string or two close-set strings played as a unit. A pair tuned to the same note thickens the sound. An octave pair adds a higher pitch to the same finger movement. In Baroque guitar music, players could alternate strummed chords with passages of individually plucked notes.',
+          'When a description says four courses, count the groups that the picking hand addresses. A doubled course occupies one playing position even though two strings can sound together.',
         ],
         link: {
           label: 'Look closely at paired strings on an oud',
@@ -106,6 +112,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'Look at the guitar attributed to Matteo Sellas, made in Venice around 1630–50. The museum photographs show its narrow waist, high arched back and elaborate rose in the sound hole. Its five courses were typical of many guitars played in seventeenth-century Europe.',
           'The same object had more than one musical life. A later owner had it altered to carry five single strings. Its fittings changed again before it entered The Met. Counting strings on a museum photograph becomes much more interesting when you first ask which period of the instrument’s life the photograph represents.',
+          'An old guitar may show the work of several owners. Compare the catalogue’s description of Sellas’s original arrangement with the photograph of its present fittings before using the image to count strings.',
         ],
       },
       {
@@ -113,6 +120,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'Six single strings gained ground over paired courses around the beginning of the nineteenth century. Builders also experimented with the thin wooden top, or soundboard. Strips of wood glued beneath it support the top while allowing it to vibrate. Fan braces spread out from the area below the sound hole.',
           'From the 1850s, Antonio de Torres helped establish a highly influential Spanish concert design. Other makers were working with fan braces too. In The Met’s Spanish Guitar essay, compare the instruments connected with Torres and the 1924 flamenco guitar by Santos Hernández. Its light construction reflects a player’s need to support it easily while playing in a different position.',
+          'Read the construction date alongside the string arrangement. A 1924 Spanish guitar shows one maker’s approach after six single strings had become common. It cannot date the first instrument to use them.',
         ],
       },
       {
@@ -121,10 +129,15 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'To play Hawaiian steel guitar, a musician can lay the strings upward and move a steel bar along them. The pitch glides between notes. One early commercial electric design was the Rickenbacker A-22, nicknamed the Frying Pan. The Met’s example was built in Los Angeles around 1934.',
           'Its horseshoe-shaped magnetic pickup senses the movement of the metal strings. An amplifier and loudspeaker turn that signal into audible sound. Suddenly a large hollow body was optional. Look at the small round aluminum body and find the pickup over the strings. Imagining where the bar and picking hand go explains more about that shape than the nickname does.',
+          'Find the pickup where the strings pass underneath its curved metal assembly. In Hawaiian playing the steel bar controls pitch while the pickup and amplifier make the moving string audible.',
         ],
       },
       {
         title: 'Compare three guitars by following the vibrating string',
+        choiceAid: 'guitarTimeline',
+        paragraphs: [
+          'Cover the dates in the timeline. Name each object from the way its sound reaches a listener, then uncover the dates and check your sequence.',
+        ],
         steps: [
           'On the Sellas instrument, find a pair of strings that sits close enough for one finger to stop both. Imagine one chord sounded across the paired courses.',
           'On a Spanish concert guitar, find the bridge where the strings pull on the wooden top. Picture the top moving the air in the room after one pluck.',
@@ -167,6 +180,10 @@ export const instrumentHistoryGuides = [
     sections: [
       {
         title: 'Three lutes you can recognize in a photograph',
+        choiceAid: 'lutePhotos',
+        paragraphs: [
+          'Begin with the size and surface of the body, then move up the neck. A tightly cropped image of a peg or a fretting finger can be misleading. Use the wider view before naming an unfamiliar instrument.',
+        ],
         table: {
           headers: ['Instrument', 'Look closely at the body', 'Watch the player'],
           rows: [
@@ -193,6 +210,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'The Persian name setar means “three strings.” A fourth string became part of the modern instrument and can serve as a drone. A drone provides a pitch that a melody can move away from and return to. Look at the Smithsonian’s image of a setar player in a painted scene from around 1600 and compare the proportions of the body and the neck with a player today.',
           'The Iranian tar has a broader, skin-faced body. In a close-up of a modern performance, try watching the player’s picking hand with the sound off. A little metal pick in the hand and a bare index fingernail give you two ways of telling tar and setar apart when the camera crops out the body.',
+          'During a modern setar performance, count independent wires at the nut if the camera permits. Then watch which strings the index fingernail sets in motion in one stroke.',
         ],
       },
       {
@@ -201,10 +219,14 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'A sympathetic string can vibrate when another string excites a pitch it shares. On a sitar these strings run under the main playing strings. Their resonance adds a trail of sound behind the melody. The bridge also shapes the buzzing edge of the plucked tone. Listen for the initial attack and then for what continues underneath it.',
           'Murari Adhikari’s 1997 sitar in The Met has seven upper strings and thirteen sympathetic strings. A sitar examined by conservators at Durham University has seven above and eleven below. The difference is visible in the row of side pegs. On The Met’s object page, play Steven Landsberg’s improvisation excerpt. During a gap in the melody, listen to how much sound is still present.',
+          'Look along the side of the sitar neck for the smaller tuning pegs, then listen to a held gap in the melody. That gives you one visual and one audible clue to the sympathetic strings.',
         ],
       },
       {
         title: 'Follow a melody in two different performances',
+        paragraphs: [
+          'Listen to the player’s first attack and to the sound underneath the following pause. Write one observation about each before looking at the concert credits for the accompanying instruments.',
+        ],
         sourceUrl:
           'https://asia-archive.si.edu/podcast/north-indian-classical-music-krishna-mohan-bhatt-sitar-anindo-chatterjee-tabla/',
         steps: [
@@ -251,6 +273,9 @@ export const instrumentHistoryGuides = [
     sections: [
       {
         title: 'Listen to how a note begins and ends',
+        paragraphs: [
+          'For an unknown sound, describe one motion before naming the instrument. A sustained note growing louder on the same pitch suggests a bowed or blown sound. A bright attack followed by a long decay invites you to look for a struck string.',
+        ],
         table: {
           headers: ['Instrument', 'What produces the sound?', 'One detail to follow'],
           rows: [
@@ -284,9 +309,11 @@ export const instrumentHistoryGuides = [
       },
       {
         title: 'A listening exercise with three marked entrances',
+        choiceAid: 'pejvak',
         sourceUrl: 'https://asia-archive.si.edu/podcast/singing-rumi-the-pejvak-ensemble/',
         paragraphs: [
           'Open the Smithsonian’s recording of the Pejvak Ensemble at its 2010 Nowruz concert. Use the program times to compare three instruments. First listen with the player names covered, then check your answers against the concert notes.',
+          'Start at a marked entrance and listen for ten seconds before looking back at the program. Say which part makes the pitched line and which part shapes the rhythm, then replay the same entrance to check.',
         ],
         steps: [
           'At 7:31, Behfar Bahadoran on tar and Pezhham Akhavass on tombak begin a duet. Follow just the drum for a few phrases, then just the pitched line. Listen for where the players leave space for one another.',
@@ -299,6 +326,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'Persian classical musicians learn a repertoire known as the radif. Its melodic units, called gushehs, give a performer material for improvisation. A singer, a ney player and a tar player can work from related material. The singer has words and breath, the ney player has an air stream, and the tar player shapes the line with repeated strokes.',
           'You may see the bowed fiddle spelled kamancha or kamantcheh in another program. In 2017 UNESCO recognized the craft and playing of the kamancheh through a joint submission from Azerbaijan and Iran. Learning the name of a performer and where a recording was made tells you more about the particular tradition you are hearing.',
+          'Listen for a short melodic turn recurring with different emphasis. A repeated shape can give your ear a foothold while a performer varies timing or ornament in an improvisation.',
         ],
       },
       {
@@ -307,6 +335,7 @@ export const instrumentHistoryGuides = [
         paragraphs: [
           'In northeastern Iran, Bakhshi musicians of Khorasan accompany singing and storytelling with a two-stringed lute called the dotar. UNESCO documents repertoire in Kurdish, Persian, Turkish and Turkmen. The singer’s words, pauses and shifts in delivery are part of what the instrument is accompanying.',
           'Watch the Khorasan film and choose a short passage where a musician moves between speech or singing and playing. Listen to what the two strings do while the voice pauses. Then return to the Pejvak duet and ask the same question about the interaction between tar and drum. You now have two particular performances you can describe in your own words.',
+          'The two strings of the dotar accompany more than a melody. In the film, listen to a short sung line and then to what the instrument plays during the breath before the next one.',
         ],
       },
     ],

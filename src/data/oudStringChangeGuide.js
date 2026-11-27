@@ -46,6 +46,15 @@ export const oudStringChangeGuide = {
   sections: [
     {
       id: 'identify-the-bridge',
+      stringPhotoLabels: [
+        'Fixed bridge · string ends at the bridge',
+        'Floating bridge · string ends at the rim',
+      ],
+      stringCheck: {
+        question: 'Where do the strings end on my oud?',
+        answer:
+          'Run your eye all the way to the short tails. A knot on the bridge identifies the fixed tie bridge covered here. Strings that pass over the bridge and continue to the rim have a different anchor.',
+      },
       title: '1. Find where your oud’s strings end',
       paragraphs: [
         'Follow one string from the round soundhole toward the wide end of the bowl. On a fixed tie bridge, the string goes through a hole in the wooden bridge and loops around it. You can see the short end there. This is the bridge used in the tying step below.',
@@ -78,6 +87,11 @@ export const oudStringChangeGuide = {
     },
     {
       id: 'match-the-course',
+      stringCheck: {
+        question: 'How many courses does an eleven-string oud have?',
+        answer:
+          'Five pairs plus one single give six courses on a common eleven-string layout. Count yours at the bridge and use its string-set chart to identify the pitch of each course.',
+      },
       title: '2. Match the new string to its course',
       paragraphs: [
         'A course is a string, or a pair of strings, played as one. Count the courses, then count the strings in each. An eleven-string oud often has five pairs and one single bass. Some ouds have a sixth pair. Make a sketch of yours and write down the open notes, including their octaves, from your teacher, maker or existing set.',
@@ -100,6 +114,11 @@ export const oudStringChangeGuide = {
     },
     {
       id: 'loosen-one-string',
+      stringCheck: {
+        question: 'How do I keep track of the correct oud peg?',
+        answer:
+          'Follow one strand of the pair into the pegbox. Touch the winding lightly while plucking that strand. Mark its handle in a photograph before letting the string go slack.',
+      },
       title: '3. Follow one string to its peg and loosen it',
       paragraphs: [
         'Cradle the rounded bowl in the towel so it cannot roll. Support the neck and leave the angled pegbox free. Photograph the bridge from the side and the open pegbox from above. Follow your string over the nut and into the box until you see which wooden shaft carries its coils. The nearest peg handle can belong to a different string.',
@@ -134,6 +153,11 @@ export const oudStringChangeGuide = {
     },
     {
       id: 'anchor-the-string',
+      stringCheck: {
+        question: 'How can I tell whether an oud bridge knot will slip?',
+        answer:
+          'Keep the instrument at very low tension and watch the short tail while gently drawing the long string toward the neck. If the tail shortens or climbs onto the top edge, loosen the tie and reform it.',
+      },
       title: '4. Tie the new string at the fixed bridge',
       paragraphs: [
         'For the rear-facing tie pictured here, thread one end through the empty bridge hole, starting on the soundhole side and coming out toward the rim. Leave several inches of short tail to work with. Bring that tail up over the ridge and pass it under the long string where it comes out toward the neck. This forms a loose loop around the ridge.',
@@ -156,6 +180,11 @@ export const oudStringChangeGuide = {
     },
     {
       id: 'wind-the-peg',
+      stringCheck: {
+        question: 'What if another oud string moves when I turn the peg?',
+        answer:
+          'Look for a crossed wire or a winding touching an adjacent coil. Back off while the new string is still low, and guide the turns beside one another with room for the neighboring peg.',
+      },
       title: '5. Thread the peg and guide the coils',
       paragraphs: [
         'Lay the long string along the fingerboard and into its original nut groove. Turn the empty peg until its drilled hole is accessible. Feed the tip through and leave a short end projecting. Allow enough slack between bridge and peg for a few turns. Keep the bridge tie seated with light finger tension as you turn the peg in the direction recorded in your photo.',
@@ -178,6 +207,11 @@ export const oudStringChangeGuide = {
     },
     {
       id: 'tune-one-string',
+      stringCheck: {
+        question: 'Why do both strings in my oud course sound wavy?',
+        answer:
+          'Mute the partner and check each open note in its intended octave. Sound them together again. On a unison course, a slower pulse means the two pitches are getting closer.',
+      },
       title: '6. Tune one string, then listen to the pair',
       paragraphs: [
         'Start below your recorded pitch. Lightly touch the other string of the pair to mute it, then pluck the new open string alone. In the linked tuner choose “Chromatic · any single note” under Instrument. Raise the note in small turns and check the octave as well as the letter. For example, the highest course on Aquila’s Arabic C2–C4 set is C4, with both strings at C4. Use the targets on your own chart.',

@@ -78,6 +78,100 @@ html[data-theme='night'] .resource-label {
   margin: 0 0 20px;
   font-size: 14px;
 }
+.guide-finder {
+  max-width: 740px;
+  margin: 24px 0;
+}
+.guide-finder label,
+.guide-task-links summary {
+  font-size: 16px;
+  font-weight: 650;
+}
+.guide-finder-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  margin-top: 8px;
+  border: 1px solid var(--resource-muted);
+  border-radius: 6px;
+  background: var(--resource-bg);
+}
+.guide-finder-input:focus-within {
+  outline: 2px solid var(--resource-ink);
+  outline-offset: 2px;
+}
+.guide-finder input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  border-radius: 0;
+  color: var(--resource-ink);
+  font: inherit;
+  padding: 12px 0;
+}
+.guide-search-status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--resource-muted);
+}
+.resource-page .guide-finder-results,
+.resource-page .guide-task-links ul {
+  padding: 0;
+  list-style: none;
+  margin: 4px 0 0;
+}
+.resource-page .guide-finder-results li,
+.resource-page .guide-task-links li {
+  margin: 0;
+  padding: 0;
+}
+.guide-finder-results a {
+  display: block;
+  padding: 8px 0;
+  text-decoration: none;
+  border-bottom: 1px solid var(--resource-line);
+}
+.guide-finder-results span {
+  display: block;
+  color: var(--resource-muted);
+  font-size: 14px;
+}
+.guide-task-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr));
+  align-items: start;
+  gap: 10px;
+  margin: 24px 0;
+}
+.guide-task-links details {
+  border: 1px solid var(--resource-line);
+  border-radius: 6px;
+  padding: 0 14px;
+}
+.guide-task-links summary,
+.guide-task-links a {
+  padding: 10px 0;
+  cursor: pointer;
+}
+.guide-task-links a {
+  display: block;
+  font-size: 15px;
+}
+.guide-task-links summary::marker {
+  color: var(--resource-muted);
+}
+.guide-task-links details[open] summary {
+  border-bottom: 1px solid var(--resource-line);
+}
+.guide-collection h2[id],
+#guide-topics,
+.guide-audio-example[id] {
+  scroll-margin-top: 150px;
+}
 .resource-contents {
   max-width: 760px;
   margin: 32px 0;

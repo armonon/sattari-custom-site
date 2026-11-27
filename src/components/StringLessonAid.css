@@ -1,0 +1,198 @@
+.string-step-check {
+  margin: 1rem 0 1.2rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--resource-line);
+  border-radius: 0.4rem;
+}
+.string-step-check summary,
+.string-wind-method h3,
+.string-course-card legend {
+  color: var(--resource-ink);
+  font-weight: 650;
+}
+.string-step-check summary {
+  cursor: pointer;
+}
+.resource-page .string-step-check p {
+  margin: 0.5rem 0 0;
+}
+.string-photo-pair,
+.string-tuner-selector,
+.string-pitch-pair,
+.string-course-fields {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.string-photo-pair,
+.string-pitch-pair,
+.string-course-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.string-photo-pair > div,
+.string-course-fields label,
+.string-pitch-pair > div {
+  min-width: 0;
+}
+.string-photo-pair .guide-step-photo {
+  margin: 0.65rem 0 0;
+}
+.string-photo-pair .guide-step-photo img {
+  width: 100%;
+  max-height: 270px;
+  object-position: left center;
+}
+.resource-page .string-photo-pair strong,
+.string-pitch-pair strong {
+  color: var(--resource-ink);
+}
+.string-tuner-selector {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.resource-page .string-tuner-selector a {
+  padding: 0.8rem;
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  border: 1px solid var(--resource-line);
+  border-radius: 0.4rem;
+  text-decoration: none;
+}
+.string-tuner-selector strong {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.string-tuner-selector span {
+  color: var(--resource-muted);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.string-tuner-drawing {
+  display: block;
+  width: 100%;
+  height: 84px;
+  background: #edf2ed;
+  border-radius: 0.2rem;
+}
+.string-wind-method {
+  scroll-margin-top: 110px;
+}
+.string-wind-method h3 {
+  margin-bottom: 0.25rem;
+}
+.string-course-card {
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+  min-width: 0;
+  border: 1px solid var(--resource-line);
+  border-radius: 0.4rem;
+}
+.string-course-card legend {
+  padding: 0 0.35rem;
+}
+.string-course-fields label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+}
+.string-course-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.45rem;
+  border: 1px solid var(--resource-muted);
+  border-radius: 0.2rem;
+  background: var(--resource-bg);
+  color: var(--resource-ink);
+}
+.string-line-diagram {
+  margin: 1.25rem 0;
+  max-width: 680px;
+}
+.string-line-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #f4f1e8;
+  border-radius: 0.3rem;
+}
+.string-line-diagram text {
+  fill: #25362c;
+  font:
+    16px system-ui,
+    sans-serif;
+}
+.string-line-diagram text.string-diagram-heading {
+  font-size: 19px;
+  font-weight: 700;
+}
+.string-line-diagram figcaption {
+  font-size: 0.94rem;
+  color: var(--resource-muted);
+  margin: 0.5rem 0;
+}
+.string-ruler-photo {
+  position: relative;
+  max-width: 680px;
+  margin: 1.25rem 0;
+}
+.string-ruler-photo .guide-step-photo {
+  margin: 0;
+}
+.string-ruler-photo .guide-step-photo img {
+  width: 100%;
+  max-height: none;
+}
+.string-ruler-photo svg {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.string-ruler-photo text {
+  font:
+    bold 23px system-ui,
+    sans-serif;
+  fill: #fff4cf;
+}
+.string-pitch-pair > div {
+  border-left: 3px solid var(--resource-line);
+  padding-left: 0.75rem;
+}
+.resource-page .string-pitch-pair p {
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+}
+.string-pitch-pair audio {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .string-photo-pair,
+  .string-tuner-selector,
+  .string-pitch-pair {
+    grid-template-columns: 1fr;
+  }
+  .resource-page .string-tuner-selector a {
+    grid-template-columns: 80px 1fr;
+  }
+  .string-tuner-drawing {
+    grid-row: span 2;
+    height: 60px;
+  }
+  .string-course-fields {
+    grid-template-columns: 1fr;
+  }
+}
+@media print {
+  .string-course-card {
+    break-inside: avoid;
+  }
+  .string-course-fields input {
+    color: black;
+    background: white;
+    border: 0;
+    border-bottom: 1px solid black;
+  }
+}

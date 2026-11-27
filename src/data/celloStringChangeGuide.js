@@ -42,6 +42,11 @@ export const celloStringChangeGuide = {
   sections: [
     {
       id: 'match-the-cello-string',
+      stringCheck: {
+        question: 'Where do I measure a cello for a replacement string?',
+        answer:
+          'Measure alongside an intact open string, from the fingerboard edge of the nut to the string’s contact on the bridge. Compare the result with the chart for the particular set.',
+      },
       title: '1. Match the note and playing length',
       paragraphs: [
         'Read the note and instrument size on the packet. A 3/4 cello needs a string designed for its playing length. With the cello supported, hold a ruler or flexible tape alongside an intact string. Measure from the fingerboard side of the nut, where the string starts to vibrate freely, to its contact point on top of the bridge. The black fingerboard ends short of the bridge.',
@@ -66,6 +71,11 @@ export const celloStringChangeGuide = {
     },
     {
       id: 'steady-and-loosen',
+      stringCheck: {
+        question: 'How do I steady the cello for a first string change?',
+        answer:
+          'Keep the cello in a supported playing position with the endpin secured against slipping. Have someone steady the instrument if you need both hands before you release tension.',
+      },
       title: '2. Steady the cello and unwind just one string',
       paragraphs: [
         'Sit on a stable chair and hold the cello in your usual playing position. Tighten the endpin clamp by hand at your usual height and seat the tip in a secure endpin stop so it cannot skid. Keep the cello supported between your knees. If the endpin slips or you need both hands just to balance the cello, have someone steady it before you touch a peg.',
@@ -100,6 +110,11 @@ export const celloStringChangeGuide = {
     },
     {
       id: 'anchor-the-ball',
+      stringCheck: {
+        question: 'Where does the ball end of a cello string rest?',
+        answer:
+          'On a fork it bears against the prongs. On a keyhole tailpiece it sits underneath the narrow slot. Take up slack gently and watch the ball stay seated before turning the peg.',
+      },
       title: '3. Seat the new string in its tailpiece fitting',
       paragraphs: [
         'Open the packet for that one note and ease the coil open, keeping its tip away from your face. Find the little metal ball fixed at one end. If there is a fine-tuner screw for this string, check that it can turn a little in either direction.',
@@ -137,6 +152,11 @@ export const celloStringChangeGuide = {
     },
     {
       id: 'wind-the-cello-peg',
+      stringCheck: {
+        question: 'What should I check after threading a cello peg?',
+        answer:
+          'With the winding still loose, sight from the nut to the first turn. Check that the tip clears other coils and that the winding has room beside the pegbox wall.',
+      },
       title: '4. Thread the peg and form the winding',
       paragraphs: [
         'With the ball end still seated, lay the string in its own grooves at the bridge and nut. On a conventional wooden peg, turn the shaft until you can see its small drilled hole. Feed the free tip through so a few millimeters show on the other side. Keep a light pull on the string as you start the peg in the direction you photographed.',
@@ -159,6 +179,11 @@ export const celloStringChangeGuide = {
     },
     {
       id: 'check-the-cello-bridge',
+      stringCheck: {
+        question: 'How can I check both feet of the cello bridge?',
+        answer:
+          'Look from each side at eye level with the top. Compare each foot with your starting photo. An opening under either foot is a reason to stop tightening.',
+      },
       title: '5. Check the grooves and the feet of the bridge',
       paragraphs: [
         'Pluck gently at low tension. Look from the peg to the tailpiece and confirm that the new string runs in its own shallow groove at the nut and at the top of the bridge. If it has hopped onto an edge, ease the peg until you can guide it back with a fingertip.',
@@ -194,6 +219,12 @@ export const celloStringChangeGuide = {
     },
     {
       id: 'tune-and-recheck',
+      stringAid: 'cello-octave',
+      stringCheck: {
+        question: 'Is the cello’s open A A3 or A4?',
+        answer:
+          'The cello target is A3, 220 Hz at concert pitch A4 = 440 Hz. Hear both references below, then return to the lower one before tuning your cello.',
+      },
       title: '6. Tune from below and recheck after playing',
       paragraphs: [
         'Select cello on the tuner. From thickest to thinnest the open strings are C2, G2, D3 and A3. Listen to the reference for the string you changed, then pluck that string with no finger on the fingerboard. On cello the open A is A3, one octave below a violin’s open A. A tuner displaying only a letter cannot tell those two A notes apart on its screen.',

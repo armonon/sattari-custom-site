@@ -34,6 +34,12 @@ export const bassStringChangeGuide = {
   sections: [
     {
       id: 'match-the-bass-set',
+      stringAid: 'bass-winding-length',
+      stringCheck: {
+        question: 'Is scale length the same as winding length on a bass?',
+        answer:
+          'Scale length describes the speaking part. The replacement also travels from the ball to the saddle and beyond the nut. Measure the old string from ball to nut and compare with the maker’s ball-to-taper specification.',
+      },
       title: '1. Match the gauges and the winding length',
       paragraphs: [
         'Start with the string count and gauges on your old packet or your bass maker’s original specifications. Gauge is thickness in thousandths of an inch. For example, a .105 is thicker than a .095. Staying with the same gauges for your first change helps preserve the feel and setup. Read each string’s envelope before opening it.',
@@ -57,6 +63,11 @@ export const bassStringChangeGuide = {
     },
     {
       id: 'remove-the-old-bass-string',
+      stringCheck: {
+        question: 'Which direction loosens a bass tuning key?',
+        answer:
+          'Watch the shaft as you turn the key slightly and pluck the string again. A falling note confirms it is loosening. Key orientation can differ from one side of the headstock to the other.',
+      },
       title: '2. Trace one string and loosen it completely',
       paragraphs: [
         'Unplug the bass. Lay it face up on a padded, stable surface with the neck supported and the keys free to turn. Photograph the bridge and headstock. Follow the string you want to change all the way to its post. Notice the side it wraps around and whether it passes under a string guide.',
@@ -79,6 +90,11 @@ export const bassStringChangeGuide = {
     },
     {
       id: 'load-the-bass-bridge',
+      stringCheck: {
+        question: 'How do I check a top-loaded bass string?',
+        answer:
+          'Follow it back from its saddle to the bridge opening. The ball should meet the rear anchor squarely and stay there when you take up slack with your fingers.',
+      },
       title: '3. Feed the new string through its bridge opening',
       paragraphs: [
         'Uncoil the matching string slowly. The ball is the small metal stop on one end. On a top-loading bridge with holes in its back edge, feed the plain tip in from that edge toward the neck. If yours has an open slot, slide the string into the slot and seat the ball in its recess. On a through-body bass, feed the tip through the corresponding metal-lined hole on the back of the body.',
@@ -126,6 +142,11 @@ export const bassStringChangeGuide = {
     },
     {
       id: 'allow-for-the-tuning-post',
+      stringCheck: {
+        question: 'How much bass string should I leave past the post?',
+        answer:
+          'Use the allowance for your post style, string and string position. Mark the cut point while the ball is seated. Read the packet before trimming round-core or flatwound strings.',
+      },
       title: '4. Measure the extra length before cutting',
       paragraphs: [
         'With the ball seated, lay the new string across the nut and straight past its own post. Check the tuner-end taper against the old string. If the thinner section would land in the nut groove, pause and recheck the set. Identify your post before trimming. A split post has a slot across its top and a hole down the center. An eyelet post has a hole through its side.',
@@ -149,6 +170,11 @@ export const bassStringChangeGuide = {
     },
     {
       id: 'wind-and-seat-the-string',
+      stringCheck: {
+        question: 'How do I start the winding on a split-post bass tuner?',
+        answer:
+          'Insert the cut end down the central hole, bend the string out through the top slot and start the turn under light tension. The cut tip should stay enclosed inside the post.',
+      },
       title: '5. Wind down the post and check both grooves',
       paragraphs: [
         'For a split post, push the cut tip into its center hole, then bend the long string through the slot. For an ordinary side-eyelet post, pass the tip through the side hole and follow that tuner’s loading directions. Hold the long string lightly and turn the key so it wraps on the same side as the old string. Each turn should sit below the previous turn, working toward the headstock face. If the wraps cross, unwind them while the string is still slack and start the winding again.',
@@ -171,6 +197,11 @@ export const bassStringChangeGuide = {
     },
     {
       id: 'tune-and-check-the-bass',
+      stringCheck: {
+        question: 'What octave are the strings on a four-string bass?',
+        answer:
+          'In standard tuning, sound E1, A1, D2 and G2 from thickest to thinnest. For a standard low-B five-string, the added string is B0. Match the reference as well as the letter.',
+      },
       title: '6. Tune up one string at a time and play it',
       paragraphs: [
         'Select bass mode on the tuner. On a standard four-string bass, the open notes from thickest to thinnest are E1, A1, D2 and G2. A standard low-B five-string adds B0 below E1. Pluck the new string without fretting it and lightly mute its neighbors. Compare with a reference tone if your tuner shows only a letter. An E an octave too high can still make the display say E.',

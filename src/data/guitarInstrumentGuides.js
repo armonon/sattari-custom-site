@@ -13,6 +13,9 @@ export const guitarInstrumentGuides = [
     sections: [
       {
         title: 'Try this even if you only know one note',
+        paragraphs: [
+          'Play the three notes on one string with the same fingertip. If the open E rings on both instruments but the F on one demands a squeeze, ask someone to check its setup before you decide that body size is the problem.',
+        ],
         steps: [
           'Tune both instruments. Sit in your usual practice chair with your feet supported. See whether your picking shoulder stays relaxed as your arm comes over the body.',
           'Pluck the thinnest string open. Then play its first and third frets, putting one fingertip just behind each metal fret. In standard tuning you have played E, F and G. Try the same three notes on the second guitar.',
@@ -21,13 +24,18 @@ export const guitarInstrumentGuides = [
       },
       {
         title: 'Separate body size from left-hand reach',
+        choiceAid: 'acousticFit',
         paragraphs: [
           'Body depth and width determine how far the picking arm reaches around the instrument. If a dreadnought lifts your shoulder, try a shallower concert or parlor body and repeat the seated test. These shape names vary among makers, so compare the actual instruments. A smaller body can suit an adult.',
           'Scale length describes the length of string designed to vibrate between nut and saddle. A shorter scale puts the frets closer together. Neck width and thickness are separate measurements. One guitar can have close-set frets yet still feel wide when you reach across all six strings. Test both directions of reach.',
+          'Rest each guitar on the same leg and keep the chair height fixed. Compare shoulder height first, then the reach to the first fret. A shallow body and a short scale solve different problems.',
         ],
       },
       {
         title: 'Match the string and body to your everyday use',
+        paragraphs: [
+          'Bring a line you sing comfortably. Ask someone to repeat one chord while you sing it softly, then loudly. Check both whether the instrument supports the voice and whether you enjoy holding it for the whole line.',
+        ],
         table: {
           headers: ['What you want to do', 'What to try and listen for'],
           rows: [
@@ -51,12 +59,14 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'Action is the gap between the strings and the frets. If you need a tight grip to play first-position notes, try the same notes on a known playable instrument. If a note buzzes, place your finger slightly closer behind the fret and try again. Ask an experienced player to repeat it. A persistent problem on one guitar is worth an inspection.',
           'Tune the open strings again after several minutes. A lifting bridge, an open seam or a crack in the top deserves a repair estimate before you decide. A fresh set of strings will not close a seam. Ask who handles adjustments on a rental and whether the fee includes a bag. On a borrowed instrument, agree with its owner before changing string type or gauge.',
+          'With permission, play a note on several frets of each string. If the same buzz returns on one fret for a second player, record the string and fret for the repairer who will inspect it.',
         ],
       },
       {
         title: 'Decide after a second listen',
         paragraphs: [
           'Give each guitar three short notes about comfort, sound and work needed. For example, “comfortable seated, clear melody, one buzzing fret to assess” tells you more than a single score. Add the cost of a case for travel, suitable replacement strings and any quoted work. A trial or lesson with a borrowed guitar may answer the remaining question before you spend anything.',
+          'Listen to instrument B first on the return visit. If you still prefer the same guitar for the same reason, put that observation beside its full price and any work it needs.',
         ],
       },
     ],
@@ -95,10 +105,15 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'Sit down with the guitar, then stand with a strap if you plan to rehearse standing. Keep a hand close as you ease your grip. Does the neck stay within reach, or is your fretting hand holding it up? Check that your picking hand can clear the controls and that you can reach the selector without losing your place.',
           'Two common scale lengths are 24¾ and 25½ inches. The longer scale spaces the frets farther apart. With the same string construction, gauge and tuning, it also puts the strings under more tension. Neck thickness, fret shape and setup affect what you actually feel. Try a first-fret note and a gentle bend farther up the neck on both guitars.',
+          'Try moving your fretting hand from the first to the fifth fret while standing. If the headstock keeps dropping when you shift, ask to try a different strap or body shape before judging the neck.',
         ],
       },
       {
         title: 'Hear the pickups with a repeatable test',
+        choiceAid: 'pickupTest',
+        paragraphs: [
+          'Find the pickup closest to the fretboard, the one nearest the bridge and the selector that switches between them. Ask the owner to identify any push-pull or coil-switch function before comparing sounds.',
+        ],
         steps: [
           'Set the amp to a clean sound and turn off delay and distortion. Choose the neck pickup. Play four even notes on one string, then a chord or two open strings together.',
           'Repeat on the bridge pickup at a similar listening volume. Notice the attack at the start of each note and how clearly you can separate the strings. The neck position often sounds rounder and the bridge brighter.',
@@ -111,6 +126,7 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'A fixed bridge holds the strings at a stationary anchor. It is straightforward if you often change tunings. A vibrato bridge lets an arm change the pitch of a chord. On a floating design the strings balance against springs, so retuning one string can move the others. If you want that effect, use the arm gently, release it and check the tuning again.',
           'Imagine two songs in your first set, one in standard tuning and one in drop D. Ask to try that change on the exact bridge you are considering. That small rehearsal will tell you how much tuning time to allow.',
+          'If you rarely use vibrato, test how quickly you can move between your usual tunings. If you use the arm regularly, start and end the test on the same open-string tuner reading.',
         ],
       },
       {
@@ -118,6 +134,7 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'A solid-body electric is quiet unplugged. To hear amplified tone in a shared home, use a guitar headphone amp, a practice amp with a headphone output, or an audio interface with an instrument input, monitoring and suitable software. On a standard electric, the guitar output jack supplies an instrument signal. Headphones need a headphone output.',
           'Borrow an amp or try a lesson-room setup before choosing equipment. For rehearsal with drums, try the amp in the actual room and see whether clean notes stay audible at the group’s volume. Include a cable, strap, travel protection, replacement strings and any setup in your budget. A working borrowed guitar and headphone amp may cover everything for the first few months.',
+          'For home practice, plug your own headphones into the practice unit and mute its speaker if the design allows it. Check that the controls and cables fit in the place you will actually play.',
         ],
       },
     ],
@@ -155,6 +172,7 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'A standard four-string electric bass is tuned E1, A1, D2 and G2, lowest to highest. That low E sounds an octave below a guitar’s low E. A common five-string adds B0 below it. Check the lowest pitches in a few bass parts you want to learn. A low C under the usual four-string range is the first fret on a low B string.',
           'A fifth string also gives you another way to finger familiar pitches. The E at its fifth fret matches the open E beside it. Compare the two sounds, then play a phrase across the other strings. If the low B keeps ringing after your phrase, practise damping it with a spare finger or your plucking-hand thumb. More strings change the muting job as well as the range.',
+          'Look at the lowest note of a song and the octave it is written in. A four-string bass covers many parts with E1 as its floor. A five-string with a low B puts C1 at the first fret of that string.',
         ],
       },
       {
@@ -162,10 +180,15 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'Compare a bass around 30 inches in scale length with a common 34-inch model. The shorter scale puts neighboring frets closer together. Reach for the first fret while seated and again on a strap. The body shape and where the strap attaches affect where that first fret sits relative to your shoulder.',
           'Next, alternate two plucking fingers across adjacent strings. Two basses with similar neck lengths can have different spacing or neck widths. A five-string can be comfortable for a small hand. Try the actual spacing. If you need a note beyond a comfortable stretch, release and shift your hand.',
+          'Compare the reach to fret one with your shoulder relaxed and the neck angled as you normally play. Then cross two adjacent strings. Reach along the neck and spacing across it are separate entries on a trial card.',
         ],
       },
       {
         title: 'Play a two-bar groove and listen to the rests',
+        choiceAid: 'bassGroove',
+        paragraphs: [
+          'Try each bass through the same amp. During the two silent beats in each bar, listen specifically for the string you just left. Mark the first beat where an unwanted string keeps ringing.',
+        ],
         steps: [
           'Use a clean bass amp at a comfortable level. Count “one, two, three, four” twice. Play open E on one and three in the first bar, then open A on one and three in the second.',
           'Stop each note on beats two and four. Listen for another string humming during a rest. Play the same groove once with fingertips and once with a pick if both techniques interest you.',
@@ -178,6 +201,7 @@ export const guitarInstrumentGuides = [
         paragraphs: [
           'At home, a bass practice amp with a headphone output or a bass headphone amp can make the start and end of the low notes clear at modest volume. For a band rehearsal, test with the group. A small amp that sounds full in a quiet room can run out of clean volume beside a drummer.',
           'Ask what you can borrow from the rehearsal room or the school before pricing an amp. Check whether a rental includes a strap, cable and bag, and who handles fret buzz or a faulty jack. For future string changes, note the model and string length it takes. Bridge design and where the string anchors can change how much winding length it needs.',
+          'If you plan to practise in headphones, play a low E, stop it cleanly and listen to the silence. Rattles in the room and distortion in a small speaker can otherwise get mistaken for a fault in the bass.',
         ],
       },
     ],
@@ -216,13 +240,18 @@ export const guitarInstrumentGuides = [
     sections: [
       {
         title: 'Why the lowest “nylon” strings look like metal',
+        choiceAid: 'stringCores',
         paragraphs: [
           'On a typical classical set the three treble strings are plain nylon or another synthetic material. The lower three often have a metal wrap around a flexible multifilament core. Winding adds mass, so the bass notes can sound at their pitches without an unwieldy solid string. Seeing a silver-colored low string on a classical guitar is normal.',
           'On a typical steel-string acoustic set the high E and B are plain steel. The other strings usually have metal winding around a steel core. A classical bass string and a steel-core acoustic bass string can therefore look similar from the outside. Use the instrument model and the set packaging to identify them.',
+          'Inspect the high E and B at the bridge under good light, then read the set label. A nylon treble can be clear or tinted. The core under a wound bass is the decisive difference and usually cannot be identified by looking at the wrap.',
         ],
       },
       {
         title: 'Try the same three notes with the same touch',
+        paragraphs: [
+          'Pluck the open high E at the same distance from each bridge and record a short phone clip from one position. Listen to the first instant of each note separately from its fading tail.',
+        ],
         steps: [
           'Tune both guitars to standard pitch. Pluck the open high E, then the first fret (F), then the third fret (G). Use your fingertip in roughly the same position between bridge and soundhole on each guitar.',
           'Listen first to the beginning of each note, then to its decay. Steel often has a brighter, more pronounced attack. Nylon often produces a rounder onset. Plucking closer to the bridge brightens either sound. Try that before attributing every difference to the material.',
@@ -231,6 +260,9 @@ export const guitarInstrumentGuides = [
       },
       {
         title: 'Which will feel easier under your hands?',
+        paragraphs: [
+          'Compare a single first-fret note, then a reach across the neck. Lower tension may help with pressure while wider string spacing changes the stretch. Choose using both tests.',
+        ],
         table: {
           headers: ['Question', 'What to check'],
           rows: [
@@ -255,6 +287,7 @@ export const guitarInstrumentGuides = [
           'Use strings specified for the instrument. A conventional classical guitar is built for nylon-string tension. A set of steel-core acoustic strings can pull the bridge away from the top or damage the instrument. A lighter steel gauge or a “silk and steel” label does not make a set safe for a conventional classical guitar.',
           'Putting classical strings on a steel-string guitar introduces other fit and setup questions, including the anchoring method, nut slots and string tension. A ball end alone does not establish compatibility. If the guitar is borrowed, unlabelled or unfamiliar, photograph the model label and bridge and ask the maker or a repairer to identify the correct string family.',
           'If your goal is to hear the other sound, borrow a guitar made for that set for one lesson. You get to compare string feel, spacing and the soundboard together, and can return the instrument in its original setup.',
+          'Before replacing an unidentified set, use the maker and model to confirm the permitted string family. A bridge with holes for ball ends can still belong to an instrument built for nylon.',
         ],
       },
     ],

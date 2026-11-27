@@ -45,6 +45,11 @@ export const ukuleleStringChangeGuide = {
   sections: [
     {
       id: 'match-your-set',
+      stringCheck: {
+        question: 'How can I tell which ukulele string set fits?',
+        answer:
+          'Read the model label inside the soundhole and check the maker’s intended tuning. For a GCEA instrument, verify whether you want a high-G or low-G fourth string before opening the set.',
+      },
       title: '1. Match the set to your ukulele and tuning',
       paragraphs: [
         'Look through the soundhole for a model name or number. Check its specifications and the old string packet if you have it. Match the replacement to the size the maker lists, such as soprano, concert, tenor or baritone. String packs can cover more than one size. Use a set made for that instrument, including any wound strings the set calls for. Ordinary steel guitar strings can overload a ukulele built for nylon or fluorocarbon.',
@@ -68,6 +73,11 @@ export const ukuleleStringChangeGuide = {
     },
     {
       id: 'identify-the-bridge',
+      stringCheck: {
+        question: 'How do I recognize a ukulele tie-bar bridge?',
+        answer:
+          'Look behind the saddle. Loops across a raised bar identify a tie bridge. A string entering a narrow slot in front of a recessed knot calls for a stopper instead.',
+      },
       title: '2. Identify the bridge before you loosen anything',
       paragraphs: [
         'Lay the ukulele face up on the towel and support its neck so the tuning buttons can turn freely. Photograph the bridge and the front of the headstock. The bridge is the anchor on the body. The saddle is the narrow strip across it that the strings pass over.',
@@ -105,6 +115,11 @@ export const ukuleleStringChangeGuide = {
     },
     {
       id: 'loosen-one-string',
+      stringCheck: {
+        question: 'Which ukulele tuning button should I turn?',
+        answer:
+          'Follow the wire or nylon strand you are changing into its nut groove, then to the shaft it wraps around. Pluck and make one tiny turn to confirm the pitch falls.',
+      },
       title: '3. Trace one string to its post and unwind it',
       paragraphs: [
         'Follow the string along the fingerboard and over the nut, the little grooved strip where the headstock begins. Put a finger on the post it wraps around. Pluck the string and turn that post’s button a little. Listen for the pitch to fall. If it rises, turn the other way. Keep loosening until the string is floppy.',
@@ -129,6 +144,15 @@ export const ukuleleStringChangeGuide = {
     },
     {
       id: 'anchor-the-new-string',
+      stringPhotoLabels: [
+        'Tie bar · the last wrap holds the tail',
+        'Slotted bridge · the stopper holds the string',
+      ],
+      stringCheck: {
+        question: 'What keeps a ukulele string from pulling out of its bridge?',
+        answer:
+          'A tie bar grips the tail in its final wrap behind the bar. A slotted bridge traps a knot larger than its slot. Give a light pull while watching the part that supplies the anchor.',
+      },
       title: '4. Anchor the new string at your type of bridge',
       paragraphs: [
         'For a tie bar with one hole per string, feed the tip through the empty hole from the soundhole side toward the tail. Leave a few inches free. Bring that short tail back over the block and under the long part of the string to form a loop. Turn the tail back toward the rear edge and pass it through its loop twice for a plain nylon tie of the type shown by Mya-Moe. Hold the last tuck against the rear face of the block as you gently pull the long string toward the neck. Follow the string maker’s tying directions if your set calls for a different wrap.',
@@ -165,6 +189,11 @@ export const ukuleleStringChangeGuide = {
     },
     {
       id: 'wind-the-post',
+      stringCheck: {
+        question: 'How do I check my ukulele post wraps?',
+        answer:
+          'Look at the coils from the side. The next coil can sit below the first one toward the headstock. Unwind a crossed coil while it is still slack.',
+      },
       title: '5. Wind the tuning post and check the string path',
       paragraphs: [
         'Bring the long end over the saddle and into the nut groove you emptied. On an ordinary upright post with a hole through its side, rotate the post until you can feed the tip through. Leave enough slack in the playing length for a few wraps. Hold it lightly with one hand and turn the button with the other. Follow the winding direction in your starting photo so the string runs cleanly from its nut groove to the post.',
@@ -200,6 +229,11 @@ export const ukuleleStringChangeGuide = {
     },
     {
       id: 'tune-and-recheck',
+      stringCheck: {
+        question: 'Is the fourth ukulele string G3 or G4?',
+        answer:
+          'A standard high-G set uses G4. A low-G set uses G3. Pluck your reference and compare the octave before tightening. A standard baritone set starts at D3.',
+      },
       title: '6. Tune in the right octave and check again after playing',
       paragraphs: [
         'Pluck one open string with your fretting hand clear. In order from string 4 to string 1, a standard high-G set uses G4, C4, E4, A4. The first G sounds higher than the C beside it. With a low-G set the order is G3, C4, E4, A4. A standard baritone uses D3, G3, B3, E4. The number matters because a tuner can show the correct letter an octave away.',

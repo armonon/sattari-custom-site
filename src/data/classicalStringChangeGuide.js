@@ -9,6 +9,11 @@ export const classicalStringChangeGuide = {
   sections: [
     {
       id: 'check-your-bridge',
+      stringCheck: {
+        question: 'How do I identify a six-hole classical guitar bridge?',
+        answer:
+          'Count the holes behind the saddle. This tie uses one hole for each of the six strings. A twelve-hole bridge has a second hole for each string and follows its own threading pattern.',
+      },
       title: '1. Identify the bridge and choose the right string',
       paragraphs: [
         'Lay the guitar face up on the towel and support its neck. Find the saddle, the narrow ridge across which the strings run. Just behind it is the tie block, the raised part of the bridge that holds the ends. Look at the face pointing away from the sound hole and count the holes. This method uses six holes for six strings. With two holes per string, follow the twelve-hole demonstration linked below. A bridge fitted with pins or beads also has a different attachment.',
@@ -44,6 +49,11 @@ export const classicalStringChangeGuide = {
     },
     {
       id: 'release-one-string',
+      stringCheck: {
+        question: 'Which roller should I unwind?',
+        answer:
+          'Trace the string into the headstock slot and across its roller to the matching key. With the string slack, slide the bent end back through that roller by hand.',
+      },
       title: '2. Follow one string to its roller and unwind it',
       paragraphs: [
         'Start with the broken string or, for a whole set, the thick sixth string. Follow it past the nut, the small ridge at the end of the fingerboard, onto one of the cylinders inside the slotted headstock. That cylinder is its roller. Look at which side of the roller the old string occupies. Take a photo so you can reproduce its path past the neighboring strings.',
@@ -68,6 +78,11 @@ export const classicalStringChangeGuide = {
     },
     {
       id: 'make-the-bridge-loop',
+      stringCheck: {
+        question: 'Which way does the string enter the tie block?',
+        answer:
+          'For the six-hole bridge shown, the long playing length stays on the neck side. Feed the short tail through toward the body end so you can bring it back over the block to form the loop.',
+      },
       title: '3. Thread the tie block and make an open loop',
       paragraphs: [
         'Open the matching packet. If the maker marks a bridge end, use that end here. Start on the saddle side of the empty hole. Feed the tip through toward the tail of the guitar until about 3 inches (7–8 cm) sticks out behind the block. The short part is your tail. The much longer part will cross the saddle and run up the neck.',
@@ -107,6 +122,12 @@ export const classicalStringChangeGuide = {
     },
     {
       id: 'secure-the-tie',
+      stringAid: 'tie-profile',
+      stringCheck: {
+        question: 'Where does the final tuck sit on a classical guitar?',
+        answer:
+          'Get level with the rear face of the bridge and look for the short tail below the top edge. Watch that spot while pulling gently toward the neck. A tail moving back onto the top needs retying.',
+      },
       title: '4. Twist the tail and seat the last tuck behind the block',
       paragraphs: [
         'Pass the tail through the open loop, winding it around the strand that crosses the top of the block. Repeat in the same direction. For the six-hole tie shown in Taylor’s instructions, use two twists for a wound bass or three for a smooth treble. The extra turn helps the slick string grip. Keep the turns next to one another.',
@@ -132,6 +153,11 @@ export const classicalStringChangeGuide = {
     },
     {
       id: 'thread-and-wind',
+      stringCheck: {
+        question: 'How do I spot a roller winding that will rub?',
+        answer:
+          'Turn just enough to form the first coils and look through the headstock slot. Leave a clear path to the nut without coils rubbing the slot wall or a neighboring string.',
+      },
       title: '5. Thread the roller and wind the first coils',
       paragraphs: [
         'Lay the long string across the saddle and into its old groove in the nut. Turn the empty roller until you can reach its hole. Pass the tip through so that it emerges pointing toward the guitar body. Bring that tip up around the back of the roller and tuck it underneath the long string. Leave enough slack along the neck to make a few turns on the roller.',
@@ -156,6 +182,11 @@ export const classicalStringChangeGuide = {
     },
     {
       id: 'tune-and-settle',
+      stringCheck: {
+        question: 'How do I tell settling nylon from a slipping knot?',
+        answer:
+          'A gradual flattening after gentle playing is common. If the pitch drops abruptly, watch the bridge tail and roller on the next pluck. Loosen the string and reset any attachment that moves.',
+      },
       title: '6. Tune from below, check the tie and let the string settle',
       paragraphs: [
         'Use standard guitar tuning. From thickest to thinnest the open strings sound at 6 = E2, 5 = A2, 4 = D3, 3 = G3, 2 = B3 and 1 = E4. Play the reference for your string first. Pluck without fretting and tighten a little at a time, watching the bridge tie as you approach the note from below. If the string feels very tight while the tuner still seems to read low, pause and check the reference octave and string packet.',

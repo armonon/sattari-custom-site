@@ -437,8 +437,8 @@ const practiceGuides = [
       {
         title: 'Hickory vs maple',
         paragraphs: [
-          'Most drumsticks are made from hickory or maple. Hickory is denser and heavier, absorbs shock well, and gives the player more feedback from the drumhead. Hickory sticks are durable and forgiving — a good choice for beginners who are still developing control.',
-          'Maple is lighter than hickory, which makes it faster and easier to play for extended periods. The reduced weight also means less rebound from the head. Maple sticks are popular with jazz drummers and players who value speed over power. Either wood works for a beginner; hickory is the more common starting recommendation.',
+          'Hickory and maple are common drumstick woods. With comparable dimensions, hickory usually produces a heavier stick and maple a lighter one. Within each species, actual pairs differ in weight and balance.',
+          'Try both on your practice surface. The taper, tip, surface tension and how you hold the stick also influence rebound. A maple pair can suit someone who wants a larger diameter without as much weight.',
         ],
       },
       {
@@ -451,7 +451,7 @@ const practiceGuides = [
       {
         title: 'When to move to a different size',
         paragraphs: [
-          'Stick with the same size long enough to develop consistency. Switching sticks too early makes it harder to build a reliable stroke. Most beginners should use the same pair for at least several months before experimenting with a different size or material.',
+          'Use one pair for repeated practice sessions so you learn its feel. You can try another size alongside it as soon as you have a specific question about balance, reach or sound.',
           'Consider moving to a heavier stick if you are playing louder music and want more weight behind each stroke. Consider moving lighter if fatigue is limiting your practice time. The right stick is the one that lets you play longer with better control — not the one endorsed by your favourite drummer.',
         ],
       },
@@ -460,6 +460,10 @@ const practiceGuides = [
       {
         label: 'Vic Firth American Classic 7A specifications',
         url: 'https://vicfirth.com/products/american-classicr-7a',
+      },
+      {
+        label: 'Vic Firth guide to wood, taper and tip choices',
+        url: 'https://vicfirth.com/pages/frequently-asked-questions',
       },
       {
         label: 'Vic Firth American Classic 55A and its 5A / 5B size comparison',

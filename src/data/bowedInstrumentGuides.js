@@ -22,18 +22,23 @@ const philharmoniaViolin = {
 export const bowedInstrumentGuides = [
   {
     slug: 'choose-a-violin-for-beginners',
+    seoTitle: 'How to Choose a Violin for Beginners: Size, Bow and Sound',
     trialSheet: true,
     title: 'How to Choose a Violin for Beginners',
     category: 'Choosing an instrument',
     description:
       'Learn how to fit a violin, test its bow and tuning, compare two instruments by ear, and decide whether to borrow, rent or buy your first violin.',
     answer:
-      'A first violin should fit your reach, stay in tune through a short lesson and let you start a note on each string. You can check all three before you know a tune. Bring the person who will play it and, if possible, someone who can play the same short passage on two violins.',
+      'To choose a first violin, test three things in order. Try a size that lets your fourth finger land with a relaxed wrist, draw the same quiet note with the bow, then listen to two violins from the same chair. A teacher or friend can play while you listen. Use the comparison card below to record what you hear and what each complete outfit will cost.',
     image: '/sattari site/violins/brescia-acoustic.jpg',
     imageAlt: 'Front view of a four-string acoustic violin with its bow',
     sections: [
       {
         title: 'Your first violin trial',
+        choiceAid: 'violinTrial',
+        paragraphs: [
+          'Try the instruments in alternating order. Label them A and B on your trial card before you look at their prices. A note such as “the quiet A started cleanly three times” will still mean something when you get home.',
+        ],
         lead: true,
         steps: [
           'Ask the teacher what the first lesson involves, whether the ensemble expects an acoustic violin and whether the school lends instruments.',
@@ -48,6 +53,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'A 4/4 violin is called full size. Labels such as 1/2 and 3/4 name smaller student sizes. An arm measurement can suggest a starting point, but two children of the same age can need different instruments. Take the player to the fitting, even if the violin will be a gift.',
           'With the instrument supported, let the teacher guide your hand into first position, the area nearest the tuning pegs. Can your fingertips land with a curved hand? Try a few gentle bow strokes. If you repeatedly lift the left shoulder, lock the elbow or squeeze the neck, try changing the support or trying the next size down. Repeat the test sitting as you would at rehearsal.',
+          'Try the smaller violin with its own correctly fitted shoulder support. If your fourth finger reaches only when the thumb grips hard or the wrist bends inward, have the teacher compare the fit again.',
         ],
       },
       {
@@ -58,6 +64,7 @@ export const bowedInstrumentGuides = [
         },
         paragraphs: [
           'Setup is the fit of the parts that let you tune, stop and bow a string. The pegs make large tuning changes. Fine tuners, where fitted, make small ones. The bridge holds the strings above the fingerboard and its curve helps the bow reach one string at a time. Ask a player to demonstrate each part.',
+          'For a used bow, ask the player to tighten and loosen it once, then watch from the frog as they draw a slow stroke. Hair coming loose in a clump or a screw that binds is a reason to ask for a repair estimate.',
         ],
         table: {
           headers: ['What to try', 'What to listen or look for'],
@@ -86,6 +93,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'Ask one player to use the same bow on both instruments. Listen from the same chair across the room. First ask for a slow stroke on each open string, from low G through D and A to high E. Then ask for the same four bars, played softly once and at a fuller volume once.',
           'Give yourself a specific question on each pass. Did the first quiet note speak straight away? Did one note jump out of the tune? Could you follow the low notes from your chair? Finally hold each violin and try a stroke yourself. Sound under your ear and sound across a room are different experiences, and both matter.',
+          'Take turns being the listener and holding the instrument. Record whether a preference followed the player, the violin or the listening spot. Repeat any close result with the violins in the opposite order.',
         ],
       },
       {
@@ -109,6 +117,7 @@ export const bowedInstrumentGuides = [
         },
         paragraphs: [
           'For a growing player between sizes, an exchange policy can matter more than a low monthly rate. For an adult with access to a well-fitting borrowed violin, one lesson on that instrument can reveal what to look for in the next one.',
+          'For a term rental, separate the refundable deposit from costs you will keep paying. Compare the fee through the same end date, then add any required cover, bow work and size exchange costs.',
         ],
       },
       {
@@ -117,6 +126,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'An acoustic violin fills a room without electronics, which is useful for lessons and unamplified groups. For late-night practice, try an acoustic violin with a practice mute and an electric instrument set up for headphones. Ask someone to listen from the next room. Both make some physical sound while being bowed.',
           'Before deciding, put three sentences on your trial card. “I could reach ___ comfortably.” “I preferred ___ when I heard the same tune.” “The complete outfit for one term will cost ___.” If a blank remains, you know exactly what to test at a second visit.',
+          'Check the instrument in the room where practice will happen. Ask your listener to close the adjoining door and report whether they hear the melody, only the bow noise, or neither.',
         ],
       },
     ],
@@ -155,13 +165,18 @@ export const bowedInstrumentGuides = [
     sections: [
       {
         title: 'What a viola size tells you',
+        choiceAid: 'violaFit',
         paragraphs: [
           'Violas commonly carry measurements in inches, such as 15, 15½ or 16. Two instruments with the same back length can have different neck lengths and different distances from nut to bridge. That last distance is the vibrating string length. It affects how far the fingers travel for the same notes.',
           'The depth of the body and the shape of its upper shoulders also change how the instrument sits against you. Ask to try two nearby sizes and, if available, two different shapes in one size. Record back length and string length separately so you can identify what felt comfortable.',
+          'To record back length, start at the upper edge beside the small button where the neck joins the back and follow the center of the back to the lower edge. To record playing length, measure along a string from the edge of the nut facing the bridge to the bridge contact point. Note the unit beside each number.',
         ],
       },
       {
         title: 'A reach test for both hands',
+        paragraphs: [
+          'Try your fourth finger twice. After the first reach, lift the hand, let the thumb relax and set the finger down again. A reach you can repeat without bracing is more useful in a lesson than a single stretched note.',
+        ],
         steps: [
           'Adjust the chin and shoulder support with a teacher. Sit in a rehearsal chair and rest the viola in playing position. Notice if you have to shrug the left shoulder to keep it there.',
           'With a teacher guiding you, place the first and fourth fingers in turn on the D string. Move the same hand shape to the lower strings. Try a second viola if your wrist twists sharply or your fingertips have to flatten to reach.',
@@ -174,6 +189,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'Ask one player to use the same viola bow to start a quiet open C on each instrument. Listen for the pitch emerging at the start of the stroke. Next ask for the same short melody on the G and D strings, followed by a few upper notes on A. Can you follow the tune as it crosses strings? A striking low note alone tells you little about that transition.',
           'Listen from a few steps away and then try from playing position. If an attractive sound takes extra effort to produce, ask the player to try a second bow with that viola. Keeping the bow constant first lets you hear what changed when you switch it.',
+          'Ask the same player to bow the C and A quietly on both violas. Listen for how soon the pitch becomes clear after the bow starts. Then try a string crossing and notice whether your bow arm has enough room.',
         ],
       },
       {
@@ -181,6 +197,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'Choose a short passage you will actually play. For a first lesson that could be four open strings in a steady pulse. A violinist moving to viola could bring a familiar scale and use it to check the wider finger spacing. Ask the teacher to observe the reach as you play and again near the end of the lesson.',
           'For a student who is still growing, ask a school or rental program about an exchange mid-term. Confirm that a viola bow and a case that fits the particular body are included. Write down the string length as well as the body size for future string replacements, and bring those numbers back to your teacher.',
+          'Write down the teacher’s observation after ten minutes of playing. Keep the model or label with your two measurements so a similar-looking loan instrument cannot be mixed up with the one you tried.',
         ],
       },
     ],
@@ -203,6 +220,10 @@ export const bowedInstrumentGuides = [
     sections: [
       {
         title: 'The differences side by side',
+        choiceAid: 'twoClefs',
+        paragraphs: [
+          'To recognize the tuning, start at the low end. A violin starts on G3 and a viola starts on C3. Find their common D4 in the diagram, then count how many lower open strings each instrument has.',
+        ],
         table: {
           headers: ['Feature', 'Violin', 'Viola'],
           rows: [
@@ -230,6 +251,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'An open string vibrates without a left-hand finger touching it. Listen to the viola’s lowest open C followed by the violin’s lowest open G. The G is a perfect fifth higher. Now have both players bow the open D. Both sound D4, the D just above middle C. Describe the start, brightness and sustain of the two sounds. You are hearing differences in timbre at the same pitch.',
           'With a friend, try three rounds with your eyes closed. First listen to low C and high E to establish the two extremes. Next hear the open D on both instruments. Finally hear the same short tune on each. A high phrase alone is a poor clue to identity because much of the two instruments’ ranges overlaps.',
+          'Keep the recording level and listening distance steady. If you hear a different color on the same D4, describe the attack or the sound after the bow settles. Those observations survive a comparison at matched volume.',
         ],
         link: { path: '/tuner/viola', label: 'Hear C3, G3, D4 and A4 as reference pitches' },
       },
@@ -238,6 +260,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'Find the middle line of a five-line staff. In alto clef, that line is middle C (C4). The space just above it is D4, the viola’s open D. In treble clef, middle C sits on the short ledger line below the staff, and D4 sits in the space immediately below the bottom line. The written positions differ, yet the open D sounds in unison.',
           'Both instruments normally read at concert pitch. A written D4 sounds D4 on either one. When moving from violin to viola, the clef changes where you look for that note, and the string layout changes where your bow lands. On violin D is the second string up from the lowest. On viola it is the third.',
+          'When reading an unfamiliar part, locate middle C first. Move up a single staff position to find D4, then identify the open D string on the instrument in your hands.',
         ],
       },
       {
@@ -245,6 +268,7 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'Start with the individual instrument demonstrations in the sources below. Listen next to a string quartet and follow one repeated figure for several bars. Who starts it, who answers, and who keeps it moving when the tune passes to the cello? This reveals more of each part than listening only for the highest line.',
           'If you are choosing which to learn, ask a teacher to put both in your hands. Try one shared note and one note unique to each instrument’s open strings. Think about which sound you want to return to tomorrow and which instrument lets you reach comfortably today.',
+          'In a quartet recording, follow the change of bow at the end of one phrase. Listen for the lower instrument that takes the shape of the melody next, even when the violin continues above it.',
         ],
       },
     ],
@@ -275,6 +299,9 @@ export const bowedInstrumentGuides = [
     sections: [
       {
         title: 'Follow the sound from string to listener',
+        paragraphs: [
+          'Trace where the sound leaves each design. An acoustic player can turn the amplifier down on a pickup-equipped instrument and still hear the body in the room. A solid-body player should test the loudness of the bare strings at the same distance.',
+        ],
         table: {
           headers: ['Design', 'What a listener hears', 'What to check'],
           rows: [
@@ -298,9 +325,11 @@ export const bowedInstrumentGuides = [
       },
       {
         title: 'Can you plug headphones straight into an electric violin?',
+        choiceAid: 'headphonePaths',
         paragraphs: [
           'Look for a connection specifically labeled for headphones. A passive pickup’s instrument output is designed for an amplifier, preamp or compatible audio interface. A headphone amplifier or a suitable interface with a headphone output can complete that setup. Some practice models supply a dedicated control box. Check the manual for the exact model and ask to try the whole chain.',
           '“Silent” commonly describes quiet headphone practice. With the power off you can still hear hair moving across a string. Have someone listen from your usual practice-room doorway while you play a full bow stroke. Then listen through wired headphones at a comfortable level to see whether you can hear how each note begins.',
+          'Check the markings beside each socket before the trial. A quarter-inch output labeled OUT and a headphone socket may use different levels even when an adapter makes the plugs fit.',
         ],
       },
       {
@@ -308,10 +337,14 @@ export const bowedInstrumentGuides = [
         paragraphs: [
           'For a school orchestra, ask the director about instruments, amplification and rehearsal rules. An acoustic violin can join an unamplified group as it is. For lessons on an electric, agree with the teacher on a listening setup that lets both of you hear bow changes and pitch clearly.',
           'For a band with drums, consider an electric violin or an acoustic with a pickup. Try it through the rehearsal system at the level the group actually uses. A resonant acoustic body can feed back at louder settings. Ask the sound engineer to help check placement and gain, and listen to how the violin sits in the full band.',
+          'For lessons, run one quiet passage while the teacher stands where they normally listen. For a band, repeat at rehearsal level and ask the other players whether they can hear the beginning of each note.',
         ],
       },
       {
         title: 'A three-pass listening test',
+        paragraphs: [
+          'Write the settings down before swapping instruments. When both are equally easy to hear, choose the one that lets you control the first quiet note, then repeat the test with the sound you plan to use.',
+        ],
         steps: [
           'Play a short phrase twice, once softly and once more strongly. On the electric, start with a clean setting and turn off reverb so you can hear the start and release of each note.',
           'Have the same player repeat that phrase on the acoustic in the same room. Match the listening volumes as closely as practical and notice the change in texture when the bow crosses strings.',

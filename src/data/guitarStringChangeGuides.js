@@ -34,6 +34,11 @@ export const acousticStringChangeGuide = {
   sections: [
     {
       id: 'identify-your-acoustic-bridge',
+      stringCheck: {
+        question: 'Which strings fit an acoustic guitar with bridge pins?',
+        answer:
+          'Compare the old end with the packet. A typical pinned steel-string guitar takes a ball end. Keep the gauge from the old packet if the guitar played well before the break.',
+      },
       title: '1. Match the strings to the guitar and bridge',
       paragraphs: [
         'On a pinned bridge, six round pin heads sit just behind the saddle, the narrow strip the strings pass over. Look up your model’s string specification or check your previous packet. Choose a ball-end steel-string acoustic set in the same gauge (thickness). If just one string broke, match that string’s gauge and note.',
@@ -77,6 +82,11 @@ export const acousticStringChangeGuide = {
     },
     {
       id: 'unwind-the-old-string',
+      stringCheck: {
+        question: 'Which tuning key belongs to the broken acoustic string?',
+        answer:
+          'Follow its path over the nut and look for the remaining coil. If two strings cross in your view, change your viewing angle before loosening a key.',
+      },
       title: '2. Loosen one string until it goes limp',
       paragraphs: [
         'To change a whole set, start with the thick low E, string 6. Follow it from the nut (the narrow strip at the headstock end of the neck) to its winding post. Pluck, turn that tuning button a little, then pluck again. A lower sound tells you that you are unwinding it. Reverse direction if the pitch rises.',
@@ -101,6 +111,11 @@ export const acousticStringChangeGuide = {
     },
     {
       id: 'free-the-bridge-pin',
+      stringCheck: {
+        question: 'What if the bridge pin feels stuck?',
+        answer:
+          'After the string is fully slack, press the string a little toward the hole to release the ball from the side of the pin. Lift the pin straight up with the puller and return it to the same hole.',
+      },
       title: '3. Free the ball end and lift the bridge pin',
       paragraphs: [
         'Push the loose string a little farther down into its bridge hole. That moves the ball off its seat and often frees the pin. Try lifting the pin straight out with your fingers. If it is snug, slide the fork of a pin puller under its head and lift gently. Set the pin beside its hole.',
@@ -125,6 +140,11 @@ export const acousticStringChangeGuide = {
     },
     {
       id: 'seat-the-acoustic-ball-end',
+      stringCheck: {
+        question: 'What should I feel when the ball end seats?',
+        answer:
+          'A gentle upward pull meets a firm stop. Keep a fingertip on the pin and pull again. The pin should stay at the same height. A rising pin means the ball needs to be reseated.',
+      },
       title: '4. Seat the new ball end beneath the bridge',
       paragraphs: [
         'Uncoil the matching replacement away from your face. Lower its metal ball into the open bridge hole. Return the same pin to that hole. On the common grooved pin shown here, the string runs along the groove toward the saddle. If the pin is smooth and the slot is cut into the bridge itself, follow that slot.',
@@ -137,7 +157,7 @@ export const acousticStringChangeGuide = {
           height: 850,
           alt: 'A player holds a slotted black bridge pin beside the metal ball end of an acoustic string, above the open bridge hole.',
           caption:
-            'Outside the guitar you can see the brass ball and the groove in the pin. Once installed, the ball catches beside the pin against the wood under the bridge.',
+            'The brass ball seats under the bridge plate beside this pin. Feel for a firm stop as you draw the string up. Touch the pin head and pull gently again. A seated ball holds the string while the pin stays still.',
           author: 'Elenaf',
           sourceUrl:
             'https://commons.wikimedia.org/wiki/File:Corda_chitarra_in_bridge_pin_(piolo)_in_ponte_acustica.jpg',
@@ -150,6 +170,11 @@ export const acousticStringChangeGuide = {
     },
     {
       id: 'wind-the-acoustic-tuning-post',
+      stringCheck: {
+        question: 'How do I check the slack at the tuning post?',
+        answer:
+          'Compare the first wrap to an unchanged neighboring post of the same type. Guide the next turn below it. If coils start piling on each other while the string is still loose, take it back out and reset the slack.',
+      },
       title: '5. Thread the post and wind a single layer',
       paragraphs: [
         'Lay the string across the saddle and in the nut slot vacated by the old string. Line up the hole in its post, pass the thin tip through, then pull a little slack back to the playing side. On a typical three-per-side headstock, about one post spacing of slack is a starting point for a thick wound string. A thin plain string needs a little more to get enough wraps.',
@@ -189,6 +214,11 @@ export const acousticStringChangeGuide = {
     },
     {
       id: 'tune-the-acoustic-and-settle',
+      stringCheck: {
+        question: 'How do I tell the two E strings apart on the tuner?',
+        answer:
+          'In standard tuning the thick low E is E2 and the thin high E is E4. Sound the correct reference before turning the key. The two E strings are two octaves apart.',
+      },
       title: '6. Tune, settle and check the pin again',
       paragraphs: [
         'Pluck the open string with one hand while turning the matched tuner slowly with the other. In standard tuning, thick to thin, strings 6 through 1 are E2, A2, D3, G3, B3 and E4. Listen to the matching reference tone before tightening farther. Both E strings show the same letter on many tuners, two octaves apart.',
@@ -231,6 +261,12 @@ export const electricStringChangeGuide = {
   sections: [
     {
       id: 'choose-the-electric-string-set',
+      stringAid: 'select-tuner',
+      stringCheck: {
+        question: 'What do 10–46 electric guitar strings mean?',
+        answer:
+          'The lightest string in that set measures .010 inch and the heaviest .046 inch. Read the individual envelope to identify an intermediate string.',
+      },
       title: '1. Read the gauge and identify locking hardware',
       paragraphs: [
         'Find the gauge on the old packet or in your guitar’s specifications. A set marked 10–46 runs from .010 inch on the fine high E to .046 inch on the thick low E. Use the same gauges for a first change, particularly with a spring-balanced vibrato bridge. A different gauge can shift its resting angle.',
@@ -270,6 +306,11 @@ export const electricStringChangeGuide = {
     },
     {
       id: 'trace-and-release-the-electric-string',
+      stringCheck: {
+        question: 'How do I release a broken string on a locking tuner?',
+        answer:
+          'First turn the key until the string is slack. Release the post clamp with its thumbwheel according to the maker’s directions. Keep track of the broken end as it comes free.',
+      },
       title: '2. Trace one string and release its tension',
       paragraphs: [
         'Take a picture of both ends of the strings. Start with the broken string or the thick low E. Trace it along the neck to its own tuning post. Notice any little metal guide (a string tree) it passes underneath. Pluck and turn the button a few degrees. If the note falls, continue loosening until the string hangs slack.',
@@ -294,6 +335,11 @@ export const electricStringChangeGuide = {
     },
     {
       id: 'load-the-electric-bridge',
+      stringCheck: {
+        question: 'Where do strings enter a Strat-style vibrato bridge?',
+        answer:
+          'Look for the row of holes in the metal block behind the guitar. Use the hole that lines up with the empty saddle. The ball stays in the block while the long string emerges at the front.',
+      },
       title: '3. Feed the new string from the correct end',
       paragraphs: [
         'Follow the old string to its ball end before removing it. On a string-through hardtail, push the slack string toward the back until the ball emerges from the metal-lined hole. On many Strat-style vibrato bridges, the equivalent holes are in the metal block reached through the opening in the back cover. Feed the tip of the new string in from the back, then draw it through from the front until the ball seats.',
@@ -333,6 +379,11 @@ export const electricStringChangeGuide = {
     },
     {
       id: 'follow-the-saddle-and-nut',
+      stringCheck: {
+        question: 'Where should a string sit on three Tele-style barrels?',
+        answer:
+          'Each barrel carries a pair. Follow the old track over the barrel and check that the string clears the height screws before guiding it into its nut slot.',
+      },
       title: '4. Lay the string across its saddle and nut slot',
       paragraphs: [
         'On the front of the guitar, each string has a resting place called a saddle. Some bridges have six separate saddles. The Telecaster pictured has three barrels shared by pairs of strings. Guide the new string across the same spot as its predecessor, then into its matching narrow slot at the nut.',
@@ -357,10 +408,29 @@ export const electricStringChangeGuide = {
     },
     {
       id: 'wind-or-lock-the-tuning-post',
+      stringAid: 'tuner-methods',
+      stringCheck: {
+        question: 'Which winding directions match my tuning post?',
+        answer:
+          'Check the top and back of the headstock. Choose the drawing that matches your hardware, then follow its winding directions. A locking thumbwheel is on the machine itself.',
+      },
       title: '5. Wind or lock the string for your tuner type',
-      paragraphs: [
-        'On a conventional post with a hole through the side, pass the tip through, then pull back enough slack for about two or three wraps. A thin plain string may need an extra turn. Bend the free tip to the side, hold the playing length lightly taut and turn the button. Follow the original winding direction so the string leads cleanly back to the nut. Guide each new coil down beneath the previous one.',
-        'A vintage split post has a slot across the top and a hole going straight down. On Fender-style split posts, measure about two to three post spacings of extra length, trim first, insert the tip down the center, bend it into the slot and wind. On a locking tuner with a rear thumbwheel, feed the string through almost taut and finger-tighten the wheel before tuning. It usually needs less than a full turn around the post. For other designs, use the maker’s instructions.',
+      stringMethods: [
+        {
+          id: 'through-hole',
+          title: 'Through-hole post',
+          body: 'Pass the tip through the side hole and draw back enough slack for about two or three wraps. A thin plain string may need an extra turn. Bend the free tip to the side, hold the playing length lightly taut and wind in the original direction. Guide each new coil below the previous one.',
+        },
+        {
+          id: 'split-post',
+          title: 'Split post',
+          body: 'Find the slot across the top and the hole down its center. On Fender-style split posts, measure about two to three post spacings of extra length and trim to the manufacturer’s allowance. Insert the cut tip down the center, bend the long string into the slot and wind toward the headstock face.',
+        },
+        {
+          id: 'locking',
+          title: 'Rear-wheel locking tuner',
+          body: 'Feed the string through the post nearly taut. Finger-tighten the rear wheel to engage the clamp, then turn the key to pitch. This design usually needs less than one complete wrap. If yours locks with another mechanism, use the instructions for that machine.',
+        },
       ],
       photos: [
         {
@@ -381,6 +451,11 @@ export const electricStringChangeGuide = {
     },
     {
       id: 'tune-and-test-the-electric',
+      stringCheck: {
+        question: 'Why does the high E show the right letter while it still sounds wrong?',
+        answer:
+          'A tuner can recognize an E in multiple octaves. Compare the open string with E4 in standard tuning before raising it further. Check the string gauge and reference if the string already feels unusually tight.',
+      },
       title: '6. Tune up, play a bend and recheck',
       paragraphs: [
         'Use a clip-on, plug into a tuner pedal, or pick softly near your tuner’s microphone. Mute the other strings and pluck the new one open. In standard tuning the targets from thickest to thinnest are E2, A2, D3, G3, B3 and E4. Raise the pitch gradually and listen for the correct octave using the reference tones. If you go sharp, lower the note slightly and come back up.',

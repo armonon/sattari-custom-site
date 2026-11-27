@@ -20,16 +20,18 @@ export const snareTuningGuide = {
       ],
       audioExamples: [
         {
-          label: 'Before · lower tuning',
+          id: 'snare-take-a',
+          label: 'Take A · before tuning',
           src: '/audio/snare-tuning/before.wav',
           description:
-            'Listen past the sharp stick attack. Hum the lower body of the note that follows it.',
+            'Listen past the sharp stick attack. Hum the body of the note that follows it.',
         },
         {
-          label: 'After · medium-high tuning',
+          id: 'snare-take-b',
+          label: 'Take B · after tuning',
           src: '/audio/snare-tuning/after.wav',
           description:
-            'Follow that same part of the hit. Can you hum the higher sound? Replay the first clip to check.',
+            'Follow that same part of the hit. Decide which take sounds higher before revealing the answer.',
         },
       ],
       audioCredit: {

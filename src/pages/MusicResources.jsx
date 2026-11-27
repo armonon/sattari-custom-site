@@ -10,12 +10,17 @@ import {
   websiteSchema,
 } from '../data/siteSeo';
 import { guideCollections, musicGuides } from '../data/musicGuides';
+import { guideRevisionDates } from '../data/guideRevisionDates';
 import { instrumentTunerPages } from '../data/instrumentTunerPages';
 import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
+import GuideFinder from '../components/GuideFinder';
+import ChoiceHistoryAid from '../components/ChoiceHistoryAid';
+import StringLessonAid from '../components/StringLessonAid';
+import { PracticeGuideAid } from '../components/PracticeGuideAid';
 import './MusicResources.css';
 
 const guidePath = (guide) => `/guides/${guide.slug}`;
@@ -43,6 +48,7 @@ function labelFor(path) {
 }
 function Page({
   title,
+  seoTitle = title,
   description,
   children,
   image,
@@ -53,7 +59,7 @@ function Page({
   return (
     <section className="resource-page">
       <SEO
-        title={title}
+        title={seoTitle}
         description={description}
         url={absoluteUrl(pathname)}
         image={image}
@@ -132,16 +138,94 @@ function StemAudioExample({ includeOriginal = true }) {
 }
 
 export function GuideIndex() {
+  const tasks = [
+    [
+      'Change a string',
+      [
+        ['Acoustic guitar', 'how-to-change-acoustic-guitar-strings'],
+        ['Classical guitar', 'how-to-change-classical-guitar-strings'],
+        ['Electric guitar', 'how-to-change-electric-guitar-strings'],
+        ['Bass guitar', 'how-to-change-bass-guitar-strings'],
+        ['Violin', 'how-to-change-a-violin-string'],
+        ['Viola', 'how-to-change-a-viola-string'],
+        ['Cello', 'how-to-change-a-cello-string'],
+        ['Ukulele', 'how-to-change-ukulele-strings'],
+        ['Persian tar', 'how-to-change-persian-tar-strings'],
+        ['Setar', 'how-to-change-setar-strings'],
+        ['Oud', 'how-to-change-oud-strings'],
+      ],
+    ],
+    [
+      'Choose an instrument',
+      [
+        ['Violin', 'choose-a-violin-for-beginners'],
+        ['Viola', 'how-to-choose-a-viola'],
+        ['Acoustic guitar', 'choose-a-beginner-acoustic-guitar'],
+        ['Electric guitar', 'how-to-choose-an-electric-guitar'],
+        ['Bass guitar', 'how-to-choose-a-bass-guitar'],
+        ['Cymbals', 'choose-your-first-cymbals'],
+      ],
+    ],
+    [
+      'Identify a sound',
+      [
+        ['Violin and viola', 'violin-vs-viola'],
+        ['Tar, setar and sitar', 'tar-setar-and-sitar'],
+        ['Instruments of Iran', 'instruments-of-iran'],
+        ['Snare drum tunings', 'how-to-tune-a-snare-drum#before-and-after'],
+        ['Song key and tempo', 'find-song-key-and-bpm'],
+      ],
+    ],
+  ];
   return (
     <Page
       title="Music Guides"
-      description="Find step-by-step restringing guides with photos for guitar, bass, violin, viola, cello, ukulele, Persian tar, setar and oud. Explore instrument history and sound."
+      seoTitle="Beginner Music Guides for Strings, Instrument Care and Practice"
+      description="Learn how to choose a first instrument, change strings with close-up photos, compare sounds by ear, and practice with song stems in Sattari’s music guides."
     >
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          '@id': absoluteUrl('/guides#collection'),
+          url: absoluteUrl('/guides'),
+          name: 'Music Guides',
+          dateModified: guideRevisionDates['/guides'],
+          isPartOf: { '@id': websiteSchema['@id'] },
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: musicGuides.length,
+            itemListElement: guideCollections
+              .flatMap((group) => group.guides)
+              .map((guide, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                name: guide.title,
+                url: absoluteUrl(guidePath(guide)),
+              })),
+          },
+        }}
+      />
       <p className="resource-lead">
-        Choose your first instrument, follow a photographed string change, or listen to the sounds
-        that distinguish instruments and their traditions.
+        Compare two instruments by ear, follow a string from bridge to tuning peg, or turn a song
+        into a backing track for practice.
       </p>
-      <nav aria-label="Guide topics" className="guide-topics">
+      <GuideFinder />
+      <nav className="guide-task-links" aria-label="Start with a task">
+        {tasks.map(([label, links]) => (
+          <details key={label}>
+            <summary>{label}</summary>
+            <ul>
+              {links.map(([name, slug]) => (
+                <li key={slug}>
+                  <Link to={'/guides/' + slug}>{name}</Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))}
+      </nav>
+      <nav aria-label="Guide topics" id="guide-topics" className="guide-topics">
         {guideCollections.map((collection) => (
           <a key={collection.id} href={`#${collection.id}`}>
             {collection.title}
@@ -200,7 +284,7 @@ function AudioComparison({ examples, credit }) {
   return (
     <div className="guide-audio-comparison">
       {examples.map((example) => (
-        <div key={example.src} className="guide-audio-example">
+        <div key={example.src} id={example.id} className="guide-audio-example">
           <h3>{example.label}</h3>
           <p>{example.description}</p>
           <audio
@@ -215,8 +299,9 @@ function AudioComparison({ examples, credit }) {
         </div>
       ))}
       <p className="guide-media-credit">
-        Recordings by {credit.author} on Freesound. <a href={credit.before}>Lower tuning</a> ·{' '}
-        <a href={credit.after}>Medium-high tuning</a> ·{' '}
+        Recordings by {credit.author} on Freesound.{' '}
+        <a href={credit.before}>First source recording</a> ·{' '}
+        <a href={credit.after}>Second source recording</a> ·{' '}
         <a href={credit.licenseUrl}>{credit.license}</a>. {credit.note}
       </p>
     </div>
@@ -252,7 +337,7 @@ function LessonPhoto({ photo }) {
   );
 }
 
-function GuideSection({ section, sources }) {
+function GuideSection({ section, sources, slug }) {
   const source = sources?.find((item) => item.url === section.sourceUrl);
   return (
     <section className="resource-section" id={section.id}>
@@ -295,15 +380,20 @@ function GuideSection({ section, sources }) {
           ))}
         </ol>
       )}
-      {section.photos?.map((photo) => (
-        <LessonPhoto key={photo.src} photo={photo} />
-      ))}
+      {section.choiceAid && <ChoiceHistoryAid name={section.choiceAid} />}
+      <StringLessonAid
+        section={section}
+        renderPhoto={(photo) => <LessonPhoto key={photo.src} photo={photo} />}
+      />
+      {!section.stringPhotoLabels &&
+        section.photos?.map((photo) => <LessonPhoto key={photo.src} photo={photo} />)}
       {source && (
         <p>
           <a href={source.url}>{source.label}</a>
         </p>
       )}
       {section.link && <Link to={section.link.path}>{section.link.label}</Link>}
+      <PracticeGuideAid slug={slug} sectionId={section.id} />
     </section>
   );
 }
@@ -319,11 +409,13 @@ export function GuideArticle() {
   const photos = sections.flatMap((section) => section.photos || []);
   const audio = sections.flatMap((section) => section.audioExamples || []);
   const previewImage = guide.image || photos[0]?.src;
+  const revised = guideRevisionDates[guidePath(guide)];
   const leadSection = sections.find((section) => section.lead);
   const bodySections = sections.filter((section) => !section.lead);
   return (
     <Page
       title={guide.title}
+      seoTitle={guide.seoTitle}
       description={guide.description}
       image={previewImage}
       category={guide.category}
@@ -336,9 +428,15 @@ export function GuideArticle() {
           '@id': `${absoluteUrl(guidePath(guide))}#article`,
           url: absoluteUrl(guidePath(guide)),
           headline: guide.title,
+          dateModified: revised,
           description: guide.description,
           inLanguage: 'en-US',
           articleSection: guide.category,
+          hasPart: sections.map((section) => ({
+            '@type': 'WebPageElement',
+            name: section.title,
+            url: absoluteUrl(guidePath(guide) + '#' + section.id),
+          })),
           ...(previewImage && {
             image: photos.length
               ? photos.map((photo) => absoluteUrl(photo.src))
@@ -366,6 +464,20 @@ export function GuideArticle() {
       />
       <p className="resource-byline">
         Published by <Link to="/about">{BUSINESS.name}</Link>
+        {revised && (
+          <>
+            {' '}
+            · Updated{' '}
+            <time dateTime={revised}>
+              {new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'UTC',
+              }).format(new Date(revised + 'T00:00:00Z'))}
+            </time>
+          </>
+        )}
       </p>
       <p className="resource-lead">{guide.answer}</p>
       {photos.length > 0 && (
@@ -373,7 +485,7 @@ export function GuideArticle() {
       )}
       {leadSection && (
         <div className="resource-article resource-checklist">
-          <GuideSection section={leadSection} sources={guide.sources} />
+          <GuideSection section={leadSection} sources={guide.sources} slug={slug} />
         </div>
       )}
       {guide.action && (
@@ -432,7 +544,7 @@ export function GuideArticle() {
       )}
       <div className="resource-article">
         {bodySections.map((section) => (
-          <GuideSection section={section} key={section.title} sources={guide.sources} />
+          <GuideSection section={section} key={section.title} sources={guide.sources} slug={slug} />
         ))}
         {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
           slug
