@@ -460,23 +460,26 @@ it('cycles through instruments and returns to the full wall with an accessible b
   await renderShowroom({ config: splatConfig });
   await waitForScene();
   selectElectric();
-  fireEvent.click(screen.getByRole('button', { name: 'Previous instrument' }));
+  const previous = screen.getByRole('button', { name: 'Previous instrument' });
+  act(() => previous.focus());
+  fireEvent.click(previous);
+  expect(previous).toHaveFocus();
   expect(
     screen.getByRole('complementary', { name: 'Selected instrument: Steel String Acoustic Guitar' })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   expect(scene.focus).toHaveBeenLastCalledWith('steel-string-acoustic-guitar');
   fireEvent.click(screen.getByRole('button', { name: 'Next instrument' }));
   expect(
     screen.getByRole('complementary', { name: `Selected instrument: ${electricName}` })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Next instrument' }));
   expect(
     screen.getByRole('complementary', { name: 'Selected instrument: 5 String Bass Guitar' })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Back to full wall' }));
   expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   expect(scene.reset).toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: 'Select 5 String Bass Guitar' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: `Select ${electricName}` })).toHaveFocus();
 });
 
 it('skips hidden catalog instruments when moving to the next selection', async () => {

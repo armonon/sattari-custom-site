@@ -66,8 +66,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
 
   function selectProduct(slug, trigger = document.activeElement) {
     if (!displays.some((display) => display.slug === slug)) return;
-    if (trigger instanceof HTMLElement && !panelRef.current?.contains(trigger))
-      returnFocusRef.current = trigger;
+    if (!selectionRef.current && trigger instanceof HTMLElement) returnFocusRef.current = trigger;
     setSelectedSlug(slug);
     setAutoPlay(false);
     setAdded(null);
@@ -198,7 +197,8 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
 
   useEffect(() => {
     if (!selectedSlug) return;
-    panelRef.current?.focus({ preventScroll: true });
+    if (!document.activeElement?.closest('.showroom-stepper'))
+      panelRef.current?.focus({ preventScroll: true });
     if (panelRef.current) panelRef.current.scrollTop = 0;
     const bounds = stageRef.current?.getBoundingClientRect();
     if (bounds && (bounds.top < -48 || bounds.top > 48))
@@ -346,10 +346,11 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <button
                   type="button"
                   aria-label="Previous instrument"
+                  title="Previous instrument"
                   disabled={displays.length < 2}
                   onClick={(event) => selectAdjacent(-1, event)}
                 >
-                  Previous
+                  <ArrowLeft size={18} aria-hidden="true" />
                 </button>
                 <span aria-live="polite">
                   {selectedIndex + 1} / {displays.length}
@@ -357,10 +358,11 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <button
                   type="button"
                   aria-label="Next instrument"
+                  title="Next instrument"
                   disabled={displays.length < 2}
                   onClick={(event) => selectAdjacent(1, event)}
                 >
-                  Next
+                  <ArrowRight size={18} aria-hidden="true" />
                 </button>
               </div>
             </>

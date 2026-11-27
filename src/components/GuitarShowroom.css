@@ -1119,3 +1119,63 @@
 .has-selection .showroom-glass-backdrop {
   opacity: 1;
 }
+
+.has-selection .showroom-stepper {
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #ffffffa8;
+  border-radius: 100px;
+  background: #f5f5f7db;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 3px 15px #171c241c;
+}
+.has-selection .showroom-stepper button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  color: #24262b;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+.has-selection .showroom-stepper button:hover {
+  background: #fff;
+}
+.has-selection .showroom-stepper button:focus-visible {
+  outline: 2px solid #245fa1;
+  outline-offset: -2px;
+}
+.has-selection .showroom-stepper button:active {
+  transform: scale(0.93);
+}
+.has-selection .showroom-stepper > span {
+  display: inline;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+@keyframes showroom-catalog-arrive {
+  from {
+    opacity: 0.45;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .shop-with-showroom :is(.shop-category-panel-heading, .shop-category-row) {
+      animation: showroom-catalog-arrive linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+    .shop-with-showroom .shop-category-row:focus-visible {
+      animation: none;
+    }
+  }
+}
