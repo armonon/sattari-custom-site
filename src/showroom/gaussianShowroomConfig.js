@@ -67,6 +67,8 @@ export const gaussianShowroomConfig = {
     allowLook: false,
     pan: false,
     zoomMode: 'crop',
+    scrollZoom: false,
+    directManipulation: false,
     maxCropZoom: 3.2,
     focusZoom: 2.7,
     transitionDuration: 1400,

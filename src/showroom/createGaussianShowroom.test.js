@@ -670,4 +670,18 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     expect(frames.size).toBe(0);
     expect(state.meshes[0].edits[0].sdfs[0].color.r).toBe(1);
   });
+  it('allows page scrolling over the showroom without changing camera zoom', async () => {
+    const view = create(1440, 900, showroomConfig);
+    await view.controller.ready;
+    await frame();
+    await frame();
+    const canvas = view.mount.querySelector('canvas');
+    const projection = state.renderers[0].renders.at(-1).projection.clone();
+    const wheel = new WheelEvent('wheel', { deltaY: 240, bubbles: true, cancelable: true });
+    canvas.dispatchEvent(wheel);
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(canvas.style.touchAction).toBe('pan-y');
+    await frame();
+    expect(state.renderers[0].renders.at(-1).projection.elements).toEqual(projection.elements);
+  });
 });

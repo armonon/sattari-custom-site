@@ -849,3 +849,253 @@
     color: #f8fafc;
   }
 }
+
+/* Calm, continuous loading and a compact instrument browser. */
+.guitar-showroom {
+  --font-showroom-display: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  --font-showroom-ui: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+}
+.guitar-showroom h1 {
+  font-size: clamp(54px, 7vw, 104px);
+  font-weight: 650;
+  letter-spacing: -0.065em;
+  line-height: 1.02;
+  max-width: 10ch;
+}
+.showroom-reference {
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 900ms ease;
+  pointer-events: none;
+}
+.showroom-reference.is-revealed {
+  opacity: 0;
+}
+.showroom-reference .showroom-load-retry {
+  pointer-events: auto;
+}
+.showroom-canvas {
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+.is-ready .showroom-canvas {
+  opacity: 1;
+}
+.showroom-load-message {
+  top: auto;
+  bottom: 24px;
+  left: 4.6%;
+  transform: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  max-width: calc(100% - 100px);
+  padding: 11px 16px;
+  border: 1px solid #ffffff42;
+  border-radius: 24px;
+  background: #f4f7fbdb;
+  color: #303844;
+  box-shadow: 0 4px 24px #00000012;
+  font-size: 13px;
+  backdrop-filter: blur(22px);
+}
+.showroom-load-message progress {
+  width: 36px;
+  height: 3px;
+  accent-color: #687a90;
+}
+.showroom-load-message small {
+  color: #556273;
+  font-variant-numeric: tabular-nums;
+}
+.showroom-load-message [role='status'] {
+  white-space: nowrap;
+}
+.showroom-product-panel {
+  animation-duration: 400ms;
+  animation-delay: 0ms;
+}
+.showroom-product-info h2 {
+  font-size: clamp(30px, 3.2vw, 48px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+.showroom-panel-top {
+  margin-bottom: 6px;
+}
+.showroom-instrument-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  margin: 0 0 26px;
+  border: 1px solid #ffffff85;
+  border-radius: 18px;
+  background: #eff3f670;
+  backdrop-filter: blur(20px);
+}
+.showroom-instrument-switcher button {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 7px;
+  border: 0;
+  border-radius: 13px;
+  color: #46515d;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 200ms,
+    box-shadow 200ms,
+    color 200ms;
+}
+.showroom-instrument-switcher button[aria-pressed='true'] {
+  background: #ffffffdf;
+  color: #171d25;
+  box-shadow: 0 2px 8px #25334b15;
+}
+.showroom-back {
+  border: 0;
+  padding: 10px 15px;
+  border-radius: 24px;
+  background: #f2f5f8e6;
+  color: #28313b;
+  backdrop-filter: blur(16px);
+  font-weight: 500;
+}
+.showroom-categories {
+  gap: 8px;
+}
+.showroom-categories button {
+  padding: 12px 18px;
+  min-height: 46px;
+  border-radius: 28px;
+  border: 1px solid #ffffff55;
+  background: #ffffff18;
+  backdrop-filter: blur(18px);
+}
+.showroom-categories span {
+  font-size: 15px;
+  font-weight: 500;
+}
+.showroom-categories button::after {
+  display: none;
+}
+.showroom-categories button:hover {
+  background: #ffffff32;
+}
+.showroom-specification dl > div {
+  font-size: 14px;
+}
+.showroom-detail-link,
+.showroom-product-description {
+  font-size: 14px;
+}
+.showroom-price-row > span {
+  font-size: 12px;
+}
+.showroom-buy-button {
+  min-height: 48px;
+  font-size: 15px;
+}
+.section.shop-with-showroom {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+.shop-with-showroom .shop-category-panel {
+  background: #fff;
+  color: #1d1d1f;
+  border-color: #d7dce2;
+  box-shadow: none;
+  border-radius: 24px;
+}
+.shop-with-showroom
+  :is(.shop-category-panel h2, .shop-category-primary strong, .shop-featured-catalog h2) {
+  color: #1d1d1f;
+}
+.shop-with-showroom .shop-category-row {
+  background: transparent;
+  color: #1d1d1f;
+  border-color: #e0e3e8;
+}
+@media (max-width: 1100px) and (min-width: 701px) {
+  .showroom-instrument-switcher {
+    flex-wrap: wrap;
+  }
+  .showroom-instrument-switcher button {
+    flex-basis: 42%;
+  }
+}
+@media (max-width: 700px) {
+  .guitar-showroom h1 {
+    font-size: clamp(46px, 12vw, 76px);
+  }
+  .showroom-hero-bottom {
+    bottom: 88px;
+    gap: 24px;
+  }
+  .showroom-categories {
+    gap: 5px;
+  }
+  .showroom-categories button {
+    padding: 11px 10px;
+  }
+  .showroom-categories span {
+    font-size: 12px;
+  }
+  .showroom-load-message {
+    left: 7%;
+    bottom: 23px;
+    padding: 10px 13px;
+    font-size: 11px;
+    gap: 7px;
+  }
+  .showroom-load-message progress {
+    width: 22px;
+  }
+  .showroom-product-panel {
+    top: 55%;
+    bottom: 24px;
+  }
+  .showroom-instrument-switcher {
+    margin-bottom: 20px;
+    border-radius: 17px;
+  }
+  .showroom-instrument-switcher button {
+    font-size: 12px;
+    padding-inline: 5px;
+  }
+  .showroom-product-info h2 {
+    font-size: 31px;
+  }
+  .showroom-back {
+    font-size: 12px;
+  }
+  .showroom-specification dl > div {
+    font-size: 13px;
+  }
+}
+
+.showroom-instrument-switcher {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #eff3f6d9;
+}
+/* Page gestures scroll naturally; selection handles camera framing. */
+.showroom-canvas canvas {
+  touch-action: pan-y;
+}
+.shop-with-showroom .shop-category-icon {
+  color: #626c79;
+  background: #f1f3f6;
+  border-color: #e5e8ec;
+}
+.shop-with-showroom .shop-category-panel-heading > a {
+  color: #52647b;
+}
+.shop-with-showroom .shop-category-primary small {
+  color: #65707b;
+}

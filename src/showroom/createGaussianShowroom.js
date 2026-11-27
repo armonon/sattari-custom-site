@@ -109,7 +109,7 @@ export function createGaussianShowroom({
   canvas.tabIndex = 0;
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', 'Interactive guitar wall. Select an instrument to explore.');
-  canvas.style.touchAction = 'none';
+  canvas.style.touchAction = config.navigation?.directManipulation === false ? 'pan-y' : 'none';
   canvas.style.cursor = 'grab';
   canvas.style.position = 'absolute';
   mount.appendChild(canvas);
@@ -196,7 +196,9 @@ export function createGaussianShowroom({
     controls.minPolarAngle = Math.max(0.0001, sourcePolar + polarRange.min);
     controls.maxPolarAngle = Math.min(Math.PI - 0.0001, sourcePolar + polarRange.max);
   }
-  controls.enabled = navigationMode === 'orbit';
+  controls.enabled = navigationMode === 'orbit' && config.navigation?.directManipulation !== false;
+  // OrbitControls.connect writes its own touch action during construction.
+  if (config.navigation?.directManipulation === false) canvas.style.touchAction = 'pan-y';
   controls.update();
   const allowedSlugs = new Set(displays.map((display) => display.slug));
   const hotspots = (config.hotspots || [])
@@ -838,7 +840,7 @@ export function createGaussianShowroom({
     if (mode === 'look' && !allowLook) return;
     tween = null;
     navigationMode = mode;
-    controls.enabled = mode === 'orbit';
+    controls.enabled = mode === 'orbit' && config.navigation?.directManipulation !== false;
     requestRender();
   }
   function hit(event) {
@@ -874,7 +876,8 @@ export function createGaussianShowroom({
       moved: false,
     });
     if (pointers.size > 1) for (const point of pointers.values()) point.moved = true;
-    if (navigationMode === 'look' || cropZoom) canvas.setPointerCapture(event.pointerId);
+    if (config.navigation?.directManipulation !== false && (navigationMode === 'look' || cropZoom))
+      canvas.setPointerCapture(event.pointerId);
   }
   function pointerMove(event) {
     const active = pointers.get(event.pointerId);
@@ -886,6 +889,11 @@ export function createGaussianShowroom({
     const dy = event.clientY - active.y;
     if (Math.hypot(event.clientX - active.startX, event.clientY - active.startY) > 5)
       active.moved = true;
+    if (config.navigation?.directManipulation === false) {
+      active.x = event.clientX;
+      active.y = event.clientY;
+      return;
+    }
     if (pointers.size === 2 && (cropZoom || navigationMode === 'look')) {
       const other = [...pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
       if (other) {
@@ -934,7 +942,7 @@ export function createGaussianShowroom({
   }
   function pageScroll(event) {
     event.stopImmediatePropagation();
-    if (cropZoom) {
+    if (cropZoom && config.navigation?.scrollZoom !== false) {
       event.preventDefault();
       const pixels =
         event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1);

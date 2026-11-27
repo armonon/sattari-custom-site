@@ -71,7 +71,6 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
     loadProgress.total > 0
       ? Math.min(100, Math.round((loadProgress.loaded / loadProgress.total) * 100))
       : null;
-  const megabytes = (bytes) => `${(bytes / 1e6).toFixed(1)} MB`;
   const visibleHotspots = new Set(
     (config.hotspots || [])
       .filter(
@@ -220,10 +219,12 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
     if (!selectedSlug || view !== 'showroom') return;
     panelRef.current?.focus({ preventScroll: true });
     if (panelRef.current) panelRef.current.scrollTop = 0;
-    stageRef.current?.scrollIntoView?.({
-      behavior: reduceMotion ? 'instant' : 'smooth',
-      block: 'start',
-    });
+    const bounds = stageRef.current?.getBoundingClientRect();
+    if (bounds && (bounds.top < -48 || bounds.top > 48))
+      stageRef.current?.scrollIntoView?.({
+        behavior: reduceMotion ? 'instant' : 'smooth',
+        block: 'start',
+      });
   }, [selectedSlug, view, reduceMotion]);
 
   useEffect(() => {
@@ -244,7 +245,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
         !node.closest('[inert], [hidden], [aria-hidden="true"]') &&
         node.checkVisibility?.({ checkVisibilityCSS: true }) !== false
     );
-    target?.focus();
+    target?.focus({ preventScroll: true });
   }, [selectedSlug]);
 
   function resetView() {
@@ -259,6 +260,10 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
   function closeProduct() {
     restoreFocusRef.current = selectedSlug;
     resetView();
+    stageRef.current?.scrollIntoView?.({
+      behavior: reduceMotion ? 'instant' : 'smooth',
+      block: 'start',
+    });
   }
   function selectAdjacent(direction, event) {
     if (!displays.length) return;
@@ -291,7 +296,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
     >
       <div
         ref={stageRef}
-        className={`showroom-stage${selected ? ' has-selection' : ''}${isReference ? ' is-reference' : ''}${!sceneReady || isReference ? ' is-image' : ''}`}
+        className={`showroom-stage${selected ? ' has-selection' : ''}${isReference ? ' is-reference' : ''}${!sceneReady || isReference ? ' is-image' : ' is-ready'}`}
         onPointerDownCapture={pauseSequence}
         onWheelCapture={pauseSequence}
         onFocusCapture={pauseSequence}
@@ -310,8 +315,11 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
           aria-hidden={isReference || !sceneReady ? 'true' : undefined}
           inert={isReference || !sceneReady ? '' : undefined}
         />
-        {(isReference || !sceneReady) && (
-          <div className="showroom-reference">
+        {
+          <div
+            className={`showroom-reference${sceneReady && !isReference ? ' is-revealed' : ''}`}
+            aria-hidden={sceneReady && !isReference ? 'true' : undefined}
+          >
             <img
               src={
                 isReference
@@ -335,22 +343,14 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 {sceneStatus === 'loading' ? (
                   <>
                     <span role="status">
-                      {downloading ? 'Opening the 3D showroom…' : 'Preparing the 3D view…'}
+                      {downloading ? 'Bringing the showroom to life' : 'Almost ready'}
                     </span>
                     <progress
                       aria-label={downloading ? 'Downloading showroom' : 'Preparing 3D view'}
                       max="100"
                       value={downloading && downloadPercent !== null ? downloadPercent : undefined}
                     />
-                    <small>
-                      {!downloading
-                        ? 'Your showroom is almost ready.'
-                        : loadProgress.total > 0
-                          ? `${megabytes(loadProgress.loaded)} of ${megabytes(loadProgress.total)} · ${downloadPercent}%`
-                          : loadProgress.loaded > 0
-                            ? `${megabytes(loadProgress.loaded)} downloaded`
-                            : 'Connecting…'}
-                    </small>
+                    {downloading && downloadPercent !== null && <small>{downloadPercent}%</small>}
                   </>
                 ) : (
                   <>
@@ -367,7 +367,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
               </div>
             )}
           </div>
-        )}
+        }
 
         <div className="showroom-stage-top">
           {selected ? (
@@ -480,6 +480,19 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <X size={18} />
               </button>
             </div>
+            <nav className="showroom-instrument-switcher" aria-label="Choose another instrument">
+              {displays.map((display) => (
+                <button
+                  type="button"
+                  key={display.slug}
+                  aria-label={`Switch to ${display.product.name}`}
+                  aria-pressed={selectedSlug === display.slug}
+                  onClick={(event) => selectProduct(display.slug, event.currentTarget)}
+                >
+                  {display.label === 'Steel string' ? 'Acoustic' : display.label}
+                </button>
+              ))}
+            </nav>
             <div className="showroom-product-summary">
               <div className="showroom-product-info">
                 <h2>{product.name}</h2>
@@ -565,7 +578,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
             </a>
           </div>
           <nav className="showroom-categories" aria-label="Guitar collection">
-            {displays.map(({ slug, label, product: item }, index) => (
+            {displays.map(({ slug, label, product: item }) => (
               <button
                 key={slug}
                 ref={(node) => {
@@ -577,7 +590,6 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 aria-pressed={selectedSlug === slug}
                 onClick={(event) => selectProduct(slug, event.currentTarget)}
               >
-                <small aria-hidden="true">0{index + 1}</small>
                 <span>{label === 'Steel string' ? 'Acoustic' : label}</span>
               </button>
             ))}
