@@ -12,7 +12,7 @@ import {
   NOTES_MAX,
   tempoInterpretation,
 } from './keyBpm';
-import { TempoDial } from './KeyBpmHero';
+import { KeyBpmMeter } from './KeyBpmHero';
 import { useMetronome } from './metronome';
 import {
   CIRCLE,
@@ -361,6 +361,15 @@ export default function KeyReadout({
         </div>
       </header>
 
+      <KeyBpmMeter
+        bpm={values.bpm}
+        bpmText={values.bpm === null ? '' : formatBpm(values.bpm)}
+        keyName={values.key ? keyLabel(values.key) : ''}
+        camelot={values.camelot}
+        keyIndex={circlePosition(values.key)?.index ?? null}
+        beating={click.on}
+      />
+
       <div className="kb-readout-grid">
         <div className="kb-panel kb-key-panel">
           <div className="kb-key-main">
@@ -442,20 +451,11 @@ export default function KeyReadout({
         </div>
 
         <div className="kb-panel kb-tempo-panel">
-          <div className="kb-tempo-top">
-            <div>
-              <p className="kb-label">Tempo</p>
-              <p className="kb-big kb-bpm">
-                {values.bpm === null ? '—' : formatBpm(values.bpm)}
-                <small>BPM</small>
-              </p>
-            </div>
-            <TempoDial
-              bpm={values.bpm}
-              beating={click.on}
-              keyIndex={circlePosition(values.key)?.index ?? null}
-            />
-          </div>
+          <p className="kb-label">Tempo</p>
+          <p className="kb-big kb-bpm">
+            {values.bpm === null ? '—' : formatBpm(values.bpm)}
+            <small>BPM</small>
+          </p>
           <p className="kb-pills">
             {values.bpmSource !== 'detected' ? (
               <span className="kb-pill is-user">

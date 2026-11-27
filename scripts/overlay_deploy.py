@@ -71,6 +71,22 @@ def draft(dist, functions_dir, receipt_path, title):
     previous = site['published_deploy']['id']
     live = api('/deploys/' + previous)
 
+    # Several lines of work publish to this site. A build made from a branch
+    # that lacks another line's pages would replace their HTML and drop them
+    # from the sitemap, so refuse unless every live page is still in the build.
+    # Merge the line that added the missing pages (normally main) and rebuild.
+    # OVERLAY_ALLOW_REMOVALS=1 is for a reviewed, intentional removal only.
+    import re
+    with urllib.request.urlopen('https://sattarimusic.com/sitemap.xml', timeout=60) as response:
+        live_pages = set(re.findall(r'<loc>(.*?)</loc>', response.read().decode()))
+    built_pages = set(re.findall(r'<loc>(.*?)</loc>', (Path(dist) / 'sitemap.xml').read_text()))
+    dropped = sorted(live_pages - built_pages)
+    if dropped and os.environ.get('OVERLAY_ALLOW_REMOVALS') != '1':
+        raise SystemExit(
+            f'This build is missing {len(dropped)} pages that are live (first: {dropped[0]}). '
+            'Another line of work published them: merge it into this branch and rebuild.'
+        )
+
     # Static: live files kept, build files replace/add.
     files = {f['path']: f['sha'] for f in api('/sites/' + SITE + '/files')}
     lower = {path.casefold(): path for path in files}

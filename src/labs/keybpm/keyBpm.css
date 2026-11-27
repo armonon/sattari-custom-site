@@ -880,3 +880,105 @@
 .kb-pill a {
   color: inherit;
 }
+
+/* The meter: matches the hub tile artwork (ink palette in both themes). */
+.kb-meter {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 24px;
+  background: #0f0e0c;
+}
+.kb-meter svg {
+  display: block;
+  width: min(100%, 440px);
+  height: auto;
+}
+.kb-meter-ring {
+  fill: none;
+  stroke: #f2ead9;
+  stroke-opacity: 0.12;
+}
+.kb-meter-ring.is-inner {
+  stroke-opacity: 0.08;
+}
+.kb-meter-key {
+  fill: #f2ead9;
+  fill-opacity: 0.4;
+  font:
+    22px ui-monospace,
+    monospace;
+}
+.kb-meter-key.is-key {
+  fill: #e4b873;
+  fill-opacity: 1;
+  font-weight: 700;
+}
+.kb-meter-tick {
+  stroke: #f2ead9;
+  stroke-opacity: 0.3;
+  stroke-width: 1.5;
+}
+.kb-meter-tick.is-long {
+  stroke-opacity: 0.75;
+  stroke-width: 3;
+}
+.kb-meter-needle {
+  transform-origin: 720px 500px;
+  transition: transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.kb-meter.is-idle .kb-meter-needle {
+  animation: kb-meter-idle 6s ease-in-out infinite alternate;
+}
+.kb-meter-needle line {
+  stroke: #e4b873;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.kb-meter-hub {
+  fill: #e4b873;
+  transform-origin: 720px 500px;
+}
+.kb-meter-hub.is-beating {
+  animation: kb-dial-beat 0.5s ease-out infinite;
+}
+.kb-meter-pin {
+  fill: #0f0e0c;
+}
+.kb-meter-value {
+  fill: #f2ead9;
+  font:
+    300 110px Inter,
+    Helvetica,
+    Arial,
+    sans-serif;
+  letter-spacing: -3px;
+}
+.kb-meter-caption {
+  fill: #8d8470;
+  font:
+    24px ui-monospace,
+    monospace;
+  letter-spacing: 6px;
+}
+.kb-meter.is-idle .kb-meter-caption {
+  font-size: 17px;
+  letter-spacing: 3px;
+}
+@keyframes kb-meter-idle {
+  from {
+    transform: rotate(-6deg);
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-meter-needle,
+  .kb-meter.is-idle .kb-meter-needle,
+  .kb-meter-hub.is-beating {
+    animation: none;
+    transition: none;
+  }
+}

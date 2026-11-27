@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { KeyBpmMeter } from './KeyBpmHero';
 import { keyLabel } from './keyTheory';
 import {
   AudioLines,
@@ -782,6 +783,7 @@ export default function KeyBpmPage() {
             if (Number.isFinite(value)) setAudition((current) => ({ ...current, duration: value }));
           }}
         />
+        {!focusRow && <KeyBpmMeter />}
         {focusRow && (
           <KeyReadout
             row={focusRow}
