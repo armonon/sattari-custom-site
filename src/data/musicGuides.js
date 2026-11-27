@@ -9,6 +9,9 @@ import { bassStringChangeGuide } from './bassStringChangeGuide.js';
 import { classicalStringChangeGuide } from './classicalStringChangeGuide.js';
 import { celloStringChangeGuide } from './celloStringChangeGuide.js';
 import { ukuleleStringChangeGuide } from './ukuleleStringChangeGuide.js';
+import { persianTarStringChangeGuide } from './persianTarStringChangeGuide.js';
+import { setarStringChangeGuide } from './setarStringChangeGuide.js';
+import { oudStringChangeGuide } from './oudStringChangeGuide.js';
 import { violaStringChangeGuide } from './violaStringChangeGuide.js';
 import { snareTuningGuide } from './snareTuningGuide.js';
 import { violinStringChangeGuide } from './violinStringChangeGuide.js';
@@ -564,6 +567,9 @@ export const guideCollections = [
       violaStringChangeGuide,
       celloStringChangeGuide,
       ukuleleStringChangeGuide,
+      persianTarStringChangeGuide,
+      setarStringChangeGuide,
+      oudStringChangeGuide,
     ],
   },
   {

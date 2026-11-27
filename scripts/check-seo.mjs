@@ -190,7 +190,9 @@ for (const url of urls) {
       const target = new URL(link.href);
       if (
         target.origin === origin &&
-        (target.pathname.startsWith('/handouts/') || /\.(webp|jpe?g|png)$/i.test(target.pathname))
+        (target.pathname.startsWith('/handouts/') ||
+          /^\/images\/guides\/[^/]+\/photo-license\.txt$/.test(target.pathname) ||
+          /\.(webp|jpe?g|png)$/i.test(target.pathname))
       ) {
         await access(`dist${decodeURI(target.pathname)}`);
       } else if (target.origin === origin && !target.pathname.startsWith('/audio/')) {

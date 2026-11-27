@@ -21,7 +21,8 @@ import './MusicResources.css';
 const guidePath = (guide) => `/guides/${guide.slug}`;
 const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
-  const stringsPages = {
+  const resourceLabels = {
+    '/studio/keybpm#live-tuner': 'Open the live instrument tuner',
     '/guitar-strings-woodland-hills': 'Guitar strings in Woodland Hills',
     '/violin-strings-woodland-hills': 'Violin strings in Woodland Hills',
     '/services/guitar-restringing-woodland-hills': 'Guitar restringing and string replacement',
@@ -33,7 +34,7 @@ function labelFor(path) {
   const tuner = instrumentTunerPages.find((page) => page.path === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
-    stringsPages[path] ||
+    resourceLabels[path] ||
     guide?.title ||
     tuner?.heading ||
     product?.name ||
@@ -133,7 +134,7 @@ export function GuideIndex() {
   return (
     <Page
       title="Music Guides"
-      description="Choose an instrument, learn to restring guitars, bass, bowed strings and ukulele with close-up photos, compare sounds by ear, and explore music history."
+      description="Find step-by-step restringing guides with photos for guitar, bass, violin, viola, cello, ukulele, Persian tar, setar and oud. Explore instrument history and sound."
     >
       <p className="resource-lead">
         Choose your first instrument, follow a photographed string change, or listen to the sounds

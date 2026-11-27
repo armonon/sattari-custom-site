@@ -56,6 +56,7 @@ export const instrumentHistoryGuides = [
       },
     ],
     related: [
+      '/guides/how-to-change-persian-tar-strings',
       '/guides/tar-setar-and-sitar',
       '/guides/instruments-of-iran',
       '/guides/history-of-the-guitar',
@@ -94,6 +95,10 @@ export const instrumentHistoryGuides = [
           'Many earlier lutes have a neck, a waist and plucked strings. The Met’s curators describe the guitar’s ancestry before the Renaissance as uncertain. By the sixteenth century a guitarist could find music printed for a small four-course instrument. The vihuela, a larger plucked instrument used in Spain, was its contemporary.',
           'A course can have one string or two close-set strings played as a unit. A pair tuned to the same note thickens the sound. An octave pair adds a higher pitch to the same finger movement. In Baroque guitar music, players could alternate strummed chords with passages of individually plucked notes.',
         ],
+        link: {
+          label: 'Look closely at paired strings on an oud',
+          path: '/guides/how-to-change-oud-strings',
+        },
       },
       {
         title: 'A Venetian guitar that changed with its players',
@@ -209,7 +214,12 @@ export const instrumentHistoryGuides = [
         ],
       },
     ],
-    related: ['/guides/history-of-the-persian-tar', '/guides/instruments-of-iran'],
+    related: [
+      '/guides/how-to-change-persian-tar-strings',
+      '/guides/how-to-change-setar-strings',
+      '/guides/history-of-the-persian-tar',
+      '/guides/instruments-of-iran',
+    ],
     sources: [
       {
         label: 'Smithsonian · tar performance, setar photographs and playing notes',
@@ -300,7 +310,12 @@ export const instrumentHistoryGuides = [
         ],
       },
     ],
-    related: ['/guides/history-of-the-persian-tar', '/guides/tar-setar-and-sitar'],
+    related: [
+      '/guides/history-of-the-persian-tar',
+      '/guides/tar-setar-and-sitar',
+      '/guides/how-to-change-persian-tar-strings',
+      '/guides/how-to-change-setar-strings',
+    ],
     sources: [
       {
         label: 'Smithsonian · hear the Pejvak Ensemble’s tar, santur and tombak solos and duet',

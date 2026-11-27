@@ -240,6 +240,9 @@ it.each([
   'how-to-change-classical-guitar-strings',
   'how-to-change-a-cello-string',
   'how-to-change-ukulele-strings',
+  'how-to-change-persian-tar-strings',
+  'how-to-change-setar-strings',
+  'how-to-change-oud-strings',
 ])('pairs each numbered step of %s with a credited, openable photograph', (slug) => {
   const { doc, schema } = renderPage('/guides/' + slug);
   const article = schema.find((item) => item['@type'] === 'Article');
@@ -264,3 +267,15 @@ it.each([
   }
   expect(article.image).toEqual(images);
 });
+
+it.each(['persian-tar', 'setar', 'oud'])(
+  'shows both string attachments on the %s',
+  (instrument) => {
+    const { doc } = renderPage('/guides/how-to-change-' + instrument + '-strings');
+    const anchor = doc.querySelector('#anchor-the-string .guide-step-photo img');
+    const peg = doc.querySelector('#wind-the-peg .guide-step-photo img');
+    expect(anchor).not.toBeNull();
+    expect(peg).not.toBeNull();
+    expect(anchor.getAttribute('src')).not.toBe(peg.getAttribute('src'));
+  }
+);

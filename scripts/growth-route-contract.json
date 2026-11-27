@@ -123,7 +123,10 @@
     "/guides/how-to-change-a-viola-string",
     "/guides/how-to-change-classical-guitar-strings",
     "/guides/how-to-change-a-cello-string",
-    "/guides/how-to-change-ukulele-strings"
+    "/guides/how-to-change-ukulele-strings",
+    "/guides/how-to-change-persian-tar-strings",
+    "/guides/how-to-change-setar-strings",
+    "/guides/how-to-change-oud-strings"
   ],
   "excluded_paths": [
     "/cart",
