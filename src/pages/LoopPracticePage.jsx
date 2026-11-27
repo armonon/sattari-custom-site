@@ -182,6 +182,7 @@ function LoopPracticeApp() {
   const { profile } = useGuitarProfile();
   const tuning = openStrings(profile);
   const [journey, setJourney] = useState('choose');
+  const lastJourney = useRef(journey);
   const [practiceProgress, setPracticeProgress] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('loop-practice-progress-v1') || '{}');
@@ -306,7 +307,13 @@ function LoopPracticeApp() {
   );
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const section =
+      lastJourney.current === journey && window.location.hash
+        ? document.getElementById(window.location.hash.slice(1))
+        : null;
+    lastJourney.current = journey;
+    if (section) section.scrollIntoView({ block: 'start', behavior: 'instant' });
+    else window.scrollTo({ top: 0, behavior: 'instant' });
   }, [journey]);
 
   useEffect(() => {

@@ -80,6 +80,31 @@ it('links to each featured restringing guide from the song library', async () =>
   );
 });
 
+it('opens the linked guide section on entry and scrolls up when choosing a song', async () => {
+  const originalUrl = window.location.href;
+  const scroll = vi.fn();
+  const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    value: scroll,
+    configurable: true,
+  });
+  const scrollTo = vi.spyOn(window, 'scrollTo');
+  try {
+    window.history.replaceState(null, '', '/learn#restringing-guides');
+    await renderPage();
+    expect(scroll.mock.contexts).toContain(document.getElementById('restringing-guides'));
+    expect(scrollTo).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Learn Night shift' }));
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+  } finally {
+    window.history.replaceState(null, '', originalUrl);
+    scrollTo.mockRestore();
+    if (originalScroll)
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll);
+    else delete HTMLElement.prototype.scrollIntoView;
+  }
+});
+
 it('opens the chord library and updates an accessible fingering diagram', async () => {
   await renderPage();
   expect(
