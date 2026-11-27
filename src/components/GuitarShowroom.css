@@ -13,7 +13,7 @@
   width: 100%;
   height: 100svh;
   min-height: 680px;
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   background: #171b20;
   scroll-margin-top: 0;
@@ -1098,4 +1098,24 @@
 }
 .shop-with-showroom .shop-category-primary small {
   color: #65707b;
+}
+
+/* Defocus the backdrop before compositing it, preventing a sharp duplicate
+   instrument at the glass transition. The selected scene stays live 3D. */
+.showroom-stage.has-selection {
+  background: #c9cdd2;
+}
+.showroom-glass-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url('/images/showroom/guitar-wall-front.png') center / cover no-repeat;
+  filter: blur(36px) saturate(0.65);
+  transform: scale(1.15);
+  opacity: 0;
+  transition: opacity 900ms ease;
+  pointer-events: none;
+}
+.has-selection .showroom-glass-backdrop {
+  opacity: 1;
 }

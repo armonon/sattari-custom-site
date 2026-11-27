@@ -181,34 +181,14 @@ it('requires details for an inquiry-only instrument instead of quick-adding', as
   }
 });
 
-it('shows both original store photos and returns to the existing Gaussian scene', async () => {
+it('keeps the scene free of showroom and original-store toggle controls', async () => {
   await renderShowroom({ config: splatConfig });
   await waitForScene();
+  expect(screen.queryByRole('button', { name: 'Showroom', exact: true })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Original store' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Violin wall' })).not.toBeInTheDocument();
   selectElectric();
-
   fireEvent.click(screen.getByRole('button', { name: 'Back to full wall' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Original store' }));
-  expect(screen.getByRole('button', { name: 'Original store' })).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  );
-  expect(screen.getByRole('img', { name: /actual Sattari Music store/ })).toHaveAttribute(
-    'src',
-    '/images/showroom/guitar-wall-reference.jpg'
-  );
-  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-  expect(scene.reset).toHaveBeenCalled();
-
-  fireEvent.click(screen.getByRole('button', { name: 'Violin wall' }));
-  expect(screen.getByRole('img', { name: /actual Sattari Music violin display/ })).toHaveAttribute(
-    'src',
-    '/images/showroom/violin-wall-reference.jpg'
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Showroom' }));
-  expect(
-    screen.queryByRole('img', { name: /actual Sattari Music violin display/ })
-  ).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: `Explore ${electricName}` })).toBeInTheDocument();
   expect(scene.create).toHaveBeenCalledTimes(1);
 });
 
@@ -544,7 +524,9 @@ it('advances the ambient scene once per interval in StrictMode and remains pause
     fireEvent(document, new Event('visibilitychange'));
     act(() => vi.advanceTimersByTime(8000));
     expect(scene.showHeroFrame).toHaveBeenCalledExactlyOnceWith(1);
-    const stage = screen.getByRole('button', { name: 'Showroom' }).closest('.showroom-stage');
+    const stage = screen
+      .getByRole('heading', { name: 'Welcome to the shop.' })
+      .closest('.showroom-stage');
     fireEvent.pointerDown(stage);
     expect(scene.stopMotion).toHaveBeenCalledTimes(1);
     act(() => vi.advanceTimersByTime(16000));
