@@ -132,7 +132,7 @@ function StemPlayhead({ deckId, duration }) {
   return <span className="sd-vertical-playhead" style={{ top: `${progress}%` }} />;
 }
 
-function Waveform({ deck, getPosition, onSeek }) {
+export function Waveform({ deck, getPosition, onSeek }) {
   return (
     <button
       type="button"

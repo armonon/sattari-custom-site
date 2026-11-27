@@ -55,6 +55,7 @@ export async function registerStudioWorker() {
   if (registration || !import.meta.env.PROD || !('serviceWorker' in navigator)) return registration;
   try {
     registration = await navigator.serviceWorker.register(STUDIO_SW_URL, { scope: STUDIO_SCOPE });
+    if (!registration) return null;
     navigator.serviceWorker
       .register(STUDIO_SW_URL, { scope: ASSETS_SCOPE, updateViaCache: 'none' })
       .catch(() => {});

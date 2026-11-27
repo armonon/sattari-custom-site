@@ -1,0 +1,31 @@
+{
+  "pass": true,
+  "widths": [
+    {
+      "viewport": 1440,
+      "scroll": 1440
+    },
+    {
+      "viewport": 1024,
+      "scroll": 1024
+    },
+    {
+      "viewport": 390,
+      "scroll": 390
+    },
+    {
+      "viewport": 320,
+      "scroll": 320
+    }
+  ],
+  "checks": [
+    "four deck imports",
+    "16 prepared stem imports",
+    "playback advances",
+    "stem level and mute",
+    "detailed controls switch",
+    "embedded audio project save/reopen",
+    "responsive widths"
+  ],
+  "errors": []
+}

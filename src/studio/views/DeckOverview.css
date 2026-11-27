@@ -1,0 +1,196 @@
+.sd-session-shell .sd-deck-view-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+.sd-session-shell .sd-deck-view-switch button {
+  padding: 8px 13px;
+  border-radius: 8px;
+  color: #a8b9ca;
+  background: #0c1926;
+}
+.sd-session-shell .sd-deck-view-switch button[aria-pressed='true'] {
+  color: #dcfffc;
+  border-color: #49cfc5;
+  background: #123139;
+}
+.sd-session-shell .sd-deck-view-switch span {
+  margin-left: auto;
+  font-size: 11px;
+  color: #92a3b6;
+}
+.sd-deck-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.sd-session-shell .sd-overview-deck {
+  min-width: 0;
+  padding: 14px 12px;
+  border: 1px solid color-mix(in srgb, var(--deck-color) 55%, #15283a);
+  border-radius: 12px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--deck-color) 9%, #071421), #07121e);
+  color: #edf4fc;
+}
+.sd-overview-deck > header {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.sd-overview-deck header > div {
+  min-width: 0;
+  flex: 1;
+}
+.sd-overview-deck h3 {
+  margin: 0 0 4px;
+  font: 600 14px/1.3 system-ui;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sd-overview-deck header span {
+  font: 11px system-ui;
+  color: #9cafbf;
+}
+.sd-overview-letter {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--deck-color);
+  color: #07121c;
+  font: 700 24px system-ui;
+}
+.sd-session-shell .sd-overview-deck button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 30px;
+  border-radius: 6px;
+  border-color: #254052;
+  background: #0a1b29;
+  color: #d8e7f3;
+}
+.sd-overview-play {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sd-session-shell .sd-overview-play .sd-waveform {
+  flex: 1;
+  min-width: 0;
+  height: 65px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.sd-overview-time {
+  display: flex;
+  justify-content: space-between;
+  color: #9aafc1;
+  font:
+    11px/1.5 ui-monospace,
+    monospace;
+  margin: 5px 0 12px;
+}
+.sd-overview-stems {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.sd-overview-stems > section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px 0;
+  border-radius: 7px;
+  background: #05121e66;
+}
+.sd-session-shell .sd-overview-stems .sd-overview-stem-name {
+  min-width: 0;
+  width: 100%;
+  font-size: 11px;
+  border: 0;
+  background: transparent;
+}
+.sd-overview-stems input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 26px;
+  height: 94px;
+  accent-color: var(--deck-color);
+  cursor: pointer;
+}
+.sd-overview-stems input:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+.sd-overview-stems output {
+  font:
+    10px/1.5 ui-monospace,
+    monospace;
+  white-space: nowrap;
+  color: var(--deck-color);
+}
+.sd-overview-lane-buttons {
+  display: flex;
+  gap: 3px;
+}
+.sd-session-shell .sd-overview-lane-buttons button {
+  min-width: 23px;
+  min-height: 25px;
+  padding: 3px;
+  font-size: 10px;
+}
+.sd-session-shell .sd-overview-lane-buttons button[aria-pressed='true'] {
+  background: var(--deck-color);
+  color: #07121e;
+}
+.sd-overview-deck button:focus-visible,
+.sd-overview-deck input:focus-visible {
+  outline: 2px solid var(--deck-color);
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .sd-deck-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 580px) {
+  .sd-deck-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sd-session-shell .sd-deck-view-switch span {
+    display: none;
+  }
+  .sd-session-shell .sd-overview-deck button {
+    min-height: 36px;
+  }
+  .sd-session-shell .sd-overview-lane-buttons button {
+    min-width: 32px;
+  }
+}
+.sd-overview-gain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: #9cafbf;
+  font-size: 10px;
+}
+.sd-overview-gain input {
+  min-width: 0;
+  flex: 1;
+  accent-color: var(--deck-color);
+}
+.sd-overview-gain output {
+  width: 30px;
+  text-align: right;
+}

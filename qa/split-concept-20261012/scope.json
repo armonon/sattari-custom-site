@@ -1,0 +1,13 @@
+{
+  "implemented": [
+    "Light waveform workspace with responsive lanes",
+    "Undo/redo/reset for stem mute, solo and gain",
+    "Collapsible source picker; original inference and audio engine preserved"
+  ],
+  "remaining": [
+    "Persist mix controls alongside recovered separation",
+    "Source library and artwork metadata",
+    "Grouped gain gestures"
+  ],
+  "qualification": "First concept slice; not full concept completion"
+}

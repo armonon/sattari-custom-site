@@ -1,0 +1,24 @@
+{
+  "viewports": [
+    {
+      "width": 1440,
+      "noOverflow": true
+    },
+    {
+      "width": 1024,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "noOverflow": true
+    },
+    {
+      "width": 320,
+      "noOverflow": true
+    }
+  ],
+  "realSeparation": true,
+  "mixUndoRedo": true,
+  "wavAndZip": true,
+  "recovery": true
+}

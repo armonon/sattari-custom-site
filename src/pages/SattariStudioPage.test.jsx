@@ -847,6 +847,7 @@ describe('SattariStudioPage', () => {
     );
 
     await waitFor(() => expect(screen.getByText('Local session')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Detailed controls' }));
     // Waveform detail is an actual display control, not an inert button. Stem
     // ranges retain accessible names even when their visible labels are compact.
     expect(deckCard('A').getByRole('button', { name: 'Waveform detail 8' })).toHaveAttribute(
@@ -943,7 +944,7 @@ describe('SattariStudioPage', () => {
     expect(screen.getByText('No recordings yet')).toBeInTheDocument();
     fireEvent.click(sessionAudio.getByRole('button', { name: /Session audio/ }));
     fireEvent.click(sessionAudio.getByRole('button', { name: /Second track/ }));
-    expect(screen.getByRole('article', { name: 'Deck B' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Deck B overview' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Master output status' })).not.toBeInTheDocument();
     expect(sessionActions().getByRole('button', { name: 'Master inspector' })).toBeVisible();
     expect(navigation.getByRole('button', { name: 'Perform', exact: true })).toHaveAttribute(
@@ -964,6 +965,7 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
     await screen.findByText('Local session');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Deck A controls' }));
     const bpm = screen.getByRole('spinbutton', { name: 'Deck A BPM' });
     fireEvent.change(bpm, { target: { value: '135.5' } });
     fireEvent.blur(bpm);
@@ -998,6 +1000,7 @@ describe('SattariStudioPage', () => {
       </HelmetProvider>
     );
     await screen.findByText('Local session');
+    fireEvent.click(screen.getByRole('button', { name: 'Detailed controls' }));
     fireEvent.click(deckCard('A').getByRole('button', { name: 'Play Deck A' }));
     await screen.findByText('Audio output unavailable');
     expect(deckCard('A').getByRole('button', { name: 'Play Deck A' })).toBeInTheDocument();
@@ -1159,6 +1162,7 @@ describe('SattariStudioPage', () => {
       });
       engineMethods.playDeck.mockResolvedValueOnce(true);
       await renderStudio();
+      fireEvent.click(screen.getByRole('button', { name: 'Detailed controls' }));
       fireEvent.click(deckCard('A').getByRole('button', { name: 'Play Deck A' }));
       await deckCard('A').findByRole('button', { name: 'Pause Deck A' });
     };
@@ -1243,6 +1247,7 @@ describe('SattariStudioPage', () => {
       expect(engineMethods.setTempoFollow).toHaveBeenLastCalledWith('D', null, 120);
       expect(engineMethods.setTempoFollow).toHaveBeenCalledWith('A', beats, 120);
       engineMethods.setPlaybackRate.mockClear();
+      fireEvent.click(screen.getByRole('button', { name: 'Detailed controls' }));
       const deckA = within(screen.getByRole('article', { name: 'Deck A' }));
       fireEvent.change(deckA.getByRole('slider', { name: 'VOL' }), { target: { value: '70' } });
       await waitFor(() => expect(engineMethods.setPlaybackRate).toHaveBeenCalledWith('B', 1));

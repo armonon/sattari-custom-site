@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useReducer } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowUpRight,
@@ -13,6 +13,8 @@ import {
   Square,
   Trash2,
 } from 'lucide-react';
+import {pocketHistory} from './pocketHistory';
+import './workspace.css';
 import LabShell from '../LabShell';
 import { downloadBlob, safeFileName } from '../files';
 import { wavBytes, zipFiles } from '../../utils/arrangementExport';
@@ -38,7 +40,7 @@ import {
   STEPS,
   stepTime,
 } from './pocketPattern';
-import { renderLoop, scheduleStep } from './pocketSynth';
+import { renderLoop, scheduleStep, scheduleDrum } from './pocketSynth';
 
 const LOOKAHEAD_SECONDS = 0.12;
 
@@ -59,7 +61,14 @@ function storage() {
 }
 
 export default function PocketPage() {
-  const [pattern, setPattern] = useState(starterPattern);
+  const [history,dispatch]=useReducer(pocketHistory,null,()=>({past:[],present:starterPattern(),future:[]}));
+  const pattern=history.present;
+  const setPattern=value=>dispatch({type:'edit',value});
+  const padsContext=useRef(null);
+  const [activePad,setActivePad]=useState(null);
+  const padTimer=useRef(null);
+  useEffect(()=>()=>{clearTimeout(padTimer.current);void padsContext.current?.close().catch(()=>{});},[]);
+  const audition=async track=>{try{const Context=window.AudioContext||window.webkitAudioContext;padsContext.current||=new Context();await padsContext.current.resume();scheduleDrum(padsContext.current,padsContext.current.destination,track.id,padsContext.current.currentTime,pattern.volume[track.id]);setActivePad(track.id);clearTimeout(padTimer.current);padTimer.current=setTimeout(()=>setActivePad(null),160);}catch(error){setStatus({text:'Could not play pad: '+error.message,error:true});}};
   const [saved, setSaved] = useState([]);
   const [libraryError, setLibraryError] = useState('');
   const [draftError, setDraftError] = useState('');
@@ -94,7 +103,7 @@ export default function PocketPage() {
     }
     try {
       const draft = readDraft(store);
-      if (draft) setPattern(draft);
+      if (draft) dispatch({type:'reset',value:draft});
     } catch (error) {
       setDraftError(error.message);
     }
@@ -367,6 +376,7 @@ export default function PocketPage() {
       tagline="A beat sketchpad for your phone. Tap a groove, add a bass line, export the loop or its stems."
       limitations={LIMITATIONS}
     >
+      <div className="pocket-history"><button className="lab-button" disabled={!history.past.length||Boolean(busy)} onClick={()=>dispatch({type:'undo'})}>Undo edit</button><button className="lab-button" disabled={!history.future.length||Boolean(busy)} onClick={()=>dispatch({type:'redo'})}>Redo edit</button></div>
       <div className="lab-panel">
         <div className="pocket-transport">
           <button
@@ -477,6 +487,7 @@ export default function PocketPage() {
           ))}
         </div>
 
+        <div className="pocket-pads" role="group" aria-label="Audition drums">{DRUM_TRACKS.map(track=><button key={track.id} type="button" style={{'--pad-color':track.color}} className={activePad===track.id?'is-playing':undefined} aria-label={`Audition ${track.label}`} onClick={()=>void audition(track)}><strong>{track.label}</strong><small>Tap to listen</small></button>)}</div>
         <div className="pocket-grid" role="group" aria-label="Bass line">
           <div className="pocket-track" style={{ '--track-color': BASS_TRACK.color }}>
             <div className="pocket-track-head">

@@ -1,0 +1,21 @@
+{
+  "implemented": [
+    "Engine-rendered scene thumbnails",
+    "Three-column dark cyan workspace, preview-first mobile",
+    "Bounded visual/loop settings undo-redo",
+    "Validated portable settings JSON (source media separate)"
+  ],
+  "verified": [
+    "16 tests",
+    "Build and TypeScript",
+    "Hosted 4-width browser workflows",
+    "PNG export and H264 720x1280 4-second loop export"
+  ],
+  "remaining": [
+    "Additional fluid and particle scene engines",
+    "Full embedded-media project format",
+    "Track waveform and markers",
+    "Smoothing/speed/scale controls"
+  ],
+  "qualification": "First concept slice, not complete concept"
+}

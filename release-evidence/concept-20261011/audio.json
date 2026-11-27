@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-11T17:17:27.964Z",
+  "physicalHardwareMeasured": false,
+  "pass": true,
+  "results": [
+    {
+      "name": "arrangement-browser",
+      "pass": true,
+      "output": "Running…\nPASS ordered offline EQ retains the original crossover response at 44.1 and 48 kHz\nPASS real offline audio has the correct silent gap, duration, gain and stop\nPASS splitting a fade preserves rendered PCM\nPASS seek into silence retains future clips and uses audio-clock position\nPASS piano notes render actual non-silent polyphonic audio\nPASS master gain affects mixdown and produces a valid 24-bit WAV\nPASS more than four independent tracks render and export aligned stems\nPASS exact integer-frame renders and stem ZIP survive fractional-second roundoff\nPASS printed references bypass repeated processing but follow master level\nPASS range exports rebase source offsets and preserve requested length\nPASS live mute and gain changes do not restart arrangement transport\nPASS loop playback schedules repeated regions and preserves live mixer control\nPASS source capture produces aligned durable chunks and recoverable float WAV audio\nPASS recording captures playable audio and timestamped performance controls\n\nCOMPLETE: 14 passed, 0 failed",
+      "errors": []
+    },
+    {
+      "name": "performance-recovery",
+      "pass": true,
+      "output": "PASS disabled source changes do not load missing assets during actual replay preparation\nPASS committed in-progress events survive closing and reopening the journal\nReplay timing: 0 events >25ms late; worst 2.7ms\nPASS edited deck, stem, pitch, loop and master events replay through the live engine and print durable audio\nSoak 10s: 195 events saved, audio 5.0s, pending 0.00MiB; running, visible, 10.1s wall, 432000 frames\nSoak 20s: 400 events saved, audio 15.0s, pending 0.00MiB; running, visible, 20.1s wall, 912000 frames\nSoak 30s: 600 events saved, audio 25.0s, pending 0.00MiB; running, visible, 30.1s wall, 1392000 frames\nSoak 40s: 800 events saved, audio 35.0s, pending 0.00MiB; running, visible, 40.1s wall, 1872000 frames\nSoak 50s: 1000 events saved, audio 45.0s, pending 0.00MiB; running, visible, 50.1s wall, 2352000 frames\nSoak 60s: 1200 events saved, audio 55.0s, pending 0.00MiB; running, visible, 60.1s wall, 2832000 frames\nPASS 60-second real audio-clock recording remains aligned, incremental and recoverable under control/UI load\nCOMPLETE: 4 passed, 0 failed",
+      "errors": []
+    }
+  ]
+}

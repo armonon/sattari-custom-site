@@ -28,7 +28,7 @@ self.onmessage = ({ data }) => {
       const result = renderVox(take.samples, take.rate, take.track, data.options, take.marks);
       const transfer = [result.lead.buffer, result.mix.buffer, result.curve.buffer];
       if (result.harmony) transfer.push(result.harmony.buffer);
-      self.postMessage({ type: 'rendered', id: data.id, serial: data.serial, ...result }, transfer);
+      self.postMessage({ type: 'rendered', id: data.id, serial: data.serial, settingsSignature: data.settingsSignature, ...result }, transfer);
     }
   } catch (error) {
     self.postMessage({ type: 'error', id: data.id, message: error?.message || 'Vox failed.' });

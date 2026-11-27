@@ -1,0 +1,21 @@
+{
+  "implemented": [
+    "Light editorial workspace",
+    "Focused Bio/photo, Music/links, Press/contact and Style sections",
+    "Undoable draft edits",
+    "Draft import rejects unrelated JSON without replacing current work"
+  ],
+  "verified": [
+    "17 tests",
+    "Build and TypeScript",
+    "Four-width browser editing/history/photo/save/open/autosave",
+    "Self-contained HTML export includes edited text and embedded photo"
+  ],
+  "remaining": [
+    "Rich text biography editing",
+    "Photo gallery and additional editorial templates",
+    "Print regression across browsers",
+    "AI writing requires a real integration; no pretend AI button"
+  ],
+  "qualification": "First concept slice, not full concept completion"
+}

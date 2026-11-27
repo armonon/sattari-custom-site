@@ -1,0 +1,13 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
+const out=new URL('./',import.meta.url).pathname,browser=await chromium.launch({channel:'chrome'});
+try{
+ const context=await browser.newContext({viewport:{width:1440,height:950},serviceWorkers:'block'}),page=await context.newPage(),errors=[];
+ page.on('pageerror',e=>errors.push(String(e)));await page.goto((process.env.TEST_URL||'http://127.0.0.1:4210')+'/studio/pocket');
+ const step=page.getByRole('button',{name:'Kick step 2',exact:true}),initial=await step.getAttribute('aria-pressed');await step.click();const changed=await step.getAttribute('aria-pressed');assert.notEqual(changed,initial);await page.getByRole('button',{name:'Undo edit',exact:true}).click();assert.equal(await step.getAttribute('aria-pressed'),initial);await page.getByRole('button',{name:'Redo edit',exact:true}).click();assert.equal(await step.getAttribute('aria-pressed'),changed);
+ await page.getByRole('button',{name:'Audition Kick',exact:true}).click();await page.getByRole('button',{name:'Play',exact:true}).click();await page.getByRole('button',{name:'Stop',exact:true}).waitFor();await page.getByRole('button',{name:'Stop',exact:true}).click();
+ await page.getByRole('textbox',{name:'Name',exact:true}).fill('Neon beat');await page.getByRole('button',{name:'Save',exact:true}).click();await page.waitForTimeout(400);await page.reload();await page.waitForFunction(()=>Array.from(document.querySelectorAll('input')).some(i=>i.value==='Neon beat'));assert.equal(await step.getAttribute('aria-pressed'),changed);
+ const [wav]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'WAV loop',exact:true}).click()]);await wav.saveAs(out+'loop.wav');assert.ok(readFileSync(await wav.path()).length>10000);
+ const [zip]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Stems (ZIP)',exact:true}).click()]);await zip.saveAs(out+'stems.zip');assert.ok(readFileSync(await zip.path()).length>10000);
+ for(const width of [1440,1024,390,320]){await page.setViewportSize({width,height:950});await page.evaluate(()=>scrollTo(0,0));assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow ${width}`);await page.screenshot({path:out+`workspace-${width}.png`,fullPage:true});}assert.deepEqual(errors,[]);
+ writeFileSync(out+'browser.json',JSON.stringify({stepEditing:true,undoRedo:true,playablePads:true,playback:true,savedPatternReopen:true,wavAndStems:true,widths:[1440,1024,390,320],pageErrors:errors},null,2));
+}finally{await browser.close()}

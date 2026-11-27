@@ -8,6 +8,10 @@ on:
   # Manual re-run of the qualified deploy (for example after catalog edits).
   workflow_dispatch:
 
+# The workflow only reads the repository; Netlify deploys use their own token.
+permissions:
+  contents: read
+
 env:
   # Opt into the June 2026 GitHub JavaScript-action runtime early so
   # checkout/setup-node/artifact failures show up before production fixes need it.
