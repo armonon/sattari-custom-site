@@ -36,6 +36,10 @@ const SESSION_ID = /^cs_[A-Za-z0-9_]{8,250}$/;
 // shop. Reported to the cart as `quantity_limit` with this number.
 const MAX_UNITS_PER_VARIANT = 10;
 
+// Stripe accepts at most 100 line items. A longer cart is refused before it
+// costs catalog lookups or a stock hold.
+const MAX_CART_LINES = 100;
+
 // Stripe's minimum session lifetime is 30 minutes. The extra minute keeps a
 // slightly slow clock on either side from making Stripe reject the session.
 const CHECKOUT_WINDOW_SECONDS = 31 * 60;
@@ -204,6 +208,7 @@ function parseRequest(event) {
 
   const items = Array.isArray(body?.items) ? body.items : [];
   if (!items.length) throw new CheckoutError('Cart is empty.');
+  if (items.length > MAX_CART_LINES) throw new CheckoutError('Invalid request.');
 
   // Optional, and ignored rather than refused when malformed: a stale value
   // left in the browser must never stop a checkout.

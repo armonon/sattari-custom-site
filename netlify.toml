@@ -98,6 +98,9 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "SAMEORIGIN"
+    # A page on another origin that opens the shop gets no handle to its window;
+    # popups the shop opens itself keep working.
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Content-Security-Policy = "frame-ancestors 'self'"
     Permissions-Policy = "camera=(), geolocation=(), payment=(), usb=(), microphone=(self), midi=(self)"
     Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'sha256-8EcVp8/rZS/V1u4IjoMzdQxQA8+pQuBvF5vSFQ1DlE0=' 'sha256-WNofvJwKTZLiodQQIIs22BEFzn47xS6JwfSZqC8bg0U=' 'wasm-unsafe-eval' https://thecreatingco.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data: https://*.sentry.io https://huggingface.co https://*.huggingface.co https://*.hf.co https://thecreatingco.com; worker-src 'self' blob:; frame-src https://www.google.com https://thecreatingco.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; manifest-src 'self'"
