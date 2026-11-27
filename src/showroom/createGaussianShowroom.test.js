@@ -537,7 +537,10 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     expect(edit.sdfs.every((sdf) => sdf.color.r === 1 && sdf.opacity === 1)).toBe(true);
     view.controller.focus('flame-stratocaster-electric-guitar');
     await frame(2400);
-    expect(edit.sdfs[0].color.r).toBeCloseTo(optionalLightingConfig.spotlight.neighborBrightness, 12);
+    expect(edit.sdfs[0].color.r).toBeCloseTo(
+      optionalLightingConfig.spotlight.neighborBrightness,
+      12
+    );
     expect(edit.sdfs[0].opacity).toBe(1);
     const renderer = state.renderers[0];
     const selected = renderer.renders.at(-1).projection.elements.slice();
@@ -548,7 +551,9 @@ describe('Gaussian showroom render lifecycle and framing', () => {
       .at(-1)
       .projection.elements.forEach((value, i) => expect(value).toBeCloseTo(selected[i], 12));
     await frame(3000);
-    expect(edit.sdfs[0].color.r).toBeGreaterThan(optionalLightingConfig.spotlight.neighborBrightness);
+    expect(edit.sdfs[0].color.r).toBeGreaterThan(
+      optionalLightingConfig.spotlight.neighborBrightness
+    );
     expect(edit.sdfs[0].color.r).toBeLessThan(1);
     view.controller.zoom(0.9);
     await frame(5000);
