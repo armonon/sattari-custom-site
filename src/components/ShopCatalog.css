@@ -1,0 +1,302 @@
+/* Shop catalog: the ink look of the Sattari tools (cream on near-black, gold
+   accent) under the showroom, with every product in a plain grid. */
+.section.shop-with-showroom {
+  --shopx-bg: #0f0e0c;
+  --shopx-panel: #171512;
+  --shopx-line: rgba(242, 234, 217, 0.14);
+  --shopx-text: #f2ead9;
+  --shopx-muted: #a89f8b;
+  --shopx-accent: #e4b873;
+  --shopx-tile: #ffffff;
+  background: var(--shopx-bg);
+  color: var(--shopx-text);
+}
+.shop-with-showroom .shopx,
+.shop-with-showroom .strings-discovery {
+  color: var(--shopx-text);
+}
+.shop-with-showroom .strings-discovery {
+  border-top-color: var(--shopx-line);
+}
+.shop-with-showroom .strings-discovery p {
+  color: var(--shopx-muted);
+}
+.shop-with-showroom .strings-discovery a {
+  color: var(--shopx-accent);
+}
+.shopx {
+  display: grid;
+  gap: 28px;
+}
+.shopx-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.shopx .shopx-kicker {
+  margin: 0 0 6px;
+  color: var(--shopx-accent);
+  font:
+    600 12px ui-monospace,
+    monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.shopx-heading h2 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--shopx-text);
+}
+.shopx-heading h2 span {
+  color: var(--shopx-accent);
+}
+.shopx-all,
+.shopx-group > header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--shopx-accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shopx-all:hover,
+.shopx-group > header a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.shopx-chips {
+  position: sticky;
+  top: 80px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  margin-inline: -4px;
+  padding: 10px 4px;
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--shopx-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  scrollbar-width: none;
+}
+.shopx-chips a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--shopx-line);
+  border-radius: 999px;
+  color: var(--shopx-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.shopx-chips a:hover,
+.shopx-chips a:focus-visible {
+  border-color: var(--shopx-accent);
+  color: var(--shopx-accent);
+}
+.shopx-chips small {
+  color: var(--shopx-muted);
+  font:
+    12px ui-monospace,
+    monospace;
+}
+.shopx-group {
+  display: grid;
+  gap: 16px;
+  scroll-margin-top: 150px;
+}
+.shopx-group > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--shopx-line);
+}
+.shopx-group > header h3 {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: clamp(20px, 2.6vw, 26px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--shopx-text);
+}
+.shopx-group > header h3 small {
+  color: var(--shopx-muted);
+  font:
+    12px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.shopx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.shopx-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--shopx-line);
+  border-radius: 16px;
+  background: var(--shopx-panel);
+  transition: border-color 0.18s ease;
+}
+.shopx-card:hover,
+.shopx-card:focus-within {
+  border-color: var(--shopx-accent);
+}
+.shopx-photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--shopx-tile);
+}
+.shopx-photo picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 14px;
+}
+.shopx-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+.shopx-card:hover .shopx-photo img {
+  transform: scale(1.03);
+}
+.shopx-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: #6b6455;
+  font-size: 13px;
+}
+.shopx-stock {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #0f0e0c;
+  color: #f2ead9;
+  font-size: 12px;
+  font-weight: 600;
+}
+.shopx-info {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.shopx-info h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.shopx-info h4 a {
+  color: var(--shopx-text);
+  text-decoration: none;
+}
+.shopx-info h4 a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.shopx .shopx-price {
+  margin: 0;
+  color: var(--shopx-accent);
+  font:
+    15px ui-monospace,
+    monospace;
+}
+.shopx-buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--shopx-accent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--shopx-accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.shopx-buy:hover:not(:disabled),
+.shopx-buy.is-added {
+  background: var(--shopx-accent);
+  color: #1a1408;
+}
+.shopx-buy:disabled {
+  border-color: var(--shopx-line);
+  color: var(--shopx-muted);
+  cursor: not-allowed;
+}
+.shopx-card.is-sold-out .shopx-photo img {
+  opacity: 0.55;
+}
+.shopx-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.shopx .shop-repair-finder {
+  margin: 8px 0 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--shopx-line);
+}
+@media (max-width: 520px) {
+  .shopx-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .shopx-card {
+    padding: 8px;
+    gap: 8px;
+  }
+  .shopx-buy {
+    font-size: 13px;
+  }
+  .shopx-chips {
+    top: 64px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shopx-photo img,
+  .shopx-card,
+  .shopx-buy {
+    transition: none;
+  }
+}

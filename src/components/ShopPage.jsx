@@ -23,6 +23,7 @@ import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
 import './StringsDiscovery.css';
+import './ShopCatalog.css';
 
 const categoryIcons = {
   cymbals: Disc3,
@@ -42,80 +43,62 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-function ProductCard({ product, kicker, recentlyAddedSlug, onQuickAdd, soldOut }) {
+function ProductCard({ product, recentlyAddedSlug, onQuickAdd, soldOut }) {
   const path = buildProductPath(product);
   const image = resolveProductImage(product);
   const priceLabel = formatPriceRange(product);
   const needsOptions = Boolean(product.colors?.length);
   const added = recentlyAddedSlug === product.slug;
-  const actionLabel = soldOut ? 'Out of stock' : added ? 'Added to cart' : 'Add to cart';
 
   return (
-    <article className={`shop-featured-product${soldOut ? ' is-sold-out' : ''}`}>
-      <Link to={path} className="shop-featured-photo" aria-label={`View ${product.name}`}>
+    <article className={`shopx-card${soldOut ? ' is-sold-out' : ''}`}>
+      <Link to={path} className="shopx-photo" aria-label={`View ${product.name}`}>
         {image ? (
           <OptimizedProductImage
             src={image}
             alt={product.name}
             loading="lazy"
-            sizes="(max-width: 380px) 100vw, (max-width: 700px) 50vw, (max-width: 980px) 33vw, 280px"
+            sizes="(max-width: 520px) 50vw, (max-width: 980px) 33vw, 300px"
           />
         ) : (
-          <span className="shop-featured-placeholder">
+          <span className="shopx-placeholder">
             <Music2 size={38} strokeWidth={1} aria-hidden="true" />
             <span>Image coming soon</span>
           </span>
         )}
-        <span className="shop-featured-open" aria-hidden="true">
-          <ArrowUpRight size={18} />
-        </span>
-        {soldOut && <span className="shop-featured-stock">Out of stock</span>}
+        {soldOut && <span className="shop-featured-stock shopx-stock">Out of stock</span>}
       </Link>
-      <div className="shop-featured-info">
-        <p className="shop-featured-category">{kicker}</p>
-        <h3>
+      <div className="shopx-info">
+        <h4>
           <Link to={path} aria-label={`View details for ${product.name}`}>
             {product.name}
           </Link>
-        </h3>
-        <div className="shop-featured-purchase">
-          <p className="shop-featured-price">{priceLabel}</p>
-          {needsOptions && !soldOut ? (
-            <Link
-              to={path}
-              className="shop-featured-action"
-              aria-label={`Choose a color for ${product.name}`}
-            >
-              <SlidersHorizontal size={18} aria-hidden="true" />
-              <span className="shop-featured-tooltip" aria-hidden="true">
-                Choose color
-              </span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              className={`shop-featured-action${added ? ' is-added' : ''}`}
-              onClick={() => onQuickAdd(product)}
-              disabled={soldOut}
-              aria-label={
-                soldOut ? `${product.name} is out of stock` : `Add ${product.name} to cart`
-              }
-            >
-              {added ? (
-                <Check size={19} aria-hidden="true" />
-              ) : (
-                <ShoppingBag size={18} aria-hidden="true" />
-              )}
-              <span className="shop-featured-tooltip" aria-hidden="true">
-                {actionLabel}
-              </span>
-            </button>
-          )}
-        </div>
-        <span className="shop-featured-announcement" role="status">
-          {added ? `${product.name} added to cart.` : ''}
-        </span>
+        </h4>
+        <p className="shopx-price">{priceLabel}</p>
       </div>
+      {needsOptions && !soldOut ? (
+        <Link to={path} className="shopx-buy" aria-label={`Choose a color for ${product.name}`}>
+          <SlidersHorizontal size={16} aria-hidden="true" /> Choose color
+        </Link>
+      ) : (
+        <button
+          type="button"
+          className={`shopx-buy${added ? ' is-added' : ''}`}
+          onClick={() => onQuickAdd(product)}
+          disabled={soldOut}
+          aria-label={soldOut ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
+        >
+          {added ? (
+            <Check size={16} aria-hidden="true" />
+          ) : (
+            <ShoppingBag size={16} aria-hidden="true" />
+          )}{' '}
+          {soldOut ? 'Out of stock' : added ? 'Added' : 'Add to cart'}
+        </button>
+      )}
+      <span className="shopx-announcement" role="status">
+        {added ? `${product.name} added to cart.` : ''}
+      </span>
     </article>
   );
 }
@@ -124,12 +107,14 @@ export default function ShopPage() {
   const { addToCart } = useCart();
   const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
-  const featuredGroups = featuredCategoryOrder.map((category) =>
-    products.filter((product) => product.category === category).slice(0, 2)
-  );
-  const featuredProducts = [0, 1].flatMap((position) =>
-    featuredGroups.map((group) => group[position]).filter(Boolean)
-  );
+  // Every product, grouped by category in a fixed order.
+  const groups = featuredCategoryOrder
+    .map((key) => ({
+      category: categories.find((item) => item.key === key),
+      items: products.filter((product) => product.category === key),
+    }))
+    .filter((group) => group.category && group.items.length);
+  const listedProducts = groups.flatMap((group) => group.items);
 
   const handleQuickAdd = (product) => {
     // Colored products link to their page instead (see ProductCard).
@@ -147,7 +132,7 @@ export default function ShopPage() {
     description: PAGE_SEO.shop.description,
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: featuredProducts.map((product, index) => ({
+      itemListElement: listedProducts.map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         url: `https://sattarimusic.com${buildProductPath(product)}`,
@@ -168,66 +153,71 @@ export default function ShopPage() {
       <StructuredData data={itemListSchema} />
       <GuitarShowroom />
 
-      <div id="shop-catalog" className="container shop-category-panel">
-        <ShopRepairFinder />
-        <div className="shop-category-panel-heading">
+      <div id="shop-catalog" className="container shopx">
+        <header className="shopx-heading">
           <div>
-            <p className="card-kicker">Browse the catalog</p>
-            <h2>Shop by category</h2>
+            <p className="shopx-kicker">The catalog</p>
+            <h2>
+              Ready to play<span aria-hidden="true">.</span>
+            </h2>
           </div>
-          <Link to="/shop/all">
+          <Link to="/shop/all" className="shopx-all">
             View all {products.length} products
             <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
-        </div>
+        </header>
 
-        <nav className="shop-category-list" aria-label="Shop product categories">
-          {categories.map((category) => {
+        <nav className="shopx-chips" aria-label="Shop product categories">
+          {groups.map(({ category, items }) => {
             const Icon = categoryIcons[category.key];
-            const productCount = products.filter(
-              (product) => product.category === category.key
-            ).length;
-
             return (
-              <Link
-                to={`/shop/${category.key}`}
-                className="shop-category-row"
-                key={category.key}
-                aria-label={`Explore ${category.title}`}
-              >
-                <span className="shop-category-icon" aria-hidden="true">
-                  <Icon size={20} />
-                </span>
-                <span className="shop-category-primary">
-                  <strong>{category.title}</strong>
-                  <small>
-                    {productCount} {productCount === 1 ? 'product' : 'products'}
-                  </small>
-                </span>
-                <span className="shop-category-action">
-                  <ArrowUpRight size={17} aria-hidden="true" />
-                </span>
-              </Link>
+              <a href={`#shop-${category.key}`} key={category.key}>
+                <Icon size={17} aria-hidden="true" />
+                {category.title}
+                <small>{items.length}</small>
+              </a>
             );
           })}
-
-          <Link
-            to="/shop/all"
-            className="shop-category-row shop-all-row"
-            aria-label="Shop all products"
-          >
-            <span className="shop-category-icon" aria-hidden="true">
-              <LayoutGrid size={20} />
-            </span>
-            <span className="shop-category-primary">
-              <strong>Shop all</strong>
-              <small>{products.length} products</small>
-            </span>
-            <span className="shop-category-action">
-              <ArrowUpRight size={17} aria-hidden="true" />
-            </span>
+          <Link to="/shop/all" aria-label="Shop all products">
+            <LayoutGrid size={17} aria-hidden="true" />
+            Shop all
+            <small>{products.length}</small>
           </Link>
         </nav>
+
+        {groups.map(({ category, items }) => (
+          <section
+            key={category.key}
+            id={`shop-${category.key}`}
+            className="shopx-group"
+            aria-labelledby={`shop-${category.key}-title`}
+          >
+            <header>
+              <h3 id={`shop-${category.key}-title`}>
+                {category.title}
+                <small>
+                  {items.length} {items.length === 1 ? 'product' : 'products'}
+                </small>
+              </h3>
+              <Link to={`/shop/${category.key}`} aria-label={`Explore ${category.title}`}>
+                View category <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+            </header>
+            <div className="shopx-grid">
+              {items.map((product) => (
+                <ProductCard
+                  key={product.slug}
+                  product={product}
+                  recentlyAddedSlug={recentlyAddedSlug}
+                  onQuickAdd={handleQuickAdd}
+                  soldOut={isSoldOut(product)}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <ShopRepairFinder />
       </div>
 
       <section
@@ -267,43 +257,6 @@ export default function ShopPage() {
           <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
           <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
         </nav>
-      </section>
-
-      <section
-        id="featured-catalog"
-        className="shop-featured-catalog"
-        aria-labelledby="featured-catalog-title"
-      >
-        <div className="container">
-          <div className="shop-catalog-header">
-            <div>
-              <p className="card-kicker">Featured catalog</p>
-              <h2 id="featured-catalog-title">
-                Ready to play<span aria-hidden="true">.</span>
-              </h2>
-            </div>
-            <Link to="/shop/all" className="shop-catalog-all-link">
-              View all {products.length} products
-              <ArrowUpRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="product-grid shop-featured-grid">
-            {featuredProducts.map((product) => {
-              const category = categories.find((item) => item.key === product.category);
-
-              return (
-                <ProductCard
-                  key={product.slug}
-                  product={product}
-                  kicker={category?.title || 'Sattari'}
-                  recentlyAddedSlug={recentlyAddedSlug}
-                  onQuickAdd={handleQuickAdd}
-                  soldOut={isSoldOut(product)}
-                />
-              );
-            })}
-          </div>
-        </div>
       </section>
     </section>
   );

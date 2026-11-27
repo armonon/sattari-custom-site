@@ -68,7 +68,7 @@ it('sends products that come in colors to their page instead of adding them with
   );
 }, 15000);
 
-it('shows a varied featured selection with current prices and sold-out controls', () => {
+it('lists every product by category with current prices and sold-out controls', () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(() => new Promise(() => {}))
@@ -86,15 +86,28 @@ it('shows a varied featured selection with current prices and sold-out controls'
       </InventoryProvider>
     </HelmetProvider>
   );
-  const catalog = screen.getByRole('region', { name: 'Ready to play' });
-  const cards = within(catalog).getAllByRole('article');
-  expect(cards).toHaveLength(10);
-  expect(cards.slice(0, 4).map((card) => within(card).getByRole('heading').textContent)).toEqual([
-    'Pirouz Series Cymbals',
-    'CREMONA - Handmade Acoustic Violin',
-    '5 String Bass Guitar',
-    '4 Pairs of Drumsticks +FREE BAG',
-  ]);
+  const chips = screen.getByRole('navigation', { name: 'Shop product categories' });
+  expect(within(chips).getByRole('link', { name: /Cymbals/ })).toHaveAttribute(
+    'href',
+    '#shop-cymbals'
+  );
+  expect(within(chips).getByRole('link', { name: 'Shop all products' })).toHaveAttribute(
+    'href',
+    '/shop/all'
+  );
+  expect(screen.getByRole('link', { name: 'Explore Violins' })).toHaveAttribute(
+    'href',
+    '/shop/violins'
+  );
+  // All 26 built-in products are on the page, grouped in a fixed category order.
+  expect(screen.getAllByRole('article')).toHaveLength(26);
+  const cymbals = screen.getByRole('region', { name: /^Cymbals/ });
+  const cards = within(cymbals).getAllByRole('article');
+  expect(cards).toHaveLength(4);
+  expect(within(cards[0]).getByRole('heading').textContent).toBe('Pirouz Series Cymbals');
+  expect(
+    within(screen.getByRole('region', { name: /^Violins/ })).getAllByRole('article')
+  ).toHaveLength(8);
   expect(within(cards[0]).getByText('$80.00')).toBeInTheDocument();
   expect(
     within(cards[0]).getByText('Out of stock', { selector: '.shop-featured-stock' })
@@ -107,6 +120,6 @@ it('shows a varied featured selection with current prices and sold-out controls'
   expect(JSON.parse(localStorage.getItem('sattari-cart-v1') || '[]')).toEqual([]);
   expect(within(cards[1]).getByRole('img')).toHaveAttribute(
     'alt',
-    'CREMONA - Handmade Acoustic Violin'
+    within(cards[1]).getByRole('heading').textContent
   );
 }, 15000);
