@@ -44,10 +44,6 @@ export const gaussianShowroomConfig = {
     desktopHeight: 0.84,
     mobileAnchor: [0.5, 0.31],
     mobileHeight: 0.45,
-    neighborBrightness: 0.19,
-    // Spark’s ellipsoid distance is anisotropic; this value feathers the
-    // oval visibly without outlining the instrument or altering its opacity.
-    softEdge: 2.65,
     allowOverscan: true,
     clipSource: true,
   },
