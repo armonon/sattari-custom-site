@@ -17,3 +17,7 @@ Manifest-preserving overlay with backend reuse: 3319 files in the deploy, 441 up
 Not verified: the metronome click and scale playback by ear on a device; the shop showroom in a real browser after this publish (its script and assets are unchanged from the previous deploy).
 
 Follow-up for other work in progress: branches that publish from the production line need this branch merged first, or their next overlay will replace these pages' HTML with builds that lack the new routes.
+
+Follow-up published: 6b09092a92a72dbc1dbe90aa, rollback 6b090588fbcfd9bcd01d0d2f. Source: this branch at the commit "Show the hub tile's meter in Key & BPM". Key & BPM now shows the same meter as its hub tile artwork, idle before a song and live for the selected track. 435 files uploaded, no function uploads; 25 function digests and settings, 4 schedules and the edge bundle match the previous deploy. Live checks: 8 routes return 200, inventory responds, the meter renders on /studio/keybpm with no page errors.
+
+overlay_deploy.py now refuses a draft whose sitemap lacks any page that is live, so a build from a branch without another line's pages cannot replace them.
