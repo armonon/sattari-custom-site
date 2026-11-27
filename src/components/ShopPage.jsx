@@ -1,17 +1,23 @@
 import React from 'react';
 import GuitarShowroom from './GuitarShowroom';
 import ShopRepairFinder from './ShopRepairFinder';
-import { ArrowUpRight, Check, Music2, ShoppingBag, SlidersHorizontal } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Music2,
+  ShoppingBag,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
 import { categories, formatPriceRange } from '../data/catalog';
-import { guitarStringPricing } from '../data/guitarStringPricing';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
-import './StringsDiscovery.css';
 
 import './ShopGallery.css';
 
@@ -25,7 +31,15 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-function ProductCard({ product, kicker, recentlyAddedSlug, onQuickAdd, soldOut }) {
+function ProductCard({
+  product,
+  kicker,
+  recentlyAddedSlug,
+  onQuickAdd,
+  soldOut,
+  filmActive,
+  onSelect,
+}) {
   const path = buildProductPath(product);
   const image = resolveProductImage(product);
   const priceLabel = formatPriceRange(product);
@@ -34,8 +48,18 @@ function ProductCard({ product, kicker, recentlyAddedSlug, onQuickAdd, soldOut }
   const actionLabel = soldOut ? 'Out of stock' : added ? 'Added to cart' : 'Add to cart';
 
   return (
-    <article className={`shop-featured-product${soldOut ? ' is-sold-out' : ''}`}>
-      <Link to={path} className="shop-featured-photo" aria-label={`View ${product.name}`}>
+    <article
+      data-active={filmActive}
+      data-category={product.category}
+      className={`shop-featured-product${soldOut ? ' is-sold-out' : ''}`}
+    >
+      <button
+        type="button"
+        className="shop-featured-photo"
+        aria-label={`Feature ${product.name}`}
+        aria-pressed={filmActive}
+        onClick={onSelect}
+      >
         {image ? (
           <OptimizedProductImage
             src={image}
@@ -49,11 +73,8 @@ function ProductCard({ product, kicker, recentlyAddedSlug, onQuickAdd, soldOut }
             <span>Image coming soon</span>
           </span>
         )}
-        <span className="shop-featured-open" aria-hidden="true">
-          <ArrowUpRight size={18} />
-        </span>
         {soldOut && <span className="shop-featured-stock">Out of stock</span>}
-      </Link>
+      </button>
       <div className="shop-featured-info">
         <p className="shop-featured-category">{kicker}</p>
         <h3>
@@ -108,12 +129,23 @@ export default function ShopPage() {
   const { isSoldOut, products } = useInventory();
   const [recentlyAddedSlug, setRecentlyAddedSlug] = React.useState(null);
   const [expanded, setExpanded] = React.useState(false);
+  const [focusSlug, setFocusSlug] = React.useState(null);
   const featuredGroups = featuredCategoryOrder.map((category) =>
     products.filter((product) => product.category === category).slice(0, 2)
   );
   const featuredProducts = [0, 1].flatMap((position) =>
     featuredGroups.map((group) => group[position]).filter(Boolean)
   );
+
+  const visibleProducts = expanded ? featuredProducts : featuredProducts.slice(0, 4);
+  const activeIndex = Math.max(
+    0,
+    visibleProducts.findIndex((item) => item.slug === focusSlug)
+  );
+  function step(direction) {
+    const next = (activeIndex + direction + visibleProducts.length) % visibleProducts.length;
+    setFocusSlug(visibleProducts[next].slug);
+  }
 
   const handleQuickAdd = (product) => {
     // Colored products link to their page instead (see ProductCard).
@@ -152,36 +184,39 @@ export default function ShopPage() {
       <StructuredData data={itemListSchema} />
       <GuitarShowroom />
 
-      <nav id="shop-catalog" className="gallery-category-bar" aria-label="Shop product categories">
-        <Link to="/shop/all">All products</Link>
-        {categories.map((category) => (
-          <Link key={category.key} to={`/shop/${category.key}`}>
-            {category.title}
-          </Link>
-        ))}
-      </nav>
-
       <section
         id="featured-catalog"
-        className="shop-featured-catalog"
+        className="shop-featured-catalog filmstrip"
         aria-labelledby="featured-catalog-title"
       >
-        <div className="container">
+        <div id="shop-catalog">
           <div className="shop-catalog-header">
             <h2 id="featured-catalog-title">Featured products</h2>
-            <Link to="/shop/all" className="shop-catalog-all-link">
-              View all {products.length} products
-              <ArrowUpRight size={17} aria-hidden="true" />
-            </Link>
+            {visibleProducts.length > 1 && (
+              <div className="film-arrows">
+                <button
+                  type="button"
+                  aria-label="Previous featured product"
+                  onClick={() => step(-1)}
+                >
+                  <ArrowLeft />
+                </button>
+                <button type="button" aria-label="Next featured product" onClick={() => step(1)}>
+                  <ArrowRight />
+                </button>
+              </div>
+            )}
           </div>
-          <div id="gallery-products" className="product-grid shop-featured-grid">
-            {(expanded ? featuredProducts : featuredProducts.slice(0, 4)).map((product) => {
+          <div id="gallery-products" className="film-frames">
+            {visibleProducts.map((product, index) => {
               const category = categories.find((item) => item.key === product.category);
 
               return (
                 <ProductCard
                   key={product.slug}
                   product={product}
+                  filmActive={index === activeIndex}
+                  onSelect={() => setFocusSlug(product.slug)}
                   kicker={category?.title || 'Sattari'}
                   recentlyAddedSlug={recentlyAddedSlug}
                   onQuickAdd={handleQuickAdd}
@@ -196,7 +231,10 @@ export default function ShopPage() {
               className="gallery-more"
               aria-expanded={expanded}
               aria-controls="gallery-products"
-              onClick={() => setExpanded(!expanded)}
+              onClick={() => {
+                setExpanded(!expanded);
+                setFocusSlug(null);
+              }}
             >
               {expanded ? 'Show fewer products' : 'Show more products'}
             </button>
@@ -204,61 +242,45 @@ export default function ShopPage() {
         </div>
       </section>
 
-      <div className="gallery-services container">
-        <a href="#shop-strings-title">
-          <img src="/images/local-gallery/owner-06.webp" alt="" loading="lazy" />
-          <span>
-            Find your strings <ArrowUpRight aria-hidden="true" />
-          </span>
-        </a>
-        <Link to="/services/instrument-repair-los-angeles">
-          <img src="/images/local-gallery/owner-24.webp" alt="" loading="lazy" />
-          <span>
-            Instrument repair <ArrowUpRight aria-hidden="true" />
-          </span>
-        </Link>
-      </div>
-      <div className="container gallery-search">
+      <section className="film-services" aria-label="Strings and repair">
+        <div className="film-service-links">
+          <div id="shop-strings-title">
+            <h2>Find your strings</h2>
+            <Link to="/guitar-strings-woodland-hills">
+              Guitar strings <ArrowUpRight size={16} />
+            </Link>
+            <Link to="/violin-strings-woodland-hills">
+              Violin strings <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <div>
+            <h2>Instrument repair</h2>
+            <Link to="/services/instrument-repair-los-angeles">
+              Repairs and setup <ArrowUpRight size={16} />
+            </Link>
+          </div>
+        </div>
         <ShopRepairFinder />
-      </div>
-
-      <section
-        id="instruments-for-sale"
-        className="container strings-discovery"
-        aria-labelledby="shop-instruments-title"
-      >
-        <h2 id="shop-instruments-title">Guitars and violins for sale in Woodland Hills</h2>
-        <p>
-          Start with the sound you want. Each instrument comparison shows the listed price and links
-          to its product page. To try a specific model locally, ask about its availability when
-          arranging your appointment.
-        </p>
-        <nav aria-label="Compare instruments for sale">
-          <Link to="/shop/guitar-bass#steel-string-acoustic-guitars">
-            Steel-string acoustic guitars
-          </Link>
-          <Link to="/shop/guitar-bass#classical-guitars">Classical guitars</Link>
-          <Link to="/shop/guitar-bass#electric-guitars">Electric guitars</Link>
-          <Link to="/shop/guitar-bass#bass-guitars">Five-string basses</Link>
-          <Link to="/shop/violins#acoustic-violins">Acoustic violins</Link>
-          <Link to="/shop/violins#electric-violins">Electric violins</Link>
-          <Link to="/visit">Plan a Woodland Hills visit</Link>
-        </nav>
       </section>
+      <nav
+        id="shop-categories"
+        className="gallery-category-bar"
+        aria-label="Shop product categories"
+      >
+        <Link to="/shop/all">All products</Link>
+        {categories.map((category) => (
+          <Link key={category.key} to={`/shop/${category.key}`}>
+            {category.title}
+          </Link>
+        ))}
+      </nav>
 
-      <section className="container strings-discovery" aria-labelledby="shop-strings-title">
-        <h2 id="shop-strings-title">Strings for guitars and violins</h2>
-        <p>
-          Standard guitar string sets cost {`$${guitarStringPricing.standardSet}`}. We carry Ernie
-          Ball and other premium strings. Call the Woodland Hills shop for your preferred set and
-          gauge or to arrange installation. You can also buy violin strings online.
-        </p>
-        <nav aria-label="Shop strings and string replacement">
-          <Link to="/guitar-strings-woodland-hills">Electric &amp; acoustic guitar strings</Link>
-          <Link to="/violin-strings-woodland-hills">Violin strings for sale</Link>
-          <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
-          <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
-        </nav>
+      <section className="film-about" id="instruments-for-sale">
+        <h2>Sattari Music, Woodland Hills</h2>
+        <p>Visit our shop by appointment to try an instrument or talk through a repair with us.</p>
+        <Link to="/visit">
+          Plan your visit <ArrowUpRight size={16} />
+        </Link>
       </section>
     </section>
   );

@@ -90,6 +90,14 @@ it('shows a varied featured selection with current prices and sold-out controls'
   const catalog = screen.getByRole('region', { name: 'Featured products' });
   const cards = within(catalog).getAllByRole('article');
   expect(cards).toHaveLength(4);
+  const firstFrame = within(cards[0]).getByRole('button', {
+    name: 'Feature Pirouz Series Cymbals',
+  });
+  expect(firstFrame).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(within(catalog).getByRole('button', { name: 'Next featured product' }));
+  expect(firstFrame).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(within(catalog).getByRole('button', { name: 'Previous featured product' }));
+  expect(firstFrame).toHaveAttribute('aria-pressed', 'true');
   expect(cards.slice(0, 4).map((card) => within(card).getByRole('heading').textContent)).toEqual([
     'Pirouz Series Cymbals',
     'CREMONA - Handmade Acoustic Violin',

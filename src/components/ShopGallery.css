@@ -1,113 +1,211 @@
 .section.shop-with-showroom {
   background: #fff;
 }
-.shop-with-showroom #shop-catalog.gallery-category-bar {
+.shop-with-showroom .filmstrip {
+  --catalog-ink: #fff;
+  --catalog-muted: #d5e1e9;
+  --catalog-action: #e8edf1;
+  --catalog-action-ink: #112532;
+  padding: 0;
+  background: #102636;
+  color: white;
+}
+.shop-with-showroom .filmstrip #shop-catalog {
+  margin: 0;
+}
+.filmstrip .shop-catalog-header {
   display: flex;
+  flex-flow: row nowrap;
   align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 22px 4vw;
+  border: 0;
+}
+.shop-with-showroom .filmstrip .shop-catalog-header h2,
+.film-service-links h2 {
+  margin: 0;
+  font:
+    700 clamp(24px, 3.4vw, 56px)/1.05 'Avenir Next Condensed',
+    'Arial Narrow',
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  color: inherit;
+}
+.film-arrows {
+  display: flex;
+  gap: 8px;
+}
+.film-arrows button {
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: white;
+  border: 1px solid #9aabb6;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}
+.film-arrows button:hover {
+  background: #314858;
+}
+.film-frames {
+  display: flex;
+  flex-wrap: wrap;
+}
+.film-frames article {
+  flex: 1 1 17%;
+  min-width: 0;
+  border: 1px solid #ffffff2b;
+  transition: flex-grow 450ms cubic-bezier(0.22, 0.68, 0.15, 1);
+}
+.film-frames article[data-active='true'] {
+  flex-grow: 2.8;
+}
+.film-frames .shop-featured-photo {
+  position: relative;
+  height: clamp(240px, 33vw, 490px);
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  aspect-ratio: auto;
+  background: #e2e6e8;
+  cursor: pointer;
+}
+.film-frames .shop-featured-photo picture {
+  padding: 0;
+}
+.film-frames .shop-featured-photo img {
+  object-fit: cover;
+  mix-blend-mode: multiply;
+  transform: scale(1.65);
+  transition: transform 480ms ease;
+}
+.film-frames article[data-active='true'] .shop-featured-photo img {
+  transform: scale(1.08);
+  object-fit: contain;
+}
+.film-frames article[data-category='cymbals'] .shop-featured-photo {
+  background: #eddfc5;
+}
+.film-frames article[data-category='cymbals'] .shop-featured-photo img {
+  object-fit: cover;
+  transform: scale(1.7);
+  object-position: center;
+}
+.film-frames .shop-featured-info {
+  padding: 16px clamp(10px, 1.4vw, 24px);
+}
+.film-frames .shop-featured-category {
+  display: none;
+}
+.film-frames .shop-featured-info h3 a {
+  color: #fff;
+}
+.film-frames .shop-featured-info h3 {
+  font:
+    650 clamp(14px, 1.35vw, 22px)/1.2 'Avenir Next Condensed',
+    'Arial Narrow',
+    sans-serif;
+  text-transform: uppercase;
+}
+.film-frames .shop-featured-purchase {
+  padding-top: 6px;
+}
+.filmstrip .gallery-more {
+  display: block;
+  margin: 0 auto;
+  padding: 12px 24px;
+  border: 0;
+  color: white;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  min-height: 44px;
+}
+.film-services {
+  background: #f3efe7;
+  color: #182832;
+  padding: clamp(24px, 4vw, 60px) max(5vw, calc((100vw - 1200px) / 2));
+}
+.film-service-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+.film-service-links h2 {
+  font-size: clamp(20px, 2.2vw, 34px);
+  margin-bottom: 8px;
+}
+.film-services a,
+.film-about a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  color: inherit;
+  margin-right: 20px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.film-services .shop-repair-finder {
+  max-width: 100%;
+  margin: 20px 0 0;
+}
+.gallery-category-bar {
+  display: flex;
   justify-content: safe center;
   overflow-x: auto;
-  gap: clamp(24px, 4vw, 72px);
-  margin: 0;
+  gap: clamp(20px, 3vw, 48px);
   padding: 0 5vw;
-  background: #fff;
-  border-bottom: 1px solid #e3e3e5;
+  background: white;
+  border-block: 1px solid #ddd;
 }
 .gallery-category-bar a {
   flex: none;
-  padding: 20px 0;
-  color: #262629;
-  font: 500 0.9rem/1.3 var(--font-body, sans-serif);
+  color: #20272a;
+  padding: 18px 0;
 }
-.gallery-category-bar a:hover {
-  text-decoration: underline;
-  text-underline-offset: 5px;
+.film-about {
+  padding: clamp(32px, 5vw, 72px) 6vw;
+  text-align: center;
+  color: #182832;
 }
-.shop-with-showroom .shop-featured-catalog {
-  --catalog-ink: #1d1d1f;
-  --catalog-muted: #595960;
-  --catalog-line: #dedee1;
-  --catalog-action: #e7e7eb;
-  --catalog-action-ink: #242426;
-  background: #f6f6f7;
-  color: var(--catalog-ink);
-  padding: clamp(36px, 5vw, 78px) 0;
-}
-.shop-with-showroom .shop-catalog-header {
-  border: 0;
-  padding-bottom: 0;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px 24px;
-}
-.shop-with-showroom .shop-catalog-header h2 {
-  font:
-    600 clamp(2rem, 4vw, 3.7rem)/1.04 -apple-system,
-    BlinkMacSystemFont,
-    Inter,
-    sans-serif;
-  letter-spacing: -0.055em;
-}
-.shop-with-showroom .shop-featured-photo {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-.shop-with-showroom .shop-featured-photo img {
-  mix-blend-mode: multiply;
-}
-.shop-with-showroom .shop-featured-info h3 {
-  font-family: inherit;
-  color: #1d1d1f;
-}
-.shop-with-showroom .shop-featured-info h3 a {
+.film-about h2 {
   color: inherit;
+  margin: 0 0 8px;
+  font-size: clamp(24px, 3vw, 38px);
 }
-.shop-with-showroom .shop-featured-action {
-  background: #e6e6e9;
-  color: #262629;
+.film-about p {
+  margin: 0 auto;
+  max-width: 55ch;
+  color: #40494f;
 }
-.shop-with-showroom .shop-featured-action:hover:not(:disabled) {
-  background: #d7d7dc;
+.film-about a {
+  margin: 8px 0 0;
 }
-.gallery-more {
-  display: block;
-  margin: 30px auto 0;
-  min-height: 44px;
-  padding: 9px 21px;
-  color: #232325;
-  background: transparent;
-  border: 1px solid #b0b0b6;
-  border-radius: 99px;
+@media (max-width: 700px) {
+  .film-frames article {
+    flex: 1 1 45%;
+  }
+  .film-frames article[data-active='true'] {
+    flex-grow: 1;
+    box-shadow: inset 0 -3px #e4bd7d;
+  }
+  .film-frames .shop-featured-photo {
+    height: clamp(150px, 44vw, 250px);
+  }
+  .film-services {
+    padding: 28px 5vw;
+  }
+  .film-service-links {
+    gap: 12px;
+  }
 }
-.gallery-services {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(14px, 3vw, 40px);
-  margin-block: clamp(32px, 5vw, 72px);
-}
-.gallery-services img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 2.15;
-  object-fit: cover;
-}
-.gallery-services a {
-  color: #1d1d1f;
-}
-.gallery-services span {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 0;
-  font-size: clamp(20px, 2.4vw, 34px);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-}
-.gallery-search .shop-repair-finder {
-  width: 100%;
-}
-@media (max-width: 600px) {
-  .gallery-services {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  .film-frames article,
+  .film-frames .shop-featured-photo img {
+    transition: none;
   }
 }
