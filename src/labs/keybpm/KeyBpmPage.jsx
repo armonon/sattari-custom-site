@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { KeyBpmMeter } from './KeyBpmHero';
 import { circlePosition, keyLabel } from './keyTheory';
@@ -663,6 +663,11 @@ export default function KeyBpmPage() {
     rows.find((row) => row.id === audition.id && row.status === 'done') ||
     [...rows].reverse().find((row) => row.status === 'done');
 
+  // Exact playback position for a click that follows the song (null when paused).
+  const songTime = useCallback(() => {
+    const element = audio.current;
+    return element && !element.paused ? element.currentTime : null;
+  }, []);
   // The meter shows whatever the readout below is showing.
   const shown = focusRow ? effectiveValues(focusRow.result, focusRow.user) : null;
 
@@ -811,6 +816,7 @@ export default function KeyBpmPage() {
             }}
             onSeparate={() => toSeparator(focusRow)}
             onClickChange={setClicking}
+            getSongTime={songTime}
           />
         )}
 

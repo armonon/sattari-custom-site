@@ -208,6 +208,12 @@ export function KeyPage() {
       </section>
       <nav className="resource-related" aria-label="Related pages">
         <h2>Keep exploring</h2>
+        <Link to="/studio/keybpm#scales">
+          Play and practice this scale <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+        <Link to="/tuner/guitar">
+          Tune your guitar first <ArrowRight size={18} aria-hidden="true" />
+        </Link>
         <Link to="/keys">
           All 24 keys <ArrowRight size={18} aria-hidden="true" />
         </Link>

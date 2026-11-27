@@ -6,6 +6,7 @@ import { formatTime } from '../audio/AudioLabParts';
 import {
   camelot,
   cleanCorrection,
+  clickGrid,
   createTapTempo,
   effectiveValues,
   formatBpm,
@@ -252,6 +253,7 @@ export default function KeyReadout({
   onSeparate,
   playable,
   onClickChange,
+  getSongTime = null,
 }) {
   const { result } = row;
   const values = effectiveValues(result, row.user);
@@ -268,7 +270,11 @@ export default function KeyReadout({
     (key) => key && camelot(key) !== values.camelot
   );
   const { stopDrone } = tones;
-  const click = useMetronome(values.bpm);
+  const grid = clickGrid(result, row.user);
+  const click = useMetronome(values.bpm, {
+    grid,
+    getSongTime: playing ? getSongTime : null,
+  });
   const stopClick = click.stop;
   // The meter at the top of the page pulses while the click runs.
   useEffect(() => {
@@ -509,7 +515,10 @@ export default function KeyReadout({
               </button>
               <p className="kb-note">
                 Play the song and tap along with the click. If it lands on every other beat, try
-                half or double time. The click is not lined up with the song&apos;s first beat.
+                half or double time.{' '}
+                {grid
+                  ? 'While the song plays, the click follows its measured beats.'
+                  : 'This tempo was set by hand, so the click is not lined up with the song.'}
               </p>
               {bpmPage(values.bpm) && (
                 <Link className="kb-more" to={bpmPage(values.bpm).path}>

@@ -176,3 +176,31 @@ it('presents pitch-class estimates with conventional key signatures', () => {
     camelot: '6B',
   });
 });
+
+describe('click grid', () => {
+  const result = {
+    bpm: 120,
+    beatAnchors: [
+      { time: 0.26, period: 0.5 },
+      { time: 40.01, period: 0.5 },
+    ],
+  };
+  it('follows measured beats and scales for half and double time', async () => {
+    const { clickGrid, gridBeatsBetween } = await import('./keyBpm');
+    const grid = clickGrid(result, null);
+    expect(gridBeatsBetween(grid, 0, 1.3)).toEqual([0.26, 0.76, 1.26]);
+    // Near the second window its own anchor is used.
+    expect(gridBeatsBetween(grid, 39.9, 40.6)).toEqual([40.01, 40.51]);
+    const half = clickGrid(result, { bpm: 60, bpmChoice: 'half' });
+    expect(half.anchors[0].period).toBe(1);
+    expect(gridBeatsBetween(half, 0, 2.3)).toEqual([0.26, 1.26, 2.26]);
+    expect(clickGrid(result, { bpm: 240, bpmChoice: 'double' }).anchors[0].period).toBe(0.25);
+  });
+  it('has no grid for a tapped or typed tempo, or without measured beats', async () => {
+    const { clickGrid, gridBeatsBetween } = await import('./keyBpm');
+    expect(clickGrid(result, { bpm: 118, bpmChoice: 'tap' })).toBeNull();
+    expect(clickGrid({ bpm: 120, beatAnchors: [] }, null)).toBeNull();
+    expect(clickGrid({ bpm: 120 }, null)).toBeNull();
+    expect(gridBeatsBetween(null, 0, 1)).toEqual([]);
+  });
+});

@@ -118,6 +118,8 @@ export function resultRow(fileName, analysis, rough = null) {
       analysis.bpm !== null ? analysis.tempoEvidence : rough ? 'rough' : 'insufficient',
     rmsDb: analysis.rmsDb,
     peakDb: analysis.peakDb,
+    // Measured beat positions; only meaningful for the strict tempo, not a rough one.
+    beatAnchors: analysis.bpm !== null ? analysis.beatAnchors || [] : [],
     note: notes.join('; '),
   };
 }
@@ -282,4 +284,36 @@ export function correctedResultsCsv(rows) {
         .join(',')
     );
   return `${lines.join('\r\n')}\r\n`;
+}
+
+/**
+ * The beat grid for a click that follows the song: the measured beats, with the
+ * period scaled for a half- or double-time choice. Null when the shown tempo was
+ * tapped or typed (it has no measured phase) or nothing was measured.
+ * Returns { anchors: [{ time, period }] }.
+ */
+export function clickGrid(result, user) {
+  const anchors = result?.beatAnchors;
+  if (!anchors?.length || !Number.isFinite(result.bpm)) return null;
+  const { bpm, bpmSource } = effectiveValues(result, user);
+  if (!['detected', 'half', 'double'].includes(bpmSource) || !Number.isFinite(bpm)) return null;
+  const scale = result.bpm / bpm;
+  return { anchors: anchors.map(({ time, period }) => ({ time, period: period * scale })) };
+}
+
+/** Song times of the grid's beats in (after, until], from the nearest measured window. */
+export function gridBeatsBetween(grid, after, until) {
+  if (!grid?.anchors.length || !(until > after)) return [];
+  const anchor = grid.anchors.reduce((best, item) =>
+    Math.abs(item.time - until) < Math.abs(best.time - until) ? item : best
+  );
+  if (!(anchor.period > 0.05)) return [];
+  const beats = [];
+  for (
+    let k = Math.floor((after - anchor.time) / anchor.period) + 1;
+    anchor.time + k * anchor.period <= until;
+    k++
+  )
+    beats.push(anchor.time + k * anchor.period);
+  return beats;
 }
