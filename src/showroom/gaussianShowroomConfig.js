@@ -47,7 +47,7 @@ export const gaussianShowroomConfig = {
     neighborBrightness: 0.19,
     // Spark’s ellipsoid distance is anisotropic; this value feathers the
     // oval visibly without outlining the instrument or altering its opacity.
-    softEdge: 0.53,
+    softEdge: 2.65,
     allowOverscan: true,
     clipSource: true,
   },
