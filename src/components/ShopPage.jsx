@@ -1,15 +1,7 @@
 import React from 'react';
 import GuitarShowroom from './GuitarShowroom';
 import ShopRepairFinder from './ShopRepairFinder';
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  Music2,
-  ShoppingBag,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { ArrowUpRight, Check, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
@@ -31,99 +23,6 @@ const resolveProductImage = (product) =>
 const buildProductPath = (product) =>
   `/product/${product.slug || product.name.replace(/\s+/g, '-').toLowerCase()}`;
 
-function ProductCard({
-  product,
-  kicker,
-  recentlyAddedSlug,
-  onQuickAdd,
-  soldOut,
-  filmActive,
-  onSelect,
-}) {
-  const path = buildProductPath(product);
-  const image = resolveProductImage(product);
-  const priceLabel = formatPriceRange(product);
-  const needsOptions = Boolean(product.colors?.length);
-  const added = recentlyAddedSlug === product.slug;
-  const actionLabel = soldOut ? 'Out of stock' : added ? 'Added to cart' : 'Add to cart';
-
-  return (
-    <article
-      data-active={filmActive}
-      data-category={product.category}
-      className={`shop-featured-product${soldOut ? ' is-sold-out' : ''}`}
-    >
-      <button
-        type="button"
-        className="shop-featured-photo"
-        aria-label={`Feature ${product.name}`}
-        aria-pressed={filmActive}
-        onClick={onSelect}
-      >
-        {image ? (
-          <OptimizedProductImage
-            src={image}
-            alt={product.name}
-            loading="lazy"
-            sizes="(max-width: 380px) 100vw, (max-width: 700px) 50vw, (max-width: 980px) 33vw, 280px"
-          />
-        ) : (
-          <span className="shop-featured-placeholder">
-            <Music2 size={38} strokeWidth={1} aria-hidden="true" />
-            <span>Image coming soon</span>
-          </span>
-        )}
-        {soldOut && <span className="shop-featured-stock">Out of stock</span>}
-      </button>
-      <div className="shop-featured-info">
-        <p className="shop-featured-category">{kicker}</p>
-        <h3>
-          <Link to={path} aria-label={`View details for ${product.name}`}>
-            {product.name}
-          </Link>
-        </h3>
-        <div className="shop-featured-purchase">
-          <p className="shop-featured-price">{priceLabel}</p>
-          {needsOptions && !soldOut ? (
-            <Link
-              to={path}
-              className="shop-featured-action"
-              aria-label={`Choose a color for ${product.name}`}
-            >
-              <SlidersHorizontal size={18} aria-hidden="true" />
-              <span className="shop-featured-tooltip" aria-hidden="true">
-                Choose color
-              </span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              className={`shop-featured-action${added ? ' is-added' : ''}`}
-              onClick={() => onQuickAdd(product)}
-              disabled={soldOut}
-              aria-label={
-                soldOut ? `${product.name} is out of stock` : `Add ${product.name} to cart`
-              }
-            >
-              {added ? (
-                <Check size={19} aria-hidden="true" />
-              ) : (
-                <ShoppingBag size={18} aria-hidden="true" />
-              )}
-              <span className="shop-featured-tooltip" aria-hidden="true">
-                {actionLabel}
-              </span>
-            </button>
-          )}
-        </div>
-        <span className="shop-featured-announcement" role="status">
-          {added ? `${product.name} added to cart.` : ''}
-        </span>
-      </div>
-    </article>
-  );
-}
-
 export default function ShopPage() {
   const { addToCart } = useCart();
   const { isSoldOut, products } = useInventory();
@@ -142,10 +41,13 @@ export default function ShopPage() {
     0,
     visibleProducts.findIndex((item) => item.slug === focusSlug)
   );
-  function step(direction) {
-    const next = (activeIndex + direction + visibleProducts.length) % visibleProducts.length;
-    setFocusSlug(visibleProducts[next].slug);
-  }
+  const active = visibleProducts[activeIndex];
+  const [wallOpen, setWallOpen] = React.useState(false);
+  const wallRef = React.useRef(null);
+  const wallTrigger = React.useRef(null);
+  React.useEffect(() => {
+    if (wallOpen) wallRef.current?.focus({ preventScroll: false });
+  }, [wallOpen]);
 
   const handleQuickAdd = (product) => {
     // Colored products link to their page instead (see ProductCard).
@@ -182,65 +84,124 @@ export default function ShopPage() {
         ])}
       />
       <StructuredData data={itemListSchema} />
-      <GuitarShowroom />
-
       <section
         id="featured-catalog"
-        className="shop-featured-catalog filmstrip"
+        className="groove-hero"
         aria-labelledby="featured-catalog-title"
       >
-        <div id="shop-catalog">
-          <div className="shop-catalog-header">
-            <h2 id="featured-catalog-title">Featured products</h2>
-            {visibleProducts.length > 1 && (
-              <div className="film-arrows">
-                <button
-                  type="button"
-                  aria-label="Previous featured product"
-                  onClick={() => step(-1)}
+        {active && (
+          <div
+            className="groove-feature"
+            data-cymbal={resolveProductImage(active) === '/sattari site/crash.png'}
+          >
+            <div key={active.slug} className="groove-art">
+              <OptimizedProductImage
+                src={resolveProductImage(active)}
+                alt={active.name}
+                loading="eager"
+                fetchpriority="high"
+              />
+            </div>
+            <div className="groove-caption" aria-live="polite">
+              <h2>
+                <Link to={buildProductPath(active)}>{active.name}</Link>
+              </h2>
+              <strong>{formatPriceRange(active)}</strong>
+              {isSoldOut(active) ? (
+                <button disabled aria-label={`${active.name} is out of stock`}>
+                  Out of stock
+                </button>
+              ) : active.colors?.length || active.sizes?.length || active.purchaseInquiry ? (
+                <Link
+                  className="groove-buy"
+                  to={buildProductPath(active)}
+                  aria-label={
+                    active.colors?.length
+                      ? `Choose a color for ${active.name}`
+                      : `View options for ${active.name}`
+                  }
                 >
-                  <ArrowLeft />
+                  View options <ArrowUpRight size={17} />
+                </Link>
+              ) : (
+                <button
+                  className="groove-buy"
+                  aria-label={`Add ${active.name} to cart`}
+                  onClick={() => handleQuickAdd(active)}
+                >
+                  {recentlyAddedSlug === active.slug ? (
+                    <>
+                      <Check size={17} /> Added
+                    </>
+                  ) : (
+                    <>
+                      Add to cart <ShoppingBag size={17} />
+                    </>
+                  )}
                 </button>
-                <button type="button" aria-label="Next featured product" onClick={() => step(1)}>
-                  <ArrowRight />
-                </button>
-              </div>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="groove-index" id="shop-catalog">
+          <h1 id="featured-catalog-title">Featured products</h1>
+          <div className="groove-rows">
+            {visibleProducts.map((item, i) => (
+              <button
+                key={item.slug}
+                type="button"
+                className="groove-row"
+                aria-label={`Feature ${item.name}`}
+                aria-pressed={i === activeIndex}
+                onClick={() => setFocusSlug(item.slug)}
+              >
+                <span aria-hidden="true" className="groove-pointer">
+                  ▸
+                </span>
+                <OptimizedProductImage src={resolveProductImage(item)} alt="" />
+                <span>{item.name}</span>
+                <strong>{formatPriceRange(item)}</strong>
+              </button>
+            ))}
+          </div>
+          <div className="groove-links">
+            {featuredProducts.length > 4 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExpanded(!expanded);
+                  setFocusSlug(null);
+                }}
+                aria-expanded={expanded}
+              >
+                {expanded ? 'Show fewer products' : 'Show more products'}
+              </button>
             )}
-          </div>
-          <div id="gallery-products" className="film-frames">
-            {visibleProducts.map((product, index) => {
-              const category = categories.find((item) => item.key === product.category);
-
-              return (
-                <ProductCard
-                  key={product.slug}
-                  product={product}
-                  filmActive={index === activeIndex}
-                  onSelect={() => setFocusSlug(product.slug)}
-                  kicker={category?.title || 'Sattari'}
-                  recentlyAddedSlug={recentlyAddedSlug}
-                  onQuickAdd={handleQuickAdd}
-                  soldOut={isSoldOut(product)}
-                />
-              );
-            })}
-          </div>
-          {featuredProducts.length > 4 && (
             <button
               type="button"
-              className="gallery-more"
-              aria-expanded={expanded}
-              aria-controls="gallery-products"
-              onClick={() => {
-                setExpanded(!expanded);
-                setFocusSlug(null);
-              }}
+              ref={wallTrigger}
+              onClick={() => setWallOpen(true)}
+              aria-expanded={wallOpen}
             >
-              {expanded ? 'Show fewer products' : 'Show more products'}
+              Explore the 3D guitar wall <ArrowUpRight size={17} />
             </button>
-          )}
+          </div>
         </div>
       </section>
+      {wallOpen && (
+        <section className="groove-wall" ref={wallRef} tabIndex={-1} aria-label="3D guitar wall">
+          <button
+            className="groove-return"
+            onClick={() => {
+              setWallOpen(false);
+              wallTrigger.current?.focus();
+            }}
+          >
+            Back to featured products
+          </button>
+          <GuitarShowroom />
+        </section>
+      )}
 
       <section className="film-services" aria-label="Strings and repair">
         <div className="film-service-links">

@@ -52,6 +52,7 @@ it('sends products that come in colors to their page instead of adding them with
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Show more products' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Feature Cymbal Felts' }));
   const chooseColor = await screen.findByRole(
     'link',
     { name: 'Choose a color for Cymbal Felts' },
@@ -61,6 +62,7 @@ it('sends products that come in colors to their page instead of adding them with
   expect(screen.queryByRole('button', { name: 'Add Cymbal Felts to cart' })).toBeNull();
 
   // A product without colors is still added straight from the shop.
+  fireEvent.click(screen.getByRole('button', { name: 'Feature Pirouz Series Cymbals' }));
   fireEvent.click(screen.getByRole('button', { name: 'Add Pirouz Series Cymbals to cart' }));
   await waitFor(() =>
     expect(JSON.parse(localStorage.getItem('sattari-cart-v1'))).toEqual([
@@ -88,34 +90,24 @@ it('shows a varied featured selection with current prices and sold-out controls'
     </HelmetProvider>
   );
   const catalog = screen.getByRole('region', { name: 'Featured products' });
-  const cards = within(catalog).getAllByRole('article');
-  expect(cards).toHaveLength(4);
-  const firstFrame = within(cards[0]).getByRole('button', {
-    name: 'Feature Pirouz Series Cymbals',
-  });
-  expect(firstFrame).toHaveAttribute('aria-pressed', 'true');
-  fireEvent.click(within(catalog).getByRole('button', { name: 'Next featured product' }));
-  expect(firstFrame).toHaveAttribute('aria-pressed', 'false');
-  fireEvent.click(within(catalog).getByRole('button', { name: 'Previous featured product' }));
-  expect(firstFrame).toHaveAttribute('aria-pressed', 'true');
-  expect(cards.slice(0, 4).map((card) => within(card).getByRole('heading').textContent)).toEqual([
-    'Pirouz Series Cymbals',
-    'CREMONA - Handmade Acoustic Violin',
-    '5 String Bass Guitar',
-    '4 Pairs of Drumsticks +FREE BAG',
-  ]);
-  expect(within(cards[0]).getByText('$80.00')).toBeInTheDocument();
+  const rows = within(catalog).getAllByRole('button', { name: /^Feature / });
+  expect(rows).toHaveLength(4);
+  expect(rows[0]).toHaveAccessibleName('Feature Pirouz Series Cymbals');
+  expect(rows[0]).toHaveAttribute('aria-pressed', 'true');
   expect(
-    within(cards[0]).getByText('Out of stock', { selector: '.shop-featured-stock' })
+    within(catalog).getByRole('heading', { name: 'Pirouz Series Cymbals' })
   ).toBeInTheDocument();
-  const soldOut = within(cards[0]).getByRole('button', {
-    name: 'Pirouz Series Cymbals is out of stock',
-  });
-  expect(soldOut).toBeDisabled();
-  fireEvent.click(soldOut);
-  expect(JSON.parse(localStorage.getItem('sattari-cart-v1') || '[]')).toEqual([]);
-  expect(within(cards[1]).getByRole('img')).toHaveAttribute(
-    'alt',
-    'CREMONA - Handmade Acoustic Violin'
-  );
+  expect(within(catalog).getAllByText('$80.00')).toHaveLength(2);
+  expect(
+    within(catalog).getByRole('button', { name: 'Pirouz Series Cymbals is out of stock' })
+  ).toBeDisabled();
+  fireEvent.click(rows[1]);
+  expect(
+    within(catalog).getByRole('heading', { name: 'CREMONA - Handmade Acoustic Violin' })
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: '3D guitar wall' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Explore the 3D guitar wall' }));
+  expect(screen.getByRole('region', { name: '3D guitar wall' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Back to featured products' }));
+  expect(screen.queryByRole('region', { name: '3D guitar wall' })).toBeNull();
 }, 15000);
