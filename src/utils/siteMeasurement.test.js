@@ -4,6 +4,7 @@ import {
   setMeasurementPreference,
   trackSiteEvent,
   trackSiteEventOnce,
+  trackVerifiedPurchaseOnce,
 } from './siteMeasurement';
 
 beforeEach(() => {
@@ -146,4 +147,80 @@ it('respects Global Privacy Control for the new events', () => {
   vi.stubGlobal('navigator', { globalPrivacyControl: true });
   trackSiteEvent('mix_exported');
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it('counts only a coarse verified purchase on a checkout page and omits its session query', () => {
+  setMeasurementPreference(true);
+  window.location.pathname = '/checkout/success';
+  window.location.search = '?session_id=cs_private&email=private@example.com';
+  trackSiteEvent('page_view');
+  expect(fetch).not.toHaveBeenCalled();
+  trackSiteEvent('purchase_verified');
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    event: 'purchase_verified',
+    page: 'purchase',
+    source: 'chatgpt',
+  });
+});
+
+it('deduplicates paid returns across remounts without transmitting checkout identifiers', () => {
+  window.location.pathname = '/checkout/success';
+  trackVerifiedPurchaseOnce('cs_private');
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).toBeNull();
+  setMeasurementPreference(true);
+  trackVerifiedPurchaseOnce('cs_private');
+  trackVerifiedPurchaseOnce('cs_private');
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+    event: 'purchase_verified',
+    page: 'purchase',
+    source: 'chatgpt',
+  });
+});
+
+it('clears optional checkout deduplication data on consent withdrawal', () => {
+  window.location.pathname = '/checkout/success';
+  setMeasurementPreference(true);
+  trackVerifiedPurchaseOnce('cs_withdrawal_test');
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).not.toBeNull();
+  setMeasurementPreference(false);
+  expect(sessionStorage.getItem('sattari-purchase-measured-v1')).toBeNull();
+});
+
+it('ties one verified purchase to the last measured local product visit in the same tab', () => {
+  setMeasurementPreference(true);
+  window.location.pathname = '/shop/guitars-los-angeles';
+  trackSiteEvent('product_link_click');
+  window.location.pathname = '/guides/choose-a-violin-for-beginners';
+  trackSiteEvent('product_link_click');
+  window.location.pathname = '/checkout/success';
+  trackVerifiedPurchaseOnce('test-order-local');
+  trackVerifiedPurchaseOnce('test-order-local');
+  trackVerifiedPurchaseOnce('test-order-later');
+  expect(
+    fetch.mock.calls
+      .map(([, request]) => JSON.parse(request.body))
+      .map(({ page, event }) => [page, event])
+  ).toEqual([
+    ['sales-guitars-la', 'product_link_click'],
+    ['guide-violin-choice', 'product_link_click'],
+    ['purchase', 'purchase_verified'],
+    ['guide-violin-choice', 'purchase_after_product_visit'],
+    ['purchase', 'purchase_verified'],
+  ]);
+});
+
+it('clears optional sales attribution on withdrawal and drops private originating paths', () => {
+  window.location.pathname = '/shop/guitars-los-angeles';
+  setMeasurementPreference(true);
+  trackSiteEvent('product_link_click');
+  expect(sessionStorage.getItem('sattari-product-origin-v1')).toBe('sales-guitars-la');
+  setMeasurementPreference(false);
+  expect(sessionStorage.getItem('sattari-product-origin-v1')).toBeNull();
+  setMeasurementPreference(true);
+  trackSiteEvent('inquiry_sent', '/private/member');
+  window.location.pathname = '/about';
+  trackSiteEvent('inquiry_sent', '/services/guitar-restringing-woodland-hills');
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetch.mock.calls[1][1].body).page).toBe('restring-guitar');
 });

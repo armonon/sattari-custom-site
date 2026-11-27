@@ -1,8 +1,9 @@
 // Key & BPM alpha: result shaping and CSV export. Measurement itself reuses the
 // Stem Separator's analyzeStemAudio (Sattari AutoKey + the site's beat tracker).
+import { compactWindow } from '../../utils/analysisMono';
 import { trackTempo } from '../../utils/tempoMap';
 
-const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+import { MAJOR_TONICS, MINOR_TONICS, parseTonic } from '../../utils/noteSpelling';
 export const KEYBPM_MAX_FILES = 200;
 export const KEYBPM_MAX_BYTES = 200 * 1024 ** 2;
 
@@ -37,10 +38,8 @@ export async function isDuplicateTrack(file, files) {
 export function keyParts(key) {
   const match = /^([A-G][#♯b♭]?)\s+(major|minor)$/.exec(String(key || '').trim());
   if (!match) return null;
-  const name = match[1].replace('♯', '#').replace('♭', 'b');
-  const flats = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
-  const root = NOTES.indexOf(flats[name] || name);
-  return root < 0 ? null : { root, minor: match[2] === 'minor' };
+  const tonic = parseTonic(match[1]);
+  return { root: tonic.pitchClass, tonic: tonic.name, minor: match[2] === 'minor' };
 }
 
 /** Camelot wheel code (8B = C major, 8A = A minor). */
@@ -61,20 +60,11 @@ const median = (values) => [...values].sort((a, b) => a - b)[values.length >> 1]
  * 70–180 BPM.
  */
 export function roughTempo(left, right, rate) {
-  const stride = Math.max(1, Math.floor(rate / 11025));
-  const seconds = Math.min(60, left.length / rate);
-  const from = Math.floor((left.length - seconds * rate) / 2);
-  const length = Math.floor((seconds * rate) / stride);
-  const samples = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    let sum = 0;
-    for (let j = 0; j < stride; j++) {
-      const at = from + i * stride + j;
-      sum += (left[at] + right[at]) / 2;
-    }
-    samples[i] = sum / stride;
-  }
-  const tempo = trackTempo(samples, rate / stride);
+  const duration = left.length / rate;
+  const seconds = Math.min(60, duration);
+  const start = (duration - seconds) / 2;
+  const part = compactWindow(left, right, rate, { start, end: start + seconds });
+  const tempo = trackTempo(part.samples, part.rate);
   const beats = tempo.beats.filter((beat) => !beat.inferred);
   if (beats.length < 8 || !(tempo.confidence >= 0.3)) return null;
   const intervals = tempo.beats.slice(1).map((beat, i) => beat.time - tempo.beats[i].time);
@@ -98,6 +88,12 @@ const TEMPO_NOTES = {
   variable: 'Tempo varies between sections',
 };
 
+function measuredKey(label) {
+  const parts = keyParts(label);
+  if (!parts) return '';
+  return parts.minor ? `${MINOR_TONICS[parts.root]} minor` : `${MAJOR_TONICS[parts.root]} major`;
+}
+
 /** One table row from an analyzeStemAudio result (+ optional rough tempo). */
 export function resultRow(fileName, analysis, rough = null) {
   if (!analysis || analysis.status !== 'ready')
@@ -112,16 +108,18 @@ export function resultRow(fileName, analysis, rough = null) {
     file: fileName,
     status: 'done',
     duration: analysis.duration,
-    key: analysis.key || '',
+    key: measuredKey(analysis.key),
     camelot: camelot(analysis.key),
     keyConfidence: analysis.keyConfidence,
     keyEvidence: analysis.key ? analysis.keyEvidence : 'insufficient',
-    alternative: analysis.key ? analysis.keyAlternative || '' : '',
+    alternative: analysis.key ? measuredKey(analysis.keyAlternative) : '',
     bpm: bpm ?? null,
     tempoEvidence:
       analysis.bpm !== null ? analysis.tempoEvidence : rough ? 'rough' : 'insufficient',
     rmsDb: analysis.rmsDb,
     peakDb: analysis.peakDb,
+    // Measured beat positions; only meaningful for the strict tempo, not a rough one.
+    beatAnchors: analysis.bpm !== null ? analysis.beatAnchors || [] : [],
     note: notes.join('; '),
   };
 }
@@ -161,8 +159,8 @@ export function resultsCsv(rows) {
 // sorted and exported as "corrected". It does not stretch or transpose audio.
 
 export const ALL_KEYS = [
-  ...NOTES.map((note) => `${note} major`),
-  ...NOTES.map((note) => `${note} minor`),
+  ...MAJOR_TONICS.map((note) => `${note} major`),
+  ...MINOR_TONICS.map((note) => `${note} minor`),
 ];
 export const BPM_MIN = 20;
 export const BPM_MAX = 400;
@@ -206,7 +204,7 @@ export function tempoInterpretation(detectedBpm, choice) {
 /** Sanitized correction, or null when nothing differs from the detection. */
 export function cleanCorrection(user) {
   if (!user || typeof user !== 'object') return null;
-  const key = typeof user.key === 'string' && ALL_KEYS.includes(user.key) ? user.key : null;
+  const key = typeof user.key === 'string' && keyParts(user.key) ? user.key.trim() : null;
   const bpm = normalizeBpm(user.bpm);
   const bpmChoice = bpm !== null && BPM_CHOICES.includes(user.bpmChoice) ? user.bpmChoice : null;
   const notes = cleanNotes(user.notes);
@@ -286,4 +284,36 @@ export function correctedResultsCsv(rows) {
         .join(',')
     );
   return `${lines.join('\r\n')}\r\n`;
+}
+
+/**
+ * The beat grid for a click that follows the song: the measured beats, with the
+ * period scaled for a half- or double-time choice. Null when the shown tempo was
+ * tapped or typed (it has no measured phase) or nothing was measured.
+ * Returns { anchors: [{ time, period }] }.
+ */
+export function clickGrid(result, user) {
+  const anchors = result?.beatAnchors;
+  if (!anchors?.length || !Number.isFinite(result.bpm)) return null;
+  const { bpm, bpmSource } = effectiveValues(result, user);
+  if (!['detected', 'half', 'double'].includes(bpmSource) || !Number.isFinite(bpm)) return null;
+  const scale = result.bpm / bpm;
+  return { anchors: anchors.map(({ time, period }) => ({ time, period: period * scale })) };
+}
+
+/** Song times of the grid's beats in (after, until], from the nearest measured window. */
+export function gridBeatsBetween(grid, after, until) {
+  if (!grid?.anchors.length || !(until > after)) return [];
+  const anchor = grid.anchors.reduce((best, item) =>
+    Math.abs(item.time - until) < Math.abs(best.time - until) ? item : best
+  );
+  if (!(anchor.period > 0.05)) return [];
+  const beats = [];
+  for (
+    let k = Math.floor((after - anchor.time) / anchor.period) + 1;
+    anchor.time + k * anchor.period <= until;
+    k++
+  )
+    beats.push(anchor.time + k * anchor.period);
+  return beats;
 }

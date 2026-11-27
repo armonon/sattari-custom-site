@@ -56,7 +56,9 @@ export const SEO: FC<SEOProps> = ({
   noindex = false,
   children,
 }) => {
-  const fullTitle = `${title} | Sattari Music`;
+  // A title that already ends with the short brand is complete (used where
+  // the full suffix would push it past what search results show).
+  const fullTitle = title.endsWith(' | Sattari') ? title : `${title} | Sattari Music`;
   const canonical = canonicalUrl(url);
   const isProduct = type === 'product' && price !== undefined;
   // Meta's crawler (link previews + the Instagram/Facebook Shopping catalog)

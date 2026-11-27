@@ -7,6 +7,7 @@ import {
   chordsFromPolyphonic,
   coveredDuration,
 } from './harmony';
+import { openStrings, profileChord, TUNINGS } from './guitarProfile';
 import { CHORD_NAMES, chordShape, TUNING, NOTE_NAMES } from './music';
 import { decodePolyphonic, transcribePolyphonic } from './polyphonic';
 
@@ -26,6 +27,35 @@ describe('playable, named guitar shapes', () => {
       expect(
         shape.frets.every((f) => f <= 0 || (f >= shape.startFret && f < shape.startFret + 4))
       ).toBe(true);
+    }
+  );
+  it.each(Object.keys(TUNINGS))(
+    'keeps every %s chord and capo voicing in tune and assigns reachable finger groups',
+    (tuning) => {
+      for (let capo = 0; capo <= 7; capo++) {
+        const profile = { tuning, capo };
+        const open = openStrings(profile);
+        for (const name of CHORD_NAMES) {
+          const shape = profileChord(name, profile);
+          if (!shape) continue;
+          const [, root, suffix] = name.match(/^([A-G]#?)(.*)$/);
+          const expected = CHORD_TYPES.find((type) => type.suffix === suffix).intervals.map(
+            (n) => (NOTE_NAMES.indexOf(root) + n) % 12
+          );
+          const actual = shape.frets.flatMap((f, s) => (f < 0 ? [] : [(open[s] + f) % 12]));
+          expect(new Set(actual)).toEqual(new Set(expected));
+          shape.frets.forEach((fret, string) => {
+            if (fret <= 0) return;
+            const finger = shape.fingers[string];
+            expect(finger).toBeGreaterThanOrEqual(1);
+            expect(finger).toBeLessThanOrEqual(4);
+            const next = shape.fingers.indexOf(finger, string + 1);
+            if (next < 0) return;
+            expect(shape.frets[next]).toBe(fret);
+            expect(shape.frets.slice(string + 1, next).every((f) => f < 0 || f >= fret)).toBe(true);
+          });
+        }
+      }
     }
   );
   it('assigns concurrent pitches to distinct strings and rejects impossible shapes', () => {

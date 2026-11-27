@@ -1,5 +1,17 @@
 export const METRIC_EVENTS = [
   'page_view',
+  'product_view',
+  'product_link_click',
+  'purchase_after_product_visit',
+  'inquiry_link_click',
+  'tuner_reference_started',
+  'tuner_microphone_started',
+  'tuner_repair_click',
+  'tuner_shop_click',
+  'cart_add',
+  'cart_view',
+  'checkout_started',
+  'purchase_verified',
   'inquiry_sent',
   'booking_requested',
   'contact_click',
@@ -40,15 +52,88 @@ export const METRIC_SOURCES = [
   'copilot',
   'gemini',
   'google',
+  'google_business_profile',
   'bing',
   'other_referral',
   'direct',
 ];
+const tunerPages = {
+  '/tuner/guitar': 'tuner-guitar',
+  '/tuner/violin': 'tuner-violin',
+  '/tuner/viola': 'tuner-viola',
+  '/tuner/bass': 'tuner-bass',
+  '/tuner/cello': 'tuner-cello',
+  '/tuner/ukulele': 'tuner-ukulele',
+};
+const salesPages = {
+  '/shop/instruments-los-angeles': 'sales-instruments-la',
+  '/shop/guitars-los-angeles': 'sales-guitars-la',
+  '/shop/violins-los-angeles': 'sales-violins-la',
+  '/shop/drums-los-angeles': 'sales-drums-la',
+  '/shop/accessories-los-angeles': 'sales-accessories-la',
+  '/guitar-strings-woodland-hills': 'sales-guitar-strings',
+  '/violin-strings-woodland-hills': 'sales-violin-strings',
+};
+const repairPages = {
+  '/services/instrument-repair-los-angeles': 'repair-la',
+  '/services/instrument-repair-woodland-hills': 'repair-woodland-hills',
+  '/services/instrument-repair-calabasas': 'repair-calabasas',
+  '/services/violin-repair-los-angeles': 'repair-violin-la',
+  '/services/guitar-setup-los-angeles': 'setup-guitar-la',
+  '/services/guitar-restringing-woodland-hills': 'restring-guitar',
+  '/services/violin-restringing-woodland-hills': 'restring-violin',
+  '/services/string-replacement-woodland-hills': 'replace-string',
+};
+const guidePages = {
+  '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
+  '/guides/practice-bass-with-isolated-stems': 'guide-bass',
+  '/guides/learn-guitar-from-a-song': 'guide-guitar',
+  '/guides/instrument-repairs-near-encino': 'guide-repair',
+  '/guides/choose-your-first-cymbals': 'guide-cymbals',
+  '/guides/remove-vocals-for-karaoke': 'guide-karaoke',
+  '/guides/make-drumless-practice-tracks': 'guide-drumless',
+  '/guides/find-song-key-and-bpm': 'guide-key-bpm',
+  '/guides/batch-separate-audio-stems': 'guide-batch',
+  '/guides/when-does-my-guitar-need-a-setup': 'guide-guitar-setup',
+  '/guides/how-to-tune-a-snare-drum': 'guide-snare-tuning',
+  '/guides/how-to-change-a-violin-string': 'guide-violin-string-change',
+  '/guides/how-to-change-acoustic-guitar-strings': 'guide-acoustic-string-change',
+  '/guides/how-to-change-electric-guitar-strings': 'guide-electric-string-change',
+  '/guides/how-to-change-bass-guitar-strings': 'guide-bass-string-change',
+  '/guides/how-to-change-a-viola-string': 'guide-viola-string-change',
+  '/guides/how-to-change-classical-guitar-strings': 'guide-classical-string-change',
+  '/guides/how-to-change-a-cello-string': 'guide-cello-string-change',
+  '/guides/how-to-change-ukulele-strings': 'guide-ukulele-string-change',
+  '/guides/how-to-change-persian-tar-strings': 'guide-persian-tar-string-change',
+  '/guides/how-to-change-setar-strings': 'guide-setar-string-change',
+  '/guides/how-to-change-oud-strings': 'guide-oud-string-change',
+  '/guides/beginner-violin-care': 'guide-violin-care',
+  '/guides/choose-a-violin-for-beginners': 'guide-violin-choice',
+  '/guides/drumsticks-for-beginners': 'guide-drumsticks',
+  '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
+  '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
+  '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
+  '/guides/how-to-tune-an-instrument': 'guide-instrument-tuning',
+  '/guides/how-to-find-the-key-of-a-song': 'guide-find-key',
+  '/guides/how-to-choose-a-viola': 'guide-viola-choice',
+  '/guides/violin-vs-viola': 'guide-violin-viola',
+  '/guides/acoustic-vs-electric-violin': 'guide-violin-types',
+  '/guides/how-to-choose-an-electric-guitar': 'guide-electric-choice',
+  '/guides/how-to-choose-a-bass-guitar': 'guide-bass-choice',
+  '/guides/nylon-vs-steel-string-guitar': 'guide-guitar-strings',
+  '/guides/history-of-the-persian-tar': 'guide-tar-history',
+  '/guides/history-of-the-guitar': 'guide-guitar-history',
+  '/guides/tar-setar-and-sitar': 'guide-tar-setar-sitar',
+  '/guides/instruments-of-iran': 'guide-iran-instruments',
+};
+export const PRODUCT_ORIGIN_PAGES = [...Object.values(salesPages), 'guide-violin-choice'];
 export const METRIC_PAGES = [
   'home',
   'about',
   'shop',
   'product',
+  'cart',
+  'purchase',
   'services',
   'local',
   'visit',
@@ -59,32 +144,22 @@ export const METRIC_PAGES = [
   'studio',
   'learn',
   'guides',
-  'guide-separation',
-  'guide-bass',
-  'guide-guitar',
-  'guide-repair',
-  'guide-cymbals',
-  'guide-karaoke',
-  'guide-drumless',
-  'guide-key-bpm',
-  'guide-batch',
-  'guide-guitar-setup',
-  'guide-snare-tuning',
-  'guide-violin-care',
-  'guide-violin-choice',
-  'guide-drumsticks',
-  'guide-practice-pad',
-  'guide-acoustic-guitar',
-  'guide-guitar-care',
-  'guide-instrument-tuning',
-  'guide-find-key',
+  ...Object.values(guidePages),
   'tool-details',
   'privacy',
   'downloads',
+  ...Object.values(tunerPages),
+  ...Object.values(salesPages),
+  ...Object.values(repairPages),
 ];
 
 export function metricPage(path) {
+  path = path.replace(/\/+$/, '').toLowerCase() || '/';
+  const specificPage =
+    tunerPages[path] || salesPages[path] || repairPages[path] || guidePages[path];
+  if (specificPage) return specificPage;
   if (path === '/') return 'home';
+  if (path === '/cart') return 'cart';
   if (path.startsWith('/shop')) return 'shop';
   if (path.startsWith('/product/')) return 'product';
   if (path.startsWith('/services')) return 'services';
@@ -97,33 +172,50 @@ export function metricPage(path) {
   // Flagship tools and their established lab URLs.
   if (path === '/studio/split') return 'split';
   if (path === '/studio/keybpm') return 'key-bpm';
-  const guides = {
-    '/guides/how-to-separate-vocals-drums-bass': 'guide-separation',
-    '/guides/practice-bass-with-isolated-stems': 'guide-bass',
-    '/guides/learn-guitar-from-a-song': 'guide-guitar',
-    '/guides/instrument-repairs-near-encino': 'guide-repair',
-    '/guides/choose-your-first-cymbals': 'guide-cymbals',
-    '/guides/remove-vocals-for-karaoke': 'guide-karaoke',
-    '/guides/make-drumless-practice-tracks': 'guide-drumless',
-    '/guides/find-song-key-and-bpm': 'guide-key-bpm',
-    '/guides/batch-separate-audio-stems': 'guide-batch',
-    '/guides/when-does-my-guitar-need-a-setup': 'guide-guitar-setup',
-    '/guides/how-to-tune-a-snare-drum': 'guide-snare-tuning',
-    '/guides/beginner-violin-care': 'guide-violin-care',
-    '/guides/choose-a-violin-for-beginners': 'guide-violin-choice',
-    '/guides/drumsticks-for-beginners': 'guide-drumsticks',
-    '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
-    '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
-    '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
-    '/guides/how-to-tune-an-instrument': 'guide-instrument-tuning',
-    '/guides/how-to-find-the-key-of-a-song': 'guide-find-key',
-  };
-  return guides[path] || (METRIC_PAGES.includes(path.slice(1)) ? path.slice(1) : null);
+
+  const publicPaths = [
+    '/about',
+    '/hub',
+    '/stem-separator',
+    '/studio',
+    '/learn',
+    '/guides',
+    '/visit',
+    '/privacy',
+    '/downloads',
+  ];
+  return publicPaths.includes(path) ? path.slice(1) : null;
+}
+
+// Only bounded event IDs travel to the collector, never hrefs or query parameters.
+export function internalLinkMetric(fromPath, destination) {
+  const from = fromPath.replace(/\/+$/, '').toLowerCase() || '/';
+  const to = destination.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+  const tuner = tunerPages[from] || from === '/studio/keybpm';
+  if (tuner && repairPages[to]) return 'tuner_repair_click';
+  if (
+    tuner &&
+    (to === '/shop' || to.startsWith('/shop/') || to.startsWith('/product/') || salesPages[to])
+  )
+    return 'tuner_shop_click';
+  if (to.startsWith('/product/') && PRODUCT_ORIGIN_PAGES.includes(metricPage(from)))
+    return 'product_link_click';
+  if (
+    from === to &&
+    ['#local-inquiry', '#repair-inquiry', '#service-inquiry'].includes(destination.hash)
+  )
+    return 'inquiry_link_click';
+  return null;
 }
 
 export function referralSource(referrer = '', search = '', origin = 'https://sattarimusic.com') {
   const campaign = new URLSearchParams(search).get('utm_source')?.toLowerCase();
   const campaigns = {
+    google: 'google',
+    google_business_profile: 'google_business_profile',
+    gbp: 'google_business_profile',
+    gmb: 'google_business_profile',
+    bing: 'bing',
     chatgpt: 'chatgpt',
     'chatgpt.com': 'chatgpt',
     perplexity: 'perplexity',

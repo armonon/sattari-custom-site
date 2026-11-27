@@ -1,9 +1,27 @@
-import { separatorGuides } from './stemSeparatorContent';
+import { bowedInstrumentGuides } from './bowedInstrumentGuides.js';
+import { guitarInstrumentGuides } from './guitarInstrumentGuides.js';
+import { instrumentHistoryGuides } from './instrumentHistoryGuides.js';
+import {
+  acousticStringChangeGuide,
+  electricStringChangeGuide,
+} from './guitarStringChangeGuides.js';
+import { bassStringChangeGuide } from './bassStringChangeGuide.js';
+import { classicalStringChangeGuide } from './classicalStringChangeGuide.js';
+import { celloStringChangeGuide } from './celloStringChangeGuide.js';
+import { ukuleleStringChangeGuide } from './ukuleleStringChangeGuide.js';
+import { persianTarStringChangeGuide } from './persianTarStringChangeGuide.js';
+import { setarStringChangeGuide } from './setarStringChangeGuide.js';
+import { oudStringChangeGuide } from './oudStringChangeGuide.js';
+import { violaStringChangeGuide } from './violaStringChangeGuide.js';
+import { snareTuningGuide } from './snareTuningGuide.js';
+import { violinStringChangeGuide } from './violinStringChangeGuide.js';
+import { practicePadGuide } from './practicePadGuide.js';
+import { separatorGuides } from './stemSeparatorContent.js';
 
-export const musicGuides = [
+const practiceGuides = [
   {
     slug: 'how-to-separate-vocals-drums-bass',
-    title: 'How to separate vocals, drums, and bass from a song',
+    title: 'How to separate vocals, drums & bass from a song',
     category: 'Stem separation',
     description:
       'Separate a song into vocals, drums, bass and other instruments with Sattari. Choose outputs, preview the results and download WAV stems in your browser.',
@@ -65,6 +83,7 @@ export const musicGuides = [
     sections: [
       {
         title: 'Prepare one musical phrase',
+        link: { path: '/tuner/bass', label: 'Tune your bass before matching the recording' },
         paragraphs: [
           'Choose a recording you have permission to use. In Stem Separator, choose Bass practice and separate it. The Bass stem is your reference; Vocals, Drums and Other instruments become the backing track you play against. Start with a short, repeated phrase rather than the entire song.',
           'Listen to the bass in the full mix first, then in isolation. Count where notes begin and end. A convincing bass part depends on note length, rests and its relationship with the kick as much as the pitches.',
@@ -117,7 +136,7 @@ export const musicGuides = [
     image: '/images/guides/standard-guitar-tuning.jpg',
     imageAlt:
       'Standard guitar tuning from the thickest string: E2 82.41 Hz, A2 110 Hz, D3 146.83 Hz, G3 196 Hz, B3 246.94 Hz, E4 329.63 Hz',
-    action: { label: 'Open the guitar tuner', path: '/learn?tool=tuner' },
+    action: { label: 'Open the live instrument tuner', path: '/studio/keybpm#live-tuner' },
     sections: [
       {
         title: 'What in tune means',
@@ -132,7 +151,7 @@ export const musicGuides = [
           'Strings are listed in the order they sit on the instrument, from the lowest-pitched side. The number after each note is its octave: E2 is the low E of a guitar, E4 the high one. Frequencies assume A4 = 440 Hz.',
         ],
         table: {
-          columns: ['Instrument', 'Open strings', 'Frequencies (Hz)'],
+          headers: ['Instrument', 'Open strings', 'Frequencies (Hz)'],
           rows: [
             [
               'Guitar (6-string)',
@@ -199,7 +218,7 @@ export const musicGuides = [
           'Once standard tuning is comfortable, a few alternatives come up often in songs. A recording that sounds slightly lower than your guitar is frequently in one of the first two.',
         ],
         table: {
-          columns: ['Tuning', 'Strings, low to high', 'What changes'],
+          headers: ['Tuning', 'Strings, low to high', 'What changes'],
           rows: [
             ['Standard', 'E  A  D  G  B  E', 'The reference for chord charts and tabs'],
             ['Half step down', 'E♭  A♭  D♭  G♭  B♭  E♭', 'Every string one fret lower'],
@@ -266,7 +285,7 @@ export const musicGuides = [
           'If you have the chords from a chart or by ear, the key is the one scale that contains them all. In any major key, the chords built on the first, fourth and fifth notes are major, the ones on the second, third and sixth are minor. Three major chords two and a half and three and a half steps apart, like G, C and D, point straight to one key.',
         ],
         table: {
-          columns: ['Key', 'I', 'IV', 'V', 'vi', 'Relative minor'],
+          headers: ['Key', 'I', 'IV', 'V', 'vi', 'Relative minor'],
           rows: [
             ['C major', 'C', 'F', 'G', 'Am', 'A minor'],
             ['G major', 'G', 'C', 'D', 'Em', 'E minor'],
@@ -287,7 +306,7 @@ export const musicGuides = [
           'Sheet music states the key at the start of every line as a group of sharps or flats. Each signature belongs to one major key and its relative minor. With sharps, the major key is one semitone above the last sharp. With flats, the major key is the second-to-last flat. One flat is F major.',
         ],
         table: {
-          columns: ['Signature', 'Major key', 'Minor key'],
+          headers: ['Signature', 'Major key', 'Minor key'],
           rows: [
             ['No sharps or flats', 'C major', 'A minor'],
             ['1 sharp', 'G major', 'E minor'],
@@ -489,107 +508,69 @@ export const musicGuides = [
     title: 'When does a guitar need a professional setup?',
     category: 'Guitar care',
     description:
-      'Spot signs your guitar needs a setup: fret buzz, high action, tuning drift and intonation problems. Learn what a setup fixes, how often to get one, and what to tell the shop.',
+      'Notice fret buzz, uncomfortable action or notes that sound out of tune? Learn what to check, how restringing differs from a setup, and what to tell the shop.',
     answer:
-      'A guitar typically needs a setup when it buzzes or feels stiff to play, when frets feel sharp on the edges, when it drifts out of tune after every song, or when notes at the 12th fret are noticeably sharp or flat compared to the open string. A professional setup adjusts neck relief, action, nut and saddle height, and intonation — all together, which is why individual adjustments often cause new problems.',
+      'A setup assessment is useful when your guitar has become uncomfortable to play, buzzes during your usual playing, or sounds out of tune higher on the neck. Describe what changed before choosing an adjustment: worn strings, playing technique, humidity and damage can cause similar symptoms.',
     image: '/sattari site/guitars/steel-acoustic.jpg',
     imageAlt: 'Steel string acoustic guitar on a stand',
     action: {
       label: 'Request a guitar setup',
-      path: '/services/instrument-repair-los-angeles#repair-inquiry',
+      path: '/services/guitar-setup-los-angeles',
     },
     sections: [
       {
-        title: 'Signs your guitar needs attention',
+        title: 'Describe the symptom before diagnosing it',
         paragraphs: [
-          'Fret buzz is the most common one — a sitar-like rattle on certain frets, or everywhere below the 5th fret. Some buzz is normal under hard attack, but if it happens at normal playing volume and affects tone, the neck relief, nut, or saddle height is off.',
-          'High action makes fretting uncomfortable and causes fatigue, especially on acoustic guitars that have not been adjusted since they left the factory. Low action causes buzz. Both can exist on the same guitar at different string heights.',
-          'Intonation drift means the guitar sounds in tune on open strings and at the 5th fret but goes noticeably sharp or flat higher up the neck. This is the saddle position. No amount of tuning fixes it without adjusting the intonation.',
-          'Seasonal changes in humidity cause wood to expand and contract, which moves the neck. A guitar that was fine in summer may buzz or play stiff in winter. Climate-sensitive instruments benefit from a setup check after major weather changes.',
+          'For buzz, note the string, fret and playing strength. Is it present on an open string, one fretted note or several? On an electric guitar, say whether it is audible through a clean amplifier as well as unplugged. A short recording can help explain an intermittent problem.',
+          'For uncomfortable action, describe where fretting feels difficult: near the nut, around the middle of the neck or higher up. Mention a recent string-gauge or tuning change. Very low action can trade easier fretting for less room to strike the string strongly.',
+          'For tuning concerns, separate a string that drifts after tuning from a fretted note that sounds sharp or flat. Old strings, excessive fretting pressure and the instrument’s setup can all affect the comparison; a tuner reading alone does not identify the repair.',
         ],
       },
       {
-        title: 'What a setup actually adjusts',
+        title: 'Restringing, setup and repair are different jobs',
+        link: {
+          path: '/services/guitar-restringing-woodland-hills',
+          label: 'See guitar restringing prices in Woodland Hills',
+        },
         paragraphs: [
-          'Neck relief is the slight forward bow in the neck, controlled by the truss rod. It affects how much room the strings have to vibrate at the lower frets. Too straight causes buzz; too much bow raises the middle of the neck uncomfortably.',
-          'Action at the nut affects open-string feel and first-position chords. Action at the saddle affects the upper frets. The two interact, so changing one without checking the other is rarely a complete solution.',
-          'Intonation means adjusting the saddle position so the string is effectively the right length at pitch. On acoustics this is cut into the saddle; on electrics, each saddle is individually adjusted. A guitar with poor intonation cannot be played fully in tune, regardless of how carefully you tune the open strings.',
+          'Restringing replaces worn or unsuitable strings and brings the instrument back to the intended tuning. It does not automatically include fretwork, nut cutting or a complete setup. Decide on the string type, gauge and usual tuning before a setup assessment.',
+          'A setup considers neck relief, string height and intonation together, within the adjustments available on that instrument. Many electric bridges allow individual saddle adjustments; an acoustic saddle is a different design. There is no single measurement that suits every guitar and playing style.',
+          'Cracks, lifting bridges, damaged frets and electrical faults need their own assessment. They should not be treated as routine string-height adjustments. Ask which work and parts are included in the estimate before authorizing it.',
         ],
       },
       {
-        title: 'How often does a guitar need a setup?',
+        title: 'Make a useful comparison at home',
+        link: { path: '/tuner/guitar', label: 'Check the open strings with the guitar tuner' },
         steps: [
-          'After every string change on an acoustic, at minimum check that the action has not moved noticeably and the guitar is still intonating well.',
-          'Annually is a reasonable default for a guitar that is played regularly, even if nothing feels wrong. Small adjustments made early prevent larger problems later.',
-          'After traveling between climates or storing the instrument through a season, check the neck relief before playing hard. A few minutes with a ruler or a tech is faster than undoing a cough that developed over months.',
-          'After any impact, hard fall or neck symptom — buzzing that appeared overnight, notes that go dead, binding in the nut slots — bring it in before playing the issue deeper.',
+          'Tune to your normal tuning and play the same familiar chords and notes at your usual strength.',
+          'Write down exactly where the symptom occurs and when it began. Keep the current string packet or note the brand and gauge if known.',
+          'Mention changes in storage, travel, tuning or string type, and any impact. Stop experimenting with adjustments if there is visible damage or a part resists movement.',
+          'Bring those observations to the assessment. Ask the shop to explain the proposed work and demonstrate the result when you collect the instrument.',
         ],
       },
       {
-        title: 'What to tell the shop',
+        title: 'When to book an assessment',
         paragraphs: [
-          'Describe the specific symptom: which frets buzz, at what playing volume, whether it affects all strings or one in particular. Mention the string gauge you use, because setup height depends on string tension. Mention any recent changes — new strings, travel, a fall.',
-          'If you have a playing style preference, say so. A setup for low-action fast electric playing is different from one optimized for heavier acoustic strumming. A tech who knows how you play can calibrate toward it rather than guessing.',
+          'Check playability after a string or tuning change and when the instrument feels different after storage or travel. A comfortable guitar does not necessarily need work simply because a date has arrived. Follow its manufacturer’s maintenance guidance and discuss a sensible check interval for how you use it.',
+          'Sattari accepts guitar and bass setup inquiries in Woodland Hills by appointment. Share the model, symptom, intended tuning and deadline. Scope, price, parts and completion timing are confirmed for the individual instrument.',
         ],
+      },
+    ],
+    sources: [
+      {
+        label: 'Fender: setup adjustments and playing preferences',
+        url: 'https://support.fender.com/hc/en-us/articles/42584764005019-How-do-I-set-up-my-Stratocaster-guitar-properly',
+      },
+      {
+        label: 'Fender: understanding intonation',
+        url: 'https://support.fender.com/hc/en-us/articles/42584627801243-How-do-I-intonate-my-instrument',
       },
     ],
     related: [
-      '/services/instrument-repair-los-angeles',
-      '/product/classic-nylon-string-guitar',
-      '/product/steel-string-acoustic-guitar',
-      '/shop/guitar-bass',
-    ],
-  },
-  {
-    slug: 'how-to-tune-a-snare-drum',
-    title: 'How to tune a snare drum',
-    category: 'Drums',
-    description:
-      'Tune a snare drum for a clear, focused sound. Learn even lug tension, the star pattern, and when dull or ringy tone is a tuning problem versus a worn head.',
-    answer:
-      'Finger-tighten all lugs evenly, then use a drum key to add tension in a star pattern — tuning opposite lugs together in small increments. Tap one inch from each lug and listen for pitch consistency. When all lugs ring at the same pitch, the head is even. A focused crack means even tension at the right pitch range; a dull thud or uncontrolled ring usually means uneven lugs or a worn head.',
-    image: '/sattari site/drums/practice-pad-12.jpg',
-    imageAlt: 'Sattari practice pad and drumsticks on a stand',
-    action: {
-      label: 'Ask about drum tuning',
-      path: '/services/instrument-repair-los-angeles#repair-inquiry',
-    },
-    sections: [
-      {
-        title: 'Start with even tension',
-        paragraphs: [
-          'Release all tension from the head first. Press gently on the center to seat the head, then finger-tighten all lugs until you feel light resistance. This is your baseline. No lug should be tighter than any other before you begin tuning.',
-          'Use the star pattern: tighten lug 1, then the lug directly across from it, then move to the next pair at 90 degrees, and repeat. Never tighten adjacent lugs in sequence — you create uneven tension that takes longer to chase out.',
-        ],
-      },
-      {
-        title: 'Match pitch by ear at each lug',
-        steps: [
-          'Tap the head firmly about one inch from each tension rod, moving around the drum. Listen to the pitch at each point.',
-          'Tighten lugs that are lower in pitch, in small increments. A quarter-turn at a time is plenty. Return to the opposite lug before making another adjustment.',
-          'Continue around the drum until all lugs produce the same pitch. At that point the head is even, regardless of what overall tension you choose.',
-          'Adjust the overall tension to the pitch and feel you want. A higher pitch gives a shorter, crisper crack. A lower pitch gives a deeper, fuller sound with more sustain.',
-        ],
-      },
-      {
-        title: 'Tune the bottom head separately',
-        paragraphs: [
-          'The resonant (bottom) head affects the snare response and the overall sustain. A looser bottom head gives more snare buzz and a longer tone. A tighter bottom head gives a drier, more controlled crack.',
-          'Tune the bottom head the same way: even tension first, star pattern second, pitch matching around each lug. Make small changes and listen after each adjustment. The interaction between the two heads changes the tone of both, so expect to go back and forth a few times.',
-        ],
-      },
-      {
-        title: 'When tuning does not fix the problem',
-        paragraphs: [
-          'If the drum sounds dull even at even, correct tension, the head may be worn or dented. A cracked or significantly dented head should be replaced before tuning further.',
-          'If the drum has an uncontrolled overtone that cannot be dialed out, check whether the bearing edge — the rim of the shell that the head sits on — is level and undamaged. A damaged bearing edge cannot be fixed by tuning. Bring the drum in for an inspection if the problem persists after careful, even tuning.',
-        ],
-      },
-    ],
-    related: [
-      '/product/sattari-practice-pad-12',
-      '/product/classic-american-hickory-a5',
-      '/product/classic-american-hickory-a7',
+      '/services/guitar-setup-los-angeles',
+      '/services/guitar-restringing-woodland-hills',
+      '/guitar-strings-woodland-hills',
+      '/guides/how-to-care-for-a-guitar',
       '/services/instrument-repair-los-angeles',
     ],
   },
@@ -598,106 +579,69 @@ export const musicGuides = [
     title: 'Violin care and maintenance for beginners',
     category: 'Strings',
     description:
-      'Keep your violin playing well: how to rosinate the bow, wipe down after playing, store the instrument safely, spot when strings need changing, and when to visit a shop.',
+      'Build a simple violin-care routine: remove rosin dust, loosen the bow, check strings and store safely. Learn which problems need a teacher or repair assessment.',
     answer:
-      'After every session, wipe rosin dust from the strings, top of the instrument, and the stick of the bow with a soft dry cloth. Store the violin in a closed case away from direct heat, sunlight, and sudden humidity changes. Rosinate the bow before each practice session — four to six slow, even strokes across a fresh cake of rosin is usually enough.',
+      'After playing, gently remove rosin dust with suitable dry cloths, release the bow’s playing tension and secure the instrument and bow in their case. Check string condition and ask for help with a leaning bridge, damaged string or persistent tuning problem instead of forcing an adjustment.',
     image: '/sattari site/violins/rosin.jpg',
     imageAlt: 'Sattari rosin in a cloth wrap',
-    action: { label: 'Shop violin accessories', path: '/shop/violins' },
+    action: {
+      label: 'Ask about violin repair',
+      path: '/services/violin-repair-los-angeles',
+    },
     sections: [
       {
-        title: 'After every session',
+        title: 'A short after-practice routine',
         steps: [
-          'Loosen the bow hair a little before storing — not completely slack, but noticeably less taut than playing tension. Fully tensioned bow hair can warp the stick over time.',
-          'Wipe rosin dust from the strings with a soft, dry cloth. Wipe the area of the top between the bridge and the end of the fingerboard. Rosin builds up on the varnish and is harder to remove the longer it sits.',
-          'Wipe the bow stick, avoiding the hair. Use a separate cloth from the one you use on the instrument body.',
-          'Place the violin in its case and close the latches. Do not leave it on a chair, stand, or music stand when you are not playing.',
+          'Use a clean, soft, dry cloth to remove loose rosin dust from the instrument. Keep a separate cloth for the strings and fingerboard so collected dirt is not rubbed into the varnish.',
+          'Wipe the bow stick gently without touching the hair. Loosen the hair after playing as your teacher or bow maker has shown you; do not dismantle the screw.',
+          'Check that the violin and bow are secured in the case and that loose accessories cannot strike them. Close the case before carrying it.',
         ],
       },
       {
-        title: 'Rosin and the bow',
+        title: 'Add rosin according to the bow’s response',
         paragraphs: [
-          'New bow hair or hair that has been washed needs rosin before it will produce any sound. Apply four to six slow, even strokes across a fresh cake of rosin, then play a few long bows to set it. Only then add more in light passes as needed.',
-          'Too much rosin makes the sound scratchy and leaves heavy white dust on everything. Too little makes the bow slip silently across the string. A consistent tone with a light residue on the strings after playing means the amount is about right.',
-          'If the rosin surface becomes shiny or glassy, score it gently with a fingernail or a key before applying. A glossy surface does not grip the bow hair.',
+          'There is no useful stroke count for every bow and practice session. Start with your teacher’s guidance and add a small amount when needed. New hair and an already rosined bow can need different amounts.',
+          'A slipping or scratchy sound is not always a rosin problem: bow speed, pressure, contact point and hair condition also matter. Ask a teacher to listen before repeatedly adding more. Do not wash the hair, use household cleaners or scratch the rosin with a key as routine maintenance.',
         ],
       },
       {
-        title: 'Storage and climate',
+        title: 'Protect the finish and storage environment',
         paragraphs: [
-          'Violins are sensitive to humidity. Wood expands in humid conditions and contracts in dry ones. Very dry air — especially heated indoor air in winter — causes seams to open, and can crack the top or back. A hard case provides a more stable environment than a soft bag. Some players use a small case humidifier in dry months.',
-          'Keep the instrument away from direct sunlight, car interiors in summer, and radiators or heating vents. A temperature that is comfortable to sit in is generally fine for the instrument. Rapid changes — cold car to warm room — are harder on the instrument than a stable temperature at either end.',
+          'Avoid alcohol, furniture polish and unapproved cleaning products on the violin. If rosin has hardened onto the varnish, ask a specialist about removal rather than scrubbing it. Follow the maker’s care instructions for the particular finish.',
+          'Keep the closed case away from heating vents, direct sun and parked cars. Monitor the environment where the instrument actually rests. Ask the maker or repairer about suitable humidity control; a humidifier should not drip water into the case or onto the instrument.',
         ],
       },
       {
-        title: 'Strings, bridge, and when to visit a shop',
+        title: 'Strings and bridge: check before playing',
+        link: { path: '/tuner/violin', label: 'Check your violin’s open G, D, A and E strings' },
         paragraphs: [
-          'Strings lose their brightness and responsiveness over time, even without breaking. A set that has been played daily for a year is probably ready to be replaced. Strings that feel rough, produce a dull or unclear tone, or are visibly corroded or fraying should be changed. Change one string at a time so the bridge and soundpost remain under tension.',
-          'Check that the bridge is standing straight — it should be perpendicular to the top, with the flat side facing the tailpiece. Seasonal tuning changes can pull the bridge out of position gradually. Never force it; if it has moved significantly, bring the violin to a shop to have it set correctly.',
-          'Pegs that slip or stick, a buzz that no amount of careful playing fixes, an open seam, or a crack anywhere on the body all need a professional repair. Minor adjustments that seem small — a loose peg, a low bridge — have real consequences for playability and can escalate if left.',
+          'Look for a broken winding, corrosion or a string that has become difficult to tune or respond consistently. Replacement timing depends on condition and use. Record the instrument size and the string’s end fitting before ordering; a listing for one size or fitting is not automatically suitable for another.',
+          'If you have not changed strings before, ask a teacher or repairer to demonstrate. Removing all strings together can release the bridge. A leaning, displaced or damaged bridge needs assessment; do not force it upright or attempt a soundpost adjustment.',
+          'For slipping or stuck pegs, new buzzing, an open seam or a crack, describe the symptom and arrange an assessment. Sattari takes violin string-replacement and repair inquiries by appointment. Confirm suitable strings, the work, price and timing before visiting.',
         ],
       },
     ],
     sources: [
       {
-        label: 'Thomann: violin care and maintenance guide',
-        url: 'https://www.thomann.de/gb/onlineresources/violin_care.htm',
+        label: 'Yamaha: daily violin care',
+        url: 'https://www.yamaha.com/en/musical_instrument_guide/violin/maintenance/',
+      },
+      {
+        label: 'Yamaha: bow maintenance',
+        url: 'https://www.yamaha.com/en/musical_instrument_guide/violin/maintenance/maintenance004.html',
+      },
+      {
+        label: 'Yamaha: changing violin strings',
+        url: 'https://www.yamaha.com/en/musical_instrument_guide/violin/maintenance/maintenance002.html',
       },
     ],
     related: [
+      '/guides/how-to-change-a-violin-string',
+      '/violin-strings-woodland-hills',
+      '/product/violin-strings',
       '/product/sattari-rosin',
-      '/product/violin-strings',
-      '/shop/violins',
-      '/services/instrument-repair-los-angeles',
-    ],
-  },
-  {
-    slug: 'choose-a-violin-for-beginners',
-    title: 'How to choose a violin for beginners',
-    category: 'Strings',
-    description:
-      'What to look for when buying a first violin — size, acoustic vs electric, what should be included, and red flags that signal a poor instrument.',
-    answer:
-      'For most beginners, a full-size (4/4) acoustic violin with a bow, case, and rosin included is the right starting point. Size matters most: an instrument that is too large causes strain and slows progress. Ask your teacher to confirm the size before buying.',
-    image: '/sattari site/violins/brescia-acoustic.jpg',
-    imageAlt: 'Sattari Brescia acoustic violin',
-    action: { label: 'Shop violins', path: '/shop/violins' },
-    sections: [
-      {
-        title: 'Get the right size first',
-        paragraphs: [
-          'Adult players and most teenagers use a full-size (4/4) violin. Younger children and smaller players may need a 3/4 or smaller instrument. The right way to check is with the player present: hold the violin in rest position under the chin, extend the arm along the neck, and see whether the fingers can reach and curl around the scroll without strain. If you cannot measure in person, ask the teacher for a size recommendation before purchasing.',
-          'Playing a violin that is too large causes tension in the shoulder, arm, and wrist, and makes shifting and bowing harder to learn. An instrument that is slightly too small is also limiting. Getting the size right matters more than any other specification at the beginner level.',
-        ],
-      },
-      {
-        title: 'Acoustic, electric, or silent?',
-        paragraphs: [
-          'An acoustic violin needs no power source and produces sound naturally through the body. It is the standard choice for lessons, classical training, and players who want an instrument with an organic, resonant tone. Acoustic violins require a practice environment where some sound is acceptable.',
-          'An electric or silent violin uses a piezo pickup and produces very little acoustic sound on its own. Connect headphones for private practice or plug into an amp to perform. Silent violins are practical for apartments or shared spaces. An acoustic violin is the better starting point for most students; a silent model is a good second instrument or the right choice where volume is a real concern.',
-        ],
-      },
-      {
-        title: 'What a beginner violin should include',
-        paragraphs: [
-          'A violin sold as a beginner instrument should include a bow, a case, and rosin. These are not optional: you cannot play without a bow, and a bow cannot grip the strings without rosin. A case protects the instrument during transport and storage. Verify that all three are part of what you are buying before assuming they are included.',
-          'The bow matters more than many beginners expect. A warped or low-quality bow is difficult to control and obscures whether the player is making progress. Check that the bow is straight by sighting down the length of the stick and that the hair is in good condition.',
-        ],
-      },
-      {
-        title: 'Signs of a well-made instrument and red flags to avoid',
-        paragraphs: [
-          'A good beginner violin is individually set up before it ships: the bridge is correctly fitted and positioned, the nut slots are cut to the right depth, and the strings are at a comfortable height. An instrument that is poorly set up is harder to play and will not hold tune reliably. Ask explicitly whether the instrument has been set up.',
-          'Red flags include pegs that slip immediately, an open seam on the body, visible cracks, a bridge that tilts forward or backward, or strings so high off the fingerboard that the fingers cannot press them down comfortably. These problems are fixable but add cost and time. A workshop-fitted instrument from a reputable seller avoids most of them before the player even picks it up.',
-        ],
-      },
-    ],
-    related: [
-      '/product/brescia-acoustic-violin',
-      '/product/chiara-wooden-electric-violin',
-      '/product/violin-strings',
-      '/encino-violin-shop',
-      '/services/instrument-repair-los-angeles',
+      '/services/violin-repair-los-angeles',
+      '/guides/choose-a-violin-for-beginners',
     ],
   },
   {
@@ -715,15 +659,15 @@ export const musicGuides = [
       {
         title: 'Why stick size matters',
         paragraphs: [
-          'Drumstick sizes are named with a number and a letter — 5A, 7A, 2B, and so on. The number refers roughly to how many sticks fit within a certain diameter (lower numbers = thicker sticks). The letter indicates the original intended use: A for orchestra, B for band, S for street. In practice, the number is what matters most.',
-          '5A is the most widely used size and the best starting point for most beginners. It is balanced, comfortable for a range of hand sizes, and versatile enough to cover most playing situations. 7A is thinner and lighter — popular for jazz and lighter playing, but can feel fragile for hard practice. Thicker sizes like 2B are designed for volume and power, not for developing technique.',
+          'Drumstick models use size names such as 5A, 5B and 7A. In the Vic Firth American Classic line, a 7A is slimmer than a 5A, and a 5B is thicker than a 5A. Compare the diameter, length and taper of the particular models you are considering.',
+          'Try a 5A as a starting point. Play the same single strokes quietly with a 5A and a 7A to feel the difference in reach, weight and rebound. If you want more weight behind a stroke, try a 5B or 2B.',
         ],
       },
       {
         title: 'Hickory vs maple',
         paragraphs: [
-          'Most drumsticks are made from hickory or maple. Hickory is denser and heavier, absorbs shock well, and gives the player more feedback from the drumhead. Hickory sticks are durable and forgiving — a good choice for beginners who are still developing control.',
-          'Maple is lighter than hickory, which makes it faster and easier to play for extended periods. The reduced weight also means less rebound from the head. Maple sticks are popular with jazz drummers and players who value speed over power. Either wood works for a beginner; hickory is the more common starting recommendation.',
+          'Hickory and maple are common drumstick woods. With comparable dimensions, hickory usually produces a heavier stick and maple a lighter one. Within each species, actual pairs differ in weight and balance.',
+          'Try both on your practice surface. The taper, tip, surface tension and how you hold the stick also influence rebound. A maple pair can suit someone who wants a larger diameter without as much weight.',
         ],
       },
       {
@@ -736,9 +680,23 @@ export const musicGuides = [
       {
         title: 'When to move to a different size',
         paragraphs: [
-          'Stick with the same size long enough to develop consistency. Switching sticks too early makes it harder to build a reliable stroke. Most beginners should use the same pair for at least several months before experimenting with a different size or material.',
+          'Use one pair for repeated practice sessions so you learn its feel. You can try another size alongside it as soon as you have a specific question about balance, reach or sound.',
           'Consider moving to a heavier stick if you are playing louder music and want more weight behind each stroke. Consider moving lighter if fatigue is limiting your practice time. The right stick is the one that lets you play longer with better control — not the one endorsed by your favourite drummer.',
         ],
+      },
+    ],
+    sources: [
+      {
+        label: 'Vic Firth American Classic 7A specifications',
+        url: 'https://vicfirth.com/products/american-classicr-7a',
+      },
+      {
+        label: 'Vic Firth guide to wood, taper and tip choices',
+        url: 'https://vicfirth.com/pages/frequently-asked-questions',
+      },
+      {
+        label: 'Vic Firth American Classic 55A and its 5A / 5B size comparison',
+        url: 'https://vicfirth.com/products/american-classicr-55a',
       },
     ],
     related: [
@@ -750,164 +708,113 @@ export const musicGuides = [
     ],
   },
   {
-    slug: 'choose-a-practice-drum-pad',
-    title: 'How to choose a practice drum pad',
-    category: 'Drums',
-    description:
-      'What to look for in your first practice pad — 8-inch vs 12-inch, rubber surface, rebound feel, and what else you need to start.',
-    answer:
-      'An 8-inch rubber practice pad is the standard starting point: quiet enough to use at home, light enough to carry, and sufficient for developing a consistent stroke. Move up to a 12-inch pad when you want more playing surface, a closer snare feel, or plan to share it with a teacher.',
-    image: '/sattari site/drums/practice-pad-8.jpg',
-    imageAlt: 'Sattari 8-inch drummer practice pad',
-    action: { label: 'Shop practice pads', path: '/shop/essentials' },
-    sections: [
-      {
-        title: '8-inch vs 12-inch: which size to start with',
-        paragraphs: [
-          'An 8-inch pad fits in a bag, costs less, and takes up almost no space on a desk or table — it is the practical choice for a student who needs to practice away from a kit. The playing surface is smaller, so technique and stick placement have to be precise. That constraint is a feature: it builds accuracy.',
-          'A 12-inch pad gives you more room to move around the surface and feels noticeably closer to a real snare drum head in diameter. It is a better choice if you are practicing rudiments that cross the center of the drum, if a teacher will share the pad with you in a lesson, or if you want the experience to map more directly to sitting behind a kit.',
-          'Most beginners do not need both. Start with the 8-inch, practice consistently for a few months, and only move to the 12-inch once the size starts limiting your work.',
-        ],
-      },
-      {
-        title: 'Surface feel and rebound',
-        paragraphs: [
-          'Rubber practice pads give consistent rebound and are quieter than foam. The rebound is slightly bouncier than a real drum head, which means strokes that feel good on the pad will need some adjustment when you move to an acoustic kit. That is normal — the pad is for developing control, not reproducing an exact drum feel.',
-          'Gum rubber surfaces are the most common and durable option. Some pads include a second surface with a different feel or a quieter response. For most beginners, a standard rubber surface is all you need.',
-          "Avoid pads that feel unusually hard or that do not give any rebound. Dead surfaces slow down development by forcing you to muscle strokes rather than using the stick's natural bounce.",
-        ],
-      },
-      {
-        title: 'Portability and where you will practice',
-        paragraphs: [
-          'If you practice at a desk or table, a non-slip base keeps the pad in place without a stand. Most 8-inch pads include one. Check that the base is wide enough that the pad does not tip when you strike near the edge.',
-          'If you plan to practice standing up or at drum-kit height, you need a snare stand to mount the pad — or a pad that includes legs. Practicing at the right height builds posture habits that transfer directly to the kit. Practicing hunched over a table does not.',
-          'For travel, an 8-inch pad fits in most drum bags or a backpack without special cases. A 12-inch pad usually needs its own bag or a larger stick bag with a pad pocket.',
-        ],
-      },
-      {
-        title: 'What else you need to start',
-        paragraphs: [
-          'You need sticks. For most beginners, 5A hickory is the right starting pair — a balanced weight for practice across most styles. Pick up two pairs so you have a spare.',
-          'A metronome or a drum machine track is as important as the pad itself. Consistent tempo is the skill that separates a drummer who sounds good from one who does not. A free app works; the goal is to have something that keeps time while you practice.',
-          'A snare stand is optional at first unless you want to practice standing up. If you eventually plan to practice rolls and rudiments for more than 20 minutes at a stretch, standing at proper height makes a real difference in how long you can go without discomfort.',
-        ],
-      },
-    ],
-    related: [
-      '/product/sattari-practice-pad-8',
-      '/product/sattari-practice-pad-12',
-      '/guides/drumsticks-for-beginners',
-      '/shop/essentials',
-      '/woodland-hills-drum-shop',
-    ],
-  },
-  {
-    slug: 'choose-a-beginner-acoustic-guitar',
-    title: 'How to choose a beginner acoustic guitar',
-    category: 'Guitar',
-    description:
-      'What to look for in your first acoustic guitar — steel-string vs classical nylon, body size, and what to expect from a well-set-up beginner instrument.',
-    answer:
-      'A full-size steel-string acoustic is the right starting guitar for most beginners. Nylon-string classical guitars suit fingerstyle, classical technique, and younger players. The two feel and sound different — choosing between them depends on the style of music you want to play, not just budget.',
-    image: '/sattari site/guitars/steel-acoustic.jpg',
-    imageAlt: 'Sattari steel-string acoustic guitar',
-    action: { label: 'Shop guitars', path: '/shop/guitar-bass' },
-    sections: [
-      {
-        title: 'Steel-string acoustic vs classical nylon',
-        paragraphs: [
-          'Steel-string acoustics have a brighter, louder sound and are the standard choice for folk, pop, country, blues, and singer-songwriter music. The strings have higher tension against your fingertips, which means a small amount of discomfort for the first few weeks as you build calluses — that goes away.',
-          'Classical nylon-string guitars have lower-tension strings that are softer on fingertips, which makes them slightly more comfortable for complete beginners. They produce a warmer, rounder tone. Nylon-string technique uses classical hand position and fingerpicking — it is the right choice for anyone learning classical music, flamenco, or Latin guitar styles.',
-          'The key question is what music you want to play. If your goal is to strum chords to singer-songwriter songs, get a steel-string. If you are drawn to classical or fingerstyle music, start with a nylon. Do not choose one hoping to easily switch later — the technique and feel are different enough that the choice matters.',
-        ],
-      },
-      {
-        title: 'Body size and playability',
-        paragraphs: [
-          'Full-size acoustic guitars (also called dreadnought or orchestra body) are the standard for adults. They produce more volume and bass response than smaller bodies. If you are an adult of average build, start with a full-size — the size difference between models is smaller in practice than it looks in photos.',
-          'Smaller bodies (concert, auditorium) are easier to hold and slightly more comfortable for players with shorter arms or smaller frames. They produce a balanced midrange tone with less bass boom. A reasonable choice if full-size feels physically awkward, but not necessary for most beginners.',
-          'Action — the height of the strings above the fretboard — matters more than body size for playability. A guitar with high action is harder to press and causes unnecessary soreness. A well-set-up guitar makes learning significantly easier. If you are buying online, choose a brand that sets up instruments before shipping.',
-        ],
-      },
-      {
-        title: 'What to look for in a first guitar',
-        paragraphs: [
-          'The most important thing is that the guitar is properly set up. A cheap guitar with good action is easier to learn on than an expensive guitar with high strings. If a guitar arrives with strings too high to comfortably press in the first few frets, take it to a tech for a basic setup before you spend weeks struggling against the instrument.',
-          'For the body, a spruce top produces a bright, articulate sound that improves over time with regular playing. Solid-top guitars develop tone as the wood responds to use; laminate tops do not change as much. For a first guitar, laminate is fine — the difference matters more once you are developing a more refined ear.',
-          'Check that the neck is straight and the tuning pegs hold pitch. A guitar that will not stay in tune makes it nearly impossible to develop a good ear and becomes genuinely discouraging. Tune up before every practice session regardless.',
-        ],
-      },
-      {
-        title: 'Electric vs acoustic for beginners',
-        paragraphs: [
-          'Acoustic guitars require no amp or cables and are ready to play anywhere. They build finger strength faster because of slightly higher string resistance. The main drawback is that practicing in an apartment or shared space is louder.',
-          'Electric guitars are quieter unplugged and easier to press physically — lighter strings and lower action. The trade-off is the cost and complexity of adding an amp. A practice amp is fine for getting started, but it is another purchase and another cable to manage.',
-          'For most beginners without a specific reason to go electric, start acoustic. You can always add an electric later. Learning on acoustic builds technique that transfers cleanly to electric; the reverse is less reliable.',
-        ],
-      },
-    ],
-    related: [
-      '/product/steel-string-acoustic-guitar',
-      '/product/classic-nylon-string-guitar',
-      '/product/flame-stratocaster-electric-guitar',
-      '/guides/when-does-my-guitar-need-a-setup',
-      '/services/guitar-setup-los-angeles',
-    ],
-  },
-  {
     slug: 'how-to-care-for-a-guitar',
     title: 'How to care for a guitar',
     category: 'Guitar care',
     description:
-      'A practical guide to keeping your guitar playing well — cleaning strings and fretboard, humidity and storage, and when to take it in for a setup.',
+      'Care for your guitar with gentle cleaning, sensible storage and string checks. Learn when model-specific instructions or a repair assessment are needed.',
     answer:
-      'Wipe down your strings after every session, keep the guitar away from extreme heat and humidity swings, and store it in a case or on a stand away from direct sunlight. Do this consistently and your guitar will stay in good playing condition for years.',
+      'Wipe the instrument gently after playing, store it securely away from heat and environmental extremes, and check strings and playability regularly. Follow the maker’s instructions for its finish, strings and humidity needs; routine care does not replace assessment of a developing fault.',
     image: '/sattari site/guitars/steel-acoustic.jpg',
     imageAlt: 'Sattari steel-string acoustic guitar',
-    action: { label: 'Guitar setup and repair', path: '/services/guitar-setup-los-angeles' },
+    action: {
+      label: 'Ask about guitar setup and repair',
+      path: '/services/guitar-setup-los-angeles',
+    },
     sections: [
       {
-        title: 'Clean strings and fretboard regularly',
+        title: 'Start with a clean, dry cloth',
         paragraphs: [
-          'Wipe your strings down after every time you play. Use a dry cloth or a string cleaning cloth — run it under and over each string to remove oils, sweat and debris. Strings that are not cleaned corrode faster, lose tone faster, and feel rough under your fingers. Cleaning adds weeks or months to their life.',
-          'The fretboard also collects oils and grime over time. For rosewood and ebony fretboards (unfinished, porous wood), use a dry or lightly dampened cloth. Every several months, or when the wood looks dry, condition the fretboard with a small amount of lemon oil or fretboard conditioner. Apply, let it soak for a few minutes, then wipe off the excess.',
-          'Maple fretboards are typically finished and sealed — clean with a dry or barely damp cloth only. Do not use oil on a finished fretboard.',
-          'Wipe down the body and neck with a soft cloth after playing. Guitar polish is optional for finished bodies (gloss or satin). Avoid polish on natural or oiled finishes, and keep any cleaning product away from the fretboard.',
+          'Use a soft cloth to remove sweat and loose dirt from the strings, neck and body after playing. Keep cloths free of grit. Avoid rubbing a damaged finish or a rough, broken string winding.',
+          'Identify the finish before applying a cleaner, polish or fretboard conditioner. A product intended for unfinished wood may be unsuitable for a sealed fingerboard; a polish may change a satin surface. Use only care products approved for the particular instrument, and follow their instructions.',
+          'Do not apply household cleaners, alcohol or oil as a general remedy. If grime will not lift with gentle dry wiping, ask the maker or repairer what is appropriate. Cleaning is not a reason to dismantle parts you are unfamiliar with.',
         ],
       },
       {
-        title: 'Humidity and storage',
+        title: 'Measure the environment where you store it',
         paragraphs: [
-          'Wood reacts to humidity. Acoustic guitars are particularly sensitive: too dry and the wood shrinks, causing sharp fret ends, cracking, and raised seams; too wet and the top swells, raising action and muffling tone. The target range for most acoustic guitars is 45–55% relative humidity.',
-          'In dry climates or during winter (when indoor heating dries the air), store your guitar in a case with a soundhole humidifier. These are inexpensive and prevent the most common humidity-related damage. Check and refill the humidifier every week or two.',
-          'Electric guitars and basses are less sensitive to humidity than acoustics because they have no hollow body to swell or contract — but they are still affected at extremes. The same general guidance applies: avoid leaving them in very dry or very damp environments for extended periods.',
-          'Never leave a guitar in a car, especially in summer. Interior car temperatures can reach extreme highs quickly, causing finish checking, glue failure, and neck issues in a single afternoon.',
+          'Wooden instruments react to changes in moisture. Follow the manufacturer’s recommended humidity range and measure near the instrument with a hygrometer. Taylor, for example, recommends 45–55% relative humidity for its guitars; use your own maker’s guidance rather than treating one brand’s specification as universal.',
+          'A case and a suitable humidity-control system can help when used correctly. Follow the device’s maintenance instructions and check readings; do not add moisture just because the calendar says winter. Keep liquid water away from the instrument.',
+          'Keep guitars away from heating vents, direct sun and parked cars. Use a stable stand or closed case where the instrument cannot be knocked over. Electric guitars and basses also contain parts affected by environmental changes; solid, hollow and semi-hollow designs should all be stored with care.',
         ],
       },
       {
-        title: 'Strings: when to change them',
+        title: 'Choose replacement strings for the instrument',
         paragraphs: [
-          'Change your strings when they sound dull, feel rough, or will not stay in tune. How often depends on how much you play and whether you clean them after each session. For daily players, every 4–8 weeks is common. For occasional players, every 3–6 months. The tone difference between fresh strings and old ones is significant — new strings restore brightness and improve intonation.',
-          'For acoustic guitars, light gauge strings (0.012–0.053) are easiest on the fingers and suitable for most playing styles. Medium gauge strings produce more volume and projection but require more finger pressure. Electric strings are lighter — 0.009 or 0.010 gauge is standard for most players.',
-          'When you change strings, clean the fretboard at the same time. It is the most convenient opportunity since the strings are off.',
+          'Inspect for corrosion, damaged windings and changes in feel or sound. String life depends on use, sweat, storage and the string type, so a fixed number of weeks will not suit every player. Record the date and set you fit to learn what works for you.',
+          'Keep the packet or note the instrument type, brand, gauge and tuning. Nylon-string, steel-string acoustic, electric and bass sets serve different instruments. Before changing gauge or tuning substantially, check the manufacturer’s recommendations and ask whether the setup needs attention.',
+          'If you are unsure how the bridge or tuning machines work, ask for help with the string change. A locking tremolo or other unfamiliar hardware needs its own procedure; do not assume all guitars restring the same way.',
         ],
       },
       {
-        title: 'When to take the guitar in',
+        title: 'Know when cleaning and strings are not enough',
         paragraphs: [
-          'Some issues require a tech rather than at-home maintenance. A professional setup adjusts neck relief, saddle height, nut slots, and intonation — all things that affect how the guitar plays and feels, and none of which can be fixed with a cloth or string change.',
-          'Take it in when: the action is too high or too low, the neck has a noticeable bow, the guitar will not intonate correctly (strings fret sharp or flat as you move up the neck), frets are uneven, or anything structural looks wrong — cracks at the bridge, lifting seams, a loose brace.',
-          'A setup typically takes one to a few days and makes a noticeable difference in playability. Most guitars benefit from a setup after purchase and again after any significant change in climate or string gauge.',
+          'If buzzing, uncomfortable action or tuning concerns persist, note the affected strings and frets and arrange an assessment. A crack, lifting bridge or loose structural joint needs inspection before further adjustment.',
+          'Sattari takes guitar string-replacement, setup and repair inquiries in Woodland Hills by appointment. Send the model, symptom, recent changes and your deadline. Confirm suitable parts, the estimate and timing before work; there is no fixed turnaround promised by this guide.',
         ],
       },
     ],
+    sources: [
+      {
+        label: 'Taylor: humidity requirements for Taylor guitars',
+        url: 'https://taylorguitars.zendesk.com/hc/en-us/articles/360061909892-Do-I-have-to-humidify-my-guitar',
+      },
+      {
+        label: 'Taylor: using and monitoring a guitar humidifier',
+        url: 'https://www.taylorguitars.com/support/maintenance/using-guitar-humidifier',
+      },
+      {
+        label: 'Taylor: deciding when to change strings',
+        url: 'https://blog.taylorguitars.com/how-often-should-you-change-guitar-strings',
+      },
+      {
+        label: 'Taylor: choosing cleaning products for the finish',
+        url: 'https://www.taylorguitars.com/support/maintenance/properly-cleaning-your-guitar',
+      },
+    ],
     related: [
+      '/guides/how-to-change-acoustic-guitar-strings',
+      '/guides/how-to-change-electric-guitar-strings',
       '/guides/when-does-my-guitar-need-a-setup',
-      '/product/steel-string-acoustic-guitar',
-      '/product/flame-stratocaster-electric-guitar',
+      '/services/guitar-restringing-woodland-hills',
+      '/guitar-strings-woodland-hills',
       '/services/guitar-setup-los-angeles',
       '/services/instrument-repair-los-angeles',
     ],
   },
 ];
+
+// Each collection is also a destination in the crawlable guide index.
+export const guideCollections = [
+  {
+    id: 'string-replacement',
+    title: 'How to change instrument strings',
+    guides: [
+      persianTarStringChangeGuide,
+      setarStringChangeGuide,
+      oudStringChangeGuide,
+      acousticStringChangeGuide,
+      classicalStringChangeGuide,
+      electricStringChangeGuide,
+      bassStringChangeGuide,
+      violinStringChangeGuide,
+      violaStringChangeGuide,
+      celloStringChangeGuide,
+      ukuleleStringChangeGuide,
+    ],
+  },
+  { id: 'bowed-strings', title: 'Violin and viola', guides: bowedInstrumentGuides },
+  { id: 'guitar-and-bass', title: 'Guitar and bass', guides: guitarInstrumentGuides },
+  {
+    id: 'instrument-history',
+    title: 'Instrument history and listening',
+    guides: instrumentHistoryGuides,
+  },
+  {
+    id: 'practice-and-care',
+    title: 'Practice, technique and care',
+    guides: [snareTuningGuide, practicePadGuide, ...practiceGuides],
+  },
+];
+
+export const musicGuides = guideCollections.flatMap((collection) => collection.guides);

@@ -248,6 +248,21 @@ function markdown(results, meta) {
     lines.push(
       `| ${summary.name} | ${summary.tracks} | ${pct(summary.key.exact, summary.key.n)} | ${pct(summary.key.weighted, summary.key.n)} | ${pct(summary.tempo.acc1, summary.tempo.n)} | ${pct(summary.tempo.acc2, summary.tempo.n)} |`
     );
+  // Describe sparse lessons from their authored scores, independently of predictions.
+  const sparseLessons = FOUNDATION_LESSONS.filter(
+    (lesson) =>
+      !lesson.chords.length && new Set(lesson.notes.map(({ midi }) => midi % 12)).size <= 2
+  );
+  const lessonRows = results.find(({ summary }) => summary.name === 'sattari-lessons').rows;
+  const sparseIds = new Set(sparseLessons.map(({ id }) => id));
+  const sparseRows = lessonRows.filter(({ id }) => sparseIds.has(id));
+  if (sparseRows.length) {
+    const withheld = sparseRows.filter(({ estimate }) => !estimate.key).length;
+    lines.push(
+      '',
+      `The lesson set includes ${sparseRows.length} unaccompanied exercises containing only one or two pitch classes. Their authored keys describe the teaching context. On their own, these notes do not establish a unique major or minor key. The detector withheld a key on ${withheld} of these ${sparseRows.length} exercises. All are included in the exact-match denominator above.`
+    );
+  }
   lines.push('', '## Does the "tentative" label mean anything?', '');
   lines.push(
     '| Set | Evidence label | Tracks | Exact | Weighted |',

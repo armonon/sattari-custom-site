@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 type Option = { label: string; description?: string } & ({ next: StepKey } | { to: string });
 
-type StepKey = 'root' | 'shop' | 'services' | 'unsure';
+type StepKey = 'root' | 'shop' | 'strings' | 'services' | 'unsure';
 
 interface Step {
   question: string;
@@ -21,6 +21,7 @@ const STEPS: Record<StepKey, Step> = {
     question: 'What brings you here today?',
     options: [
       { label: 'Shop instruments & gear', next: 'shop' },
+      { label: 'Buy strings or book restringing', next: 'strings' },
       {
         label: 'Get something repaired',
         description: 'Drums, guitars, violins, and more',
@@ -28,6 +29,16 @@ const STEPS: Record<StepKey, Step> = {
       },
       { label: 'Lessons, rentals, rehearsal, or studio time', next: 'services' },
       { label: "I'm not sure yet", next: 'unsure' },
+    ],
+  },
+  strings: {
+    question: 'What do you need for your instrument?',
+    options: [
+      { label: 'Buy guitar strings', to: '/guitar-strings-woodland-hills' },
+      { label: 'Buy violin strings', to: '/violin-strings-woodland-hills' },
+      { label: 'Book a guitar restring', to: '/services/guitar-restringing-woodland-hills' },
+      { label: 'Request violin string fitting', to: '/services/violin-restringing-woodland-hills' },
+      { label: 'Get help with a broken string', to: '/services/string-replacement-woodland-hills' },
     ],
   },
   shop: {
@@ -72,7 +83,7 @@ function ChatIcon() {
   );
 }
 
-export default function ShopAssistant() {
+export default function ShopAssistant({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [history, setHistory] = useState<StepKey[]>(['root']);
   const navigate = useNavigate();
@@ -115,7 +126,7 @@ export default function ShopAssistant() {
   }
 
   return (
-    <div className="shop-assistant">
+    <div className={`shop-assistant${compact ? ' shop-assistant--compact' : ''}`}>
       {open && (
         <div
           className="shop-assistant-panel"

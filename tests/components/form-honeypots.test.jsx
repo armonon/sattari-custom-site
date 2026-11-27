@@ -82,10 +82,11 @@ describe('form honeypots', () => {
   it('StudioBookingForm keeps its website trap out of reach', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ enabled: false, durations: [1, 2, 3, 4], days: [], reserved: [] }),
+      json: async () => ({ enabled: true, durations: [1, 2, 3, 4], days: [], reserved: [] }),
     });
     const { container } = render(<StudioBookingForm />);
-    await screen.findByText(/Online booking is not open/);
+    // The form (and its trap) is only rendered while online booking is open.
+    await waitFor(() => expect(honeypot(container, 'website')).not.toBeNull());
 
     expectHiddenFromPeople(honeypot(container, 'website'));
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { metricPage, referralSource, validMetric } from './siteMetrics';
+import { internalLinkMetric, metricPage, referralSource, validMetric } from './siteMetrics';
 import { musicGuides } from '../data/musicGuides';
 
 describe('privacy-bounded metrics', () => {
@@ -65,4 +65,54 @@ describe('privacy-bounded metrics', () => {
       expect(validMetric({ ...metric, filename: 'my-song.wav' })).toBe(false);
     }
   );
+});
+
+it('groups commercial pages and Google campaign tags without retaining queries', () => {
+  expect(metricPage('/guitar-strings-woodland-hills')).toBe('sales-guitar-strings');
+  expect(metricPage('/violin-strings-woodland-hills')).toBe('sales-violin-strings');
+  expect(metricPage('/cart')).toBe('cart');
+  expect(
+    referralSource('', '?utm_source=google_business_profile&utm_medium=organic&private=omit')
+  ).toBe('google_business_profile');
+  expect(validMetric({ event: 'purchase_verified', page: 'purchase', source: 'google' })).toBe(
+    true
+  );
+  expect(
+    validMetric({
+      event: 'purchase_verified',
+      page: 'purchase',
+      source: 'google',
+      session: 'private',
+    })
+  ).toBe(false);
+});
+
+it('registers every dedicated tuner with only the published instrument labels', () => {
+  for (const slug of ['guitar', 'violin', 'viola', 'bass', 'cello', 'ukulele']) {
+    const page = metricPage('/tuner/' + slug + '/');
+    expect(page).toBe('tuner-' + slug);
+    expect(
+      validMetric({ event: 'tuner_reference_started', page, source: 'google_business_profile' })
+    ).toBe(true);
+  }
+  expect(metricPage('/tuner/unknown-song.mp3')).toBeNull();
+  expect(metricPage('/tuner-guitar')).toBeNull();
+  expect(referralSource('', '?utm_source=gmb')).toBe('google_business_profile');
+});
+
+it.each([
+  ['/tuner/guitar', '/services/guitar-restringing-woodland-hills', 'tuner_repair_click'],
+  ['/studio/keybpm', '/shop', 'tuner_shop_click'],
+  ['/tuner/bass', '/product/five-string-bass-guitar', 'tuner_shop_click'],
+  ['/tuner/bass', '/guides/practice-bass-with-isolated-stems', null],
+  ['/shop/guitars-los-angeles', '/product/five-string-bass-guitar', 'product_link_click'],
+  [
+    '/guides/choose-a-violin-for-beginners',
+    '/product/brescia-acoustic-violin',
+    'product_link_click',
+  ],
+  ['/shop/guitars-los-angeles', '/shop/guitars-los-angeles#local-inquiry', 'inquiry_link_click'],
+  ['/shop/guitars-los-angeles', '/services/instrument-repair-los-angeles#repair-inquiry', null],
+])('maps %s → %s to a bounded action', (source, href, event) => {
+  expect(internalLinkMetric(source, new URL(href, 'https://sattarimusic.com'))).toBe(event);
 });

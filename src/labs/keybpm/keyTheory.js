@@ -2,16 +2,39 @@
 // and the pitches used by the by-ear checks (drone and scale).
 import { keyParts } from './keyBpm';
 
-// Conventional spellings: the key signature with the fewest accidentals
-// (B♭ major, not A♯ major). The analyzer's own strings use sharps throughout
-// and stay unchanged in storage, reports and CSV; these are display names.
+import {
+  MAJOR_TONICS,
+  musicalAccidentals,
+  parseTonic,
+  spellInterval,
+} from '../../utils/noteSpelling';
+import { spelledScale, noteFrequency } from './instrumentTheory';
+
+// Conventional spellings for reference lists: the key signature with the fewest
+// accidentals (B♭ major, not A♯ major). keyDisplay below keeps whatever spelling
+// the musician or the recording supplied; these are used where no spelling was
+// chosen (scale and chord lists, the key reference pages).
 const MAJOR_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const MINOR_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11, 12];
 const MINOR_STEPS = [0, 2, 3, 5, 7, 8, 10, 12];
 
-/** { tonic: 'F♯', mode: 'minor' } for display, or null. */
+/** Keep the tonic spelling chosen by the musician or supplied by the recording. */
 export function keyDisplay(key) {
+  const parts = keyParts(key);
+  return parts
+    ? { tonic: musicalAccidentals(parts.tonic), mode: parts.minor ? 'minor' : 'major' }
+    : null;
+}
+
+/** The key as shown on screen ('F# minor' → 'F♯ minor'); unknown strings pass through. */
+export function keyLabel(key) {
+  const shown = keyDisplay(key);
+  return shown ? `${shown.tonic} ${shown.mode}` : key || '';
+}
+
+/** { tonic: 'B♭', mode: 'major' } in the conventional spelling, or null. */
+export function conventionalKey(key) {
   const parts = keyParts(key);
   if (!parts) return null;
   return parts.minor
@@ -19,21 +42,19 @@ export function keyDisplay(key) {
     : { tonic: MAJOR_NAMES[parts.root], mode: 'major' };
 }
 
-/** 'A# major' → 'B♭ major' for display; unknown strings pass through. */
-export function keyLabel(key) {
-  const shown = keyDisplay(key);
+/** 'A# major' → 'B♭ major'. */
+export function conventionalKeyLabel(key) {
+  const shown = conventionalKey(key);
   return shown ? `${shown.tonic} ${shown.mode}` : key || '';
 }
 
-const NAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-/** The relative major or minor, in the analyzer's spelling ('C major' ↔ 'A minor'). */
 export function relativeKey(key) {
   const parts = keyParts(key);
   if (!parts) return '';
-  return parts.minor
-    ? `${NAME[(parts.root + 3) % 12]} major`
-    : `${NAME[(parts.root + 9) % 12]} minor`;
+  const relative = parts.minor
+    ? spellInterval(parseTonic(parts.tonic), 3, 3, 2)
+    : spellInterval(parseTonic(parts.tonic), 3, 9, 5);
+  return `${relative.name} ${parts.minor ? 'major' : 'minor'}`;
 }
 
 /** Position on the circle of fifths: index 0 = C major / A minor at the top, clockwise. */
@@ -49,25 +70,24 @@ export const CIRCLE = Array.from({ length: 12 }, (_, index) => {
   const majorRoot = (index * 7) % 12;
   return {
     index,
-    major: MAJOR_NAMES[majorRoot],
-    minor: `${MINOR_NAMES[(majorRoot + 9) % 12]}m`,
+    major: musicalAccidentals(MAJOR_TONICS[majorRoot]),
+    minor: musicalAccidentals(relativeKey(`${MAJOR_TONICS[majorRoot]} major`).split(' ')[0]) + 'm',
   };
 });
-
-const frequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 /** Tonic pitch in Hz (octave 3 by default: A3 = 220 Hz). */
 export function tonicFrequency(key, octave = 3) {
   const parts = keyParts(key);
-  return parts ? frequency(12 * (octave + 1) + parts.root) : null;
+  return parts ? noteFrequency(12 * (octave + 1) + parseTonic(parts.tonic).semitones) : null;
 }
 
 /** One octave of the major or natural minor scale from the tonic, in Hz. */
 export function scaleFrequencies(key, octave = 3) {
   const parts = keyParts(key);
   if (!parts) return [];
-  const base = 12 * (octave + 1) + parts.root;
-  return (parts.minor ? MINOR_STEPS : MAJOR_STEPS).map((step) => frequency(base + step));
+  return spelledScale(parts.tonic, parts.minor ? 'minor' : 'major', octave).map((note) =>
+    noteFrequency(note.midi)
+  );
 }
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -76,7 +96,7 @@ const ACCIDENTAL = { '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' };
 
 /** The seven scale notes, spelled one letter per degree (F major has B♭, not A♯). */
 export function scaleNotes(key) {
-  const shown = keyDisplay(key);
+  const shown = conventionalKey(key);
   const parts = keyParts(key);
   if (!shown || !parts) return [];
   const first = LETTERS.indexOf(shown.tonic[0]);
@@ -128,7 +148,10 @@ export function compatibleKeys(key) {
   if (!parts) return [];
   const mode = parts.minor ? 'minor' : 'major';
   return [
-    { key: relativeKey(key), relation: 'relative' },
+    {
+      key: `${ANALYZER_NAMES[(parts.root + (parts.minor ? 3 : 9)) % 12]} ${parts.minor ? 'major' : 'minor'}`,
+      relation: 'relative',
+    },
     { key: `${ANALYZER_NAMES[(parts.root + 5) % 12]} ${mode}`, relation: 'fifth down' },
     { key: `${ANALYZER_NAMES[(parts.root + 7) % 12]} ${mode}`, relation: 'fifth up' },
   ];

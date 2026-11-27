@@ -9,10 +9,10 @@ export const LAB_TOOLS = [
   },
   {
     id: 'keybpm',
-    name: 'Key & BPM',
+    name: 'Tuner & Key',
     path: '/studio/keybpm',
-    seoTitle: 'Key & BPM Finder: Song Key, Camelot & Tempo, Free',
-    blurb: 'Find key, Camelot and tempo, listen back, fix half/double time, export CSV.',
+    seoTitle: 'Online Music Tuner, Song Key Detector & BPM Finder',
+    blurb: 'Tune an instrument, practice scales, or find the key and tempo of a song.',
     stage: 'Beta',
   },
   {
@@ -26,14 +26,14 @@ export const LAB_TOOLS = [
     id: 'lyric',
     name: 'Lyric',
     path: '/studio/lyric',
-    seoTitle: 'Lyric: Free Lyric Video Maker with On-Device Alignment',
+    seoTitle: 'Lyric: Free Lyric Video Maker, Aligned On-Device',
     blurb: 'Drop a song and paste lyrics, align words on-device, animate and export MP4.',
   },
   {
     id: 'clean',
     name: 'Clean',
     path: '/studio/clean',
-    seoTitle: 'Clean: One-Click Voice Cleanup, Denoise & Loudness',
+    seoTitle: 'Clean: 1-Click Voice Cleanup, Denoise & Loudness',
     blurb:
       'Clean up a voice recording on-device: denoise, de-ess, compress and match loudness in one click.',
   },

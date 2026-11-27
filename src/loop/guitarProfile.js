@@ -68,12 +68,30 @@ export function profileChord(name, profile = DEFAULT_PROFILE) {
   const frets = shape.frets.map((f, s) =>
     f < 0 ? -1 : TUNING[s] + f - TUNINGS[p.tuning].notes[s]
   );
+  if (frets.every((f, s) => f === shape.frets[s]))
+    return { ...shape, name, fullName: original.fullName, shapeName };
   const held = frets.filter((f) => f > 0);
   if (
     frets.some((f) => f > 20 || f < -1) ||
     (held.length && Math.max(...held) - Math.min(...held) > 4)
   )
     return null;
+  // A finger may barre across a higher fret or a skipped string, but it must
+  // leave any lower sounding fret (including an open string) unobstructed.
+  const fingers = Array(6).fill(0);
+  let fingerCount = 0;
+  for (const fret of [...new Set(held)].sort((a, b) => a - b)) {
+    let finger = 0;
+    for (let string = 0; string < frets.length; string++) {
+      const target = frets[string];
+      if (target >= 0 && target < fret) finger = 0;
+      if (target === fret) {
+        if (!finger) finger = ++fingerCount;
+        fingers[string] = finger;
+      }
+    }
+  }
+  if (fingerCount > 4) return null;
   const start = held.length ? Math.min(...held) : 1;
   return {
     name,
@@ -81,7 +99,7 @@ export function profileChord(name, profile = DEFAULT_PROFILE) {
     shapeName,
     frets,
     startFret: start,
-    fingers: frets.map((f) => (f <= 0 ? 0 : Math.min(4, f - start + 1))),
+    fingers,
     suggested: true,
   };
 }

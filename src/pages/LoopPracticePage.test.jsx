@@ -63,9 +63,55 @@ it('rejects a non-audio import and allows returning to the demo', async () => {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
+it('links to each featured restringing guide from the song library', async () => {
+  await renderPage();
+  expect(screen.getByRole('link', { name: 'Music guides' })).toHaveAttribute('href', '/guides');
+  const guides = within(screen.getByRole('navigation', { name: 'String replacement guides' }));
+  for (const [name, slug] of [
+    ['Change Persian tar strings', 'how-to-change-persian-tar-strings'],
+    ['Change Persian setar strings', 'how-to-change-setar-strings'],
+    ['Change oud strings', 'how-to-change-oud-strings'],
+  ]) {
+    expect(guides.getByRole('link', { name })).toHaveAttribute('href', '/guides/' + slug);
+  }
+  expect(guides.getByRole('link', { name: 'All restringing guides' })).toHaveAttribute(
+    'href',
+    '/guides#string-replacement'
+  );
+});
+
+it('opens the linked guide section on entry and scrolls up when choosing a song', async () => {
+  const originalUrl = window.location.href;
+  const scroll = vi.fn();
+  const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    value: scroll,
+    configurable: true,
+  });
+  const scrollTo = vi.spyOn(window, 'scrollTo');
+  try {
+    window.history.replaceState(null, '', '/learn#restringing-guides');
+    await renderPage();
+    expect(scroll.mock.contexts).toContain(document.getElementById('restringing-guides'));
+    expect(scrollTo).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Learn Night shift' }));
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+  } finally {
+    window.history.replaceState(null, '', originalUrl);
+    scrollTo.mockRestore();
+    if (originalScroll)
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll);
+    else delete HTMLElement.prototype.scrollIntoView;
+  }
+});
+
 it('opens the chord library and updates an accessible fingering diagram', async () => {
   await renderPage();
-  fireEvent.click(screen.getByRole('button', { name: 'Tune your guitar' }));
+  expect(
+    screen.getByRole('link', { name: 'Tune your instrument and find song key' })
+  ).toHaveAttribute('href', '/studio/keybpm#live-tuner');
+  fireEvent.click(screen.getByRole('button', { name: 'Learn Night shift' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Explore & edit the full practice sheet' }));
   fireEvent.click(screen.getByRole('button', { name: 'Chord library', exact: true }));
   fireEvent.change(screen.getByLabelText('Find a chord'), { target: { value: 'F#' } });
   fireEvent.click(screen.getByRole('button', { name: 'F#m', exact: true }));

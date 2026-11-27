@@ -87,8 +87,12 @@ describe('StudioBookingForm', () => {
     });
     render(<StudioBookingForm />);
     await screen.findByText(/Online booking is not open/);
-    expect(screen.getByRole('button', { name: 'Request booking' })).toBeDisabled();
-    expect(screen.getByLabelText('Date')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Request booking' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Date')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Call the shop' })).toHaveAttribute(
+      'href',
+      'tel:+14244653020'
+    );
   });
   it('offers a retry after availability fails', async () => {
     fetchMock.mockRejectedValueOnce(new Error('Offline'));

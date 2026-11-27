@@ -275,7 +275,7 @@ try {
     const text = await status.textContent();
     const bpm = Number(/([\d.]+) BPM/.exec(text)?.[1]);
     assert(Math.abs(bpm - 120) / 120 < 0.04, text);
-    assert(await page.getByLabel('Count-in (1 bar)').isEnabled());
+    assert(await page.getByLabel('Count-in (4 beats)').isEnabled());
     return text;
   });
 

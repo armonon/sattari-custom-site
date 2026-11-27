@@ -6,7 +6,7 @@ import KeyBpmPage from '../keybpm/KeyBpmPage';
 import VoxPage from '../vox/VoxPage';
 import { LAB_TOOLS } from './audioLabTools';
 
-vi.mock('../../utils/seo', () => ({ SEO: () => null }));
+vi.mock('../../utils/seo', () => ({ SEO: () => null, StructuredData: () => null }));
 vi.mock('../../pwa/SattariAppMetadata', () => ({ default: () => null }));
 vi.mock('../split/SplitOffline', () => ({ default: () => null }));
 
@@ -18,10 +18,17 @@ class FakeWorker {
 afterEach(() => vi.unstubAllGlobals());
 
 describe.each([
-  ['Split', SplitPage, /Split into stems|Add a song/, /bleed between stems/, 'Alpha'],
-  ['Key & BPM', KeyBpmPage, /Add tracks/, /half or double time/, 'Beta'],
-  ['Vox', VoxPage, /Record a take/, /monophonic/, 'Alpha'],
-])('%s lab', (title, Page, control, limitation, stage) => {
+  ['Split', 'Split', SplitPage, /Split into stems|Add a song/, /bleed between stems/, 'Alpha'],
+  [
+    'Tuner & Key',
+    'Music Tuner & Song Key Detector',
+    KeyBpmPage,
+    /Add tracks/,
+    /half or double time/,
+    'Beta',
+  ],
+  ['Vox', 'Vox', VoxPage, /Record a take/, /monophonic/, 'Alpha'],
+])('%s lab', (title, heading, Page, control, limitation, stage) => {
   it('is labelled with its release stage, states its limits and links the other labs', async () => {
     vi.stubGlobal('Worker', FakeWorker);
     await act(async () => {
@@ -31,7 +38,7 @@ describe.each([
         </MemoryRouter>
       );
     });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(title);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(heading);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(stage);
     expect(screen.getAllByText(control).length).toBeGreaterThan(0);
     expect(screen.getByText(limitation)).toBeInTheDocument();

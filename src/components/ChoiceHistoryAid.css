@@ -1,0 +1,279 @@
+.choice-aid {
+  border: 1px solid var(--resource-line);
+  border-inline-start: 3px solid #39887d;
+  background: color-mix(in srgb, var(--resource-bg) 91%, #88b1a5);
+  border-radius: 0.6rem;
+  padding: clamp(1rem, 3.5vw, 1.65rem);
+  margin-block: 1.4rem;
+  color: var(--resource-ink);
+  min-width: 0;
+}
+.choice-aid h3,
+.choice-aid h4,
+.choice-aid dl,
+.choice-aid dd,
+.choice-aid figure {
+  margin: 0;
+}
+.choice-aid .choice-aid-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.95rem;
+}
+.choice-aid-heading h3 {
+  font-size: 1.2rem;
+  line-height: 1.35;
+}
+.choice-aid button {
+  font: inherit;
+  font-size: 0.87rem;
+  font-weight: 650;
+  cursor: pointer;
+  color: inherit;
+  border: 1px solid var(--resource-muted);
+  border-radius: 0.35rem;
+  background: transparent;
+  padding: 0.4rem 0.65rem;
+}
+.choice-aid button:focus-visible,
+.choice-aid input:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.choice-aid svg {
+  width: 100%;
+  max-width: 42rem;
+  display: block;
+  height: auto;
+}
+.choice-aid p {
+  margin: 0.8rem 0;
+}
+.choice-aid > :last-child {
+  margin-bottom: 0;
+}
+.choice-aid img {
+  max-width: 100%;
+  display: block;
+  height: auto;
+}
+.choice-aid .choice-worksheet table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+.choice-worksheet th,
+.choice-worksheet td {
+  border-bottom: 1px solid var(--resource-line);
+  padding: 0.4rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.choice-worksheet th:first-child {
+  width: 34%;
+}
+.choice-worksheet input,
+.choice-fields input {
+  display: block;
+  color: inherit;
+  background: var(--resource-bg);
+  font: inherit;
+  padding: 0.4rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--resource-line);
+  border-radius: 0.25rem;
+}
+.choice-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.choice-fields label {
+  flex: 1 1 10rem;
+  font-size: 0.9rem;
+}
+.choice-fields input {
+  margin-top: 0.35rem;
+}
+.choice-audio {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+}
+.choice-audio span,
+.choice-aid figcaption {
+  font-size: 0.89rem;
+  line-height: 1.45;
+}
+.choice-audio audio {
+  width: 100%;
+  max-width: 31rem;
+}
+.choice-route + .choice-route {
+  margin-top: 1rem;
+}
+.choice-aid .choice-route ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0;
+  margin: 0.45rem 0;
+  gap: 0.35rem;
+}
+.choice-aid .choice-route li {
+  padding: 0.3rem 0.6rem;
+  margin: 0;
+  border: 1px solid var(--resource-line);
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+}
+.choice-aid .choice-route li + li::before {
+  content: '→ ';
+}
+.choice-bands {
+  display: flex;
+  gap: 0.35rem;
+}
+.choice-bands > div {
+  flex: 1;
+  border: 1px solid var(--resource-line);
+  padding: 0.35rem;
+  text-align: center;
+  background: var(--resource-bg);
+}
+.choice-bands small,
+.choice-bands strong,
+.choice-photo-strip figcaption strong {
+  display: block;
+}
+.choice-bars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+}
+.choice-bars h4 {
+  margin-bottom: 0.3rem;
+}
+.choice-timeline > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.55fr) 1fr;
+  gap: 0.7rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--resource-line);
+}
+.choice-timeline dt {
+  font-weight: 680;
+}
+.choice-aid .choice-object,
+.choice-aid .choice-bridge {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) 3fr;
+  gap: 1rem;
+  align-items: center;
+}
+.choice-aid .choice-bridge {
+  margin-block: 1rem;
+}
+.choice-aid .choice-marked-photo {
+  position: relative;
+  display: block;
+  width: min(100%, 14rem);
+  justify-self: center;
+}
+.choice-aid .choice-marked-photo img {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0;
+}
+.choice-aid .choice-marked-photo svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.choice-aid figcaption a,
+.choice-aid dd a,
+.choice-aid dt a {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+.choice-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.choice-photo-strip img {
+  object-fit: contain;
+  height: 11rem;
+  width: 100%;
+  margin-bottom: 0.55rem;
+  background: var(--resource-bg);
+}
+@media (max-width: 550px) {
+  .choice-timeline > div,
+  .choice-aid .choice-object,
+  .choice-aid .choice-bridge {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .choice-object img,
+  .choice-bridge img {
+    max-height: 13rem;
+    object-fit: contain;
+    margin-bottom: 0.45rem;
+  }
+  .choice-photo-strip {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .choice-photo-strip figure {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .choice-photo-strip img {
+    height: 7.5rem;
+    margin: 0;
+  }
+}
+@media print {
+  body:has([data-choice-print])
+    *:not(:has([data-choice-print])):not([data-choice-print]):not([data-choice-print] *) {
+    display: none !important;
+  }
+  body:has([data-choice-print]),
+  body:has([data-choice-print]) *:has([data-choice-print]) {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: white !important;
+  }
+  [data-choice-print] {
+    color: black;
+    background: white;
+    border: 1px solid #888;
+  }
+  [data-choice-print] button {
+    display: none;
+  }
+  [data-choice-print] input {
+    background: white;
+    color: black;
+    border: 0;
+    border-bottom: 1px solid #777;
+    min-height: 1.7em;
+  }
+}

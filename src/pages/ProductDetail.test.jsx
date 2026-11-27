@@ -6,6 +6,9 @@ import ProductDetail from './ProductDetail';
 import { CartProvider } from '../context/CartContext';
 import { InventoryProvider } from '../context/InventoryContext';
 import { deferred } from '../test/deferred';
+import { trackSiteEvent } from '../utils/siteMeasurement';
+
+vi.mock('../utils/siteMeasurement', () => ({ trackSiteEvent: vi.fn() }));
 
 const EMPTY_CATALOG = { overrides: {}, added: [], hidden: [] };
 
@@ -86,6 +89,43 @@ it('exposes item-specific violin specifications and all real gallery images to s
 afterEach(() => {
   localStorage.clear();
   vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
+
+it('offers string-fit help without presenting installation as part of the product price', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('violin-strings');
+  await screen.findByRole('heading', { level: 1, name: 'Violin Strings' });
+  expect(screen.getByText(/Installation is a separate service inquiry/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Violin string fit and replacement' })).toHaveAttribute(
+    'href',
+    '/violin-strings-woodland-hills'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await waitFor(() =>
+    expect(storedCart()).toEqual([expect.objectContaining({ slug: 'violin-strings', quantity: 1 })])
+  );
+});
+
+it('measures a loaded product once and only emits cart_add when quantity is added', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  localStorage.setItem(
+    'sattari-cart-v1',
+    JSON.stringify([{ slug: 'cymbal-felts', size: null, color: null, quantity: 9 }])
+  );
+  renderProduct('cymbal-felts');
+  await waitFor(() => expect(trackSiteEvent).toHaveBeenCalledWith('product_view'));
+  fireEvent.click(screen.getByRole('button', { name: 'Increase quantity' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await screen.findByText(/Added 1\. 10 is the most/);
+  fireEvent.click(screen.getByRole('button', { name: /Added/ }));
+  expect(trackSiteEvent.mock.calls).toEqual([['product_view'], ['cart_add']]);
 });
 
 it('starts each product with its own photo, color and quantity', async () => {
@@ -240,4 +280,58 @@ it('shows the retry as busy while the catalog is asked again', async () => {
   expect(busy).toHaveAttribute('aria-busy', 'true');
   await act(async () => retry.resolve(jsonResponse({ error: 'Unavailable' }, 503)));
   expect(await screen.findByRole('button', { name: 'Try again' })).toBeEnabled();
+});
+
+it('opens a linked cymbal size at its real price and adds that option to the cart', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('sattari-effect-cymbal?size=17%22');
+  await waitFor(() => expect(screen.getByLabelText('Choose Size')).toHaveValue('17"'));
+  expect(screen.getByRole('link', { name: 'Link to this option' })).toHaveAttribute(
+    'href',
+    '/product/sattari-effect-cymbal?size=17%22'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Add to Cart' }));
+  await waitFor(() =>
+    expect(storedCart()).toEqual([expect.objectContaining({ size: '17"', quantity: 1 })])
+  );
+  await waitFor(() => {
+    const product = [...document.head.querySelectorAll('script[type="application/ld+json"]')]
+      .map((node) => JSON.parse(node.textContent))
+      .find((data) => data['@type'] === 'Product');
+    expect(product.offers.find((offer) => offer.price === 80).url).toBe(
+      'https://sattarimusic.com/product/sattari-effect-cymbal?size=17%22'
+    );
+  });
+});
+it('keeps an explicitly linked sold-out color selected rather than substituting another color', async () => {
+  const stock = { 'miami-electric-violin::::Black': 4, 'miami-electric-violin::::Red': 0 };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('miami-electric-violin?color=Red', { snapshot: { stock, catalog: EMPTY_CATALOG } });
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Red (out of stock)' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  );
+  expect(
+    screen.getByRole('button', { name: 'MIAMI - Electric Violin is out of stock', exact: true })
+  ).toBeDisabled();
+});
+
+it('links the five-string bass to the playable low-B tuner preset', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => jsonResponse({ stock: {}, catalog: EMPTY_CATALOG }))
+  );
+  renderProduct('five-string-bass-guitar');
+  expect(await screen.findByRole('link', { name: /tune this five-string bass/i })).toHaveAttribute(
+    'href',
+    '/tuner/bass?preset=bass-five'
+  );
 });

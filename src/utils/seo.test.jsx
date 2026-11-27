@@ -55,7 +55,7 @@ describe('search metadata', () => {
   });
 
   it('targets distinct online music needs while keeping repair search local', () => {
-    expect(PAGE_SEO.home.title).toBe('Learn, Shop & Create Music');
+    expect(PAGE_SEO.home.title).toBe('Woodland Hills Instruments, Repairs & Music Tools');
     expect(PAGE_SEO.home.description).toContain('worldwide');
     expect(PAGE_SEO.shop.title).toMatch(/Buy.*Online/);
     expect(PAGE_SEO.learn.title).toContain('Learn Guitar Online');

@@ -4,7 +4,7 @@ import { SITE_ORIGIN } from '../data/siteSeo';
 // (src/entry-prerender.jsx). The pages themselves keep the Alpha label.
 export const LAB_SEO = {
   canvas: {
-    title: 'Canvas: Audio-Reactive Spotify Canvas & Reels Loops',
+    title: 'Canvas: Audio-Reactive Spotify Canvas & Reels',
     description:
       'Turn a track and cover art into an audio-reactive 9:16 loop for Spotify Canvas, Reels and TikTok. Runs in your browser; nothing is uploaded.',
     url: `${SITE_ORIGIN}/studio/canvas`,

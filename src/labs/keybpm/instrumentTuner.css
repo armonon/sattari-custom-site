@@ -1,0 +1,585 @@
+.instrument-lab {
+  --tuner-accent-wash: color-mix(in srgb, var(--alab-accent) 10%, var(--alab-panel));
+  /* The ink palette of the Key & BPM meter and its hub tile. */
+  --tuner-display: #0f0e0c;
+  --tuner-phosphor: #f2ead9;
+  --tuner-display-muted: #a89f8b;
+  border: 1px solid var(--alab-line);
+  border-radius: 18px;
+  background: var(--alab-panel);
+  padding: clamp(16px, 3vw, 36px);
+  scroll-margin-top: 110px;
+  min-width: 0;
+}
+.instrument-lab h2 {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  font-weight: 620;
+}
+.instrument-lab-heading > p,
+.instrument-scales > p,
+.instrument-service > p {
+  margin-top: 8px;
+  max-width: 70ch;
+  color: var(--alab-muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+.instrument-console {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: stretch;
+  margin-top: clamp(20px, 3vw, 30px);
+}
+.instrument-setup {
+  display: grid;
+  gap: 22px;
+  align-content: start;
+  align-self: center;
+  min-width: 0;
+}
+.instrument-controls {
+  display: grid;
+  gap: 12px;
+}
+.instrument-preset {
+  grid-template-columns: minmax(0, 1fr) minmax(94px, 0.42fr);
+}
+.instrument-controls label,
+.instrument-field-label {
+  color: var(--alab-text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.instrument-controls label {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+}
+.instrument-controls select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 8px;
+  background-color: var(--alab-raised);
+  padding-inline: 10px 2px;
+  font-size: 0.91rem;
+  font-weight: 450;
+  text-overflow: ellipsis;
+}
+.instrument-strings,
+.instrument-scale-notes {
+  display: grid;
+  gap: 7px;
+}
+.instrument-strings {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+.instrument-strings button,
+.instrument-scale-notes button {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 59px;
+  border: 1px solid var(--alab-line);
+  border-radius: 9px;
+  background: var(--alab-panel);
+  color: var(--alab-text);
+  padding: 7px 2px;
+  font-variant-numeric: tabular-nums;
+}
+.instrument-strings strong,
+.instrument-scale-notes strong {
+  font-size: 1.12rem;
+  font-weight: 620;
+  line-height: 1.25;
+}
+.instrument-strings strong {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1px 5px;
+}
+.instrument-string-name {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.instrument-strings small,
+.instrument-scale-notes small {
+  color: var(--alab-muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+.instrument-strings button[aria-pressed='true'] {
+  border: 2px solid var(--alab-accent);
+  background: var(--tuner-accent-wash);
+  color: var(--alab-accent);
+}
+.instrument-strings button[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+.instrument-reference {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+}
+.instrument-reference > p,
+.instrument-chromatic {
+  font-size: 0.81rem;
+  color: var(--alab-muted);
+  line-height: 1.5;
+}
+.instrument-hear,
+.instrument-mic,
+.instrument-song-key {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 9px 16px;
+}
+.instrument-lab .instrument-hear {
+  min-width: min(190px, 100%);
+  border: 1px solid var(--alab-accent);
+  background: var(--alab-accent);
+  color: var(--alab-accent-ink);
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+.instrument-lab .instrument-hear[data-playing='true'] {
+  color: var(--alab-accent);
+  background: var(--tuner-accent-wash);
+}
+.instrument-sound-help {
+  color: var(--alab-muted);
+  font-size: 0.875rem;
+}
+.instrument-sound-help summary {
+  width: fit-content;
+  padding-block: 6px;
+  cursor: pointer;
+  color: var(--alab-accent);
+}
+.instrument-sound-help p {
+  margin: 4px 0 8px;
+}
+.instrument-sound-help button {
+  min-height: 44px;
+}
+.instrument-readout {
+  display: grid;
+  align-content: center;
+  position: relative;
+  min-width: 0;
+  gap: 12px;
+  padding: clamp(18px, 2.7vw, 34px);
+  border: 1px solid rgba(242, 234, 217, 0.16);
+  border-radius: 14px;
+  color: #f2ead9;
+  background-color: var(--tuner-display);
+}
+.instrument-screen-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: var(--tuner-display-muted);
+  font-size: 0.7rem;
+  font-weight: 550;
+}
+.instrument-screen-top > span:first-child,
+.instrument-screen-label {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.instrument-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.instrument-signal i {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--tuner-display-muted);
+  border-radius: 50%;
+}
+.instrument-signal[data-active='true'] i {
+  background: var(--tuner-phosphor);
+  border-color: var(--tuner-phosphor);
+  box-shadow: 0 0 9px rgba(228, 184, 115, 0.3);
+}
+.instrument-pitch {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.instrument-screen-label {
+  font-size: 0.65rem;
+  color: var(--tuner-display-muted);
+}
+.instrument-pitch > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 11px;
+}
+.instrument-pitch strong {
+  font-size: clamp(3.8rem, 7vw, 6.4rem);
+  font-weight: 560;
+  letter-spacing: -0.065em;
+  line-height: 1.08;
+  color: var(--tuner-phosphor);
+}
+.instrument-pitch > div > span {
+  font-family: ui-monospace, monospace;
+  font-size: 0.94rem;
+  color: var(--tuner-display-muted);
+}
+.instrument-gauge {
+  padding: 0 4px;
+}
+.instrument-gauge-caption {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: var(--tuner-display-muted);
+  font-size: 0.67rem;
+}
+.instrument-meter {
+  position: relative;
+  height: 23px;
+  border-bottom: 1px solid #7b9787;
+  background:
+    linear-gradient(90deg, #8da497 1px, transparent 1px) left bottom / 25% 21px repeat-x,
+    linear-gradient(90deg, #668072 1px, transparent 1px) left bottom / 5% 12px repeat-x;
+}
+.instrument-meter::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 21px;
+  background: #8da497;
+}
+.instrument-sweet-spot {
+  position: absolute;
+  inset: 0 45%;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(0deg, #89c49c46, #89c49c10);
+  border-bottom: 2px solid var(--tuner-phosphor);
+}
+.instrument-meter::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  height: 24px;
+  background: var(--tuner-phosphor);
+}
+.instrument-needle {
+  position: absolute;
+  bottom: -2px;
+  width: 3px;
+  height: 32px;
+  transform: translateX(-50%);
+  background: #ffda99;
+  box-shadow: 0 0 6px #ffc77d44;
+  transition: left 80ms linear;
+}
+.instrument-needle::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: -1px;
+  border-inline: 4.5px solid transparent;
+  border-top: 6px solid #ffda99;
+}
+.instrument-gauge-labels {
+  position: relative;
+  height: 14px;
+  margin-top: 5px;
+  font:
+    0.66rem/1.2 ui-monospace,
+    monospace;
+  color: var(--tuner-display-muted);
+}
+.instrument-gauge-labels span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+.instrument-gauge-labels span:first-child {
+  left: 0;
+  transform: none;
+}
+.instrument-gauge-labels span:nth-child(2) {
+  left: 25%;
+}
+.instrument-gauge-labels span:nth-child(3) {
+  left: 50%;
+}
+.instrument-gauge-labels span:nth-child(4) {
+  left: 75%;
+}
+.instrument-gauge-labels span:last-child {
+  right: 0;
+  transform: none;
+}
+.instrument-readout .instrument-feedback {
+  color: var(--tuner-display-muted);
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.instrument-feedback strong {
+  color: #ffda99;
+}
+.instrument-readout[data-in-tune='true'] .instrument-feedback strong {
+  color: #8fd4a0;
+}
+.instrument-lab .instrument-mic {
+  justify-self: center;
+  border: 1px solid rgba(228, 184, 115, 0.55);
+  color: #f2ead9;
+  background: rgba(228, 184, 115, 0.12);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.instrument-lab .instrument-mic:focus-visible {
+  outline-color: var(--tuner-phosphor);
+}
+.instrument-lab .instrument-note {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--alab-muted);
+}
+.instrument-lab .alab-error {
+  margin-top: 12px;
+}
+.instrument-scales,
+.instrument-service {
+  margin-top: clamp(22px, 3vw, 32px);
+  border-top: 1px solid var(--alab-line);
+  padding-top: clamp(22px, 3vw, 32px);
+}
+.instrument-scales {
+  scroll-margin-top: 110px;
+}
+.instrument-scales h2 {
+  font-size: clamp(1.28rem, 2vw, 1.55rem);
+}
+.instrument-song-key {
+  background: var(--tuner-accent-wash);
+  border: 1px solid var(--alab-accent);
+  color: var(--alab-accent);
+  margin-top: 12px;
+}
+.instrument-scale-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0 12px;
+}
+.instrument-scale-notes {
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+}
+.instrument-actions {
+  margin-top: 12px;
+}
+.instrument-actions .alab-button {
+  min-height: 44px;
+}
+.instrument-service h3 {
+  font-size: 1.07rem;
+}
+.instrument-service div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+  margin-top: 10px;
+}
+.instrument-service a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--alab-accent);
+  font-weight: 550;
+  font-size: 0.9rem;
+  text-underline-offset: 4px;
+}
+@media (hover: hover) {
+  .instrument-strings button:hover,
+  .instrument-scale-notes button:hover {
+    border-color: var(--alab-accent);
+    background: var(--tuner-accent-wash);
+  }
+  .instrument-hear:hover {
+    filter: brightness(1.08);
+  }
+  .instrument-lab .instrument-mic:hover {
+    background: rgba(228, 184, 115, 0.22);
+  }
+}
+@media (max-width: 760px) {
+  .instrument-console {
+    grid-template-columns: 1fr;
+  }
+  .instrument-setup {
+    gap: 16px;
+  }
+  .instrument-strings {
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  }
+  .instrument-readout {
+    padding-block: 22px;
+  }
+}
+@media (max-width: 520px) {
+  .instrument-strings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .instrument-scale-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .instrument-scale-controls label:last-child {
+    grid-column: 1 / -1;
+  }
+  .instrument-scale-notes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .instrument-hear {
+    width: 100%;
+  }
+  .instrument-screen-top {
+    font-size: 0.67rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .instrument-needle {
+    transition: none;
+  }
+}
+
+.instrument-strings:has(button:nth-child(4):last-child) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* The tuner reads on the same meter as Key & BPM: needle = cents from the note. */
+.instrument-dial {
+  position: relative;
+  width: min(100%, 400px);
+  margin-inline: auto;
+  aspect-ratio: 1;
+}
+.instrument-dial-meter,
+.instrument-dial-meter svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.instrument-dial .instrument-pitch {
+  position: absolute;
+  inset: 54% 0 auto;
+  pointer-events: none;
+}
+.instrument-dial .instrument-pitch strong {
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+}
+.instrument-dial .instrument-pitch > div {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.kb-meter-svg .kb-meter-ring {
+  fill: none;
+  stroke: #f2ead9;
+  stroke-opacity: 0.12;
+}
+.kb-meter-svg .kb-meter-ring.is-inner {
+  stroke-opacity: 0.08;
+}
+.kb-meter-svg .kb-meter-key {
+  fill: #f2ead9;
+  fill-opacity: 0.45;
+  font:
+    22px ui-monospace,
+    monospace;
+}
+.kb-meter-svg .kb-meter-tick {
+  stroke: #f2ead9;
+  stroke-opacity: 0.3;
+  stroke-width: 1.5;
+}
+.kb-meter-svg .kb-meter-tick.is-long {
+  stroke-opacity: 0.75;
+  stroke-width: 3;
+}
+.kb-tuner-sweet {
+  fill: none;
+  stroke: #e4b873;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-opacity: 0.55;
+}
+.kb-tuner-side {
+  fill: #a89f8b;
+  font:
+    17px ui-monospace,
+    monospace;
+  letter-spacing: 4px;
+}
+.kb-meter-svg .kb-meter-needle {
+  transform-origin: 720px 500px;
+  transition: transform 0.12s linear;
+}
+.kb-meter-svg .kb-meter-needle line {
+  stroke: #e4b873;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.kb-meter-svg .kb-meter-hub {
+  fill: #e4b873;
+}
+.kb-meter-svg .kb-meter-pin {
+  fill: #0f0e0c;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-needle line {
+  stroke: #8fd4a0;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-hub,
+.kb-tuner-meter.is-in-tune .kb-tuner-sweet {
+  fill: none;
+  stroke: #8fd4a0;
+  stroke-opacity: 1;
+}
+.kb-tuner-meter.is-in-tune .kb-meter-hub {
+  fill: #8fd4a0;
+  stroke: none;
+}
+.instrument-readout[data-in-tune='true'] .instrument-pitch strong {
+  color: #8fd4a0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-meter-svg .kb-meter-needle {
+    transition: none;
+  }
+}

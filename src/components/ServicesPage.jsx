@@ -12,6 +12,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import ServiceInquiryForm from './ServiceInquiryForm';
+import ServicePlanningDetails from './ServicePlanningDetails';
+import ShopRepairFinder from './ShopRepairFinder';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, businessSchema } from '../data/siteSeo';
 
@@ -41,10 +43,10 @@ const services = [
     kicker: 'Creative space',
     icon: DoorOpen,
     title: 'Studio & rehearsal',
-    short: '$25 per hour or $60 for four hours. Request a time.',
+    short: '$25 per hour or $60 for four hours. Call to arrange a time.',
     href: '/services/rehearsal-space-los-angeles',
-    body: 'Choose your date and time. We review your request, then email a payment link. Your booking is finalized when payment succeeds.',
-    points: ['$25 per hour', '$60 for a four-hour session', 'Staff approval before payment'],
+    body: 'Call with your date, session length and equipment needs. We will confirm availability and arrangements before your visit. Online booking is not open yet.',
+    points: ['$25 per hour', '$60 for a four-hour session', 'Availability confirmed by the shop'],
   },
   {
     value: 'lessons',
@@ -206,11 +208,11 @@ export default function ServicesPage() {
               </span>
               <div>
                 <h2 id="service-request-title">
-                  {isBooking ? 'Book a time' : 'Send your request'}
+                  {isBooking ? 'Arrange a session' : 'Send your request'}
                 </h2>
                 <p>
                   {isBooking
-                    ? 'Request first. Pay after approval.'
+                    ? 'Check availability and confirm arrangements with the shop.'
                     : 'Share the timing and a few useful details. No commitment required.'}
                 </p>
               </div>
@@ -223,6 +225,9 @@ export default function ServicesPage() {
             />
           </section>
         </div>
+
+        <ServicePlanningDetails service={serviceValue} />
+        {serviceValue === 'repairs' && <ShopRepairFinder />}
 
         <section className="services-location" id="visit" aria-labelledby="services-location-title">
           <div className="services-location-copy">

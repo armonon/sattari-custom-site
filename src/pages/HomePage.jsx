@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Drum,
   GraduationCap,
+  Gauge,
   Headphones,
   MapPin,
   Music2,
@@ -18,9 +19,11 @@ import OptimizedProductImage from '../components/OptimizedProductImage';
 import HomeHeroBackground from '../components/HomeHeroBackground';
 import HomeLocalGallery from '../components/HomeLocalGallery';
 import { BUSINESS, PAGE_SEO } from '../data/siteSeo';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import { bookingPrice, money } from '../utils/studioBooking';
 import { SEO } from '../utils/seo';
 import './HomePage.css';
+import '../components/StringsDiscovery.css';
 
 const categories = [
   {
@@ -46,7 +49,7 @@ const categories = [
   },
   {
     name: 'Guitar & bass',
-    note: 'Six strings. Or four.',
+    note: 'Electric, acoustic, classical & bass.',
     path: '/shop/guitar-bass',
     image: '/sattari site/guitars/flame-stratocaster.jpg',
     color: '#bce2c8',
@@ -120,6 +123,18 @@ const tools = [
     status: 'Beta',
     color: '#b9e3c3',
   },
+  {
+    name: 'Tuner & Key',
+    category: 'Understand a song',
+    detail: 'Tune guitar, bass or violin, practice scales, and find song key and BPM.',
+    path: '/studio/keybpm',
+    reference: '/tools/key-bpm',
+    image: '/images/tools/key-bpm.jpg',
+    alt: 'Key & BPM showing a musical key and tempo correction',
+    icon: Gauge,
+    status: 'Beta',
+    color: '#f2dc75',
+  },
 ];
 
 export default function HomePage() {
@@ -155,28 +170,34 @@ export default function HomePage() {
           <div className="home-width home-hero-inner">
             <div className="home-hero-copy">
               <p className="home-eyebrow">
-                <span className="home-location-dot" /> For musicians worldwide
+                <span className="home-location-dot" /> Woodland Hills shop · Music tools worldwide
               </p>
               <h1 id="home-title">
                 Sattari<span>Music.</span>
               </h1>
               <p className="home-hero-tagline">
-                A world of sound.
+                Find your instrument.
                 <br />
-                All yours to play.
+                Keep it playing.
               </p>
               <p className="home-hero-description">
-                Learn guitar. Find your instrument. Create music.
-                <br className="home-desktop-break" /> California roots. Worldwide sound.
+                Shop guitars, violins, cymbals and accessories.
+                <br className="home-desktop-break" /> Repairs and setups in Woodland Hills by
+                appointment.
               </p>
               <div className="home-hero-actions">
                 <Link to="/shop" className="home-button home-button-blue">
-                  Find your sound <ArrowUpRight size={18} />
+                  Shop instruments <ArrowUpRight size={18} />
                 </Link>
-                <a href="#home-hub" className="home-text-link">
-                  Explore the Hub <ArrowDown size={17} />
-                </a>
+                <Link to="/services/instrument-repair-los-angeles" className="home-text-link">
+                  Request a repair <Wrench size={17} />
+                </Link>
               </div>
+              <p className="home-hero-contact">
+                <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
+                <Link to="/visit">Arrange a Woodland Hills visit</Link>
+                <a href="#home-hub">Explore free music tools</a>
+              </p>
             </div>
             <span className="home-hero-edition">
               Independent spirit.
@@ -260,6 +281,21 @@ export default function HomePage() {
                 Online, or in person <MapPin size={14} />
               </Link>
             </div>
+            <section className="strings-discovery" aria-labelledby="home-strings-title">
+              <h2 id="home-strings-title">Guitar and violin strings in Woodland Hills</h2>
+              <p>
+                A standard guitar string set is {`$${guitarStringPricing.standardSet}`} at our
+                Woodland Hills shop. We carry Ernie Ball and other premium strings. Call to check
+                your gauge and arrange pickup, or book a restringing appointment.
+              </p>
+              <nav aria-label="Strings and restringing">
+                <Link to="/guitar-strings-woodland-hills">Guitar strings</Link>
+                <Link to="/violin-strings-woodland-hills">Violin strings</Link>
+                <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+                <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
+                <Link to="/studio/keybpm#live-tuner">Tune your instrument</Link>
+              </nav>
+            </section>
           </div>
         </section>
 
@@ -310,10 +346,10 @@ export default function HomePage() {
                 className="home-button home-button-dark"
                 to="/services/rehearsal-space-los-angeles#local-inquiry"
               >
-                Request a time <ArrowUpRight size={17} />
+                Arrange a session <ArrowUpRight size={17} />
               </Link>
               <span className="home-booking-note">
-                Los Angeles time. Subject to availability and confirmation. Payment after approval.
+                Los Angeles time. Call to confirm your session; online booking is not open yet.
               </span>
             </div>
             <div className="home-address">
@@ -352,7 +388,18 @@ export default function HomePage() {
             </div>
             <div className="home-tools">
               {tools.map(
-                ({ name, category, detail, path, image, alt, icon: Icon, status, color }) => (
+                ({
+                  name,
+                  category,
+                  detail,
+                  path,
+                  reference,
+                  image,
+                  alt,
+                  icon: Icon,
+                  status,
+                  color,
+                }) => (
                   <article className="home-tool" key={path} style={{ '--tool-color': color }}>
                     <Link to={path} className="home-tool-link" aria-label={`Open Sattari ${name}`}>
                       <div className="home-tool-eyebrow">
@@ -371,7 +418,7 @@ export default function HomePage() {
                         <img src={image} alt={alt} width="1440" height="1000" loading="lazy" />
                       </div>
                     </Link>
-                    <Link to={`/tools${path}`} className="home-tool-details">
+                    <Link to={reference || `/tools${path}`} className="home-tool-details">
                       Formats, privacy & limits <ArrowRight size={14} />
                     </Link>
                   </article>

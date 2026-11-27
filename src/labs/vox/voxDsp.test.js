@@ -6,6 +6,7 @@ import {
   diatonicAbove,
   hzToMidi,
   keyLabel,
+  scaleNoteNames,
   parseKey,
   psola,
   renderVox,
@@ -47,8 +48,14 @@ describe('scale helpers', () => {
   it('parses keys including flats and defaults to major', () => {
     expect(parseKey('A minor')).toEqual({ root: 9, mode: 'minor' });
     expect(parseKey('Bb')).toEqual({ root: 10, mode: 'major' });
+    expect(parseKey('eb minor')).toEqual({ root: 3, mode: 'minor' });
+    expect(parseKey('B♯ major')).toEqual({ root: 0, mode: 'major' });
+    expect(parseKey('C♭ minor')).toEqual({ root: 11, mode: 'minor' });
     expect(parseKey('nope')).toBeNull();
-    expect(keyLabel({ root: 1, mode: 'major' })).toBe('C# major');
+    expect(keyLabel({ root: 1, mode: 'major' })).toBe('Db major');
+    expect(scaleNoteNames(5, 'major')[10]).toBe('Bb');
+    expect(scaleNoteNames(6, 'major')[5]).toBe('E#');
+    expect(scaleNoteNames(6, 'major')[0]).toBeNull();
   });
 
   it('snaps to the nearest scale note', () => {

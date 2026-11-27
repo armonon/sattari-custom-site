@@ -51,6 +51,7 @@ const PUBLIC_ROUTES = {
 
 const SCHEDULES = {
   'checkout-maintenance': '*/10 * * * *',
+  'instagram-token-refresh': '0 10 * * 1,4',
   'nightly-backup': '0 9 * * *',
   'studio-booking-maintenance': '*/5 * * * *',
 };

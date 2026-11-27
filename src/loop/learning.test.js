@@ -27,6 +27,15 @@ describe('musical lesson structure', () => {
       true
     );
   });
+  it('keeps rests before the first attack in a bar and through the end of a practice phrase', () => {
+    const [bar] = scoreMeasures([{ midi: 64, beatStart: 9, beatDuration: 1 }], 60, 4, 12);
+    expect(bar.number).toBe(3);
+    expect(bar.events.map(({ beat, beats, rest }) => [beat, beats, rest])).toEqual([
+      [8, 1, true],
+      [9, 1, false],
+      [10, 2, true],
+    ]);
+  });
   it('cancels accidentals, inserts rests and ties notes across the barline', () => {
     const bars = scoreMeasures(
       [

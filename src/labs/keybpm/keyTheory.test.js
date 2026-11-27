@@ -5,6 +5,7 @@ import {
   circlePosition,
   keyDisplay,
   compatibleKeys,
+  conventionalKeyLabel,
   diatonicChords,
   keyLabel,
   relativeKey,
@@ -20,7 +21,11 @@ describe('key theory', () => {
     expect(keyDisplay('nonsense')).toBeNull();
     expect(relativeKey('A minor')).toBe('C major');
     expect(relativeKey('C major')).toBe('A minor');
-    expect(relativeKey('D# major')).toBe('C minor');
+    expect(relativeKey('Eb major')).toBe('C minor');
+    expect(relativeKey('D# major')).toBe('B# minor');
+    expect(relativeKey('Bb minor')).toBe('Db major');
+    expect(relativeKey('Cb major')).toBe('Ab minor');
+    expect(keyDisplay('B♭ major')).toEqual({ tonic: 'B♭', mode: 'major' });
   });
 
   it('places relative keys in the same slot and fifths one slot apart', () => {
@@ -28,6 +33,7 @@ describe('key theory', () => {
     expect(circlePosition('A minor')).toEqual({ index: 0, ring: 'minor' });
     expect(circlePosition('G major').index).toBe(1);
     expect(circlePosition('F major').index).toBe(11);
+    expect(CIRCLE[10]).toMatchObject({ major: 'B♭', minor: 'Gm' });
     expect(CIRCLE[1]).toMatchObject({ major: 'G', minor: 'Em' });
     // The circle order matches the Camelot wheel: one slot = one Camelot step.
     for (const slot of CIRCLE) {
@@ -38,6 +44,8 @@ describe('key theory', () => {
 
   it('gives the tonic and scale pitches', () => {
     expect(tonicFrequency('A minor')).toBeCloseTo(220, 6);
+    expect(tonicFrequency('B# major', 3)).toBeCloseTo(tonicFrequency('C major', 4), 6);
+    expect(tonicFrequency('Cb major', 4)).toBeCloseTo(tonicFrequency('B major', 3), 6);
     expect(tonicFrequency('C major', 4)).toBeCloseTo(261.626, 2);
     const minor = scaleFrequencies('A minor');
     expect(minor).toHaveLength(8);
@@ -47,11 +55,12 @@ describe('key theory', () => {
   });
 
   it('spells keys the conventional way without changing the analyzer strings', () => {
-    expect(keyLabel('A# major')).toBe('B♭ major');
-    expect(keyLabel('D# major')).toBe('E♭ major');
-    expect(keyLabel('G# minor')).toBe('G♯ minor');
-    expect(keyLabel('A# minor')).toBe('B♭ minor');
+    expect(conventionalKeyLabel('A# major')).toBe('B♭ major');
+    expect(conventionalKeyLabel('D# major')).toBe('E♭ major');
+    expect(conventionalKeyLabel('G# minor')).toBe('G♯ minor');
+    expect(conventionalKeyLabel('A# minor')).toBe('B♭ minor');
     expect(keyLabel('')).toBe('');
+    expect(keyLabel('A# major')).toBe('A♯ major');
     expect(CIRCLE.map((slot) => slot.major).join(' ')).toBe('C G D A E B F♯ D♭ A♭ E♭ B♭ F');
   });
 

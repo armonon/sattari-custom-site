@@ -129,3 +129,68 @@ describe('ServiceInquiryForm', () => {
     }
   );
 });
+
+it('delivers instrument and timing through the existing details contract on both transports', async () => {
+  render(<ServiceInquiryForm initialService="repairs" />);
+  fillInquiry();
+  fireEvent.change(screen.getByLabelText('Instrument / gear and model (optional)'), {
+    target: { value: 'Acoustic guitar, model A' },
+  });
+  fireEvent.change(screen.getByLabelText('Preferred timing (optional)'), {
+    target: { value: 'Before Friday' },
+  });
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 404 });
+  fireEvent.click(screen.getByRole('button', { name: 'Send service request' }));
+  await screen.findByRole('status');
+  const netlify = new URLSearchParams(fetchMock.mock.calls[0][1].body);
+  const fallback = JSON.parse(fetchMock.mock.calls[1][1].body);
+  expect(netlify.get('details')).toBe(
+    'Instrument / gear: Acoustic guitar, model A\n\nPreferred timing: Before Friday\n\nA guitar setup'
+  );
+  expect(fallback.details).toBe(netlify.get('details'));
+  expect(fallback).not.toHaveProperty('instrument');
+  expect(fallback).not.toHaveProperty('timing');
+});
+
+it('keeps music-tool feedback focused while service intake captures instrument and timing', () => {
+  const { rerender } = render(<ServiceInquiryForm initialService="tool-feedback" />);
+  expect(screen.getByLabelText('Your feedback')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Instrument / gear and model (optional)')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Preferred timing (optional)')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send feedback' })).toBeInTheDocument();
+  rerender(<ServiceInquiryForm initialService="repairs" />);
+  expect(screen.getByLabelText('Instrument / gear and model (optional)')).toBeInTheDocument();
+  expect(screen.getByLabelText('Preferred timing (optional)')).toBeInTheDocument();
+});
+
+it('delivers a guitar string appointment request on both transports and resets the pack preferences', async () => {
+  render(<ServiceInquiryForm initialService="accessories" guitarStringInquiry />);
+  fireEvent.change(screen.getByLabelText('Your Name'), { target: { value: 'Alex' } });
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alex@example.com' } });
+  fireEvent.change(screen.getByLabelText('Guitar type'), {
+    target: { value: 'Steel-string acoustic guitar' },
+  });
+  fireEvent.change(screen.getByLabelText('What would you like to check?'), {
+    target: { value: 'Arrange a restringing appointment' },
+  });
+  fireEvent.change(screen.getByLabelText('Preferred brand, set or gauge (optional)'), {
+    target: { value: '12–53' },
+  });
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 404 });
+  fireEvent.click(screen.getByRole('button', { name: 'Send string inquiry' }));
+  await screen.findByRole('status');
+  const netlify = new URLSearchParams(fetchMock.mock.calls[0][1].body);
+  const fallback = JSON.parse(fetchMock.mock.calls[1][1].body);
+  expect(netlify.get('details')).toContain(
+    'Guitar string request: Arrange a restringing appointment'
+  );
+  expect(netlify.get('details')).toContain('Guitar type: Steel-string acoustic guitar');
+  expect(netlify.get('details')).toContain('Preferred set or gauge: 12–53');
+  expect(fallback.details).toBe(netlify.get('details'));
+  expect(fallback).not.toHaveProperty('preferredPack');
+  fireEvent.click(screen.getByRole('button', { name: 'Start another request' }));
+  expect(screen.getByLabelText('Preferred brand, set or gauge (optional)')).toHaveValue('');
+  fireEvent.change(screen.getByLabelText('Service Type'), { target: { value: 'lessons' } });
+  expect(screen.queryByLabelText('Guitar type')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Describe what you need')).toBeRequired();
+});

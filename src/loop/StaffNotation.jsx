@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { scoreMeasures, polyphonicScoreMeasures } from './score';
 
-export default function StaffNotation({ notes, active, bpm, polyphonic = false }) {
+export default function StaffNotation({ notes, active, bpm, endBeat, polyphonic = false }) {
   const root = useRef(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function StaffNotation({ notes, active, bpm, polyphonic = false }
           Vex.Flow;
         const measures = polyphonic
           ? polyphonicScoreMeasures(notes, bpm)
-          : scoreMeasures(notes, bpm);
+          : scoreMeasures(notes, bpm, 4, endBeat);
         const widths = measures.map((bar, i) =>
           Math.max(230, bar.events.length * 55 + (i ? 40 : 110))
         );
@@ -91,7 +91,7 @@ export default function StaffNotation({ notes, active, bpm, polyphonic = false }
       cancelled = true;
       element?.replaceChildren();
     };
-  }, [notes, active, bpm, polyphonic]);
+  }, [notes, active, bpm, endBeat, polyphonic]);
   return (
     <div className="loop-score-scroll">
       {error && <p role="alert">{error}</p>}

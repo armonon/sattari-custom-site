@@ -30,6 +30,7 @@ import {
   StemSeparatorPage,
   SplitPage,
   KeyBpmPage,
+  InstrumentTunerPage,
   VoxPage,
   LyricPage,
   CleanPage,
@@ -99,6 +100,11 @@ const ROUTES: RouteDefinition[] = [
   localPage('/encino-violin-shop', 'encino-violins'),
   localPage('/services/violin-repair-los-angeles', 'violin-repair'),
   localPage('/services/guitar-setup-los-angeles', 'guitar-setup'),
+  localPage('/guitar-strings-woodland-hills', 'guitar-strings'),
+  localPage('/violin-strings-woodland-hills', 'violin-strings'),
+  localPage('/services/guitar-restringing-woodland-hills', 'guitar-restringing'),
+  localPage('/services/violin-restringing-woodland-hills', 'violin-restringing'),
+  localPage('/services/string-replacement-woodland-hills', 'string-replacement'),
   localPage('/los-angeles-music-store', 'music-store'),
   localPage('/woodland-hills-music-store', 'woodland-hills'),
   localPage('/encino-music-store', 'encino'),
@@ -131,6 +137,7 @@ const ROUTES: RouteDefinition[] = [
   // Studio alpha labs: Split, Key & BPM, Vox (src/labs).
   { path: '/studio/split', page: SplitPage },
   { path: '/studio/keybpm', page: KeyBpmPage },
+  { path: '/tuner/:instrument', page: InstrumentTunerPage },
   { path: '/studio/vox', page: VoxPage },
   // Wave-3 alpha tools.
   { path: '/studio/lyric', page: LyricPage },
@@ -192,7 +199,10 @@ const App: FC = () => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   // Alpha lab tools: /studio/<lab> (Split, Key & BPM, Vox, Canvas, Pocket) and /press.
-  const isLabPage = pagePath.startsWith('/studio/') || LAB_PATHS.includes(pagePath);
+  const isLabPage =
+    pagePath.startsWith('/studio/') ||
+    pagePath.startsWith('/tuner/') ||
+    LAB_PATHS.includes(pagePath);
   const isAudioWorkspace =
     isLabPage || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
   const isResourcePage = /^\/(guides|tools|keys|bpm|visit|privacy)(\/|$)/.test(pagePath);
@@ -266,7 +276,9 @@ const App: FC = () => {
   }, [cartOpen]);
 
   return (
-    <div className={`site-shell${pagePath === '/' ? ' is-home' : ''}`}>
+    <div
+      className={`site-shell${pagePath === '/' ? ' is-home' : ''}${pagePath === '/shop' ? ' is-shop' : ''}`}
+    >
       <OrganizationSchema />
       <ScrollManager />
       {STUDIO_APP_PAGE.test(pagePath) && <StudioAppStatus />}
@@ -344,7 +356,7 @@ const App: FC = () => {
 
       {!isAudioWorkspace && <Footer />}
       <SiteMeasurement />
-      {!isAudioWorkspace && !isResourcePage && <ShopAssistant />}
+      {!isAudioWorkspace && !isResourcePage && <ShopAssistant compact={pagePath === '/shop'} />}
     </div>
   );
 };

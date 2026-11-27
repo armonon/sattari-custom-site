@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import KeyBpmHero from './KeyBpmHero';
-import { keyLabel } from './keyTheory';
+import { KeyBpmMeter } from './KeyBpmHero';
+import { circlePosition, keyLabel } from './keyTheory';
 import {
   AudioLines,
+  Disc3,
   Download,
   FolderOpen,
   Layers,
   LoaderCircle,
   Pause,
+  Piano,
   Play,
   Save,
   SlidersHorizontal,
@@ -16,6 +18,9 @@ import {
   Trash2,
 } from 'lucide-react';
 import KeyReadout from './KeyReadout';
+import InstrumentTuner from './InstrumentTuner';
+import { instrumentTunerPages } from '../../data/instrumentTunerPages';
+import { StructuredData } from '../../utils/seo';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop } from '../audio/AudioLabParts';
 import { downloadBlob, isAudioFile } from '../audio/audioLabFiles';
@@ -52,7 +57,7 @@ import {
 import './keyBpm.css';
 
 const LIMITS = [
-  'Key is one global estimate per track (Sattari AutoKey). Key changes, modal or atonal music are not reported separately.',
+  'Key is one global estimate per track (Sattari AutoKey). It compares major and minor keys. A one- or two-note exercise can give you a tuning pitch without enough information to identify its key. A track that changes key or uses a mode may need to be checked by ear.',
   'BPM can land on half or double time. "Rough" means the strict estimator declined and a single 60-second pass was used, folded into 70–180 BPM.',
   '"Tentative" means the best key only narrowly beat the runner-up, which is shown as the alternative. In Sattari\'s own 17-recording test set, tentative keys were exact only 1 time in 7, while supported keys were exact 5 times in 6: check a tentative key and its alternative by ear. A small set, not a genre benchmark.',
   'Your corrections are labels on the result. They do not stretch, speed up or transpose the audio.',
@@ -228,6 +233,11 @@ function CorrectionEditor({ row, onChange, onClose }) {
                 ? `Detected: ${keyLabel(row.result.key)} (${row.result.camelot})`
                 : 'No key detected'}
             </option>
+            {row.user?.key && !ALL_KEYS.includes(row.user.key) && (
+              <option value={row.user.key}>
+                {row.user.key} ({camelot(row.user.key)})
+              </option>
+            )}
             {ALL_KEYS.map((key) => (
               <option key={key} value={key}>
                 {keyLabel(key)} ({camelot(key)})
@@ -284,6 +294,7 @@ export default function KeyBpmPage() {
   const [loadingExample, setLoadingExample] = useState(false);
   const [audition, setAudition] = useState({ id: null, playing: false, time: 0, duration: 0 });
   const [focusId, setFocusId] = useState(null);
+  const [clicking, setClicking] = useState(false);
   const imports = useRef(Promise.resolve());
   const pendingImports = useRef(0);
   const reportPicker = useRef(null);
@@ -652,24 +663,84 @@ export default function KeyBpmPage() {
     rows.find((row) => row.id === audition.id && row.status === 'done') ||
     [...rows].reverse().find((row) => row.status === 'done');
 
+  // Exact playback position for a click that follows the song (null when paused).
+  const songTime = useCallback(() => {
+    const element = audio.current;
+    return element && !element.paused ? element.currentTime : null;
+  }, []);
+  // The meter shows whatever the readout below is showing.
+  const shown = focusRow ? effectiveValues(focusRow.result, focusRow.user) : null;
+
   return (
     <AudioLabShell
       tool="keybpm"
-      title="Key & BPM"
+      title="Music Tuner & Song Key Detector"
       badge="Beta"
       eyebrow="Sattari Music"
-      summary="Find the key, Camelot code and tempo of one song or a whole folder. Listen back, fix half- or double-time, tap the beat, and save the values you trust."
-      description="Detect the musical key, Camelot code and BPM of one or many tracks in your browser. Audition each song, correct half/double tempo or the key, and export CSV or a report."
+      summary="Tune one note by ear or microphone, or practice a scale. For a whole song, add a recording to find its musical key and tempo."
+      description="Tune by ear or microphone with a free chromatic tuner and instrument presets. Find a song’s key, Camelot code and tempo in BPM from an audio file on your device."
       limits={LIMITS}
       limitsTitle="What the estimates can and cannot tell you"
       related={{ path: '/stem-separator', label: 'Stem Separator' }}
     >
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          '@id': 'https://sattarimusic.com/studio/keybpm#application',
+          name: 'Sattari Music Tuner & Song Key Detector',
+          url: 'https://sattarimusic.com/studio/keybpm',
+          applicationCategory: 'MusicApplication',
+          operatingSystem: 'Web browser',
+          isAccessibleForFree: true,
+          featureList: [
+            'Live chromatic tuner for single notes',
+            'Continuous open-string reference tones with adjustable concert pitch',
+            'Guitar, bass, violin, viola, cello and ukulele presets',
+            'Major, minor, pentatonic, blues, Dorian and Mixolydian scales',
+            'Recorded song key, Camelot and BPM estimates',
+            'Local audio processing',
+          ],
+        }}
+      />
       <div className="alab-workspace">
-        {!focusRow && <KeyBpmHero />}
+        <KeyBpmMeter
+          bpm={shown?.bpm ?? null}
+          bpmText={shown?.bpm != null ? formatBpm(shown.bpm) : ''}
+          keyName={shown?.key ? keyLabel(shown.key) : ''}
+          camelot={shown?.camelot || ''}
+          keyIndex={shown?.key ? (circlePosition(shown.key)?.index ?? null) : null}
+          beating={clicking}
+        />
+        <nav className="kb-section-nav" aria-label="Tuner and key detector sections">
+          <a href="#live-tuner">
+            <AudioLines size={16} aria-hidden="true" /> Live tuner
+          </a>
+          <a href="#scales">
+            <Piano size={16} aria-hidden="true" /> Scales
+          </a>
+          <a href="#song-key">
+            <Disc3 size={16} aria-hidden="true" /> Song key &amp; BPM
+          </a>
+        </nav>
+        <InstrumentTuner
+          songKey={focusRow ? effectiveValues(focusRow.result, focusRow.user).key : null}
+          onBeforeListen={stopAudition}
+        />
+        <nav className="kb-instrument-guides" aria-label="Instrument tuning guides">
+          <span>Instrument tuning guides</span>
+          {instrumentTunerPages.map(({ slug, path, name }) => (
+            <Link to={path} key={slug}>
+              {name} tuner
+            </Link>
+          ))}
+        </nav>
         {received && <HandoffNotice handoff={received} destination="Key & BPM" />}
         <LabDrop
-          title="Add tracks"
-          hint="Drop one song or many · WAV, MP3, FLAC, M4A, OGG · up to 10 min each · measured on this device, nothing is uploaded"
+          id="song-key"
+          title="Song key detector & BPM finder"
+          inputLabel="Add tracks"
+          hint="Add tracks to estimate their musical key and tempo in beats per minute. Choose WAV, MP3, FLAC, M4A or OGG files, up to 10 minutes each."
           multiple
           disabled={checking}
           onFiles={addFiles}
@@ -684,6 +755,11 @@ export default function KeyBpmPage() {
             <AudioLines size={15} aria-hidden="true" /> Try the 8-second example
           </button>
         </LabDrop>
+        <p className="alab-note">
+          Finding the key of a beat? Choose a section with bass, chords or melody. A drums-only loop
+          can give you a tempo even when its key is unclear.{' '}
+          <Link to="/guides/find-song-key-and-bpm">How to check a song’s key and BPM by ear</Link>
+        </p>
         {errors.length > 0 && (
           <div className="alab-error" role="alert">
             {errors.slice(0, 6).map((error) => (
@@ -708,7 +784,11 @@ export default function KeyBpmPage() {
         <audio
           ref={audio}
           preload="metadata"
-          onPlay={() => setAudition((current) => ({ ...current, playing: true }))}
+          onPlay={() => {
+            window.dispatchEvent(new Event('sattari:stop-reference'));
+            window.dispatchEvent(new Event('sattari:reference-tone'));
+            setAudition((current) => ({ ...current, playing: true }));
+          }}
           onPause={() => setAudition((current) => ({ ...current, playing: false }))}
           onEnded={() => setAudition((current) => ({ ...current, playing: false }))}
           onTimeUpdate={(event) => {
@@ -735,6 +815,8 @@ export default function KeyBpmPage() {
               if (user) trackSiteEventOnce(`${focusRow.id}:corrected`, 'keybpm_corrected');
             }}
             onSeparate={() => toSeparator(focusRow)}
+            onClickChange={setClicking}
+            getSongTime={songTime}
           />
         )}
 

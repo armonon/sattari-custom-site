@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import KeyReadout from './KeyReadout';
@@ -21,9 +21,11 @@ const result = {
 const row = (user) => ({ id: 'r1', file: new File(['a'], 'groove.wav'), result, user });
 const idle = { id: null, playing: false, time: 0, duration: 0 };
 let oscillators;
+let contexts;
 
 beforeEach(() => {
   oscillators = [];
+  contexts = [];
   const param = () => ({
     value: 0,
     setTargetAtTime() {},
@@ -33,12 +35,18 @@ beforeEach(() => {
   vi.stubGlobal(
     'AudioContext',
     class {
-      currentTime = 0;
+      constructor() {
+        contexts.push(this);
+      }
+      state = 'running';
+      get currentTime() {
+        return performance.now() / 1000;
+      }
       destination = {};
       resume() {}
-      close() {
-        return Promise.resolve();
-      }
+      close = vi.fn(async () => {
+        this.state = 'closed';
+      });
       createGain() {
         return { gain: param(), connect() {} };
       }
@@ -55,6 +63,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -96,15 +105,15 @@ it('stores a half-time choice and notes as corrections, never changing the detec
   expect(result.bpm).toBe(120);
 });
 
-it('plays a drone on the tonic and stops it, and the T key taps the tempo', () => {
+it('plays a drone on the tonic and stops it, and the T key taps the tempo', async () => {
   setup();
   const drone = screen.getByRole('button', { name: 'Drone on A' });
   fireEvent.click(drone);
-  expect(drone).toHaveAttribute('aria-pressed', 'true');
+  await waitFor(() => expect(drone).toHaveAttribute('aria-pressed', 'true'));
   expect(oscillators.map((osc) => Math.round(osc.frequency.value))).toEqual([110, 165, 220]);
   fireEvent.click(drone);
   expect(drone).toHaveAttribute('aria-pressed', 'false');
-  expect(oscillators[0].stop).toHaveBeenCalled();
+  await waitFor(() => expect(oscillators[0].stop).toHaveBeenCalled());
   const now = vi.spyOn(performance, 'now');
   [0, 500, 1000, 1500].forEach((t) => {
     now.mockReturnValue(t);
@@ -112,6 +121,100 @@ it('plays a drone on the tonic and stops it, and the T key taps the tempo', () =
   });
   expect(screen.getByText('120 BPM from 4 taps')).toBeInTheDocument();
   now.mockRestore();
+});
+
+it('skips an enharmonic duplicate when offering a second tonic to audition', () => {
+  const source = row({ key: 'Bb major' });
+  source.result = { ...source.result, key: 'A# major', camelot: '6B', alternative: 'G minor' };
+  setup(undefined, { row: source });
+  expect(screen.getByRole('button', { name: 'Drone on B♭' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Drone on the second choice (G minor)' })
+  ).toBeInTheDocument();
+});
+
+it('reports unavailable output and releases a context that rejects resume', async () => {
+  setup();
+  const button = screen.getByRole('button', { name: 'Drone on A' });
+  const Base = window.AudioContext;
+  vi.stubGlobal(
+    'AudioContext',
+    class {
+      constructor() {
+        throw new Error('Device unavailable');
+      }
+    }
+  );
+  fireEvent.click(button);
+  expect(screen.getByRole('alert')).toHaveTextContent(/check your audio output/i);
+  vi.stubGlobal(
+    'AudioContext',
+    class extends Base {
+      state = 'suspended';
+      resume() {
+        return Promise.reject(new Error('Output denied'));
+      }
+    }
+  );
+  fireEvent.click(button);
+  await waitFor(() => expect(contexts[0].close).toHaveBeenCalledTimes(1));
+  expect(screen.getByRole('alert')).toHaveTextContent(/tap the tone again/i);
+  expect(button).toHaveAttribute('aria-pressed', 'false');
+  expect(oscillators).toHaveLength(0);
+});
+
+it('ignores a late startup failure after a different tone starts, and releases on pagehide', async () => {
+  setup();
+  let reject;
+  const Base = window.AudioContext;
+  vi.stubGlobal(
+    'AudioContext',
+    class extends Base {
+      state = 'suspended';
+      resume() {
+        return new Promise((_, no) => {
+          reject = no;
+        });
+      }
+    }
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Drone on A' }));
+  vi.stubGlobal('AudioContext', Base);
+  const alternative = screen.getByRole('button', { name: /Drone on the second choice/ });
+  fireEvent.click(alternative);
+  await act(async () => {
+    reject(new Error('Superseded'));
+  });
+  await waitFor(() => expect(alternative).toHaveAttribute('aria-pressed', 'true'));
+  expect(contexts[0].close).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('alert')).toBeNull();
+  act(() => window.dispatchEvent(new Event('pagehide')));
+  expect(contexts[1].close).toHaveBeenCalledTimes(1);
+  expect(alternative).toHaveAttribute('aria-pressed', 'false');
+});
+
+it('closes the scale context after the last note and disposes a frozen output', () => {
+  setup();
+  fireEvent.click(screen.getByRole('button', { name: 'Play the A minor scale' }));
+  expect(oscillators).toHaveLength(8);
+  act(() => oscillators[7].onended());
+  expect(contexts[0].close).toHaveBeenCalledTimes(1);
+  vi.useFakeTimers();
+  const Base = window.AudioContext;
+  vi.stubGlobal(
+    'AudioContext',
+    class extends Base {
+      get currentTime() {
+        return 0;
+      }
+    }
+  );
+  const button = screen.getByRole('button', { name: 'Drone on A' });
+  fireEvent.click(button);
+  act(() => vi.advanceTimersByTime(4250));
+  expect(button).toHaveAttribute('aria-pressed', 'false');
+  expect(contexts[1].close).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('alert')).toHaveTextContent(/check your audio output/i);
 });
 
 it('lists the chords and compatible keys, and clicks at the shown tempo', () => {

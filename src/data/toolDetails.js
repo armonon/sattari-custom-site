@@ -70,19 +70,27 @@ export const toolDetails = {
   'key-bpm': {
     key: 'key-bpm',
     slug: 'key-bpm',
-    name: 'Sattari Key & BPM',
+    name: 'Sattari Tuner & Key',
     path: '/studio/keybpm',
     status: 'Beta',
     description:
-      'Find the key, Camelot code and BPM of songs in your browser. Supported files, half/double tempo, corrections, reports, CSV and privacy.',
+      'Compare live chromatic tuning with song key and BPM detection. See supported audio formats, concert pitches, scale playback, export options and privacy details.',
     summary:
-      'Estimate the musical key, Camelot code and tempo of one song or a folder, listen back, correct half- or double-time and the key, and export a CSV or report that keeps the detection and your corrections apart.',
+      'Choose the live tuner to match an open string by ear or measure one note with your microphone. Choose the song key detector to estimate the key, Camelot code and tempo of a recording. Both run on your device. Song reports keep the original measurements alongside your corrections.',
     screenshot: '/images/tools/key-bpm.jpg',
     screenshotWidth: 1280,
     screenshotHeight: 858,
     screenshotCaption:
       'Actual Key & BPM result for the original Sattari demo (C major, 8B, 120 BPM), with the tempo set to half time by the user. The detected value stays visible beside the correction.',
     facts: [
+      [
+        'Live chromatic tuner',
+        'Choose Chromatic to see the nearest note and how many cents sharp or flat you are. For open strings, choose standard or Drop D guitar, four- or five-string bass, violin, viola, cello or high-G ukulele. Tap a string to hear it continuously, or select a string while the microphone is on to set your tuning target. A quiet room helps the microphone pick out low notes.',
+      ],
+      [
+        'Calibration and scales',
+        'Choose a concert A of 432, 440, 441, 442 or 443 Hz. Hear individual notes or play a whole major, natural minor, pentatonic, blues, Dorian or Mixolydian scale. After analyzing a song, Use song key sets the practice scale to the selected track’s key.',
+      ],
       [
         'Input',
         'Audio files your browser can decode (WAV, MP3, FLAC, M4A, OGG; AIFF and M4A support varies by browser). Mono or stereo, up to 10 minutes and 200 MB each, up to 200 tracks in a list.',
@@ -105,7 +113,7 @@ export const toolDetails = {
       ],
       [
         'Privacy',
-        'Audio is decoded and measured on your device and never uploaded. Reports and CSV contain names and measurements, not audio.',
+        'Audio is decoded and measured on your device. Live microphone sound is never recorded or uploaded. The microphone starts on request and stops when the page is hidden. Reports and CSV contain track names and measurements.',
       ],
       [
         'Storage',

@@ -47,13 +47,9 @@ export default function InstagramFeed() {
     );
   }
 
-  if (error || posts.length === 0) {
-    return (
-      <div className="instagram-placeholder">
-        <span>{error || 'No Instagram posts available yet.'}</span>
-      </div>
-    );
-  }
+  // Nothing to show: the section's profile link stands on its own, so no
+  // error box is put in front of visitors.
+  if (error || posts.length === 0) return null;
 
   return (
     <div className="instagram-feed-grid" aria-label="Recent Instagram photos">

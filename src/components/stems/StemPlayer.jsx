@@ -1349,9 +1349,9 @@ export default function StemPlayer({
                 {grid.status === 'working'
                   ? 'Finding the beat…'
                   : gridReady
-                    ? `Beat grid · ${grid.bpm} BPM (estimated)`
+                    ? `Beat grid · ${grid.bpm} BPM (estimated) · grouped in fours`
                     : grid.status === 'none'
-                      ? 'No steady beat found: loops and clicks work without a grid'
+                      ? 'No steady beat found. Set A and B manually to loop a passage.'
                       : ''}
               </span>
             </h3>
@@ -1367,14 +1367,14 @@ export default function StemPlayer({
               />
             </label>
             <label className="stem-player-switch">
-              <span>Count-in (1 bar)</span>
+              <span>Count-in (4 beats)</span>
               <input
                 type="checkbox"
                 role="switch"
                 checked={countIn}
                 disabled={!gridReady}
                 onChange={(event) => setCountIn(event.target.checked)}
-                aria-label="Count-in (1 bar)"
+                aria-label="Count-in (4 beats)"
               />
             </label>
             <label className="stem-player-switch">

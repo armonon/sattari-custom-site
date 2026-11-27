@@ -64,7 +64,7 @@ it('lists the Studio alpha labs', () => {
   );
   for (const [name, route, stage] of [
     ['Split', '/studio/split', 'Alpha'],
-    ['Key & BPM', '/studio/keybpm', 'Beta'],
+    ['Tuner & Key', '/studio/keybpm', 'Beta'],
     ['Vox', '/studio/vox', 'Alpha'],
   ]) {
     expect(screen.getByRole('link', { name: new RegExp(`^${stage}\\s*${name}`) })).toHaveAttribute(

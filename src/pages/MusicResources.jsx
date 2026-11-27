@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowRight, Download, MapPin, Phone } from 'lucide-react';
 import { SEO, StructuredData } from '../utils/seo';
@@ -8,31 +9,49 @@ import {
   organizationSchema,
   websiteSchema,
 } from '../data/siteSeo';
-import { musicGuides } from '../data/musicGuides';
+import { guideCollections, musicGuides } from '../data/musicGuides';
+import { guideRevisionDates } from '../data/guideRevisionDates';
+import { instrumentTunerPages } from '../data/instrumentTunerPages';
 import { separatorQuestions } from '../data/stemSeparatorContent';
 import { toolDetails, toolReferencePath } from '../data/toolDetails';
 import { getProductBySlug } from '../data/catalog';
 import NotFoundPage from '../components/NotFoundPage';
 import { AnalyticsChoice } from '../components/SiteMeasurement';
+import GuideFinder from '../components/GuideFinder';
+import ChoiceHistoryAid from '../components/ChoiceHistoryAid';
+import StringLessonAid from '../components/StringLessonAid';
+import { PracticeGuideAid } from '../components/PracticeGuideAid';
 import './MusicResources.css';
 
 const guidePath = (guide) => `/guides/${guide.slug}`;
 const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
+  const resourceLabels = {
+    '/studio/keybpm#live-tuner': 'Open the live instrument tuner',
+    '/keys': 'Notes and chords for all 24 keys',
+    '/bpm': 'Tempo reference: every BPM',
+    '/guitar-strings-woodland-hills': 'Guitar strings in Woodland Hills',
+    '/violin-strings-woodland-hills': 'Violin strings in Woodland Hills',
+    '/services/guitar-restringing-woodland-hills': 'Guitar restringing and string replacement',
+    '/services/violin-restringing-woodland-hills': 'Violin restringing and string fitting',
+    '/services/string-replacement-woodland-hills': 'Broken guitar, bass or violin string help',
+  };
   const guide = musicGuides.find((item) => guidePath(item) === path);
   const tool = Object.values(toolDetails).find((item) => toolReferencePath(item) === path);
+  const tuner = instrumentTunerPages.find((page) => page.path === path);
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
-  if (path === '/keys') return 'Notes and chords for all 24 keys';
-  if (path === '/bpm') return 'Tempo reference: every BPM';
   return (
+    resourceLabels[path] ||
     guide?.linkLabel ||
     guide?.title ||
+    tuner?.heading ||
     product?.name ||
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
 }
 export function Page({
   title,
+  seoTitle = title,
   description,
   children,
   image,
@@ -43,7 +62,7 @@ export function Page({
   return (
     <section className="resource-page">
       <SEO
-        title={title}
+        title={seoTitle}
         description={description}
         url={absoluteUrl(pathname)}
         image={image}
@@ -59,6 +78,7 @@ export function Page({
       <div className="resource-shell">
         <nav className="resource-nav" aria-label="Music resources">
           <Link to="/guides">Guides</Link>
+          <Link to="/learn">Guitar song lessons</Link>
           <Link to="/hub">Music tools</Link>
           <Link to="/visit">Visit Sattari</Link>
         </nav>
@@ -121,35 +141,127 @@ function StemAudioExample({ includeOriginal = true }) {
 }
 
 export function GuideIndex() {
+  const tasks = [
+    [
+      'Change a string',
+      [
+        ['Acoustic guitar', 'how-to-change-acoustic-guitar-strings'],
+        ['Classical guitar', 'how-to-change-classical-guitar-strings'],
+        ['Electric guitar', 'how-to-change-electric-guitar-strings'],
+        ['Bass guitar', 'how-to-change-bass-guitar-strings'],
+        ['Violin', 'how-to-change-a-violin-string'],
+        ['Viola', 'how-to-change-a-viola-string'],
+        ['Cello', 'how-to-change-a-cello-string'],
+        ['Ukulele', 'how-to-change-ukulele-strings'],
+        ['Persian tar', 'how-to-change-persian-tar-strings'],
+        ['Setar', 'how-to-change-setar-strings'],
+        ['Oud', 'how-to-change-oud-strings'],
+      ],
+    ],
+    [
+      'Choose an instrument',
+      [
+        ['Violin', 'choose-a-violin-for-beginners'],
+        ['Viola', 'how-to-choose-a-viola'],
+        ['Acoustic guitar', 'choose-a-beginner-acoustic-guitar'],
+        ['Electric guitar', 'how-to-choose-an-electric-guitar'],
+        ['Bass guitar', 'how-to-choose-a-bass-guitar'],
+        ['Cymbals', 'choose-your-first-cymbals'],
+      ],
+    ],
+    [
+      'Identify a sound',
+      [
+        ['Violin and viola', 'violin-vs-viola'],
+        ['Tar, setar and sitar', 'tar-setar-and-sitar'],
+        ['Instruments of Iran', 'instruments-of-iran'],
+        ['Snare drum tunings', 'how-to-tune-a-snare-drum#before-and-after'],
+        ['Song key and tempo', 'find-song-key-and-bpm'],
+      ],
+    ],
+  ];
   return (
     <Page
-      title="Learn: Music Guides"
-      description="Practical music guides from Sattari Music: tune your instrument, find the key of a song, choose a violin or drumsticks, care for your gear, separate stems, and more."
+      title="Music Guides"
+      seoTitle="Beginner Music Guides for Strings, Instrument Care and Practice"
+      description="Learn how to choose a first instrument, change strings with close-up photos, compare sounds by ear, and practice with song stems in Sattari’s music guides."
     >
-      <p className="resource-lead">Good questions. More music.</p>
-      <Link className="resource-action" to="/learn">
-        Practice guitar in the Sattari Learn app
-        <ArrowRight size={18} />
-      </Link>
-      <div className="guide-list">
-        {musicGuides.map((guide) => (
-          <article key={guide.slug}>
-            <Link className="guide-image" to={guidePath(guide)} tabIndex={-1} aria-hidden="true">
-              <img src={guide.image} alt="" loading="lazy" width="1280" height="800" />
-            </Link>
-            <div>
-              <p className="resource-label">{guide.category}</p>
-              <h2>
-                <Link to={guidePath(guide)}>{guide.title}</Link>
-              </h2>
-              <p>{guide.answer}</p>
-              <Link className="resource-link" to={guidePath(guide)}>
-                Read guide <ArrowRight size={16} />
-              </Link>
-            </div>
-          </article>
+      <StructuredData
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          '@id': absoluteUrl('/guides#collection'),
+          url: absoluteUrl('/guides'),
+          name: 'Music Guides',
+          dateModified: guideRevisionDates['/guides'],
+          isPartOf: { '@id': websiteSchema['@id'] },
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: musicGuides.length,
+            itemListElement: guideCollections
+              .flatMap((group) => group.guides)
+              .map((guide, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                name: guide.title,
+                url: absoluteUrl(guidePath(guide)),
+              })),
+          },
+        }}
+      />
+      <p className="resource-lead">
+        Compare two instruments by ear, follow a string from bridge to tuning peg, or turn a song
+        into a backing track for practice.
+      </p>
+      <GuideFinder />
+      <nav className="guide-task-links" aria-label="Start with a task">
+        {tasks.map(([label, links]) => (
+          <details key={label}>
+            <summary>{label}</summary>
+            <ul>
+              {links.map(([name, slug]) => (
+                <li key={slug}>
+                  <Link to={'/guides/' + slug}>{name}</Link>
+                </li>
+              ))}
+            </ul>
+          </details>
         ))}
-      </div>
+      </nav>
+      <nav aria-label="Guide topics" id="guide-topics" className="guide-topics">
+        {guideCollections.map((collection) => (
+          <a key={collection.id} href={`#${collection.id}`}>
+            {collection.title}
+          </a>
+        ))}
+      </nav>
+      {guideCollections.map((collection) => (
+        <section className="guide-collection" key={collection.id} aria-labelledby={collection.id}>
+          <h2 id={collection.id}>{collection.title}</h2>
+          <div className="guide-list">
+            {collection.guides.map((guide) => (
+              <article key={guide.slug}>
+                {guide.image && (
+                  <Link
+                    className="guide-image"
+                    to={guidePath(guide)}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  >
+                    <img src={guide.image} alt="" loading="lazy" width="96" height="100" />
+                  </Link>
+                )}
+                <div>
+                  <h3>
+                    <Link to={guidePath(guide)}>{guide.title}</Link>
+                  </h3>
+                  <p>{guide.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
       <section className="resource-section">
         <h2>Know your tools</h2>
         <div className="resource-tool-links">
@@ -165,15 +277,153 @@ export function GuideIndex() {
   );
 }
 
+function AudioComparison({ examples, credit }) {
+  const playing = useRef(null);
+  function playExample(event) {
+    const next = event.currentTarget;
+    if (playing.current && playing.current !== next) playing.current.pause();
+    playing.current = next;
+  }
+  return (
+    <div className="guide-audio-comparison">
+      {examples.map((example) => (
+        <div key={example.src} id={example.id} className="guide-audio-example">
+          <h3>{example.label}</h3>
+          <p>{example.description}</p>
+          <audio
+            aria-label={example.label}
+            controls
+            preload="metadata"
+            src={example.src}
+            onPlay={playExample}
+          >
+            <a href={example.src}>Open this recording (WAV)</a>
+          </audio>
+        </div>
+      ))}
+      <p className="guide-media-credit">
+        Recordings by {credit.author} on Freesound.{' '}
+        <a href={credit.before}>First source recording</a> ·{' '}
+        <a href={credit.after}>Second source recording</a> ·{' '}
+        <a href={credit.licenseUrl}>{credit.license}</a>. {credit.note}
+      </p>
+    </div>
+  );
+}
+
+function LessonPhoto({ photo }) {
+  return (
+    <figure className="guide-step-photo">
+      <a href={photo.src} aria-label={`Open full-size photo: ${photo.alt}`}>
+        <img
+          width={photo.width}
+          height={photo.height}
+          src={photo.src}
+          alt={photo.alt}
+          loading="lazy"
+        />
+      </a>
+      <figcaption>
+        {photo.caption}
+        <span className="guide-media-credit">
+          Photo by <a href={photo.sourceUrl}>{photo.author}</a>
+          {photo.licenseUrl && (
+            <>
+              {' '}
+              · <a href={photo.licenseUrl}>{photo.license}</a>
+            </>
+          )}
+          {photo.edit && <> · {photo.edit}</>}
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function GuideSection({ section, sources, slug }) {
+  const source = sources?.find((item) => item.url === section.sourceUrl);
+  return (
+    <section className="resource-section" id={section.id}>
+      <h2>{section.title}</h2>
+      {section.paragraphs?.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      {section.audioExamples && (
+        <AudioComparison examples={section.audioExamples} credit={section.audioCredit} />
+      )}
+      {section.table && (
+        <div className="guide-table-wrap">
+          <table aria-label={section.title}>
+            <thead>
+              <tr>
+                {section.table.headers.map((header) => (
+                  <th key={header} scope="col">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {section.table.rows.map(([label, ...cells]) => (
+                <tr key={label}>
+                  <th scope="row">{label}</th>
+                  {cells.map((cell, i) => (
+                    <td key={section.table.headers[i + 1]}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {section.steps && (
+        <ol>
+          {section.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      )}
+      {section.after?.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      {section.choiceAid && <ChoiceHistoryAid name={section.choiceAid} />}
+      <StringLessonAid
+        section={section}
+        renderPhoto={(photo) => <LessonPhoto key={photo.src} photo={photo} />}
+      />
+      {!section.stringPhotoLabels &&
+        section.photos?.map((photo) => <LessonPhoto key={photo.src} photo={photo} />)}
+      {source && (
+        <p>
+          <a href={source.url}>{source.label}</a>
+        </p>
+      )}
+      {section.link && <Link to={section.link.path}>{section.link.label}</Link>}
+      <PracticeGuideAid slug={slug} sectionId={section.id} />
+    </section>
+  );
+}
+
 export function GuideArticle() {
   const { slug } = useParams();
   const guide = musicGuides.find((item) => item.slug === slug);
   if (!guide) return <NotFoundPage />;
+  const sections = guide.sections.map((section, index) => ({
+    ...section,
+    id: section.id || sectionId(index),
+  }));
+  const photos = sections.flatMap((section) => section.photos || []);
+  const audio = sections.flatMap((section) => section.audioExamples || []);
+  const previewImage = guide.image || photos[0]?.src;
+  const revised = guideRevisionDates[guidePath(guide)];
+  const leadSection = sections.find((section) => section.lead);
+  const bodySections = sections.filter((section) => !section.lead);
   return (
     <Page
       title={guide.title}
+      seoTitle={guide.seoTitle}
       description={guide.description}
-      image={guide.image}
+      image={previewImage}
       category={guide.category}
       type="article"
     >
@@ -184,10 +434,30 @@ export function GuideArticle() {
           '@id': `${absoluteUrl(guidePath(guide))}#article`,
           url: absoluteUrl(guidePath(guide)),
           headline: guide.title,
+          dateModified: revised,
           description: guide.description,
           inLanguage: 'en-US',
           articleSection: guide.category,
-          image: absoluteUrl(guide.image),
+          hasPart: sections.map((section) => ({
+            '@type': 'WebPageElement',
+            name: section.title,
+            url: absoluteUrl(guidePath(guide) + '#' + section.id),
+          })),
+          ...(previewImage && {
+            image: photos.length
+              ? photos.map((photo) => absoluteUrl(photo.src))
+              : absoluteUrl(previewImage),
+          }),
+          ...(audio.length > 0 && {
+            audio: audio.map((example) => ({
+              '@type': 'AudioObject',
+              name: example.label,
+              contentUrl: absoluteUrl(example.src),
+              encodingFormat: 'audio/wav',
+              description: example.description,
+            })),
+          }),
+          ...(guide.sources?.length && { citation: guide.sources.map((source) => source.url) }),
           mainEntityOfPage: absoluteUrl(guidePath(guide)),
           isPartOf: { '@id': websiteSchema['@id'] },
           author: {
@@ -200,68 +470,87 @@ export function GuideArticle() {
       />
       <p className="resource-byline">
         Published by <Link to="/about">{BUSINESS.name}</Link>
+        {revised && (
+          <>
+            {' '}
+            · Updated{' '}
+            <time dateTime={revised}>
+              {new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'UTC',
+              }).format(new Date(revised + 'T00:00:00Z'))}
+            </time>
+          </>
+        )}
       </p>
       <p className="resource-lead">{guide.answer}</p>
-      <Link className="resource-action" to={guide.action.path}>
-        {guide.action.label}
-        <ArrowRight size={18} />
-      </Link>
+      {photos.length > 0 && (
+        <p className="guide-photo-instruction">Select any close-up to open the full-size photo.</p>
+      )}
+      {leadSection && (
+        <div className="resource-article resource-checklist">
+          <GuideSection section={leadSection} sources={guide.sources} slug={slug} />
+        </div>
+      )}
+      {guide.action && (
+        <Link className="resource-action" to={guide.action.path}>
+          {guide.action.label}
+          <ArrowRight size={18} />
+        </Link>
+      )}
       <nav className="resource-contents" aria-label="In this guide">
         <h2>In this guide</h2>
-        <ol>
-          {guide.sections.map((section, index) => (
+        <ol
+          className={
+            sections.some((section) => /^\d+\./.test(section.title))
+              ? 'guide-step-index'
+              : undefined
+          }
+        >
+          {sections.map((section) => (
             <li key={section.title}>
-              <a href={`#${sectionId(index)}`}>{section.title}</a>
+              <a href={`#${section.id}`}>{section.title}</a>
             </li>
           ))}
         </ol>
       </nav>
-      <figure className="resource-figure">
-        <img src={guide.image} alt={guide.imageAlt} width="1280" height="800" loading="lazy" />
-      </figure>
+      {guide.trialSheet && (
+        <a
+          className="resource-link guide-handout"
+          href="/handouts/instrument-trial-sheet.pdf"
+          download
+        >
+          <Download size={18} aria-hidden="true" /> Download the instrument trial sheet (one-page
+          PDF)
+        </a>
+      )}
+      {guide.image && (
+        <figure
+          className={
+            guide.imageCredit || !guide.action
+              ? 'resource-figure guide-instrument-photo'
+              : 'resource-figure'
+          }
+        >
+          <img
+            src={guide.image}
+            alt={guide.imageAlt}
+            width={guide.imageWidth || 1280}
+            height={guide.imageHeight || 800}
+            loading="lazy"
+          />
+          {guide.imageCredit && (
+            <figcaption>
+              {guide.imageAlt} <a href={guide.imageCredit.url}>{guide.imageCredit.label}</a>
+            </figcaption>
+          )}
+        </figure>
+      )}
       <div className="resource-article">
-        {guide.sections.map((section, index) => (
-          <section key={section.title} className="resource-section" id={sectionId(index)}>
-            <h2>{section.title}</h2>
-            {section.paragraphs?.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-            {section.table && (
-              <div className="resource-table-scroll">
-                <table className="resource-table">
-                  <thead>
-                    <tr>
-                      {section.table.columns.map((column) => (
-                        <th key={column} scope="col">
-                          {column}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.table.rows.map(([head, ...cells]) => (
-                      <tr key={head}>
-                        <th scope="row">{head}</th>
-                        {cells.map((cell, cellIndex) => (
-                          <td key={section.table.columns[cellIndex + 1]}>{cell}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {section.steps && (
-              <ol>
-                {section.steps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-            )}
-            {section.after?.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </section>
+        {bodySections.map((section) => (
+          <GuideSection section={section} key={section.title} sources={guide.sources} slug={slug} />
         ))}
         {['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems'].includes(
           slug
@@ -468,25 +757,27 @@ export function PrivacyPage() {
           Studio stores projects and audio assets in your browser. Learn stores imported lessons,
           guitar settings, practice history, recorded takes and attached lesson videos locally. Stem
           Separator saves your songs and stems in this browser until you choose Clear saved work.
-          Key & BPM keeps results only in the open tab unless you save a report. Download backups;
-          clearing browser data can remove local projects, lessons, recordings and saved stems.
+          The song key and BPM finder saves results in this browser. You can export a report to keep
+          a copy. Clearing browser data can remove saved results, projects, lessons and recordings.
         </p>
       </section>
       <section className="resource-section">
         <h2>Optional site measurement</h2>
         <p>
-          With your permission, we count page groups, recognized referral sources and actions such
-          as a completed inquiry, analysis, separation, practice session or software download click.
-          A practice completion is not a verified musical skill; a download click is not a verified
-          download or installation. We do not add visitor IDs or store raw referring URLs, query
-          strings, IP addresses, contact fields or audio in these aggregate reports. Counts are not
-          unique visitors or verified sales.
+          With your permission, we count page visits and actions such as starting a tuner microphone
+          or reference tone, following a product link, tapping a phone number, sending an inquiry,
+          using a music tool or completing a verified purchase. Reports contain only the action, a
+          page label and a broad referral source. Audio, notes you play, form contents, visitor IDs,
+          IP addresses, order IDs and raw URLs stay out of these reports.
         </p>
         <p>
           Measurement is off until you allow it. We respect Global Privacy Control and Do Not Track.
-          A local preference remembers your choice; session storage remembers only a broad source
-          such as ChatGPT or Google. Reports cover the latest 90 days. Hosting providers still
-          receive normal network requests and may maintain operational logs.
+          Your browser remembers your choice. During a visit, the tab remembers the broad referral
+          source and the last measured local shopping page or violin buying guide where you followed
+          a product link. This lets us count a later verified purchase from that tab. A checkout
+          reference stays in the tab to avoid counting the same purchase twice. Aggregate reports
+          cover the latest 90 days. Hosting providers receive normal network requests and may keep
+          operational logs.
         </p>
         <AnalyticsChoice />
       </section>

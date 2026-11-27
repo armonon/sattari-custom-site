@@ -1,4 +1,6 @@
 import React from 'react';
+import GuitarShowroom from './GuitarShowroom';
+import ShopRepairFinder from './ShopRepairFinder';
 import {
   ArrowUpRight,
   Check,
@@ -15,16 +17,12 @@ import { useCart } from '../context/CartContext';
 import { useInventory } from '../context/InventoryContext';
 import { Link } from 'react-router-dom';
 import { categories, formatPriceRange } from '../data/catalog';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import OptimizedProductImage from './OptimizedProductImage';
 import { SEO, StructuredData } from '../utils/seo';
 import { PAGE_SEO, breadcrumbSchema } from '../data/siteSeo';
 import '../styles-products-premium.css';
-
-const trustPoints = [
-  { label: 'Instruments & accessories', to: '/shop/instruments-los-angeles' },
-  { label: 'Secure Stripe checkout', to: '/cart' },
-  { label: 'Repairs, rentals & classes', to: '/services' },
-];
+import './StringsDiscovery.css';
 
 const categoryIcons = {
   cymbals: Disc3,
@@ -146,8 +144,7 @@ export default function ShopPage() {
     '@type': 'CollectionPage',
     name: 'Sattari Music Shop',
     url: 'https://sattarimusic.com/shop',
-    description:
-      'Instruments, music accessories, handcrafted cymbals, drumsticks, practice pads, and musician essentials from Sattari Music.',
+    description: PAGE_SEO.shop.description,
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: featuredProducts.map((product, index) => ({
@@ -160,7 +157,7 @@ export default function ShopPage() {
   };
 
   return (
-    <section className="section page-header-offset">
+    <section className="section page-header-offset shop-with-showroom">
       <SEO {...PAGE_SEO.shop} />
       <StructuredData
         data={breadcrumbSchema([
@@ -169,23 +166,10 @@ export default function ShopPage() {
         ])}
       />
       <StructuredData data={itemListSchema} />
-      <div className="container section-header narrow shop-page-intro">
-        <p className="eyebrow">Shop Sattari Music</p>
-        <h1>Musical instruments &amp; accessories</h1>
-        <p>
-          Shop the current catalog online, or ask about instruments, accessories, repairs, rentals,
-          rehearsal space, studio time, teachers, and classes at our Woodland Hills music store.
-        </p>
-        <div className="shop-trust-bar" aria-label="Storefront trust highlights">
-          {trustPoints.map((point) => (
-            <Link className="trust-chip trust-chip-link" to={point.to} key={point.label}>
-              {point.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <GuitarShowroom />
 
-      <div className="container shop-category-panel">
+      <div id="shop-catalog" className="container shop-category-panel">
+        <ShopRepairFinder />
         <div className="shop-category-panel-heading">
           <div>
             <p className="card-kicker">Browse the catalog</p>
@@ -245,6 +229,45 @@ export default function ShopPage() {
           </Link>
         </nav>
       </div>
+
+      <section
+        id="instruments-for-sale"
+        className="container strings-discovery"
+        aria-labelledby="shop-instruments-title"
+      >
+        <h2 id="shop-instruments-title">Guitars and violins for sale in Woodland Hills</h2>
+        <p>
+          Start with the sound you want. Each instrument comparison shows the listed price and links
+          to its product page. To try a specific model locally, ask about its availability when
+          arranging your appointment.
+        </p>
+        <nav aria-label="Compare instruments for sale">
+          <Link to="/shop/guitar-bass#steel-string-acoustic-guitars">
+            Steel-string acoustic guitars
+          </Link>
+          <Link to="/shop/guitar-bass#classical-guitars">Classical guitars</Link>
+          <Link to="/shop/guitar-bass#electric-guitars">Electric guitars</Link>
+          <Link to="/shop/guitar-bass#bass-guitars">Five-string basses</Link>
+          <Link to="/shop/violins#acoustic-violins">Acoustic violins</Link>
+          <Link to="/shop/violins#electric-violins">Electric violins</Link>
+          <Link to="/visit">Plan a Woodland Hills visit</Link>
+        </nav>
+      </section>
+
+      <section className="container strings-discovery" aria-labelledby="shop-strings-title">
+        <h2 id="shop-strings-title">Strings for guitars and violins</h2>
+        <p>
+          Standard guitar string sets cost {`$${guitarStringPricing.standardSet}`}. We carry Ernie
+          Ball and other premium strings. Call the Woodland Hills shop for your preferred set and
+          gauge or to arrange installation. You can also buy violin strings online.
+        </p>
+        <nav aria-label="Shop strings and string replacement">
+          <Link to="/guitar-strings-woodland-hills">Electric &amp; acoustic guitar strings</Link>
+          <Link to="/violin-strings-woodland-hills">Violin strings for sale</Link>
+          <Link to="/services/guitar-restringing-woodland-hills">Guitar restringing</Link>
+          <Link to="/services/violin-restringing-woodland-hills">Violin restringing</Link>
+        </nav>
+      </section>
 
       <section
         id="featured-catalog"
