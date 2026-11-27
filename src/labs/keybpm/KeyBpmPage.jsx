@@ -704,14 +704,6 @@ export default function KeyBpmPage() {
         }}
       />
       <div className="alab-workspace">
-        <KeyBpmMeter
-          bpm={shown?.bpm ?? null}
-          bpmText={shown?.bpm != null ? formatBpm(shown.bpm) : ''}
-          keyName={shown?.key ? keyLabel(shown.key) : ''}
-          camelot={shown?.camelot || ''}
-          keyIndex={shown?.key ? (circlePosition(shown.key)?.index ?? null) : null}
-          beating={clicking}
-        />
         <nav className="kb-section-nav" aria-label="Tuner and key detector sections">
           <a href="#live-tuner">
             <AudioLines size={16} aria-hidden="true" /> Live tuner
@@ -799,6 +791,14 @@ export default function KeyBpmPage() {
             const value = event.currentTarget.duration;
             if (Number.isFinite(value)) setAudition((current) => ({ ...current, duration: value }));
           }}
+        />
+        <KeyBpmMeter
+          bpm={shown?.bpm ?? null}
+          bpmText={shown?.bpm != null ? formatBpm(shown.bpm) : ''}
+          keyName={shown?.key ? keyLabel(shown.key) : ''}
+          camelot={shown?.camelot || ''}
+          keyIndex={shown?.key ? (circlePosition(shown.key)?.index ?? null) : null}
+          beating={clicking}
         />
         {focusRow && (
           <KeyReadout
