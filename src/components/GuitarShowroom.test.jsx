@@ -181,34 +181,14 @@ it('requires details for an inquiry-only instrument instead of quick-adding', as
   }
 });
 
-it('shows both original store photos and returns to the existing Gaussian scene', async () => {
+it('keeps the scene free of showroom and original-store toggle controls', async () => {
   await renderShowroom({ config: splatConfig });
   await waitForScene();
+  expect(screen.queryByRole('button', { name: 'Showroom', exact: true })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Original store' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Violin wall' })).not.toBeInTheDocument();
   selectElectric();
-
   fireEvent.click(screen.getByRole('button', { name: 'Back to full wall' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Original store' }));
-  expect(screen.getByRole('button', { name: 'Original store' })).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  );
-  expect(screen.getByRole('img', { name: /actual Sattari Music store/ })).toHaveAttribute(
-    'src',
-    '/images/showroom/guitar-wall-reference.jpg'
-  );
-  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-  expect(scene.reset).toHaveBeenCalled();
-
-  fireEvent.click(screen.getByRole('button', { name: 'Violin wall' }));
-  expect(screen.getByRole('img', { name: /actual Sattari Music violin display/ })).toHaveAttribute(
-    'src',
-    '/images/showroom/violin-wall-reference.jpg'
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Showroom' }));
-  expect(
-    screen.queryByRole('img', { name: /actual Sattari Music violin display/ })
-  ).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: `Explore ${electricName}` })).toBeInTheDocument();
   expect(scene.create).toHaveBeenCalledTimes(1);
 });
 
@@ -265,7 +245,7 @@ it('reveals interactive scene markers only after the configured splat reports re
   scene.create.mockImplementation(() => scene);
   await renderShowroom({ config: splatConfig });
   await waitFor(() => expect(scene.create).toHaveBeenCalledTimes(1));
-  expect(screen.getByText('Opening the 3D showroom…')).toBeInTheDocument();
+  expect(screen.getByText('Bringing the showroom to life')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: `Explore ${electricName}` })).not.toBeInTheDocument();
   expect(scene.create.mock.calls[0][0].config).toBe(splatConfig);
 
@@ -341,9 +321,9 @@ it('reports actual download size and separates downloading from preparing the sc
     'value',
     '50'
   );
-  expect(screen.getByText('15.0 MB of 30.0 MB · 50%')).toBeInTheDocument();
+  expect(screen.getByText('50%')).toBeInTheDocument();
   act(() => callbacks.onProgress({ phase: 'decoding', loaded: 30000000, total: 30000000 }));
-  expect(screen.getByText('Preparing the 3D view…')).toBeInTheDocument();
+  expect(screen.getByText('Almost ready')).toBeInTheDocument();
   expect(screen.getByRole('progressbar', { name: 'Preparing 3D view' })).not.toHaveAttribute(
     'value'
   );
@@ -360,7 +340,7 @@ it('keeps downloads with unknown size indeterminate instead of inventing a perce
   act(() =>
     scene.create.mock.calls[0][0].onProgress({ phase: 'downloading', loaded: 8000000, total: 0 })
   );
-  expect(screen.getByText('8.0 MB downloaded')).toBeInTheDocument();
+  expect(screen.getByText('Bringing the showroom to life')).toBeInTheDocument();
   expect(screen.getByRole('progressbar', { name: 'Downloading showroom' })).not.toHaveAttribute(
     'value'
   );
@@ -379,7 +359,7 @@ it('retries a failed asset without reloading the page or accepting callbacks fro
     first.onReady();
     first.onProgress({ phase: 'downloading', loaded: 30000000, total: 30000000 });
   });
-  expect(screen.getByText('Connecting…')).toBeInTheDocument();
+  expect(screen.getByText('Bringing the showroom to life')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: `Explore ${electricName}` })).not.toBeInTheDocument();
   act(() => scene.create.mock.calls[1][0].onReady());
   await waitForScene();
@@ -434,6 +414,10 @@ it.each([false, true])(
     );
     try {
       await renderShowroom();
+      vi.spyOn(
+        screen.getByRole('heading', { name: 'Welcome to the shop.' }).closest('.showroom-stage'),
+        'getBoundingClientRect'
+      ).mockReturnValue({ top: -250 });
       selectElectric();
       expect(scroll).toHaveBeenCalledWith({
         behavior: 'instant',
@@ -476,23 +460,26 @@ it('cycles through instruments and returns to the full wall with an accessible b
   await renderShowroom({ config: splatConfig });
   await waitForScene();
   selectElectric();
-  fireEvent.click(screen.getByRole('button', { name: 'Previous instrument' }));
+  const previous = screen.getByRole('button', { name: 'Previous instrument' });
+  act(() => previous.focus());
+  fireEvent.click(previous);
+  expect(previous).toHaveFocus();
   expect(
     screen.getByRole('complementary', { name: 'Selected instrument: Steel String Acoustic Guitar' })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   expect(scene.focus).toHaveBeenLastCalledWith('steel-string-acoustic-guitar');
   fireEvent.click(screen.getByRole('button', { name: 'Next instrument' }));
   expect(
     screen.getByRole('complementary', { name: `Selected instrument: ${electricName}` })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Next instrument' }));
   expect(
     screen.getByRole('complementary', { name: 'Selected instrument: 5 String Bass Guitar' })
-  ).toHaveFocus();
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Back to full wall' }));
   expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   expect(scene.reset).toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: 'Select 5 String Bass Guitar' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: `Select ${electricName}` })).toHaveFocus();
 });
 
 it('skips hidden catalog instruments when moving to the next selection', async () => {
@@ -540,7 +527,9 @@ it('advances the ambient scene once per interval in StrictMode and remains pause
     fireEvent(document, new Event('visibilitychange'));
     act(() => vi.advanceTimersByTime(8000));
     expect(scene.showHeroFrame).toHaveBeenCalledExactlyOnceWith(1);
-    const stage = screen.getByRole('button', { name: 'Showroom' }).closest('.showroom-stage');
+    const stage = screen
+      .getByRole('heading', { name: 'Welcome to the shop.' })
+      .closest('.showroom-stage');
     fireEvent.pointerDown(stage);
     expect(scene.stopMotion).toHaveBeenCalledTimes(1);
     act(() => vi.advanceTimersByTime(16000));
@@ -631,7 +620,7 @@ it('prerenders the showroom without window or document globals', () => {
     );
     expect(markup).toContain('Welcome to');
     expect(markup).toContain('the shop.');
-    expect(markup).toContain('Opening the 3D showroom');
+    expect(markup).toContain('Bringing the showroom to life');
   } finally {
     vi.stubGlobal('window', originalWindow);
     vi.stubGlobal('document', originalDocument);
@@ -657,4 +646,23 @@ it('keeps shopping navigation while removing the entire former control row', asy
   expect(screen.getByRole('button', { name: 'Next instrument' })).toBeEnabled();
   expect(screen.queryByRole('button', { name: removed })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
+});
+
+it('switches directly between instruments without scrolling the page or recreating the scene', async () => {
+  await renderShowroom({ config: splatConfig });
+  await waitForScene();
+  selectElectric();
+  const stage = screen.getByRole('complementary').closest('.showroom-stage');
+  const measure = vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({ top: 0 });
+  const scroll = vi.fn();
+  stage.scrollIntoView = scroll;
+  fireEvent.click(screen.getByRole('button', { name: 'Switch to Classic Nylon String Guitar' }));
+  expect(
+    screen.getByRole('complementary', { name: 'Selected instrument: Classic Nylon String Guitar' })
+  ).toBeInTheDocument();
+  expect(scroll).not.toHaveBeenCalled();
+  expect(scene.create).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Back to full wall' }));
+  expect(scroll).toHaveBeenCalledWith({ behavior: 'instant', block: 'start' });
+  measure.mockRestore();
 });

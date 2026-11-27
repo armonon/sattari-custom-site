@@ -644,15 +644,18 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     };
     for (const hotspot of showroomConfig.hotspots) {
       view.controller.focus(hotspot.slug);
-      expect(gainAt(hotspot.position)).toBeCloseTo(1, 10);
-      expect(gainAt(headstocks[hotspot.slug])).toBeCloseTo(1, 10);
+      expect(gainAt(hotspot.position)).toBeGreaterThan(0.8);
+      expect(gainAt(headstocks[hotspot.slug])).toBeGreaterThan(0.69);
     }
     view.controller.focus('flame-stratocaster-electric-guitar');
     const selectedRedBodyEdge = [-1.586428, 1.390483, 1.712101];
     const adjacentBlueBody = [-1.580693, 1.546426, 1.782057];
-    expect(gainAt(selectedRedBodyEdge)).toBeGreaterThan(0.95);
-    expect(gainAt(adjacentBlueBody)).toBeLessThan(0.5);
-    expect(gainAt(adjacentBlueBody)).toBeGreaterThan(showroomConfig.spotlight.neighborBrightness);
+    // These nearby samples straddle the feather. Retain separation while
+    // limiting the brightness jump that previously made a hard shadow.
+    const contrast = gainAt(selectedRedBodyEdge) - gainAt(adjacentBlueBody);
+    expect(contrast).toBeGreaterThan(0.1);
+    expect(contrast).toBeLessThan(0.2);
+    expect(gainAt(adjacentBlueBody)).toBeGreaterThan(0.5);
   });
 
   it('stops demand rendering after a neutral hero tour is paused', async () => {
@@ -669,5 +672,19 @@ describe('Gaussian showroom render lifecycle and framing', () => {
     await frame(1302);
     expect(frames.size).toBe(0);
     expect(state.meshes[0].edits[0].sdfs[0].color.r).toBe(1);
+  });
+  it('allows page scrolling over the showroom without changing camera zoom', async () => {
+    const view = create(1440, 900, showroomConfig);
+    await view.controller.ready;
+    await frame();
+    await frame();
+    const canvas = view.mount.querySelector('canvas');
+    const projection = state.renderers[0].renders.at(-1).projection.clone();
+    const wheel = new WheelEvent('wheel', { deltaY: 240, bubbles: true, cancelable: true });
+    canvas.dispatchEvent(wheel);
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(canvas.style.touchAction).toBe('pan-y');
+    await frame();
+    expect(state.renderers[0].renders.at(-1).projection.elements).toEqual(projection.elements);
   });
 });

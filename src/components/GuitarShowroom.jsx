@@ -1,16 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Box,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  Camera,
-  Check,
-  Plus,
-  ShoppingBag,
-  X,
-} from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, Check, Plus, ShoppingBag, X } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { useCart } from '../context/CartContext';
 import { formatPriceRange } from '../data/catalog';
@@ -37,8 +27,6 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [loadProgress, setLoadProgress] = useState({ phase: 'downloading', loaded: 0, total: 0 });
   const [selectedSlug, setSelectedSlug] = useState(null);
-  const [view, setView] = useState('showroom');
-  const [reference, setReference] = useState('guitar');
   const [added, setAdded] = useState(null);
   const [heroFrame, setHeroFrame] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
@@ -59,19 +47,12 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
   const atCartLimit = inCart >= MAX_LINE_QUANTITY;
   const sceneReady = Boolean(config.url) && sceneStatus === 'ready';
   const sequenceRunning =
-    autoPlay &&
-    !reduceMotion &&
-    inViewport &&
-    pageVisible &&
-    sceneReady &&
-    !selected &&
-    view === 'showroom';
+    autoPlay && !reduceMotion && inViewport && pageVisible && sceneReady && !selected;
   const downloading = loadProgress.phase === 'downloading';
   const downloadPercent =
     loadProgress.total > 0
       ? Math.min(100, Math.round((loadProgress.loaded / loadProgress.total) * 100))
       : null;
-  const megabytes = (bytes) => `${(bytes / 1e6).toFixed(1)} MB`;
   const visibleHotspots = new Set(
     (config.hotspots || [])
       .filter(
@@ -85,11 +66,9 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
 
   function selectProduct(slug, trigger = document.activeElement) {
     if (!displays.some((display) => display.slug === slug)) return;
-    if (trigger instanceof HTMLElement && !panelRef.current?.contains(trigger))
-      returnFocusRef.current = trigger;
+    if (!selectionRef.current && trigger instanceof HTMLElement) returnFocusRef.current = trigger;
     setSelectedSlug(slug);
     setAutoPlay(false);
-    setView('showroom');
     setAdded(null);
     if (autoPlay) controllerRef.current?.stopMotion?.();
     controllerRef.current?.focus(slug);
@@ -207,24 +186,27 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
   }, [added]);
 
   useEffect(() => {
-    if (view === 'reference' || !inViewport || !pageVisible) controllerRef.current?.pause?.();
+    if (!inViewport || !pageVisible) controllerRef.current?.pause?.();
     else {
       controllerRef.current?.resume?.();
       controllerRef.current?.refresh?.();
       if (sceneStatus === 'ready' && selectionRef.current)
         controllerRef.current?.focus(selectionRef.current);
     }
-  }, [view, sceneStatus, inViewport, pageVisible]);
+  }, [sceneStatus, inViewport, pageVisible]);
 
   useEffect(() => {
-    if (!selectedSlug || view !== 'showroom') return;
-    panelRef.current?.focus({ preventScroll: true });
+    if (!selectedSlug) return;
+    if (!document.activeElement?.closest('.showroom-stepper'))
+      panelRef.current?.focus({ preventScroll: true });
     if (panelRef.current) panelRef.current.scrollTop = 0;
-    stageRef.current?.scrollIntoView?.({
-      behavior: reduceMotion ? 'instant' : 'smooth',
-      block: 'start',
-    });
-  }, [selectedSlug, view, reduceMotion]);
+    const bounds = stageRef.current?.getBoundingClientRect();
+    if (bounds && (bounds.top < -48 || bounds.top > 48))
+      stageRef.current?.scrollIntoView?.({
+        behavior: reduceMotion ? 'instant' : 'smooth',
+        block: 'start',
+      });
+  }, [selectedSlug, reduceMotion]);
 
   useEffect(() => {
     if (selectedSlug || !restoreFocusRef.current) return;
@@ -244,7 +226,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
         !node.closest('[inert], [hidden], [aria-hidden="true"]') &&
         node.checkVisibility?.({ checkVisibilityCSS: true }) !== false
     );
-    target?.focus();
+    target?.focus({ preventScroll: true });
   }, [selectedSlug]);
 
   function resetView() {
@@ -259,6 +241,10 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
   function closeProduct() {
     restoreFocusRef.current = selectedSlug;
     resetView();
+    stageRef.current?.scrollIntoView?.({
+      behavior: reduceMotion ? 'instant' : 'smooth',
+      block: 'start',
+    });
   }
   function selectAdjacent(direction, event) {
     if (!displays.length) return;
@@ -279,7 +265,6 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
     addToCart({ slug: product.slug, quantity: 1 });
     setAdded(product.slug);
   }
-  const isReference = view === 'reference';
   const needsDetails =
     product?.colors?.length || product?.sizes?.length || product?.purchaseInquiry;
 
@@ -291,7 +276,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
     >
       <div
         ref={stageRef}
-        className={`showroom-stage${selected ? ' has-selection' : ''}${isReference ? ' is-reference' : ''}${!sceneReady || isReference ? ' is-image' : ''}`}
+        className={`showroom-stage${selected ? ' has-selection' : ''}${!sceneReady ? ' is-image' : ' is-ready'}`}
         onPointerDownCapture={pauseSequence}
         onWheelCapture={pauseSequence}
         onFocusCapture={pauseSequence}
@@ -304,30 +289,20 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
           }
         }}
       >
+        <div className="showroom-glass-backdrop" aria-hidden="true" />
         <div
-          className={`showroom-canvas${isReference || !sceneReady ? ' is-hidden' : ''}`}
+          className={`showroom-canvas${!sceneReady ? ' is-hidden' : ''}`}
           ref={mountRef}
-          aria-hidden={isReference || !sceneReady ? 'true' : undefined}
-          inert={isReference || !sceneReady ? '' : undefined}
+          aria-hidden={!sceneReady ? 'true' : undefined}
+          inert={!sceneReady ? '' : undefined}
         />
-        {(isReference || !sceneReady) && (
-          <div className="showroom-reference">
-            <img
-              src={
-                isReference
-                  ? `/images/showroom/${reference === 'violin' ? 'violin' : 'guitar'}-wall-reference.jpg`
-                  : config.poster
-              }
-              alt={
-                isReference
-                  ? reference === 'violin'
-                    ? 'The actual Sattari Music violin display, with green acoustic panels and store posters.'
-                    : 'The actual Sattari Music store, with electric guitars, basses and acoustic guitars hanging on the wall.'
-                  : 'Guitars on display in the showroom.'
-              }
-              draggable="false"
-            />
-            {!isReference && ['loading', 'unavailable'].includes(sceneStatus) && (
+        {
+          <div
+            className={`showroom-reference${sceneReady ? ' is-revealed' : ''}`}
+            aria-hidden={sceneReady ? 'true' : undefined}
+          >
+            <img src={config.poster} alt="Guitars on display in the showroom." draggable="false" />
+            {['loading', 'unavailable'].includes(sceneStatus) && (
               <div
                 className="showroom-load-message"
                 role={sceneStatus === 'unavailable' ? 'status' : undefined}
@@ -335,22 +310,14 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 {sceneStatus === 'loading' ? (
                   <>
                     <span role="status">
-                      {downloading ? 'Opening the 3D showroom…' : 'Preparing the 3D view…'}
+                      {downloading ? 'Bringing the showroom to life' : 'Almost ready'}
                     </span>
                     <progress
                       aria-label={downloading ? 'Downloading showroom' : 'Preparing 3D view'}
                       max="100"
                       value={downloading && downloadPercent !== null ? downloadPercent : undefined}
                     />
-                    <small>
-                      {!downloading
-                        ? 'Your showroom is almost ready.'
-                        : loadProgress.total > 0
-                          ? `${megabytes(loadProgress.loaded)} of ${megabytes(loadProgress.total)} · ${downloadPercent}%`
-                          : loadProgress.loaded > 0
-                            ? `${megabytes(loadProgress.loaded)} downloaded`
-                            : 'Connecting…'}
-                    </small>
+                    {downloading && downloadPercent !== null && <small>{downloadPercent}%</small>}
                   </>
                 ) : (
                   <>
@@ -367,7 +334,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
               </div>
             )}
           </div>
-        )}
+        }
 
         <div className="showroom-stage-top">
           {selected ? (
@@ -379,10 +346,11 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <button
                   type="button"
                   aria-label="Previous instrument"
+                  title="Previous instrument"
                   disabled={displays.length < 2}
                   onClick={(event) => selectAdjacent(-1, event)}
                 >
-                  Previous
+                  <ArrowLeft size={18} aria-hidden="true" />
                 </button>
                 <span aria-live="polite">
                   {selectedIndex + 1} / {displays.length}
@@ -390,39 +358,18 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <button
                   type="button"
                   aria-label="Next instrument"
+                  title="Next instrument"
                   disabled={displays.length < 2}
                   onClick={(event) => selectAdjacent(1, event)}
                 >
-                  Next
+                  <ArrowRight size={18} aria-hidden="true" />
                 </button>
               </div>
             </>
-          ) : (
-            <>
-              <div className="showroom-view-toggle" aria-label="Showroom view">
-                <button
-                  type="button"
-                  aria-pressed={!isReference}
-                  onClick={() => setView('showroom')}
-                >
-                  <Box size={16} aria-hidden="true" /> Showroom
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={isReference}
-                  onClick={() => {
-                    setView('reference');
-                    resetView();
-                  }}
-                >
-                  <Camera size={16} aria-hidden="true" /> Original store
-                </button>
-              </div>
-            </>
-          )}
+          ) : null}
         </div>
 
-        {!isReference && sceneReady && (
+        {sceneReady && (
           <div
             className="showroom-pins"
             hidden={Boolean(selected)}
@@ -447,26 +394,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
           </div>
         )}
 
-        {isReference && (
-          <div className="showroom-photo-tabs">
-            <button
-              type="button"
-              aria-pressed={reference === 'guitar'}
-              onClick={() => setReference('guitar')}
-            >
-              Guitar wall
-            </button>
-            <button
-              type="button"
-              aria-pressed={reference === 'violin'}
-              onClick={() => setReference('violin')}
-            >
-              Violin wall
-            </button>
-          </div>
-        )}
-
-        {selected && !isReference && (
+        {selected && (
           <aside
             key={selectedSlug}
             ref={panelRef}
@@ -480,6 +408,19 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 <X size={18} />
               </button>
             </div>
+            <nav className="showroom-instrument-switcher" aria-label="Choose another instrument">
+              {displays.map((display) => (
+                <button
+                  type="button"
+                  key={display.slug}
+                  aria-label={`Switch to ${display.product.name}`}
+                  aria-pressed={selectedSlug === display.slug}
+                  onClick={(event) => selectProduct(display.slug, event.currentTarget)}
+                >
+                  {display.label === 'Steel string' ? 'Acoustic' : display.label}
+                </button>
+              ))}
+            </nav>
             <div className="showroom-product-summary">
               <div className="showroom-product-info">
                 <h2>{product.name}</h2>
@@ -554,7 +495,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
           </aside>
         )}
 
-        <div className="showroom-hero-bottom" hidden={Boolean(selected) || isReference}>
+        <div className="showroom-hero-bottom" hidden={Boolean(selected)}>
           <div className="showroom-heading">
             <h1 id="showroom-title">
               Welcome to
@@ -565,7 +506,7 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
             </a>
           </div>
           <nav className="showroom-categories" aria-label="Guitar collection">
-            {displays.map(({ slug, label, product: item }, index) => (
+            {displays.map(({ slug, label, product: item }) => (
               <button
                 key={slug}
                 ref={(node) => {
@@ -577,7 +518,6 @@ export default function GuitarShowroom({ config = gaussianShowroomConfig }) {
                 aria-pressed={selectedSlug === slug}
                 onClick={(event) => selectProduct(slug, event.currentTarget)}
               >
-                <small aria-hidden="true">0{index + 1}</small>
                 <span>{label === 'Steel string' ? 'Acoustic' : label}</span>
               </button>
             ))}
