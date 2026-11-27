@@ -69,6 +69,7 @@ function Page({
       <div className="resource-shell">
         <nav className="resource-nav" aria-label="Music resources">
           <Link to="/guides">Guides</Link>
+          <Link to="/learn">Guitar song lessons</Link>
           <Link to="/hub">Music tools</Link>
           <Link to="/visit">Visit Sattari</Link>
         </nav>

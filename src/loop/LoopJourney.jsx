@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -66,9 +67,15 @@ export function SongArt({ lesson, small = false }) {
   );
 }
 
+const restringingGuides = [
+  { label: 'Change Persian tar strings', path: '/guides/how-to-change-persian-tar-strings' },
+  { label: 'Change Persian setar strings', path: '/guides/how-to-change-setar-strings' },
+  { label: 'Change oud strings', path: '/guides/how-to-change-oud-strings' },
+];
+
 function JourneyHeader({ stage, onBack }) {
   return (
-    <header className="lj-header">
+    <header className={stage === 'choose' ? 'lj-header lj-library-header' : 'lj-header'}>
       <button
         type="button"
         className="loop-brand lj-brand"
@@ -96,6 +103,12 @@ function JourneyHeader({ stage, onBack }) {
           <ArrowLeft size={16} />
           <span>Hub</span>
         </Link>
+        {stage === 'choose' && (
+          <Link className="lj-tool-link lj-guides-link" to="/guides" aria-label="Music guides">
+            <BookOpen size={16} aria-hidden="true" />
+            <span>Guides</span>
+          </Link>
+        )}
         <Link
           className="lj-tool-link"
           to="/studio/keybpm#live-tuner"
@@ -166,6 +179,25 @@ function SongLibrary({ records, onChoose, onUpload, progress, onDaily }) {
         </div>
         <PracticeDeck lesson={SONGS[0]} onChoose={onChoose} />
       </section>
+      <nav
+        className="lj-restring-guides"
+        id="restringing-guides"
+        aria-labelledby="lj-restring-guides-title"
+      >
+        <h2 id="lj-restring-guides-title">String replacement guides</h2>
+        <ul>
+          {restringingGuides.map(({ label, path }) => (
+            <li key={path}>
+              <Link to={path}>
+                {label} <ChevronRight size={15} aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link className="lj-all-guides" to="/guides#string-replacement">
+          All restringing guides <ArrowRight size={15} aria-hidden="true" />
+        </Link>
+      </nav>
       <CoursePath onChoose={onChoose} progress={progress} />
       <section className="lj-songbook" aria-labelledby="lj-songbook-title">
         <div className="lj-section-heading">

@@ -553,12 +553,13 @@ const practiceGuides = [
 
 // Each collection is also a destination in the crawlable guide index.
 export const guideCollections = [
-  { id: 'bowed-strings', title: 'Violin and viola', guides: bowedInstrumentGuides },
-  { id: 'guitar-and-bass', title: 'Guitar and bass', guides: guitarInstrumentGuides },
   {
     id: 'string-replacement',
     title: 'How to change instrument strings',
     guides: [
+      persianTarStringChangeGuide,
+      setarStringChangeGuide,
+      oudStringChangeGuide,
       acousticStringChangeGuide,
       classicalStringChangeGuide,
       electricStringChangeGuide,
@@ -567,11 +568,10 @@ export const guideCollections = [
       violaStringChangeGuide,
       celloStringChangeGuide,
       ukuleleStringChangeGuide,
-      persianTarStringChangeGuide,
-      setarStringChangeGuide,
-      oudStringChangeGuide,
     ],
   },
+  { id: 'bowed-strings', title: 'Violin and viola', guides: bowedInstrumentGuides },
+  { id: 'guitar-and-bass', title: 'Guitar and bass', guides: guitarInstrumentGuides },
   {
     id: 'instrument-history',
     title: 'Instrument history and listening',

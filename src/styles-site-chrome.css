@@ -242,6 +242,12 @@
   }
 }
 
+@media (min-width: 761px) and (max-width: 820px) {
+  .site-shell .nav-link {
+    padding-inline: 5px;
+  }
+}
+
 @media (max-width: 760px) {
   :root {
     --fs-display: 2.5rem;

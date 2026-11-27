@@ -63,6 +63,23 @@ it('rejects a non-audio import and allows returning to the demo', async () => {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
+it('links to each featured restringing guide from the song library', async () => {
+  await renderPage();
+  expect(screen.getByRole('link', { name: 'Music guides' })).toHaveAttribute('href', '/guides');
+  const guides = within(screen.getByRole('navigation', { name: 'String replacement guides' }));
+  for (const [name, slug] of [
+    ['Change Persian tar strings', 'how-to-change-persian-tar-strings'],
+    ['Change Persian setar strings', 'how-to-change-setar-strings'],
+    ['Change oud strings', 'how-to-change-oud-strings'],
+  ]) {
+    expect(guides.getByRole('link', { name })).toHaveAttribute('href', '/guides/' + slug);
+  }
+  expect(guides.getByRole('link', { name: 'All restringing guides' })).toHaveAttribute(
+    'href',
+    '/guides#string-replacement'
+  );
+});
+
 it('opens the chord library and updates an accessible fingering diagram', async () => {
   await renderPage();
   expect(

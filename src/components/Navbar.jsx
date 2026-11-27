@@ -9,6 +9,7 @@ const links = [
   { to: '/about', label: 'About' },
   { to: '/shop', label: 'Shop' },
   { to: '/services', label: 'Local Services' },
+  { to: '/guides', label: 'Guides & Learn' },
 ];
 
 export default function Navbar({ onCartClick }) {

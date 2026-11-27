@@ -103,6 +103,8 @@ it('dismisses the menu when a pointer lands outside the header', () => {
 });
 
 it.each([
+  ['/guides', 'Guides & Learn'],
+  ['/guides/how-to-change-oud-strings', 'Guides & Learn'],
   ['/product/cymbal-felts', 'Shop'],
   ['/SHOP/VIOLINS/', 'Shop'],
   ['/stem-separator/', 'Sattari Hub'],
