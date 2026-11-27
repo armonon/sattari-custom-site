@@ -23,3 +23,5 @@ Follow-up published: 6b09092a92a72dbc1dbe90aa, rollback 6b090588fbcfd9bcd01d0d2f
 overlay_deploy.py now refuses a draft whose sitemap lacks any page that is live, so a build from a branch without another line's pages cannot replace them.
 
 Follow-up published: 6b091bc6d934d2996375271f, rollback 6b09092a92a72dbc1dbe90aa. Key & BPM uses the ink palette of its hub tile in day and night mode, with the meter under the title as the page hero showing the selected track. 436 files uploaded, no function uploads; 25 function digests and settings and 4 schedules match the previous deploy. Live checks: 7 routes return 200, inventory responds, /studio/keybpm renders the meter on the ink background with no page errors.
+
+Follow-up published: 6b091cbce8c37d9ee13b3d26, rollback 6b091bc6d934d2996375271f. The instrument tuner pages (/tuner/*) use the same ink palette in day and night mode. 435 files uploaded, no function uploads; 25 function digests and settings and 4 schedules match the previous deploy. Live checks: 7 routes return 200, inventory responds, /tuner/guitar and /tuner/violin render on the ink background with no page errors.
