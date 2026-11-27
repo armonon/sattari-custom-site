@@ -11,21 +11,24 @@ import { separatorGuides, separatorQuestions } from '../data/stemSeparatorConten
 import { toolDetails } from '../data/toolDetails';
 import { LIMITS } from '../utils/stemSeparator';
 import { GuideArticle, GuideIndex, ToolDetailsPage } from './MusicResources';
+import { InventoryProvider } from '../context/InventoryContext';
 
-function renderPage(path) {
+function renderPage(path, inventory = null) {
   const context = {};
   const canUseDOM = HelmetProvider.canUseDOM;
   HelmetProvider.canUseDOM = false;
   try {
     const body = renderToString(
       <HelmetProvider context={context}>
-        <StaticRouter location={path}>
-          <Routes>
-            <Route path="/guides" element={<GuideIndex />} />
-            <Route path="/guides/:slug" element={<GuideArticle />} />
-            <Route path="/tools/:tool" element={<ToolDetailsPage />} />
-          </Routes>
-        </StaticRouter>
+        <InventoryProvider initialInventory={inventory}>
+          <StaticRouter location={path}>
+            <Routes>
+              <Route path="/guides" element={<GuideIndex />} />
+              <Route path="/guides/:slug" element={<GuideArticle />} />
+              <Route path="/tools/:tool" element={<ToolDetailsPage />} />
+            </Routes>
+          </StaticRouter>
+        </InventoryProvider>
       </HelmetProvider>
     );
     const { helmet } = context;
@@ -108,7 +111,11 @@ describe('Stem Separator search content', () => {
         expect(doc.body.textContent).toContain(text);
       }
     }
-    expect(doc.querySelector('.resource-action').getAttribute('href')).toBe('/stem-separator');
+    // Each guide's call to action opens the flagship tool that completes its task.
+    expect(doc.querySelector('.resource-action').getAttribute('href')).toBe(guide.action.path);
+    expect(['/stem-separator', '/studio/keybpm']).toContain(
+      new URL(guide.action.path, 'https://sattarimusic.com').pathname
+    );
     expect(schema.find((item) => item['@type'] === 'Article')).toMatchObject({
       headline: guide.title,
       description: guide.description,
@@ -152,3 +159,123 @@ describe('Stem Separator search content', () => {
     expect(text).toContain('still calculates all four source groups');
   });
 });
+
+it('keeps the violin trial, comparison anchor and handout available without an inventory dependency', () => {
+  const { doc } = renderPage('/guides/choose-a-violin-for-beginners');
+  const list = doc.querySelector('.resource-checklist ol');
+  expect(list.children).toHaveLength(5);
+  expect(list.compareDocumentPosition(doc.querySelector('.resource-contents'))).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
+  expect(doc.querySelector('#compare-violins h2')).not.toBeNull();
+  expect(doc.querySelector('a[download]').getAttribute('href')).toBe(
+    '/handouts/instrument-trial-sheet.pdf'
+  );
+  expect(doc.querySelector('a[href^="/product/"], a[href^="/shop"]')).toBeNull();
+});
+
+it('gives every educational guide an index link, cited sources and educational next steps', () => {
+  const { doc: index } = renderPage('/guides');
+  const educational = musicGuides.filter((guide) => !guide.action);
+  for (const guide of educational) {
+    const path = `/guides/${guide.slug}`;
+    const { doc, schema } = renderPage(path);
+    const article = schema.find((item) => item['@type'] === 'Article');
+    expect(index.querySelector(`a[href="${path}"]`)).not.toBeNull();
+    expect(guide.sources.length).toBeGreaterThanOrEqual(2);
+    expect(article.citation).toEqual(guide.sources.map((source) => source.url));
+    expect(
+      doc.querySelector('.resource-action, a[href^="/shop"], a[href^="/product/"]')
+    ).toBeNull();
+    for (const section of guide.sections) {
+      if (section.sourceUrl) {
+        expect(guide.sources.some((source) => source.url === section.sourceUrl)).toBe(true);
+      }
+      if (section.table) {
+        const table = [...doc.querySelectorAll('table')].find(
+          (el) => el.getAttribute('aria-label') === section.title
+        );
+        expect(table.querySelectorAll('th[scope="col"]')).toHaveLength(
+          section.table.headers.length
+        );
+        expect(table.querySelectorAll('th[scope="row"]')).toHaveLength(section.table.rows.length);
+      }
+    }
+  }
+});
+
+it('ships the two snare listening examples as accessible players backed by separate recordings', () => {
+  const { doc, schema } = renderPage('/guides/how-to-tune-a-snare-drum');
+  const players = [...doc.querySelectorAll('#before-and-after audio[controls]')];
+  expect(players.map((p) => p.getAttribute('src'))).toEqual([
+    '/audio/snare-tuning/before.wav',
+    '/audio/snare-tuning/after.wav',
+  ]);
+  const recordings = schema.find((item) => item['@type'] === 'Article').audio;
+  expect(recordings.map((item) => item.name)).toEqual(
+    players.map((p) => p.getAttribute('aria-label'))
+  );
+  expect(
+    doc.querySelector('#before-and-after a[href="https://creativecommons.org/licenses/by/4.0/"]')
+  ).not.toBeNull();
+});
+
+it('places full-size violin detail photographs next to the steps they illustrate', () => {
+  const { doc } = renderPage('/guides/how-to-change-a-violin-string');
+  for (const id of ['seat-the-tailpiece-end', 'wind-the-peg', 'check-the-bridge']) {
+    const figure = doc.querySelector(`#${id} figure`);
+    expect(figure).not.toBeNull();
+    const img = figure.querySelector('img');
+    expect(img.getAttribute('alt').length).toBeGreaterThan(12);
+    expect(figure.querySelector('a').getAttribute('href')).toBe(img.getAttribute('src'));
+    expect(figure.querySelector('figcaption a')).not.toBeNull();
+  }
+});
+
+it.each([
+  'how-to-change-acoustic-guitar-strings',
+  'how-to-change-electric-guitar-strings',
+  'how-to-change-bass-guitar-strings',
+  'how-to-change-a-viola-string',
+  'how-to-change-classical-guitar-strings',
+  'how-to-change-a-cello-string',
+  'how-to-change-ukulele-strings',
+  'how-to-change-persian-tar-strings',
+  'how-to-change-setar-strings',
+  'how-to-change-oud-strings',
+])('pairs each numbered step of %s with a credited, openable photograph', (slug) => {
+  const { doc, schema } = renderPage('/guides/' + slug);
+  const article = schema.find((item) => item['@type'] === 'Article');
+  const steps = [...doc.querySelectorAll('section.resource-section[id]')].filter((section) =>
+    /^\d+\./.test(section.querySelector('h2')?.textContent || '')
+  );
+  expect(steps.length).toBeGreaterThanOrEqual(4);
+  const images = [];
+  for (const [index, step] of steps.entries()) {
+    expect(step.querySelector('h2').textContent).toMatch(new RegExp('^' + (index + 1) + '\\.'));
+    const figures = [...step.querySelectorAll('.guide-step-photo')];
+    expect(figures.length).toBeGreaterThan(0);
+    for (const figure of figures) {
+      const img = figure.querySelector('img');
+      const src = img.getAttribute('src');
+      expect(img.getAttribute('alt').length).toBeGreaterThan(12);
+      expect(figure.querySelector('a').getAttribute('href')).toBe(src);
+      expect(existsSync(resolve('public', src.slice(1)))).toBe(true);
+      expect(figure.querySelector('figcaption .guide-media-credit a')).not.toBeNull();
+      images.push('https://sattarimusic.com' + src);
+    }
+  }
+  expect(article.image).toEqual(images);
+});
+
+it.each(['persian-tar', 'setar', 'oud'])(
+  'shows both string attachments on the %s',
+  (instrument) => {
+    const { doc } = renderPage('/guides/how-to-change-' + instrument + '-strings');
+    const anchor = doc.querySelector('#anchor-the-string .guide-step-photo img');
+    const peg = doc.querySelector('#wind-the-peg .guide-step-photo img');
+    expect(anchor).not.toBeNull();
+    expect(peg).not.toBeNull();
+    expect(anchor.getAttribute('src')).not.toBe(peg.getAttribute('src'));
+  }
+);

@@ -17,8 +17,8 @@ export function FounderIntro({ className = 'section section-contrast' }) {
           </p>
           <p>
             The catalog covers cymbals, drumsticks, violins, guitars and accessories. The online
-            side includes a stem separator, a browser DAW, guitar lessons and free Mac audio
-            plugins—all built and maintained in California.
+            side includes a stem separator, Sattari Songboard browser studio, guitar practice and
+            experimental music tools. Explore current tools and their limits in the Sattari Hub.
           </p>
         </div>
         <div className="about-row-portrait">

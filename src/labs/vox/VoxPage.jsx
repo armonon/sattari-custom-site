@@ -14,7 +14,7 @@ import {
 import { DEFAULT_SETTINGS, settingsHistory, validateSettings } from './voxSettings';
 import './workspace.css';
 import useVoxRecorder from './useVoxRecorder';
-import { hzToMidi, keyLabel, NOTE_NAMES, scalePitchClasses, VOX_MAX_SECONDS } from './voxDsp';
+import { hzToMidi, keyLabel, voxTonics, scaleNoteNames, VOX_MAX_SECONDS } from './voxDsp';
 import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
@@ -55,15 +55,16 @@ function PitchGraph({ analysis, curve, keyChoice, duration }) {
       const high = Math.ceil(midis[Math.floor(midis.length * 0.98)]) + 2;
       const y = (midi) => height - ((midi - low) / Math.max(1, high - low)) * height;
       const x = (seconds) => (seconds / Math.max(0.1, duration)) * width;
-      const classes = scalePitchClasses(keyChoice.root, keyChoice.mode);
+      const noteNames = scaleNoteNames(keyChoice.root, keyChoice.mode);
       const styles = getComputedStyle(canvas);
       context.font = '10px Inter, sans-serif';
       for (let note = low; note <= high; note++) {
-        if (!classes.includes(((note % 12) + 12) % 12)) continue;
+        const label = noteNames[((note % 12) + 12) % 12];
+        if (!label) continue;
         context.fillStyle = styles.getPropertyValue('--alab-line') || '#34383b';
         context.fillRect(0, y(note), width, 1);
         context.fillStyle = styles.getPropertyValue('--alab-muted') || '#a4acae';
-        context.fillText(NOTE_NAMES[((note % 12) + 12) % 12], 2, y(note) - 2);
+        context.fillText(label, 2, y(note) - 2);
       }
       const plot = (color, shiftAt) => {
         context.fillStyle = color;
@@ -370,7 +371,7 @@ export default function VoxPage() {
                           setKeyChoice((value) => ({ ...value, root: Number(event.target.value) }))
                         }
                       >
-                        {NOTE_NAMES.map((name, index) => (
+                        {voxTonics(keyChoice.mode).map((name, index) => (
                           <option key={name} value={index}>
                             {name}
                           </option>

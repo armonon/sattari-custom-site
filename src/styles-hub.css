@@ -140,6 +140,12 @@
 .hub-tool-stem-separator {
   --tool-accent: #a7e5cb;
 }
+.hub-tool-key-bpm {
+  --tool-accent: #e4b873;
+}
+[data-theme='day'] .hub-tool-key-bpm {
+  --tool-accent: #8a5a12;
+}
 [data-theme='day'] .hub-tool-studio {
   --tool-accent: #b24230;
 }
@@ -615,6 +621,7 @@
     width: calc(100% - 48px);
   }
   .hub-workspace-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
   .hub-tool-name h3 {

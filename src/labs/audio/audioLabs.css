@@ -1,36 +1,29 @@
 /* Sattari Studio labs (Split, Key & BPM, Vox). Same palette and rhythm as the
    Stem Separator and Hub pages, with a day theme. */
-.alab-page {
-  --alab-bg: #111213;
-  --alab-panel: #191b1d;
-  --alab-raised: #232628;
-  --alab-line: #34383b;
-  --alab-text: #f3f5f4;
-  --alab-muted: #a4acae;
-  --alab-accent: #b9e7c8;
-  --alab-accent-ink: #102018;
+/* One palette for every tool in this shell, in day and night mode: the ink
+   look of the Key & BPM meter (cream on near-black, gold accent). */
+.alab-page,
+[data-theme='day'] .alab-page {
+  --alab-bg: #0f0e0c;
+  --alab-panel: #171512;
+  --alab-raised: #1e1b17;
+  --alab-line: rgba(242, 234, 217, 0.12);
+  --alab-text: #f2ead9;
+  --alab-muted: #a89f8b;
+  --alab-accent: #e4b873;
+  --alab-accent-ink: #1a1408;
   --alab-bad: #ffb4a8;
+  color-scheme: dark;
+}
+.alab-page {
   position: relative;
   z-index: 1;
   min-height: calc(100vh - 88px);
   background: var(--alab-bg);
   color: var(--alab-text);
   padding: 0 24px 72px;
-  color-scheme: dark;
   font-family: Inter, sans-serif;
   letter-spacing: 0;
-}
-[data-theme='day'] .alab-page {
-  --alab-bg: #f4f6f5;
-  --alab-panel: #ffffff;
-  --alab-raised: #eef1ef;
-  --alab-line: #d4dcd7;
-  --alab-text: #19221e;
-  --alab-muted: #58655f;
-  --alab-accent: #216a52;
-  --alab-accent-ink: #ffffff;
-  --alab-bad: #a3271a;
-  color-scheme: light;
 }
 .alab-page * {
   box-sizing: border-box;

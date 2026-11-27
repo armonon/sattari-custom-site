@@ -31,6 +31,7 @@ const SERVICE_LABELS = {
   lessons: 'Teachers / classes',
   studio: 'Rental studio',
   'audio-alpha': 'Audio Suite alpha access',
+  'tool-feedback': 'Music tool feedback',
 };
 
 function json(statusCode, body) {

@@ -105,7 +105,7 @@ it('restores saved results and keeps interrupted sources available for retry', a
   });
 });
 
-it('does not restore old sessions after the user creates and removes a new queue', async () => {
+it('still restores saved songs after the user adds and removes a file before storage opens', async () => {
   let resolveLoad;
   loadSessions.mockReturnValueOnce(
     new Promise((resolve) => {
@@ -123,7 +123,29 @@ it('does not restore old sessions after the user creates and removes a new queue
     });
     await Promise.resolve();
   });
-  expect(result.current.jobs).toEqual([]);
+  // Saved work is never silently dropped because of an unrelated early edit.
+  expect(result.current.jobs.map((job) => job.id)).toEqual(['old']);
+});
+
+it('keeps a file added before restoration alongside restored songs, without duplicates', async () => {
+  let resolveLoad;
+  loadSessions.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveLoad = resolve;
+    })
+  );
+  const { result } = renderHook(useStemSeparator);
+  const saved = file('saved.wav');
+  act(() => result.current.addFiles([file('new.wav'), saved]));
+  await act(async () => {
+    resolveLoad({
+      sessions: [{ id: 'old', file: saved, status: 'done', outputs: [], updatedAt: 1 }],
+      warnings: [],
+    });
+    await Promise.resolve();
+  });
+  expect(result.current.jobs.map((job) => job.file.name)).toEqual(['saved.wav', 'new.wav']);
+  expect(result.current.jobs[0].id).toBe('old');
 });
 
 it('deletes valid saved sessions replaced before restoration completes', async () => {
@@ -275,7 +297,7 @@ it('releases output URLs on remove, clear, and unmount', async () => {
   expect(URL.revokeObjectURL).toHaveBeenCalledTimes(16);
 });
 
-it('runs the real demo pipeline with the selected stems and CPU preference', async () => {
+it('runs the real demo pipeline with all four parts and the CPU preference', async () => {
   const fetchDemo = vi.fn(async () => ({ ok: true, blob: async () => new Blob(['audio']) }));
   vi.stubGlobal('fetch', fetchDemo);
   const { result } = renderHook(useStemSeparator);
@@ -287,7 +309,14 @@ it('runs the real demo pipeline with the selected stems and CPU preference', asy
   await act(async () => result.current.loadDemo());
   expect(result.current.jobs.map((job) => job.status)).toEqual(['queued', 'done']);
   expect(result.current.jobs[1].file.name).toBe('sattari-practice-demo.wav');
-  expect(result.current.jobs[1].outputs.map((output) => output.id)).toEqual(['drums', 'bass']);
+  // The example always separates every part so each practice mix can be heard.
+  expect(result.current.jobs[1].outputs.map((output) => output.id)).toEqual([
+    'vocals',
+    'drums',
+    'bass',
+    'other',
+  ]);
+  expect(result.current.selected).toEqual(['drums', 'bass']);
   expect(separate.mock.lastCall[5]).toBe(true);
   expect(result.current.loadingDemo).toBe(false);
   expect(fetchDemo.mock.calls[0][0]).toBe('/audio/sattari-practice-demo.wav');
@@ -330,4 +359,58 @@ it('shows a failed demo request without leaving the page locked', async () => {
   expect(result.current.errors[0]).toContain('demo could not load');
   expect(result.current.loadingDemo).toBe(false);
   expect(result.current.running).toBe(false);
+});
+
+it('separates a 20-second preview section first on longer songs, then the whole song', async () => {
+  const frames = 44100 * 60;
+  decodeTrack.mockResolvedValueOnce({
+    left: new Float32Array(frames),
+    right: new Float32Array(frames),
+    channels: 2,
+    duration: 60,
+    peaks: [],
+  });
+  let releaseFull;
+  const seen = [];
+  separate.mockImplementation((audio, stems) => {
+    seen.push(audio.left.length);
+    if (seen.length === 1) return Promise.resolve(outputs(stems));
+    return new Promise((resolve) => {
+      releaseFull = () => resolve(outputs(stems));
+    });
+  });
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('long.wav')]));
+  let running;
+  act(() => {
+    running = result.current.run();
+  });
+  await waitFor(() => expect(result.current.jobs[0].preview).toBeTruthy());
+  expect(seen[0]).toBe(20 * 44100);
+  expect(result.current.jobs[0].preview).toMatchObject({ start: 18, duration: 20 });
+  expect(result.current.jobs[0].status).toBe('processing');
+  await act(async () => {
+    releaseFull();
+    await running;
+  });
+  expect(seen[1]).toBe(frames);
+  expect(result.current.jobs[0].status).toBe('done');
+  expect(result.current.jobs[0].preview).toBeNull();
+});
+
+it('a failed preview does not stop the full separation, and short songs skip it', async () => {
+  decodeTrack.mockResolvedValueOnce({
+    left: new Float32Array(44100 * 50),
+    right: new Float32Array(44100 * 50),
+    channels: 2,
+    duration: 50,
+    peaks: [],
+  });
+  separate.mockRejectedValueOnce(new Error('preview failed'));
+  const { result } = renderHook(useStemSeparator);
+  act(() => result.current.addFiles([file('fifty.wav'), file('short.wav')]));
+  await act(async () => result.current.run());
+  expect(result.current.jobs.map((job) => job.status)).toEqual(['done', 'done']);
+  // fifty.wav: failed preview + full; short.wav (1 s fixture): full only.
+  expect(separate).toHaveBeenCalledTimes(3);
 });

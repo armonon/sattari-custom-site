@@ -12,15 +12,15 @@ it('launches all three real workspaces and their reference pages', () => {
     </MemoryRouter>
   );
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sattari Hub');
-  for (const [name, route] of [
+  for (const [name, route, reference = `/tools${route}`] of [
     ['Sattari Studio', '/studio'],
-    ['Sattari Learn', '/learn'],
     ['Stem Separator', '/stem-separator'],
+    ['Key & BPM', '/studio/keybpm', '/tools/key-bpm'],
   ]) {
     expect(screen.getByRole('link', { name: `Open ${name}` })).toHaveAttribute('href', route);
     expect(
       screen.getByRole('link', { name: `${name} formats, privacy and limits` })
-    ).toHaveAttribute('href', `/tools${route}`);
+    ).toHaveAttribute('href', reference);
   }
   expect(screen.getAllByRole('img')).toHaveLength(3);
   expect(screen.queryByRole('link', { name: 'Music software for Mac' })).not.toBeInTheDocument();
@@ -62,12 +62,12 @@ it('lists the Studio alpha labs', () => {
       <SattariHubPage />
     </MemoryRouter>
   );
-  for (const [name, route] of [
-    ['Split', '/studio/split'],
-    ['Key & BPM', '/studio/keybpm'],
-    ['Vox', '/studio/vox'],
+  for (const [name, route, stage] of [
+    ['Split', '/studio/split', 'Alpha'],
+    ['Tuner & Key', '/studio/keybpm', 'Beta'],
+    ['Vox', '/studio/vox', 'Alpha'],
   ]) {
-    expect(screen.getByRole('link', { name: new RegExp(`^Alpha\\s*${name}`) })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: new RegExp(`^${stage}\\s*${name}`) })).toHaveAttribute(
       'href',
       route
     );

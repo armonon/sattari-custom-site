@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -66,9 +67,15 @@ export function SongArt({ lesson, small = false }) {
   );
 }
 
-function JourneyHeader({ stage, onBack, onTool }) {
+const restringingGuides = [
+  { label: 'Change Persian tar strings', path: '/guides/how-to-change-persian-tar-strings' },
+  { label: 'Change Persian setar strings', path: '/guides/how-to-change-setar-strings' },
+  { label: 'Change oud strings', path: '/guides/how-to-change-oud-strings' },
+];
+
+function JourneyHeader({ stage, onBack }) {
   return (
-    <header className="lj-header">
+    <header className={stage === 'choose' ? 'lj-header lj-library-header' : 'lj-header'}>
       <button
         type="button"
         className="loop-brand lj-brand"
@@ -96,15 +103,20 @@ function JourneyHeader({ stage, onBack, onTool }) {
           <ArrowLeft size={16} />
           <span>Hub</span>
         </Link>
-        <button
-          type="button"
+        {stage === 'choose' && (
+          <Link className="lj-tool-link lj-guides-link" to="/guides" aria-label="Music guides">
+            <BookOpen size={16} aria-hidden="true" />
+            <span>Guides</span>
+          </Link>
+        )}
+        <Link
           className="lj-tool-link"
-          aria-label="Tune your guitar"
-          onClick={() => onTool('tuner')}
+          to="/studio/keybpm#live-tuner"
+          aria-label="Tune your instrument and find song key"
         >
           <SlidersHorizontal size={16} />
-          <span>Tune your guitar</span>
-        </button>
+          <span>Tuner & key</span>
+        </Link>
       </div>
     </header>
   );
@@ -167,6 +179,25 @@ function SongLibrary({ records, onChoose, onUpload, progress, onDaily }) {
         </div>
         <PracticeDeck lesson={SONGS[0]} onChoose={onChoose} />
       </section>
+      <nav
+        className="lj-restring-guides"
+        id="restringing-guides"
+        aria-labelledby="lj-restring-guides-title"
+      >
+        <h2 id="lj-restring-guides-title">String replacement guides</h2>
+        <ul>
+          {restringingGuides.map(({ label, path }) => (
+            <li key={path}>
+              <Link to={path}>
+                {label} <ChevronRight size={15} aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link className="lj-all-guides" to="/guides#string-replacement">
+          All restringing guides <ArrowRight size={15} aria-hidden="true" />
+        </Link>
+      </nav>
       <CoursePath onChoose={onChoose} progress={progress} />
       <section className="lj-songbook" aria-labelledby="lj-songbook-title">
         <div className="lj-section-heading">
@@ -725,7 +756,6 @@ export default function LoopJourney({
   onChoose,
   onUpload,
   onBack,
-  onTool,
   onPractice,
   onExitPractice,
   onStudio,
@@ -790,7 +820,7 @@ export default function LoopJourney({
     );
   return (
     <div className="lj-journey">
-      <JourneyHeader stage={stage} onBack={onBack} onTool={onTool} />
+      <JourneyHeader stage={stage} onBack={onBack} />
       {stage === 'choose' ? (
         <SongLibrary
           records={records}

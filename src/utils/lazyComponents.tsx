@@ -129,6 +129,7 @@ export const StemSeparatorPage = lazyPage(() => import('@pages/StemSeparatorPage
 // Studio alpha labs (wave 2): /studio/split, /studio/keybpm, /studio/vox.
 export const SplitPage = lazyPage(() => import('../labs/split/SplitPage'));
 export const KeyBpmPage = lazyPage(() => import('../labs/keybpm/KeyBpmPage'));
+export const InstrumentTunerPage = lazyPage(() => import('@pages/InstrumentTunerPage'));
 export const VoxPage = lazyPage(() => import('../labs/vox/VoxPage'));
 export const LyricPage = lazyPage(() => import('../labs/lyric/LyricPage'));
 export const CleanPage = lazyPage(() => import('../labs/clean/CleanPage'));
@@ -137,6 +138,10 @@ export const GuideArticle = lazyPage(() => import('@pages/MusicResources'), 'Gui
 export const ToolDetailsPage = lazyPage(() => import('@pages/MusicResources'), 'ToolDetailsPage');
 export const VisitPage = lazyPage(() => import('@pages/MusicResources'), 'VisitPage');
 export const PrivacyPage = lazyPage(() => import('@pages/MusicResources'), 'PrivacyPage');
+export const KeyIndex = lazyPage(() => import('@pages/MusicReference'), 'KeyIndex');
+export const KeyPage = lazyPage(() => import('@pages/MusicReference'), 'KeyPage');
+export const BpmIndex = lazyPage(() => import('@pages/MusicReference'), 'BpmIndex');
+export const BpmPage = lazyPage(() => import('@pages/MusicReference'), 'BpmPage');
 // Wave-2 alpha tools (src/labs).
 export const CanvasPage = lazyPage(() => import('@/labs/canvas/CanvasPage'));
 export const PocketPage = lazyPage(() => import('@/labs/pocket/PocketPage'));

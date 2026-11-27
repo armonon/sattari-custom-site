@@ -42,6 +42,17 @@ describe('bass', () => {
   it('tunes row 0 to the root in octave 1 (A = 55 Hz)', () => {
     expect(bassFrequency(9, 'minor', 0)).toBeCloseTo(55);
     expect(bassFrequency(9, 'minor', 7)).toBeCloseTo(110);
+    expect(bassRowLabels(5, 'major')).toEqual(['F', 'G', 'A', 'Bb', 'C', 'D', 'E', 'F']);
+    expect(bassRowLabels(0, 'minorPentatonic')).toEqual([
+      'C',
+      'Eb',
+      'F',
+      'G',
+      'Bb',
+      'C',
+      'Eb',
+      'F',
+    ]);
     expect(bassRowLabels(9, 'minorPentatonic')).toEqual(['A', 'C', 'D', 'E', 'G', 'A', 'C', 'D']);
   });
 

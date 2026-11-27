@@ -182,6 +182,7 @@ function LoopPracticeApp() {
   const { profile } = useGuitarProfile();
   const tuning = openStrings(profile);
   const [journey, setJourney] = useState('choose');
+  const lastJourney = useRef(journey);
   const [practiceProgress, setPracticeProgress] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('loop-practice-progress-v1') || '{}');
@@ -306,7 +307,13 @@ function LoopPracticeApp() {
   );
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const section =
+      lastJourney.current === journey && window.location.hash
+        ? document.getElementById(window.location.hash.slice(1))
+        : null;
+    lastJourney.current = journey;
+    if (section) section.scrollIntoView({ block: 'start', behavior: 'instant' });
+    else window.scrollTo({ top: 0, behavior: 'instant' });
   }, [journey]);
 
   useEffect(() => {
@@ -651,10 +658,6 @@ function LoopPracticeApp() {
           onBack={() => goTo('choose')}
           onExitPractice={() => goTo('overview')}
           onPractice={() => goTo('focus')}
-          onTool={(id) => {
-            changeNav(id);
-            goTo('studio');
-          }}
           onStudio={() => {
             changeNav('practice');
             goTo('studio');
@@ -1703,7 +1706,12 @@ function LoopPracticeApp() {
               <h2>
                 Phrase {i + 1} · {formatTime(p.start)}–{formatTime(p.end)}
               </h2>
-              <StaffGuide notes={p.notes} active={-1} bpm={lesson.bpm} />
+              <StaffGuide
+                notes={p.notes}
+                active={-1}
+                bpm={lesson.bpm}
+                endBeat={lesson.source === 'demo' ? (p.end * lesson.bpm) / 60 : undefined}
+              />
               <TabGuide notes={p.notes} active={-1} onSelect={() => {}} />
               {lesson.polyphonicNotes?.some((n) => n.end > p.start && n.start < p.end) && (
                 <>

@@ -1,4 +1,4 @@
-import process from 'node:process';
+import { currentInstagramToken } from '../../server/instagramToken.js';
 
 // Every visitor sees the same nine posts, so the Instagram API is asked at most
 // once per FRESH_MS per warm instance, the CDN's shared durable cache absorbs
@@ -46,11 +46,21 @@ function unavailable() {
   );
 }
 
-async function fetchPosts(accessToken) {
-  const url = new URL('https://graph.instagram.com/me/media');
+// Instagram Login tokens read the account's own media; a business-account
+// token (see server/instagramToken.js) reads it through the Facebook Graph API.
+function mediaUrl(credentials) {
+  const url =
+    credentials.mode === 'business'
+      ? new URL(`https://graph.facebook.com/${encodeURIComponent(credentials.accountId)}/media`)
+      : new URL('https://graph.instagram.com/me/media');
   url.searchParams.set('fields', FIELDS);
   url.searchParams.set('limit', '9');
-  url.searchParams.set('access_token', accessToken);
+  url.searchParams.set('access_token', credentials.token);
+  return url;
+}
+
+async function fetchPosts(credentials) {
+  const url = mediaUrl(credentials);
 
   const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!response.ok) {
@@ -86,15 +96,15 @@ export default async function instagramFeed(request) {
     return cached ? posts(cached.posts, { stale: true }) : unavailable();
   }
 
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
-  if (!accessToken) {
+  const credentials = await currentInstagramToken();
+  if (!credentials) {
     console.error(JSON.stringify({ type: 'instagram-feed-not-configured' }));
     lastFailureAt = now;
     return unavailable();
   }
 
   try {
-    const list = await fetchPosts(accessToken);
+    const list = await fetchPosts(credentials);
     cached = { posts: list, at: now };
     lastFailureAt = 0;
     return posts(list);
@@ -103,6 +113,7 @@ export default async function instagramFeed(request) {
     console.error(
       JSON.stringify({
         type: 'instagram-feed-failed',
+        mode: credentials.mode,
         status: error?.status,
         name: error?.name,
         detail: error?.detail,

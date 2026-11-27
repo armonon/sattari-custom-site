@@ -26,6 +26,7 @@ import DecksView from '../studio/views/DecksView';
 import FilesView from '../studio/views/FilesView';
 import LibraryView, { useLibraryDeckSlots } from '../studio/views/LibraryView';
 import MixerDock from '../studio/views/MixerDock';
+import MobileStudioChrome from '../studio/views/MobileStudioChrome';
 import { PadsAndFx } from '../studio/views/PerformTools';
 import {
   AdvancedStrip,
@@ -43,6 +44,7 @@ import '../styles-stemdeck-web.css';
 import '../styles-stemdeck-native.css';
 import '../styles-studio-console.css';
 import '../styles-studio-session.css';
+import '../styles-songboard-mobile.css';
 
 const STUDIO_FEATURES = [
   'Deck mixing',
@@ -234,6 +236,25 @@ export default function SattariStudioPage() {
                 onToggleAdvanced={() => setAdvancedVisible((value) => !value)}
                 settingsOpen={settingsOpen}
                 onToggleSettings={() => setSettingsOpen((value) => !value)}
+              />
+
+              <MobileStudioChrome
+                activeView={activeView}
+                onViewChange={setActiveView}
+                mixerOpen={dock.open}
+                onShowMixer={() => dock.show({ focus: false })}
+                onHideMixer={dock.hide}
+                onOpenSettings={() => setSettingsOpen(true)}
+                onOpenInput={input.openChooser}
+                session={state}
+                transport={{
+                  playing: arrangementTransport ? arranger.arrangerPlaying : anyPlaying,
+                  available: arrangementTransport
+                    ? state.arranger.tracks.some((track) => track.clips.length > 0)
+                    : loadedDecks.length > 0,
+                  onToggle: deckOps.toggleGlobalTransport,
+                }}
+                capture={capture}
               />
 
               {advancedVisible ? (

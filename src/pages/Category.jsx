@@ -7,6 +7,9 @@ import { useInventory } from '../context/InventoryContext';
 import { SEO, StructuredData } from '../utils/seo';
 import { CATEGORY_LOCAL_HELP, CATEGORY_SEO, breadcrumbSchema } from '../data/siteSeo';
 import NotFoundPage from '../components/NotFoundPage';
+import CategoryBuyingGuide from '../components/CategoryBuyingGuide';
+import { categoryBuyingGuides } from '../data/catalogMerchandising';
+import { instrumentShopping } from '../data/instrumentShopping';
 import '../styles-products-premium.css';
 import '../components/LocalSeoPage.css';
 
@@ -26,12 +29,12 @@ function sortProducts(list, sort) {
 }
 
 const categoryHighlights = {
-  cymbals: ['Handcrafted tone', 'Stage-ready projection', 'Distinctive response'],
-  sticks: ['Premium wood', 'Balanced rebound', 'Daily-play durability'],
-  essentials: ['Practice-ready', 'Compact carry', 'Built for consistency'],
-  violins: ['Hand-carved tonewoods', 'Workshop-fitted & tuned', 'Acoustic, electric & silent'],
-  'guitar-bass': ['Set up and ready', 'Ships from California', 'Electric & acoustic'],
-  all: ['Instruments & accessories', 'Secure checkout', 'Ships from California'],
+  cymbals: ['Crash & splash', 'Hi-hat pairs', 'Effect cymbals'],
+  sticks: ['5A & 7A', 'Hickory & maple', 'Wood & nylon tips'],
+  essentials: ['Practice pads', 'Bags & accessories', 'Hand percussion'],
+  violins: ['Acoustic & electric', 'Compare included kits', 'Strings & accessories'],
+  'guitar-bass': ['Nylon & steel strings', 'Electric guitar', 'Five-string bass'],
+  all: ['Instruments & accessories', 'Secure checkout', 'Visits by appointment'],
 };
 
 // Synthetic category for the /shop/all page (lists every product).
@@ -69,6 +72,7 @@ export default function Category() {
   if (!category) {
     return <NotFoundPage />;
   }
+  const shopping = instrumentShopping[category.key];
 
   const categorySchema = {
     '@context': 'https://schema.org',
@@ -99,16 +103,28 @@ export default function Category() {
         ])}
       />
       <div className="container section-header narrow">
-        <p className="eyebrow">Category spotlight</p>
-        <h1>{category.title}</h1>
-        <p>{category.description}</p>
-        <div className="shop-trust-bar" aria-label={`${category.title} highlights`}>
-          {categoryHighlights[category.key].map((point) => (
-            <span className="trust-chip" key={point}>
-              {point}
-            </span>
-          ))}
-        </div>
+        <h1>{shopping?.heading || category.title}</h1>
+        <p>{shopping?.introduction || category.description}</p>
+        {shopping ? (
+          <nav className="catalog-shopping-nav" aria-label={`Browse ${category.title} by type`}>
+            {shopping.families.map((family) => (
+              <a key={family.id} href={'#' + family.id}>
+                {family.name}
+              </a>
+            ))}
+          </nav>
+        ) : (
+          <div className="shop-trust-bar" aria-label={`${category.title} highlights`}>
+            {categoryHighlights[category.key].map((point) => (
+              <span className="trust-chip" key={point}>
+                {point}
+              </span>
+            ))}
+          </div>
+        )}
+        {!shopping && categoryBuyingGuides[category.key] && (
+          <a href="#buying-guide">{categoryBuyingGuides[category.key].title}</a>
+        )}
       </div>
       <div className="container shop-toolbar">
         {isAll && (
@@ -257,6 +273,7 @@ export default function Category() {
           );
         })}
       </div>
+      <CategoryBuyingGuide categoryKey={category.key} products={products} isSoldOut={isSoldOut} />
       <section className="container category-local-help" aria-label="Local instrument support">
         <h2>{CATEGORY_LOCAL_HELP[category.key].title}</h2>
         <p>{CATEGORY_LOCAL_HELP[category.key].copy}</p>

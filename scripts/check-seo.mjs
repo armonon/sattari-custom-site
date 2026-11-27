@@ -18,8 +18,19 @@ const localTargets = [
   '/encino-violin-shop',
   '/services/violin-repair-los-angeles',
   '/services/guitar-setup-los-angeles',
+  '/guitar-strings-woodland-hills',
+  '/violin-strings-woodland-hills',
+  '/services/guitar-restringing-woodland-hills',
 ];
 const linkedLocalTargets = new Set();
+const tunerPresets = {
+  '/tuner/guitar': 'guitar',
+  '/tuner/violin': 'violin',
+  '/tuner/viola': 'viola',
+  '/tuner/cello': 'cello',
+  '/tuner/bass': 'bass',
+  '/tuner/ukulele': 'ukulele',
+};
 for (const path of localTargets) {
   assert.ok(urls.includes(origin + path), `${path}: new local page missing from sitemap`);
 }
@@ -29,6 +40,28 @@ for (const url of urls) {
   const file = path === '/' ? 'dist/index.html' : `dist${path}.html`;
   const dom = new JSDOM(await readFile(file, 'utf8'), { url });
   const doc = dom.window.document;
+  if (path === '/studio/keybpm') {
+    for (const tunerPath of Object.keys(tunerPresets)) {
+      assert.ok(urls.includes(origin + tunerPath), `Missing tuner sitemap URL: ${tunerPath}`);
+      assert.ok(doc.querySelector(`a[href="${tunerPath}"]`), `Missing hub link to ${tunerPath}`);
+    }
+    for (const id of ['live-tuner', 'scales', 'song-key']) {
+      assert.ok(doc.getElementById(id), `Missing tuner destination #${id}`);
+    }
+  }
+  if (Object.hasOwn(tunerPresets, path)) {
+    const preset = tunerPresets[path];
+    const selects = [...doc.querySelectorAll('#live-tuner select')];
+    assert.ok(
+      selects.some((select) => select.value === preset),
+      `${path}: wrong initial preset`
+    );
+    assert.ok(doc.title.toLowerCase().includes(preset), `${path}: instrument missing from title`);
+    assert.ok(
+      doc.querySelector('h1').textContent.toLowerCase().includes(preset),
+      `${path}: instrument missing from H1`
+    );
+  }
   for (const link of doc.querySelectorAll('a[href]')) {
     const target = new URL(link.href, url);
     if (
@@ -117,7 +150,7 @@ for (const url of urls) {
     assert.ok(!doc.querySelector('.product-detail-shell').textContent.includes('California made'));
   }
   if (path === '/') {
-    assert.match(doc.querySelector('.home-hero-copy').textContent, /musicians worldwide/i);
+    assert.match(doc.querySelector('.home-hero-copy').textContent, /music tools worldwide/i);
     for (const destination of ['/shop', '/learn', '/studio', '/services']) {
       assert.ok(doc.querySelector(`a[href="${destination}"]`), `Home must link to ${destination}`);
     }
@@ -147,6 +180,7 @@ for (const url of urls) {
   if (
     path.startsWith('/guides') ||
     path.startsWith('/tools/') ||
+    /^\/(keys|bpm)(\/|$)/.test(path) ||
     ['/visit', '/privacy'].includes(path)
   ) {
     for (const image of doc.querySelectorAll('.resource-page img'))
@@ -155,7 +189,14 @@ for (const url of urls) {
       await access(`dist${decodeURI(new URL(audio.src).pathname)}`);
     for (const link of doc.querySelectorAll('.resource-page a[href]')) {
       const target = new URL(link.href);
-      if (target.origin === origin && !target.pathname.startsWith('/audio/')) {
+      if (
+        target.origin === origin &&
+        (target.pathname.startsWith('/handouts/') ||
+          /^\/images\/guides\/[^/]+\/photo-license\.txt$/.test(target.pathname) ||
+          /\.(webp|jpe?g|png)$/i.test(target.pathname))
+      ) {
+        await access(`dist${decodeURI(target.pathname)}`);
+      } else if (target.origin === origin && !target.pathname.startsWith('/audio/')) {
         assert.ok(
           urls.includes(origin + target.pathname),
           `${path}: unknown resource link ${target.pathname}`

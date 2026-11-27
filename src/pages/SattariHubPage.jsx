@@ -3,7 +3,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   AudioLines,
-  BookOpen,
+  Gauge,
   Library,
   Radio,
   SlidersHorizontal,
@@ -30,28 +30,29 @@ const workspaces = [
     tools: ['Four decks', 'Instruments', 'Arrangement'],
   },
   {
-    id: 'learn',
-    name: 'Sattari Learn',
-    category: 'Practice',
-    detail: 'Guided guitar lessons & live feedback',
-    path: '/learn',
-    image: '/images/tools/learn-guitar.jpg',
-    alt: 'Sattari Learn song library and interactive guitar practice player',
-    icon: BookOpen,
-    status: 'Practice lab',
-    tools: ['Tabs & chords', 'Guided practice', 'Live feedback'],
+    id: 'key-bpm',
+    name: 'Key & BPM',
+    category: 'Understand',
+    detail: 'Find key, Camelot and tempo, then fix half/double time',
+    path: '/studio/keybpm',
+    image: '/images/tools/key-bpm-hero-ink.jpg',
+    alt: 'Analog tempo dial reading 120 BPM inside a circle of fifths, C major, Camelot 8B',
+    icon: Gauge,
+    status: 'Beta',
+    reference: '/tools/key-bpm',
+    tools: ['Key', 'Camelot', 'BPM', 'CSV'],
   },
   {
     id: 'stem-separator',
     name: 'Stem Separator',
     category: 'Explore',
-    detail: 'Find the individual parts of a track',
+    detail: 'Separate a song and download vocal, drum or bass practice mixes',
     path: '/stem-separator',
     image: '/images/tools/separator.jpg',
     alt: 'Stem Separator with completed bass and drum files',
     icon: Split,
     status: 'Local processing',
-    tools: ['Vocals', 'Drums', 'Bass', 'Instruments'],
+    tools: ['Vocals', 'Drums', 'Bass', 'Other instruments'],
   },
 ];
 
@@ -93,6 +94,9 @@ export default function SattariHubPage() {
             </div>
             <div className="hub-heading-aside">
               <p>Learn guitar. Create music. Explore sound.</p>
+              <Link to="/learn" className="hub-text-link">
+                Sattari Learn: guitar practice <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </div>
           </header>
 
@@ -104,7 +108,19 @@ export default function SattariHubPage() {
             <div className="hub-workspace-grid">
               {workspaces.map(
                 (
-                  { id, name, category, detail, path, image, alt, icon: Icon, status, tools },
+                  {
+                    id,
+                    name,
+                    category,
+                    detail,
+                    path,
+                    image,
+                    alt,
+                    icon: Icon,
+                    status,
+                    tools,
+                    reference,
+                  },
                   index
                 ) => (
                   <article key={id} className={`hub-tool hub-tool-${id}`}>
@@ -131,7 +147,10 @@ export default function SattariHubPage() {
                     </Link>
                     <div className="hub-tool-footer">
                       <span>{status}</span>
-                      <Link to={`/tools${path}`} aria-label={`${name} formats, privacy and limits`}>
+                      <Link
+                        to={reference || `/tools${path}`}
+                        aria-label={`${name} formats, privacy and limits`}
+                      >
                         Details <ArrowRight size={14} aria-hidden="true" />
                       </Link>
                     </div>

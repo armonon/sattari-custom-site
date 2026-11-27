@@ -1,3 +1,4 @@
+import { analysisChannel, compactWindow } from './analysisMono';
 import { analyzeAutoKey, AUTO_KEY_ENGINE, AUTO_KEY_MIN_MARGIN } from './sattariAutoKey';
 import { chromaForRange } from './audioAnalysis';
 import { trackTempo } from './tempoMap';
@@ -16,21 +17,60 @@ export function musicalAnalysisWindows(duration) {
   });
 }
 
-function compactWindow(left, right, rate, window, useChannel) {
-  const stride = Math.max(1, Math.floor(rate / 11025));
-  const from = Math.floor(window.start * rate);
-  const length = Math.floor((window.end * rate - from) / stride);
-  const samples = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    let sum = 0;
-    for (let offset = 0; offset < stride; offset++) {
-      const at = from + i * stride + offset;
-      sum +=
-        useChannel === 0 ? left[at] : useChannel === 1 ? right[at] : (left[at] + right[at]) / 2;
-    }
-    samples[i] = sum / stride;
+/**
+ * The beat tracker works on 20 ms frames, so its period is a whole number of
+ * frames: 128 BPM comes out as 130, 174 as 176. This searches within 4% of that
+ * period on a 5 ms onset envelope for the period whose multiples line up best,
+ * then for the offset that puts the beats on the onsets.
+ * Returns { period, time } in seconds; time is one beat near the window start.
+ */
+export function refineBeat(samples, rate, period) {
+  const hop = Math.max(1, Math.round(rate / 200));
+  const fps = rate / hop;
+  const frames = Math.floor(samples.length / hop);
+  if (!(period > 0) || frames < 8 * period * fps) return { period, time: 0 };
+  const level = new Float32Array(frames);
+  for (let frame = 0; frame < frames; frame++) {
+    let energy = 0;
+    for (let i = frame * hop; i < (frame + 1) * hop; i++) energy += samples[i] * samples[i];
+    level[frame] = Math.sqrt(energy / hop);
   }
-  return { samples, rate: rate / stride };
+  // Onsets only: rises in level.
+  const onset = new Float32Array(frames);
+  for (let frame = 1; frame < frames; frame++)
+    onset[frame] = Math.max(0, level[frame] - level[frame - 1]);
+  const at = (position) => {
+    const index = Math.floor(position);
+    if (index < 0 || index + 1 >= frames) return 0;
+    const part = position - index;
+    return onset[index] * (1 - part) + onset[index + 1] * part;
+  };
+  const coarse = period * fps;
+  let best = coarse,
+    bestScore = -1;
+  for (let step = -80; step <= 80; step++) {
+    const lag = coarse * (1 + step * 0.0005);
+    let score = 0;
+    for (const multiple of [1, 2, 4, 8])
+      for (let frame = 0; frame < frames; frame++)
+        if (onset[frame] > 0) score += onset[frame] * at(frame + lag * multiple);
+    if (score > bestScore) {
+      bestScore = score;
+      best = lag;
+    }
+  }
+  let offset = 0,
+    offsetScore = -1;
+  for (let start = 0; start < best; start += 0.5) {
+    let score = 0;
+    for (let position = start; position < frames - 1; position += best) score += at(position);
+    if (score > offsetScore) {
+      offsetScore = score;
+      offset = start;
+    }
+  }
+  // An onset frame holds the rise that ended in it: the attack began a frame earlier.
+  return { period: best / fps, time: Math.max(0, (offset - 0.5) / fps) };
 }
 
 function hasRhythmicDynamics(samples, rate) {
@@ -70,13 +110,7 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
   const windows = silent || duration < 3 ? [] : musicalAnalysisWindows(duration);
   const chroma = Array(12).fill(0);
   const tempos = [];
-  // Preserve antiphase material that would disappear in a simple stereo sum.
-  const useChannel =
-    mixEnergy < Math.max(leftEnergy, rightEnergy) * 0.05
-      ? leftEnergy >= rightEnergy
-        ? 0
-        : 1
-      : null;
+  const useChannel = analysisChannel(leftEnergy, rightEnergy, mixEnergy);
   const autoKey =
     !silent && duration >= 3 && stem !== 'drums'
       ? analyzeAutoKey(left, right, rate, useChannel)
@@ -96,7 +130,17 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
       const supported = tempo.beats.filter((beat) => !beat.inferred).length;
       if (tempo.confidence >= 0.55 && supported >= 6) {
         const intervals = tempo.beats.slice(1).map((beat, i) => beat.time - tempo.beats[i].time);
-        tempos.push({ bpm: 60 / median(intervals), confidence: tempo.confidence });
+        const period = median(intervals);
+        const fine = refineBeat(part.samples, part.rate, period);
+        tempos.push({
+          bpm: 60 / fine.period,
+          confidence: tempo.confidence,
+          // Where a beat actually falls in the song, for lining a click up with it.
+          anchor: {
+            time: Math.round((window.start + fine.time) * 1e4) / 1e4,
+            period: Math.round(fine.period * 1e5) / 1e5,
+          },
+        });
       }
     }
   }
@@ -157,6 +201,8 @@ export function analyzeStemAudio(left, right, rate, { stem = 'song', channels = 
           : !consistentTempo
             ? 'variable'
             : null,
+    // One measured beat per analyzed window: [{ time, period }] in seconds.
+    beatAnchors: consistentTempo ? tempos.map((tempo) => tempo.anchor) : [],
     prominentNotes: notes.map(({ note }) => note),
     analyzedSeconds: rounded(windows.reduce((sum, window) => sum + window.end - window.start, 0)),
     windows,

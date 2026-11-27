@@ -1,0 +1,153 @@
+.practice-aid {
+  margin: 1.3rem 0 0;
+  border-inline-start: 3px solid var(--resource-line);
+  padding-inline-start: 1.15rem;
+  color: var(--resource-ink);
+}
+.practice-aid h3,
+.practice-aid h4 {
+  margin: 0 0 0.35rem;
+  color: inherit;
+  line-height: 1.35;
+}
+.practice-aid p {
+  margin: 0.4rem 0 0.75rem;
+}
+.practice-aid-feature {
+  background: color-mix(in srgb, var(--resource-ink) 4%, var(--resource-bg));
+  border: 1px solid var(--resource-line);
+  border-radius: 12px;
+  padding: clamp(0.85rem, 2.3vw, 1.5rem);
+}
+.practice-clips,
+.practice-card-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 0.85rem;
+  margin: 0.8rem 0;
+}
+.practice-clips figure {
+  margin: 0;
+  min-width: 0;
+}
+.practice-clips figcaption,
+.practice-card-fields label,
+.practice-case-check legend {
+  font-weight: 650;
+}
+.practice-clips audio {
+  display: block;
+  width: 100%;
+  margin: 0.4rem 0;
+}
+.practice-clip-nav,
+.practice-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.1rem;
+}
+.practice-answer {
+  margin: 0.7rem 0;
+}
+.practice-answer summary {
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 650;
+  padding: 0.35rem 0;
+}
+.practice-worksheet,
+.practice-case-check {
+  margin: 0.85rem 0 0;
+}
+.practice-card-fields input,
+.practice-copy-fallback {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--resource-ink);
+  background: var(--resource-bg);
+  border: 1px solid var(--resource-muted);
+  border-radius: 5px;
+  padding: 0.55rem 0.6rem;
+  margin-top: 0.25rem;
+}
+.practice-copy-fallback {
+  min-height: 8rem;
+}
+.practice-card-actions button {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--resource-ink);
+  background: var(--resource-bg);
+  border: 1px solid var(--resource-muted);
+  border-radius: 5px;
+  padding: 0.55rem 0.85rem;
+}
+.practice-card-actions button:hover {
+  border-color: currentColor;
+}
+.practice-worksheet :focus-visible,
+.practice-aid summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.practice-response {
+  display: block;
+  margin-top: 0.4rem;
+}
+.practice-response:empty {
+  display: none;
+}
+.practice-case-check {
+  border: 1px solid var(--resource-line);
+  padding: 0.65rem 0.85rem;
+}
+.practice-case-check label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+}
+.practice-case-check input {
+  flex: 0 0 auto;
+}
+@media print {
+  body:has([data-print-card])
+    :where(*):not(:has([data-print-card]), [data-print-card], [data-print-card] *) {
+    display: none !important;
+  }
+  body:has([data-print-card]) :where(*):has([data-print-card]) {
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    min-height: 0 !important;
+  }
+  .practice-worksheet[data-print-card] {
+    color: black;
+    background: white;
+    padding: 1rem;
+  }
+  .practice-worksheet[data-print-card] .practice-card-actions,
+  .practice-worksheet[data-print-card] .practice-response,
+  .practice-worksheet[data-print-card] textarea {
+    display: none;
+  }
+  .practice-worksheet[data-print-card] .practice-card-fields {
+    display: block;
+  }
+  .practice-worksheet[data-print-card] label {
+    display: block;
+    margin: 1rem 0;
+  }
+  .practice-worksheet[data-print-card] input {
+    color: black;
+    border: 0;
+    border-bottom: 1px solid #333;
+    border-radius: 0;
+    font-weight: normal;
+    background: white;
+  }
+}

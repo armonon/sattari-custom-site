@@ -101,3 +101,39 @@ it('requires staff auth for reports', async () => {
   expect((await staffHandler({ httpMethod: 'POST' })).statusCode).toBe(405);
   expect(JSON.parse((await staffHandler({ httpMethod: 'GET' })).body)).toEqual({ days: [] });
 });
+
+it.each([
+  ['product_view', 'product'],
+  ['cart_add', 'product'],
+  ['cart_view', 'cart'],
+  ['checkout_started', 'cart'],
+  ['purchase_verified', 'purchase'],
+])(
+  'accepts the coarse commerce event %s without storing order/customer identifiers',
+  async (event, page) => {
+    expect((await handler(request({ event, page, source: 'google' }))).status).toBe(204);
+    const [data] = await readMetrics({});
+    expect(data.counts).toEqual({ [`google|${page}|${event}`]: 1 });
+    expect(Object.keys(data).sort()).toEqual(['counts', 'date', 'total']);
+  }
+);
+
+it.each([
+  ['tuner-bass', 'page_view'],
+  ['tuner-violin', 'tuner_reference_started'],
+  ['tuner-guitar', 'tuner_microphone_started'],
+  ['key-bpm', 'tuner_repair_click'],
+  ['tuner-cello', 'tuner_shop_click'],
+  ['restring-violin', 'contact_click'],
+  ['restring-guitar', 'inquiry_sent'],
+  ['sales-drums-la', 'product_link_click'],
+  ['sales-violins-la', 'purchase_after_product_visit'],
+])('records and reads back a consented %s / %s cell', async (page, event) => {
+  const source = 'google_business_profile';
+  expect((await handler(request({ event, page, source }))).status).toBe(204);
+  requireStaff.mockResolvedValue({ staff: 'Owner' });
+  const response = await staffHandler({ httpMethod: 'GET' });
+  expect(JSON.parse(response.body).days[0].counts).toEqual({
+    [source + '|' + page + '|' + event]: 1,
+  });
+});

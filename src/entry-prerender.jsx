@@ -11,7 +11,9 @@ import { localSeoPages } from './components/LocalSeoPage';
 import { categories, products } from './data/catalog';
 import { mergeCatalog, EMPTY_CATALOG_DOC } from './utils/catalogMerge';
 import { musicGuides } from './data/musicGuides';
-import { toolDetails } from './data/toolDetails';
+import { instrumentTunerPages } from './data/instrumentTunerPages';
+import { toolDetails, toolReferencePath } from './data/toolDetails';
+import { referencePaths } from './data/musicReference';
 
 const LOCAL_SEO_ENTRY = 'src/components/LocalSeoPage.tsx';
 const localPages = Object.values(localSeoPages);
@@ -23,8 +25,9 @@ export function getPrerenderRoutes(inventory) {
       '/visit',
       '/privacy',
       ...musicGuides.map((guide) => `/guides/${guide.slug}`),
-      ...Object.values(toolDetails).map((tool) => `/tools${tool.path}`),
+      ...Object.values(toolDetails).map(toolReferencePath),
     ].map((path) => [path, 'src/pages/MusicResources.jsx']),
+    ...referencePaths.map((path) => [path, 'src/pages/MusicReference.jsx']),
     ['/', 'src/pages/HomePage.jsx'],
     ['/about', 'src/components/AboutPage.jsx'],
     ['/shop', 'src/components/ShopPage.jsx'],
@@ -37,6 +40,7 @@ export function getPrerenderRoutes(inventory) {
     // Wave-2 music tools (alpha label on the page, indexable like any tool).
     ['/studio/split', 'src/labs/split/SplitPage.jsx'],
     ['/studio/keybpm', 'src/labs/keybpm/KeyBpmPage.jsx'],
+    ...instrumentTunerPages.map(({ path }) => [path, 'src/pages/InstrumentTunerPage.jsx']),
     ['/studio/vox', 'src/labs/vox/VoxPage.jsx'],
     ['/studio/canvas', 'src/labs/canvas/CanvasPage.jsx'],
     ['/studio/pocket', 'src/labs/pocket/PocketPage.jsx'],

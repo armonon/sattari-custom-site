@@ -1,13 +1,28 @@
-import { camelot, keyParts, KEYBPM_MAX_BYTES, KEYBPM_MAX_FILES } from './keyBpm';
+import {
+  BPM_CHOICES,
+  camelot,
+  cleanNotes,
+  NOTES_MAX,
+  keyParts,
+  KEYBPM_MAX_BYTES,
+  KEYBPM_MAX_FILES,
+  normalizeBpm,
+} from './keyBpm';
 
 export const KEYBPM_REPORT_MAX_BYTES = 2 * 1024 * 1024;
 export const KEYBPM_REPORT_SCHEMA = 'SattariKeyBpm.report';
+// Version 2 adds optional per-track `user` corrections (with optional
+// one-line `notes`) and `origin` labels.
+// Version 1 reports (no corrections) still open unchanged.
+export const KEYBPM_REPORT_VERSION = 2;
+const SUPPORTED_VERSIONS = [1, 2];
 export const KEYBPM_REPORT_LIMITS = [
   'Previously measured results only. Source audio is not included; choose audio files to analyze again.',
   'One global key estimate per track; key changes, modal and atonal music are not separately identified.',
   'Tempo can be half/double time. Rough estimates use one middle segment and fold into 70–180 BPM.',
   'Fixture-tested estimates, not accuracy-certified against a labelled music corpus.',
   'Report structure is validated; imported measurements are not re-verified without original audio.',
+  'Corrected key and BPM values are the musician’s own choices, stored separately from the detected estimate. They do not change the audio.',
 ];
 const invalid = () => {
   throw new Error('Invalid or unsupported Key & BPM report. Existing tracks were not changed.');
@@ -31,7 +46,7 @@ const evidence = (value) => {
   if (!['supported', 'tentative', 'insufficient', 'rough'].includes(value)) invalid();
   return value;
 };
-function track(record) {
+function track(record, version) {
   if (!object(record) || !object(record.source) || !object(record.result)) invalid();
   const source = {
     name: text(record.source.name, 512, false),
@@ -72,7 +87,35 @@ function track(record) {
     )
       invalid();
   }
-  return { source, result, measuredAt: timestamp(record.measuredAt) };
+  const parsed = { source, result, measuredAt: timestamp(record.measuredAt) };
+  if (version >= 2 && record.user !== undefined && record.user !== null) {
+    const user = record.user;
+    if (!object(user)) invalid();
+    const key = user.key === null ? null : text(user.key, 24, false);
+    if (key !== null && !keyParts(key)) invalid();
+    const bpm = user.bpm === null ? null : normalizeBpm(user.bpm);
+    if (user.bpm !== null && (bpm === null || bpm !== user.bpm)) invalid();
+    const bpmChoice = user.bpmChoice === null ? null : user.bpmChoice;
+    if ((bpm === null) !== (bpmChoice === null)) invalid();
+    if (bpmChoice !== null && !BPM_CHOICES.includes(bpmChoice)) invalid();
+    const notes = user.notes === undefined ? '' : text(user.notes, NOTES_MAX);
+    if (notes !== cleanNotes(notes)) invalid();
+    if (key === null && bpm === null && !notes) invalid();
+    if (result.status !== 'done') invalid();
+    parsed.user = {
+      key,
+      bpm,
+      bpmChoice,
+      editedAt: timestamp(user.editedAt),
+      ...(notes ? { notes } : {}),
+    };
+  }
+  if (version >= 2 && record.origin !== undefined && record.origin !== null) {
+    if (!object(record.origin) || !['original', 'stem', 'mix'].includes(record.origin.kind))
+      invalid();
+    parsed.origin = { kind: record.origin.kind, label: text(record.origin.label, 200, false) };
+  }
+  return parsed;
 }
 export function parseKeyBpmReport(textValue) {
   if (
@@ -89,7 +132,7 @@ export function parseKeyBpmReport(textValue) {
   if (
     !object(report) ||
     report.schema !== KEYBPM_REPORT_SCHEMA ||
-    report.version !== 1 ||
+    !SUPPORTED_VERSIONS.includes(report.version) ||
     !Array.isArray(report.tracks) ||
     !report.tracks.length ||
     report.tracks.length > KEYBPM_MAX_FILES
@@ -97,16 +140,18 @@ export function parseKeyBpmReport(textValue) {
     invalid();
   return {
     schema: KEYBPM_REPORT_SCHEMA,
-    version: 1,
+    // Opened reports are migrated in memory to the current version.
+    version: KEYBPM_REPORT_VERSION,
+    sourceVersion: report.version,
     createdAt: timestamp(report.createdAt),
     limits: [...KEYBPM_REPORT_LIMITS],
-    tracks: report.tracks.map(track),
+    tracks: report.tracks.map((record) => track(record, report.version)),
   };
 }
 export function createKeyBpmReport(rows, createdAt = new Date().toISOString()) {
   const report = {
     schema: KEYBPM_REPORT_SCHEMA,
-    version: 1,
+    version: KEYBPM_REPORT_VERSION,
     createdAt,
     limits: [...KEYBPM_REPORT_LIMITS],
     tracks: rows.map((row) => ({
@@ -118,9 +163,13 @@ export function createKeyBpmReport(rows, createdAt = new Date().toISOString()) {
       },
       measuredAt: row.measuredAt,
       result: row.result,
+      ...(row.user ? { user: row.user } : {}),
+      ...(row.origin ? { origin: { kind: row.origin.kind, label: row.origin.label } } : {}),
     })),
   };
   // Apply the exact same schema on export and import. Never save a file that
   // this version cannot reopen, or infer absent source audio from metadata.
-  return JSON.stringify(parseKeyBpmReport(JSON.stringify(report)), null, 2);
+  const checked = parseKeyBpmReport(JSON.stringify(report));
+  delete checked.sourceVersion;
+  return JSON.stringify(checked, null, 2);
 }

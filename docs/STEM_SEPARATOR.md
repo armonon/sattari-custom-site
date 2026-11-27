@@ -4,8 +4,82 @@ Route: `/stem-separator`, linked from Sattari Hub. This is real client-side
 HTDemucs separation, not an EQ split or a simulated upload workflow. Store,
 Learn, and Studio behavior is unchanged.
 
-## Workflow
+## Workflow (flagship release, November 2026)
 
+`/stem-separator` and `/studio/split` share one hook (`useStemSeparator`), one
+IndexedDB workspace (`splitSessionStore`) and one synchronized player
+(`src/components/stems/StemPlayer.jsx`). Split is the single-song view; choosing a
+song there adds it to the shared workspace and no longer deletes the batch saved by
+the main page. Both routes stay live; Split is not redirected.
+
+- **What are you making?** Separate all parts, Vocal backing track, Drum practice,
+  Bass practice, Solo a part, or Custom. Every goal except Custom separates all four
+  stems and opens the player on the matching preset; Custom keeps the stem
+  checkboxes. The goal is stored with the song (`goal`).
+- **Player**: every stem is parsed from its WAV at its exact 44.1 kHz rate
+  (`parseWav`, no resampling) into AudioBuffers on one AudioContext. All lanes
+  start at the same `when` and offset. Mute, solo and level changes only move gain
+  nodes, so lanes never drift. The original song is an exclusive A/B reference: it
+  is decoded on demand, routed straight to the output and never summed into the
+  stem mix or the export.
+- **Layout** (November 2026 overhaul, "console"): the player spans the page above
+  the song list. An overview (`StemOverview.jsx`) draws every part's real peaks in
+  its colour (silent parts dimmed), numbered bar lines, the loop and playhead;
+  clicking seeks and the position slider stays the keyboard equivalent. Below:
+  transport with m:ss.t timecode and bar.beat / speed / key readouts
+  (`beatPosition`), then a channel strip per part (waveform, vertical fader, mute,
+  solo, WAV) plus a master strip, and a side rail with Practice, Beat and click,
+  and Download my mix. Colours come from CSS variables, so the site's day and night
+  themes both apply, including the canvas.
+- **Level meters**: each lane's gain node feeds an `AnalyserNode` before the
+  master, and the master feeds one before the output, so meters are real
+  post-fader peaks (−60 to 0 dBFS, with a short visual fall-off) drawn straight to
+  the DOM each frame. Muted lanes read zero. Browsers without `createAnalyser`
+  connect directly and show no meter movement.
+- **Mix rule** (`src/utils/stemMix.js`, `laneGain`): a muted lane is silent (mute
+  wins over solo); if any unmuted lane is soloed only soloed lanes play; an audible
+  lane plays at lane gain (0–2) × master (0–1.5). Preview and export call the same
+  function.
+- **A–B loop**: Set A / Set B at the playhead (minimum 0.25 s), Clear loop. While a
+  loop is set every source uses `loop`, `loopStart`, `loopEnd`; starting outside the
+  loop starts at A. The export can be the whole song or the loop only.
+- **Practice memory** (`practiceState.js`, `practiceStore.js`, `usePracticeMemory`):
+  each song's setup is remembered in this browser: mix (levels, mute, solo,
+  master), Prevent clipping, speed, key, the current loop, up to 12 named
+  **saved loops**, and the click, count-in, snap and bar-start settings. It lives
+  in its own small IndexedDB database (`sattari-practice-state`, JSON only, no
+  audio) keyed by the song, so a fader move never rewrites the audio record.
+  Writes are debounced (0.4 s) and flushed when the page hides. Everything read
+  back goes through `cleanPracticeState`: values are clamped, loops that do not
+  fit the audio are dropped, a mix saved for a different set of parts is not
+  applied, and a damaged record falls back to defaults. Removing a song forgets
+  its setup; **Clear saved work** clears all of them. If storage is unavailable
+  the player works as before and simply does not remember.
+- **Keyboard shortcuts** (finished songs only, never while typing in a field):
+  Space play/pause, ← → 5 seconds, `[` `]` set loop start/end, `\` clear the
+  loop, 1–9 jump to a saved loop, 0 back to the start or loop start, C click.
+  Space and arrows keep their normal meaning on a focused button or slider.
+- **Download my mix**: snapshots the settings, headroom option, format and decoded
+  sources, then renders in 65,536-frame chunks (cancellable between chunks, with
+  measured progress). Output length is the longest stem; shorter stems are padded
+  with silence, never truncated. Format: WAV, 44.1 kHz stereo, 32-bit float
+  (default, keeps peaks above 0 dBFS) or 24-bit PCM (peaks above 0 dBFS are clipped,
+  with a warning). The live **Mix peak** readout is the exact peak of the current
+  settings. **Prevent clipping** lowers the whole mix to a −1 dBFS peak (never raises
+  it); the applied change is shown in preview and in the export summary. An
+  all-muted or all-zero mix cannot be exported. File names say what is in them
+  (`song-no-vocals-mix.wav`, `-drumless-`, `-bassless-`, `-vocals-solo-`, `-custom-`).
+- **Export choices** (added 2026-11-21): whole song or **A–B loop only** (every
+  stem cut at the same frames, file named `…-loop-0m12s-0m20s`), and **M4A · AAC
+  192 kbps** next to the WAVs when the browser has an AAC encoder (WebCodecs via
+  `mediabunny`, loaded only when used). AAC is lossy and adds encoder padding (about
+  80 ms on the demo), so WAV remains the choice for sample-exact alignment.
+- **Same practice mix for every song**: with two or more finished songs, pick a
+  preset and download one ZIP with one mix per song (rendered one song at a time;
+  songs without all four parts are skipped and named).
+- **Shareable goal links**: `/stem-separator?goal=` `vocal-backing`, `drum-practice`,
+  `bass-practice`, `solo-vocals|drums|bass|other`, `all` or `custom` preselect the
+  goal; "Copy a link to this setup" produces one. Unknown values are ignored.
 - Drop multiple audio files or use the file picker.
 - `Separate demo` runs the bundled eight-second original practice mix through
   the same decoder, analysis, model, and export path as an uploaded track. It
@@ -59,9 +133,18 @@ Third-party notices: `public/stem-separator-credits.txt`.
 - Browser-decodable mono/stereo files only. Codec support varies by browser.
 - 20 files per queue, 100 MiB per file, 300 MiB total source files.
 - Maximum duration: 10 minutes per track; 512 MiB retained output budget.
-- Results are temporary for this mounted page session, not stored in a library.
-  Download before navigating away. Reload/close warns if processing or results
-  exist. Navigating away cancels work and releases preview URLs.
+- Finished songs, stems, analysis, goal and handoff labels are saved in this
+  browser's IndexedDB (`sattari-split-sessions`) so a reload restores them. Songs
+  interrupted mid-processing restore as "Interrupted. Retry when ready." Files added
+  before storage finishes opening are merged with restored songs (a queued duplicate
+  of a restored file is dropped). Invalid or over-limit records are skipped with a
+  warning and left untouched; **Clear saved work** (with confirmation) clears the
+  whole store, including those, plus every saved practice setup, and does not touch
+  the model cache, other tools,
+  theme or measurement choice. Storage failure is reported in the page; results stay
+  usable in the tab. Browser storage can be evicted, so it is not a backup.
+- In-app navigation prompts only while processing or packaging, or when results
+  exist but could not be saved. Leaving cancels processing and releases URLs.
 - AI output can contain bleed/artifacts. More selected stems increase retained
   output size; the model computes all four sources regardless of selection.
 - Musical analysis requires at least three seconds and sufficient tonal or

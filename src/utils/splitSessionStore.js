@@ -6,6 +6,38 @@ const MAX_INPUT_BYTES = 300 * 1024 ** 2;
 const MAX_OUTPUT_BYTES = 512 * 1024 ** 2;
 const VALID_STEMS = new Set(['vocals', 'drums', 'bass', 'other']);
 const VALID_STATUSES = new Set(['queued', 'processing', 'done', 'error', 'cancelled']);
+export const VALID_GOALS = new Set([
+  'all',
+  'no-vocals',
+  'no-drums',
+  'no-bass',
+  'solo:vocals',
+  'solo:drums',
+  'solo:bass',
+  'solo:other',
+  'custom',
+]);
+const ORIGIN_KINDS = new Set(['original', 'stem', 'mix']);
+
+// Optional same-tab handoff label and the musician's own key/BPM choices.
+// Older records have neither field and remain valid.
+function validOrigin(origin) {
+  if (origin === undefined || origin === null) return true;
+  if (typeof origin !== 'object') return false;
+  const user = origin.user;
+  return (
+    typeof origin.from === 'string' &&
+    origin.from.length <= 40 &&
+    ORIGIN_KINDS.has(origin.kind) &&
+    typeof origin.label === 'string' &&
+    origin.label.length <= 200 &&
+    (user === undefined ||
+      user === null ||
+      (typeof user === 'object' &&
+        (user.key === null || (typeof user.key === 'string' && user.key.length <= 24)) &&
+        (user.bpm === null || (Number.isFinite(user.bpm) && user.bpm > 0 && user.bpm < 1000))))
+  );
+}
 
 function validPeaks(peaks) {
   return (
@@ -90,6 +122,8 @@ export function saveSplitSession(job) {
     peaks: job.peaks,
     analysis: job.analysis,
     stems: job.stems,
+    goal: job.goal,
+    origin: job.origin,
     outputs: (job.outputs || []).map(({ id, blob, name, peaks, analysis }) => ({
       id,
       blob,
@@ -104,6 +138,15 @@ export function saveSplitSession(job) {
 
 export function deleteSplitSession(id) {
   return enqueueWrite(() => transact('readwrite', (store) => store.delete(id)));
+}
+
+/**
+ * Remove every saved Stem Separator song from this browser. Only this tool's
+ * own IndexedDB store is cleared; the cached model, other Sattari tools,
+ * theme and measurement choices are untouched.
+ */
+export function clearSplitSessions() {
+  return enqueueWrite(() => transact('readwrite', (store) => store.clear()));
 }
 
 export function loadSplitSessions() {
@@ -156,7 +199,9 @@ export function hydrateSplitSession(record) {
       record.progress !== null &&
       (!Number.isFinite(record.progress) || record.progress < 0 || record.progress > 1)) ||
     !validPeaks(record.peaks) ||
-    !validAnalysis(record.analysis)
+    !validAnalysis(record.analysis) ||
+    (record.goal !== undefined && !VALID_GOALS.has(record.goal)) ||
+    !validOrigin(record.origin)
   )
     throw new Error('Saved session metadata is invalid.');
   if (record.file.size <= 0 || record.file.size > 100 * 1024 ** 2)

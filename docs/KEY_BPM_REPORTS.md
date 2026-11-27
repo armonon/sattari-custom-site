@@ -1,6 +1,6 @@
 # Key & BPM: measurements and portable reports
 
-Status: alpha. This is a local, browser-decoded analysis utility, not a certified
+Status: beta (flagship tool, November 2026). This is a local, browser-decoded analysis utility, not a certified
 music-corpus key/tempo detector. No microphone permission or audio upload is
 needed for its core workflow. Existing shared suite/account features are separate.
 
@@ -27,14 +27,63 @@ needed for its core workflow. Existing shared suite/account features are separat
    quoted and spreadsheet-formula prefixes are neutralized. CSV is an output
    format, not an analysis-report input format.
 
-Results are not automatically persisted or synced. Keep a downloaded report
-before closing the tab; source audio must be retained separately. Only actual
-byte-identical files with the same name/size are treated as duplicates; different
-mixes that happen to share a filename and length are both admitted.
+Results, corrections, origin labels and (within a 600 MiB budget, in list
+order) the source audio are saved in this browser's IndexedDB
+(`sattari-keybpm`) and restored on reload. Rows over the budget keep their results
+and show "Saved result · audio not kept". Rows that were measuring restore as
+waiting; press Resume. Every saved record is revalidated with the report schema;
+invalid records are skipped with a note. **Clear** empties the list and the store.
+Nothing is synced between devices; save a report or CSV as a copy.
+
+## Listening and corrections
+
+- **Play** on a row auditions the original file through one shared `<audio>`
+  element with play/pause and a seek bar. Only one source plays; its object URL is
+  revoked when you stop, switch rows, clear the list or leave. Rows opened from a
+  report have no audio: play and separate are disabled and say why.
+- **Adjust** opens the correction editor. Tempo: Detected / Half time / Double time
+  of the detected value, **Tap** (average of up to 8 taps, at least 3; a pause over
+  2.5 s restarts), or a typed value. Valid BPM is finite, 20–400, kept to two
+  decimals; invalid input disables Apply. Key: any of the 24 keys, or the detected
+  alternative; the Camelot code follows (`camelot()`). **Reset to detected** removes
+  the key and tempo correction and keeps your notes.
+- The large readout above the table shows the selected track (click a track name;
+  playing a track also selects it): the key on a circle of fifths with the second
+  choice shaded, the tempo with half / as detected / double buttons, a tap pad (or
+  the T key), and reference tones for checking by ear — a drone on the tonic (root,
+  fifth, octave), a one-octave major or natural-minor scale, and a drone on the
+  second choice. The tones only play; they never change the result.
+- **Your notes**: one line of plain text (up to 500 characters; line breaks and
+  other control characters become spaces), saved like a correction. Notes alone
+  are a valid correction.
+- Corrections are stored beside the result as `user: { key, bpm, bpmChoice,
+  editedAt, notes? }`; the detected `result` (key, BPM, evidence, alternative, margin) and
+  `measuredAt` are never modified. The table shows the corrected value with
+  "yours · detected …" / "half time · detected …". Sorting uses the displayed value.
+  A corrected BPM or key is metadata only: no audio is stretched or transposed.
+- **Separate** sends the row's real file to Stem Separator in the same tab, with
+  user values labelled as the musician's. Stem Separator's **Check key & BPM**
+  sends the original song, a stem or a rendered mix here, labelled by kind.
+
+## CSV
+
+The first 13 columns are unchanged (detected values). Seven columns are appended:
+`Corrected key`, `Corrected Camelot`, `Corrected BPM`, `BPM correction`
+(`half|double|tap|manual`), `Corrected at`, `Source` (handoff label), `Your notes`. Every cell is
+quoted; cells beginning with `= + - @`, tab or CR are prefixed with `'`.
 
 ## Report format and failure behavior
 
-Schema `SattariKeyBpm.report`, version 1, UTF-8 JSON, maximum 2 MiB. Records preserve
+Version 2 (current) adds optional per-track `user` (above) and `origin: { kind,
+label }`. `user.notes` is optional; reports without it open unchanged, and earlier
+builds ignore it. Version 1 reports open unchanged (no corrections). Saving always writes
+version 2. A malformed correction (unknown key, BPM outside 20–400 or with more than
+two decimals, BPM without a choice, notes that are not one clean line or exceed
+500 characters, an empty correction, a correction on an error
+row, a missing timestamp) rejects the whole report without changing current rows,
+like any other invalid record. Versions other than 1 and 2 are rejected.
+
+Schema `SattariKeyBpm.report`, versions 1–2, UTF-8 JSON, maximum 2 MiB. Records preserve
 source filename/size/type/modification time, measurement timestamp, measurements,
 confidence/evidence and notes. No audio bytes, credentials or server state are
 included. Report limits are supplied by the app, not trusted arbitrary file claims.

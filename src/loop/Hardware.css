@@ -1562,3 +1562,68 @@
     justify-content: center;
   }
 }
+
+.loop-app .lj-guides-link > span {
+  display: inline;
+}
+.loop-app .lj-restring-guides {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 24px;
+  padding: 12px 0;
+  border-block: 1px solid var(--lp-line);
+}
+.loop-app .lj-restring-guides h2 {
+  font-size: 18px;
+  letter-spacing: -0.4px;
+}
+.loop-app .lj-restring-guides ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.loop-app .lj-restring-guides a {
+  display: inline-flex;
+  gap: 5px;
+  min-height: 44px;
+  align-items: center;
+  font-size: 13px;
+}
+.loop-app .lj-restring-guides a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.loop-app .lj-restring-guides svg {
+  color: var(--lj-accent);
+}
+.loop-app .lj-all-guides {
+  margin-inline-start: auto;
+  font-weight: 600;
+}
+@media (max-width: 580px) {
+  .loop-app .lj-library-header {
+    height: auto;
+    padding-block: 12px;
+    flex-wrap: wrap;
+  }
+  .loop-app .lj-library-header .lj-steps {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .loop-app .lj-restring-guides {
+    display: block;
+  }
+  .loop-app .lj-restring-guides ul {
+    flex-direction: column;
+  }
+}
+@media (max-width: 360px) {
+  .loop-app .lj-library-header {
+    padding-inline: 12px;
+  }
+}

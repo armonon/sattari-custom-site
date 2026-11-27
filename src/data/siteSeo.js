@@ -1,3 +1,5 @@
+import { guitarStringPricing } from './guitarStringPricing.js';
+
 export const SITE_ORIGIN = 'https://sattarimusic.com';
 
 export const BUSINESS = {
@@ -6,6 +8,7 @@ export const BUSINESS = {
   telephone: '+1-424-465-3020',
   phoneDisplay: '(424) 465-3020',
   phoneHref: 'tel:+14244653020',
+  googlePhotos: 'https://maps.google.com/maps/contrib/103987062368900608516',
   addressLine: '4881 Topanga Canyon Blvd #202, Woodland Hills, CA 91364',
   shopHoursNote: 'By appointment only. Call to arrange your visit.',
   studioHoursNote: 'Every day, 6 PM to midnight (Los Angeles time).',
@@ -65,7 +68,7 @@ export const businessSchema = {
   image: absoluteUrl('/sattari site/sattari logo.png'),
   sameAs: ['https://www.instagram.com/sattari.music/'],
   description:
-    'Appointment-only Woodland Hills music store and drum shop with cymbals, drumsticks, violins, guitars, instrument repair, rentals and lessons, serving Encino, Calabasas and Los Angeles.',
+    'Appointment-only Woodland Hills music store with cymbals, drumsticks, violins, guitars, violin strings and Ernie Ball guitar strings. Services include restringing, instrument repair, rentals and lessons.',
 };
 
 export const websiteSchema = {
@@ -77,48 +80,47 @@ export const websiteSchema = {
   alternateName: 'Sattari',
   inLanguage: 'en-US',
   description:
-    'Learn guitar, shop musical instruments, create music, separate stems and download Sattari audio software. Local repairs and musician services in Woodland Hills, California.',
+    'Shop musical instruments, learn guitar and create music with Sattari browser tools. Local repairs and musician services in Woodland Hills, California.',
   publisher: { '@id': organizationSchema['@id'] },
 };
 
 export const PAGE_SEO = {
   home: {
-    title: 'Buy Violins, Drums, Cymbals & Guitars Online',
+    title: 'Woodland Hills Instruments, Repairs & Music Tools',
     description:
-      'Shop Sattari violins, cymbals, drumsticks and guitars, with online tools for musicians worldwide, plus repair, lessons and rentals in Woodland Hills, Los Angeles.',
+      'Shop guitars, violins and strings. Learn and create music worldwide with Sattari. Ask about guitar restringing in Woodland Hills; visits by appointment.',
     url: `${SITE_ORIGIN}/`,
     image: '/images/home/sattari-instruments-hero.jpg',
     imageWidth: 1536,
     imageHeight: 1024,
   },
   about: {
-    title: 'Our Story | Instruments, Music & Software',
+    title: 'Our Story | Instruments, Repairs & Music Tools',
     description:
       'Meet Sattari Music and founder Mohammad Sattari. A California music company connecting instruments, online learning, music creation and local repair services.',
     url: `${SITE_ORIGIN}/about`,
   },
   shop: {
-    title: 'Buy Musical Instruments & Accessories Online',
+    title: 'Buy Guitars, Violins, Drum Gear & Accessories Online',
     description:
-      'Buy cymbals, drumsticks, acoustic and electric violins, guitars, bass and music accessories online. Sattari instruments with support from Woodland Hills, California.',
+      'Shop guitars, basses, violins, violin strings and drum gear online. Compare models and prices or arrange an instrument appointment in Woodland Hills.',
     url: `${SITE_ORIGIN}/shop`,
   },
   services: {
     title: 'Repairs, Rentals & Music Lessons | Woodland Hills',
     description:
-      'Request guitar, violin or drum repair, instrument rentals, music lessons and rehearsal space in Woodland Hills, serving Encino, Calabasas and Los Angeles.',
+      'Ask about guitar restringing, violin and instrument repair, rentals, lessons and rehearsal space at Sattari Music in Woodland Hills. Confirm scope and availability.',
     url: `${SITE_ORIGIN}/services`,
   },
   repair: {
-    title: 'Los Angeles Instrument Repair Shop | Woodland Hills',
-    description:
-      'Guitar, violin, drum and percussion repair support at Sattari Music in Woodland Hills. Describe the issue and request an assessment before bringing in your gear.',
+    title: 'Guitar, Violin & Instrument Repair in Los Angeles',
+    description: `Visit Sattari in Woodland Hills by appointment for guitar setups, violin repair and drum hardware. Standard guitar restringing is $${guitarStringPricing.standardInstalled} with strings and labor.`,
     url: `${SITE_ORIGIN}/services/instrument-repair-los-angeles`,
   },
   hub: {
     title: 'Online Music Tools | Learn, Create & Separate',
     description:
-      'Learn guitar, create music in StemDeck, separate vocals and instruments, or explore Mac audio plugins. Sattari Hub connects your next practice and production session.',
+      'Learn guitar, create in Sattari Songboard, separate vocals and instruments, or explore experimental browser music tools. Sattari Hub connects your next music session.',
     url: `${SITE_ORIGIN}/hub`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,
@@ -134,9 +136,9 @@ export const PAGE_SEO = {
     imageHeight: 1131,
   },
   studio: {
-    title: 'Online Music Studio & Browser DAW | StemDeck',
+    title: 'Songboard: Online Music Studio & Browser DAW | Sattari',
     description:
-      'Create and remix with StemDeck in Sattari Studio. A browser DAW with deck mixing, audio recording, MIDI instruments, an arranger and WAV export.',
+      'Create and remix with Sattari Songboard in your browser: four decks, instant-access stem controls, recording, MIDI instruments, arrangement and WAV export.',
     url: `${SITE_ORIGIN}/studio`,
     image: '/images/tools/studio.jpg',
     imageWidth: 1920,
@@ -189,8 +191,12 @@ export const CATEGORY_LOCAL_HELP = {
         label: 'How to choose a violin for beginners',
         to: '/guides/choose-a-violin-for-beginners',
       },
-      { label: 'Acoustic vs electric violin', to: '/guides/acoustic-vs-electric-violin' },
-      { label: 'How to change violin strings', to: '/guides/how-to-change-violin-strings' },
+      { label: 'Violin strings in Woodland Hills', to: '/violin-strings-woodland-hills' },
+      { label: 'Online violin tuner', to: '/tuner/violin' },
+      {
+        label: 'Violin restringing and string fitting',
+        to: '/services/violin-restringing-woodland-hills',
+      },
       { label: 'Choosing a violin near Encino', to: '/encino-violin-shop' },
       { label: 'Violin repair and setup', to: '/services/violin-repair-los-angeles' },
     ],
@@ -203,8 +209,18 @@ export const CATEGORY_LOCAL_HELP = {
         label: 'How to choose a beginner acoustic guitar',
         to: '/guides/choose-a-beginner-acoustic-guitar',
       },
-      { label: 'Nylon vs steel-string guitar', to: '/guides/nylon-vs-steel-string-guitar' },
       { label: 'Guitar and bass setup', to: '/services/guitar-setup-los-angeles' },
+      { label: 'Electric and acoustic guitar strings', to: '/guitar-strings-woodland-hills' },
+      {
+        label: 'Guitar restringing and string replacement',
+        to: '/services/guitar-restringing-woodland-hills',
+      },
+      {
+        label: 'Broken-string help for guitar and bass',
+        to: '/services/string-replacement-woodland-hills',
+      },
+      { label: 'Online guitar tuner', to: '/tuner/guitar' },
+      { label: 'Four- and five-string bass tuner', to: '/tuner/bass' },
       { label: 'Music store near Calabasas', to: '/calabasas-music-store' },
     ],
   },
@@ -237,14 +253,14 @@ export const CATEGORY_SEO = {
   // The one violins page in search results: /shop/violins-los-angeles
   // canonicalizes here.
   violins: {
-    title: 'Buy Violins Online | Acoustic, Electric & Silent',
+    title: 'Acoustic & Electric Violins for Sale in Woodland Hills',
     description:
-      'Compare Sattari acoustic, electric and silent violins, plus violin strings, rosin and accessories. Shop online with guidance from our Woodland Hills team.',
+      'Compare acoustic and electric violins by size, price, bow and case. Shop violins and accessories online or arrange a Woodland Hills visit to try a model.',
   },
   'guitar-bass': {
-    title: 'Buy Guitars & Bass Online | Electric & Acoustic',
+    title: 'Guitars for Sale in Woodland Hills | Acoustic, Electric & Bass',
     description:
-      'Explore Sattari electric, steel-string and nylon-string guitars, bass and accessories. Shop online or ask our California team about fit and setup.',
+      'Compare steel-string acoustics, nylon-string classical guitars, electric guitars and five-string basses. Check prices online or arrange a Woodland Hills visit.',
   },
   all: {
     title: 'All Instruments & Accessories | Sattari Catalog',

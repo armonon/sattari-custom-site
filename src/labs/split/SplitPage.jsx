@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
   AudioLines,
   Download,
   FileMusic,
+  Gauge,
   LoaderCircle,
   RotateCcw,
   SlidersHorizontal,
@@ -13,10 +14,13 @@ import {
 } from 'lucide-react';
 import AudioLabShell from '../audio/AudioLabShell';
 import { formatTime, LabDrop, LabWaveform } from '../audio/AudioLabParts';
-import StemMixer from './StemMixer';
+import StemPlayer from '../../components/stems/StemPlayer';
 import SplitOffline from './SplitOffline';
-import './workspace.css';
+import { stemLabel } from '../../pages/stemSeparatorGoals';
+import { offerToolHandoff } from '../../utils/toolHandoff';
+import { trackSiteEvent, trackSiteEventOnce } from '../../utils/siteMeasurement';
 import useStemSeparator from '../../hooks/useStemSeparator';
+import usePracticeMemory from '../../hooks/usePracticeMemory';
 import { safeTrackName, STEMS } from '../../utils/stemSeparator';
 import { createStemArchive } from '../../utils/stemSeparatorDownload';
 import { downloadBlob } from '../audio/audioLabFiles';
@@ -25,15 +29,16 @@ import { entryFile, useLockerOpen } from '../../suite/suiteKit';
 
 const LIMITS = [
   'Quality is HTDemucs-class, not studio grade: expect some bleed between stems and artifacts on dense mixes.',
-  '"Instruments" is everything that is not vocals, drums or bass (guitars, keys, synths together).',
+  '"Other instruments" is everything that is not vocals, drums or bass (guitars, keys, synths together) in one stem. A vocal-free backing track is drums + bass + other instruments.',
   'First run downloads a 172 MB model from Hugging Face (cached afterwards). Desktop Chrome/Edge with WebGPU is fastest; CPU mode can take several minutes per song.',
   'One song at a time, up to 10 minutes and 100 MB. Phones and tablets are untested.',
   'Use it on your own tracks or for practice; you are responsible for having the rights to what you separate.',
-  'Sessions are saved only in this browser when storage is available. Use one Split tab at a time. Sessions remain until you replace the song or clear browser site data; storage quota or eviction can prevent recovery, so download important WAVs as a backup.',
+  'Songs are saved only in this browser when storage is available, shared with Stem Separator. Use one tab at a time. They remain until you remove them in Stem Separator or clear browser site data; storage quota or eviction can prevent recovery, so download important WAVs as a backup.',
 ];
 
 export default function SplitPage() {
   const separator = useStemSeparator();
+  const practice = usePracticeMemory();
   const {
     jobs,
     running,
@@ -45,48 +50,59 @@ export default function SplitPage() {
     run,
     cancel,
     storageWarning,
-    clearAll,
   } = separator;
   const navigate = useNavigate();
   const [zipping, setZipping] = useState(false);
   const [zipError, setZipError] = useState('');
+  const [focusId, setFocusId] = useState(null);
   const zipAbort = useRef(null);
-  const job = jobs[jobs.length - 1] || null;
+  // Split is the single-song view of the shared Stem Separator workspace. It
+  // shows one song but never deletes the others saved there.
+  const job = jobs.find((item) => item.id === focusId) || jobs[jobs.length - 1] || null;
   const locked = running || loadingDemo || zipping;
 
   const choose = (files) => {
     if (locked || !files.length) return;
-    clearAll();
-    addFiles([files[0]]);
+    const [added] = addFiles([files[0]]);
+    if (added) setFocusId(added.id);
   };
 
   // A song sent from the Locker or another suite app (?tcc-open=) is queued like a dropped file.
   useLockerOpen('split', (entry) => choose([entryFile(entry)]));
 
-  const lanes = useMemo(() => {
+  const stems = useMemo(() => {
     if (job?.status !== 'done') return null;
     return STEMS.map((stem) => {
       const output = job.outputs.find((item) => item.id === stem.id);
       return (
         output && {
-          ...stem,
+          id: stem.id,
+          label: stemLabel(stem.id),
+          color: stem.color,
           blob: output.blob,
           url: output.url,
           name: output.name,
           peaks: output.peaks,
         }
       );
-    })
-      .filter(Boolean)
-      .concat({
-        id: 'original',
-        label: 'Original',
-        color: '#8b939b',
-        blob: job.file,
-        peaks: job.peaks,
-        muted: true,
-      });
+    }).filter(Boolean);
   }, [job]);
+
+  const toKeyBpm = (file, kind, label) => {
+    offerToolHandoff({
+      target: 'keybpm',
+      from: 'Split',
+      file,
+      kind,
+      label,
+      detected:
+        kind === 'original' && job.analysis?.status === 'ready'
+          ? { key: job.analysis.key || null, bpm: job.analysis.bpm ?? null }
+          : null,
+    });
+    trackSiteEvent('continue_to_keybpm');
+    navigate('/studio/keybpm');
+  };
 
   const openInStemDeck = () => {
     const title = safeTrackName(job.file.name);
@@ -98,6 +114,7 @@ export default function SplitPage() {
         file: new File([output.blob], output.name, { type: 'audio/wav' }),
       })),
     });
+    trackSiteEvent('continue_to_songboard');
     navigate('/studio');
   };
 
@@ -109,6 +126,7 @@ export default function SplitPage() {
     try {
       const blob = await createStemArchive([job], controller.signal);
       downloadBlob(blob, `${safeTrackName(job.file.name)}-stems.zip`);
+      trackSiteEvent('stem_download');
     } catch (error) {
       if (!controller.signal.aborted) setZipError(error.message);
     } finally {
@@ -153,13 +171,12 @@ export default function SplitPage() {
     <AudioLabShell
       tool="split"
       title="Split"
-      eyebrow="Sattari Studio lab"
-      summary="One track. Every part. Separate vocals, drums, bass and instruments, then make the mix yours."
-      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in StemDeck."
+      eyebrow="Single-song view of Stem Separator"
+      summary="Drop one song and split it into vocals, drums, bass and other instruments on your device. Build a backing track, loop a section, download your mix or open the stems in Songboard."
+      description="Split a song into vocals, drums, bass and instrument stems in your browser with HTDemucs, then open them in Songboard."
       limits={LIMITS}
     >
       <div className="alab-workspace">
-        <details className="split-source-picker" open={!job}><summary>{job ? "Replace track or try a demo" : "Choose your starting point"}</summary>
         <LabDrop
           title={job ? 'Choose another song' : 'Add a song'}
           hint="WAV, MP3, FLAC, M4A, OGG · one song · up to 10 min"
@@ -171,14 +188,13 @@ export default function SplitPage() {
             className="alab-text-button"
             disabled={locked}
             onClick={() => {
-              clearAll();
+              setFocusId(null);
               void separator.loadDemo();
             }}
           >
             <AudioLines size={15} aria-hidden="true" /> Try the 8-second demo
           </button>
         </LabDrop>
-        </details>
         {errors.length > 0 && (
           <div className="alab-error" role="alert">
             {errors.map((error) => (
@@ -259,6 +275,36 @@ export default function SplitPage() {
                 />
               </div>
             )}
+            {job.status === 'processing' && job.preview && (
+              <>
+                <p className="alab-note" role="status">
+                  Preview of {formatTime(job.preview.start)}–
+                  {formatTime(job.preview.start + job.preview.duration)} while the whole song
+                  separates. Downloads appear when it finishes.
+                </p>
+                <StemPlayer
+                  key={`${job.id}-preview`}
+                  trackName={`${job.file.name} (preview)`}
+                  fileBase={safeTrackName(job.file.name)}
+                  stems={STEMS.map((stem) => {
+                    const output = job.preview.outputs.find((item) => item.id === stem.id);
+                    return (
+                      output && {
+                        id: stem.id,
+                        label: stemLabel(stem.id),
+                        color: stem.color,
+                        blob: output.blob,
+                        url: output.url,
+                        name: output.name,
+                        peaks: output.peaks,
+                      }
+                    );
+                  }).filter(Boolean)}
+                  initialPreset={job.goal || 'all'}
+                  previewOnly
+                />
+              </>
+            )}
             {(job.status === 'error' || job.status === 'cancelled') && (
               <p className="alab-bad" role="alert">
                 {job.message}
@@ -270,16 +316,64 @@ export default function SplitPage() {
                 your browser cache.
               </p>
             )}
-            {lanes && (
+            {stems && practice.ready && (
               <>
-                <StemMixer lanes={lanes} />
+                <StemPlayer
+                  key={job.id}
+                  trackName={job.file.name}
+                  fileBase={safeTrackName(job.file.name)}
+                  stems={stems}
+                  original={{ blob: job.file, peaks: job.peaks }}
+                  initialPreset={job.goal || 'all'}
+                  initialPractice={practice.get(job.id)}
+                  onPracticeChange={(state) => practice.save(job.id, state)}
+                  onEvent={(type) => {
+                    if (type === 'preview') trackSiteEventOnce(`${job.id}:preview`, 'stem_preview');
+                    if (type === 'stem_download') trackSiteEvent('stem_download');
+                    if (type === 'mix_exported') trackSiteEvent('mix_exported');
+                  }}
+                  stemActions={(stem) => (
+                    <button
+                      type="button"
+                      className="stem-player-icon"
+                      aria-label={`Check key and BPM of the ${stem.label} stem`}
+                      title={`Check key & BPM of ${stem.label}`}
+                      onClick={() =>
+                        toKeyBpm(
+                          new File([stem.blob], stem.name, { type: 'audio/wav' }),
+                          'stem',
+                          `${stem.label} stem of ${job.file.name}`
+                        )
+                      }
+                    >
+                      <Gauge size={15} aria-hidden="true" />
+                    </button>
+                  )}
+                  afterExport={(mix) => (
+                    <div>
+                      <button
+                        type="button"
+                        className="alab-text-button"
+                        onClick={() =>
+                          toKeyBpm(
+                            new File([mix.blob], mix.name, { type: 'audio/wav' }),
+                            'mix',
+                            `${mix.name} (your mix of ${job.file.name})`
+                          )
+                        }
+                      >
+                        <Gauge size={14} aria-hidden="true" /> Check key & BPM of this mix
+                      </button>
+                    </div>
+                  )}
+                />
                 <div className="alab-actions">
                   <button
                     type="button"
                     className="alab-button alab-primary"
                     onClick={openInStemDeck}
                   >
-                    <SlidersHorizontal size={16} aria-hidden="true" /> Open in StemDeck
+                    <SlidersHorizontal size={16} aria-hidden="true" /> Open in Songboard
                   </button>
                   <button
                     type="button"
@@ -323,7 +417,16 @@ export default function SplitPage() {
                   </p>
                 )}
                 <p className="alab-note">
-                  Open in StemDeck loads the original and the four stems into the first empty deck,
+                  <button
+                    type="button"
+                    className="alab-text-button"
+                    onClick={() => toKeyBpm(job.file, 'original', job.file.name)}
+                  >
+                    <Gauge size={14} aria-hidden="true" /> Check key & BPM of the original
+                  </button>
+                </p>
+                <p className="alab-note">
+                  Open in Songboard loads the original and the four stems into the first empty deck,
                   with the full mix turned down. WAVs are 32-bit float, 44.1 kHz. Export for Ableton
                   adds a Live Set (Live 12) with each stem on its own track at bar 1, warped at the
                   detected tempo{analysis?.bpm ? ` (${analysis.bpm} BPM)` : ''}.
@@ -339,6 +442,26 @@ export default function SplitPage() {
             Credits and licenses
           </a>
         </p>
+        {jobs.length > 1 && (
+          <p className="alab-note">
+            {jobs.length} songs are saved in this browser.{' '}
+            <label className="alab-inline-select">
+              Show
+              <select
+                value={job?.id || ''}
+                disabled={locked}
+                onChange={(event) => setFocusId(event.target.value)}
+              >
+                {jobs.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.file.name}
+                  </option>
+                ))}
+              </select>
+            </label>{' '}
+            <Link to="/stem-separator">Manage all songs in Stem Separator</Link>
+          </p>
+        )}
         <SplitOffline disabled={locked} />
       </div>
     </AudioLabShell>

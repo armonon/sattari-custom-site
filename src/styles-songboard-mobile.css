@@ -1,0 +1,866 @@
+/* Sattari Songboard phone shell -------------------------------------------------
+   This final layer ports the native iPhone information architecture without
+   forking the browser audio engine. Desktop keeps the full workstation. */
+
+.sd-mobile-shell,
+.sd-mobile-view-title {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .stemdeck-web.sd-session-shell {
+    --songboard-mobile-bg: #0b0f0e;
+    --songboard-mobile-panel: #171d1b;
+    --songboard-mobile-panel-raised: #202725;
+    --songboard-mobile-border: #343d39;
+    --songboard-mobile-mint: #91e7cf;
+    --songboard-mobile-coral: #ff7773;
+    --songboard-mobile-muted: #a7aeaa;
+    min-height: 100dvh;
+    padding: 0;
+    color: #f6f4ef;
+    background: var(--songboard-mobile-bg);
+  }
+
+  .sd-session-shell .sd-app-frame {
+    min-height: 100dvh;
+    padding: 0 12px calc(174px + env(safe-area-inset-bottom));
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: var(--songboard-mobile-bg);
+    box-shadow: none;
+  }
+
+  .sd-session-shell .sd-command-bar {
+    display: none;
+  }
+
+  .sd-mobile-shell {
+    display: block;
+    padding-top: calc(78px + env(safe-area-inset-top));
+  }
+
+  .sd-mobile-header {
+    position: fixed;
+    z-index: 70;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    align-items: center;
+    min-height: calc(78px + env(safe-area-inset-top));
+    margin: 0;
+    padding: env(safe-area-inset-top) 14px 4px;
+    border-bottom: 1px solid rgb(52 61 57 / 72%);
+    background: rgb(11 15 14 / 94%);
+    backdrop-filter: blur(22px) saturate(135%);
+  }
+
+  .sd-mobile-header > div {
+    min-width: 0;
+    text-align: center;
+  }
+
+  .sd-mobile-header strong {
+    display: block;
+    overflow: hidden;
+    color: #f6f4ef;
+    font-size: 15px;
+    font-weight: 760;
+    letter-spacing: 0.22em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sd-mobile-header span {
+    display: block;
+    margin-top: 5px;
+    overflow: hidden;
+    color: var(--songboard-mobile-muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sd-mobile-header button {
+    display: grid;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    color: var(--songboard-mobile-muted);
+    background: transparent;
+  }
+
+  .sd-mobile-mode-tabs {
+    position: sticky;
+    z-index: 65;
+    top: calc(78px + env(safe-area-inset-top));
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin: 10px 0 12px;
+    padding: 5px;
+    border: 1px solid #202724;
+    border-radius: 17px;
+    background: #171d1b;
+  }
+
+  .sd-mobile-mode-tabs button {
+    min-height: 48px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: var(--songboard-mobile-muted);
+    background: transparent;
+    font-size: 16px;
+    font-weight: 720;
+  }
+
+  .sd-mobile-mode-tabs button.is-active {
+    border-color: #56605c;
+    color: #f6f4ef;
+    background: linear-gradient(180deg, #343a38, #272c2a);
+    box-shadow: inset 0 1px rgb(255 255 255 / 8%);
+  }
+
+  .sd-mobile-capture-dock {
+    position: fixed;
+    z-index: 95;
+    right: 0;
+    bottom: calc(75px + env(safe-area-inset-bottom));
+    left: 0;
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr) 64px;
+    grid-template-rows: 26px 60px;
+    gap: 7px 8px;
+    padding: 6px 12px 9px;
+    border-top: 1px solid var(--songboard-mobile-border);
+    background: rgb(23 29 27 / 97%);
+    box-shadow: 0 -12px 34px rgb(0 0 0 / 40%);
+    backdrop-filter: blur(22px);
+  }
+
+  .sd-mobile-capture-dock > small {
+    grid-column: 1 / 3;
+    align-self: end;
+    color: var(--songboard-mobile-muted);
+    font-size: 10px;
+    font-weight: 760;
+    letter-spacing: 0.025em;
+  }
+
+  .sd-mobile-capture-dock > small span {
+    margin: 0 8px;
+  }
+
+  .sd-mobile-capture-dock > i {
+    grid-column: 3;
+    align-self: end;
+    height: 3px;
+    border-radius: 2px;
+    background: #39413e;
+  }
+
+  .sd-mobile-capture-dock button {
+    min-height: 58px;
+    border-radius: 16px;
+    font-weight: 760;
+  }
+
+  .sd-mobile-play {
+    grid-column: 1;
+    color: #10251f;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-mobile-record {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #241211;
+    border-color: var(--songboard-mobile-coral);
+    background: var(--songboard-mobile-coral);
+    font-size: 16px;
+  }
+
+  .sd-mobile-record.is-recording {
+    color: white;
+    background: #d64e4b;
+  }
+
+  .sd-mobile-voice {
+    grid-column: 3;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding: 4px;
+    color: var(--songboard-mobile-mint);
+    border-color: var(--songboard-mobile-border);
+    background: #202725;
+    font-size: 11px;
+  }
+
+  .sd-mobile-bottom-nav {
+    position: fixed;
+    z-index: 100;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    min-height: calc(75px + env(safe-area-inset-bottom));
+    padding: 4px 16px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--songboard-mobile-border);
+    background: rgb(23 29 27 / 98%);
+  }
+
+  .sd-mobile-bottom-nav button {
+    position: relative;
+    display: flex;
+    min-height: 66px;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    border: 0;
+    color: var(--songboard-mobile-muted);
+    background: transparent;
+    font-size: 11px;
+    font-weight: 720;
+  }
+
+  .sd-mobile-bottom-nav button::before {
+    position: absolute;
+    top: 0;
+    width: 42px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: transparent;
+    content: '';
+  }
+
+  .sd-mobile-bottom-nav button.is-active {
+    color: var(--songboard-mobile-mint);
+  }
+
+  .sd-mobile-bottom-nav button.is-active::before {
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-desktop-view-title {
+    display: none;
+  }
+
+  .sd-mobile-view-title {
+    display: inline;
+  }
+
+  .sd-session-shell .sd-workspace {
+    padding: 0;
+  }
+
+  .sd-session-shell .sd-workspace-heading {
+    min-height: 46px;
+    max-height: none;
+    margin: 0 2px 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-session-shell .sd-workspace-heading h2 {
+    margin: 0;
+    color: #f6f4ef;
+    font-size: 20px;
+    font-weight: 780;
+    letter-spacing: -0.03em;
+  }
+
+  .sd-session-shell .sd-view-library .sd-workspace-heading,
+  .sd-session-shell .sd-view-files .sd-workspace-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 72px;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  .sd-session-shell :is(.sd-view-library, .sd-view-files) .sd-workspace-quick-actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .sd-session-shell
+    :is(.sd-view-library, .sd-view-files)
+    .sd-workspace-quick-actions
+    .sd-panel-layout-menu {
+    display: none;
+  }
+
+  .sd-session-shell .sd-view-library .sd-workspace-heading h2,
+  .sd-session-shell .sd-view-files .sd-workspace-heading h2 {
+    font-family: ui-serif, Georgia, serif;
+    font-size: 42px;
+    letter-spacing: -0.045em;
+  }
+
+  .sd-session-shell .sd-view-decks .sd-workspace-heading,
+  .sd-session-shell .sd-view-arranger .sd-workspace-heading {
+    display: none;
+  }
+
+  .sd-session-shell .sd-notice {
+    right: 12px;
+    bottom: calc(174px + env(safe-area-inset-bottom));
+    left: 12px;
+    z-index: 92;
+  }
+
+  /* Perform: focused source first, controls by progressive disclosure. */
+  .sd-session-shell .sd-performance-coach {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-performance-coach > strong,
+  .sd-performance-coach > .sd-performance-xf-options,
+  .sd-performance-coach > .sd-performance-sync {
+    display: none;
+  }
+
+  .sd-scene-buttons {
+    display: grid;
+    grid-row: 1;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .sd-scene-buttons button {
+    min-width: 0;
+    min-height: 58px;
+    padding: 8px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 14px;
+    color: var(--songboard-mobile-muted);
+    background: var(--songboard-mobile-panel);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .sd-scene-buttons button.is-active {
+    color: #16332a;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-scene-buttons button:last-child {
+    display: none;
+  }
+
+  .sd-performance-crossfade {
+    display: grid;
+    grid-row: 2;
+    grid-template-columns: 68px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    color: var(--songboard-mobile-muted);
+    font-size: 11px;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sd-performance-crossfade input {
+    width: 100%;
+    accent-color: var(--songboard-mobile-mint);
+  }
+
+  .sd-session-shell .sd-performance-stage {
+    min-height: 0;
+  }
+
+  .sd-session-shell .sd-focused-deck {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-decks-grid {
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sd-focused-deck .sd-deck:nth-child(n + 2) {
+    display: none;
+  }
+
+  .sd-focused-deck .sd-deck {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    padding: 12px;
+    overflow: hidden;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #19201e, #131816);
+    box-shadow: none;
+  }
+
+  .sd-focused-deck .sd-deck-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 54px;
+    padding: 0 0 8px;
+    border: 0;
+  }
+
+  .sd-focused-deck .sd-deck-identity {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-rows: 27px 22px;
+    gap: 0 8px;
+  }
+
+  .sd-focused-deck .sd-deck-badge {
+    grid-row: 1 / 3;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    align-self: center;
+    border-radius: 12px;
+    color: #153128;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+    font-size: 17px;
+    font-weight: 820;
+  }
+
+  .sd-focused-deck .sd-deck-title {
+    height: 27px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    color: #f6f4ef;
+    background: transparent;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sd-focused-deck .sd-deck-meta {
+    display: flex;
+    grid-column: 2;
+    gap: 6px;
+  }
+
+  .sd-focused-deck .sd-deck-meta input,
+  .sd-focused-deck .sd-deck-meta button {
+    width: auto;
+    height: 22px;
+    min-height: 22px;
+    padding: 0 4px;
+    border: 0;
+    color: var(--songboard-mobile-muted);
+    background: transparent;
+    font-size: 11px;
+  }
+
+  .sd-focused-deck .sd-deck-live-actions {
+    gap: 5px;
+  }
+
+  .sd-focused-deck .sd-deck-live-actions .sd-processing-badge,
+  .sd-focused-deck .sd-deck-live-actions select {
+    display: none;
+  }
+
+  .sd-focused-deck .sd-deck-live-actions button {
+    min-width: 54px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .sd-focused-deck .sd-deck-overview {
+    display: block;
+    min-height: 104px;
+    margin: 0 0 10px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #303936;
+    border-radius: 12px;
+    background: #090c0d;
+  }
+
+  .sd-focused-deck .sd-deck-overview .sd-waveform {
+    min-height: 102px;
+  }
+
+  .sd-focused-deck .sd-deck-density,
+  .sd-focused-deck .sd-deck-spectrum {
+    display: none;
+  }
+
+  .sd-focused-deck .sd-stem-wavefield {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    height: 126px;
+    min-height: 126px;
+    margin: 0 0 10px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-vertical-wave {
+    min-width: 0;
+    border: 1px solid #303936;
+    border-radius: 12px;
+    background: #101514;
+  }
+
+  .sd-focused-deck .sd-stem-wave-controls {
+    bottom: 5px;
+    gap: 3px;
+  }
+
+  .sd-focused-deck .sd-stem-wave-controls button {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: 8px;
+  }
+
+  .sd-focused-deck .sd-deck-transport {
+    display: grid;
+    grid-template-columns: 1fr 0.72fr auto;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-deck-transport > button {
+    min-height: 48px;
+    border-radius: 13px;
+  }
+
+  .sd-focused-deck .sd-deck-transport .sd-play-button {
+    color: #132d25;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-focused-deck .sd-cf-assign {
+    min-width: 92px;
+  }
+
+  .sd-focused-deck .sd-deck-mix-band {
+    display: none;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox {
+    margin: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox > nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 8px;
+    padding: 0;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox > nav button {
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 12px;
+    color: var(--songboard-mobile-muted);
+    background: #202725;
+  }
+
+  .sd-focused-deck .sd-deck-toolbox > nav button.is-active {
+    color: #102b22;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-focused-deck .sd-tool-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px 0 0;
+    border-top: 1px solid #303936;
+    background: transparent;
+  }
+
+  .sd-focused-deck .sd-tool-content button,
+  .sd-focused-deck .sd-tool-content select {
+    min-height: 44px;
+    border-radius: 12px;
+  }
+
+  .sd-focused-deck .sd-source-mode,
+  .sd-focused-deck .sd-separation-status {
+    grid-column: 1 / -1;
+  }
+
+  .sd-focused-deck .sd-deck-status {
+    display: none;
+  }
+
+  .sd-source-dock {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 9px;
+    border: 1px dashed var(--songboard-mobile-border);
+    border-radius: 14px;
+    color: var(--songboard-mobile-mint);
+    background: #111614;
+  }
+
+  .sd-session-shell .sd-empty-performance {
+    min-height: 55dvh;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-session-shell .sd-empty-source-cta {
+    max-width: 350px;
+    border: 0;
+    color: #f6f4ef;
+    background: transparent;
+  }
+
+  .sd-session-shell .sd-empty-source-cta .sd-import-action {
+    min-height: 52px;
+    border-radius: 13px;
+    color: #102b22;
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-session-shell .sd-pads-fx {
+    margin-top: 10px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 16px;
+    background: var(--songboard-mobile-panel);
+  }
+
+  /* Bounce library: large search, touch tabs and clean track cards. */
+  .sd-session-shell .sd-view-library .sd-workspace-heading .sd-workspace-quick-actions {
+    display: flex;
+  }
+
+  .sd-session-shell .sd-view-library .sd-workspace-heading .sd-workspace-quick-actions button {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    overflow: hidden;
+    color: #102b22;
+    border-color: var(--songboard-mobile-mint);
+    border-radius: 14px;
+    background: var(--songboard-mobile-mint);
+    font-size: 0;
+  }
+
+  .sd-session-shell .sd-music-library {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-session-shell .sd-music-library > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 0 12px;
+    border: 0;
+  }
+
+  .sd-session-shell .sd-music-library > header > div:first-child {
+    display: none;
+  }
+
+  .sd-session-shell .sd-music-import-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .sd-session-shell .sd-music-import-actions > button,
+  .sd-session-shell .sd-music-import-actions summary {
+    min-height: 46px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 13px;
+    background: var(--songboard-mobile-panel-raised);
+  }
+
+  .sd-session-shell .sd-library-planning {
+    display: block;
+  }
+
+  .sd-session-shell .sd-library-sidebar-browser {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .sd-session-shell .sd-bounce-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .sd-session-shell .sd-bounce-tabs button {
+    min-width: 0;
+    min-height: 48px;
+    padding: 5px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 14px;
+    color: var(--songboard-mobile-muted);
+    background: var(--songboard-mobile-panel);
+    font-size: 11px;
+  }
+
+  .sd-session-shell .sd-bounce-tabs button[aria-pressed='true'] {
+    color: #102b22;
+    border-color: var(--songboard-mobile-mint);
+    background: var(--songboard-mobile-mint);
+  }
+
+  .sd-session-shell .sd-library-songs {
+    padding: 0;
+  }
+
+  .sd-session-shell .sd-library-session-assets {
+    margin-top: 12px;
+    border: 1px solid var(--songboard-mobile-border);
+    border-radius: 14px;
+    background: var(--songboard-mobile-panel);
+  }
+
+  /* Edit: make the timeline the surface, with tools horizontally scrollable. */
+  .sd-session-shell .sd-view-arranger .sd-arrangement-editor {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--songboard-mobile-bg);
+  }
+
+  .sd-session-shell .sd-music-import-actions .sd-library-manage {
+    grid-column: 1 / -1;
+  }
+
+  .sd-session-shell .sd-view-arranger .ae-main-header,
+  .sd-session-shell .sd-view-arranger .ae-toolbar {
+    position: sticky;
+    z-index: 20;
+    top: calc(146px + env(safe-area-inset-top));
+    background: rgb(11 15 14 / 96%);
+  }
+
+  .sd-session-shell .sd-view-arranger .ae-scroll {
+    min-height: 48dvh;
+    border-color: var(--songboard-mobile-border);
+    border-radius: 14px;
+  }
+
+  /* Mixer becomes the native Mix surface instead of a narrow desktop dock. */
+  .sd-session-shell .sd-mixer-dock {
+    position: fixed;
+    z-index: 85;
+    top: calc(146px + env(safe-area-inset-top));
+    right: 0;
+    bottom: calc(174px + env(safe-area-inset-bottom));
+    left: 0;
+    width: auto;
+    max-height: none;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    border: 0;
+    border-radius: 0;
+    background: var(--songboard-mobile-bg);
+  }
+
+  .sd-session-shell .sd-settings-popover,
+  .sd-session-shell .sd-session-inspector,
+  .sd-session-shell .sd-advanced-strip {
+    position: fixed;
+    z-index: 110;
+    top: calc(78px + env(safe-area-inset-top));
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    padding: 22px;
+    overflow: auto;
+    border: 0;
+    border-radius: 0;
+    background: #101513;
+  }
+
+  .sd-session-shell .sd-files-view {
+    min-height: 55dvh;
+    border: 0;
+    background: transparent;
+  }
+}
+
+@media (max-width: 360px) {
+  .sd-mobile-header strong {
+    font-size: 13px;
+    letter-spacing: 0.15em;
+  }
+
+  .sd-mobile-mode-tabs button {
+    font-size: 14px;
+  }
+
+  .sd-mobile-capture-dock {
+    grid-template-columns: 54px minmax(0, 1fr) 56px;
+    padding-inline: 8px;
+  }
+
+  .sd-mobile-record {
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .sd-focused-deck .sd-stem-wavefield {
+    height: 110px;
+    min-height: 110px;
+  }
+}

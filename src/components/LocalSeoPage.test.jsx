@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
 import { StaticRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { products } from '../data/catalog';
+import { formatPriceRange, products } from '../data/catalog';
 import { BUSINESS, CATEGORY_LOCAL_HELP, CATEGORY_SEO, PAGE_SEO } from '../data/siteSeo';
 import { useInventory } from '../context/InventoryContext';
 import LocalSeoPage, { localSeoPages } from './LocalSeoPage';
@@ -102,20 +102,120 @@ describe('local search pages', () => {
     expect(doc.querySelectorAll('.local-product-stock')).toHaveLength(3);
   });
 
+  it.each(['instruments', 'guitars', 'violins', 'drums'])(
+    'shows current product prices, images and availability on the %s sales page',
+    (key) => {
+      const ids = localSeoPages[key].productIds;
+      const hidden = ids[0];
+      const soldOut = ids[1];
+      const current = products
+        .filter((product) => product.slug !== hidden)
+        .map((product) =>
+          product.slug === soldOut ? { ...product, price: 42, sizes: [] } : product
+        );
+      useInventory.mockReturnValue({ products: current, isSoldOut: (p) => p.slug === soldOut });
+      const { doc } = renderPage(<LocalSeoPage pageKey={key} />);
+      const cards = [...doc.querySelectorAll('.local-product')];
+      expect(cards).toHaveLength(ids.length - 1);
+      for (const card of cards) {
+        const slug = card.getAttribute('href').replace('/product/', '');
+        expect(ids).toContain(slug);
+        expect(slug).not.toBe(hidden);
+        const product = current.find((item) => item.slug === slug);
+        expect(card.querySelector('img')).not.toBeNull();
+        expect(card.querySelector('h3').textContent).toBe(product.name);
+        expect(card.querySelector('p').textContent).toBe(formatPriceRange(product));
+      }
+      expect(doc.querySelector(`a[href="/product/${soldOut}"]`).textContent).toContain(
+        'Out of stock'
+      );
+    }
+  );
+
   it('keeps all new pages discoverable from product categories or repair services', () => {
     const links = Object.values(CATEGORY_LOCAL_HELP).flatMap((help) =>
       help.links.map((link) => link.to)
     );
-    for (const key of ['woodland-drums', 'encino-violins', 'violin-repair', 'guitar-setup']) {
+    for (const key of [
+      'woodland-drums',
+      'encino-violins',
+      'violin-repair',
+      'guitar-setup',
+      'guitar-strings',
+      'violin-strings',
+      'guitar-restringing',
+      'violin-restringing',
+      'string-replacement',
+    ]) {
       expect(links).toContain(new URL(localSeoPages[key].url).pathname);
     }
+  });
+
+  it('shows approved standard guitar prices and connects string buying and fitting', () => {
+    const guitar = renderPage(<LocalSeoPage pageKey="guitar-strings" />);
+    expect(guitar.doc.querySelectorAll('.local-product')).toHaveLength(0);
+    expect(guitar.schema.some((item) => ['Product', 'Offer'].includes(item['@type']))).toBe(false);
+    expect(
+      guitar.doc.querySelector('a[href="/services/guitar-restringing-woodland-hills"]')
+    ).not.toBeNull();
+
+    const violin = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+    expect(violin.doc.querySelectorAll('.local-product')).toHaveLength(1);
+    expect(violin.doc.querySelector('.local-product').getAttribute('href')).toBe(
+      '/product/violin-strings'
+    );
+    expect(
+      violin.doc.querySelector('a[href="/services/violin-repair-los-angeles"]')
+    ).not.toBeNull();
+
+    const restringing = renderPage(<LocalSeoPage pageKey="guitar-restringing" />);
+    const service = restringing.schema.find((item) => item['@type'] === 'Service');
+    expect(service.provider['@id']).toBe('https://sattarimusic.com/#business');
+    expect(service.offers).toMatchObject({
+      '@type': 'Offer',
+      name: 'Standard guitar string set and restringing labor',
+      price: 55,
+      priceCurrency: 'USD',
+    });
+    for (const page of [guitar, restringing]) {
+      const priceAnswer = page.schema
+        .find((item) => item['@type'] === 'FAQPage')
+        .mainEntity.find(({ acceptedAnswer }) =>
+          ['$20', '$35', '$55'].every((price) => acceptedAnswer.text.includes(price))
+        );
+      expect(priceAnswer).toBeDefined();
+      expect(page.doc.body.textContent).toContain(priceAnswer.acceptedAnswer.text);
+      expect(page.doc.body.textContent).toContain('Ernie Ball');
+      expect(page.doc.body.textContent).toMatch(/premium/i);
+      expect(page.doc.querySelector('meta[name="description"]').content).toContain('$20');
+    }
+    expect(violin.doc.body.textContent).not.toContain('$55');
+    expect(
+      restringing.doc.querySelector('a[href="/services/guitar-setup-los-angeles"]')
+    ).not.toBeNull();
+  });
+
+  it('replaces the violin purchase CTA with an inquiry when inventory hides the product', () => {
+    useInventory.mockReturnValue({
+      products: products.filter((product) => product.slug !== 'violin-strings'),
+      isSoldOut: () => false,
+    });
+    const { doc, schema } = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+    expect(doc.querySelector('a[href="/product/violin-strings"]')).toBeNull();
+    expect(doc.querySelectorAll('.local-product')).toHaveLength(0);
+    const primaryCta = doc.querySelector('.repair-hero-copy .button-solid');
+    expect(primaryCta.textContent).toBe('Ask about availability');
+    expect(primaryCta.getAttribute('href')).toBe('#local-inquiry');
+    expect(doc.body.textContent).not.toContain('available through the current online catalog');
+    const faqs = schema.find((item) => item['@type'] === 'FAQPage').mainEntity;
+    for (const faq of faqs) expect(doc.body.textContent).toContain(faq.acceptedAnswer.text);
   });
 
   it('gives Los Angeles instrument repair visible FAQs matching its schema', () => {
     const { doc, schema } = renderPage(<RepairPage />);
     const faqs = schema.find((item) => item['@type'] === 'FAQPage').mainEntity;
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
-    expect(doc.title).toContain('Los Angeles Instrument Repair Shop');
+    expect(doc.title).toContain(PAGE_SEO.repair.title);
     expect(doc.querySelectorAll('details')).toHaveLength(faqs.length);
     for (const faq of faqs) {
       expect(doc.body.textContent).toContain(faq.name);
@@ -125,4 +225,17 @@ describe('local search pages', () => {
       'https://sattarimusic.com/#business'
     );
   });
+});
+
+it('keeps a sold-out violin string listing browsable and sends purchase inquiries to the shop', () => {
+  useInventory.mockReturnValue({
+    products,
+    isSoldOut: (product) => product.slug === 'violin-strings',
+  });
+  const { doc } = renderPage(<LocalSeoPage pageKey="violin-strings" />);
+  expect(doc.querySelector('.repair-hero-copy .button-solid').getAttribute('href')).toBe(
+    '#local-inquiry'
+  );
+  expect(doc.querySelector('.local-product').getAttribute('href')).toBe('/product/violin-strings');
+  expect(doc.querySelector('.local-product-stock').textContent).toBe('Out of stock');
 });

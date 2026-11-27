@@ -32,6 +32,15 @@ describe('portable analysis reports', () => {
     expect(decoded.limits.join(' ')).toContain('Source audio is not included');
     expect(decoded.tracks[0].source.arrayBuffer).toBeUndefined();
   });
+  it.each(['A# major', 'Bb major', 'B♭ major'])(
+    'preserves the spelling of the corrected key %s',
+    (key) => {
+      const original = row();
+      original.user = { key, bpm: null, bpmChoice: null, editedAt: when };
+      const decoded = parseKeyBpmReport(createKeyBpmReport([original], when));
+      expect(decoded.tracks[0].user.key).toBe(key);
+    }
+  );
   it('preserves quiet/insufficient results and per-file failures', () => {
     const quiet = row();
     Object.assign(quiet.result, {
@@ -52,7 +61,7 @@ describe('portable analysis reports', () => {
     expect(decoded.tracks.map((t) => t.result)).toEqual([quiet.result, failure.result]);
   });
   it.each([
-    ['unsupported version', (r) => (r.version = 2)],
+    ['unsupported version', (r) => (r.version = 3)],
     ['mismatched key/Camelot', (r) => (r.tracks[0].result.camelot = '12A')],
     ['fake success shape', (r) => delete r.tracks[0].result.duration],
     ['invalid confidence', (r) => (r.tracks[0].result.keyConfidence = 99)],

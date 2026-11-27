@@ -7,7 +7,13 @@ import './hubLabs.css';
 // One list for every wave-2 alpha tool: the audio labs (Split, Key & BPM, Vox)
 // first, then Canvas, Pocket and Press.
 const HUB_LABS = [
-  ...LAB_TOOLS.map(({ id, name, path, blurb }) => ({ id, name, path, detail: blurb })),
+  ...LAB_TOOLS.map(({ id, name, path, blurb, stage }) => ({
+    id,
+    name,
+    path,
+    detail: blurb,
+    stage,
+  })),
   ...LAB_APPS,
 ];
 
@@ -19,12 +25,12 @@ export default function HubLabs() {
         <h2 id="hub-labs-title">
           <FlaskConical size={18} aria-hidden="true" /> Labs
         </h2>
-        <span>Alpha tools</span>
+        <span>Early-access tools</span>
       </div>
       <div className="hub-labs-grid">
-        {HUB_LABS.map(({ id, name, path, detail }) => (
+        {HUB_LABS.map(({ id, name, path, detail, stage = 'Alpha' }) => (
           <Link key={id} to={path} className="hub-reading-link">
-            <span className="hub-eyebrow">Alpha</span>
+            <span className="hub-eyebrow">{stage}</span>
             <h3>
               {name}
               <ArrowUpRight size={20} aria-hidden="true" />

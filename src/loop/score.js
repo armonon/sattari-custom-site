@@ -105,7 +105,7 @@ export function polyphonicScoreMeasures(notes, bpm, meter = 4) {
   });
 }
 
-export function scoreMeasures(notes, bpm, meter = 4) {
+export function scoreMeasures(notes, bpm, meter = 4, endBeat) {
   if (!notes.length) return [];
   const events = notes.map((note, index) => ({
     ...note,
@@ -137,13 +137,14 @@ export function scoreMeasures(notes, bpm, meter = 4) {
       part++;
     }
   };
-  let cursor = events[0].beat;
+  let cursor = Math.floor((events[0].beat + 0.0001) / meter) * meter;
   events.forEach((note, i) => {
     if (note.beat > cursor) append(cursor, note.beat - cursor);
     const end = Math.min(note.beat + note.beats, events[i + 1]?.beat ?? Infinity);
     append(note.beat, Math.max(0.25, end - note.beat), note);
     cursor = end;
   });
+  if (Number.isFinite(endBeat) && endBeat > cursor) append(cursor, endBeat - cursor);
   // Explicit accidentals, including natural cancellation, reset at each barline.
   return [...measures.values()].map((bar) => {
     const accidentals = new Map();

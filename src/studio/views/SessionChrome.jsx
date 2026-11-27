@@ -14,13 +14,20 @@ import { PanelLayoutActions } from '../../components/studio/StudioPanel';
 import ToolReferenceLink from '../../components/ToolReferenceLink';
 import { InstallAppButton } from '../../pwa/StudioPwaUi';
 
-export const READY_NOTICE = 'STEMDECK browser engine ready.';
+export const READY_NOTICE = 'Sattari Songboard browser engine ready.';
 
 const VIEW_TITLES = {
   decks: 'Perform',
   arranger: 'Arrange',
   library: 'Library',
   files: 'Project files',
+};
+
+const MOBILE_VIEW_TITLES = {
+  decks: 'Perform',
+  arranger: 'Edit',
+  library: 'Bounce',
+  files: 'Projects',
 };
 
 export function AdvancedStrip({
@@ -170,7 +177,7 @@ export function SettingsPopover({
       <button type="button" onClick={onReset}>
         Reset session
       </button>
-      <InstallAppButton>Install StemDeck</InstallAppButton>
+      <InstallAppButton>Install Songboard</InstallAppButton>
       <a href="/studio-install.html" target="_blank" rel="noopener noreferrer">
         Install on iPhone, iPad or Mac
       </a>
@@ -275,7 +282,10 @@ export function WorkspaceHeading({
   return (
     <header className="sd-workspace-heading">
       <div>
-        <h2>{VIEW_TITLES[activeView]}</h2>
+        <h2>
+          <span className="sd-desktop-view-title">{VIEW_TITLES[activeView]}</span>
+          <span className="sd-mobile-view-title">{MOBILE_VIEW_TITLES[activeView]}</span>
+        </h2>
         <span className="sd-workspace-eyebrow">{sessionName}</span>
       </div>
       <div className="sd-workspace-quick-actions">

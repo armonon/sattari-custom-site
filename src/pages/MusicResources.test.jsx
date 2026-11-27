@@ -16,9 +16,8 @@ it.each(['how-to-separate-vocals-drums-bass', 'practice-bass-with-isolated-stems
         </MemoryRouter>
       </HelmetProvider>
     );
-    expect(
-      [...container.querySelectorAll('audio')].map((node) => node.getAttribute('src'))
-    ).toEqual([
+    const demo = container.querySelector('.resource-demo');
+    expect([...demo.querySelectorAll('audio')].map((node) => node.getAttribute('src'))).toEqual([
       '/audio/sattari-practice-demo.wav',
       '/audio/sattari-demo-bass.wav',
       '/audio/sattari-demo-drums.wav',

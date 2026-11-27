@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import ServiceInquiryForm from './ServiceInquiryForm';
+import ServicePlanningDetails from './ServicePlanningDetails';
+import ShopRepairFinder from './ShopRepairFinder';
 import { SEO, StructuredData } from '../utils/seo';
 import { BUSINESS, PAGE_SEO, breadcrumbSchema, businessSchema } from '../data/siteSeo';
+import { guitarStringPricing } from '../data/guitarStringPricing';
 import './LocalSeoPage.css';
 
 const repairFaqs = [
@@ -15,7 +18,7 @@ const repairFaqs = [
   },
   {
     q: 'How much will an instrument repair cost?',
-    a: 'Cost depends on the instrument, work and any parts needed. An inquiry starts the assessment; it is not a fixed quote. The team will discuss the proposed work and price before you approve it.',
+    a: `Standard guitar restringing costs $${guitarStringPricing.standardLabor} for installation labor. A standard guitar string set is $${guitarStringPricing.standardSet}, bringing the installed total to $${guitarStringPricing.standardInstalled}. For other repairs, tell us the instrument and symptom so we can confirm the work, parts and price.`,
   },
   {
     q: 'Can my instrument be ready before a gig or lesson?',
@@ -108,29 +111,30 @@ export default function RepairPage() {
       <div className="container repair-hero">
         <div className="repair-hero-copy">
           <p className="eyebrow">Los Angeles instrument repair</p>
-          <h1>Instrument repair in Woodland Hills</h1>
+          <h1>Guitar, violin and instrument repair in Los Angeles</h1>
           <p>
-            Sattari Music helps local musicians diagnose, repair, tune, and dial in instruments and
-            performance gear for Woodland Hills, Encino, Calabasas, and Los Angeles musicians — from
-            everyday fixes to rare or sentimental pieces that need thoughtful care.
+            Broken string, buzzing fret or rattling drum hardware? Tell us what you hear and which
+            instrument you play. Our Woodland Hills shop takes repair and setup appointments for
+            musicians across Los Angeles.
           </p>
           <div className="hero-actions services-actions">
             <a className="button button-solid" href="#repair-inquiry">
               Request a repair check
             </a>
-            <Link className="button button-outline" to="/services">
-              View all local services
-            </Link>
+            <a className="button button-outline" href={BUSINESS.phoneHref}>
+              Call {BUSINESS.phoneDisplay}
+            </a>
           </div>
         </div>
 
         <div className="repair-callout-card">
-          <p className="card-kicker">Repair focus</p>
-          <h2>Fast clarity before you spend money.</h2>
+          <h2>What goes into a repair quote?</h2>
           <p>
-            Tell us what is wrong, send photos if needed when we reply, and we’ll point you toward
-            the best next step: repair, tune-up, replacement part, setup adjustment, or a deeper
-            inspection.
+            A standard guitar restring with new strings costs{' '}
+            {`$${guitarStringPricing.standardInstalled}`}. See the{' '}
+            <Link to="/services/guitar-restringing-woodland-hills">string and labor prices</Link>.
+            For a setup or another repair, tell us what needs attention and when you need the
+            instrument back. We’ll confirm the price and timing with you.
           </p>
           <div className="repair-mini-stats" aria-label="Repair service highlights">
             <span>Violins</span>
@@ -141,6 +145,40 @@ export default function RepairPage() {
         </div>
       </div>
 
+      <section className="container local-advice" aria-labelledby="repair-by-instrument">
+        <div>
+          <h2 id="repair-by-instrument">Choose a repair by instrument</h2>
+          <p>
+            For an acoustic guitar, electric guitar or bass, note the usual tuning and whether the
+            problem happens on open strings, at one fret or all the way up the neck.
+          </p>
+          <Link to="/services/guitar-setup-los-angeles#setup-symptoms">
+            Guitar and bass setup assessment
+          </Link>
+        </div>
+        <div>
+          <h2>Violin bridge, peg and string problems</h2>
+          <p>
+            If a peg slips or the bridge has shifted, tell us what changed before you try tuning
+            again. For a single snapped string, include the note, violin size and tailpiece fitting.
+          </p>
+          <Link to="/services/violin-repair-los-angeles#bridge-and-peg-symptoms">
+            Violin repair and setup assessment
+          </Link>
+        </div>
+        <div>
+          <h2>Drums, stands and pedals</h2>
+          <p>
+            Say which drum, stand or pedal makes the sound and whether it occurs with the snare
+            wires engaged, during a pedal stroke or when you move the hardware. Keep any loose
+            pieces for the assessment.
+          </p>
+          <a href="#repair-inquiry">Describe a drum or hardware fault</a>
+        </div>
+      </section>
+      <div className="container">
+        <ShopRepairFinder />
+      </div>
       <div className="container repair-grid">
         <article className="info-card repair-info-card">
           <p className="card-kicker">What we help with</p>
@@ -163,26 +201,39 @@ export default function RepairPage() {
         </article>
       </div>
 
-      <div className="container repair-process-panel">
-        <div>
-          <p className="eyebrow">Simple process</p>
-          <h2>Send the issue. Get a clear next step.</h2>
-        </div>
-        <div className="repair-process-steps">
-          <div>
-            <strong>1</strong>
-            <span>Describe the instrument, gear, or rare piece and what is happening.</span>
-          </div>
-          <div>
-            <strong>2</strong>
-            <span>We reply with what to check, bring, or send photos of.</span>
-          </div>
-          <div>
-            <strong>3</strong>
-            <span>We schedule the repair, tune-up, setup, or inspection.</span>
-          </div>
-        </div>
+      <div className="container">
+        <ServicePlanningDetails service="repairs" />
       </div>
+
+      <section className="container repair-archive" aria-labelledby="repair-archive-title">
+        <figure>
+          <img
+            src="/images/local-gallery/owner-03.webp"
+            alt="Hands holding a string alongside the tuning pegs of a sitar"
+            width="765"
+            height="1020"
+            loading="lazy"
+          />
+          <figcaption>
+            String work on a sitar, from{' '}
+            <a href={BUSINESS.googlePhotos}>Sattari’s Google photo gallery</a>.
+          </figcaption>
+        </figure>
+        <div>
+          <h2 id="repair-archive-title">Which string needs attention?</h2>
+          <p>
+            On this sitar, the playing strings run over the frets and the sympathetic strings run
+            underneath. When asking about a broken string, tell us which set it belongs to and where
+            it broke. A photo of the bridge and tuning pegs can help us identify the fitting.
+          </p>
+          <p>
+            For a guitar or violin, tell us the string name if you know it, whether it slipped or
+            snapped, and whether it has happened in the same spot before. We’ll confirm what the
+            shop can take on and how to share photos when we reply.
+          </p>
+          <a href="#repair-inquiry">Describe your instrument</a>
+        </div>
+      </section>
 
       <div className="container service-form-shell" id="repair-inquiry">
         <div className="service-form-copy section-header narrow">
@@ -214,6 +265,8 @@ export default function RepairPage() {
         <nav aria-label="Instrument-specific services">
           <Link to="/services/violin-repair-los-angeles">Violin repair and setup</Link>
           <Link to="/services/guitar-setup-los-angeles">Guitar and bass setup</Link>
+          <Link to="/services/guitar-restringing-woodland-hills">Guitar string replacement</Link>
+          <Link to="/violin-strings-woodland-hills">Violin strings and replacement advice</Link>
           <Link to="/woodland-hills-drum-shop">Woodland Hills drum gear</Link>
         </nav>
         <p>

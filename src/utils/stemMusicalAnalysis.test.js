@@ -138,3 +138,35 @@ describe('bounded musical analysis', () => {
     expect(analyzeStemAudio(samples, samples, rate)).toMatchObject({ key: null, bpm: null });
   });
 });
+
+describe('fine tempo and beat position', () => {
+  // The tracker's 20 ms frames can only express some tempos (128 reads as 130).
+  it.each([
+    [128, 0.11],
+    [174, 0.2],
+  ])('reads %i BPM exactly and anchors the grid on the beats', (bpm, first) => {
+    const rate = 22050,
+      seconds = 30,
+      period = 60 / bpm;
+    const left = new Float32Array(rate * seconds);
+    let seed = 7;
+    const noise = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
+    for (let time = first; time < seconds; time += period) {
+      const at = Math.round(time * rate);
+      for (let i = 0; i < 2000 && at + i < left.length; i++)
+        left[at + i] +=
+          (Math.sin((2 * Math.PI * 70 * i) / rate) * 0.7 + noise() * 0.3) * Math.exp(-i / 350);
+    }
+    for (let i = 0; i < left.length; i++)
+      for (const pitch of [220, 261.63, 329.63])
+        left[i] += Math.sin((2 * Math.PI * pitch * i) / rate) * 0.04;
+    const result = analyzeStemAudio(left, left.slice(), rate, { channels: 2 });
+    expect(result.bpm).toBe(bpm);
+    expect(result.beatAnchors.length).toBeGreaterThan(0);
+    for (const anchor of result.beatAnchors) {
+      const phase = (((anchor.time - first) % period) + period) % period;
+      expect(Math.min(phase, period - phase)).toBeLessThan(0.015);
+      expect(Math.abs(anchor.period - period) / period).toBeLessThan(0.001);
+    }
+  });
+});

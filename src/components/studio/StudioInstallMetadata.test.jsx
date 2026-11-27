@@ -3,7 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { describe, it, expect } from 'vitest';
 import StudioInstallMetadata from './StudioInstallMetadata';
 
-describe('StemDeck installation metadata', () => {
+describe('Songboard installation metadata', () => {
   it('adds install metadata only while the studio is mounted', async () => {
     const view = render(
       <HelmetProvider>
@@ -17,7 +17,7 @@ describe('StemDeck installation metadata', () => {
     );
     expect(
       document.querySelector('meta[name="apple-mobile-web-app-title"]')?.getAttribute('content')
-    ).toBe('StemDeck');
+    ).toBe('Songboard');
     view.unmount();
     await waitFor(() => expect(document.querySelector('link[rel="manifest"]')).toBeNull());
   });

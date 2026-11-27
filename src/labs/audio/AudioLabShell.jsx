@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FlaskConical, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Layers, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { SEO } from '../../utils/seo';
 import { LAB_TOOLS } from './audioLabTools';
 import SattariAppMetadata from '../../pwa/SattariAppMetadata';
@@ -18,6 +18,10 @@ export default function AudioLabShell({
   description,
   limits,
   children,
+  badge = 'Alpha',
+  limitsTitle = 'Alpha: what it does not do yet',
+  // Optional sister-tool link shown first in the header, e.g. Key & BPM → Stem Separator.
+  related = null,
 }) {
   const current = LAB_TOOLS.find((item) => item.id === tool);
   return (
@@ -31,8 +35,13 @@ export default function AudioLabShell({
               <ArrowLeft size={14} aria-hidden="true" /> Sattari Hub
             </Link>
             <span className="alab-breadcrumb-end">
+              {related && (
+                <Link to={related.path}>
+                  <Layers size={14} aria-hidden="true" /> {related.label}
+                </Link>
+              )}
               <Link to="/studio">
-                <SlidersHorizontal size={14} aria-hidden="true" /> Open StemDeck
+                <SlidersHorizontal size={14} aria-hidden="true" /> Open Songboard
               </Link>
               <InstallAppButton className="alab-install">Install Sattari app</InstallAppButton>
               <SuiteMenu />
@@ -42,7 +51,7 @@ export default function AudioLabShell({
             <div>
               <p className="alab-eyebrow">{eyebrow}</p>
               <h1>
-                {title} <span className="alab-alpha">Alpha</span>
+                {title} <span className="alab-alpha">{badge}</span>
               </h1>
               <p className="alab-summary">{summary}</p>
             </div>
@@ -53,7 +62,7 @@ export default function AudioLabShell({
           {children}
           <section className="alab-limits" aria-labelledby={`${tool}-limits`}>
             <h2 id={`${tool}-limits`}>
-              <FlaskConical size={16} aria-hidden="true" /> Alpha: what it does not do yet
+              <FlaskConical size={16} aria-hidden="true" /> {limitsTitle}
             </h2>
             <ul>
               {limits.map((limit) => (

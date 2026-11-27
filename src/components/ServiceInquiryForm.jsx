@@ -12,6 +12,7 @@ const SERVICE_OPTIONS = [
   { value: 'rehearsal', label: 'Rehearsal space' },
   { value: 'studio', label: 'Rental studio' },
   { value: 'lessons', label: 'Teachers / classes' },
+  { value: 'tool-feedback', label: 'Music tool feedback' },
 ];
 
 // Off-screen rather than display:none, which some bots skip. Named to match the
@@ -31,6 +32,7 @@ export default function ServiceInquiryForm({
   onServiceChange = undefined,
   source = 'Website service form',
   compact = false,
+  guitarStringInquiry = false,
 }) {
   const [form, setForm] = useState({
     service: initialService,
@@ -38,12 +40,15 @@ export default function ServiceInquiryForm({
     email: '',
     phone: '',
     details: '',
+    instrument: '',
+    timing: '',
     'bot-field': '',
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const service = controlledService ?? form.service;
+  const checkStringPack = guitarStringInquiry && ['accessories', 'repairs'].includes(service);
   const confirmationRef = useRef(null);
   const serviceSelectRef = useRef(null);
   const focusFormRef = useRef(false);
@@ -87,7 +92,26 @@ export default function ServiceInquiryForm({
     e.preventDefault();
     if (submitting) return;
     const version = ++submissionVersion.current;
-    const inquiry = { ...form, service };
+    const submittedPath = window.location.pathname;
+    // Extra prompts are combined into the existing details field so both
+    // Netlify Forms and the API keep the same delivery/storage contract.
+    const { instrument, timing, ...contactForm } = form;
+    const fields = new FormData(e.currentTarget);
+    const pack = String(fields.get('preferredPack') || '').trim();
+    const inquiry = {
+      ...contactForm,
+      service,
+      details: [
+        checkStringPack && `Guitar string request: ${fields.get('stringRequest')}`,
+        checkStringPack && `Guitar type: ${fields.get('guitarType')}`,
+        checkStringPack && pack && `Preferred set or gauge: ${pack}`,
+        instrument.trim() && `Instrument / gear: ${instrument.trim()}`,
+        timing.trim() && `Preferred timing: ${timing.trim()}`,
+        form.details.trim(),
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+    };
     setSubmitting(true);
     setError('');
 
@@ -136,7 +160,7 @@ export default function ServiceInquiryForm({
       }
 
       if (version === submissionVersion.current) setSubmitted(true);
-      trackSiteEvent('inquiry_sent');
+      trackSiteEvent('inquiry_sent', submittedPath);
     } catch (submitError) {
       if (!submitError.sentryCaptured) {
         captureException(submitError, {
@@ -193,7 +217,13 @@ export default function ServiceInquiryForm({
           className="button button-outline"
           onClick={() => {
             focusFormRef.current = true;
-            setForm((current) => ({ ...current, details: '', 'bot-field': '' }));
+            setForm((current) => ({
+              ...current,
+              details: '',
+              instrument: '',
+              timing: '',
+              'bot-field': '',
+            }));
             setSubmitted(false);
             setError('');
           }}
@@ -212,9 +242,11 @@ export default function ServiceInquiryForm({
       {!compact && (
         <>
           <p className="card-kicker">Local service request</p>
-          <h3>Service Inquiry</h3>
+          <h3>{checkStringPack ? 'Guitar string inquiry' : 'Service Inquiry'}</h3>
           <p className="form-helper">
-            Tell us what you need, when you need it, and any details that will help us guide you.
+            {checkStringPack
+              ? 'Tell us which set you need. We’ll confirm the gauge, the price of any premium option and a time for pickup or installation.'
+              : 'Tell us what you need, when you need it, and any details that will help us guide you.'}
           </p>
         </>
       )}
@@ -281,17 +313,103 @@ export default function ServiceInquiryForm({
           />
         </label>
       </div>
+      {checkStringPack && (
+        <>
+          <div className="service-form-row">
+            <label>
+              <span>What would you like to check?</span>
+              <select name="stringRequest" defaultValue="Check pickup availability">
+                <option>Check pickup availability</option>
+                <option>Arrange a restringing appointment</option>
+                <option>Check a premium set and price</option>
+                <option>Help choosing replacement strings</option>
+              </select>
+            </label>
+            <label>
+              <span>Guitar type</span>
+              <select name="guitarType" defaultValue="Help me identify it">
+                <option>Help me identify it</option>
+                <option>Electric guitar</option>
+                <option>Steel-string acoustic guitar</option>
+                <option>Nylon-string classical guitar</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span>Preferred brand, set or gauge (optional)</span>
+            <input name="preferredPack" maxLength={120} placeholder="As printed on your packet" />
+          </label>
+        </>
+      )}
+      {service !== 'tool-feedback' && (
+        <div className="service-form-row">
+          <label>
+            <span>
+              {service === 'lessons'
+                ? 'Instrument and experience (optional)'
+                : 'Instrument / gear and model (optional)'}
+            </span>
+            <input
+              name="instrument"
+              value={form.instrument}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'lessons'
+                  ? 'e.g. guitar, beginner'
+                  : 'e.g. electric guitar, model if known'
+              }
+            />
+          </label>
+          <label>
+            <span>Preferred timing (optional)</span>
+            <input
+              name="timing"
+              value={form.timing}
+              onChange={handleChange}
+              maxLength={160}
+              placeholder={
+                service === 'rentals'
+                  ? 'Pickup and return dates'
+                  : 'Your deadline or preferred days'
+              }
+            />
+          </label>
+        </div>
+      )}
       <label>
-        <span>Describe what you need</span>
+        <span>
+          {checkStringPack
+            ? 'Tuning or other details (optional)'
+            : service === 'tool-feedback'
+              ? 'Your feedback'
+              : 'Describe what you need'}
+        </span>
         <textarea
           name="details"
           value={form.details}
           onChange={handleChange}
           rows={4}
-          placeholder="Timing, location, gear, and what you are trying to solve"
-          required
+          maxLength={3200}
+          placeholder={
+            service === 'tool-feedback'
+              ? 'What were you trying to do, and what happened? Browser and device help.'
+              : service === 'repairs'
+                ? 'Describe the symptoms, tuning and any recent changes. Ask about restringing, setup or an assessment.'
+                : service === 'rentals'
+                  ? 'Gear, sizes, quantities, dates and purpose. We will confirm availability and terms.'
+                  : service === 'lessons'
+                    ? 'Your goals, experience and preferred lesson format. Ask about available teachers and rates.'
+                    : 'What are you looking for? Include fit, availability or service questions.'
+          }
+          required={!checkStringPack}
         />
       </label>
+      <p className="form-helper">
+        {service === 'tool-feedback'
+          ? 'Share the steps you tried and what happened. We may follow up by email.'
+          : 'A request starts a conversation. We will confirm scope, availability and any price before you commit. For repairs, we can ask for photos when we reply.'}
+      </p>
       <div aria-hidden="true" style={HONEYPOT_STYLE}>
         <label>
           Leave this field empty
@@ -306,7 +424,13 @@ export default function ServiceInquiryForm({
         </label>
       </div>
       <button className="button button-solid button-full" type="submit" disabled={submitting}>
-        {submitting ? 'Sending...' : 'Send service request'}
+        {submitting
+          ? 'Sending...'
+          : checkStringPack
+            ? 'Send string inquiry'
+            : service === 'tool-feedback'
+              ? 'Send feedback'
+              : 'Send service request'}
       </button>
     </form>
   );
