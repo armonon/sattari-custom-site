@@ -99,22 +99,17 @@
   mix-blend-mode: multiply;
 }
 .groove-feature[data-cymbal='true'] .groove-art {
-  inset: auto;
-  left: -47%;
-  top: 50%;
-  width: max(144%, 75vh);
-  aspect-ratio: 1;
-  transform: translateY(-50%);
-  overflow: hidden;
-  border-radius: 50%;
+  inset: 2% 4% 30%;
 }
 .groove-feature[data-cymbal='true'] .groove-art img {
-  position: absolute;
-  width: 313%;
-  max-width: none;
-  height: auto;
-  left: -39%;
-  top: -67%;
+  object-fit: contain;
+}
+.groove-feature[data-cymbal='true'] .groove-caption {
+  background: #302319;
+  padding-top: 22px;
+}
+.groove-feature[data-cymbal='true'] .groove-caption h2 {
+  font-size: clamp(26px, 3vw, 50px);
 }
 .groove-caption {
   position: absolute;
@@ -253,8 +248,7 @@
     min-height: clamp(280px, 48svh, 430px);
   }
   .groove-feature[data-cymbal='true'] .groove-art {
-    width: 110%;
-    left: -12%;
+    inset: 2% 4% 36%;
   }
   .groove-index h1 {
     max-width: none;
