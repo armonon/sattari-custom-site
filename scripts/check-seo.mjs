@@ -180,6 +180,7 @@ for (const url of urls) {
   if (
     path.startsWith('/guides') ||
     path.startsWith('/tools/') ||
+    /^\/(keys|bpm)(\/|$)/.test(path) ||
     ['/visit', '/privacy'].includes(path)
   ) {
     for (const image of doc.querySelectorAll('.resource-page img'))

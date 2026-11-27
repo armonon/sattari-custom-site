@@ -4,8 +4,12 @@ import {
   CIRCLE,
   circlePosition,
   keyDisplay,
+  compatibleKeys,
+  diatonicChords,
+  keyLabel,
   relativeKey,
   scaleFrequencies,
+  scaleNotes,
   tonicFrequency,
 } from './keyTheory';
 import { camelot } from './keyBpm';
@@ -47,5 +51,53 @@ describe('key theory', () => {
     expect(minor[2]).toBeCloseTo(220 * 2 ** (3 / 12), 6);
     expect(minor[7]).toBeCloseTo(440, 6);
     expect(scaleFrequencies('C major')[2]).toBeCloseTo(130.813 * 2 ** (4 / 12), 2);
+  });
+
+  it('spells keys the conventional way without changing the analyzer strings', () => {
+    expect(keyLabel('A# major')).toBe('B♭ major');
+    expect(keyLabel('D# major')).toBe('E♭ major');
+    expect(keyLabel('G# minor')).toBe('G♯ minor');
+    expect(keyLabel('A# minor')).toBe('B♭ minor');
+    expect(keyLabel('')).toBe('');
+    expect(CIRCLE.map((slot) => slot.major).join(' ')).toBe('C G D A E B F♯ D♭ A♭ E♭ B♭ F');
+  });
+
+  it('spells scales one letter per degree and builds the diatonic triads', () => {
+    expect(scaleNotes('F major')).toEqual(['F', 'G', 'A', 'B♭', 'C', 'D', 'E']);
+    expect(scaleNotes('F# major')).toEqual(['F♯', 'G♯', 'A♯', 'B', 'C♯', 'D♯', 'E♯']);
+    expect(scaleNotes('D# minor')).toEqual(['E♭', 'F', 'G♭', 'A♭', 'B♭', 'C♭', 'D♭']);
+    expect(scaleNotes('nonsense')).toEqual([]);
+    for (const tonic of ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'])
+      for (const mode of ['major', 'minor']) {
+        const notes = scaleNotes(`${tonic} ${mode}`);
+        expect(new Set(notes.map((note) => note[0])).size).toBe(7);
+        expect(notes.join('')).not.toMatch(/𝄫|𝄪/u);
+      }
+    expect(diatonicChords('C major').map((chord) => chord.name)).toEqual([
+      'C',
+      'Dm',
+      'Em',
+      'F',
+      'G',
+      'Am',
+      'Bdim',
+    ]);
+    expect(diatonicChords('A minor').map((chord) => `${chord.numeral} ${chord.name}`)).toEqual([
+      'i Am',
+      'ii° Bdim',
+      'III C',
+      'iv Dm',
+      'v Em',
+      'VI F',
+      'VII G',
+    ]);
+  });
+
+  it('lists the Camelot neighbours', () => {
+    const mixes = compatibleKeys('C major');
+    expect(mixes.map((mix) => mix.key)).toEqual(['A minor', 'F major', 'G major']);
+    expect(mixes.map((mix) => camelot(mix.key))).toEqual(['8A', '7B', '9B']);
+    expect(compatibleKeys('A minor').map((mix) => camelot(mix.key))).toEqual(['8B', '7A', '9A']);
+    expect(compatibleKeys('x')).toEqual([]);
   });
 });

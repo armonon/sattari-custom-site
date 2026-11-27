@@ -28,6 +28,8 @@ const sectionId = (index) => `guide-section-${index + 1}`;
 function labelFor(path) {
   const resourceLabels = {
     '/studio/keybpm#live-tuner': 'Open the live instrument tuner',
+    '/keys': 'Notes and chords for all 24 keys',
+    '/bpm': 'Tempo reference: every BPM',
     '/guitar-strings-woodland-hills': 'Guitar strings in Woodland Hills',
     '/violin-strings-woodland-hills': 'Violin strings in Woodland Hills',
     '/services/guitar-restringing-woodland-hills': 'Guitar restringing and string replacement',
@@ -40,13 +42,14 @@ function labelFor(path) {
   const product = path.startsWith('/product/') ? getProductBySlug(path.slice(9)) : null;
   return (
     resourceLabels[path] ||
+    guide?.linkLabel ||
     guide?.title ||
     tuner?.heading ||
     product?.name ||
     (tool ? `${tool.name} details` : path.split('/').at(-1).replaceAll('-', ' '))
   );
 }
-function Page({
+export function Page({
   title,
   seoTitle = title,
   description,
@@ -380,6 +383,9 @@ function GuideSection({ section, sources, slug }) {
           ))}
         </ol>
       )}
+      {section.after?.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
       {section.choiceAid && <ChoiceHistoryAid name={section.choiceAid} />}
       <StringLessonAid
         section={section}
@@ -646,6 +652,15 @@ export function ToolDetailsPage() {
               <p>{answer}</p>
             </details>
           ))}
+        </section>
+      )}
+      {key === 'key-bpm' && (
+        <section className="resource-section">
+          <h2>Key and tempo reference</h2>
+          <p>
+            <Link to="/keys">Notes, chords and Camelot codes for all 24 keys</Link>, and{' '}
+            <Link to="/bpm">a click and delay times for every tempo</Link>.
+          </p>
         </section>
       )}
       <Related paths={tool.guides.map((slug) => `/guides/${slug}`)} />

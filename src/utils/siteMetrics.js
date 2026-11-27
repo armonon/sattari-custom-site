@@ -113,6 +113,8 @@ const guidePages = {
   '/guides/choose-a-practice-drum-pad': 'guide-practice-pad',
   '/guides/choose-a-beginner-acoustic-guitar': 'guide-acoustic-guitar',
   '/guides/how-to-care-for-a-guitar': 'guide-guitar-care',
+  '/guides/how-to-tune-an-instrument': 'guide-instrument-tuning',
+  '/guides/how-to-find-the-key-of-a-song': 'guide-find-key',
   '/guides/how-to-choose-a-viola': 'guide-viola-choice',
   '/guides/violin-vs-viola': 'guide-violin-viola',
   '/guides/acoustic-vs-electric-violin': 'guide-violin-types',

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { keyLabel } from './keyTheory';
 import {
   AudioLines,
   Disc3,
@@ -228,7 +229,7 @@ function CorrectionEditor({ row, onChange, onClose }) {
           >
             <option value="">
               {row.result.key
-                ? `Detected: ${row.result.key} (${row.result.camelot})`
+                ? `Detected: ${keyLabel(row.result.key)} (${row.result.camelot})`
                 : 'No key detected'}
             </option>
             {row.user?.key && !ALL_KEYS.includes(row.user.key) && (
@@ -238,7 +239,7 @@ function CorrectionEditor({ row, onChange, onClose }) {
             )}
             {ALL_KEYS.map((key) => (
               <option key={key} value={key}>
-                {key} ({camelot(key)})
+                {keyLabel(key)} ({camelot(key)})
               </option>
             ))}
           </select>
@@ -249,13 +250,14 @@ function CorrectionEditor({ row, onChange, onClose }) {
             className="alab-text-button"
             onClick={() => set({ key: row.result.alternative })}
           >
-            Use the alternative: {row.result.alternative} ({camelot(row.result.alternative)})
+            Use the alternative: {keyLabel(row.result.alternative)} (
+            {camelot(row.result.alternative)})
           </button>
         )}
       </fieldset>
       <div className="kb-editor-foot">
         <span className="alab-note">
-          Showing {values.key || 'no key'}
+          Showing {values.key ? keyLabel(values.key) : 'no key'}
           {values.bpm !== null ? ` · ${formatBpm(values.bpm)} BPM` : ''}. Detected values are kept
           and exported alongside.
         </span>
@@ -967,19 +969,19 @@ export default function KeyBpmPage() {
                         <>
                           <td>{formatTime(result.duration)}</td>
                           <td>
-                            {values.key || '—'}
+                            {values.key ? keyLabel(values.key) : '—'}
                             {values.keySource === 'user' ? (
                               <small className="kb-flag-user">
-                                yours · detected {result.key || 'none'}
+                                yours · detected {result.key ? keyLabel(result.key) : 'none'}
                               </small>
                             ) : (
                               result.key &&
                               result.keyEvidence === 'tentative' && (
                                 <small
                                   className="alab-flag"
-                                  title={`Close call. Check by ear: the alternative is ${result.alternative}.`}
+                                  title={`Close call. Check by ear: the alternative is ${keyLabel(result.alternative)}.`}
                                 >
-                                  tentative · or {result.alternative}
+                                  tentative · or {keyLabel(result.alternative)}
                                 </small>
                               )
                             )}
@@ -1004,7 +1006,7 @@ export default function KeyBpmPage() {
                             {row.user?.notes && (
                               <span className="kb-row-notes">{row.user.notes} </span>
                             )}
-                            {result.alternative && `Alt. ${result.alternative}. `}
+                            {result.alternative && `Alt. ${keyLabel(result.alternative)}. `}
                             {result.note}
                             {row.userFrom && ` Your values from ${row.userFrom}.`}
                           </td>
@@ -1097,7 +1099,8 @@ export default function KeyBpmPage() {
           <Link to="/guides/find-song-key-and-bpm">
             how to read key estimates and half/double BPM
           </Link>
-          . <Link to="/tools/key-bpm">Formats, privacy &amp; limits</Link>.
+          . <Link to="/tools/key-bpm">Formats, privacy &amp; limits</Link>. Reference:{' '}
+          <Link to="/keys">all 24 keys</Link> and <Link to="/bpm">every tempo</Link>.
         </p>
         <ToolFeedback tool="Key & BPM" />
       </div>

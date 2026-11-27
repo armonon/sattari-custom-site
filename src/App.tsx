@@ -42,6 +42,10 @@ import {
   ToolDetailsPage,
   VisitPage,
   PrivacyPage,
+  KeyIndex,
+  KeyPage,
+  BpmIndex,
+  BpmPage,
   CanvasPage,
   PocketPage,
   PressPage,
@@ -71,6 +75,10 @@ const ROUTES: RouteDefinition[] = [
   { path: '/guides', page: GuideIndex },
   { path: '/guides/:slug', page: GuideArticle },
   { path: '/tools/:tool', page: ToolDetailsPage },
+  { path: '/keys', page: KeyIndex },
+  { path: '/keys/:slug', page: KeyPage },
+  { path: '/bpm', page: BpmIndex },
+  { path: '/bpm/:bpm', page: BpmPage },
   { path: '/visit', page: VisitPage },
   { path: '/privacy', page: PrivacyPage },
   { path: '/studio-booking', page: StudioBookingStatus },
@@ -197,7 +205,7 @@ const App: FC = () => {
     LAB_PATHS.includes(pagePath);
   const isAudioWorkspace =
     isLabPage || ['/hub', '/learn', '/loop', '/studio', '/stem-separator'].includes(pagePath);
-  const isResourcePage = /^\/(guides|tools|visit|privacy)(\/|$)/.test(pagePath);
+  const isResourcePage = /^\/(guides|tools|keys|bpm|visit|privacy)(\/|$)/.test(pagePath);
 
   const openCart = useCallback(() => {
     openerRef.current =
