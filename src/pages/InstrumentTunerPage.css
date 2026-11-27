@@ -1,3 +1,18 @@
+/* The same ink palette as Key & BPM and its hub tile, in day and night mode. */
+.alab-page.instrument-tuner-page,
+[data-theme='day'] .alab-page.instrument-tuner-page {
+  --alab-bg: #0f0e0c;
+  --alab-panel: #171512;
+  --alab-raised: #1e1b17;
+  --alab-line: rgba(242, 234, 217, 0.1);
+  --alab-text: #f2ead9;
+  --alab-muted: #a89f8b;
+  --alab-accent: #e4b873;
+  --alab-accent-ink: #1a1408;
+  --alab-bad: #ffb4a8;
+  color-scheme: dark;
+  font-family: Sora, Inter, sans-serif;
+}
 .instrument-tuner-page .alab-shell {
   max-width: 1100px;
 }
